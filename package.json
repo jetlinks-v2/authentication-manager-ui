@@ -1,6 +1,6 @@
 {
   "name": "authentication-manager-ui",
-  "id": "authentication-manager-ui",
+  "id": "authentication-manager",
   "version": "1.0.0",
   "description": "JetLinks sub module",
   "main": "index.ts",

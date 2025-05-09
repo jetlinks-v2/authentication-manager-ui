@@ -19,19 +19,6 @@ import { getModuleRoutesMap } from '@jetlinks-web/utils'
  */
 const getExtraRoutesMap = () => ({})
 
-/**
- * 拓展组件，某些页面的功能或者组件是需要挂载该模块才会显示。这时候就需要子模块将功能抛出，比如组织管理下，当挂载设备管理模块时，加载产品、设备标签
- * @return
- * {
- *    "department": [
- *          {
- *              name: 'product',
- *              label: 'Department.index.945805-0',
- *              component:  defineAsyncComponent(() => import('./views/department/product/index.vue'))
- *          }
- *      ]
- * }
- */
 const getComponents = () => ({})
 
 export default {

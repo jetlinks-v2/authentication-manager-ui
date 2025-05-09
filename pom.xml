@@ -11,7 +11,7 @@
     </parent>
     <packaging>jar</packaging>
 
-    <artifactId>authentication-manager-ui</artifactId>
+    <artifactId>authentication-manager</artifactId>
     <name>权限、用户管理UI</name>
     <description>JetLinks 权限、用户管理UI模块</description>
 
