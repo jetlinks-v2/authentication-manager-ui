@@ -1,3 +1,5 @@
+import i18n from "@/locales";
+
 const routerModules = import.meta.glob('./views/**/index.vue')
 import { getModuleRoutesMap } from '@jetlinks-web/utils'
 
@@ -17,7 +19,51 @@ import { getModuleRoutesMap } from '@jetlinks-web/utils'
  *  }
  * }
  */
-const getExtraRoutesMap = () => ({})
+const getExtraRoutesMap = () => {
+  return {
+    'system/Role': [{ // 角色管理
+      code: 'Detail',
+      url: '/Detail/:id',
+      name: i18n.global.t('router.extraMenu.260658-0')
+    }],
+    'system/Menu': [
+      {
+        code: 'Setting',
+        url: '/Setting',
+        name: i18n.global.t('router.extraMenu.260658-1')
+      },
+      {
+        code: 'Detail',
+        url: '/Detail/:id',
+        name: i18n.global.t('router.extraMenu.260658-2')
+      },
+    ],
+    'system/Apply': [
+      {
+        code: 'Save',
+        url: '/Save',
+        name: i18n.global.t('router.extraMenu.260658-3')
+      },
+      {
+        code: 'View',
+        url: '/View',
+        name: i18n.global.t('Apply.index.483342-20')
+      },
+      {
+        code: 'Api',
+        url: '/Api',
+        name: i18n.global.t('Apply.index.483342-19')
+      },
+    ],
+    'system/Positions': [
+      {
+        code: 'Detail',
+        url: '/Detail/:id',
+        name: i18n.global.t('router.extraMenu.260658-3')
+      }
+    ]
+  }
+}
 
 const getComponents = () => ({})
 
