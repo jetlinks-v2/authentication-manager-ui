@@ -92,7 +92,7 @@
                 :hasPermission="`${permission}:action`"
                 type="link"
                 :popConfirm="{
-                title: `确定要${!!slotProps.status ? $t('Permission.index.473829-6') : $t('Permission.index.473829-5')}吗？`,
+                title: $t('User.index.673867-5', [slotProps.status ? $t('User.index.673867-2') : $t('User.index.673867-4')]),
                 onConfirm: () => changeStatus(slotProps),
               }"
                 style="padding: 0"
