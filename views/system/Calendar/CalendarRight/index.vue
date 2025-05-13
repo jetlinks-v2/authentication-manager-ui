@@ -73,7 +73,6 @@
 </template>
 
 <script setup name="Calendar">
-import FullCalendar from '../FullCalendar/index.vue';
 import { inject } from 'vue';
 import { clearAll } from '@authentication-manager/api/system/calendar';
 import { onlyMessage } from '@jetlinks-web/utils';
