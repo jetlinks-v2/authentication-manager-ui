@@ -6,13 +6,14 @@
           <LeftTree @change="onChange" />
         </div>
         <div class="right">
+<!--           && extraComponents?.length-->
           <a-tabs
-            v-if="isNoCommunity && extraComponents?.length"
+            v-if="isNoCommunity"
             v-model:activeKey="activeKey"
             destroyInactiveTabPane
           >
             <a-tab-pane
-              v-for="item in extraComponents"
+              v-for="item in _extra"
               :key="item.name"
               :tab="$t(item.label)"
             >
@@ -41,7 +42,9 @@
 import LeftTree from "./components/LeftTree.vue";
 import User from "./user/index.vue";
 import Position from "./positions/index.vue";
-import { getModulesComponents, isNoCommunity } from "@/utils";
+import { isNoCommunity } from "@/utils";
+import Product from './product/index.vue'
+import Device from './device/index.vue'
 
 const activeKey = ref<"product" | "device" | "user">("product");
 
@@ -50,6 +53,23 @@ const positionId = ref<string>("");
 const extraComponents = ref([]);
 
 const bindBool = ref<boolean>(false);
+
+// const hasPerm = useAuthStore().hasPermission(
+//     // `${USER_CENTER_MENU_CODE}:${USER_CENTER_MENU_BUTTON_CODE}`,
+// )
+
+const _extra = [
+  {
+    name: 'product',
+    label: 'Department.index.945805-0',
+    component: Product
+  },
+  {
+    name: 'device',
+    label: 'Department.index.945805-1',
+    component: Device
+  },
+]
 const openDeviceBind = () => {
   bindBool.value = true;
   activeKey.value = "device";
@@ -57,9 +77,6 @@ const openDeviceBind = () => {
 
 const onChange = (id: string) => {
   departmentId.value = id;
-  if (!id) {
-    console.log('1111111')
-  }
 };
 
 const onChangeTabs = (id) => {
@@ -70,9 +87,9 @@ const onChangeTabs = (id) => {
   }, 100);
 };
 
-onMounted(() => {
-  extraComponents.value = getModulesComponents("department");
-});
+// onMounted(() => {
+//   extraComponents.value = getModulesComponents("department");
+// });
 </script>
 
 <style lang="less" scoped>
