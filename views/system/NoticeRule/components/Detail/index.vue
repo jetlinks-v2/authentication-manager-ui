@@ -45,8 +45,8 @@
 </template>
 
 <script lang="ts" setup>
-import ConfigApi from '@/api/notice/config';
-import TemplateApi from '@/api/notice/template';
+import ConfigApi from '@authentication-manager/api/notice/config';
+import TemplateApi from '@authentication-manager/api/notice/template';
 import { queryConfigVariables } from '@authentication-manager/api/system/noticeRule';
 import { getRoleList_api } from '@authentication-manager/api/system/user';
 import { useI18n } from 'vue-i18n';

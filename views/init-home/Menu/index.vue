@@ -4,7 +4,7 @@
       <img :src="getImage('/init-home/menu.png')" />
     </div>
     <div class="menu-info">
-      <b>{{ $t("Menu.index.459633-0", [count]) }}</b>
+      <b>{{ $t("Menu.index.459633-0", [menusData.count]) }}</b>
       <div>{{ $t("Menu.index.459633-2") }}</div>
     </div>
   </div>
@@ -13,21 +13,24 @@
 <script lang="ts" setup>
 import { getImage } from "@jetlinks-web/utils";
 import { USER_CENTER_MENU_DATA } from "../data/baseMenu";
-import BaseMenu from "../data";
+import BaseMenuData, { mergeTrees, handleMenuOptions } from '../data'
 import {
   updateMenus,
   systemVersion,
-  getProviders,
+  queryModule,
   getSystemPermission,
 } from "@authentication-manager/api/initHome";
-import { protocolList } from "@/utils/consts";
+import { OpenMicroApp } from "@/utils/consts";
+import { BASE_API } from '@jetlinks-web/constants'
+import { useApplication } from '@/store'
 
+const app = useApplication()
 /**
  * 获取菜单数据
  */
-const menuDatas = reactive({
+const menusData = reactive({
   count: 0,
-  current: BaseMenu,
+  current: [],
 });
 
 /**
@@ -39,34 +42,35 @@ const getProvidersFn = async () => {
   if (req.success && req.result) {
     version = req.result.edition;
   }
+
   if (version === "community") {
-    return undefined;
-  } else {
-    try {
-      const res: any = await getProviders();
-      const ids = res.result?.map?.((item) => item.id) || [];
-      return protocolList.some((item) => ids.includes(item.value));
-    } catch (error) {
-      return false;
-    }
+    return false;
+  }
+
+  try {
+    const res = await queryModule();
+    return res.success && res.result.length
+  } catch (error) {
+    return false;
   }
 };
 
 /**
  * 获取当前系统权限信息
  */
-const getSystemPermissionData = async () => {
+const getSystemPermissionData = async ( BaseMenu: any[] ) => {
   const hasProtocol = await getProvidersFn();
   const resp = await getSystemPermission();
-  if (resp.status === 200) {
+  if (resp.success) {
     const newTree = filterMenu(
       resp.result.map((item: any) => JSON.parse(item).id),
       BaseMenu,
       hasProtocol,
     );
     const _count = menuCount(newTree);
-    menuDatas.current = newTree;
-    menuDatas.count = _count;
+    menusData.current = newTree;
+    menusData.count = _count;
+    console.log(newTree)
   }
 };
 
@@ -88,7 +92,7 @@ const filterMenu = (
     if (item.children) {
       item.children = filterMenu(permissions, item.children, hasProtocol);
     }
-    if (!hasProtocol && item.code == "link/DataCollect") {
+    if (!hasProtocol && item.options?.hasProtocol) {
       return false;
     }
     return isShow || !!item.children?.length;
@@ -102,7 +106,7 @@ const menuCount = (menus: any[]) => {
   return menus.reduce((pre, next) => {
     let _count = 1;
 
-    if (next.children) {
+    if (next.children?.length) {
       _count = menuCount(next.children);
     }
     return pre + _count;
@@ -130,24 +134,40 @@ const dealMenu = (data: any) => {
 const initMenu = async () => {
   return new Promise(async (resolve) => {
     //  用户中心
-    dealMenu(menuDatas.current);
+    dealMenu(menusData.current);
     const res = await updateMenus([
-      ...menuDatas.current!,
+      ...menusData.current!,
       USER_CENTER_MENU_DATA,
     ]);
-    if (res.status === 200) {
-      resolve(true);
-    } else {
-      resolve(false);
-    }
+    resolve(res.success)
   });
 };
-const { count } = toRefs(menuDatas);
 
-getSystemPermissionData();
+const getCloudMenu = async () => {
+  let bseMenus = await BaseMenuData();
+
+  if (app.appList.length > 0 && OpenMicroApp) {
+    const appItems = app.appList.filter(item => !item.path.startsWith('http'))
+
+    for (const item of appItems) {
+      let _path = item.path.startsWith('/') ? item.path : '/' + item.path
+      const url = `${window.location.protocol}//${document.location.host}${BASE_API}${_path}/baseMenu.json`
+      const resp = await fetch(url)
+      if (resp.ok) {
+        const res = await resp.json()
+        bseMenus = mergeTrees(bseMenus, handleMenuOptions(res, item))
+      }
+    }
+  }
+
+  getSystemPermissionData(bseMenus)
+}
+
+getCloudMenu()
+
 
 defineExpose({
-  updataMenu: initMenu,
+  updateMenu: initMenu,
 });
 </script>
 <style lang="less" scoped>

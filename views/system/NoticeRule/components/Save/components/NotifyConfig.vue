@@ -87,7 +87,7 @@
 </template>
 
 <script lang="ts" setup>
-import ConfigApi from '@/api/notice/config';
+import ConfigApi from '@authentication-manager/api/notice/config';
 import { MSG_TYPE, NOTICE_METHOD } from './const';
 import { noticeType } from '../../../data';
 import { useI18n } from 'vue-i18n';

@@ -92,7 +92,7 @@
 </template>
 
 <script lang="ts" setup>
-import TemplateApi from '@/api/notice/template';
+import TemplateApi from '@authentication-manager/api/notice/template';
 import { MSG_TYPE, NOTICE_METHOD } from './const';
 import { noticeType, _variableMap } from '../../../data';
 import { useI18n } from 'vue-i18n';

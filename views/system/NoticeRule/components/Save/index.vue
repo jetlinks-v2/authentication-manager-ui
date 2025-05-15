@@ -131,7 +131,7 @@ import NotifyTemplate from './components/NotifyTemplate.vue';
 import VariableDefinitions from './components/VariableDefinitions.vue';
 import Role from '../Role/index.vue';
 import { onlyMessage } from "@jetlinks-web/utils";
-import Template from '@/api/notice/template';
+import Template from '@authentication-manager/api/notice/template';
 import { variableMap } from '../../data';
 import { cloneDeep } from 'lodash-es';
 import { useI18n } from 'vue-i18n';
