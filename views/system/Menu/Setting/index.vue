@@ -67,11 +67,12 @@
 </template>
 
 <script setup lang="ts" name="MenuSetting">
-import { getMenuTree, getProviders } from "@authentication-manager/api/system/menu";
+import { getMenuTree } from "@authentication-manager/api/system/menu";
 import {
   getSystemPermission as getSystemPermission_api,
   updateMenus,
-} from "@/api/initHome";
+  queryModule
+} from "@authentication-manager/api/initHome";
 import {
   filterMenu,
   inItSelected,
@@ -82,14 +83,13 @@ import {
   handleSorts,
   handleSortsArr, handleMenuFilterMessage, handleMergeTree,
 } from "./utils";
-import { handleBaseMenu } from "@/views/init-home/data";
+import BaseMenuData from "@authentication-manager/views/init-home/data";
+import { USER_CENTER_MENU_DATA } from "@authentication-manager/views/init-home/data/baseMenu";
 import type { AntTreeNodeDropEvent } from "ant-design-vue/es/tree";
 import { cloneDeep, unionBy } from "lodash-es";
-import { onlyMessage } from "@/utils/comm";
 import { USER_CENTER_MENU_CODE, messageSubscribe } from "@/utils/consts";
-import { protocolList } from "@/utils/consts";
+import { onlyMessage } from "@/utils/comm";
 import { isNoCommunity } from "@/utils/utils";
-import { USER_CENTER_MENU_DATA } from "@/views/init-home/data/baseMenu";
 import { useI18n } from "vue-i18n";
 
 const { t: $t } = useI18n();
@@ -100,6 +100,7 @@ const baseMenu: any = ref([]);
 const visible = ref(false);
 const loading = ref(false);
 const treeDataDropChange = ref(false); // 标记treeData拖拽成功
+const hasCollectorService = ref(false)
 
 const params = {
   paging: false,
@@ -129,12 +130,10 @@ let filterProtocolList: any[] = [];
 const getProvidersFn = async () => {
   if (!isNoCommunity) {
     return;
-  } else {
-    const res: any = await getProviders();
-    filterProtocolList = protocolList.filter((item) => {
-      return res.result?.find((val: any) => item.alias == val.id);
-    });
   }
+
+  const res = await queryModule();
+  hasCollectorService.value = res.success && res.result.length
 };
 getProvidersFn();
 /**
@@ -295,8 +294,9 @@ const synchronizationMenu = (menu: any, baseMenu: any) => {
   return unionBy(newMenu, baseMenu, "code");
 };
 onMounted(() => {
-  getSystemPermission_api().then((resp: any) => {
-    const filterBaseMenu = handleBaseMenu().filter(
+  getSystemPermission_api().then(async (resp: any) => {
+    const baseMenus = await BaseMenuData()
+    const filterBaseMenu = baseMenus.filter(
       (item) => ![USER_CENTER_MENU_CODE, messageSubscribe].includes(item.code),
     );
 
@@ -331,7 +331,7 @@ const filterMenus = (menus: any[]) => {
     if (item.children) {
       item.children = filterMenus(item.children);
     }
-    if (!filterProtocolList.length && item.code == "link/DataCollect") {
+    if (!hasCollectorService && item.options?.hasProtocol) {
       return false;
     }
     return item;

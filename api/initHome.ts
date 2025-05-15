@@ -38,7 +38,8 @@ export const addRoleGroup = (data:any) => request.patch('/role/group',data)
  */
 export const systemVersion = () => request.get(`/system/version`)
 
-export const getProviders = () => request.get(`/data-collect/channel/providers`);
+// export const getProviders = () => request.get(`/data-collect/channel/providers`);
+export const queryModule = () => request.get(`/command-supports/service/collectorService:collector/commands`);
 
 export const saveNetwork = (data: any) => request.post(`/network/config`, data)
 
