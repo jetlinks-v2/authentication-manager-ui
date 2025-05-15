@@ -237,7 +237,7 @@ import {intersection} from 'lodash-es';
 import type {dictType} from '../typings';
 import {useDepartmentStore} from '@/store/department';
 import dayjs from 'dayjs';
-import {systemImg} from "@/assets";
+import {systemImg} from "@authentication-manager/assets";
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();

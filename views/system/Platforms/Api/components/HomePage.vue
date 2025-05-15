@@ -88,7 +88,7 @@
       <div>
         <h3>{{ $t("components.HomePage.726029-16") }}</h3>
         <div>
-          <img :src="systemImg.apiHome" />
+          <img :src="apiHome" />
         </div>
       </div>
       <div style="width: 505px">
@@ -142,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-import { systemImg } from "@/assets/system";
+import apiHome from "@authentication-manager/assets/apiHome.png";
 import { useI18n } from "vue-i18n";
 
 const { t: $t } = useI18n();

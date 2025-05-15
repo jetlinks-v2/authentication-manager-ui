@@ -255,7 +255,7 @@ import {
 } from '@authentication-manager/api/system/department';
 import { intersection } from 'lodash-es';
 import { useDepartmentStore } from '@/store/department';
-import {systemImg} from "@/assets";
+import {systemImg} from "@authentication-manager/assets";
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();
