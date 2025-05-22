@@ -67,20 +67,8 @@ const getExtraRoutesMap = () => {
 
 const getComponents = () => ({})
 
-const getDefaultRoutes = () => [
-  {
-    path: '/init-home',
-    name: 'init-home',
-    component: () => import("./views/init-home/index.vue"),
-    meta: {
-      title: "初始化",
-    },
-  }
-]
-
 export default {
   getAsyncRoutesMap: () => getModuleRoutesMap(routerModules),
   getExtraRoutesMap,
   getComponents,
-  getDefaultRoutes
 }
