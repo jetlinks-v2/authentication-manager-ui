@@ -83,8 +83,8 @@ import {
   handleSorts,
   handleSortsArr, handleMenuFilterMessage, handleMergeTree,
 } from "./utils";
-import BaseMenuData from "@authentication-manager/views/init-home/data";
-import { USER_CENTER_MENU_DATA } from "@authentication-manager/views/init-home/data/baseMenu";
+import BaseMenuData from "@/views/init-home/data";
+import { USER_CENTER_MENU_DATA } from "@/views/init-home/data/baseMenu";
 import type { AntTreeNodeDropEvent } from "ant-design-vue/es/tree";
 import { cloneDeep, unionBy } from "lodash-es";
 import { USER_CENTER_MENU_CODE, messageSubscribe } from "@/utils/consts";
