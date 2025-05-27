@@ -19,6 +19,9 @@ export const getRoleListNoPaging_api = () => request.get(`/role/_query/no-paging
 
 // 获取用户列表
 export const getUserByRole_api = (data: any): Promise<any> => request.post(`/user/_query/`, data);
+
+// 获取用户列表不分页
+export const getUserByRoleNoPaging_api = (data: any): Promise<any> => request.post(`/user/_query/no-paging?paging=false`, data);
 // 将用户与角色绑定
 export const bindUser_api = (roleId:string, data: string[]): Promise<any> => request.post(`/role/${roleId}/users/_bind`, data);
 // 将用户与角色解绑

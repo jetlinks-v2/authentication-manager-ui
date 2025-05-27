@@ -651,6 +651,36 @@
             ]
           },
           {
+            "id": "copy",
+            "name": "复制",
+            "i18nMessages": {
+              "zh_CN": "复制",
+              "en_US": "Copy",
+              "en": "Copy"
+            },
+            "permissions": [
+              {
+                "permission": "user",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "role",
+                "actions": [
+                  "query",
+                  "save"
+                ]
+              },
+              {
+                "permission": "menu",
+                "actions": [
+                  "grant"
+                ]
+              }
+            ]
+          },
+          {
             "id": "add",
             "name": "新增",
             "i18nMessages": {

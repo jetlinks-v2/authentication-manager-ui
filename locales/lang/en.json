@@ -495,6 +495,8 @@
   "components.AddDialog.956922-8": "Description",
   "components.AddDialog.956922-9": "Please enter a description",
   "components.AddDialog.956922-10": "Operation Successful",
+  "components.AddDialog.956922-11": "Copy",
+  "components.AddDialog.956922-12": "The menu/operation/data permissions and users for the following roles will be copied",
   "Detail.index.386725-0": "Permission Allocation",
   "Detail.index.386725-1": "User Management",
   "User.index.667995-0": "Add",

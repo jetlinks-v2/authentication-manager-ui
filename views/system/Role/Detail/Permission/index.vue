@@ -4,11 +4,11 @@
       <div>
         <TitleComponent :data="$t('Permission.index.071527-0')" />
       </div>
-      <PermissionTree v-model:select-items="menus" />
+      <PermissionTree ref="permissionTreeRef" />
       <div class="bottom">
         <a-button
             type="primary"
-            :confirm-loading="loading"
+            :loading="loading"
             @click="clickSave"
             style="margin-top: 24px"
         >{{ $t('Permission.index.071527-1') }}</a-button>
@@ -27,17 +27,20 @@ const { t: $t } = useI18n();
 const route = useRoute()
 const roleId = route.params.id as string
 const loading = ref(false)
-const menus = ref([]) // USER_CENTER_MENU_DATA
+const permissionTreeRef = ref<any>()
 const clickSave = () => {
+  const resp = permissionTreeRef.value?.onSave();
+  loading.value = true
   updatePermissionTree_api(roleId, {
-    menus: menus.value,
+    menus: resp,
   }).then((res:any)=>{
-    if(res.status === 200){
+    if(res.success){
         onlyMessage($t('Permission.index.071527-2'))
     }
+  }).finally(()=>{
+    loading.value = false
   })
 }
-
 </script>
 
 <style lang="less" scoped>

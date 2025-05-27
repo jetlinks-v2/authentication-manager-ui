@@ -496,6 +496,8 @@
   "components.AddDialog.956922-8": "说明",
   "components.AddDialog.956922-9": "请输入说明",
   "components.AddDialog.956922-10": "操作成功",
+  "components.AddDialog.956922-11": "复制",
+  "components.AddDialog.956922-12": "将会复制以下角色的菜单/操作/数据权限和用户",
   "Detail.index.386725-0": "权限分配",
   "Detail.index.386725-1": "用户管理",
   "User.index.667995-0": "新增",

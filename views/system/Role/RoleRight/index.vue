@@ -43,7 +43,7 @@
                 type="link"
                 style="padding: 0 5px"
                 :danger="i.key === 'delete'"
-                :hasPermission="'system/Role:' + i.key"
+                :hasPermission="'system/Role:' + (i.key === 'copy' ? 'update' : i.key)"
               >
                 <template #icon>
                   <AIcon :type="i.icon" />
@@ -63,11 +63,19 @@
       :current="current"
       @save="onSave"
     />
+
+    <Copy
+        v-if="copy.visible"
+        :data="copy.data"
+        @close="copy.visible = false"
+        @save="onCopySave"
+    />
   </div>
 </template>
 
 <script setup lang="ts" name="RoleRight">
 import AddDialog from './components/AddDialog.vue'
+import Copy from './components/Copy.vue'
 import { getRoleList_api, delRole_api } from '@authentication-manager/api/system/role'
 import { useMenuStore } from '@/store/menu'
 import { onlyMessage } from '@jetlinks-web/utils'
@@ -89,6 +97,10 @@ const queryParams = ref<any>({ terms: [] })
 // 表格
 const tableRef = ref<Record<string, any>>()
 const dialogVisible = ref(isSave)
+const copy = reactive({
+  visible: false,
+  data: {}
+})
 const columns = [
   {
     title: $t('RoleRight.index.470525-1'),
@@ -122,7 +134,7 @@ const columns = [
     title: $t('RoleRight.index.470525-4'),
     dataIndex: 'action',
     key: 'action',
-    width: 150,
+    width: 180,
     fixed: 'right',
     scopedSlots: true,
   },
@@ -162,6 +174,18 @@ const getActions = (
       icon: 'FormOutlined',
     },
     {
+      key: 'copy',
+      text: '复制',
+      tooltip: {
+        title: '复制',
+      },
+      onClick: () => {
+        copy.visible = true
+        copy.data = data
+      },
+      icon: 'CopyOutlined',
+    },
+    {
       key: 'delete',
       text: $t('RoleRight.index.470525-7'),
       tooltip: {
@@ -194,6 +218,11 @@ const addRole = () => {
 const onSave = () => {
   tableRef.value?.reload()
 }
+
+const onCopySave = () => {
+  copy.visible = false
+  tableRef.value?.reload()
+}
 const handelSearch = (search: any) => {
   queryParams.value.terms = props.groupId
     ? [
@@ -206,6 +235,7 @@ const handelSearch = (search: any) => {
       ]
     : [...search.terms]
 }
+
 watch(
   () => props.groupId,
   (value) => {
