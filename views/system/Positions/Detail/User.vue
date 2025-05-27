@@ -1,4 +1,4 @@
-<template>
+`<template>
   <div class="role-user-container">
     <pro-search
       :columns="columns"
@@ -164,24 +164,16 @@ const selectedRowKeys = ref<string[]>([])
 // 弹窗相关
 const dialogVisible = ref(false)
 const table = {
-  getList: (oParams: any) => {
-    const params = {
-      ...oParams,
+  getList: (params: any) => {
+    params.terms.push({
       terms: [
         {
-          terms: [
-            {
-              column: 'id$in-dimension$position',
-              value: positionId,
-            },
-          ],
+          column: 'id$in-dimension$position',
+          value: positionId,
         },
       ],
-    }
-    if (oParams.terms[0])
-      params.terms.unshift({
-        terms: oParams.terms[0].terms,
-      })
+    },)
+
     return getUser(params)
   },
   // 批量解绑
