@@ -36,7 +36,9 @@ const { data: positionsList } = usePositionList(route.params.id !== ':id' ? { te
     column: 'id',
     termType: 'not',
     value: route.params.id
-  }]} : undefined)
+  }],
+  sorts: [{name: 'createTime', order: 'desc'}]
+} : { sorts: [{name: 'createTime', order: 'desc'}]})
 
 const formModel = reactive({
   name: undefined,
