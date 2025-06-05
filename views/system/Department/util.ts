@@ -136,7 +136,7 @@ export const useColumns = (departmentId: string) => {
             //     placeholder: i18n.global.t('Department.util.780026-3'),
             // },
             options() {
-                const params = departmentId ? {terms: [{column: 'orgId', value: departmentId}]} : {}
+                const params = departmentId ? {terms: [{column: 'orgId', value: departmentId}], sorts: [{name: 'createTime', order: 'desc'}], paging: false} : {sorts: [{name: 'createTime', order: 'desc'}], paging: false}
                 return queryPageNoPage(params).then(resp => {
                     if (resp.success) {
                         return resp.result.map(item => {
