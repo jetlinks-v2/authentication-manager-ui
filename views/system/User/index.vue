@@ -22,14 +22,40 @@
             :scroll="{ y: 'calc(100% - 60px)' }"
         >
           <template #headerLeftRender>
-            <j-permission-button
-                :hasPermission="`${permission}:add`"
-                type="primary"
-                @click="table.openDialog('add')"
-            >
-              <AIcon type="PlusOutlined"/>
-              {{ $t('User.index.673867-0') }}
-            </j-permission-button>
+            <a-space>
+              <j-permission-button
+                  :hasPermission="`${permission}:add`"
+                  type="primary"
+                  @click="table.openDialog('add')"
+              >
+                <AIcon type="PlusOutlined"/>
+                {{ $t('User.index.673867-0') }}
+              </j-permission-button>
+              <a-dropdown>
+                <a-button>
+                  批量操作
+                </a-button>
+                <template #overlay>
+                  <a-menu>
+                    <a-menu-item key="import">
+                      <j-permission-button
+                          :hasPermission="`${permission}:import`"
+                          @click="onImport"
+                      >
+                        批量导入
+                      </j-permission-button>
+                    </a-menu-item>
+                    <a-menu-item key="export">
+                      <j-permission-button
+                          :hasPermission="`${permission}:export`"
+                      >
+                        批量导出
+                      </j-permission-button>
+                    </a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+            </a-space>
           </template>
           <template #type="slotProps">
             {{ typeOptions.find(i => i.value === slotProps?.typeId)?.label || slotProps.typeId }}
@@ -47,7 +73,7 @@
           </template>
           <template #username="slotProps">
             <span class="user-tag">
-              <j-ellipsis>{{ slotProps.username}}</j-ellipsis>
+              <j-ellipsis>{{ slotProps.username }}</j-ellipsis>
             </span>
           </template>
           <template #positions="slotProps">
@@ -135,16 +161,16 @@
           </template>
         </j-pro-table>
       </FullPage>
-
-      <EditUserDialog
-          v-if="dialog.visible"
-          :type="dialog.type"
-          v-model:visible="dialog.visible"
-          :data="dialog.selectItem"
-          @confirm="table.refresh"
-      />
     </div>
   </j-page-container>
+  <EditUserDialog
+      v-if="dialog.visible"
+      :type="dialog.type"
+      v-model:visible="dialog.visible"
+      :data="dialog.selectItem"
+      @confirm="table.refresh"
+  />
+  <BatchImport v-if="importData.visible" @close="importData.visible = false" />
 </template>
 
 <script setup lang="ts" name="UserMange">
@@ -166,6 +192,9 @@ const {t: $t} = useI18n();
 const permission = 'system/User';
 
 const typeOptions = ref([])
+const importData = reactive({
+  visible: false
+})
 
 const columns = [
   {
@@ -277,7 +306,7 @@ const columns = [
   },
 ];
 
-if(isNoCommunity) {
+if (isNoCommunity) {
   columns.splice(4, 0, {
     title: i18n.global.t('Department.util.780026-9'),
     dataIndex: 'positions',
@@ -415,9 +444,13 @@ const handleParams = (params: any) => {
   queryParams.value = {terms: newParams || []};
 };
 
+const onImport = () => {
+  importData.visible = true;
+}
+
 onMounted(() => {
   getUserType_api().then(resp => {
-    if(resp.success){
+    if (resp.success) {
       typeOptions.value = (resp.result || []).map((item: dictType) => ({
         label: item.name,
         value: item.id,

@@ -244,6 +244,47 @@
                 ]
               }
             ]
+          },
+          {
+            "id": "export",
+            "name": "批量导出",
+            "i18nMessages": {
+              "zh_CN": "批量导出",
+              "en_US": "Export",
+              "en": "Export"
+            },
+            "permissions": [
+              {
+                "permission": "user",
+                "actions": [
+                  "query"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "import",
+            "name": "批量导入",
+            "i18nMessages": {
+              "zh_CN": "批量导入",
+              "en_US": "Import",
+              "en": "Import"
+            },
+            "permissions": [
+              {
+                "permission": "file",
+                "actions": [
+                  "upload-static"
+                ]
+              },
+              {
+                "permission": "user",
+                "actions": [
+                  "query",
+                  "save"
+                ]
+              }
+            ]
           }
         ],
         "accessSupport": {
