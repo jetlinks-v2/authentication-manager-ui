@@ -243,7 +243,7 @@ export const drop = (info: AntTreeNodeDropEvent, treeData: any) => {
         callback: any,
     ) => {
         data.forEach((item, index) => {
-            if (item.key === key) {
+            if (item.code === key) {
                 return callback(item, index, data);
             }
             if (item.children) {

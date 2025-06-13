@@ -26,12 +26,12 @@
               <template #header>
                 <div>
                   {{ item.name }}
-                  <span
-                    style="margin-left: 10px"
-                    class="alert"
-                    v-if="item.provider === 'alarm'"
-                    >{{ $t("NoticeRule.index.804848-1") }}</span
-                  >
+<!--                  <span-->
+<!--                    style="margin-left: 10px"-->
+<!--                    class="alert"-->
+<!--                    v-if="item.provider === 'alarm'"-->
+<!--                    >{{ $t("NoticeRule.index.804848-1") }}</span-->
+<!--                  >-->
                 </div>
               </template>
               <div>

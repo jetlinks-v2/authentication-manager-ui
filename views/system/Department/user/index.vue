@@ -9,7 +9,7 @@
         @search="handleParams"
         ref="searchRef"
     />
-    <div style="flex: 1; min-height: 0">
+    <FullPage>
       <j-pro-table
           v-if="show"
           ref="tableRef"
@@ -74,7 +74,7 @@
           </j-permission-button>
         </template>
       </j-pro-table>
-    </div>
+    </FullPage>
   </div>
   <AddBindUserDialog
       v-if="dialogVisible"

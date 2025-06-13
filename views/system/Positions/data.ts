@@ -79,7 +79,10 @@ export const useColumns = () => {
         termOptions: ['eq'],
         options: () =>
           new Promise((resolve) => {
-            getTreeData_api({}).then((resp: any) => {
+            getTreeData_api({
+              paging: false,
+              sorts: [{ name: 'sortIndex', order: 'asc' }, { name: 'name', order: 'asc' }]
+            }).then((resp: any) => {
               const formatValue = (list: any[]) => {
                 const _list: any[] = [];
                 list.forEach((item) => {
@@ -124,7 +127,7 @@ export const usePositionList = (params: any) => {
     onSuccess(resp) {
       return resp.result.map((item: any) => ({ ...item, value: item.id, label: item.name }))
     },
-    defaultParams: params
+    defaultParams: {...params, paging: false}
   })
 
   return { data }
