@@ -212,8 +212,9 @@ const delDepartment = (id: string) => {
 const onSave = (id: string) => {
   visible.value = false
   current.value = {}
-  if ((window as any).onTabSaveSuccess) {
-    (window as any).onTabSaveSuccess(id);
+  const sourceId = route.query?.sourceId;
+  if (sourceId && (window as any).onTabSaveSuccess) {
+    (window as any).onTabSaveSuccess(sourceId, id);
     setTimeout(() => window.close(), 300);
   } else {
     getTree()
