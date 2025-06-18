@@ -85,6 +85,8 @@
   "Department.util.780026-7": "Disabled",
   "Department.util.780026-8": "Operation",
   "Department.util.780026-9": "Position",
+  "Department.index.945805-0": "Product",
+  "Department.index.945805-1": "Device",
   "user.index.252066-0": "Bind User",
   "user.index.252066-1": "Are you sure to unbind? The relevant position information of the user will also be cleared.",
   "user.index.252066-2": "Batch Unbind",
