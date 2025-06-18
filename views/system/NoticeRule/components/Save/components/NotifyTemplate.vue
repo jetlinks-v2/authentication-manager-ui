@@ -97,6 +97,7 @@ import { MSG_TYPE, NOTICE_METHOD } from './const';
 import { noticeType, _variableMap } from '../../../data';
 import { useI18n } from 'vue-i18n';
 import { cloneDeep } from "lodash-es";
+import { randomString } from '@jetlinks-web/utils';
 
 const { t: $t } = useI18n();
 const props = defineProps({
@@ -199,17 +200,20 @@ const handleData = async (e: any) => {
 };
 
 const onAdd = () => {
+    const sourceId = `template_add_${randomString()}`; // 唯一标识
     const tab: any = window.open(
         `${origin}/#/iot/notice/Template/detail/:id?notifyType=${noticeType.get(
             props.notifyType,
-        )}&notifierId=${props.notifierId}`,
+        )}&notifierId=${props.notifierId}&sourceId=${sourceId}`,
     );
-    tab.onTabSaveSuccess = (value: any) => {
-        _selectedRowKeys.value = [value.id];
-        emit('update:value', value.id);
-        emit('change', { templateName: value?.name, value: value?.id });
-        emit('update:detail', value);
-        tableRef.value?.reload();
+    tab.onTabSaveSuccess = (_sourceId: string, value: any) => {
+       if(sourceId === _sourceId){
+            _selectedRowKeys.value = [value.id];
+            emit('update:value', value.id);
+            emit('change', { templateName: value?.name, value: value?.id });
+            emit('update:detail', value);
+            tableRef.value?.reload();
+       }
     };
 };
 

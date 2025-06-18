@@ -15,8 +15,9 @@ const router = useRouter()
 const { loading, run } = useRequest(save, {
   onSuccess: (resp) => {
     onlyMessage($t('Detail.index.707691-33'))
-    if (window.onTabSaveSuccess) {
-      window.onTabSaveSuccess(resp.result.id);
+    const sourceId = route.query?.sourceId;
+    if (window.onTabSaveSuccess && sourceId) {
+      window.onTabSaveSuccess(sourceId, resp.result.id);
       setTimeout(() => window.close(), 300);
     } else {
       router.replace({ name: 'system/Positions/Detail', params: { id: resp.result.id } })
