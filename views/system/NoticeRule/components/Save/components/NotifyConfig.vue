@@ -91,6 +91,7 @@ import ConfigApi from '@authentication-manager/api/notice/config';
 import { MSG_TYPE, NOTICE_METHOD } from './const';
 import { noticeType } from '../../../data';
 import { useI18n } from 'vue-i18n';
+import { randomString } from '@jetlinks-web/utils';
 
 const { t: $t } = useI18n();
 const props = defineProps({
@@ -193,16 +194,19 @@ const handleClick = (dt: any) => {
 };
 
 const onAdd = () => {
+    const sourceId = `notify_add_${randomString()}`; // 唯一标识
     const tab: any = window.open(
         `${origin}/#/iot/notice/Config/detail/:id?notifyType=${noticeType.get(
             props.notifyType,
-        )}`,
+        )}&sourceId=${sourceId}`,
     );
-    tab.onTabSaveSuccess = (value: any) => {
-        _selectedRowKeys.value = [value.id];
-        emit('update:value', value.id);
-        emit('change', { provider: value?.provider, value: value.id });
-        tableRef.value?.reload();
+    tab.onTabSaveSuccess = (_sourceId: string, value: any) => {
+        if(sourceId === _sourceId){
+            _selectedRowKeys.value = [value.id];
+            emit('update:value', value.id);
+            emit('change', { provider: value?.provider, value: value.id });
+            tableRef.value?.reload();
+        }
     };
 };
 

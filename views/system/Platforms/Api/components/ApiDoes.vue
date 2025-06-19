@@ -247,7 +247,7 @@ const responseStatusCard = reactive<cardType>({
         const tableData = <any>[];
         Object.entries(props.selectApi.responses || {}).forEach((item: any) => {
             const desc = item[1].description;
-            const schema = item[1].content['*/*'].schema.$ref?.split('/') || '';
+            const schema = item[1].content?.['*/*']?.schema?.$ref?.split('/') || '';
 
             tableData.push({
                 code: item[0],
