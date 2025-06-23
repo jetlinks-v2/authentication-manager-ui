@@ -13,13 +13,14 @@ const columns = useColumns(permission);
 const menuStore = useMenuStore()
 const tableRef = ref()
 
-const save = useRoute().query.save
+const _query = useRoute().query
 
-const onAdd = () => {
+const onAdd = (dt = {}) => {
   menuStore.jumpPage('system/Positions/Detail', {
     params: {
       id: ':id',
     },
+    query: dt
   })
 }
 
@@ -39,9 +40,9 @@ const onDelete = (id) => {
 }
 
 onMounted(() => {
-  if (save) {
+  if (_query.save) {
     setTimeout(() => {
-      onAdd()
+      onAdd({sourceId: _query.sourceId})
     })
   }
 })
