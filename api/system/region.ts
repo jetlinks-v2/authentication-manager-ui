@@ -20,3 +20,7 @@ export const updateRegion = (data: any): Promise<any> => request.patch(`/area`, 
 
 // 获取全部内置地区(树结构)
 export const getBuiltinRegionTree = (data: any): Promise<any> => request.post(`/area/builtin/_all/tree`, data);
+
+export const getAreaParentList = (data: any) => request.post(`/area/parent/list`, data);
+
+export const getAreaList = (data: any) => request.post(`/area/_query/no-paging?paging=false`, data);

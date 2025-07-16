@@ -9,6 +9,7 @@
             value: 'code'
         }"
       tree-node-filter-prop="name"
+      :loadData="onLoadData"
       @select="onSelect"
   >
     <template #title="{ name, code }">
@@ -26,6 +27,7 @@
 <script lang="ts" setup>
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import {getAreaList, getAreaParentList} from "@authentication-manager/api/system/region";
 
 const { t: $t } = useI18n();
 const props = defineProps({
@@ -41,10 +43,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  areaTree: {
-    type: Array,
-    default: () => [],
-  },
+  // areaTree: {
+  //   type: Array,
+  //   default: () => [],
+  // },
   sync: {
     type: Boolean,
     default: true
@@ -56,7 +58,7 @@ const emits = defineEmits(['update:value', 'update:name', 'update:children', 'up
 const features = ref<any>({});
 const _value = ref<string>();
 const mySync = ref<boolean>(props.sync);
-
+const areaTree = ref([])
 
 const findChildren = (data: any, code: string) => {
   let children: any[] = []
@@ -106,12 +108,75 @@ const onSelect = (val: string, node: any) => {
   emits('update:value', node.code);
 };
 
+const onLoadData = (treeNode: any) => {
+  return new Promise((resolve) => {
+    if (treeNode.children) {
+      resolve();
+      return;
+    }
+    const params = {
+      terms: [{
+        column: 'parentId',
+        value: treeNode.key
+      }]
+    }
+
+    getAreaList(params).then(resp => {
+      if (resp.success) {
+        treeNode.dataRef.children = resp.result
+        resolve()
+      }
+    })
+  })
+}
+
+getAreaList().then(resp => {
+  if (resp.success) {
+    areaTree.value = resp.result
+  }
+})
+
+const getAllChildren = (pId: string) => {
+
+  // 递归获取所有子级
+  const getChildren = (data: any[]) => {
+    getAreaList({
+      terms: [{
+        column: 'parentId',
+        value: data[0].id
+      }]
+    }).then(resp => {
+      if (resp.success) {
+        data[0].children = resp.result
+        if (data[0].children) {
+          getChildren(data[0].children)
+        }
+      }
+    })
+  }
+
+  // 根据当前id获取所有父级
+  getAreaParentList([pId]).then(resp => {
+    if (resp.success) {
+      areaTree.value = resp.result
+      if (resp.children) {
+        getChildren(areaTree.value)
+      }
+    }
+  })
+}
+
+if (props.value) {
+  getAllChildren(_value.value)
+}
 
 watch(
     () => props.value,
     () => {
       if (props.value) {
         _value.value = props.value as string
+
+        //
       } else {
         emits('update:name', $t('Save.BuildIn.317807-2'));
         emits('update:value', '100000');
