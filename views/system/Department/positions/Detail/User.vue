@@ -92,6 +92,8 @@
     v-if="addUserDialogVisible"
     v-model:visible="addUserDialogVisible"
     :data="{}"
+    :roleIds="roleIds"
+    @confirm="table.refresh"
     type="add"
   />
 </template>
@@ -108,6 +110,10 @@ const { t: $t } = useI18n();
 const props = defineProps({
   orgId: {
     type: String
+  },
+  roleIds: {
+    type: Array,
+    default: () => ([])
   }
 })
 

@@ -24,7 +24,7 @@
                 :columns="columns"
             >
                 <template #headerLeftRender>
-                    <a-space>
+                    <a-space v-if="parentId">
                         <j-permission-button
                             :hasPermission="`${permission}:assert`"
                             type="primary"
@@ -58,6 +58,24 @@
                                             <AIcon
                                                 type="EditOutlined"
                                             />{{ $t('product.index.083446-4') }}
+                                        </j-permission-button>
+                                    </a-menu-item>
+                                    <a-menu-item>
+                                        <j-permission-button
+                                            :hasPermission="`${permission}:assert`"
+                                            
+                                        >
+                                            <AIcon type="ImportOutlined"/>
+                                            批量导入
+                                        </j-permission-button>
+                                    </a-menu-item>
+                                    <a-menu-item>
+                                        <j-permission-button
+                                            :hasPermission="`${permission}:assert`"
+                                            
+                                        >
+                                            <AIcon type="ExportOutlined"/>
+                                            批量导出
                                         </j-permission-button>
                                     </a-menu-item>
                                 </a-menu>
@@ -210,7 +228,7 @@
         </FullPage>
 
         <div class="dialogs">
-            <AddDeviceOrProductDialog
+            <Assign
                 v-if="dialogs.addShow"
                 v-model:visible="dialogs.addShow"
                 :query-columns="columns"
@@ -242,7 +260,7 @@
 
 <script setup lang="ts" name="product">
 
-import AddDeviceOrProductDialog from '../components/AddDeviceOrProductDialog.vue';
+import Assign from '../property/components/Assign.vue';
 import EditPermissionDialog from '../components/EditPermissionDialog.vue';
 import NextDialog from '../components/NextDialog.vue';
 import { onlyMessage } from '@/utils/comm';
@@ -301,7 +319,10 @@ const columns = [
         title: $t('product.index.083446-7'),
         dataIndex: 'describe',
         key: 'describe',
-        ellipsis: true
+        ellipsis: true,
+        search: {
+            type: 'string'
+        }
     },
     {
         title: $t('product.index.083446-8'),

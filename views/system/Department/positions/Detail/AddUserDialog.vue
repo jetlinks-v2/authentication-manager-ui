@@ -50,23 +50,23 @@
                             { required: form.data.username !== 'admin', message: $t('components.EditUserDialog.939453-13') },
                         ]">
                         <form-item-role :extraData="detail.roleList" :extraProps="{ multiple: true }"
-                            :disabledData="disabledData.roles" v-model:value="form.data.roleIdList"
+                            :disabledData="disabledData.roles" :showAdd="false" v-model:value="form.data.roleIdList"
                             />
                     </a-form-item>
                 </a-col>
                 <a-col :span="12">
                     <a-form-item name="orgIdList" :label="$t('components.EditUserDialog.939453-14')" class="flex">
                         <form-item-org :extraData="detail.orgList" :extraProps="{ multiple: true }"
-                            :disabledData="disabledData.orgIds" v-model:value="form.data.orgIdList" />
+                            :disabledData="disabledData.orgIds" :showAdd="false" v-model:value="form.data.orgIdList" />
                     </a-form-item>
                 </a-col>
             </a-row>
             <a-row :gutter="24" v-if="IsShow('add', 'edit') && isNoCommunity">
                 <a-col :span="12">
                     <a-form-item name="positions" :label="$t('components.EditUserDialog.939453-31')">
-                        <form-item-position :extraData="detail.positions"
+                        <form-item-position :extraData="detail.positions" :disabledData="disabledData.positions"
                             :extraProps="{ disabled: form.data.username === 'admin', multiple: true }"
-                            v-model:value="form.data.positions" @change="onChange" />
+                            v-model:value="form.data.positions" :showAdd="false" @change="onChange" />
                     </a-form-item>
                 </a-col>
             </a-row>
@@ -150,6 +150,7 @@ const props = defineProps<{
     type: modalType;
     data: any;
     visible: boolean;
+    roleIds: string[]
 }>();
 
 const route = useRoute()
@@ -159,10 +160,12 @@ const positionsMap = new Map()
 
 const disabledData = reactive<{
     roles: any[],
-    orgIds: any[]
+    orgIds: any[],
+    positions: any[]
 }>({
     roles: [],
-    orgIds: []
+    orgIds: [],
+    positions: [],
 })
 const detail = ref({})
 
@@ -260,7 +263,10 @@ const init = () => {
 
 const getUserInfo = () => {
     const id = props.data?.id || '';
-    if (props.type === 'add') form.data = {orgIdList: [route.query.departmentId], positions: [route.params.id]} as formType;
+    disabledData.orgIds = [route.query.departmentId]
+    disabledData.roles = props.roleIds
+    disabledData.positions = [route.params.id]
+    if (props.type === 'add') form.data = {orgIdList: [route.query.departmentId], positions: [route.params.id], roleIdList: props.roleIds} as formType;
     else if (props.type === 'reset') form.data = { id } as formType;
     else if (props.type === 'edit') {
         getUser_api(id).then((resp: any) => {
@@ -293,31 +299,13 @@ const submit = (): Promise<any> => {
     let api: axiosFunType;
     let params = {};
     const { positions, ...extraFormData } = form.data
-    if (props.type === 'add') {
-        api = addUser_api;
-        params = {
-            user: extraFormData,
-            orgIdList: form.data.orgIdList,
-            roleIdList: form.data.roleIdList,
-            positions: positions,
-        };
-    } else if (props.type === 'edit') {
-        api = updateUser_api;
-        params = {
-            id: form.data.id,
-            user: extraFormData,
-            orgIdList: form.data.orgIdList,
-            roleIdList: form.data.roleIdList,
-            positions: positions,
-        };
-    } else if (props.type === 'reset') {
-        api = updatePassword_api;
-        params = {
-            id: form.data.id,
-            password: form.data.password,
-        };
-    } else return Promise.reject();
-    return api(params);
+    params = {
+        user: extraFormData,
+        orgIdList: form.data.orgIdList,
+        roleIdList: form.data.roleIdList,
+        positions: positions,
+    }
+    return addUser_api(params);
 }
 
 const IsShow = (...typeList: modalType[]) => typeList.includes(props.type)

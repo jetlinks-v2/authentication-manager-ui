@@ -24,7 +24,7 @@
         :columns="columns"
       >
         <template #headerLeftRender>
-          <a-space>
+          <a-space v-if="parentId">
             <j-permission-button
               :hasPermission="`${permission}:assert`"
               type="primary"
@@ -72,7 +72,7 @@
         <template #card="slotProps">
           <CardBox
             :value="slotProps"
-            :actions="[{ key: 1 }]"
+            :actions="table.getActions(slotProps, 'card')"
             v-bind="slotProps"
             :active="
               table._selectedRowKeys.value.includes(slotProps.id)
@@ -131,23 +131,18 @@
                 </a-col>
               </a-row>
             </template>
-            <template #actions>
+            <template #actions="item">
               <j-permission-button
-                :hasPermission="`${permission}:assert`"
-                @click="table.clickEdit(slotProps)"
-              >
-                <AIcon type="EditOutlined"/>
-              </j-permission-button>
-
-              <j-permission-button
-                :hasPermission="`${permission}:bind`"
-                :popConfirm="{
-                  title: $t('device.index.988419-6'),
-                  onConfirm: () =>
-                    table.clickUnBind(slotProps),
+                :hasPermission="item.permission"
+                :tooltip="{
+                  ...item.tooltip
                 }"
+                :popConfirm="item.popConfirm"
+                :disabled="item.disabled"
+                @click="item.onClick"
               >
-                <AIcon type="DisconnectOutlined"/>
+                <AIcon :type="item.icon"/>
+                {{ item.text }}
               </j-permission-button>
             </template>
           </CardBox>
@@ -196,7 +191,7 @@
     </FullPage>
 
     <div class="dialogs">
-      <AddDeviceOrProductDialog
+      <Assign
         v-if="dialogs.addShow"
         v-model:visible="dialogs.addShow"
         :query-columns="columns"
@@ -221,7 +216,7 @@
 </template>
 
 <script setup lang="ts" name="device">
-import AddDeviceOrProductDialog from '../components/AddDeviceOrProductDialog.vue';
+import Assign from '../property/components/Assign.vue';
 import EditPermissionDialog from '../components/EditPermissionDialog.vue';
 import {onlyMessage} from '@/utils/comm';
 import {
@@ -377,6 +372,7 @@ const table = {
     else
       return [
         {
+          text: $t('device.index.988419-15'),
           permission: `${permission}:assert`,
           key: 'edit',
           tooltip: {title: $t('device.index.988419-15')},
@@ -384,6 +380,7 @@ const table = {
           onClick: () => table.clickEdit(data),
         },
         {
+          text: $t('device.index.988419-16'),
           permission: `${permission}:bind`,
           key: 'unbind',
           tooltip: {title: $t('device.index.988419-16')},
@@ -623,12 +620,6 @@ watchEffect(() => {
         .card-item-content-value {
           color: #2f54eb;
         }
-      }
-    }
-
-    .card-tools {
-      span {
-        color: #252525;
       }
     }
   }

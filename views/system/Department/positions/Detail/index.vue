@@ -19,7 +19,7 @@ const { loading, run } = useRequest(save, {
       window.onTabSaveSuccess(resp.result.id);
       setTimeout(() => window.close(), 300);
     } else {
-      router.replace({ name: 'system/Positions/Detail', params: { id: resp.result.id } })
+      router.replace({ name: 'system/Department/positions/Detail', params: { id: resp.result.id }, query: { ...route.query } })
     }
   },
   immediate: false
@@ -42,7 +42,7 @@ const { data: positionsList } = usePositionList(route.params.id !== ':id' ? { te
 
 const formModel = reactive({
   name: undefined,
-  orgId: undefined,
+  orgId: route.query.departmentId,
   roles: undefined,
   parentId: undefined,
   description: undefined,
@@ -94,6 +94,11 @@ watch(() => route.params.id, (v) => {
   }
 }, { immediate: true })
 
+watch(() => route.query.tab, (v) => {
+  if(v && v === 'user') {
+    activeKey.value = 'user'
+  }
+}, {immediate: true})
 </script>
 
 <template>
@@ -131,7 +136,7 @@ watch(() => route.params.id, (v) => {
               <a-row :gutter="24">
                 <a-col :span="12">
                   <a-form-item name="orgId" :label="$t('components.EditUserDialog.939453-14-1')" :rules="[{ required : true, message: '请选择组织'}]">
-                    <form-item-org v-model:value="formModel.orgId" :extraProps="{ multiple: false, disabled: formModel.id }" />
+                    <form-item-org v-model:value="formModel.orgId" :extraProps="{ multiple: false, disabled: true }" />
                   </a-form-item>
                 </a-col>
                 <a-col :span="12">
@@ -173,7 +178,7 @@ watch(() => route.params.id, (v) => {
             </j-permission-button>
           </a-tab-pane>
           <a-tab-pane key="user" :tab="$t('Detail.index.386725-1')">
-            <User :orgId="formModel.orgId" />
+            <User :orgId="formModel.orgId" :roleIds="formModel.roles"/>
           </a-tab-pane>
         </a-tabs>
       </div>

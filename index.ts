@@ -61,6 +61,13 @@ const getExtraRoutesMap = () => {
         url: '/Detail/:id',
         name: i18n.global.t('router.extraMenu.260658-3')
       }
+    ],
+    'system/Department': [
+      {
+        code: 'positions/Detail',
+        url: '/positions/Detail/:id',
+        name: '职位详情'
+      }
     ]
   }
 }

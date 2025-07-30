@@ -12,7 +12,16 @@
             v-model:activeKey="activeKey"
             destroyInactiveTabPane
           >
-            <a-tab-pane
+            <a-tab-pane key="position" :tab="$t('Department.index.945805-3')">
+              <Position :parentId="departmentId" @changeTabs="onChangeTabs" />
+            </a-tab-pane>
+            <a-tab-pane key="user" :tab="$t('Department.index.945805-2')">
+              <User :parentId="departmentId" :positionId="positionId" />
+            </a-tab-pane>
+            <a-tab-pane key="property" tab="资产">
+              <Property :department-id="departmentId" />
+            </a-tab-pane>
+            <!-- <a-tab-pane
               v-for="item in _extra"
               :key="item.name"
               :tab="$t(item.label)"
@@ -23,13 +32,7 @@
                 @open-device-bind="openDeviceBind"
                 v-model:bindBool="bindBool"
               />
-            </a-tab-pane>
-            <a-tab-pane key="position" :tab="$t('Department.index.945805-3')">
-              <Position :parentId="departmentId" @changeTabs="onChangeTabs" />
-            </a-tab-pane>
-            <a-tab-pane key="user" :tab="$t('Department.index.945805-2')">
-              <User :parentId="departmentId" :positionId="positionId" />
-            </a-tab-pane>
+            </a-tab-pane> -->
           </a-tabs>
           <User v-else :parentId="departmentId" />
         </div>
@@ -45,8 +48,9 @@ import Position from "./positions/index.vue";
 import { isNoCommunity } from "@/utils";
 import Product from './product/index.vue'
 import Device from './device/index.vue'
+import Property from './property/index.vue'
 
-const activeKey = ref<"product" | "device" | "user">("product");
+const activeKey = ref<"product" | "device" | "user" | "position">("position");
 
 const departmentId = ref<string>("");
 const positionId = ref<string>("");

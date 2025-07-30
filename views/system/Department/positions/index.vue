@@ -1,9 +1,12 @@
 <script setup name="Positions">
 import { useI18n } from 'vue-i18n';
-import { queryPage } from '@authentication-manager/api/system/positions';
+import { queryPage, del } from '@authentication-manager/api/system/positions';
 import BindModal from './Bind.vue'
+import { useMenuStore } from '@/store';
+import { onlyMessage } from '@jetlinks-web/utils';
 
 const { t: $t } = useI18n();
+const menuStore = useMenuStore();
 const permission = 'system/Department'
 
 const props = defineProps({
@@ -32,7 +35,27 @@ const columns = [
     ellipsis: true,
     search: {
       type: 'string',
+      first: true,
     },
+  },
+  {
+    title: '角色',
+    dataIndex: 'roles',
+    key: 'roles',
+    ellipsis: true,
+    search: {
+      type: 'string'
+    },
+    scopedSlots: true
+  },
+  {
+    title: '上级职位',
+    dataIndex: 'parentName',
+    key: 'parentName',
+    ellipsis: true,
+    search: {
+      type: 'string'
+    }
   },
   {
     title: $t('position.index.252066-1'),
@@ -54,7 +77,7 @@ const columns = [
     dataIndex: 'action',
     key: 'action',
     fixed: 'right',
-    width: 100,
+    width: 130,
     scopedSlots: true,
   },
 ]
@@ -133,12 +156,53 @@ const handleParams = (e) => {
 }
 
 const onJumpPage = (record) => {
-  emits('changeTabs', record.id)
+  menuStore.jumpPage('system/Department/positions/Detail', {
+    params: {
+      id: record.id,
+    },
+    query: {
+      departmentId: props.parentId,
+      tab: 'user'
+    }
+  })
+}
+
+//跳转职位详情页面
+const toPositionDetail = (data) => {
+  menuStore.jumpPage('system/Department/positions/Detail', {
+    params: {
+      id: data.id
+    },
+    query: {
+      departmentId: props.parentId
+    }
+  })
+}
+
+//删除职位
+const deletePosition = async (id) => {
+  const res = await del(id)
+  if(res.success) {
+    onlyMessage('操作成功')
+    tableRef.value?.reload();
+  }
 }
 
 const showBindUser = (record) => {
   positionId.value = record.id
   dialogVisible.value = true
+}
+
+//新增组织
+const handleAdd = () => {
+  menuStore.jumpPage('system/Department/positions/Detail', {
+    params: {
+      id: ':id',
+    },
+    query: {
+      departmentId: props.parentId
+    }
+  })
 }
 
 watch(
@@ -160,31 +224,64 @@ watch(
       @search="handleParams"
       ref="searchRef"
     />
-    <j-pro-table
-      ref="tableRef"
-      :columns="columns"
-      :request="handleQuery"
-      :params="queryParams"
-      :defaultParams="{
-        sorts: [{ name: 'createTime', order: 'desc' }],
-      }"
-      mode="TABLE"
-      :scroll="{y: 'calc(100vh - 450px)'}"
-    >
-      <template #memberCount="slotProps">
-        <a @click="onJumpPage(slotProps)">{{ slotProps.memberCount }}</a>
-      </template>
-      <template #action="slotProps">
-        <j-permission-button
-          type="link"
-          :hasPermission="`${permission}:bind-user`"
-          :tooltip="{ title: $t('user.index.252066-0') }"
-          @click="showBindUser(slotProps)"
-        >
-          <AIcon type="UserAddOutlined" />
-        </j-permission-button>
-      </template>
-    </j-pro-table>
+    <FullPage>
+      <j-pro-table
+        ref="tableRef"
+        :columns="columns"
+        :request="handleQuery"
+        :params="queryParams"
+        :defaultParams="{
+          sorts: [{ name: 'createTime', order: 'desc' }],
+        }"
+        mode="TABLE"
+        :scroll="{y: 'calc(100vh - 450px)'}"
+      >
+        <template #headerLeftRender>
+          <j-permission-button v-if="parentId" type="primary" @click="handleAdd">
+            <AIcon type="PlusOutlined"/>
+            新增职位
+          </j-permission-button> 
+        </template>
+        <template #roles="slotProps">
+          {{ slotProps.roles?.map(item => item.name).join(',') }}
+        </template>
+        <template #memberCount="slotProps">
+          <a @click="onJumpPage(slotProps)">{{ slotProps.memberCount }}</a>
+        </template>
+        <template #action="slotProps">
+          <!-- <j-permission-button
+            type="link"
+            :hasPermission="`${permission}:bind-user`"
+            :tooltip="{ title: $t('user.index.252066-0') }"
+            @click="showBindUser(slotProps)"
+          >
+            <AIcon type="UserAddOutlined" />
+          </j-permission-button> -->
+          <j-permission-button
+            type="link"
+            :hasPermission="`${permission}:bind-user`"
+            :tooltip="{ title: '编辑' }"
+            @click="toPositionDetail(slotProps)"
+          >
+            <AIcon type="EditOutlined" />
+          </j-permission-button>
+          <j-permission-button
+            type="link"
+            danger
+            :hasPermission="`${permission}:bind-user`"
+            :tooltip="{ title: '删除' }"
+            :popConfirm="{
+              title: '确认删除？',
+              onConfirm: () => {
+                deletePosition(slotProps.id)
+              }
+            }"
+          >
+            <AIcon type="DeleteOutlined" />
+          </j-permission-button>
+        </template>
+      </j-pro-table>
+    </FullPage>
   </div>
   <BindModal v-if="dialogVisible" :orgId="parentId" :positionId="positionId" @save="onSave" @close="dialogVisible = false" />
 </template>

@@ -10,14 +10,26 @@
         <AIcon type="SearchOutlined" />
       </template>
     </a-input>
-    <j-permission-button
-      type="primary"
-      :hasPermission="`${permission}:add`"
-      @click="openDialog()"
-      style="width: 100%; margin: 12px 0"
-    >
-      {{ $t('components.LeftTree.755653-1') }}
-    </j-permission-button>
+    <a-row>
+      <a-col flex="1">
+        <j-permission-button
+          type="primary"
+          :hasPermission="`${permission}:add`"
+          @click="openDialog()"
+          style="width: 100%; margin: 12px 0"
+        >
+          {{ $t('components.LeftTree.755653-1') }}
+        </j-permission-button>
+      </a-col>
+      <a-col flex="50px">
+        <j-permission-button
+          type="link"
+          style="width: 100%; margin: 12px 0"
+        >
+          <AIcon type="ImportOutlined"/>
+        </j-permission-button>
+      </a-col>
+    </a-row>
     <div class="tree">
       <a-spin :spinning="loading">
         <a-tree
@@ -25,6 +37,7 @@
           :tree-data="treeData"
           :selected-keys="selectedKeys"
           v-model:expandedKeys="expandedKeys"
+          :show-line="{showLeafIcon: false}"
           :fieldNames="{ key: 'id' }"
           @select="onSelect"
         >
