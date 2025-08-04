@@ -42,6 +42,7 @@
             style="width: 500px"
             :placeholder="$t('BasicInfo.Permission.040830-6')"
             show-search
+            option-filter-prop="label"
             :options="assetsType"
           >
           </a-select>
