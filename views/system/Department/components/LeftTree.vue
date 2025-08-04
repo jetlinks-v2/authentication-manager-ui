@@ -18,7 +18,7 @@
     >
       {{ $t('components.LeftTree.755653-1') }}
     </j-permission-button>
-    <div class="tree">
+    <div class="tree" ref="treeContainer">
       <a-spin :spinning="loading">
         <a-tree
           v-if="treeData.length > 0"
@@ -26,6 +26,8 @@
           :selected-keys="selectedKeys"
           v-model:expandedKeys="expandedKeys"
           :fieldNames="{ key: 'id' }"
+          :virtual="true"
+          :height="treeHeight"
           @select="onSelect"
         >
           <template #title="{ name, data }">
@@ -121,6 +123,22 @@ const expandedKeys = ref<string[] | number[]>([])
 // 弹窗
 const visible = ref<boolean>(false)
 const current = ref<any>({})
+
+const treeContainer = ref<HTMLElement>()
+const treeHeight = ref<number>(400)
+
+// 计算树的高度
+const calculateTreeHeight = () => {
+  if (treeContainer.value) {
+    const containerHeight = treeContainer.value.clientHeight
+    treeHeight.value = Math.max(200, containerHeight - 10)
+  }
+}
+
+// 监听窗口大小变化
+const resizeObserver = new ResizeObserver(() => {
+  calculateTreeHeight()
+})
 
 // 获取数据
 const getTree = (cb?: Function) => {
@@ -254,10 +272,24 @@ watch(
   {
     immediate: true,
   },
-)
+) 
 
 onMounted(() => {
   getTree(save ? openDialog : undefined)
+  
+  // 初始化高度计算
+  nextTick(() => {
+    calculateTreeHeight()
+    if (treeContainer.value) {
+      resizeObserver.observe(treeContainer.value)
+    }
+  })
+})
+
+onUnmounted(() => {
+  if (treeContainer.value) {
+    resizeObserver.unobserve(treeContainer.value)
+  }
 })
 </script>
 
@@ -268,8 +300,9 @@ onMounted(() => {
   flex-direction: column;
 
   .tree {
-    flex: 1 auto;
-    overflow-y: auto;
+    flex: 1;
+    min-height: 0; // 重要：确保flex子元素可以收缩
+    // overflow: hidden; // 移除overflow-y，让a-tree自己处理滚动
   }
 }
 .department-tree-item-content {
@@ -291,7 +324,6 @@ onMounted(() => {
   width: 100%;
   .ant-tree-node-content-wrapper {
     flex: 1 1 auto;
-
   }
 }
 </style>
