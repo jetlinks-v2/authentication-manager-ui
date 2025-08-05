@@ -25,6 +25,7 @@
         <j-permission-button
           type="link"
           style="width: 100%; margin: 12px 0"
+          @click="batchImportVisible = true"
         >
           <AIcon type="ImportOutlined"/>
         </j-permission-button>
@@ -104,11 +105,18 @@
       @save="onSave"
       @close="visible = false"
     />
+    <BatchImport 
+      v-if="batchImportVisible"
+      :downloadUrlBuilder="downloadImportTemplate_api"
+      :request="batchImport_api"
+      @close="batchImportVisible = false"
+      @save="getTree"
+    />
   </div>
 </template>
 
 <script setup lang="ts" name="LeftTree">
-import { getTreeData_api, delDepartment_api } from '@authentication-manager/api/system/department'
+import { getTreeData_api, delDepartment_api, downloadImportTemplate_api, batchImport_api } from '@authentication-manager/api/system/department'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { debounce, cloneDeep, omit } from 'lodash-es'
 import Save from './Save.vue'
@@ -133,6 +141,8 @@ const expandedKeys = ref<string[] | number[]>([])
 
 // 弹窗
 const visible = ref<boolean>(false)
+//批量导入弹窗
+const batchImportVisible = ref(false)
 const current = ref<any>({})
 
 // 获取数据

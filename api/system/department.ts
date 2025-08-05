@@ -1,4 +1,5 @@
 import { request } from '@jetlinks-web/core'
+import { ndJson } from '@jetlinks-web/core/src/fetch';
 
 // 获取部门数据
 export const getTreeData_api = (data: object) => request.post(`/organization/_all/tree`, data);
@@ -39,3 +40,13 @@ export const bindUser_api = (parentId:string,data: object) => request.post(`/org
 // 解绑用户
 export const unBindUser_api = (parentId:string,data: object) => request.post(`/organization/${parentId}/users/_unbind`, data);
 
+/**
+ * 下载组织导入模板
+ * @param format 文件格式
+ */
+export const downloadImportTemplate_api = (format: 'xlsx' | 'csv') => request.get(`/organization/template.${format}`);
+/**
+ * 批量导入组织
+ * @param fileUrl 文件地址
+ */
+export const batchImport_api = (fileUrl: string) => ndJson.get(`/organization/_import?fileUrl=${fileUrl}`);
