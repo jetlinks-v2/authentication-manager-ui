@@ -213,14 +213,22 @@ const _send = () => {
   };
 
   let url = props.selectApi?.url;
+  let queryParams = ''
   let _data;
   let _params;
   const urlParams = {};
   requestBody.params.paramsTable.forEach((item) => {
     urlParams[item.name] = item.value;
-    if (url.includes(`{${item.name}}`))
+    if (url.includes(`{${item.name}}`)){
       url = url.replace(`{${item.name}}`, item.value);
+    } else if(item.value) {
+      queryParams += `${item.name}=${item.value}&`
+    }
   });
+  if (queryParams) {
+    queryParams = queryParams.slice(0, -1)
+    url += `?${queryParams}`
+  }
   if (methodName === 'get') {
     _data = {
       ...JSON.parse(requestBody.code || '{}'),
