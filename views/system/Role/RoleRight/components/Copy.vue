@@ -171,7 +171,7 @@ const onSave = async () => {
         if ((resp2 === undefined || resp2.success) && (resp3 === undefined || resp3.success)) {
           onlyMessage($t('Permission.index.071527-2'))
           loading.value = false
-          emits('save')
+          emits('save', id)
         }
       } else {
         loading.value = false

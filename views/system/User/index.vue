@@ -48,6 +48,7 @@
                     <a-menu-item key="export">
                       <j-permission-button
                           :hasPermission="`${permission}:export`"
+                          @click="onExport"
                       >
                         批量导出
                       </j-permission-button>
@@ -170,7 +171,14 @@
       :data="dialog.selectItem"
       @confirm="table.refresh"
   />
-  <BatchImport v-if="importData.visible" @close="importData.visible = false" />
+  <BatchImport
+    v-if="importData.visible"
+    :downloadUrlBuilder="importUserTemplate_api"
+    :request="importUser_api"
+    message="若系统中已存在相同用户名，若为更新该用户信息模板字段为空，将清空该字段；若有值，则更新该字段"
+    @close="importData.visible = false"
+    @save="handleImportDone"
+  />
 </template>
 
 <script setup lang="ts" name="UserMange">
@@ -181,8 +189,11 @@ import {
   changeUserStatus_api,
   deleteUser_api,
   queryRole_api,
+  importUserTemplate_api,
+  importUser_api,
+  exportUser_api,
 } from '@authentication-manager/api/system/user';
-import {onlyMessage} from '@jetlinks-web/utils';
+import {downloadFileByUrl, onlyMessage} from '@jetlinks-web/utils';
 import {useI18n} from 'vue-i18n';
 import i18n from "@/locales";
 import {queryPageNoPage} from "@authentication-manager/api/system/positions";
@@ -446,6 +457,20 @@ const handleParams = (params: any) => {
 
 const onImport = () => {
   importData.visible = true;
+}
+
+const onExport = async () => {
+  const res = await exportUser_api()
+  if(res) {
+    const blob = new Blob([res], { type: 'xlsx' });
+    const url = URL.createObjectURL(blob);
+    downloadFileByUrl(url, '用户列表', 'xlsx')
+  }
+}
+
+//导入用户完成
+const handleImportDone = () => {
+  tableRef.value?.reload();
 }
 
 onMounted(() => {

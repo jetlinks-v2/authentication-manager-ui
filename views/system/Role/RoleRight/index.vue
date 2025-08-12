@@ -175,9 +175,9 @@ const getActions = (
     },
     {
       key: 'copy',
-      text: '复制',
+      text: $t('RoleRight.index.470525-11'),
       tooltip: {
-        title: '复制',
+        title: $t('RoleRight.index.470525-11'),
       },
       onClick: () => {
         copy.visible = true
@@ -219,9 +219,14 @@ const onSave = () => {
   tableRef.value?.reload()
 }
 
-const onCopySave = () => {
+const onCopySave = (id: string) => {
   copy.visible = false
   tableRef.value?.reload()
+  jumpPage('system/Role/Detail', {
+    params: {
+      id,
+    }
+  })
 }
 const handelSearch = (search: any) => {
   queryParams.value.terms = props.groupId
