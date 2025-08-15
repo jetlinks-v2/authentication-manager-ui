@@ -104,6 +104,7 @@ const onImgChange = (url: string, _key: string) => {
 .radio-container {
     display: flex;
     flex-wrap: wrap;
+    gap: 8px;
     .radio-container-item {
         display: flex;
         padding: 8px 0;
@@ -112,9 +113,8 @@ const onImgChange = (url: string, _key: string) => {
         align-items: center;
         width: 120px;
         border-radius: 6px;
-        margin-right: 8px;
-        margin-top: 8px;
         cursor: pointer;
+        border: 1px solid transparent;
 
         span {
             color: #333333;
@@ -124,7 +124,7 @@ const onImgChange = (url: string, _key: string) => {
 
         &.active {
             background: #f2f4f7;
-            border: 1px solid #adb8c7;
+            border-color: #adb8c7;
         }
     }
 

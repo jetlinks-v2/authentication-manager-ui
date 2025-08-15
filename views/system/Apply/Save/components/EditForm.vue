@@ -94,6 +94,7 @@
             <a-form-item
                 :name="['page', 'baseUrl']"
                 class="resetLabel"
+                validateFirst
                 :rules="[
                                 {
                                     required: true,
@@ -580,6 +581,7 @@
                 v-if="form.data.provider !== 'internal-integrated'"
             >
               <a-form-item
+                  validateFirst
                   :name="['apiClient', 'headers']"
                   :rules="[
                                     {
@@ -604,6 +606,7 @@
                 />
               </a-form-item>
               <a-form-item
+                  validateFirst
                   :label="$t('components.EditForm.949962-12')"
                   :name="['apiClient', 'parameters']"
                   :rules="[
@@ -940,13 +943,7 @@
               </template>
             </div>
             <a-form-item
-                v-if="
-                                (form.data.provider === 'internal-standalone' ||
-                                    form.data.provider === 'third-party') &&
-                                !form.data.integrationModes.includes(
-                                    'apiClient',
-                                ) && form.data.sso.configuration.type === 'oauth2'
-                            "
+                v-if="showAuthUrl"
                 class="resetLabel"
                 :name="[
                                 'sso',
@@ -1704,6 +1701,14 @@ const dialog = reactive({
   current: {},
 });
 
+const showAuthUrl = computed(() => {
+  const { provider, integrationModes, sso } = form.data
+  if (provider === 'third-party') {
+    return integrationModes.includes('apiClient') && sso.configuration.type === 'oauth2'
+  }
+  return true
+})
+
 watch(
     () => form.data.provider,
     (n) => {
@@ -1980,14 +1985,10 @@ const validateIP = (_rule: Rule, value: string) => {
  * 校验接入地址
  */
 const validateBaseUrl = (_rule: Rule, value: string) => {
-  if (value) {
-    if (value === 'http://' || value === 'https://') {
-      return Promise.reject($t('components.EditForm.949962-7'))
-    }
-    return Promise.resolve()
-  } else {
+  if (!value || (value && (value === 'http://' || value === 'https://'))) {
     return Promise.reject($t('components.EditForm.949962-7'))
   }
+  return Promise.resolve()
 }
 
 const onSsoTypeChange = (val) => {
