@@ -115,11 +115,11 @@ const handleQuery = (params) => {
   const _params = {
     ...params,
     terms: [
-      ...params.terms,
       {
         column: 'orgId',
         termType: 'eq',
         value: props.parentId,
+        terms: params.terms || []
       }
     ]
   }

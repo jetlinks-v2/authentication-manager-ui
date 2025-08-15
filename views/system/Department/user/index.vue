@@ -49,7 +49,9 @@
           </a-space>
         </template>
         <template #positions="slotProps">
-          {{ slotProps.positions?.filter(item => item.orgId === props.parentId)?.map(item => item.name).join(',') || '--' }}
+          {{
+            slotProps.positions?.filter(item => item.orgId === props.parentId)?.map(item => item.name).join(',') || '--'
+          }}
         </template>
         <template #status="slotProps">
           <j-badge-status
@@ -191,42 +193,38 @@ const handleParams = (e: any) => {
 // 请求数据
 const handleSearch = (oParams: any) =>
     requestFun(props.parentId, oParams, [
-        {
-          terms: isNoCommunity ? [
+      {
+        terms: isNoCommunity ? [
+          {
+            terms: [
               {
-                  terms: [
-                      {
-                          "column": "id$in-org-user$org",
-                          "value": [
-                              props.parentId
-                          ]
-                      },
-                  ],
+                "column": "id$in-org-user$org",
+                "value": [
+                  props.parentId
+                ]
               },
               {
-                  type: 'or',
-                  terms: [
-                      {
-                          "column": "id$in-org-user$position",
-                          "value": [
-                              props.parentId
-                          ]
-                      }
-                  ]
+                type: 'or',
+                "column": "id$in-org-user$position",
+                "value": [
+                  props.parentId
+                ],
               }
-          ] : [
-            {
-              terms: [
-                  {
-                      "column": "id$in-org-user$org",
-                      "value": [
-                          props.parentId
-                      ]
-                  },
-              ],
-            }
-          ]
-        }
+            ],
+          },
+        ] : [
+          {
+            terms: [
+              {
+                "column": "id$in-org-user$org",
+                "value": [
+                  props.parentId
+                ]
+              },
+            ],
+          }
+        ]
+      }
     ])
 
 // 取消绑定
