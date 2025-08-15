@@ -3,6 +3,7 @@ import i18n from "@/locales"
 import { queryPageNoPage } from '@authentication-manager/api/system/positions'
 import {getUserList_api} from "@authentication-manager/api/system/user";
 import { isNoCommunity } from "@/utils/utils";
+import {omit} from "lodash-es";
 
 export const ArrayToTree = (list: any[]): any[] => {
     const treeList: any[] = []
@@ -185,14 +186,18 @@ export const bindUserColumns = [
 
 // 请求数据
 export const requestFun = async (parentId: string, oParams: any, defaultParams: any) => {
-    console.log(parentId, oParams)
+    console.log(parentId, oParams, defaultParams)
     if (parentId) {
         const params = {
-            ...oParams,
+            ...omit(oParams, 'terms'),
             sorts: [{ name: 'createTime', order: 'desc' }],
             terms: [
-                ...oParams.terms,
-                ...defaultParams
+                ...defaultParams,
+                {
+                    terms: [
+                        ...oParams.terms
+                    ]
+                }
             ],
         }
         return await getUserList_api(params)

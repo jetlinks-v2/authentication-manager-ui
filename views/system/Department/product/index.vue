@@ -511,7 +511,6 @@ const table = {
                 ...oParams,
                 sorts: [{ name: 'createTime', order: 'desc' }],
                 terms: [
-                    ...oParams.terms,
                     {
                         column: 'id',
                         termType: 'dim-assets',
@@ -524,6 +523,7 @@ const table = {
                                 },
                             ],
                         },
+                        terms: oParams.terms || []
                     },
                 ],
             };
