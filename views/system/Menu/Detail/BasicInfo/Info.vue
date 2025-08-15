@@ -52,7 +52,7 @@
               >
                 <a-input
                   v-model:value="formModel.name"
-                  :disabled="menuData.some(item => item.code === formModel.code)"
+                  :disabled="value?.options?.builtIn"
                   :placeholder="$t('BasicInfo.Info.607342-5')"
                 />
               </a-form-item>
@@ -145,8 +145,6 @@ import ChooseIconDialog from '../../components/ChooseIconDialog.vue'
 import { validMenuCode } from '@authentication-manager/api/system/menu'
 import {OWNER_KEY} from "@/utils/consts";
 import { useI18n } from 'vue-i18n';
-import BaseMenuData from '@/views/init-home/data'
-import { omit } from 'lodash-es'
 
 const { t: $t } = useI18n();
 const route = useRoute()
@@ -159,25 +157,7 @@ const props = defineProps({
   },
 })
 
-const menuList = ref<any[]>([])
 
-const menuData = computed(() => {
-  const arr: any[] = [];
-  const flat = (data: any[]) => {
-    data.forEach(item => {
-      arr.push(omit(item, ['children']))
-      if (item.children) {
-        flat(item.children)
-      }
-    })
-  }
-  flat(menuList.value)
-  return arr
-})
-
-onMounted(async () => {
-  menuList.value = await BaseMenuData()
-})
 const routeParams = {
   id: route.params.id === ':id' ? undefined : (route.params.id as string),
   ...route.query,
