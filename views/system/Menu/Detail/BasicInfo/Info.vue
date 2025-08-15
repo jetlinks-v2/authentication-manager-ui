@@ -52,6 +52,7 @@
               >
                 <a-input
                   v-model:value="formModel.name"
+                  :disabled="value?.options?.builtIn"
                   :placeholder="$t('BasicInfo.Info.607342-5')"
                 />
               </a-form-item>
@@ -155,6 +156,7 @@ const props = defineProps({
     default: () => {},
   },
 })
+
 
 const routeParams = {
   id: route.params.id === ':id' ? undefined : (route.params.id as string),
