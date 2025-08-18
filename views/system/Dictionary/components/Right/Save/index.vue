@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    visible
+    open
     :title="
       type === 'add' ? $t('Save.index.134000-0') : $t('Save.index.134000-1')
     "

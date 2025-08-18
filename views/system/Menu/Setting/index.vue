@@ -56,7 +56,7 @@
     </a-card>
     <a-modal
       modalType="message"
-      :visible="visible"
+      :open="visible"
       :confirmLoading="loading"
       @ok="handleOk"
       @cancel="handleCancel"

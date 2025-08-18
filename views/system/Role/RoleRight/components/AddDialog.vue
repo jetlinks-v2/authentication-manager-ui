@@ -1,6 +1,6 @@
 <template>
     <a-modal
-        visible
+        open
         :title="modalType ==='add' ? $t('components.AddDialog.956922-0') : $t('components.AddDialog.956922-1')"
         width="670px"
         @cancel="emits('update:visible', false)"

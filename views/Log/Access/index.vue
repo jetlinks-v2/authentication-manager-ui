@@ -59,7 +59,7 @@
           </j-pro-table>
         </div>
     </div>
-    <a-modal :width="1100" v-model:visible="visible" :title="$t('Access.index.480752-0')">
+    <a-modal :width="1100" v-model:open="visible" :title="$t('Access.index.480752-0')">
         <a-descriptions :labelStyle="{width: '200px'}" :data="descriptionsData" title="" bordered :column="2">
             <a-descriptions-item label="URL">
                 {{ descriptionsData?.url }}

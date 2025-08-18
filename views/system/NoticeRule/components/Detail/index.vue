@@ -1,5 +1,5 @@
 <template>
-    <a-modal :width="644" visible :title="$t('Detail.index.056969-0')" @cancel="emit('close')">
+    <a-modal :width="644" open :title="$t('Detail.index.056969-0')" @cancel="emit('close')">
         <div class="detail">
             <div class="item">
                 <div class="label">{{ $t('Detail.index.056969-1') }}</div>

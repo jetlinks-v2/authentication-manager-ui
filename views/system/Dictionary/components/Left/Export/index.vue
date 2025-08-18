@@ -1,5 +1,5 @@
 <template>
-    <a-modal visible :title="$t('Export.index.047269-0')" @cancel="close" @ok="downLoad" :maskClosable="false"
+    <a-modal open :title="$t('Export.index.047269-0')" @cancel="close" @ok="downLoad" :maskClosable="false"
         :confirmLoading="loading" :width="900">
         <JProTable
             :columns="columns"

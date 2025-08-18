@@ -2,7 +2,7 @@
     <a-modal
         class="edit-dialog-container"
         :title="$t('components.ThirdMenu.045501-0')"
-        visible
+        open
         width="800px"
         :maskClosable="false"
         @cancel="cancel"

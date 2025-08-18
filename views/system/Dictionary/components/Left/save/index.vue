@@ -3,7 +3,7 @@
     :title="
       type === 'add' ? $t('save.index.551811-0') : $t('save.index.551811-1')
     "
-    visible
+    open
     @cancel="closeModal"
     @ok="submitData"
     width="650px"

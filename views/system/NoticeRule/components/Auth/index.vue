@@ -1,7 +1,7 @@
 <template>
     <a-modal
         :width="540"
-        visible
+        open
         :title="$t('Auth.index.210912-0')"
         @cancel="emit('close')"
         @ok="onSave"

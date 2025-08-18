@@ -2,7 +2,7 @@
   <a-modal
     :maskClosable="false"
     width="650px"
-    :visible="true"
+    :open="true"
     :title="mode === 'edit' ? $t('Save.index.968210-0') : $t('Save.index.968210-1')"
     :confirmLoading="loading"
     @ok="handleSave"

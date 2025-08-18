@@ -1,6 +1,6 @@
 <template>
     <a-modal
-        visible
+        open
         :title="editType === 'add' ? $t('components.editTag.984859-0') : $t('components.editTag.984859-1')"
         @cancel="emit('closeEditTag')"
         @ok="submit"

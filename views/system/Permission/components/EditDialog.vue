@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    visible
+    open
     :title="dialogTitle"
     width="1000px"
     @ok="confirm"

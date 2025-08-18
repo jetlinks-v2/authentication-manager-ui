@@ -1,5 +1,5 @@
 <template>
-    <a-modal visible :title="$t('componenets.MenuDialog.599618-0')" width="600px" @ok="handleOk" @cancel="cancel" class="edit-dialog-container"
+    <a-modal open :title="$t('componenets.MenuDialog.599618-0')" width="600px" @ok="handleOk" @cancel="cancel" class="edit-dialog-container"
         :confirmLoading="loading">
         <a-select v-model:value="form.checkedSystem" @change="(value) => value && getTree(value)  " style="width: 200px"
             :placeholder="$t('componenets.MenuDialog.599618-1')">

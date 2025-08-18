@@ -1,6 +1,6 @@
 <template>
     <a-modal class="add-device-or-product-dialog-container" :title="$t('components.AddDeviceOrProductDialog.314014-0')" width="1440px" :maskClosable="false" @ok="confirm"
-        :confirmLoading="loading" @cancel="cancel" visible>
+        :confirmLoading="loading" @cancel="cancel" open>
         <h5 class="row">
             <AIcon type="ExclamationCircleOutlined" style="margin-right: 6px" />
             {{ $t('components.AddDeviceOrProductDialog.314014-1') }}
