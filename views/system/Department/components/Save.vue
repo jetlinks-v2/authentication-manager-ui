@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    visible
+    open
     :title="title"
     :maskClosable="false"
     width="520px"

@@ -2,7 +2,7 @@
   <a-modal
     :title="$t('components.AddBindUserDialog.811389-0')"
     :width="900"
-    visible
+    open
     :confirmLoading="loading"
     @ok="confirm"
     @cancel="emits('close')"

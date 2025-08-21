@@ -6,7 +6,7 @@
         @ok="confirm"
         :maskClosable="false"
         :confirmLoading="loading"
-        visible
+        open
         @cancel="emits('update:visible', false)"
     >
         <div class="alert-info">

@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    visible
+    open
     :title="props.mode"
     width="660px"
     @ok="confirm"

@@ -1,5 +1,5 @@
 <template>
-    <a-modal visible :title="$t('components.AddUserDialog.659587-0')" width="1000px" @ok="confirm" @cancel="emits('update:visible', false)">
+    <a-modal open :title="$t('components.AddUserDialog.659587-0')" width="1000px" @ok="confirm" @cancel="emits('update:open', false)">
         <pro-search style="padding: 0" :columns="columns" type="simple" @search="(params) => queryParams = { ...params }" />
 
         <div style="height: 480px;">

@@ -1,7 +1,7 @@
 <template>
     <a-modal
         :width="1056"
-        visible
+        open
         :title="$t('Save.index.320308-0')"
         @cancel="emit('close')"
         :bodyStyle="{ padding: 0 }"

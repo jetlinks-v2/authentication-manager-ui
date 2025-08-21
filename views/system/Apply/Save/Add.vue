@@ -1,7 +1,7 @@
 <template>
     <a-modal
         :width="810"
-        visible
+        open
         :title="$t('Save.Add.112184-0')"
         @cancel="emit('close')"
         @ok="onSave"

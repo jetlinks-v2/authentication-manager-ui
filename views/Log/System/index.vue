@@ -58,7 +58,7 @@
           </j-pro-table>
         </div>
     </div>
-    <a-modal :width="1100" v-model:visible="visible" :title="$t('System.index.112006-0')">
+    <a-modal :width="1100" v-model:open="visible" :title="$t('System.index.112006-0')">
         <div>
             <span class="mr-10">[{{ descriptionsData?.threadName }}]</span>
             <span class="mr-10">{{
