@@ -42,7 +42,7 @@ const handleData = (dt) => {
   const arr = flattenArray(dt?.children) || []
   const _data = arr.filter(i => i.granted) // 1: true, 0: 没值 -1:false
   const flag = !arr.length ? 0 : arr.length === _data.length ? 1 : -1
-  const btns = dt.buttons || []
+  const btns = dt.buttons || arr.flatMap(i => i.buttons || [])
   const _btns = btns.filter(i => i.granted)
   const _flag = !btns.length ? 0 : btns.length === _btns.length ? 1 : -1;
   if(flag === 0 && _flag === 0) {
