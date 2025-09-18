@@ -2,7 +2,7 @@ name: Auto Deploy jetlinks-ui to the JetLinks Maven Repository
 
 on:
   push:
-    branches: ["2.11"]
+    branches: [ "2.11" ]
 
 
 jobs:
@@ -15,6 +15,20 @@ jobs:
         os: [ ubuntu-latest ]
     steps:
       - uses: actions/checkout@v1
+      - name: Debug Info
+        run: |
+          echo "=== GITHUB WORKSPACE ==="
+          echo $GITHUB_WORKSPACE
+          echo
+          echo "=== CURRENT DIR ==="
+          pwd
+          echo
+          echo "=== ENV VARS ==="
+          env | sort
+          echo
+          echo "=== WORKSPACE FILE TREE ==="
+          ls -alhR $GITHUB_WORKSPACE
+
       - run: echo ${{github.ref}}
       - name: Set up Repository info
         uses: actions/setup-java@v2
