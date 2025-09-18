@@ -104,6 +104,7 @@ import Save from './Save.vue'
 import { useRoute } from 'vue-router'
 import { ArrayToTree } from '../util'
 import { useI18n } from 'vue-i18n';
+import { useTabSaveSuccessBack } from '@/hooks'
 
 const { t: $t } = useI18n();
 const permission = 'system/Department'
@@ -126,6 +127,8 @@ const current = ref<any>({})
 
 const treeContainer = ref<HTMLElement>()
 const treeHeight = ref<number>(400)
+
+const { onBack } = useTabSaveSuccessBack()
 
 // 计算树的高度
 const calculateTreeHeight = () => {
@@ -230,11 +233,9 @@ const delDepartment = (id: string) => {
 const onSave = (id: string) => {
   visible.value = false
   current.value = {}
-  const sourceId = route.query?.sourceId;
-  if (sourceId && (window as any).onTabSaveSuccess) {
-    (window as any).onTabSaveSuccess(sourceId, id);
-    setTimeout(() => window.close(), 300);
-  } else {
+
+  const isTabBack = onBack(id)
+  if (!isTabBack) {
     getTree()
   }
 }
@@ -272,11 +273,11 @@ watch(
   {
     immediate: true,
   },
-) 
+)
 
 onMounted(() => {
   getTree(save ? openDialog : undefined)
-  
+
   // 初始化高度计算
   nextTick(() => {
     calculateTreeHeight()

@@ -1485,6 +1485,7 @@ import ApplyList from './ApplyList/index.vue';
 import InputGroup from './InputGroup.vue'
 import {systemImg} from "@authentication-manager/assets";
 import {useI18n} from 'vue-i18n';
+import { useTabSaveSuccess } from '@/hooks'
 
 const {t: $t} = useI18n();
 const emit = defineEmits(['changeApplyType']);
@@ -1508,6 +1509,7 @@ const rolePermission = 'system/Role';
 const typeOptions = ref<any[]>([]);
 
 const loading = ref<boolean>(false);
+const { onOpen } = useTabSaveSuccess('system/Role')
 
 // 初始化表单
 const initForm: formType = {
@@ -1819,15 +1821,16 @@ function getOrgIdList() {
 
 // 添加角色/组织
 function clickAddItem(data: string[], target: string) {
-  const tab: any = window.open(`${origin}/#/system/${target}?save=true`);
-  tab.onTabSaveSuccess = (value: string) => {
+  onOpen({ save: true},{
+    menuCode: `system/${target}`
+  }).then(value => {
     if (target === 'Role') {
       getRoleIdList();
     } else {
       getOrgIdList()
     }
     data.push(value)
-  };
+  })
 }
 
 // 保存

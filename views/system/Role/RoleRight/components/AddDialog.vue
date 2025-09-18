@@ -55,6 +55,7 @@ import { saveRole_api , queryRoleGroup , updateRole_api} from '@authentication-m
 import { useMenuStore } from '@/store/menu';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n';
+import { useTabSaveSuccessBack } from '@/hooks'
 
 const { t: $t } = useI18n();
 const route = useRoute();
@@ -88,6 +89,8 @@ const form = ref<any>({
 });
 const formRef = ref<any>();
 const groupOptions = ref<any>([])
+
+const { onBack } = useTabSaveSuccessBack()
 const confirm = async() => {
     loading.value = true;
     formRef.value
@@ -99,12 +102,7 @@ const confirm = async() => {
                     onlyMessage($t('components.AddDialog.956922-10'));
                     emits('update:visible', false);
                     if (route.query.save) {
-                        const sourceId = route.query?.sourceId;
-                        // @ts-ignore
-                        if((window as any).onTabSaveSuccess && sourceId){
-                            (window as any).onTabSaveSuccess(sourceId, resp.result.id);
-                            setTimeout(() => window.close(), 300);
-                        }
+                      onBack(resp.result.id)
                 } else jumpPage(`system/Role/Detail`, {params:{ id: resp.result.id }});
             }
                 }).catch(() => (loading.value = false));
