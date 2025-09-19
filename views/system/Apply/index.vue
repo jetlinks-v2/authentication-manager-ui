@@ -232,11 +232,11 @@ import {
   changeApplyStatus_api,
   delApply_api,
   queryType,
-} from '@authentication-manager/api/system/apply';
+} from '@authentication-manager-ui/api/system/apply';
 import {onlyMessage} from '@jetlinks-web/utils';
 import {useMenuStore} from '@/store/menu';
 import Add from './Save/Add.vue';
-import {systemImg} from "@authentication-manager/assets";
+import {systemImg} from "@authentication-manager-ui/assets";
 import {useI18n} from 'vue-i18n';
 
 const {t: $t} = useI18n();

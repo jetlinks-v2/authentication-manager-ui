@@ -1,7 +1,7 @@
 import { TreeType } from "./typings"
 import i18n from "@/locales"
-import { queryPageNoPage } from '@authentication-manager/api/system/positions'
-import {getUserList_api} from "@authentication-manager/api/system/user";
+import { queryPageNoPage } from '@authentication-manager-ui/api/system/positions'
+import {getUserList_api} from "@authentication-manager-ui/api/system/user";
 import { isNoCommunity } from "@/utils/utils";
 
 export const ArrayToTree = (list: any[]): any[] => {

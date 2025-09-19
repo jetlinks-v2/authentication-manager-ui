@@ -100,7 +100,7 @@
 <script lang="ts" setup name="SystemLog">
 import type { ActionsType } from '../typings';
 import type { SystemLogItem } from '../typings';
-import { querySystem } from '@authentication-manager/api/log';
+import { querySystem } from '@authentication-manager-ui/api/log';
 import dayjs from 'dayjs';
 import { useI18n } from 'vue-i18n';
 

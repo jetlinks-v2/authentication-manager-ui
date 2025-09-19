@@ -142,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-import apiHome from "@authentication-manager/assets/apiHome.png";
+import apiHome from "@authentication-manager-ui/assets/apiHome.png";
 import { useI18n } from "vue-i18n";
 
 const { t: $t } = useI18n();

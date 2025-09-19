@@ -56,7 +56,7 @@
 </template>
 
 <script lang="ts" setup>
-import { queryChannelConfig } from "@authentication-manager/api/system/noticeRule";
+import { queryChannelConfig } from "@authentication-manager-ui/api/system/noticeRule";
 import Item from "./components/Item/index.vue";
 import { omit } from "lodash-es";
 import { useI18n } from "vue-i18n";

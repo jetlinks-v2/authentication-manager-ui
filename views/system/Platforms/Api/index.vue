@@ -66,7 +66,7 @@
 
 <script setup lang="ts" name="apiPage">
 import HomePage from './components/HomePage.vue';
-import {getApiGranted_api, apiOperations_api} from '@authentication-manager/api/system/apiPage';
+import {getApiGranted_api, apiOperations_api} from '@authentication-manager-ui/api/system/apiPage';
 import type {
   treeNodeTpye,
   apiObjType,

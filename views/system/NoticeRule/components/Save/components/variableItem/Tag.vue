@@ -9,7 +9,7 @@
 </template>
 
 <script lang="ts" setup>
-import TemplateApi from '@authentication-manager/api/notice/template';
+import TemplateApi from '@authentication-manager-ui/api/notice/template';
 
 const props = defineProps({
     notify: {

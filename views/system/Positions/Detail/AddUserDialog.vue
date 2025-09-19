@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts" name="PositionsAddUser">
-import { getUser, bindUser } from '@authentication-manager/api/system/positions';
+import { getUser, bindUser } from '@authentication-manager-ui/api/system/positions';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n';
 

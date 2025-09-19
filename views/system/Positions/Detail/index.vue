@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n';
 import User from './User.vue'
 import {onlyMessage} from "@jetlinks-web/utils";
-import {detail, save, update} from '@authentication-manager/api/system/positions'
+import {detail, save, update} from '@authentication-manager-ui/api/system/positions'
 import { useRequest } from '@jetlinks-web/hooks'
 import {usePositionList} from "../data";
 

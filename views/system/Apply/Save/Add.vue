@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts" setup>
-import { queryType } from '@authentication-manager/api/system/apply';
+import { queryType } from '@authentication-manager-ui/api/system/apply';
 import { useMenuStore } from '@/store/menu';
 import { onlyMessage } from '@jetlinks-web/utils';
 import ApplyList from './components/ApplyList/index.vue';

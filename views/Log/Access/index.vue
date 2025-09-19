@@ -110,7 +110,7 @@
 </template>
 <script lang="ts" setup name="AccessLog">
 import type { ActionsType } from '../typings';
-import { queryAccess } from '@authentication-manager/api/log';
+import { queryAccess } from '@authentication-manager-ui/api/log';
 import dayjs from 'dayjs';
 import { modifySearchColumnValue } from '@/utils/comm';
 import { useI18n } from 'vue-i18n';

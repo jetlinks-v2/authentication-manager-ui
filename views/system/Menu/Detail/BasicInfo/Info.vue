@@ -141,7 +141,7 @@
 <script lang="ts" setup>
 import { useRoute } from 'vue-router'
 import ChooseIconDialog from '../../components/ChooseIconDialog.vue'
-import { validMenuCode } from '@authentication-manager/api/system/menu'
+import { validMenuCode } from '@authentication-manager-ui/api/system/menu'
 import {OWNER_KEY} from "@/utils/consts";
 import { useI18n } from 'vue-i18n';
 

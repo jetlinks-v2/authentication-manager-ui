@@ -39,7 +39,7 @@
 
 <script lang="ts" setup name="DictionaryItem">
 import dayjs from 'dayjs';
-import { queryDicItem, deleteDicItem, queryDicItemNoPage } from '@authentication-manager/api/system/dictionary'
+import { queryDicItem, deleteDicItem, queryDicItemNoPage } from '@authentication-manager-ui/api/system/dictionary'
 import Save from './Save/index.vue'
 import { onlyMessage } from '@jetlinks-web/utils';
 import { cloneDeep } from 'lodash-es';

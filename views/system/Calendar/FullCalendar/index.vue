@@ -77,7 +77,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import locale from '@fullcalendar/core/locales/zh-cn';
 import { onlyMessage } from '@jetlinks-web/utils';
 import dayjs from 'dayjs';
-import { queryEvents, saveEvents } from '@authentication-manager/api/system/calendar';
+import { queryEvents, saveEvents } from '@authentication-manager-ui/api/system/calendar';
 import { cloneDeep, flatten } from 'lodash-es';
 import { defineExpose } from 'vue';
 import { inject } from 'vue';

@@ -46,7 +46,7 @@
 </template>
 
 <script setup name="EditTag">
-import { saveTag, saveTagsColor, getTagsColor } from '@authentication-manager/api/system/calendar';
+import { saveTag, saveTagsColor, getTagsColor } from '@authentication-manager-ui/api/system/calendar';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { randomString } from '@jetlinks-web/utils';
 import ColorPicker from 'colorpicker-v3';

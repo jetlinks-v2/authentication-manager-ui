@@ -49,7 +49,7 @@
 <script lang="ts" setup name="DictionaryEdit">
 import { onlyMessage } from "@jetlinks-web/utils";
 import type { Rule } from "ant-design-vue/es/form";
-import { verifyId, addDictionary } from "@authentication-manager/api/system/dictionary";
+import { verifyId, addDictionary } from "@authentication-manager-ui/api/system/dictionary";
 import { useI18n } from "vue-i18n";
 
 const { t: $t } = useI18n();

@@ -67,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { updateMenu } from '@authentication-manager/api/system/menu'
+import { updateMenu } from '@authentication-manager-ui/api/system/menu'
 import { onlyMessage } from '@jetlinks-web/utils'
 import ButtonAddDialog from '../../components/ButtonAddDialog.vue'
 import { useI18n } from 'vue-i18n';

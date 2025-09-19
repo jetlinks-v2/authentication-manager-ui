@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n';
 import { useColumns } from './data';
 import {useMenuStore} from "@/store";
-import { queryPage, del } from '@authentication-manager/api/system/positions';
+import { queryPage, del } from '@authentication-manager-ui/api/system/positions';
 import {useRoute} from "vue-router";
 import {onlyMessage} from "@jetlinks-web/utils";
 

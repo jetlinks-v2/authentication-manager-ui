@@ -158,7 +158,7 @@ import {
     deleteChannelConfig,
     editChannelConfig,
     updateChannelConfig,
-} from '@authentication-manager/api/system/noticeRule';
+} from '@authentication-manager-ui/api/system/noticeRule';
 import { Modal, Checkbox } from 'ant-design-vue';
 import { usePermission } from '@jetlinks-web/hooks'
 import { LocalStore } from '@jetlinks-web/utils';

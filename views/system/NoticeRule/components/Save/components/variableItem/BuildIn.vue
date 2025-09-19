@@ -51,7 +51,7 @@
 </template>
 
 <script lang="ts" setup name='NotifyBuildIn'>
-import { queryConfigVariables } from '@authentication-manager/api/system/noticeRule';
+import { queryConfigVariables } from '@authentication-manager-ui/api/system/noticeRule';
 
 const props = defineProps({
     value: {

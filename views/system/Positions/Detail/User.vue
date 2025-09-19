@@ -86,7 +86,7 @@
 </template>
 
 <script setup lang="ts" name="PositionsUser">
-import { getUser, unbindUser } from '@authentication-manager/api/system/positions'
+import { getUser, unbindUser } from '@authentication-manager-ui/api/system/positions'
 import AddUserDialog from './AddUserDialog.vue'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n';

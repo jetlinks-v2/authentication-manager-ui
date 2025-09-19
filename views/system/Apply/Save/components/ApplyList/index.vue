@@ -33,7 +33,7 @@
 <script lang="ts" setup>
 import { PropType } from 'vue';
 import MUpload from './MUpload.vue';
-import {systemImg} from "@authentication-manager/assets";
+import {systemImg} from "@authentication-manager-ui/assets";
 
 const props = defineProps({
     disabled: {

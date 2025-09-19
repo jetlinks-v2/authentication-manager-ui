@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import type { dictType, optionsType } from '../typings';
-import { updatePermission_api } from '@authentication-manager/api/system/department';
+import { updatePermission_api } from '@authentication-manager-ui/api/system/department';
 import { onlyMessage } from '@/utils/comm';
 import { useI18n } from 'vue-i18n';
 

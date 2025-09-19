@@ -155,7 +155,7 @@
 import type {PropType} from 'vue';
 import {reactive, ref, watch} from 'vue';
 import BuildIn from './BuildIn.vue';
-import {updateRegion, validateName, validateCode} from '@authentication-manager/api/system/region';
+import {updateRegion, validateName, validateCode} from '@authentication-manager-ui/api/system/region';
 import {cloneDeep, omit} from "lodash-es";
 import { onlyMessage } from "@jetlinks-web/utils";
 import RadioButton from '@/components/CardSelect/RadioButton.vue'
