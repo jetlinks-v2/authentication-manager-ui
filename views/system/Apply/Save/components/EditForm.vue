@@ -1470,8 +1470,8 @@ import {
   getAppInfo_api,
   queryType,
   getThirdPartyType
-} from '@authentication-manager/api/system/apply';
-import {getRoleList_api} from '@authentication-manager/api/system/user';
+} from '@authentication-manager-ui/api/system/apply';
+import {getRoleList_api} from '@authentication-manager-ui/api/system/user';
 import FormLabel from './FormLabel.vue';
 import RequestTable from './RequestTable.vue';
 import MenuDialog from '../../componenets/MenuDialog.vue';
@@ -1483,7 +1483,7 @@ import {useMenuStore} from '@/store';
 import {Rule} from 'ant-design-vue/lib/form';
 import ApplyList from './ApplyList/index.vue';
 import InputGroup from './InputGroup.vue'
-import {systemImg} from "@authentication-manager/assets";
+import {systemImg} from "@authentication-manager-ui/assets";
 import {useI18n} from 'vue-i18n';
 import { useTabSaveSuccess } from '@/hooks'
 

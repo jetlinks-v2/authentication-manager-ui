@@ -86,7 +86,7 @@
 </template>
 
 <script lang="ts" setup name="DictionaryLeft">
-import { getDicList, deleteDictionary, addDictionary } from '@authentication-manager/api/system/dictionary';
+import { getDicList, deleteDictionary, addDictionary } from '@authentication-manager-ui/api/system/dictionary';
 import Save from './save/index.vue'
 import Export from './Export/index.vue'
 import { onlyMessage } from '@jetlinks-web/utils';

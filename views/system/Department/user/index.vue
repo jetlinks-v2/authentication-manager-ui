@@ -86,7 +86,7 @@
 
 <script setup lang="ts" name="user">
 import AddBindUserDialog from './components/AddBindUserDialog.vue'
-import {unBindUser_api} from '@authentication-manager/api/system/department'
+import {unBindUser_api} from '@authentication-manager-ui/api/system/department'
 import {useColumns, requestFun} from '../util'
 import {onlyMessage} from '@jetlinks-web/utils'
 import {useI18n} from 'vue-i18n';

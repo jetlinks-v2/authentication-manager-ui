@@ -95,7 +95,7 @@
 import { cloneDeep, debounce } from "lodash-es";
 import { onMounted, ref, watch } from "vue";
 import Save from "../Save/index.vue";
-import { getRegionTree, delRegion, updateRegion } from "@authentication-manager/api/system/region";
+import { getRegionTree, delRegion, updateRegion } from "@authentication-manager-ui/api/system/region";
 import { useArea, useRegion } from "../hooks";
 import ResizeObserver from "ant-design-vue/lib/vc-resize-observer";
 import { onlyMessage } from "@jetlinks-web/utils";

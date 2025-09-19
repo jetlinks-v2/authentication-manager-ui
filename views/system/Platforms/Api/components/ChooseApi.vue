@@ -38,7 +38,7 @@ import {
     addOperations_api,
     delOperations_api,
     updateOperations_api,
-} from '@authentication-manager/api/system/apiPage';
+} from '@authentication-manager-ui/api/system/apiPage';
 import { modeType } from '../typing';
 import { useDepartmentStore } from '@/store/department';
 import { onlyMessage } from "@jetlinks-web/utils";

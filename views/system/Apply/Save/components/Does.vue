@@ -139,7 +139,7 @@
 
 <script setup lang="ts">
 import type { applyType } from '../typing';
-import {systemImg} from "@authentication-manager/assets";
+import {systemImg} from "@authentication-manager-ui/assets";
 const props = defineProps<{
     type: applyType;
 }>();

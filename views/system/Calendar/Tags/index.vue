@@ -71,7 +71,7 @@
 </template>
 
 <script setup name="CalendarTags">
-import { queryTags, deleteTags, saveTagsColor } from '@authentication-manager/api/system/calendar';
+import { queryTags, deleteTags, saveTagsColor } from '@authentication-manager-ui/api/system/calendar';
 import { Draggable } from '@fullcalendar/interaction';
 import EditTag from './components/editTag.vue';
 import { onlyMessage } from '@jetlinks-web/utils';

@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { bindUser_api } from '@authentication-manager/api/system/department'
+import { bindUser_api } from '@authentication-manager-ui/api/system/department'
 import { useRequest } from '@jetlinks-web/hooks'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { bindUserColumns, requestFun } from '../../util'

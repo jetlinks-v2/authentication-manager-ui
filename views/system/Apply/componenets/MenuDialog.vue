@@ -28,10 +28,10 @@ import {
     getOwnerTreeStandalone_api,
     saveOwnerMenu_api,
     updateApp_api,
-} from '@authentication-manager/api/system/apply';
+} from '@authentication-manager-ui/api/system/apply';
 import { CheckInfo } from 'ant-design-vue/lib/vc-tree/props';
 import { useMenuStore } from '@/store/menu';
-import { getMenuTree_api } from '@authentication-manager/api/system/menu';
+import { getMenuTree_api } from '@authentication-manager-ui/api/system/menu';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n';
 

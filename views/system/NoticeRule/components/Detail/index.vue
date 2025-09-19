@@ -45,10 +45,10 @@
 </template>
 
 <script lang="ts" setup>
-import ConfigApi from '@authentication-manager/api/notice/config';
-import TemplateApi from '@authentication-manager/api/notice/template';
-import { queryConfigVariables } from '@authentication-manager/api/system/noticeRule';
-import { getRoleList_api } from '@authentication-manager/api/system/user';
+import ConfigApi from '@authentication-manager-ui/api/notice/config';
+import TemplateApi from '@authentication-manager-ui/api/notice/template';
+import { queryConfigVariables } from '@authentication-manager-ui/api/system/noticeRule';
+import { getRoleList_api } from '@authentication-manager-ui/api/system/user';
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();

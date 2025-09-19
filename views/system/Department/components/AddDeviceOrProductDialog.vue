@@ -133,11 +133,11 @@ import {
     getDeviceList_api,
     bindDeviceOrProductList_api,
     getBindingsPermission,
-} from '@authentication-manager/api/system/department';
+} from '@authentication-manager-ui/api/system/department';
 import { dictType } from '../typings';
 import { useDepartmentStore } from '@/store/department';
 import dayjs from 'dayjs';
-import { systemImg } from '@authentication-manager/assets/index'
+import { systemImg } from '@authentication-manager-ui/assets/index'
 import { useI18n } from 'vue-i18n';
 import ButtonCheckBox from './ButtonCheckBox.vue'
 

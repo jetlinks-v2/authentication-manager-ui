@@ -67,12 +67,12 @@
 </template>
 
 <script setup lang="ts" name="MenuSetting">
-import { getMenuTree } from "@authentication-manager/api/system/menu";
+import { getMenuTree } from "@authentication-manager-ui/api/system/menu";
 import {
   getSystemPermission as getSystemPermission_api,
   updateMenus,
   queryModule
-} from "@authentication-manager/api/initHome";
+} from "@authentication-manager-ui/api/initHome";
 import {
   filterMenu,
   inItSelected,

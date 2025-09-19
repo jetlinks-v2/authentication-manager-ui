@@ -17,7 +17,7 @@
 import { useRoute } from 'vue-router'
 import BasicInfo from './BasicInfo/index.vue'
 import ButtonMange from './ButtonMange/index.vue'
-import { getMenuInfo } from '@authentication-manager/api/system/menu'
+import { getMenuInfo } from '@authentication-manager-ui/api/system/menu'
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();

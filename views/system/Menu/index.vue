@@ -87,7 +87,7 @@
 </template>
 
 <script setup lang="ts" name="Menu">
-import { getMenuTree, delMenu } from '@authentication-manager/api/system/menu'
+import { getMenuTree, delMenu } from '@authentication-manager-ui/api/system/menu'
 import { useMenuStore } from '@/store/menu'
 import { onlyMessage } from '@jetlinks-web/utils'
 import {OWNER_KEY} from "@/utils/consts";

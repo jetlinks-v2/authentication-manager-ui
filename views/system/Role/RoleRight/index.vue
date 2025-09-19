@@ -68,7 +68,7 @@
 
 <script setup lang="ts" name="RoleRight">
 import AddDialog from './components/AddDialog.vue'
-import { getRoleList_api, delRole_api } from '@authentication-manager/api/system/role'
+import { getRoleList_api, delRole_api } from '@authentication-manager-ui/api/system/role'
 import { useMenuStore } from '@/store/menu'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n';

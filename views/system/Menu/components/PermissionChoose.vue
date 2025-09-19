@@ -48,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { exportPermission_api } from '@authentication-manager/api/system/permission'
+import { exportPermission_api } from '@authentication-manager-ui/api/system/permission'
 
 type PermissionType = {
   id: string

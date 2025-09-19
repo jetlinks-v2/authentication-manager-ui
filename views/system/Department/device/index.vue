@@ -231,13 +231,13 @@ import {
   unBindDeviceOrProduct_api,
   getDeviceProduct_api,
   getBindingsPermission,
-} from '@authentication-manager/api/system/department';
+} from '@authentication-manager-ui/api/system/department';
 import {intersection} from 'lodash-es';
 
 import type {dictType} from '../typings';
 import {useDepartmentStore} from '@/store/department';
 import dayjs from 'dayjs';
-import {systemImg} from "@authentication-manager/assets";
+import {systemImg} from "@authentication-manager-ui/assets";
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();

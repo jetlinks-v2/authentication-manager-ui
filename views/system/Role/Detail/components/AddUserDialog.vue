@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts" name="RoleAddUser">
-import { getUserByRole_api, bindUser_api } from '@authentication-manager/api/system/role';
+import { getUserByRole_api, bindUser_api } from '@authentication-manager-ui/api/system/role';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n';
 

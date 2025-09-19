@@ -1,6 +1,6 @@
 <script setup name="Positions">
 import { useI18n } from 'vue-i18n';
-import { queryPage } from '@authentication-manager/api/system/positions';
+import { queryPage } from '@authentication-manager-ui/api/system/positions';
 import BindModal from './Bind.vue'
 
 const { t: $t } = useI18n();

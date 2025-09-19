@@ -52,7 +52,7 @@
 
 <script setup lang="ts">
 import { cloneDeep } from 'lodash-es'
-import { addDepartment_api, updateDepartment_api } from '@authentication-manager/api/system/department'
+import { addDepartment_api, updateDepartment_api } from '@authentication-manager-ui/api/system/department'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useRequest } from '@jetlinks-web/hooks'
 import { FormType, TreeType } from '../typings';

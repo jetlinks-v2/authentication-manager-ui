@@ -103,7 +103,7 @@
 </template>
 
 <script lang="ts" setup>
-import { queryRoleList } from '@authentication-manager/api/system/noticeRule';
+import { queryRoleList } from '@authentication-manager-ui/api/system/noticeRule';
 import { PropType } from 'vue';
 import { useI18n } from 'vue-i18n';
 
