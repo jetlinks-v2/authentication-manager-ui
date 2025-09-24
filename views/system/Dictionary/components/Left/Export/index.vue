@@ -1,5 +1,5 @@
 <template>
-    <a-modal visible :title="$t('Export.index.047269-0')" @cancel="close" @ok="downLoad" :maskClosable="false"
+    <a-modal open :title="$t('Export.index.047269-0')" @cancel="close" @ok="downLoad" :maskClosable="false"
         :confirmLoading="loading" :width="900">
         <JProTable
             :columns="columns"
@@ -34,7 +34,7 @@
 </template>
 
 <script lang="ts" setup name="DictionaryExport">
-import { getDic_page , downDic} from '@authentication-manager/api/system/dictionary';
+import { getDic_page , downDic} from '@authentication-manager-ui/api/system/dictionary';
 import { onlyMessage , downloadFileByUrl } from '@jetlinks-web/utils';
 import dayjs from 'dayjs';
 import { useI18n } from 'vue-i18n';

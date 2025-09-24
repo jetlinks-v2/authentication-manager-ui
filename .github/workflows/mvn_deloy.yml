@@ -2,7 +2,7 @@ name: Auto Deploy jetlinks-ui to the JetLinks Maven Repository
 
 on:
   push:
-    branches: ["master"]
+    branches: [ "2.11" ]
 
 
 jobs:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node_version: [ 18.x ]
+        node_version: [ 22.x ]
         #        os: [ubuntu-latest, windows-latest, macOS-latest]
         os: [ ubuntu-latest ]
     steps:

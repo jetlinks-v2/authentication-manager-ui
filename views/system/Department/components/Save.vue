@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    visible
+    open
     :title="title"
     :maskClosable="false"
     width="520px"
@@ -52,7 +52,7 @@
 
 <script setup lang="ts">
 import { cloneDeep } from 'lodash-es'
-import { addDepartment_api, updateDepartment_api } from '@authentication-manager/api/system/department'
+import { addDepartment_api, updateDepartment_api } from '@authentication-manager-ui/api/system/department'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useRequest } from '@jetlinks-web/hooks'
 import { FormType, TreeType } from '../typings';
@@ -126,8 +126,9 @@ const checkSort = (e: any) => {
 /**
  * 上级组织选择改变
  */
- const handleTreeSelectChange = () => {
+ const handleTreeSelectChange = (val: string) => {
   // 上级组织
+  formModel.data.parentId = val || ''
   const parent: any = treeData.value.find((f: any) => f.id === formModel.data.parentId)
   // 当前编辑的组织排序, 为选择上级组织的最大排序+1, 如上级组织没有自组织, 则默认为1
   formModel.data.sortIndex = parent?.children

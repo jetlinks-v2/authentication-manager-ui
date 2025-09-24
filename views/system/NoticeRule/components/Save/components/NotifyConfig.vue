@@ -87,10 +87,12 @@
 </template>
 
 <script lang="ts" setup>
-import ConfigApi from '@authentication-manager/api/notice/config';
+import ConfigApi from '@authentication-manager-ui/api/notice/config';
 import { MSG_TYPE, NOTICE_METHOD } from './const';
 import { noticeType } from '../../../data';
 import { useI18n } from 'vue-i18n';
+import { randomString } from '@jetlinks-web/utils';
+import { useTabSaveSuccess } from '@/hooks'
 
 const { t: $t } = useI18n();
 const props = defineProps({
@@ -117,6 +119,15 @@ const getMethodTxt = (type: string) => {
 const params = ref<Record<string, any>>({});
 const _selectedRowKeys = ref<string[]>([]);
 const tableRef = ref<any>();
+
+const { onOpen } = useTabSaveSuccess('notice/Config/Detail', {
+  onSuccess(value) {
+    _selectedRowKeys.value = [value.id];
+    emit('update:value', value.id);
+    emit('change', { provider: value?.provider, value: value.id });
+    tableRef.value?.reload();
+  }
+})
 
 const columns = [
     {
@@ -193,17 +204,9 @@ const handleClick = (dt: any) => {
 };
 
 const onAdd = () => {
-    const tab: any = window.open(
-        `${origin}/#/iot/notice/Config/detail/:id?notifyType=${noticeType.get(
-            props.notifyType,
-        )}`,
-    );
-    tab.onTabSaveSuccess = (value: any) => {
-        _selectedRowKeys.value = [value.id];
-        emit('update:value', value.id);
-        emit('change', { provider: value?.provider, value: value.id });
-        tableRef.value?.reload();
-    };
+  onOpen({
+    notifyType: noticeType.get(props.notifyType )
+  })
 };
 
 watch(

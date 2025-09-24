@@ -42,6 +42,7 @@
             style="width: 500px"
             :placeholder="$t('BasicInfo.Permission.040830-6')"
             show-search
+            option-filter-prop="label"
             :options="assetsType"
           >
           </a-select>
@@ -87,7 +88,7 @@
 
 <script lang="ts" setup>
 import PermissionChoose from '../../components/PermissionChoose.vue'
-import { getAssetsType, getMenuTree } from '@authentication-manager/api/system/menu'
+import { getAssetsType, getMenuTree } from '@authentication-manager-ui/api/system/menu'
 import { isNoCommunity } from '@/utils';
 
 const props = defineProps({

@@ -1,6 +1,6 @@
 <template>
     <a-modal
-        visible
+        open
         :title="$t('components.NextDialog.372830-0')"
         width="520px"
         @ok="handleOk"

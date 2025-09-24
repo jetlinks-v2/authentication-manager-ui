@@ -88,7 +88,7 @@
       :positionId="positionId"
       @refresh="table.refresh"
   />
-  <AddUserDialog 
+  <AddUserDialog
     v-if="addUserDialogVisible"
     v-model:visible="addUserDialogVisible"
     :data="{}"
@@ -97,7 +97,7 @@
 </template>
 
 <script setup lang="ts" name="PositionsUser">
-import { getUser, unbindUser } from '@authentication-manager/api/system/positions'
+import { getUser, unbindUser } from '@authentication-manager-ui/api/system/positions'
 import BindUserDialog from './BindUserDialog.vue'
 import AddUserDialog from './AddUserDialog.vue'
 import { onlyMessage } from '@jetlinks-web/utils'

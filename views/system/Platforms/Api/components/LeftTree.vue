@@ -26,10 +26,11 @@ import {
     getApiGranted_api,
     getTreeOne_api,
     getTreeTwo_api,
-} from '@authentication-manager/api/system/apiPage';
+} from '@authentication-manager-ui/api/system/apiPage';
 import type { modeType, treeNodeTpye } from '../typing';
 import { useDepartmentStore } from '@/store/department';
 import { useI18n } from 'vue-i18n';
+import {request} from '@jetlinks-web/core'
 
 const { t: $t } = useI18n();
 const department = useDepartmentStore();
@@ -51,7 +52,7 @@ const getTreeData = () => {
             ...item,
             key: item.url,
         }));
-        const allPromise = tree.map((item) => getTreeTwo_api(item.name));
+        const allPromise = tree.map((item) => request.get(item.url));
         // 若类型不为api，根据不同类型添加得到不同的过滤数组
         if (props.mode === 'appManger') allPromise.push(apiOperations_api());
         else if (props.mode === 'home')

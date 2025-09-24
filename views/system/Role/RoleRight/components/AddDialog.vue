@@ -1,6 +1,6 @@
 <template>
     <a-modal
-        visible
+        open
         :title="modalType ==='add' ? $t('components.AddDialog.956922-0') : $t('components.AddDialog.956922-1')"
         width="670px"
         @cancel="emits('update:visible', false)"
@@ -51,10 +51,11 @@
 </template>
 
 <script setup lang="ts" name="RoleAddDialog">
-import { saveRole_api , queryRoleGroup , updateRole_api} from '@authentication-manager/api/system/role';
+import { saveRole_api , queryRoleGroup , updateRole_api} from '@authentication-manager-ui/api/system/role';
 import { useMenuStore } from '@/store/menu';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n';
+import { useTabSaveSuccessBack } from '@/hooks'
 
 const { t: $t } = useI18n();
 const route = useRoute();
@@ -88,6 +89,8 @@ const form = ref<any>({
 });
 const formRef = ref<any>();
 const groupOptions = ref<any>([])
+
+const { onBack } = useTabSaveSuccessBack()
 const confirm = async() => {
     loading.value = true;
     formRef.value
@@ -99,11 +102,7 @@ const confirm = async() => {
                     onlyMessage($t('components.AddDialog.956922-10'));
                     emits('update:visible', false);
                     if (route.query.save) {
-                        // @ts-ignore
-                        if((window as any).onTabSaveSuccess){
-                            (window as any).onTabSaveSuccess(resp.result.id);
-                            setTimeout(() => window.close(), 300);
-                        }
+                      onBack(resp.result.id)
                 } else jumpPage(`system/Role/Detail`, {params:{ id: resp.result.id }});
             }
                 }).catch(() => (loading.value = false));
@@ -121,7 +120,7 @@ const confirm = async() => {
 };
 // 表单相关
 const  getGroupOptions = ()=>{
-    queryRoleGroup({sorts: [{ name: 'createTime', order: 'desc' }]}).then((res:any)=>{
+    queryRoleGroup({sorts: [{ name: 'createTime', order: 'desc' }], paging: false}).then((res:any)=>{
         if(res.status ===200){
            groupOptions.value = res.result.map((item:any)=>{
                 return {

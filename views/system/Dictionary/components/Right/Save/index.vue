@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    visible
+    open
     :title="
       type === 'add' ? $t('Save.index.134000-0') : $t('Save.index.134000-1')
     "
@@ -34,7 +34,7 @@
 
 <script lang="ts" setup name="DictionaryItemEdit">
 import type { Rule } from "ant-design-vue/es/form";
-import { saveDicItem, verifyValue } from "@authentication-manager/api/system/dictionary";
+import { saveDicItem, verifyValue } from "@authentication-manager-ui/api/system/dictionary";
 import { onlyMessage } from "@jetlinks-web/utils";
 import { cloneDeep } from "lodash-es";
 import { useI18n } from "vue-i18n";

@@ -40,6 +40,8 @@
           v-model:expandedKeys="expandedKeys"
           :show-line="{showLeafIcon: false}"
           :fieldNames="{ key: 'id' }"
+          :virtual="true"
+          :height="treeHeight"
           @select="onSelect"
         >
           <template #title="{ name, data }">
@@ -105,7 +107,7 @@
       @save="onSave"
       @close="visible = false"
     />
-    <BatchImport 
+    <BatchImport
       v-if="batchImportVisible"
       :downloadUrlBuilder="downloadImportTemplate_api"
       :request="batchImport_api"
@@ -116,13 +118,14 @@
 </template>
 
 <script setup lang="ts" name="LeftTree">
-import { getTreeData_api, delDepartment_api, downloadImportTemplate_api, batchImport_api } from '@authentication-manager/api/system/department'
+import { getTreeData_api, delDepartment_api, downloadImportTemplate_api, batchImport_api } from '@authentication-manager-ui/api/system/department'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { debounce, cloneDeep, omit } from 'lodash-es'
 import Save from './Save.vue'
 import { useRoute } from 'vue-router'
 import { ArrayToTree } from '../util'
 import { useI18n } from 'vue-i18n';
+import { useTabSaveSuccessBack } from '@/hooks'
 
 const { t: $t } = useI18n();
 const permission = 'system/Department'
@@ -144,6 +147,24 @@ const visible = ref<boolean>(false)
 //批量导入弹窗
 const batchImportVisible = ref(false)
 const current = ref<any>({})
+
+const treeContainer = ref<HTMLElement>()
+const treeHeight = ref<number>(400)
+
+const { onBack } = useTabSaveSuccessBack()
+
+// 计算树的高度
+const calculateTreeHeight = () => {
+  if (treeContainer.value) {
+    const containerHeight = treeContainer.value.clientHeight
+    treeHeight.value = Math.max(200, containerHeight - 10)
+  }
+}
+
+// 监听窗口大小变化
+const resizeObserver = new ResizeObserver(() => {
+  calculateTreeHeight()
+})
 
 // 获取数据
 const getTree = (cb?: Function) => {
@@ -235,10 +256,9 @@ const delDepartment = (id: string) => {
 const onSave = (id: string) => {
   visible.value = false
   current.value = {}
-  if ((window as any).onTabSaveSuccess) {
-    (window as any).onTabSaveSuccess(id);
-    setTimeout(() => window.close(), 300);
-  } else {
+
+  const isTabBack = onBack(id)
+  if (!isTabBack) {
     getTree()
   }
 }
@@ -280,6 +300,20 @@ watch(
 
 onMounted(() => {
   getTree(save ? openDialog : undefined)
+
+  // 初始化高度计算
+  nextTick(() => {
+    calculateTreeHeight()
+    if (treeContainer.value) {
+      resizeObserver.observe(treeContainer.value)
+    }
+  })
+})
+
+onUnmounted(() => {
+  if (treeContainer.value) {
+    resizeObserver.unobserve(treeContainer.value)
+  }
 })
 </script>
 
@@ -290,8 +324,9 @@ onMounted(() => {
   flex-direction: column;
 
   .tree {
-    flex: 1 auto;
-    overflow-y: auto;
+    flex: 1;
+    min-height: 0; // 重要：确保flex子元素可以收缩
+    // overflow: hidden; // 移除overflow-y，让a-tree自己处理滚动
   }
 }
 .department-tree-item-content {
@@ -313,7 +348,6 @@ onMounted(() => {
   width: 100%;
   .ant-tree-node-content-wrapper {
     flex: 1 1 auto;
-
   }
 }
 </style>

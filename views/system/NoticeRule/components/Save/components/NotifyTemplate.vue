@@ -92,11 +92,13 @@
 </template>
 
 <script lang="ts" setup>
-import TemplateApi from '@authentication-manager/api/notice/template';
+import TemplateApi from '@authentication-manager-ui/api/notice/template';
 import { MSG_TYPE, NOTICE_METHOD } from './const';
 import { noticeType, _variableMap } from '../../../data';
 import { useI18n } from 'vue-i18n';
 import { cloneDeep } from "lodash-es";
+import { randomString } from '@jetlinks-web/utils';
+import { useTabSaveSuccess } from '@/hooks'
 
 const { t: $t } = useI18n();
 const props = defineProps({
@@ -128,6 +130,16 @@ const tableRef = ref<any>();
 
 const params = ref<Record<string, any>>({});
 const _selectedRowKeys = ref<string[]>([]);
+
+const { onOpen } = useTabSaveSuccess('notice/Template/Detail', {
+  onSuccess(value) {
+    _selectedRowKeys.value = [value.id];
+    emit('update:value', value.id);
+    emit('change', { templateName: value?.name, value: value?.id });
+    emit('update:detail', value);
+    tableRef.value?.reload();
+  }
+})
 
 const columns = [
     {
@@ -199,18 +211,10 @@ const handleData = async (e: any) => {
 };
 
 const onAdd = () => {
-    const tab: any = window.open(
-        `${origin}/#/iot/notice/Template/detail/:id?notifyType=${noticeType.get(
-            props.notifyType,
-        )}&notifierId=${props.notifierId}`,
-    );
-    tab.onTabSaveSuccess = (value: any) => {
-        _selectedRowKeys.value = [value.id];
-        emit('update:value', value.id);
-        emit('change', { templateName: value?.name, value: value?.id });
-        emit('update:detail', value);
-        tableRef.value?.reload();
-    };
+    onOpen({
+      notifyType: noticeType.get(props.notifyType),
+      notifierId: props.notifierId
+    })
 };
 
 watch(

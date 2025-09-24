@@ -80,7 +80,7 @@ export function getCodeText(
                 value = []
                 break;
             case 'object':
-                const _itemType = schema?.items?.type
+                const _itemType = schemas?.items?.type
                 const _item = dealNoRef(_itemType)
                 result = _item ? {..._item}: {};
                 break;

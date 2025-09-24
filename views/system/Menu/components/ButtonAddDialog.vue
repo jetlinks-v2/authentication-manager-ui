@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    visible
+    open
     :title="props.mode"
     width="660px"
     @ok="confirm"
@@ -77,7 +77,7 @@
 <script setup lang="ts">
 import { onlyMessage } from '@jetlinks-web/utils'
 import PermissionChoose from './PermissionChoose.vue'
-import { updateMenu } from '@authentication-manager/api/system/menu'
+import { updateMenu } from '@authentication-manager-ui/api/system/menu'
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();

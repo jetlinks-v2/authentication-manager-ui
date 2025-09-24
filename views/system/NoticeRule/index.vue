@@ -26,12 +26,12 @@
               <template #header>
                 <div>
                   {{ item.name }}
-                  <span
-                    style="margin-left: 10px"
-                    class="alert"
-                    v-if="item.provider === 'alarm'"
-                    >{{ $t("NoticeRule.index.804848-1") }}</span
-                  >
+<!--                  <span-->
+<!--                    style="margin-left: 10px"-->
+<!--                    class="alert"-->
+<!--                    v-if="item.provider === 'alarm'"-->
+<!--                    >{{ $t("NoticeRule.index.804848-1") }}</span-->
+<!--                  >-->
                 </div>
               </template>
               <div>
@@ -56,7 +56,7 @@
 </template>
 
 <script lang="ts" setup>
-import { queryChannelConfig } from "@authentication-manager/api/system/noticeRule";
+import { queryChannelConfig } from "@authentication-manager-ui/api/system/noticeRule";
 import Item from "./components/Item/index.vue";
 import { omit } from "lodash-es";
 import { useI18n } from "vue-i18n";

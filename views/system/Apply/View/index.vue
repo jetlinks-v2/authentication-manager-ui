@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts" name="apiPage">
-import { getAppInfo_api } from '@authentication-manager/api/system/apply';
+import { getAppInfo_api } from '@authentication-manager-ui/api/system/apply';
 import Api from '../../Platforms/Api/index.vue';
 
 const route = useRoute();

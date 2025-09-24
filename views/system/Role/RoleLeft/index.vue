@@ -17,6 +17,7 @@
           :fieldNames="{ title: 'name', key: 'id',
           children: 'children' }"
           :selectedKeys="selectedKeys"
+					v-model:expandedKeys="expandedKeys"
           :showLine="{ showLeafIcon: false }"
           :tree-data="listData"
           blockNode
@@ -63,7 +64,7 @@
 
 <script lang="ts" name="RoleLeft" setup>
 import { onlyMessage, randomString } from '@jetlinks-web/utils';
-import { queryRoleGroup, saveRoleGroup, deleteRoleGroup } from '@authentication-manager/api/system/role';
+import { queryRoleGroup, saveRoleGroup, deleteRoleGroup } from '@authentication-manager-ui/api/system/role';
 import { useUserStore } from '@/store/user'
 import { useI18n } from 'vue-i18n';
 
@@ -76,6 +77,7 @@ const listData: any = ref([{
 	children: []
 }])
 const selectedKeys = ref<string[]>(['global_role'])
+const expandedKeys = ref<string[]>(['global_role'])
 const searchValue = ref()
 const inputRef = ref()
 const addName = ref()
@@ -104,6 +106,7 @@ const queryGroup = async (select?: Boolean, searchName?: string) => {
 	}
 }
 const addGroup = () => {
+	expandedKeys.value = ['global_role']
 	addName.value = ''
 	const newId = randomString()
 	listData.value[0].children.splice(1, 0, ({
@@ -113,7 +116,9 @@ const addGroup = () => {
 	}))
 	selectId.value = newId
 	nextTick(() => {
-		inputRef.value.focus()
+		setTimeout(() => {
+			inputRef.value.focus()
+		}, 500)
 	})
 }
 const saveGroup = async (data: any) => {

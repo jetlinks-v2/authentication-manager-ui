@@ -104,7 +104,7 @@
 
 <script setup lang="ts" name="RolePermissionTree">
 import { cloneDeep, uniqBy } from 'lodash-es';
-import { getPermissionTree_api } from '@authentication-manager/api/system/role';
+import { getPermissionTree_api } from '@authentication-manager-ui/api/system/role';
 import { getCurrentInstance } from 'vue';
 import {
   USER_CENTER_MENU_CODE

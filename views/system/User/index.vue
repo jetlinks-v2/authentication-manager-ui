@@ -155,11 +155,11 @@ import {
   changeUserStatus_api,
   deleteUser_api,
   queryRole_api,
-} from '@authentication-manager/api/system/user';
+} from '@authentication-manager-ui/api/system/user';
 import {onlyMessage} from '@jetlinks-web/utils';
 import {useI18n} from 'vue-i18n';
 import i18n from "@/locales";
-import {queryPageNoPage} from "@authentication-manager/api/system/positions";
+import {queryPageNoPage} from "@authentication-manager-ui/api/system/positions";
 import {isNoCommunity} from '@/utils/utils';
 
 const {t: $t} = useI18n();
@@ -289,7 +289,7 @@ if(isNoCommunity) {
       //   placeholder: i18n.global.t('Department.util.780026-3'),
       // },
       options() {
-        return queryPageNoPage().then(resp => {
+        return queryPageNoPage({ paging: false, sorts: [{name: 'createTime', order: 'desc'}]}).then(resp => {
           if (resp.success) {
             return resp.result.map(item => {
               return {

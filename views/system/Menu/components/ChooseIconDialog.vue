@@ -1,6 +1,6 @@
 <template>
     <a-modal
-        visible
+        open
         :title="$t('components.ChooseIconDialog.390527-0')"
         width="800px"
         @cancel="emits('close')"

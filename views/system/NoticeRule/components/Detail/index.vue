@@ -1,5 +1,5 @@
 <template>
-    <a-modal :width="644" visible :title="$t('Detail.index.056969-0')" @cancel="emit('close')">
+    <a-modal :width="644" open :title="$t('Detail.index.056969-0')" @cancel="emit('close')">
         <div class="detail">
             <div class="item">
                 <div class="label">{{ $t('Detail.index.056969-1') }}</div>
@@ -45,10 +45,10 @@
 </template>
 
 <script lang="ts" setup>
-import ConfigApi from '@authentication-manager/api/notice/config';
-import TemplateApi from '@authentication-manager/api/notice/template';
-import { queryConfigVariables } from '@authentication-manager/api/system/noticeRule';
-import { getRoleList_api } from '@authentication-manager/api/system/user';
+import ConfigApi from '@authentication-manager-ui/api/notice/config';
+import TemplateApi from '@authentication-manager-ui/api/notice/template';
+import { queryConfigVariables } from '@authentication-manager-ui/api/system/noticeRule';
+import { getRoleList_api } from '@authentication-manager-ui/api/system/user';
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();

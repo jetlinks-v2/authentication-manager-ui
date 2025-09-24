@@ -1,6 +1,6 @@
 <template>
   <a-modal
-    visible
+    open
     width="650px"
     :title="$t('Save.GeoJsonModal.692990-0')"
     :maskClosable="false"

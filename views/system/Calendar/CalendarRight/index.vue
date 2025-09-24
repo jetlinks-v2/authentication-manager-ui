@@ -74,7 +74,7 @@
 
 <script setup name="Calendar">
 import { inject } from 'vue';
-import { clearAll } from '@authentication-manager/api/system/calendar';
+import { clearAll } from '@authentication-manager-ui/api/system/calendar';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n';
 

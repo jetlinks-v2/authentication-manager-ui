@@ -59,7 +59,7 @@
           </j-pro-table>
         </div>
     </div>
-    <a-modal :width="1100" v-model:visible="visible" :title="$t('Access.index.480752-0')">
+    <a-modal :width="1100" v-model:open="visible" :title="$t('Access.index.480752-0')">
         <a-descriptions :labelStyle="{width: '200px'}" :data="descriptionsData" title="" bordered :column="2">
             <a-descriptions-item label="URL">
                 {{ descriptionsData?.url }}
@@ -110,7 +110,7 @@
 </template>
 <script lang="ts" setup name="AccessLog">
 import type { ActionsType } from '../typings';
-import { queryAccess } from '@authentication-manager/api/log';
+import { queryAccess } from '@authentication-manager-ui/api/log';
 import dayjs from 'dayjs';
 import { modifySearchColumnValue } from '@/utils/comm';
 import { useI18n } from 'vue-i18n';

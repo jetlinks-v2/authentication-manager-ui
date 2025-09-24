@@ -1,6 +1,6 @@
 <template>
     <a-modal
-        visible
+        open
         :title="dialogTitle"
         :maskClosable="false"
         width="675px"
@@ -177,7 +177,7 @@ import {
     updateUser_api,
     updatePassword_api,
     getUser_api,
-} from '@authentication-manager/api/system/user';
+} from '@authentication-manager-ui/api/system/user';
 import { Rule } from 'ant-design-vue/es/form';
 import { DefaultOptionType } from 'ant-design-vue/es/vc-tree-select/TreeSelect';
 import { AxiosResponse } from 'axios';
@@ -185,7 +185,7 @@ import { passwordRegEx } from '@/utils/validate';
 import { onlyMessage } from '@/utils/comm';
 import {cloneDeep, flatten, map} from 'lodash-es';
 import { useI18n } from 'vue-i18n';
-import {queryPageNoPage} from "@authentication-manager/api/system/positions";
+import {queryPositionDetailNoPage} from "@authentication-manager-ui/api/system/positions";
 import {isNoCommunity} from '@/utils/utils';
 
 const { t: $t } = useI18n();
@@ -383,7 +383,7 @@ const hasNodeWithId = (arr: any, id: any)=>{
 
 onMounted(() => {
   if(isNoCommunity) {
-    queryPageNoPage({
+    queryPositionDetailNoPage({
       paging: false,
       sorts: [{name: 'sortIndex', order: 'asc'}]
     }).then(resp => {

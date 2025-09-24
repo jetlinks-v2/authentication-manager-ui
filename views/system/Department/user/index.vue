@@ -9,7 +9,7 @@
         @search="handleParams"
         ref="searchRef"
     />
-    <div style="flex: 1; min-height: 0">
+    <FullPage>
       <j-pro-table
           v-if="show"
           ref="tableRef"
@@ -74,7 +74,7 @@
           </j-permission-button>
         </template>
       </j-pro-table>
-    </div>
+    </FullPage>
   </div>
   <AddBindUserDialog
       v-if="dialogVisible"
@@ -86,7 +86,7 @@
 
 <script setup lang="ts" name="user">
 import AddBindUserDialog from './components/AddBindUserDialog.vue'
-import {unBindUser_api} from '@authentication-manager/api/system/department'
+import {unBindUser_api} from '@authentication-manager-ui/api/system/department'
 import {useColumns, requestFun} from '../util'
 import {onlyMessage} from '@jetlinks-web/utils'
 import {useI18n} from 'vue-i18n';

@@ -2,7 +2,7 @@
     <a-modal
         class="edit-dialog-container"
         :title="$t('components.ThirdMenu.045501-0')"
-        visible
+        open
         width="800px"
         :maskClosable="false"
         @cancel="cancel"
@@ -236,7 +236,7 @@ import {
     saveMenuInfo_api,
     getMenuInfo_api,
     delMenuInfo_api,
-} from '@authentication-manager/api/system/menu';
+} from '@authentication-manager-ui/api/system/menu';
 import { USER_CENTER_MENU_CODE, messageSubscribe } from '@/utils/consts';
 import ChooseIconDialog from '../../Menu/components/ChooseIconDialog.vue';
 import { Rule } from 'ant-design-vue/lib/form';

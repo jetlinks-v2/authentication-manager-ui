@@ -1,4 +1,4 @@
-import { getBuiltinRegionTree } from '@authentication-manager/api/system/region';
+import { getBuiltinRegionTree } from '@authentication-manager-ui/api/system/region';
 import {useRequest} from "@jetlinks-web/hooks";
 
 export const useArea = () => {

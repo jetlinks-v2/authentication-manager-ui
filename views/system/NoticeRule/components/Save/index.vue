@@ -1,7 +1,7 @@
 <template>
     <a-modal
         :width="1056"
-        visible
+        open
         :title="$t('Save.index.320308-0')"
         @cancel="emit('close')"
         :bodyStyle="{ padding: 0 }"
@@ -131,7 +131,7 @@ import NotifyTemplate from './components/NotifyTemplate.vue';
 import VariableDefinitions from './components/VariableDefinitions.vue';
 import Role from '../Role/index.vue';
 import { onlyMessage } from "@jetlinks-web/utils";
-import Template from '@authentication-manager/api/notice/template';
+import Template from '@authentication-manager-ui/api/notice/template';
 import { variableMap } from '../../data';
 import { cloneDeep } from 'lodash-es';
 import { useI18n } from 'vue-i18n';

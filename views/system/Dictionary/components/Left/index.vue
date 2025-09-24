@@ -13,7 +13,7 @@
                 {{ $t('Left.index.036608-2') }}
             </j-permission-button>
             <a-upload :before-upload="beforeUpload" accept=".json" :show-upload-list="false"
-                :disabled="!usePermission('system/Dictionary:import').hasPerm.value">
+                :disabled="!hasPerm">
                 <j-permission-button type="text" hasPermission="system/Dictionary:import">
                     {{ $t('Left.index.036608-3') }}
                 </j-permission-button>
@@ -86,7 +86,7 @@
 </template>
 
 <script lang="ts" setup name="DictionaryLeft">
-import { getDicList, deleteDictionary, addDictionary } from '@authentication-manager/api/system/dictionary';
+import { getDicList, deleteDictionary, addDictionary } from '@authentication-manager-ui/api/system/dictionary';
 import Save from './save/index.vue'
 import Export from './Export/index.vue'
 import { onlyMessage } from '@jetlinks-web/utils';
@@ -101,6 +101,10 @@ const addType = ref('add')
 const listData = ref<any[]>([])
 const editData = ref()
 const selectedKeys: any = ref([])
+
+const { hasPerm } = usePermission(
+  ref(`system/Dictionary:import`),
+)
 const showSave = () => {
     saveShow.value = true
     addType.value = 'add'

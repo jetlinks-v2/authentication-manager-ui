@@ -18,7 +18,7 @@
 </template>
 
 <script lang="ts" setup>
-import { queryChannelProviders } from '@authentication-manager/api/system/noticeRule';
+import { queryChannelProviders } from '@authentication-manager-ui/api/system/noticeRule';
 import { iconMap } from '../../../data';
 
 const props = defineProps({

@@ -8,8 +8,8 @@
             :beforeUpload="beforeUpload"
             :showUploadList="uploadInfo.showUploadList"
             :action="uploadInfo.action">
-        <div class="upload-div" :style="`width: ${width};`">
-          <div v-if="loading">
+        <div class="upload-div" :style="`width: ${width}; height: ${height}`">
+          <div v-if="loading" style="height: 100%; display: flex; justify-content: center; align-items: center">
             <AIcon type="LoadingOutlined" />
           </div>
           <template v-else>
@@ -162,7 +162,8 @@ const uploadInfo: UploadInfoType = {
  * @returns {boolean} 如果文件为jico格式，返回 true，否则返回 false
  */
   isIcoType: (file: File) => {
-    const isico = file.type.includes("x-icon")
+    // const isico = file.type.includes("x-icon") || file.type.includes('.icon')
+    const isico = file.type === 'image/x-icon' || file.type === 'image/vnd.microsoft.icon'
     if(!isico) {
       onlyMessage($t('upload.upload.283727-11'),'error')
     }

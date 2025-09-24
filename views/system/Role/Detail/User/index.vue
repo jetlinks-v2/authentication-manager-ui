@@ -77,7 +77,7 @@
 
 <script setup lang="ts" name="RoleUser">
 import AddUserDialog from '../components/AddUserDialog.vue'
-import { getUserByRole_api, unbindUser_api } from '@authentication-manager/api/system/role'
+import { getUserByRole_api, unbindUser_api } from '@authentication-manager-ui/api/system/role'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n';
 import dayjs from "dayjs";

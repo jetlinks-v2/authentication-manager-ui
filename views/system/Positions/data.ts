@@ -1,8 +1,8 @@
 import { useI18n } from 'vue-i18n';
-import {queryRole_api} from "@authentication-manager/api/system/user";
-import {getTreeData_api} from "@authentication-manager/api/system/department";
+import {queryRole_api} from "@authentication-manager-ui/api/system/user";
+import {getTreeData_api} from "@authentication-manager-ui/api/system/department";
 import {useRequest} from "@jetlinks-web/hooks";
-import {queryPageNoPage} from "@authentication-manager/api/system/positions";
+import {queryPageNoPage} from "@authentication-manager-ui/api/system/positions";
 
 export const useColumns = () => {
   const { t: $t } = useI18n();
@@ -127,7 +127,7 @@ export const usePositionList = (params: any) => {
     onSuccess(resp) {
       return resp.result.map((item: any) => ({ ...item, value: item.id, label: item.name }))
     },
-    defaultParams: params
+    defaultParams: {...params, paging: false}
   })
 
   return { data }

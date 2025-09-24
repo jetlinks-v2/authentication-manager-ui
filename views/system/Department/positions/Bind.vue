@@ -2,7 +2,7 @@
 import { useRequest } from '@jetlinks-web/hooks';
 import { useI18n } from "vue-i18n";
 import { bindUserColumns } from '../util'
-import { getUser, bindUser } from '@authentication-manager/api/system/positions';
+import { getUser, bindUser } from '@authentication-manager-ui/api/system/positions';
 import {onlyMessage} from "@jetlinks-web/utils";
 
 const { t: $t } = useI18n();
@@ -81,7 +81,7 @@ const onConfirm = () => {
   <a-modal
     :title="$t('components.AddBindUserDialog.811389-0')"
     :width="900"
-    visible
+    open
     :confirmLoading="loading"
     @ok="onConfirm"
     @cancel="emits('close')"

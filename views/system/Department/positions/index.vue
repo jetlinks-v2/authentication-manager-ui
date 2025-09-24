@@ -1,6 +1,6 @@
 <script setup name="Positions">
 import { useI18n } from 'vue-i18n';
-import { queryPage, del } from '@authentication-manager/api/system/positions';
+import { queryPage, del } from '@authentication-manager-ui/api/system/positions';
 import BindModal from './Bind.vue'
 import { useMenuStore } from '@/store';
 import { onlyMessage } from '@jetlinks-web/utils';
@@ -240,7 +240,7 @@ watch(
           <j-permission-button v-if="parentId" type="primary" @click="handleAdd">
             <AIcon type="PlusOutlined"/>
             新增职位
-          </j-permission-button> 
+          </j-permission-button>
         </template>
         <template #roles="slotProps">
           {{ slotProps.roles?.map(item => item.name).join(',') }}
