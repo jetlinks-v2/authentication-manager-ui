@@ -1,7 +1,6 @@
 <template>
   <j-pro-table
     mode="TABLE"
-    type="TREE"
     :columns="columns"
     :request="getTreeData_api"
     :multiple="false"
@@ -25,7 +24,22 @@
 </template>
 
 <script setup lang="ts">
-import { getTreeData_api } from '@authentication-manager/api/system/department'
+import { getTreeData_api, getBindingsPermission } from '@authentication-manager-ui/api/system/department'
+
+const props = defineProps({
+  assetType: {
+    type: String,
+    default: ''
+  },
+  parentId: {
+    type: String,
+    default: ''
+  },
+  request: {
+    type: Object,
+    default: () => {}
+  }
+})
 const columns = [
   {
     title: '名称',
@@ -37,8 +51,8 @@ const columns = [
   },
   {
     title: '排序',
-    key: 'sort',
-    dataIndex: 'sort'
+    key: 'sortIndex',
+    dataIndex: 'sortIndex'
   }
 ]
 
@@ -51,6 +65,41 @@ const onSelect = (record: Record<string, any>) => {
 const onSelectNone = () => {
   selectedRowKeys.value = [];
 }
+
+const getOrgAssets = async () => {
+  const res = await props.request.noPagingListApi({
+    terms: [{
+      column: 'id',
+      termType: 'dim-assets',
+      value: {
+        assetType: props.assetType,
+        targets: [
+          {
+            type: 'org',
+            id: selectedRowKeys.value?.[0],
+          },
+        ],
+      },
+      type: 'and'
+    }]
+  })
+  const ids = res.result.map((item: any) => item.id);
+  const perRes = await getBindingsPermission(props.assetType, ids);
+  res.result.forEach((item: any) => {
+    item.permissionList = perRes.result
+      .find((f: any) => f?.assetId === item.id)
+      ?.permissionInfoList?.map((m: any) => ({
+        label: m.name,
+        value: m.id,
+        disabled: true,
+      })) || [];
+  })
+  return res.result
+}
+
+defineExpose({
+  getOrgAssets
+})
 </script>
 
 <style scoped lang="less">

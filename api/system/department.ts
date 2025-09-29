@@ -12,11 +12,13 @@ export const delDepartment_api = (id: string) => request.remove(`/organization/$
 
 
 // 获取所属产品列表
-export const getDeviceProduct_api = (data: object) => request.get(`/device/product/_query/no-paging`, data);
+export const getDeviceProduct_api = (data: object) => request.post(`/device/product/_query/no-paging`, data);
 // 获取产品列表
 export const getDeviceOrProductList_api = (data: object) => request.post(`/device-product/_query`, data);
 // 获取设备列表
 export const getDeviceList_api = (data: object) => request.post(`/device/instance/_query`, data);
+// 获取设备不分页列表
+export const getDeviceNoPagingList_api = (data: object) => request.post(`/device/instance/_query/no-paging`, data);
 // 根据产品的id获取产品的权限
 export const getPermission_api = (type: 'device' | 'product', ids: object, id: string) => request.post(`/assets/bindings/${type}/org/${id}/_query`, ids);
 // 获取绑定的权限
@@ -44,9 +46,39 @@ export const unBindUser_api = (parentId:string,data: object) => request.post(`/o
  * 下载组织导入模板
  * @param format 文件格式
  */
-export const downloadImportTemplate_api = (format: 'xlsx' | 'csv') => request.get(`/organization/template.${format}`);
+export const downloadImportTemplate_api = (format: 'xlsx' | 'csv') => request.get(`/organization/template.${format}`, {}, { responseType: 'blob' });
 /**
  * 批量导入组织
  * @param fileUrl 文件地址
  */
 export const batchImport_api = (fileUrl: string) => ndJson.get(`/organization/_import?fileUrl=${fileUrl}`);
+
+/**
+ * 下载产品资产导入模板
+ * @param format 文件格式
+ */
+export const downloadProductAssetsImportTemplate_api = (format: 'xlsx' | 'csv') => request.get(`/device-product/asset/template.${format}`, {}, { responseType: 'blob' });
+
+/**
+ * 导入产品资产
+ * @param targetId 组织id
+ * @param fileUrl 文件地址
+ */
+export const importProductAssets_api = (targetId: string, fileUrl: string) => ndJson.get(`/device-product/${targetId}/_import?fileUrl=${fileUrl}`);
+
+/**
+ * 导出产品资产
+ * @param data 导出参数
+ */
+export const exportProductAssets_api = (data: object) => request.post(`/device-product/asset/export.xlsx`, data, { responseType: 'blob' });
+
+/**
+ * 导入设备资产
+ */
+export const importDeviceAssets_api = (targetId: string, fileUrl: string) => ndJson.get(`/device/instance/import/${targetId}?fileUrl=${fileUrl}`);
+
+/**
+ * 下载设备资产导入模板
+ * @param format 文件格式
+ */
+export const downloadDeviceAssetsImportTemplate_api = (format: 'xlsx' | 'csv') => request.get(`/device/instance/download/asset/template.${format}`, {}, { responseType: 'blob' });

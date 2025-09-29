@@ -1,5 +1,5 @@
 <template>
-    <a-modal visible :title="dialogTitle" :maskClosable="false" width="675px" @ok="confirm"
+    <a-modal open :title="dialogTitle" :maskClosable="false" width="675px" @ok="confirm"
         @cancel="emits('update:visible', false)" class="edit-dialog-container" :confirmLoading="loading"
         :cancelText="$t('components.EditUserDialog.939453-0')" :okText="$t('components.EditUserDialog.939453-1')">
         <a-form ref="formRef" :model="form.data" layout="vertical">
@@ -132,7 +132,7 @@ import {
     updateUser_api,
     updatePassword_api,
     getUser_api,
-} from '@authentication-manager/api/system/user';
+} from '@authentication-manager-ui/api/system/user';
 import { Rule } from 'ant-design-vue/es/form';
 import { DefaultOptionType } from 'ant-design-vue/es/vc-tree-select/TreeSelect';
 import { AxiosResponse } from 'axios';
@@ -140,7 +140,7 @@ import { passwordRegEx } from '@/utils/validate';
 import { onlyMessage } from '@/utils/comm';
 import { cloneDeep, flatten, map } from 'lodash-es';
 import { useI18n } from 'vue-i18n';
-import { queryPageNoPage } from "@authentication-manager/api/system/positions";
+import { queryPageNoPage } from "@authentication-manager-ui/api/system/positions";
 import { isNoCommunity } from '@/utils/utils';
 
 const { t: $t } = useI18n();
@@ -150,7 +150,9 @@ const props = defineProps<{
     type: modalType;
     data: any;
     visible: boolean;
-    roleIds: string[]
+    roleIds: string[];
+    orgId: string;
+    positionId: string;
 }>();
 
 const route = useRoute()
@@ -218,7 +220,7 @@ const formRef = ref<FormInstance>();
 const _roleDetail = ref([] as any[]);
 const form = reactive({
     data: {
-        orgIdList: [route.query.departmentId]
+        orgIdList:  props.orgId ? [props.orgId] : [],
     } as formType,
     roleOptions: [],
     _departmentOptions: [] as DefaultOptionType[],
@@ -263,10 +265,10 @@ const init = () => {
 
 const getUserInfo = () => {
     const id = props.data?.id || '';
-    disabledData.orgIds = [route.query.departmentId]
+    disabledData.orgIds = props.orgId ? [props.orgId] : []
     disabledData.roles = props.roleIds
-    disabledData.positions = [route.params.id]
-    if (props.type === 'add') form.data = {orgIdList: [route.query.departmentId], positions: [route.params.id], roleIdList: props.roleIds} as formType;
+    disabledData.positions = props.positionId ? [props.positionId] : []
+    if (props.type === 'add') form.data = {orgIdList: props.orgId ? [props.orgId] : [], positions: props.positionId ? [props.positionId] : [], roleIdList: props.roleIds} as formType;
     else if (props.type === 'reset') form.data = { id } as formType;
     else if (props.type === 'edit') {
         getUser_api(id).then((resp: any) => {

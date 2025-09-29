@@ -63,19 +63,19 @@
                                     <a-menu-item>
                                         <j-permission-button
                                             :hasPermission="`${permission}:assert`"
-                                            
+                                            @click="batchImportVisible = true"
                                         >
                                             <AIcon type="ImportOutlined"/>
-                                            批量导入
+                                            {{ $t('Department.device.398213-0') }}
                                         </j-permission-button>
                                     </a-menu-item>
                                     <a-menu-item>
                                         <j-permission-button
                                             :hasPermission="`${permission}:assert`"
-                                            
+                                            @click="handleBatchExport"
                                         >
                                             <AIcon type="ExportOutlined"/>
-                                            批量导出
+                                            {{ $t('Department.device.398213-1') }}
                                         </j-permission-button>
                                     </a-menu-item>
                                 </a-menu>
@@ -254,6 +254,13 @@
                 v-model:visible="dialogs.nextShow"
                 @confirm="nextConfirm"
             />
+            <BatchImport
+                v-if="batchImportVisible"
+                :downloadUrlBuilder="downloadProductAssetsImportTemplate_api"
+                :request="(fileUrl: string) => importProductAssets_api(parentId, fileUrl)"
+                @close="batchImportVisible = false"
+                @save="handleBatchImport"
+            />
         </div>
     </div>
 </template>
@@ -270,11 +277,15 @@ import {
     getPermissionDict_api,
     unBindDeviceOrProduct_api,
     getBindingsPermission,
+    downloadProductAssetsImportTemplate_api,
+    importProductAssets_api,
+    exportProductAssets_api,
 } from '@authentication-manager-ui/api/system/department';
 import { intersection } from 'lodash-es';
 import { useDepartmentStore } from '@/store/department';
 import {systemImg} from "@authentication-manager-ui/assets";
 import { useI18n } from 'vue-i18n';
+import { downloadFileByUrl } from '@jetlinks-web/utils';
 
 const { t: $t } = useI18n();
 const permission = 'system/Department';
@@ -356,6 +367,7 @@ const columns = [
 ];
 const queryParams = ref({});
 
+const batchImportVisible = ref(false);
 const tableRef = ref();
 const searchRef = ref();
 const tableData = reactive({
@@ -629,6 +641,39 @@ const dialogs = reactive({
     editShow: false,
     nextShow: false,
 });
+
+//批量导入
+const handleBatchImport = () => {
+    tableRef.value?.reload();
+}
+
+//批量导出
+const handleBatchExport = () => {
+    exportProductAssets_api({
+        filter: {
+            terms: [
+                    ...queryParams.value?.terms,
+                    {
+                        column: 'id',
+                        termType: 'dim-assets',
+                        value: {
+                            assetType: 'product',
+                            targets: [
+                                {
+                                    type: 'org',
+                                    id: props.parentId,
+                                },
+                            ],
+                        },
+                    },
+                ],
+        }
+    }).then((resp: any) => {
+        const blob = new Blob([resp], {type: 'xlsx'});
+        const url = URL.createObjectURL(blob);
+        downloadFileByUrl(url, '产品资产', 'xlsx');
+    })
+}
 
 watch(
     () => props.parentId,

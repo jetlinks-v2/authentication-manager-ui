@@ -31,11 +31,11 @@
           <a-space>
             <a-button type="primary" @click="addUserDialogVisible = true">
               <AIcon type="PlusOutlined"/>
-              新增用户
+              {{ $t('position.User.473212-0') }}
             </a-button>
             <a-button @click="dialogVisible = true">
               <AIcon type="LinkOutlined" />
-              绑定用户
+              {{ $t('position.User.473212-1') }}
             </a-button>
             <j-permission-button
                 :popConfirm="{
@@ -95,11 +95,13 @@
     :roleIds="roleIds"
     @confirm="table.refresh"
     type="add"
+    :orgId="route.query.departmentId"
+    :positionId="positionId"
   />
 </template>
 
 <script setup lang="ts" name="PositionsUser">
-import { getUser, unbindUser } from '@authentication-manager/api/system/positions'
+import { getUser, unbindUser } from '@authentication-manager-ui/api/system/positions'
 import BindUserDialog from './BindUserDialog.vue'
 import AddUserDialog from './AddUserDialog.vue'
 import { onlyMessage } from '@jetlinks-web/utils'
@@ -117,6 +119,7 @@ const props = defineProps({
   }
 })
 
+const route = useRoute()
 const positionId = useRoute().params.id as string
 
 const columns = [

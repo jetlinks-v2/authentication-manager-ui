@@ -27,26 +27,24 @@
       <div style="margin: 16px;">
         <TabsCard :options="typeOptions" v-model:activeKey="activeKey"/>
       </div>
-      <Customize v-if="activeKey === 'customize'" ref="customizeRef" v-bind="props" :bulkBool="bulkBool" :bulkList="bulkList" />
-      <All v-else-if="activeKey === 'all'" ref="customizeRef" v-bind="props" :bulkBool="bulkBool" :bulkList="bulkList" />
-      <Org v-else-if="activeKey === 'org'" ref="customizeRef" v-bind="props" :bulkBool="bulkBool" :bulkList="bulkList" />
+      <Customize v-if="activeKey === 'customize'" ref="typeRef" v-bind="props" :bulkBool="bulkBool" :bulkList="bulkList" />
+      <All v-else-if="activeKey === 'all'" ref="typeRef" v-bind="props" :bulkBool="bulkBool" :bulkList="bulkList" :request="bindAssetsApi"/>
+      <Org v-else-if="activeKey === 'org'" ref="typeRef" v-bind="props" :bulkBool="bulkBool" :bulkList="bulkList" :request="bindAssetsApi"/>
   </a-modal>
 </template>
 
 <script setup lang="ts">
 import {  onlyMessage } from '@/utils/comm';
 import {
-  getDeviceOrProductList_api,
-  getDeviceList_api,
   bindDeviceOrProductList_api,
-  getBindingsPermission,
-} from '@authentication-manager/api/system/department';
+  getDeviceOrProductList_api,
+  getDeviceProduct_api,
+  getDeviceList_api,
+  getDeviceNoPagingList_api
+} from '@authentication-manager-ui/api/system/department';
 import { dictType } from '../../typings';
 import { useDepartmentStore } from '@/store/department';
-import dayjs from 'dayjs';
-import { systemImg } from '@authentication-manager/assets/index'
 import { useI18n } from 'vue-i18n';
-import ButtonCheckBox from './ButtonCheckBox.vue'
 import Customize from './Customize.vue';
 import All from './All.vue';
 import Org from './Org.vue'
@@ -67,33 +65,81 @@ const props = defineProps<{
 const loading = ref(false);
 // 资产咨询次数, 产品分配后自动进入的设备资产, 第一次需要带上产品id查询
 const queryCount = ref(0);
-const customizeRef = ref();
+const typeRef = ref();
 
-const confirm = () => {
-  if (customizeRef.value?.selectedRows.length < 1) {
-      return onlyMessage($t('components.AddDeviceOrProductDialog.314014-6'), 'warning');
+// 通过资产类型确定请求接口
+const bindAssetsApi = computed(() => {
+  switch (props.assetType) {
+    case 'product':
+      return {
+        listApi: getDeviceOrProductList_api,
+        noPagingListApi: getDeviceProduct_api,
+      };
+    case 'device':
+      return {
+        listApi: getDeviceList_api,
+        noPagingListApi: getDeviceNoPagingList_api,
+      };
   }
+})
 
-  const params = customizeRef.value?.selectedRows.map((item: any) => ({
-      targetType: 'org',
-      targetId: props.parentId,
-      assetType: props.assetType,
-      assetIdList: [item.id],
-      // 保存时, 过滤没有的权限
-      permission: item.selectPermissions.filter((f: any) =>
-          (item.permissionList || []).map((m: any) => m.value).includes(f),
-      ),
-  }));
+const confirm = async () => {
+  let params = {}
+  if (activeKey.value === 'customize') {
+    if (typeRef.value?.selectedRows.length < 1) {
+        return onlyMessage($t('components.AddDeviceOrProductDialog.314014-6'), 'warning');
+    }
+    loading.value = true;
+    params = typeRef.value?.selectedRows.map((item: any) => ({
+        targetType: 'org',
+        targetId: props.parentId,
+        assetType: props.assetType,
+        assetIdList: [item.id],
+        // 保存时, 过滤没有的权限
+        permission: item.selectPermissions.filter((f: any) =>
+            (item.permissionList || []).map((m: any) => m.value).includes(f),
+        ),
+    }));
+  } else if (activeKey.value === 'all') {
+    loading.value = true;
+    const data = await typeRef.value?.getAllAssets().catch(() => loading.value = false);
+    if(!data.length) {
+      loading.value = false;
+      return onlyMessage($t('请选择数据'), 'warning');
+    }
+    params = data.map((item: any) => ({
+        targetType: 'org',
+        targetId: props.parentId,
+        assetType: props.assetType,
+        assetIdList: [item.id],
+        // 保存时, 过滤没有的权限
+        permission: bulkList.value,
+    }));
+  } else if (activeKey.value === 'org') {
+    loading.value = true;
+    const data = await typeRef.value?.getOrgAssets().catch(() => loading.value = false);
+    if(!data.length) {
+      loading.value = false;
+      return onlyMessage($t('该组织下暂无可共享数据'), 'warning');
+    }
+    params = data.map((item: any) => ({
+        targetType: 'org',
+        targetId: props.parentId,
+        assetType: props.assetType,
+        assetIdList: [item.id],
+        // 保存时, 过滤没有的权限
+        permission: bulkList.value,
+    }));
+  } 
 
   // 分配产品资产后, 进入设备资产分配
   // departmentStore.setProductId(table.selectedRows.map((item: any) => item.id));
 
-  loading.value = true;
   bindDeviceOrProductList_api(props.assetType, params)
       .then(() => {
           onlyMessage($t('components.AddDeviceOrProductDialog.314014-7'));
           emits('confirm');
-          // emits('next',customizeRef.value?.selectedRows.map((item: any) => item.id))
+          // emits('next',typeRef.value?.selectedRows.map((item: any) => item.id))
           // if(props.assetType === 'device'){
           //     departmentStore.setProductId(undefined)
           // }
@@ -119,19 +165,19 @@ const typeOptionsLabel = () => {
 
 const typeOptions = [
   {
-    label: '自定义',
+    label: $t('property.Assign.385242-0'),
     value: 'customize',
-    desc: `自定义选择任意${typeOptionsLabel()}`
+    desc: $t('property.Assign.385242-1', [typeOptionsLabel()])
   },
   {
-    label: '全部',
+    label: $t('property.Assign.385242-2'),
     value: 'all',
-    desc: `按筛选条件过滤选择所有${typeOptionsLabel()}`
+    desc: $t('property.Assign.385242-3', [typeOptionsLabel()])
   },
   {
-    label: '组织',
+    label: $t('property.Assign.385242-4'),
     value: 'org',
-    desc: `选择归属于具体组织的${typeOptionsLabel()}`
+    desc: $t('property.Assign.385242-5', [typeOptionsLabel()])
   }
 ]
 

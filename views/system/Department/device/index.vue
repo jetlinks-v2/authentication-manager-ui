@@ -63,6 +63,24 @@
                       {{ $t('device.index.988419-4') }}
                     </j-permission-button>
                   </a-menu-item>
+                  <a-menu-item>
+                    <j-permission-button
+                      :hasPermission="`${permission}:assert`"
+                      @click="batchImportVisible = true"
+                    >
+                      <AIcon type="ImportOutlined"/>
+                      {{ $t('Department.device.398213-0') }}
+                    </j-permission-button>
+                  </a-menu-item>
+                  <a-menu-item>
+                    <j-permission-button
+                      :hasPermission="`${permission}:assert`"
+                      @click="handleBatchExport"
+                    >
+                      <AIcon type="ExportOutlined"/>
+                      {{ $t('Department.device.398213-1') }}
+                    </j-permission-button>
+                  </a-menu-item>
                 </a-menu>
               </template>
             </a-dropdown>
@@ -211,6 +229,13 @@
         :defaultPermission="table.defaultPermission"
         @confirm="table.refresh"
       />
+      <BatchImport
+        v-if="batchImportVisible"
+        :downloadUrlBuilder="downloadDeviceAssetsImportTemplate_api"
+        :request="(fileUrl: string) => importDeviceAssets_api(parentId, fileUrl)"
+        @close="batchImportVisible = false"
+        @save="handleBatchImport"
+      />
     </div>
   </div>
 </template>
@@ -226,6 +251,8 @@ import {
   unBindDeviceOrProduct_api,
   getDeviceProduct_api,
   getBindingsPermission,
+  downloadDeviceAssetsImportTemplate_api,
+  importDeviceAssets_api
 } from '@authentication-manager-ui/api/system/department';
 import {intersection} from 'lodash-es';
 
@@ -234,6 +261,7 @@ import {useDepartmentStore} from '@/store/department';
 import dayjs from 'dayjs';
 import {systemImg} from "@authentication-manager-ui/assets";
 import { useI18n } from 'vue-i18n';
+import { downloadFileByUrl } from '@jetlinks-web/utils';
 
 const { t: $t } = useI18n();
 const departmentStore = useDepartmentStore();
@@ -345,6 +373,7 @@ const columns = [
 ];
 const queryParams = ref({});
 
+const batchImportVisible = ref(false);
 const tableRef = ref();
 const searchRef = ref();
 const table = {
@@ -606,6 +635,39 @@ const dialogs = reactive({
 });
 
 table.init();
+
+//批量导入
+const handleBatchImport = () => {
+    tableRef.value?.reload();
+}
+
+//批量导出
+const handleBatchExport = () => {
+  exportProductAssets_api({
+    filter: {
+      terms: [
+        ...queryParams.value?.terms,
+        {
+          column: 'id',
+          termType: 'dim-assets',
+          value: {
+            assetType: 'product',
+            targets: [
+              {
+                type: 'org',
+                id: props.parentId,
+              },
+            ],
+          },
+        },
+      ],
+    }
+  }).then((resp: any) => {
+    const blob = new Blob([resp], {type: 'xlsx'});
+    const url = URL.createObjectURL(blob);
+    downloadFileByUrl(url, '设备资产', 'xlsx');
+  })
+}
 watchEffect(() => {
   props.bindBool && table.clickAdd();
   emits('update:bindBool', false);

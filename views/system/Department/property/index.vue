@@ -1,5 +1,5 @@
 <template>
-  <a-tabs v-model:active-key="activeKey" type="card">
+  <a-tabs v-model:active-key="activeKey" type="card" :destroyInactiveTabPane="true">
     <a-tab-pane v-for="item in _extra" :key="item.name">
       <template #tab>
         <a-space>
@@ -10,7 +10,7 @@
       <component :is="item.component" :parentId="departmentId" />
     </a-tab-pane>
   </a-tabs>
-  <a-empty v-if="!_extra.length" description="暂无可分配资产">
+  <a-empty v-if="!_extra.length" :description="$t('property.index.675027-4')">
 
   </a-empty>
 </template>
@@ -18,7 +18,7 @@
 <script setup lang="ts" name="property">
 import Product from '../product/index.vue'
 import Device from '../device/index.vue'
-import { productIcon, deviceIcon } from '@authentication-manager/assets';
+import { productIcon, deviceIcon } from '@authentication-manager-ui/assets';
 import { useMenuStore } from '@/store';
 
 const props = defineProps({

@@ -31,7 +31,7 @@
         </j-permission-button>
       </a-col>
     </a-row>
-    <div class="tree">
+    <div class="tree" ref="treeContainer">
       <a-spin :spinning="loading">
         <a-tree
           v-if="treeData.length > 0"
@@ -253,11 +253,11 @@ const delDepartment = (id: string) => {
 }
 
 // 刷新
-const onSave = (id: string) => {
+const onSave = async (id: string) => {
   visible.value = false
   current.value = {}
 
-  const isTabBack = onBack(id)
+  const isTabBack = await onBack(id)
   if (!isTabBack) {
     getTree()
   }

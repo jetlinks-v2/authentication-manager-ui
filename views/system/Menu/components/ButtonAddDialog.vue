@@ -8,7 +8,7 @@
     :maskClosable="false"
     :confirmLoading="loading"
   >
-    <a-form :model="formModel" class="basic-form" ref="formRef">
+    <a-form :model="formModel" class="basic-form" ref="formRef" layout="vertical">
       <a-form-item
         :label="$t('components.ButtonAddDialog.947292-0')"
         name="id"

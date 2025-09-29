@@ -1,5 +1,5 @@
 <template>
-  <a-modal visible title="绑定用户" width="1000px" @ok="confirm" @cancel="emits('update:visible', false)">
+  <a-modal open :title="$t('user.index.252066-0')" :confirmLoading="loading" width="1000px" @ok="confirm" @cancel="emits('update:visible', false)">
     <pro-search style="margin: 0; padding: 0;" :columns="columns" type="simple" @search="(params) => queryParams = { ...params }" />
 
     <div style="height: 450px;">
@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts" name="PositionsAddUser">
-import { getUser, bindUser } from '@authentication-manager/api/system/positions';
+import { getUser, bindUser } from '@authentication-manager-ui/api/system/positions';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n';
 
@@ -33,6 +33,8 @@ const props = defineProps<{
   orgId: string;
   positionId: string;
 }>();
+
+const loading = ref(false);
 
 const columns = [
   {
@@ -89,12 +91,15 @@ const confirm = () => {
   if (selectedRowKeys.value.length < 1) {
     onlyMessage($t('components.AddUserDialog.659587-3'), 'error');
   } else {
+    loading.value = true
     bindUser(props.orgId, props.positionId, selectedRowKeys.value).then((resp) => {
       if (resp.success) {
         onlyMessage($t('components.AddUserDialog.659587-4'));
         emits('refresh');
         emits('update:visible', false);
       }
+    }).finally(() => {
+      loading.value = false
     });
   }
 };

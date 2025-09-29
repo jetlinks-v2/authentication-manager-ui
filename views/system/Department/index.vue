@@ -18,7 +18,7 @@
             <a-tab-pane key="user" :tab="$t('Department.index.945805-2')">
               <User :parentId="departmentId" :positionId="positionId" />
             </a-tab-pane>
-            <a-tab-pane key="property" tab="资产">
+            <a-tab-pane key="property" :tab="$t('Department.index.945805-4')">
               <Property :department-id="departmentId" />
             </a-tab-pane>
             <!-- <a-tab-pane

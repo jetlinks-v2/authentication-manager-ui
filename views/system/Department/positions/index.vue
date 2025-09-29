@@ -183,7 +183,7 @@ const toPositionDetail = (data) => {
 const deletePosition = async (id) => {
   const res = await del(id)
   if(res.success) {
-    onlyMessage('操作成功')
+    onlyMessage($t('Tags.index.675027-4'))
     tableRef.value?.reload();
   }
 }
@@ -237,9 +237,9 @@ watch(
         :scroll="{y: 'calc(100vh - 450px)'}"
       >
         <template #headerLeftRender>
-          <j-permission-button v-if="parentId" type="primary" @click="handleAdd">
+          <j-permission-button v-if="parentId" hasPermission="system/Department:bind-position" type="primary" @click="handleAdd">
             <AIcon type="PlusOutlined"/>
-            新增职位
+            {{ $t('position.index.252066-2') }}
           </j-permission-button>
         </template>
         <template #roles="slotProps">
@@ -259,8 +259,8 @@ watch(
           </j-permission-button> -->
           <j-permission-button
             type="link"
-            :hasPermission="`${permission}:bind-user`"
-            :tooltip="{ title: '编辑' }"
+            :hasPermission="`${permission}:update-position`"
+            :tooltip="{ title: $t('Tags.index.675027-1') }"
             @click="toPositionDetail(slotProps)"
           >
             <AIcon type="EditOutlined" />
@@ -268,10 +268,10 @@ watch(
           <j-permission-button
             type="link"
             danger
-            :hasPermission="`${permission}:bind-user`"
-            :tooltip="{ title: '删除' }"
+            :hasPermission="`${permission}:delete-position`"
+            :tooltip="{ title: $t('Tags.index.675027-2') }"
             :popConfirm="{
-              title: '确认删除？',
+              title: $t('Tags.index.675027-3'),
               onConfirm: () => {
                 deletePosition(slotProps.id)
               }

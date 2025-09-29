@@ -9,7 +9,7 @@
   <j-pro-table ref="tableRef" :request="requestFun" :gridColumn="2" :gridColumns="[2]" :params="queryParams"
      :columns="columns" :scroll="{y: '300px'}">
     <template #card="slotProps">
-      <CardBox :value="slotProps" :actions="[{ key: 1 }]" v-bind="slotProps" :active="_selectedRowKeys.includes(slotProps.id)" 
+      <CardBox :value="slotProps" :actions="[{ key: 1 }]" v-bind="slotProps"
         :status="slotProps.state?.value" :statusText="slotProps.state?.text"
         :statusNames="{
           online: 'processing',
@@ -79,15 +79,13 @@
 import {
   getDeviceOrProductList_api,
   getDeviceList_api,
-  bindDeviceOrProductList_api,
   getBindingsPermission,
-} from '@authentication-manager/api/system/department';
+} from '@authentication-manager-ui/api/system/department';
 import { dictType } from '../../typings';
 import { useI18n } from 'vue-i18n';
 import ButtonCheckBox from './ButtonCheckBox.vue'
-import { systemImg } from '@authentication-manager/assets/index'
+import { systemImg } from '@authentication-manager-ui/assets/index'
 import dayjs from 'dayjs';
-import { onlyMessage } from '@jetlinks-web/utils';
 
 const { t: $t } = useI18n();
 const props = defineProps<{
@@ -97,7 +95,11 @@ const props = defineProps<{
   allPermission: dictType;
   assetType: 'product' | 'device';
   bulkBool: boolean;
-  bulkList: string[]
+  bulkList: string[];
+  request: {
+    listApi: any,
+    noPagingListApi: any,
+  }
 }>();
 const queryCount = ref(0);
 const queryParams = ref({});
@@ -114,11 +116,7 @@ const tableRef = ref();
 // 获取并整理数据
 const getData = (params: object, parentId: string) =>
   new Promise((resolve) => {
-    const api =
-      props.assetType === 'product'
-        ? getDeviceOrProductList_api
-        : getDeviceList_api;
-    api(params).then((resp: any) => {
+    props.request.listApi(params).then((resp: any) => {
       type resultType = {
         data: any[];
         total: number;
@@ -196,7 +194,20 @@ const getData = (params: object, parentId: string) =>
 const requestFun = async (oParams: any) => {
     queryCount.value += 1;
     if (props.parentId) {
-      let terms: any[] = []
+      let terms: any[] = [{
+        column: 'id',
+        termType: 'dim-assets$not',
+        value: {
+          assetType: props.assetType,
+          targets: [
+            {
+              type: 'org',
+              id: props.parentId,
+            },
+          ],
+        },
+        type: 'and'
+      }]
 
       // if (
       //     props.assetType !== 'device' ||
@@ -239,28 +250,41 @@ const requestFun = async (oParams: any) => {
     }
   }
 
-const selectAll = (selected: boolean, _selectedRows: any, changeRows: any) => {
-  if (selected) {
-    changeRows.map((i: any) => {
-      if (!_selectedRowKeys.value.includes(i.id)) {
-        _selectedRowKeys.value.push(i.id)
-        selectedRows.value.push(i)
+// 获取搜索条件下的所有对应资产
+const getAllAssets = async () => {
+  const resp: any = await props.request.noPagingListApi({
+    terms: [
+      ...queryParams.value?.terms || [],
+      {
+        column: 'id',
+        termType: 'dim-assets$not',
+        value: {
+          assetType: props.assetType,
+          targets: [
+            {
+              type: 'org',
+              id: props.parentId,
+            },
+          ],
+        },
+        type: 'and'
       }
-    })
-  } else {
-    const arr = changeRows.map((item: any) => item.id)
-    const _ids: string[] = [];
-    const _row: any[] = [];
-    selectedRows.value.map((i: any) => {
-      if (!arr.includes(i.id)) {
-        _ids.push(i.id)
-        _row.push(i)
-      }
-    })
-    _selectedRowKeys.value = _ids;
-    selectedRows.value = _row;
-  }
+    ]
+  });
+  const ids = resp.result.map((item: any) => item.id);
+  const perRes = await getBindingsPermission(props.assetType, ids);
+  resp.result.forEach((item: any) => {
+    item.permissionList = perRes.result
+      .find((f: any) => f?.assetId === item.id)
+      ?.permissionInfoList?.map((m: any) => ({
+        label: m.name,
+        value: m.id,
+        disabled: true,
+      })) || [];
+  })
+  return resp.result;
 }
+
 
 watch(
   () => [props.bulkBool, props.bulkList, _selectedRowKeys.value],
@@ -320,7 +344,8 @@ const search = (e: any) => {
 
 defineExpose({
   _selectedRowKeys: _selectedRowKeys.value,
-  selectedRows: selectedRows.value
+  selectedRows: selectedRows.value,
+  getAllAssets
 })
 </script>
 
