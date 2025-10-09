@@ -1704,7 +1704,7 @@ const dialog = reactive({
 const showAuthUrl = computed(() => {
   const { provider, integrationModes, sso } = form.data
   if (provider === 'third-party') {
-    return integrationModes.includes('apiClient') && sso.configuration.type === 'oauth2'
+    return integrationModes.some((i: any) => ['apiClient', 'ssoClient'].includes(i)) && sso.configuration.type === 'oauth2'
   }
   return true
 })
