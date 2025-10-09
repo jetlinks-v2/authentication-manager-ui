@@ -244,6 +244,47 @@
                 ]
               }
             ]
+          },
+          {
+            "id": "export",
+            "name": "批量导出",
+            "i18nMessages": {
+              "zh_CN": "批量导出",
+              "en_US": "Export",
+              "en": "Export"
+            },
+            "permissions": [
+              {
+                "permission": "user",
+                "actions": [
+                  "query"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "import",
+            "name": "批量导入",
+            "i18nMessages": {
+              "zh_CN": "批量导入",
+              "en_US": "Import",
+              "en": "Import"
+            },
+            "permissions": [
+              {
+                "permission": "file",
+                "actions": [
+                  "upload-static"
+                ]
+              },
+              {
+                "permission": "user",
+                "actions": [
+                  "query",
+                  "save"
+                ]
+              }
+            ]
           }
         ],
         "accessSupport": {
@@ -680,6 +721,36 @@
               "zh_CN": "编辑",
               "en_US": "Edit",
               "en": "Edit"
+            },
+            "permissions": [
+              {
+                "permission": "user",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "role",
+                "actions": [
+                  "query",
+                  "save"
+                ]
+              },
+              {
+                "permission": "menu",
+                "actions": [
+                  "grant"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "copy",
+            "name": "复制",
+            "i18nMessages": {
+              "zh_CN": "复制",
+              "en_US": "Copy",
+              "en": "Copy"
             },
             "permissions": [
               {

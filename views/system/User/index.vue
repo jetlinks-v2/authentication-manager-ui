@@ -22,14 +22,41 @@
             :scroll="{ y: 'calc(100% - 60px)' }"
         >
           <template #headerLeftRender>
-            <j-permission-button
-                :hasPermission="`${permission}:add`"
-                type="primary"
-                @click="table.openDialog('add')"
-            >
-              <AIcon type="PlusOutlined"/>
-              {{ $t('User.index.673867-0') }}
-            </j-permission-button>
+            <a-space>
+              <j-permission-button
+                  :hasPermission="`${permission}:add`"
+                  type="primary"
+                  @click="table.openDialog('add')"
+              >
+                <AIcon type="PlusOutlined"/>
+                {{ $t('User.index.673867-0') }}
+              </j-permission-button>
+              <a-dropdown>
+                <a-button>
+                  批量操作
+                </a-button>
+                <template #overlay>
+                  <a-menu>
+                    <a-menu-item key="import">
+                      <j-permission-button
+                          :hasPermission="`${permission}:import`"
+                          @click="onImport"
+                      >
+                        批量导入
+                      </j-permission-button>
+                    </a-menu-item>
+                    <a-menu-item key="export">
+                      <j-permission-button
+                          :hasPermission="`${permission}:export`"
+                          @click="onExport"
+                      >
+                        批量导出
+                      </j-permission-button>
+                    </a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+            </a-space>
           </template>
           <template #type="slotProps">
             {{ typeOptions.find(i => i.value === slotProps?.typeId)?.label || slotProps.typeId }}
@@ -47,7 +74,7 @@
           </template>
           <template #username="slotProps">
             <span class="user-tag">
-              <j-ellipsis>{{ slotProps.username}}</j-ellipsis>
+              <j-ellipsis>{{ slotProps.username }}</j-ellipsis>
             </span>
           </template>
           <template #positions="slotProps">
@@ -135,16 +162,23 @@
           </template>
         </j-pro-table>
       </FullPage>
-
-      <EditUserDialog
-          v-if="dialog.visible"
-          :type="dialog.type"
-          v-model:visible="dialog.visible"
-          :data="dialog.selectItem"
-          @confirm="table.refresh"
-      />
     </div>
   </j-page-container>
+  <EditUserDialog
+      v-if="dialog.visible"
+      :type="dialog.type"
+      v-model:visible="dialog.visible"
+      :data="dialog.selectItem"
+      @confirm="table.refresh"
+  />
+  <BatchImport
+    v-if="importData.visible"
+    :downloadUrlBuilder="importUserTemplate_api"
+    :request="importUser_api"
+    message="若系统中已存在相同用户名，若为更新该用户信息模板字段为空，将清空该字段；若有值，则更新该字段"
+    @close="importData.visible = false"
+    @save="handleImportDone"
+  />
 </template>
 
 <script setup lang="ts" name="UserMange">
@@ -155,8 +189,11 @@ import {
   changeUserStatus_api,
   deleteUser_api,
   queryRole_api,
+  importUserTemplate_api,
+  importUser_api,
+  exportUser_api,
 } from '@authentication-manager-ui/api/system/user';
-import {onlyMessage} from '@jetlinks-web/utils';
+import {downloadFileByUrl, onlyMessage} from '@jetlinks-web/utils';
 import {useI18n} from 'vue-i18n';
 import i18n from "@/locales";
 import {queryPageNoPage} from "@authentication-manager-ui/api/system/positions";
@@ -166,6 +203,9 @@ const {t: $t} = useI18n();
 const permission = 'system/User';
 
 const typeOptions = ref([])
+const importData = reactive({
+  visible: false
+})
 
 const columns = [
   {
@@ -277,7 +317,7 @@ const columns = [
   },
 ];
 
-if(isNoCommunity) {
+if (isNoCommunity) {
   columns.splice(4, 0, {
     title: i18n.global.t('Department.util.780026-9'),
     dataIndex: 'positions',
@@ -415,9 +455,27 @@ const handleParams = (params: any) => {
   queryParams.value = {terms: newParams || []};
 };
 
+const onImport = () => {
+  importData.visible = true;
+}
+
+const onExport = async () => {
+  const res = await exportUser_api()
+  if(res) {
+    const blob = new Blob([res], { type: 'xlsx' });
+    const url = URL.createObjectURL(blob);
+    downloadFileByUrl(url, '用户列表', 'xlsx')
+  }
+}
+
+//导入用户完成
+const handleImportDone = () => {
+  tableRef.value?.reload();
+}
+
 onMounted(() => {
   getUserType_api().then(resp => {
-    if(resp.success){
+    if (resp.success) {
       typeOptions.value = (resp.result || []).map((item: dictType) => ({
         label: item.name,
         value: item.id,
