@@ -1853,83 +1853,95 @@
           "value": "unsupported"
         },
         "supportDataAccess": false
-      }
-    ]
-  },
-  {
-    "code": "iot",
-    "name": "物联网",
-    "i18nMessages": {
-      "name": {
-        "zh_CN": "物联网",
-        "en_US": "IoT",
-        "en": "IoT"
-      }
-    },
-    "owner": "iot",
-    "id": "9c21f88182e7cc75cbdfa8e4b7844272",
-    "url": "/iot",
-    "icon": "icon-wulianwang",
-    "sortIndex": 1,
-    "permissions": [],
-    "children": [
+      },
       {
-        "code": "link",
-        "name": "运维管理",
+        "code": "system/Log",
+        "name": "日志管理",
         "i18nMessages": {
           "name": {
-            "zh_CN": "运维管理",
-            "en_US": "Operation Management",
-            "en": "Operation Management"
+            "zh_CN": "日志管理",
+            "en_US": "Log Management",
+            "en": "Log Management"
           }
         },
         "owner": "iot",
-        "id": "bd55cdc9d0c1700afe628f572f91c22e",
-        "url": "/iot/link",
-        "icon": "icon-yunweiguanli-1",
-        "permissions": [],
-        "sortIndex": 4,
+        "id": "7bfca91e0accad83c96ad8b3a79153c0",
+        "sortIndex": 17,
+        "url": "/system/log",
+        "icon": "icon-rizhifuwu",
+        "showPage": [
+          "system-logger",
+          "access-logger"
+        ],
+        "permissions": [
+          {
+            "permission": "system-logger",
+            "actions": [
+              "query"
+            ]
+          },
+          {
+            "permission": "access-logger",
+            "actions": [
+              "self-data",
+              "query"
+            ]
+          }
+        ],
+        "buttons": [],
         "children": [
           {
-            "code": "Log",
-            "name": "日志管理",
+            "id": "645fe54e5ca9e70988ff20f1e55e2261",
+            "sortIndex": 1,
+            "level": 3,
+            "owner": "iot",
+            "name": "访问日志",
             "i18nMessages": {
               "name": {
-                "zh_CN": "日志管理",
-                "en_US": "Log Management",
-                "en": "Log Management"
+                "zh_CN": "访问日志",
+                "en_US": "Access Log",
+                "en": "Access Log"
               }
             },
-            "owner": "iot",
-            "id": "c340f8977e0d221da893715cab58ae8c",
-            "sortIndex": 4,
-            "url": "/iot/link/Log",
+            "code": "system/Log/Access",
             "icon": "icon-rizhifuwu",
+            "url": "/system/log/access",
+            "describe": "",
             "showPage": [
-              "system-logger",
               "access-logger"
             ],
-            "permissions": [
-              {
-                "permission": "system-logger",
-                "actions": [
-                  "query"
-                ]
-              },
-              {
-                "permission": "access-logger",
-                "actions": [
-                  "self-data",
-                  "query"
-                ]
-              }
-            ],
-            "buttons": [],
             "accessSupport": {
-              "text": "不支持",
-              "value": "unsupported"
+                "text": "不支持",
+                "value": "unsupported"
             },
-            "supportDataAccess": false
+            "assetType": "accessLogger",
+            "assetAccesses": []
+          },
+          {
+            "id": "57e5bdaaee37a611424cfc1f5ab02d1f",
+            "sortIndex": 2,
+            "level": 3,
+            "owner": "iot",
+            "name": "系统日志",
+            "i18nMessages": {
+              "name": {
+                "zh_CN": "系统日志",
+                "en_US": "System Log",
+                "en": "System Log"
+              }
+            },
+            "showPage": [
+              "system-logger"
+            ],
+            "code": "system/Log/System",
+            "icon": "icon-rizhifuwu",
+            "url": "/system/log/system",
+            "describe": "",
+            "accessSupport": {
+                "text": "不支持",
+                "value": "unsupported"
+            },
+            "assetAccesses": []
           }
         ]
       }
