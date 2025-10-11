@@ -69,9 +69,10 @@ const columns = [
   },
   {
     title: '上级职位',
-    dataIndex: 'parentName',
-    key: 'parentName',
+    dataIndex: 'parentId',
+    key: 'parentId',
     ellipsis: true,
+    scopedSlots: true,
     search: {
       type: 'select',
       termFilter: ['not', 'in', 'nin'],
@@ -253,7 +254,7 @@ watch(
 </script>
 
 <template>
-  <div style="overflow-y: auto;">
+  <div style="overflow-y: auto;" :key="parentId">
     <pro-search
         :columns="columns"
         noMargin
@@ -283,6 +284,9 @@ watch(
         </template>
         <template #roles="slotProps">
           {{ slotProps.roles?.map(item => item.name).join(',') }}
+        </template>
+        <template #parentId="slotProps">
+          {{ slotProps.parentName || "--" }}
         </template>
         <template #memberCount="slotProps">
           <a @click="onJumpPage(slotProps)">{{ slotProps.memberCount }}</a>

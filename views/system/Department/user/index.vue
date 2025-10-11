@@ -1,5 +1,5 @@
 <template>
-  <div style="height: 100%; display: flex; flex-direction: column">
+  <div :key="parentId" style="height: 100%; display: flex; flex-direction: column">
     <pro-search
         v-if="show"
         noMargin
@@ -92,7 +92,7 @@
       @save="onSave"
       @close="dialogVisible = false"
   />
-  <AddUserDialog 
+  <AddUserDialog
     v-if="addUserDialogVisible"
     v-model:visible="addUserDialogVisible"
     :orgId="parentId"

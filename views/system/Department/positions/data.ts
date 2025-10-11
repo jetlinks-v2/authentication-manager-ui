@@ -2,7 +2,7 @@ import { useI18n } from 'vue-i18n';
 import {queryRole_api} from "@authentication-manager-ui/api/system/user";
 import {getTreeData_api} from "@authentication-manager-ui/api/system/department";
 import {useRequest} from "@jetlinks-web/hooks";
-import {queryPageNoPage} from "@authentication-manager-ui/api/system/positions";
+import {queryPageNoPage, queryPositionDetailNoPage} from "@authentication-manager-ui/api/system/positions";
 
 export const useColumns = () => {
   const { t: $t } = useI18n();
@@ -123,7 +123,7 @@ export const useColumns = () => {
 }
 
 export const usePositionList = (params: any) => {
-  const { data } = useRequest(queryPageNoPage, {
+  const { data } = useRequest(queryPositionDetailNoPage, {
     onSuccess(resp) {
       return resp.result.map((item: any) => ({ ...item, value: item.id, label: item.name }))
     },

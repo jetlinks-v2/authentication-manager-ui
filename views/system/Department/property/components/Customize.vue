@@ -6,7 +6,8 @@
     noMargin
     @search="search"
   />
-  <j-pro-table ref="tableRef" :request="requestFun" :gridColumn="2" :gridColumns="[2]" :params="queryParams"
+  <div style="height: 500px">
+    <j-pro-table ref="tableRef" :request="requestFun" :gridColumn="2" :gridColumns="[2]" :params="queryParams"
     :rowSelection="{
       selectedRowKeys: _selectedRowKeys,
       onSelect: onSelectChange,
@@ -15,12 +16,11 @@
       getCheckboxProps: (record) => ({
         disabled: !(record.permissionList?.length && record.permissionList.find((item: any) => item.value === 'share'))
       }),
-    }" 
+    }"
     :columns="columns"
-    :scroll="{y: '300px'}"
     >
     <template #card="slotProps">
-      <CardBox :value="slotProps" :actions="[{ key: 1 }]" v-bind="slotProps" :active="_selectedRowKeys.includes(slotProps.id)
+      <CardBox :value="slotProps" v-bind="slotProps" :active="_selectedRowKeys.includes(slotProps.id)
         " @click="onSelectChange" :status="slotProps.state?.value" :statusText="slotProps.state?.text"
         :statusNames="{
           online: 'processing',
@@ -84,6 +84,7 @@
       }}</span>
     </template>
   </j-pro-table>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -236,7 +237,7 @@ const getData = (params: object, parentId: string) =>
       );
     });
   })
- 
+
 // 整理参数并获取数据
 const requestFun = async (oParams: any) => {
     queryCount.value += 1;

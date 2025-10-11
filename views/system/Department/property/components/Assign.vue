@@ -1,11 +1,6 @@
 <template>
   <a-modal class="add-device-or-product-dialog-container" :title="$t('components.AddDeviceOrProductDialog.314014-0')" width="1440px" :maskClosable="false" @ok="confirm"
-      :confirmLoading="loading" @cancel="cancel" visible>
-      <!-- <h5 class="row">
-          <AIcon type="ExclamationCircleOutlined" style="margin-right: 6px" />
-          {{ $t('components.AddDeviceOrProductDialog.314014-1') }}
-      </h5> -->
-
+      :confirmLoading="loading" @cancel="cancel" open>
       <div class="batch-config">
           <a-space>
               <div class="row">
@@ -24,8 +19,13 @@
           target="category-bind-modal"
           @search="search"
       /> -->
-      <div style="margin: 16px;">
-        <TabsCard :options="typeOptions" v-model:activeKey="activeKey"/>
+      <div style="display: flex; align-items: flex-end; margin: 16px; justify-content: space-between">
+        <div>
+          <TabsCard :options="typeOptions" v-model:activeKey="activeKey"/>
+        </div>
+        <div style="color: rgba(0, 0, 0, 0.25)">
+          {{ $t('components.AddDeviceOrProductDialog.314014-1') }}
+        </div>
       </div>
       <Customize v-if="activeKey === 'customize'" ref="typeRef" v-bind="props" :bulkBool="bulkBool" :bulkList="bulkList" />
       <All v-else-if="activeKey === 'all'" ref="typeRef" v-bind="props" :bulkBool="bulkBool" :bulkList="bulkList" :request="bindAssetsApi"/>
@@ -130,7 +130,7 @@ const confirm = async () => {
         // 保存时, 过滤没有的权限
         permission: bulkList.value,
     }));
-  } 
+  }
 
   // 分配产品资产后, 进入设备资产分配
   // departmentStore.setProductId(table.selectedRows.map((item: any) => item.id));

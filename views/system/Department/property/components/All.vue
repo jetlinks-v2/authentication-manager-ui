@@ -6,73 +6,75 @@
     noMargin
     @search="search"
   />
-  <j-pro-table ref="tableRef" :request="requestFun" :gridColumn="2" :gridColumns="[2]" :params="queryParams"
-     :columns="columns" :scroll="{y: '300px'}">
-    <template #card="slotProps">
-      <CardBox :value="slotProps" :actions="[{ key: 1 }]" v-bind="slotProps"
-        :status="slotProps.state?.value" :statusText="slotProps.state?.text"
-        :statusNames="{
+  <div style="height: 500px">
+    <j-pro-table ref="tableRef" :request="requestFun" :gridColumn="2" :gridColumns="[2]" :params="queryParams"
+                 :columns="columns">
+      <template #card="slotProps">
+        <CardBox :value="slotProps" v-bind="slotProps"
+                 :status="slotProps.state?.value" :statusText="slotProps.state?.text"
+                 :statusNames="{
           online: 'processing',
           offline: 'error',
           notActive: 'warning',
         }">
-        <template #img>
-          <slot name="img">
-            <img :src="systemImg.deviceProductImg" style="cursor: pointer" alt="" />
-          </slot>
-        </template>
-        <template #content>
-          <h3 class="card-item-content-title" style='margin-bottom: 18px;'>
-            <j-ellipsis style="width: calc(100% - 100px);">
-              {{ slotProps.name }}
-            </j-ellipsis>
-          </h3>
-          <a-row>
-            <a-col :span="12">
-              <div class="card-item-content-text">ID</div>
-              <div style="cursor: pointer" class="card-item-content-value">
-                {{ slotProps.id }}
-              </div>
-            </a-col>
-            <a-col :span="12">
-              <div class="card-item-content-text">
-                {{ $t('components.AddDeviceOrProductDialog.314014-5') }}
-              </div>
-              <div style="cursor: pointer; height: 30px" class="card-item-content-value"
-                @click="(e) => e.stopPropagation()">
-                <!--                                    <a-checkbox-group v-model:value="slotProps.selectPermissions-->
-                <!--                                        " :options="slotProps.permissionList" />-->
-                <ButtonCheckBox :options="slotProps.permissionList"
-                  :value="bulkList"
+          <template #img>
+            <slot name="img">
+              <img :src="systemImg.deviceProductImg" style="cursor: pointer" alt="" />
+            </slot>
+          </template>
+          <template #content>
+            <h3 class="card-item-content-title" style='margin-bottom: 18px;'>
+              <j-ellipsis style="width: calc(100% - 100px);">
+                {{ slotProps.name }}
+              </j-ellipsis>
+            </h3>
+            <a-row>
+              <a-col :span="12">
+                <div class="card-item-content-text">ID</div>
+                <div style="cursor: pointer" class="card-item-content-value">
+                  {{ slotProps.id }}
+                </div>
+              </a-col>
+              <a-col :span="12">
+                <div class="card-item-content-text">
+                  {{ $t('components.AddDeviceOrProductDialog.314014-5') }}
+                </div>
+                <div style="cursor: pointer; height: 30px" class="card-item-content-value"
+                     @click="(e) => e.stopPropagation()">
+                  <!--                                    <a-checkbox-group v-model:value="slotProps.selectPermissions-->
+                  <!--                                        " :options="slotProps.permissionList" />-->
+                  <ButtonCheckBox :options="slotProps.permissionList"
+                                  :value="bulkList"
                   />
-              </div>
-            </a-col>
-          </a-row>
-        </template>
-      </CardBox>
-    </template>
+                </div>
+              </a-col>
+            </a-row>
+          </template>
+        </CardBox>
+      </template>
 
-    <template #permission="slotProps">
-      <div style="cursor: pointer" class="card-item-content-value" @click="(e) => e.stopPropagation()">
-        <!--                    <a-checkbox-group v-model:value="slotProps.selectPermissions" :options="slotProps.permissionList" />-->
-        <ButtonCheckBox :options="slotProps.permissionList"
-          :value="bulkList"
+      <template #permission="slotProps">
+        <div style="cursor: pointer" class="card-item-content-value" @click="(e) => e.stopPropagation()">
+          <!--                    <a-checkbox-group v-model:value="slotProps.selectPermissions" :options="slotProps.permissionList" />-->
+          <ButtonCheckBox :options="slotProps.permissionList"
+                          :value="bulkList"
           />
-      </div>
-    </template>
-    <template #state="slotProps">
-      <j-badge-status :status="slotProps.state.value" :text="slotProps.state.text" :statusNames="{
+        </div>
+      </template>
+      <template #state="slotProps">
+        <j-badge-status :status="slotProps.state.value" :text="slotProps.state.text" :statusNames="{
         online: 'processing',
         offline: 'error',
         notActive: 'warning',
       }"></j-badge-status>
-    </template>
-    <template #registryTime="slotProps">
+      </template>
+      <template #registryTime="slotProps">
       <span>{{
-        slotProps.registryTime ? dayjs(slotProps.registryTime).format('YYYY-MM-DD HH:mm:ss') : "--"
-      }}</span>
-    </template>
-  </j-pro-table>
+          slotProps.registryTime ? dayjs(slotProps.registryTime).format('YYYY-MM-DD HH:mm:ss') : "--"
+        }}</span>
+      </template>
+    </j-pro-table>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -189,7 +191,7 @@ const getData = (params: object, parentId: string) =>
       );
     });
   })
- 
+
 // 整理参数并获取数据
 const requestFun = async (oParams: any) => {
     queryCount.value += 1;
@@ -253,8 +255,9 @@ const requestFun = async (oParams: any) => {
 // 获取搜索条件下的所有对应资产
 const getAllAssets = async () => {
   const resp: any = await props.request.noPagingListApi({
+    paging: false,
     terms: [
-      ...queryParams.value?.terms || [],
+      ...(queryParams.value?.terms || []),
       {
         column: 'id',
         termType: 'dim-assets$not',

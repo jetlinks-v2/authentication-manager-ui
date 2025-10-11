@@ -77,6 +77,8 @@ export const exportProductAssets_api = (data: object) => request.post(`/device-p
  */
 export const importDeviceAssets_api = (targetId: string, fileUrl: string) => ndJson.get(`/device/instance/import/${targetId}?fileUrl=${fileUrl}`);
 
+export const exportDeviceAssets_api = (data: object) => request.post(`/device/instance/export/asset/export.xlsx`, data, { responseType: 'blob' });
+
 /**
  * 下载设备资产导入模板
  * @param format 文件格式

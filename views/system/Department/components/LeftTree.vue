@@ -52,7 +52,7 @@
                   {{ name }}
                 </j-ellipsis>
               </div>
-              <div class="func-btn" @click="(e) => e.stopPropagation()">
+              <a-space>
                 <j-permission-button
                   :hasPermission="`${permission}:update`"
                   type="link"
@@ -66,10 +66,12 @@
                 </j-permission-button>
                 <j-permission-button
                   :hasPermission="`${permission}:add`"
+                  v-if="data.level < 8"
                   type="link"
                   :tooltip="{
                     title: $t('components.LeftTree.755653-3'),
                   }"
+                  style="padding: 0"
                   @click="
                     openDialog({
                       ...data,
@@ -93,7 +95,7 @@
                 >
                   <AIcon type="DeleteOutlined" />
                 </j-permission-button>
-              </div>
+              </a-space>
             </div>
           </template>
         </a-tree>
@@ -335,13 +337,15 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   height: 25px;
+  gap: 12px;
 
   .title {
-    width: calc(100% - 80px);
+    flex: 1;
+    min-width: 0;
   }
   .func-btn {
     font-size: 14px;
-    width: 80px;
+    //width: 80px;
   }
 }
 

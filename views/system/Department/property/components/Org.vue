@@ -11,16 +11,14 @@
         { name: 'name', order: 'asc' }
       ]
     }"
-    :scroll="{ y: '300px' }"
+    type="TREE"
     :rowSelection="{
       type: 'radio',
       selectedRowKeys,
       onSelect,
       onSelectNone,
     }"
-  >
-
-  </j-pro-table>
+  />
 </template>
 
 <script setup lang="ts">
@@ -52,7 +50,8 @@ const columns = [
   {
     title: '排序',
     key: 'sortIndex',
-    dataIndex: 'sortIndex'
+    dataIndex: 'sortIndex',
+    width: 300
   }
 ]
 

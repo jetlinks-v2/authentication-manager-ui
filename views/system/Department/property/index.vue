@@ -8,7 +8,7 @@
           <a-tag>{{ assetsCount[item.name] || 0 }}</a-tag>
         </a-space>
       </template>
-      <component :is="item.component" :parentId="departmentId"/>
+      <component :is="item.component" :parentId="departmentId" @refresh="onRefresh" @open-device-bind="openDeviceBind"/>
     </a-tab-pane>
   </a-tabs>
   <a-empty v-if="!_extra.length" :description="$t('property.index.675027-4')">
@@ -60,7 +60,11 @@ const init = async () => {
   activeKey.value = _extra.value?.[0]?.name
 }
 
-const queryCount = async () => {
+const openDeviceBind = () => {
+  activeKey.value = 'device'
+}
+
+const queryProductCount = async () => {
   // 查询当前部门下的产品数量
   if (menuStore.hasMenu('device/Product')) {
     const res = await getProductCount({
@@ -84,6 +88,9 @@ const queryCount = async () => {
       assetsCount.product = res.result || 0
     }
   }
+}
+
+const queryDeviceCount = async () => {
   if (menuStore.hasMenu('device/Instance')) {
     const res = await getDeviceCount({
       terms: [
@@ -108,10 +115,21 @@ const queryCount = async () => {
   }
 }
 
+const onRefresh = async (flag: boolean) => {
+  if (flag) {
+    await queryProductCount()
+  } else {
+    await queryDeviceCount()
+  }
+}
+
 watch(() => props.departmentId, async () => {
   if (props.departmentId) {
-    await queryCount()
+    await queryProductCount()
+    await queryDeviceCount()
   }
+}, {
+  immediate: true
 })
 init();
 </script>

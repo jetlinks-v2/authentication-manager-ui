@@ -97,9 +97,6 @@ export const useColumns = (departmentId: string) => {
           key: 'status',
           search: {
               type: 'select',
-              // componentProps: {
-              //     placeholder: i18n.global.t('Department.util.780026-5'),
-              // },
               options: [
                   {
                       label: i18n.global.t('Department.util.780026-6'),
@@ -123,7 +120,7 @@ export const useColumns = (departmentId: string) => {
       },
     ]
     if(isNoCommunity) {
-      arr.splice(2,1,{
+      arr.splice(2,0,{
         title: i18n.global.t('Department.util.780026-9'),
         dataIndex: 'positions',
         key: 'positions',
@@ -131,10 +128,7 @@ export const useColumns = (departmentId: string) => {
         scopedSlots: true,
         search: {
             type: 'select',
-            termFilter: ['not', 'in', 'nin'],
-            // componentProps: {
-            //     placeholder: i18n.global.t('Department.util.780026-3'),
-            // },
+            termFilter: ['not', 'in', 'nin'], // 为什么过滤了
             options() {
                 const params = departmentId ? {terms: [{column: 'orgId', value: departmentId}], sorts: [{name: 'createTime', order: 'desc'}], paging: false} : {sorts: [{name: 'createTime', order: 'desc'}], paging: false}
                 return queryPageNoPage(params).then(resp => {

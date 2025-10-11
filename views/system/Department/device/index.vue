@@ -216,7 +216,7 @@
         :parent-id="props.parentId"
         :all-permission="table.permissionList.value"
         asset-type="device"
-        @confirm="table.refresh"
+        @confirm="onRefresh"
       />
       <EditPermissionDialog
         v-if="dialogs.editShow"
@@ -235,6 +235,7 @@
         :request="(fileUrl: string) => importDeviceAssets_api(parentId, fileUrl)"
         @close="batchImportVisible = false"
         @save="handleBatchImport"
+        :message="$t('Department.index.945805-6')"
       />
     </div>
   </div>
@@ -252,7 +253,7 @@ import {
   getDeviceProduct_api,
   getBindingsPermission,
   downloadDeviceAssetsImportTemplate_api,
-  importDeviceAssets_api
+  importDeviceAssets_api, exportProductAssets_api, exportDeviceAssets_api
 } from '@authentication-manager-ui/api/system/department';
 import {intersection} from 'lodash-es';
 
@@ -268,7 +269,7 @@ const departmentStore = useDepartmentStore();
 
 const permission = 'system/Department';
 
-const emits = defineEmits(['update:bindBool']);
+const emits = defineEmits(['update:bindBool', 'refresh']);
 const props = defineProps<{
   parentId: string;
   bindBool: boolean;
@@ -361,7 +362,15 @@ const columns = [
     scopedSlots: true,
     width: 80
   },
-
+  {
+    title: $t('product.index.083446-7'),
+    dataIndex: 'describe',
+    key: 'describe',
+    ellipsis: true,
+    search: {
+      type: 'string'
+    }
+  },
   {
     title: $t('device.index.988419-14'),
     dataIndex: 'action',
@@ -537,7 +546,7 @@ const table = {
         ...oParams,
         sorts: [{name: 'createTime', order: 'desc'}],
         terms: [
-          ...oParams.terms,
+          ...(oParams.terms || []),
           {
             column: 'id',
             termType: 'dim-assets',
@@ -615,7 +624,7 @@ const table = {
     const response = unBindDeviceOrProduct_api('device', params)
     response.then(() => {
       onlyMessage($t('device.index.988419-19'));
-      table.refresh();
+      onRefresh()
     });
     return response
   },
@@ -634,6 +643,11 @@ const dialogs = reactive({
   editShow: false,
 });
 
+const onRefresh = () => {
+  emits('refresh', false);
+  table.refresh()
+}
+
 table.init();
 
 //批量导入
@@ -643,15 +657,15 @@ const handleBatchImport = () => {
 
 //批量导出
 const handleBatchExport = () => {
-  exportProductAssets_api({
+  exportDeviceAssets_api({
     filter: {
       terms: [
-        ...queryParams.value?.terms,
+        ...(queryParams.value?.terms || []),
         {
           column: 'id',
           termType: 'dim-assets',
           value: {
-            assetType: 'product',
+            assetType: 'device',
             targets: [
               {
                 type: 'org',
