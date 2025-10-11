@@ -11,6 +11,7 @@
         { name: 'name', order: 'asc' }
       ]
     }"
+    type="TREE"
     :scroll="{ y: '300px' }"
     :rowSelection="{
       type: 'radio',
