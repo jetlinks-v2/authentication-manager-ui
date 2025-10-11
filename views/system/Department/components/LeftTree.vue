@@ -43,6 +43,7 @@
           :virtual="true"
           :height="treeHeight"
           @select="onSelect"
+          block-node
         >
           <template #title="{ name, data }">
             <div class="department-tree-item-content">
@@ -171,7 +172,7 @@ const getTree = (cb?: Function) => {
   loading.value = true
   const params = {
     paging: false,
-    sorts: [{ name: 'sortIndex', order: 'asc' }, { name: 'name', order: 'asc' }],
+    sorts: [{ name: 'sortIndex', order: 'asc' }, { name: 'createTime', order: 'asc' }],
   } as any
   if (searchValue.value) {
     params.terms = [{ column: 'name$LIKE', value: `%${searchValue.value}%` }]
@@ -188,6 +189,7 @@ const getTree = (cb?: Function) => {
       // ) // 报存源数据
       handleTreeMap(resp.result) // 将树形结构转换为map结构
       treeData.value = resp.result // 第一次不用进行过滤
+      selectedKeys.value = treeData.value.map(i => i.id).slice(0, 1)
       cb && cb()
     })
     .finally(() => {
@@ -213,6 +215,7 @@ const onSearch = debounce(() => {
     treeData.value = ArrayToTree(cloneDeep([...treeMap.values()]))
     expandedKeys.value = []
   }
+  selectedKeys.value = treeData.value.map(i => i.id).slice(0, 1)
 
   function dig(_data: any[]): any {
     const pIds: string[] = []
@@ -289,8 +292,6 @@ const onSelect = (val: string[]) => {
 watch(
   () => selectedKeys.value,
   (n) => {
-    console.log('sssss')
-
     emits('change', n?.[0])
   },
   {

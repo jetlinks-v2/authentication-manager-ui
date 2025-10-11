@@ -82,3 +82,8 @@ export const importDeviceAssets_api = (targetId: string, fileUrl: string) => ndJ
  * @param format 文件格式
  */
 export const downloadDeviceAssetsImportTemplate_api = (format: 'xlsx' | 'csv') => request.get(`/device/instance/download/asset/template.${format}`, {}, { responseType: 'blob' });
+
+
+export const getProductCount = (data: any) => request.post('/device/product/_count', data)
+
+export const getDeviceCount = (data: any) => request.post('/device-instance/_count', data)

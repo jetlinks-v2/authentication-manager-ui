@@ -59,7 +59,7 @@ import {
   getPermissionTree_api,
   getUserByRoleNoPaging_api,
   queryRoleGroup, saveRole_api, updatePermissionTree_api
-} from "@/modules/authentication-manager-ui/api/system/role";
+} from "@authentication-manager-ui/api/system/role";
 import {paramsEncodeQuery} from "@/utils";
 import {onlyMessage} from "@jetlinks-web/utils";
 import {map} from "lodash-es";

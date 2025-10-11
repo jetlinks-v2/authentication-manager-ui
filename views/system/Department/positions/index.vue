@@ -1,11 +1,12 @@
 <script setup name="Positions">
-import { useI18n } from 'vue-i18n';
-import { queryPage, del } from '@authentication-manager-ui/api/system/positions';
+import {useI18n} from 'vue-i18n';
+import {queryPage, del, queryPageNoPage} from '@authentication-manager-ui/api/system/positions';
 import BindModal from './Bind.vue'
-import { useMenuStore } from '@/store';
-import { onlyMessage } from '@jetlinks-web/utils';
+import {useMenuStore} from '@/store';
+import {onlyMessage} from '@jetlinks-web/utils';
+import {queryRole_api} from "@authentication-manager-ui/api/system/user";
 
-const { t: $t } = useI18n();
+const {t: $t} = useI18n();
 const menuStore = useMenuStore();
 const permission = 'system/Department'
 
@@ -44,7 +45,25 @@ const columns = [
     key: 'roles',
     ellipsis: true,
     search: {
-      type: 'string'
+      type: 'select',
+      // TODO: 角色查询
+      options: () =>
+          new Promise((resolve) => {
+            queryRole_api({
+              paging: false,
+              sorts: [
+                {name: 'createTime', order: 'desc'},
+                {name: 'id', order: 'desc'},
+              ],
+            }).then((resp) => {
+              resolve(
+                  resp.result.map((item) => ({
+                    label: item.name,
+                    value: item.id,
+                  })),
+              );
+            });
+          }),
     },
     scopedSlots: true
   },
@@ -54,8 +73,27 @@ const columns = [
     key: 'parentName',
     ellipsis: true,
     search: {
-      type: 'string'
-    }
+      type: 'select',
+      termFilter: ['not', 'in', 'nin'],
+      options() {
+        const params = props.parentId ? {
+          terms: [{column: 'orgId', value: props.parentId}],
+          sorts: [{name: 'createTime', order: 'desc'}],
+          paging: false
+        } : {sorts: [{name: 'createTime', order: 'desc'}], paging: false}
+        return queryPageNoPage(params).then(resp => {
+          if (resp.success) {
+            return resp.result.map(item => {
+              return {
+                label: item.name,
+                value: item.id
+              }
+            })
+          }
+          return []
+        })
+      }
+    },
   },
   {
     title: $t('position.index.252066-1'),
@@ -182,7 +220,7 @@ const toPositionDetail = (data) => {
 //删除职位
 const deletePosition = async (id) => {
   const res = await del(id)
-  if(res.success) {
+  if (res.success) {
     onlyMessage($t('Tags.index.675027-4'))
     tableRef.value?.reload();
   }
@@ -206,38 +244,39 @@ const handleAdd = () => {
 }
 
 watch(
-  () => props.parentId,
-  () => {
-    refresh()
-    searchRef.value?.reset?.()
-  },
+    () => props.parentId,
+    () => {
+      refresh()
+      searchRef.value?.reset?.()
+    },
 )
 </script>
 
 <template>
   <div style="overflow-y: auto;">
     <pro-search
-      :columns="columns"
-      noMargin
-      target="category-position"
-      style="margin: 0;"
-      @search="handleParams"
-      ref="searchRef"
+        :columns="columns"
+        noMargin
+        target="category-position"
+        style="margin: 0;"
+        @search="handleParams"
+        ref="searchRef"
     />
     <FullPage>
       <j-pro-table
-        ref="tableRef"
-        :columns="columns"
-        :request="handleQuery"
-        :params="queryParams"
-        :defaultParams="{
+          ref="tableRef"
+          :columns="columns"
+          :request="handleQuery"
+          :params="queryParams"
+          :defaultParams="{
           sorts: [{ name: 'createTime', order: 'desc' }],
         }"
-        mode="TABLE"
-        :scroll="{y: 'calc(100vh - 450px)'}"
+          mode="TABLE"
+          :scroll="{y: 'calc(100vh - 450px)'}"
       >
         <template #headerLeftRender>
-          <j-permission-button v-if="parentId" hasPermission="system/Department:bind-position" type="primary" @click="handleAdd">
+          <j-permission-button v-if="parentId" hasPermission="system/Department:bind-position" type="primary"
+                               @click="handleAdd">
             <AIcon type="PlusOutlined"/>
             {{ $t('position.index.252066-2') }}
           </j-permission-button>
@@ -258,32 +297,33 @@ watch(
             <AIcon type="UserAddOutlined" />
           </j-permission-button> -->
           <j-permission-button
-            type="link"
-            :hasPermission="`${permission}:update-position`"
-            :tooltip="{ title: $t('Tags.index.675027-1') }"
-            @click="toPositionDetail(slotProps)"
+              type="link"
+              :hasPermission="`${permission}:update-position`"
+              :tooltip="{ title: $t('Tags.index.675027-1') }"
+              @click="toPositionDetail(slotProps)"
           >
-            <AIcon type="EditOutlined" />
+            <AIcon type="EditOutlined"/>
           </j-permission-button>
           <j-permission-button
-            type="link"
-            danger
-            :hasPermission="`${permission}:delete-position`"
-            :tooltip="{ title: $t('Tags.index.675027-2') }"
-            :popConfirm="{
+              type="link"
+              danger
+              :hasPermission="`${permission}:delete-position`"
+              :tooltip="{ title: $t('Tags.index.675027-2') }"
+              :popConfirm="{
               title: $t('Tags.index.675027-3'),
               onConfirm: () => {
                 deletePosition(slotProps.id)
               }
             }"
           >
-            <AIcon type="DeleteOutlined" />
+            <AIcon type="DeleteOutlined"/>
           </j-permission-button>
         </template>
       </j-pro-table>
     </FullPage>
   </div>
-  <BindModal v-if="dialogVisible" :orgId="parentId" :positionId="positionId" @save="onSave" @close="dialogVisible = false" />
+  <BindModal v-if="dialogVisible" :orgId="parentId" :positionId="positionId" @save="onSave"
+             @close="dialogVisible = false"/>
 </template>
 
 <style scoped lang="less">
