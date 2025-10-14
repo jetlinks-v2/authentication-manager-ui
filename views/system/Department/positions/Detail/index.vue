@@ -7,6 +7,7 @@ import { useRequest } from '@jetlinks-web/hooks'
 import {usePositionList} from "../data";
 import {getDepartmentList_api} from "@/api/system/user";
 import {cloneDeep} from "lodash-es";
+import {filterSelectNode} from "@/utils";
 
 const { t: $t } = useI18n();
 
@@ -78,8 +79,8 @@ const handleOrgData = (orgList, positionList, disabledIds = []) => {
 
 const _treeData = computed(() => {
   const disabledIds = []
-  if(oldData.value.parentId) {
-    disabledIds.push(oldData.value.parentId)
+  if(oldData.value.id) {
+    disabledIds.push(oldData.value.id)
   }
   return handleOrgData(treeData.value, positionsList.value, disabledIds)
 })
@@ -157,9 +158,13 @@ watch(() => route.query.tab, (v) => {
             <a-form ref="formRef" :model="formModel" layout="vertical">
               <a-row :gutter="24">
                 <a-col :span="12">
-                  <a-form-item :label="$t('components.EditUserDialog.939453-37')" name="code" :rules="[
+                  <a-form-item validate-first :label="$t('components.EditUserDialog.939453-37')" name="code" :rules="[
                     { required: true, message: $t('components.EditUserDialog.939453-36') },
-                    { max: 64, message: $t('components.EditUserDialog.939453-5') }
+                    { max: 64, message: $t('components.EditUserDialog.939453-5')},
+                     {
+                                    pattern: /^[a-zA-Z0-9_\-]+$/,
+                                    message: $t('Save.index.902471-2'),
+                                }
                   ]">
                     <a-input v-model:value="formModel.code" :placeholder="$t('components.EditUserDialog.939453-36')"></a-input>
                   </a-form-item>
@@ -197,7 +202,7 @@ watch(() => route.query.tab, (v) => {
                 </a-col>
                 <a-col :span="12">
                   <a-form-item :label="$t('positions.index.223804-1')">
-                    <a-tree-select showSearch :fieldNames="{ label: 'name', value: 'id' }" allowClear v-model:value="formModel.parentId" :tree-data="_treeData" :placeholder="$t('positions.index.223804-2')" />
+                    <a-tree-select :filterTreeNode="(v, node) => filterSelectNode(v, node, 'name')" showSearch :fieldNames="{ label: 'name', value: 'id' }" allowClear v-model:value="formModel.parentId" :tree-data="_treeData" :placeholder="$t('positions.index.223804-2')" />
                   </a-form-item>
                 </a-col>
               </a-row>

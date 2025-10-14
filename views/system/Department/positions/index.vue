@@ -46,7 +46,6 @@ const columns = [
     ellipsis: true,
     search: {
       type: 'select',
-      // TODO: 角色查询
       options: () =>
           new Promise((resolve) => {
             queryRole_api({

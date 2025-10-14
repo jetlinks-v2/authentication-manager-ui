@@ -1486,6 +1486,7 @@ import InputGroup from './InputGroup.vue'
 import {systemImg} from "@authentication-manager-ui/assets";
 import {useI18n} from 'vue-i18n';
 import { useTabSaveSuccess } from '@/hooks'
+import {filterSelectNode} from "@/utils";
 
 const {t: $t} = useI18n();
 const emit = defineEmits(['changeApplyType']);
