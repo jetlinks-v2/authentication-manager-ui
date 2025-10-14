@@ -157,11 +157,11 @@ watch(() => route.query.tab, (v) => {
             <a-form ref="formRef" :model="formModel" layout="vertical">
               <a-row :gutter="24">
                 <a-col :span="12">
-                  <a-form-item :label="$t('components.EditUserDialog.939453-34')" name="code" :rules="[
-                    { required: true, message: $t('components.EditUserDialog.939453-35') },
+                  <a-form-item :label="$t('components.EditUserDialog.939453-37')" name="code" :rules="[
+                    { required: true, message: $t('components.EditUserDialog.939453-36') },
                     { max: 64, message: $t('components.EditUserDialog.939453-5') }
                   ]">
-                    <a-input v-model:value="formModel.code" :placeholder="$t('components.EditUserDialog.939453-35')"></a-input>
+                    <a-input v-model:value="formModel.code" :placeholder="$t('components.EditUserDialog.939453-36')"></a-input>
                   </a-form-item>
                 </a-col>
                 <a-col :span="12">
