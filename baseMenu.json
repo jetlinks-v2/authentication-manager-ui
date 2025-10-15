@@ -458,7 +458,8 @@
               {
                 "permission": "device-product",
                 "actions": [
-                  "query"
+                  "query",
+                  "export"
                 ]
               },
               {
