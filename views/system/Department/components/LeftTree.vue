@@ -191,7 +191,14 @@ const getTree = (cb?: Function) => {
       // ) // 报存源数据
       handleTreeMap(resp.result) // 将树形结构转换为map结构
       treeData.value = resp.result // 第一次不用进行过滤
-      selectedKeys.value = treeData.value.map(i => i.id).slice(0, 1)
+      selectedKeys.value = route.query.id ? [route.query.id as string] : treeData.value.map(i => i.id).slice(0, 1)
+      // 根据路由query参数展开父级节点
+      const targetId = route.query.id as string
+      if (targetId && treeMap.has(targetId)) {
+        const parentKeys = expandParentNodes(targetId)
+        expandedKeys.value = [...new Set([...expandedKeys.value, ...parentKeys])]
+      }
+      
       cb && cb()
     })
     .finally(() => {
@@ -242,6 +249,24 @@ function handleTreeMap(_data: any[]) {
       }
     })
   }
+}
+
+// 根据目标节点ID展开其所有父级节点
+const expandParentNodes = (targetId: string) => {
+  if (!targetId || !treeMap.has(targetId)) {
+    return []
+  }
+  
+  const expandKeys: string[] = []
+  let currentNode = treeMap.get(targetId)
+  
+  // 向上查找所有父级节点
+  while (currentNode && currentNode.parentId) {
+    expandKeys.push(currentNode.parentId)
+    currentNode = treeMap.get(currentNode.parentId)
+  }
+  
+  return expandKeys
 }
 // 删除部门
 const delDepartment = (id: string) => {

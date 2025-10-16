@@ -140,7 +140,7 @@ import { passwordRegEx } from '@/utils/validate';
 import { onlyMessage } from '@/utils/comm';
 import { cloneDeep, flatten, map } from 'lodash-es';
 import { useI18n } from 'vue-i18n';
-import { queryPageNoPage } from "@authentication-manager-ui/api/system/positions";
+import { queryPositionDetailNoPage } from "@authentication-manager-ui/api/system/positions";
 import { isNoCommunity } from '@/utils/utils';
 
 const { t: $t } = useI18n();
@@ -208,7 +208,8 @@ const onChange = (value: string[]) => {
     const arr = (value || []).map(i => {
         return positionsMap.get(i) || i
     })
-
+    console.log(positionsMap)
+    console.log(map(arr, 'roles'));
     const roles = map(flatten(map(arr, 'roles')), 'id').filter(i => i);
     const orgIds = map(arr, 'orgId').filter(i => i);
 
@@ -337,7 +338,7 @@ const hasNodeWithId = (arr: any, id: any) => {
 
 onMounted(() => {
     if (isNoCommunity) {
-        queryPageNoPage({
+        queryPositionDetailNoPage({
             paging: false,
             sorts: [{ name: 'sortIndex', order: 'asc' }]
         }).then(resp => {
