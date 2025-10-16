@@ -5,7 +5,7 @@
         <a-space>
           <img :src="item.icon" alt="">
           {{ $t(item.label) }}
-          <a-tag>{{ assetsCount[item.name] || 0 }}</a-tag>
+          <span>{{ assetsCount[item.name] || 0 }}</span>
         </a-space>
       </template>
       <component :is="item.component" :parentId="departmentId" @refresh="onRefresh" @open-device-bind="openDeviceBind"/>
@@ -116,11 +116,8 @@ const queryDeviceCount = async () => {
 }
 
 const onRefresh = async (flag: boolean) => {
-  if (flag) {
-    await queryProductCount()
-  } else {
-    await queryDeviceCount()
-  }
+  queryProductCount()
+  queryDeviceCount()
 }
 
 watch(() => props.departmentId, async () => {
