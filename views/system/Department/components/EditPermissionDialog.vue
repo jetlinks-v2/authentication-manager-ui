@@ -63,12 +63,11 @@ const form = reactive({
 const options = computed(() => {
     const result: optionsType = [];
     props.allPermission.forEach((item) => {
-        if (props.permissionList.includes(item.id))
-            result.push({
-                label: item.name,
-                value: item.id,
-                disabled: item.id === 'read',
-            });
+        result.push({
+            label: item.name,
+            value: item.id,
+            disabled: item.id === 'read',
+        });
     });
     return result;
 });
