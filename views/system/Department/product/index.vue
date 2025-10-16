@@ -16,11 +16,11 @@
           modeValue="CARD"
           :params="queryParams"
           :rowSelection="{
-                    selectedRowKeys: tableData._selectedRowKeys,
-                    onSelect: table.onSelect,
-                    onSelectAll: table.onSelectAll,
-                    onSelectNone: table.cancelSelect
-                }"
+            selectedRowKeys: tableData._selectedRowKeys,
+            onSelect: table.onSelect,
+            onSelectAll: table.onSelectAll,
+            onSelectNone: table.cancelSelect
+          }"
           :columns="columns"
       >
         <template #headerLeftRender>

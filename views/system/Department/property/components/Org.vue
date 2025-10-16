@@ -18,7 +18,15 @@
       onSelect,
       onSelectNone,
     }"
-  />
+  >
+    <template #alertRender>
+      <a-alert :message="`包含${productCount}个${assetsName}`">
+        <template #closeText>
+          <a-button type="link" @click="onSelectNone">取消选择</a-button>
+        </template>
+      </a-alert>
+    </template>
+  </j-pro-table>
 </template>
 
 <script setup lang="ts">
@@ -56,9 +64,15 @@ const columns = [
 ]
 
 const selectedRowKeys = ref<string[]>([])
+const productCount = ref<number>(0)
+
+const assetsName = computed(() => {
+  return props.assetType === 'product' ? '产品' : '设备'
+})
 
 const onSelect = (record: Record<string, any>) => {
   selectedRowKeys.value = [record.id]
+  getOrgAssets()
 }
 
 const onSelectNone = () => {
@@ -66,6 +80,7 @@ const onSelectNone = () => {
 }
 
 const getOrgAssets = async () => {
+  console.log('selectedRowKeys', selectedRowKeys.value)
   const res = await props.request.noPagingListApi({
     terms: [{
       column: 'id',
@@ -83,6 +98,7 @@ const getOrgAssets = async () => {
     }]
   })
   const ids = res.result.map((item: any) => item.id);
+  productCount.value = ids.length;
   const perRes = await getBindingsPermission(props.assetType, ids);
   res.result.forEach((item: any) => {
     item.permissionList = perRes.result
