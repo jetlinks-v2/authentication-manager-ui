@@ -31,6 +31,7 @@
               style="width: 200px"
               :options="action.options"
               @change="onActionChange"
+              show-search
               :placeholder="$t('components.PermissionTree.954862-4')"
               mode="multiple"
               :max-tag-count="1"
@@ -219,7 +220,7 @@ const bulkChange = () => {
   if (!dataPermission.visible) return;
   Object.keys(flatTableData).forEach(key => {
     const item = flatTableData[key];
-    if (item.granted && item.accessSupport && item.accessSupport.value === 'support') {
+    if ((item.granted || item._granted) && item.accessSupport && item.accessSupport.value === 'support') {
       item.selectAccesses = dataPermission.data;
     }
   });

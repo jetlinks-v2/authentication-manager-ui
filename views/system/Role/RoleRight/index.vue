@@ -174,7 +174,7 @@ const getActions = (
       icon: 'FormOutlined',
     },
     {
-      key: 'copy',
+      key: 'add',
       text: $t('RoleRight.index.470525-11'),
       tooltip: {
         title: $t('RoleRight.index.470525-11'),
