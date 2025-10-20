@@ -1915,7 +1915,8 @@
               "text": "支持",
               "value": "support"
             },
-            "supportDataAccess": true
+            "supportDataAccess": true,
+            "assetType": "accessLogger"
           },
           {
             "id": "57e5bdaaee37a611424cfc1f5ab02d1f",

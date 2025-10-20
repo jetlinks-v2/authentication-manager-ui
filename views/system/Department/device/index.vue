@@ -301,15 +301,8 @@ const columns = [
     key: 'productName',
     ellipsis: true,
     search: {
-      rename: 'productId$product-info',
+      rename: 'productId',
       type: 'select',
-      handleValue(value: string, data: any) {
-        return value && value.length ? [{
-          column: 'id',
-          termType: data?.termType === 'not' ? 'nin' : 'in',
-          value: `${value.toString()}`
-        }] : undefined;
-      },
       options: () =>
         new Promise((resolve) => {
           const params = {
