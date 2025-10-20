@@ -1359,7 +1359,9 @@
                 <a-select
                     v-model:value="form.data.sso.roleIdList"
                     mode="multiple"
+                    show-search
                     :options="form.roleIdList"
+                    :filter-option="filterOption"
                     :placeholder="$t('components.EditForm.949962-52')"
                 ></a-select>
                 <j-permission-button
@@ -1392,6 +1394,9 @@
                     multiple
                     :tree-data="form.orgIdList"
                     :placeholder="$t('components.EditForm.949962-57')"
+                    :filterTreeNode="
+                                (v: string, node: any) => filterSelectNode(v, node, 'name')
+                            "
                 >
                   <template #title="{ name }">
                     {{ name }}
@@ -1482,6 +1487,7 @@ import ApplyList from './ApplyList/index.vue';
 import InputGroup from './InputGroup.vue'
 import {systemImg} from "@authentication-manager/assets";
 import {useI18n} from 'vue-i18n';
+import {filterSelectNode} from "@/utils";
 
 const {t: $t} = useI18n();
 const emit = defineEmits(['changeApplyType']);
@@ -1687,6 +1693,10 @@ const checkPassword = (_rule: Rule, value: string) => {
     }
   })
 }
+
+const filterOption = (input: string, option: any) => {
+  return option.label.indexOf(input) >= 0;
+};
 
 // 接入方式的选项
 const joinOptions = computed(() => {
