@@ -31,11 +31,11 @@
           <a-space>
             <a-button type="primary" @click="addUserDialogVisible = true">
               <AIcon type="PlusOutlined"/>
-              新增用户
+              {{ $t('position.User.473212-0') }}
             </a-button>
             <a-button @click="dialogVisible = true">
               <AIcon type="LinkOutlined" />
-              绑定用户
+              {{ $t('position.User.473212-1') }}
             </a-button>
             <j-permission-button
                 :popConfirm="{
@@ -88,11 +88,15 @@
       :positionId="positionId"
       @refresh="table.refresh"
   />
-  <AddUserDialog
+  <AddUserDialog 
     v-if="addUserDialogVisible"
     v-model:visible="addUserDialogVisible"
     :data="{}"
+    :roleIds="roleIds"
+    @confirm="table.refresh"
     type="add"
+    :orgId="route.query.departmentId"
+    :positionId="positionId"
   />
 </template>
 
@@ -108,9 +112,14 @@ const { t: $t } = useI18n();
 const props = defineProps({
   orgId: {
     type: String
+  },
+  roleIds: {
+    type: Array,
+    default: () => ([])
   }
 })
 
+const route = useRoute()
 const positionId = useRoute().params.id as string
 
 const columns = [

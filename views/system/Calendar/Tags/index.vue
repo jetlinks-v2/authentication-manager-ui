@@ -18,14 +18,16 @@
                         :style="{ background: i.color }"
                         class="colorExtractor"
                     ></div>
-                    <j-ellipsis
-                        class="tagName"
-                        style="
-                        width: 120px;
+                    <div class="tagLeftName">
+                      <j-ellipsis
+                          class="tagName"
+                          style="
+                        width: 100%;
                     "
-                        :id="i.id"
-                    >{{ i.i18nName || i.name }}
-                    </j-ellipsis>
+                          :id="i.id"
+                      >{{ i.i18nName || i.name }}
+                      </j-ellipsis>
+                    </div>
                 </div>
                 <div class="controls">
                     <j-permission-button
@@ -189,9 +191,12 @@ onMounted(() => {
         margin-bottom: 10px;
         padding: 0 10px;
         height: 32px;
+
         .tagLeft {
             display: flex;
             padding-top: 6px;
+            flex: 1;
+            min-width: 0;
             .colorExtractor {
                 margin-top: 3px;
                 width: 16px;
@@ -199,6 +204,11 @@ onMounted(() => {
                 border-radius: 2px;
                 margin-right: 8px;
             }
+
+          .tagLeftName {
+            flex: 1;
+            min-width: 0;
+          }
         }
         .controls{
             display: none;

@@ -74,18 +74,17 @@
             </a-row>
             <a-row :gutter="24" v-if="form.IsShow('add', 'edit')">
                 <a-col :span="12">
-                    <a-form-item name="roleIdList" :label="$t('components.EditUserDialog.939453-12')" class="flex"
-                        :rules="[
-                            { required: form.data.username !== 'admin', message: $t('components.EditUserDialog.939453-13') },
-                        ]"
-                    >
+                    <a-form-item name="roleIdList" :label="$t('components.EditUserDialog.939453-12')" class="flex">
+<!--                      :rules="[-->
+<!--                      { required: form.data.username !== 'admin', message: $t('components.EditUserDialog.939453-13') },-->
+<!--                      ]"-->
                       <form-item-role :extraData="detail.roleList" :extraProps="{multiple: true}" :disabledData="disabledData.roles" v-model:value="form.data.roleIdList" :disabled="form.data.username === 'admin'" />
                       <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 4px" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
                     </a-form-item>
                 </a-col>
                 <a-col :span="12">
                     <a-form-item name="orgIdList" :label="$t('components.EditUserDialog.939453-14')" class="flex">
-                      <form-item-org :extraData="detail.orgList" :extraProps="{multiple: true}" :disabledData="disabledData.orgIds" v-model:value="form.data.orgIdList" />
+                      <form-item-org :extraData="detail.orgList" :extraProps="{multiple: true}" :disabledData="disabledData.orgIds" v-model:value="form.data.orgIdList" :disabled="form.data.username === 'admin'" />
                       <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 4px" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
                     </a-form-item>
                 </a-col>

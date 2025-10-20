@@ -10,14 +10,27 @@
         <AIcon type="SearchOutlined" />
       </template>
     </a-input>
-    <j-permission-button
-      type="primary"
-      :hasPermission="`${permission}:add`"
-      @click="openDialog()"
-      style="width: 100%; margin: 12px 0"
-    >
-      {{ $t('components.LeftTree.755653-1') }}
-    </j-permission-button>
+    <a-row>
+      <a-col flex="1">
+        <j-permission-button
+          type="primary"
+          :hasPermission="`${permission}:add`"
+          @click="openDialog()"
+          style="width: 100%; margin: 12px 0"
+        >
+          {{ $t('components.LeftTree.755653-1') }}
+        </j-permission-button>
+      </a-col>
+      <a-col flex="50px">
+        <j-permission-button
+          type="link"
+          style="width: 100%; margin: 12px 0"
+          @click="batchImportVisible = true"
+        >
+          <AIcon type="ImportOutlined"/>
+        </j-permission-button>
+      </a-col>
+    </a-row>
     <div class="tree" ref="treeContainer">
       <a-spin :spinning="loading">
         <a-tree
@@ -25,10 +38,12 @@
           :tree-data="treeData"
           :selected-keys="selectedKeys"
           v-model:expandedKeys="expandedKeys"
+          :show-line="{showLeafIcon: false}"
           :fieldNames="{ key: 'id' }"
           :virtual="true"
           :height="treeHeight"
           @select="onSelect"
+          block-node
         >
           <template #title="{ name, data }">
             <div class="department-tree-item-content">
@@ -37,7 +52,7 @@
                   {{ name }}
                 </j-ellipsis>
               </div>
-              <div class="func-btn" @click="(e) => e.stopPropagation()">
+              <a-space>
                 <j-permission-button
                   :hasPermission="`${permission}:update`"
                   type="link"
@@ -51,10 +66,12 @@
                 </j-permission-button>
                 <j-permission-button
                   :hasPermission="`${permission}:add`"
+                  v-if="data.level < 8"
                   type="link"
                   :tooltip="{
                     title: $t('components.LeftTree.755653-3'),
                   }"
+                  style="padding: 0"
                   @click="
                     openDialog({
                       ...data,
@@ -78,7 +95,7 @@
                 >
                   <AIcon type="DeleteOutlined" />
                 </j-permission-button>
-              </div>
+              </a-space>
             </div>
           </template>
         </a-tree>
@@ -93,11 +110,18 @@
       @save="onSave"
       @close="visible = false"
     />
+    <BatchImport
+      v-if="batchImportVisible"
+      :downloadUrlBuilder="downloadImportTemplate_api"
+      :request="batchImport_api"
+      @close="batchImportVisible = false"
+      @save="getTree"
+    />
   </div>
 </template>
 
 <script setup lang="ts" name="LeftTree">
-import { getTreeData_api, delDepartment_api } from '@authentication-manager-ui/api/system/department'
+import { getTreeData_api, delDepartment_api, downloadImportTemplate_api, batchImport_api } from '@authentication-manager-ui/api/system/department'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { debounce, cloneDeep, omit } from 'lodash-es'
 import Save from './Save.vue'
@@ -123,6 +147,8 @@ const expandedKeys = ref<string[] | number[]>([])
 
 // 弹窗
 const visible = ref<boolean>(false)
+//批量导入弹窗
+const batchImportVisible = ref(false)
 const current = ref<any>({})
 
 const treeContainer = ref<HTMLElement>()
@@ -148,7 +174,7 @@ const getTree = (cb?: Function) => {
   loading.value = true
   const params = {
     paging: false,
-    sorts: [{ name: 'sortIndex', order: 'asc' }, { name: 'name', order: 'asc' }],
+    sorts: [{ name: 'sortIndex', order: 'asc' }, { name: 'createTime', order: 'asc' }],
   } as any
   if (searchValue.value) {
     params.terms = [{ column: 'name$LIKE', value: `%${searchValue.value}%` }]
@@ -165,6 +191,14 @@ const getTree = (cb?: Function) => {
       // ) // 报存源数据
       handleTreeMap(resp.result) // 将树形结构转换为map结构
       treeData.value = resp.result // 第一次不用进行过滤
+      selectedKeys.value = route.query.id ? [route.query.id as string] : treeData.value.map(i => i.id).slice(0, 1)
+      // 根据路由query参数展开父级节点
+      const targetId = route.query.id as string
+      if (targetId && treeMap.has(targetId)) {
+        const parentKeys = expandParentNodes(targetId)
+        expandedKeys.value = [...new Set([...expandedKeys.value, ...parentKeys])]
+      }
+      
       cb && cb()
     })
     .finally(() => {
@@ -190,6 +224,7 @@ const onSearch = debounce(() => {
     treeData.value = ArrayToTree(cloneDeep([...treeMap.values()]))
     expandedKeys.value = []
   }
+  selectedKeys.value = treeData.value.map(i => i.id).slice(0, 1)
 
   function dig(_data: any[]): any {
     const pIds: string[] = []
@@ -215,6 +250,24 @@ function handleTreeMap(_data: any[]) {
     })
   }
 }
+
+// 根据目标节点ID展开其所有父级节点
+const expandParentNodes = (targetId: string) => {
+  if (!targetId || !treeMap.has(targetId)) {
+    return []
+  }
+  
+  const expandKeys: string[] = []
+  let currentNode = treeMap.get(targetId)
+  
+  // 向上查找所有父级节点
+  while (currentNode && currentNode.parentId) {
+    expandKeys.push(currentNode.parentId)
+    currentNode = treeMap.get(currentNode.parentId)
+  }
+  
+  return expandKeys
+}
 // 删除部门
 const delDepartment = (id: string) => {
   delDepartment_api(id).then((resp) => {
@@ -230,11 +283,11 @@ const delDepartment = (id: string) => {
 }
 
 // 刷新
-const onSave = (id: string) => {
+const onSave = async (id: string) => {
   visible.value = false
   current.value = {}
 
-  const isTabBack = onBack(id)
+  const isTabBack = await onBack(id)
   if (!isTabBack) {
     getTree()
   }
@@ -266,8 +319,6 @@ const onSelect = (val: string[]) => {
 watch(
   () => selectedKeys.value,
   (n) => {
-    console.log('sssss')
-
     emits('change', n?.[0])
   },
   {
@@ -311,13 +362,15 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   height: 25px;
+  gap: 12px;
 
   .title {
-    width: calc(100% - 80px);
+    flex: 1;
+    min-width: 0;
   }
   .func-btn {
     font-size: 14px;
-    width: 80px;
+    //width: 80px;
   }
 }
 

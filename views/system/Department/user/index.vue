@@ -1,5 +1,5 @@
 <template>
-  <div style="height: 100%; display: flex; flex-direction: column">
+  <div :key="parentId" style="height: 100%; display: flex; flex-direction: column">
     <pro-search
         v-if="show"
         noMargin
@@ -26,6 +26,16 @@
       >
         <template #headerLeftRender>
           <a-space>
+            <j-permission-button
+                type="primary"
+                :hasPermission="`${permission}:bind-user`"
+                @click="addUserDialogVisible = true"
+                style="margin-right: 15px"
+                :disabled="isShow"
+            >
+              <AIcon type="PlusOutlined"/>
+              {{ $t('position.User.473212-0') }}
+            </j-permission-button>
             <j-permission-button
                 type="primary"
                 :hasPermission="`${permission}:bind-user`"
@@ -82,11 +92,19 @@
       @save="onSave"
       @close="dialogVisible = false"
   />
+  <AddUserDialog
+    v-if="addUserDialogVisible"
+    v-model:visible="addUserDialogVisible"
+    :orgId="parentId"
+    type="add"
+    @confirm="handleAddUser"
+  />
 </template>
 
 <script setup lang="ts" name="user">
 import AddBindUserDialog from './components/AddBindUserDialog.vue'
 import {unBindUser_api} from '@authentication-manager-ui/api/system/department'
+import AddUserDialog from '../positions/Detail/AddUserDialog.vue'
 import {useColumns, requestFun} from '../util'
 import {onlyMessage} from '@jetlinks-web/utils'
 import {useI18n} from 'vue-i18n';
@@ -117,6 +135,8 @@ const searchTarget = useRouteQuery('target')
 // 搜索参数
 const queryParams = ref({})
 const dialogVisible = ref(false)
+const addUserDialogVisible = ref(false)
+
 // 表格
 const tableRef = ref<any>() // 表格实例
 const searchRef = ref<any>() // 表格实例
@@ -186,6 +206,11 @@ const handleParams = (e: any) => {
     })
   })
   queryParams.value = e
+}
+
+const handleAddUser = () => {
+  addUserDialogVisible.value = false;
+  refresh()
 }
 
 // 请求数据

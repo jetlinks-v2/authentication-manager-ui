@@ -244,6 +244,47 @@
                 ]
               }
             ]
+          },
+          {
+            "id": "export",
+            "name": "批量导出",
+            "i18nMessages": {
+              "zh_CN": "批量导出",
+              "en_US": "Export",
+              "en": "Export"
+            },
+            "permissions": [
+              {
+                "permission": "user",
+                "actions": [
+                  "query"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "import",
+            "name": "批量导入",
+            "i18nMessages": {
+              "zh_CN": "批量导入",
+              "en_US": "Import",
+              "en": "Import"
+            },
+            "permissions": [
+              {
+                "permission": "file",
+                "actions": [
+                  "upload-static"
+                ]
+              },
+              {
+                "permission": "user",
+                "actions": [
+                  "query",
+                  "save"
+                ]
+              }
+            ]
           }
         ],
         "accessSupport": {
@@ -417,7 +458,8 @@
               {
                 "permission": "device-product",
                 "actions": [
-                  "query"
+                  "query",
+                  "export"
                 ]
               },
               {
@@ -564,6 +606,59 @@
                 "permission": "assets-bind",
                 "actions": [
                   "query"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "bind-position",
+            "name": "绑定职位",
+            "i18nMessages": {
+              "zh_CN": "绑定职位",
+              "en_US": "Bind Position",
+              "en": "Bind Position"
+            },
+            "permissions": [
+              {
+                "permission": "position",
+                "actions": [
+                  "query",
+                  "save"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "delete-position",
+            "name": "删除职位",
+            "i18nMessages": {
+              "zh_CN": "删除职位",
+              "en_US": "Delete Position",
+              "en": "Delete Position"
+            },
+            "permissions": [
+              {
+                "permission": "position",
+                "actions": [
+                  "delete"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "update-position",
+            "name": "更新职位",
+            "i18nMessages": {
+              "zh_CN": "更新职位",
+              "en_US": "Update Position",
+              "en": "Update Position"
+            },
+            "permissions": [
+              {
+                "permission": "position",
+                "actions": [
+                  "query",
+                  "save"
                 ]
               }
             ]
@@ -1731,170 +1826,92 @@
         "supportDataAccess": false
       },
       {
-        "id": "c22370da99f05c1e44c5fe1cd4973633",
-        "sortIndex": 15,
-        "level": 2,
+        "code": "system/Log",
+        "name": "日志管理",
+        "i18nMessages": {
+          "name": {
+            "zh_CN": "日志管理",
+            "en_US": "Log Management",
+            "en": "Log Management"
+          }
+        },
         "owner": "iot",
-        "name": "职位管理",
-        "code": "system/Positions",
-        "url": "/system/positions",
-        "icon": "icon-yonghuguanli",
+        "id": "7bfca91e0accad83c96ad8b3a79153c0",
+        "sortIndex": 17,
+        "url": "/system/log",
+        "icon": "icon-rizhifuwu",
+        "showPage": [
+          "system-logger",
+          "access-logger"
+        ],
         "permissions": [
           {
-            "permission": "position",
+            "permission": "system-logger",
             "actions": [
+              "query"
+            ]
+          },
+          {
+            "permission": "access-logger",
+            "actions": [
+              "self-data",
               "query"
             ]
           }
         ],
-        "showPage": [
-          "position"
-        ],
-        "i18nMessages": {
-          "name": {
-            "zh_CN": "职位管理",
-            "en_US": "Positions Management",
-            "en": "Positions Management"
-          }
-        },
-        "buttons": [
-          {
-            "id": "add",
-            "name": "新增",
-            "permissions": [
-              {
-                "permission": "position",
-                "actions": [
-                  "save"
-                ]
-              }
-            ],
-            "i18nMessages": {
-              "zh_CN": "新增",
-              "en_US": "Add",
-              "en": "Add"
-            }
-          },
-          {
-            "id": "delete",
-            "name": "删除",
-            "permissions": [
-              {
-                "permission": "position",
-                "actions": [
-                  "delete"
-                ]
-              }
-            ],
-            "i18nMessages": {
-              "zh_CN": "删除",
-              "en_US": "Delete",
-              "en": "Delete"
-            }
-          },
-          {
-            "id": "update",
-            "name": "编辑",
-            "permissions": [
-              {
-                "permission": "position",
-                "actions": [
-                  "save"
-                ]
-              }
-            ],
-            "i18nMessages": {
-              "zh_CN": "编辑",
-              "en_US": "Edit",
-              "en": "Edit"
-            }
-          }
-        ],
-        "accessSupport": {
-          "text": "间接支持",
-          "value": "indirect"
-        },
-        "supportDataAccess": false,
-        "indirectMenus": [
-          "3962ec0835f3b4a68c1f63b955625046"
-        ]
-      }
-    ]
-  },
-  {
-    "code": "iot",
-    "name": "物联网",
-    "i18nMessages": {
-      "name": {
-        "zh_CN": "物联网",
-        "en_US": "IoT",
-        "en": "IoT"
-      }
-    },
-    "owner": "iot",
-    "id": "9c21f88182e7cc75cbdfa8e4b7844272",
-    "url": "/iot",
-    "icon": "icon-wulianwang",
-    "sortIndex": 1,
-    "permissions": [],
-    "children": [
-      {
-        "code": "link",
-        "name": "运维管理",
-        "i18nMessages": {
-          "name": {
-            "zh_CN": "运维管理",
-            "en_US": "Operation Management",
-            "en": "Operation Management"
-          }
-        },
-        "owner": "iot",
-        "id": "bd55cdc9d0c1700afe628f572f91c22e",
-        "url": "/iot/link",
-        "icon": "icon-yunweiguanli-1",
-        "permissions": [],
-        "sortIndex": 4,
+        "buttons": [],
         "children": [
           {
-            "code": "Log",
-            "name": "日志管理",
+            "id": "645fe54e5ca9e70988ff20f1e55e2261",
+            "sortIndex": 1,
+            "level": 3,
+            "owner": "iot",
+            "name": "访问日志",
             "i18nMessages": {
               "name": {
-                "zh_CN": "日志管理",
-                "en_US": "Log Management",
-                "en": "Log Management"
+                "zh_CN": "访问日志",
+                "en_US": "Access Log",
+                "en": "Access Log"
               }
             },
-            "owner": "iot",
-            "id": "c340f8977e0d221da893715cab58ae8c",
-            "sortIndex": 4,
-            "url": "/iot/link/Log",
+            "code": "system/Log/Access",
             "icon": "icon-rizhifuwu",
+            "url": "/system/log/access",
+            "describe": "",
             "showPage": [
-              "system-logger",
               "access-logger"
             ],
-            "permissions": [
-              {
-                "permission": "system-logger",
-                "actions": [
-                  "query"
-                ]
-              },
-              {
-                "permission": "access-logger",
-                "actions": [
-                  "self-data",
-                  "query"
-                ]
-              }
-            ],
-            "buttons": [],
             "accessSupport": {
-              "text": "不支持",
-              "value": "unsupported"
+              "text": "支持",
+              "value": "support"
             },
-            "supportDataAccess": false
+            "supportDataAccess": true
+          },
+          {
+            "id": "57e5bdaaee37a611424cfc1f5ab02d1f",
+            "sortIndex": 2,
+            "level": 3,
+            "owner": "iot",
+            "name": "系统日志",
+            "i18nMessages": {
+              "name": {
+                "zh_CN": "系统日志",
+                "en_US": "System Log",
+                "en": "System Log"
+              }
+            },
+            "showPage": [
+              "system-logger"
+            ],
+            "code": "system/Log/System",
+            "icon": "icon-rizhifuwu",
+            "url": "/system/log/system",
+            "describe": "",
+            "accessSupport": {
+                "text": "不支持",
+                "value": "unsupported"
+            },
+            "assetAccesses": []
           }
         ]
       }

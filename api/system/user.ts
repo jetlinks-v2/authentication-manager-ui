@@ -1,4 +1,4 @@
-import { request } from '@jetlinks-web/core'
+import { request, ndJson } from '@jetlinks-web/core'
 
 /**
  * 获取用户基本信息
@@ -55,3 +55,21 @@ export const deleteUser_api = (id: string) => request.remove(`/user/${id}`);
 
 // 查询角色不分页
 export const queryRole_api = (data: any): Promise<any> => request.post(`/role/_query/no-paging`, data)
+
+/**
+ * 导入用户模板
+ * @param format 文件格式
+ */
+export const importUserTemplate_api = (format: string) => request.get(`/user/detail/template.${format}`, {}, { responseType: 'blob' });
+
+/**
+ * 导入用户
+ * @param fileUrl 文件地址
+ */
+export const importUser_api = (fileUrl: string) => ndJson.get(`/user/detail/_import?fileUrl=${fileUrl}`);
+
+/**
+ * 导出用户
+ * @param data 查询参数
+ */
+export const exportUser_api = (format: string = 'xlsx') => request.get(`/user/detail/download.${format}/_query`, {}, { responseType: 'blob' });

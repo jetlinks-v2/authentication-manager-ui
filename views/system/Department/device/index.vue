@@ -24,7 +24,7 @@
         :columns="columns"
       >
         <template #headerLeftRender>
-          <a-space>
+          <a-space v-if="parentId">
             <j-permission-button
               :hasPermission="`${permission}:assert`"
               type="primary"
@@ -63,6 +63,24 @@
                       {{ $t('device.index.988419-4') }}
                     </j-permission-button>
                   </a-menu-item>
+                  <a-menu-item>
+                    <j-permission-button
+                      :hasPermission="`${permission}:assert`"
+                      @click="batchImportVisible = true"
+                    >
+                      <AIcon type="ImportOutlined"/>
+                      {{ $t('Department.device.398213-0') }}
+                    </j-permission-button>
+                  </a-menu-item>
+                  <a-menu-item>
+                    <j-permission-button
+                      :hasPermission="`${permission}:assert`"
+                      @click="handleBatchExport"
+                    >
+                      <AIcon type="ExportOutlined"/>
+                      {{ $t('Department.device.398213-1') }}
+                    </j-permission-button>
+                  </a-menu-item>
                 </a-menu>
               </template>
             </a-dropdown>
@@ -72,7 +90,7 @@
         <template #card="slotProps">
           <CardBox
             :value="slotProps"
-            :actions="[{ key: 1 }]"
+            :actions="table.getActions(slotProps, 'card')"
             v-bind="slotProps"
             :active="
               table._selectedRowKeys.value.includes(slotProps.id)
@@ -131,23 +149,18 @@
                 </a-col>
               </a-row>
             </template>
-            <template #actions>
+            <template #actions="item">
               <j-permission-button
-                :hasPermission="`${permission}:assert`"
-                @click="table.clickEdit(slotProps)"
-              >
-                <AIcon type="EditOutlined"/>
-              </j-permission-button>
-
-              <j-permission-button
-                :hasPermission="`${permission}:bind`"
-                :popConfirm="{
-                  title: $t('device.index.988419-6'),
-                  onConfirm: () =>
-                    table.clickUnBind(slotProps),
+                :hasPermission="item.permission"
+                :tooltip="{
+                  ...item.tooltip
                 }"
+                :popConfirm="item.popConfirm"
+                :disabled="item.disabled"
+                @click="item.onClick"
               >
-                <AIcon type="DisconnectOutlined"/>
+                <AIcon :type="item.icon"/>
+                {{ item.text }}
               </j-permission-button>
             </template>
           </CardBox>
@@ -196,14 +209,14 @@
     </FullPage>
 
     <div class="dialogs">
-      <AddDeviceOrProductDialog
+      <Assign
         v-if="dialogs.addShow"
         v-model:visible="dialogs.addShow"
         :query-columns="columns"
         :parent-id="props.parentId"
         :all-permission="table.permissionList.value"
         asset-type="device"
-        @confirm="table.refresh"
+        @confirm="onRefresh"
       />
       <EditPermissionDialog
         v-if="dialogs.editShow"
@@ -216,12 +229,20 @@
         :defaultPermission="table.defaultPermission"
         @confirm="table.refresh"
       />
+      <BatchImport
+        v-if="batchImportVisible"
+        :downloadUrlBuilder="downloadDeviceAssetsImportTemplate_api"
+        :request="(fileUrl: string) => importDeviceAssets_api(parentId, fileUrl)"
+        @close="batchImportVisible = false"
+        @save="handleBatchImport"
+        :message="$t('Department.index.945805-6')"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts" name="device">
-import AddDeviceOrProductDialog from '../components/AddDeviceOrProductDialog.vue';
+import Assign from '../property/components/Assign.vue';
 import EditPermissionDialog from '../components/EditPermissionDialog.vue';
 import {onlyMessage} from '@/utils/comm';
 import {
@@ -231,6 +252,8 @@ import {
   unBindDeviceOrProduct_api,
   getDeviceProduct_api,
   getBindingsPermission,
+  downloadDeviceAssetsImportTemplate_api,
+  importDeviceAssets_api, exportProductAssets_api, exportDeviceAssets_api
 } from '@authentication-manager-ui/api/system/department';
 import {intersection} from 'lodash-es';
 
@@ -239,13 +262,14 @@ import {useDepartmentStore} from '@/store/department';
 import dayjs from 'dayjs';
 import {systemImg} from "@authentication-manager-ui/assets";
 import { useI18n } from 'vue-i18n';
+import { downloadFileByUrl } from '@jetlinks-web/utils';
 
 const { t: $t } = useI18n();
 const departmentStore = useDepartmentStore();
 
 const permission = 'system/Department';
 
-const emits = defineEmits(['update:bindBool']);
+const emits = defineEmits(['update:bindBool', 'refresh']);
 const props = defineProps<{
   parentId: string;
   bindBool: boolean;
@@ -338,7 +362,15 @@ const columns = [
     scopedSlots: true,
     width: 80
   },
-
+  {
+    title: $t('product.index.083446-7'),
+    dataIndex: 'describe',
+    key: 'describe',
+    ellipsis: true,
+    search: {
+      type: 'string'
+    }
+  },
   {
     title: $t('device.index.988419-14'),
     dataIndex: 'action',
@@ -350,6 +382,7 @@ const columns = [
 ];
 const queryParams = ref({});
 
+const batchImportVisible = ref(false);
 const tableRef = ref();
 const searchRef = ref();
 const table = {
@@ -377,6 +410,7 @@ const table = {
     else
       return [
         {
+          text: $t('device.index.988419-15'),
           permission: `${permission}:assert`,
           key: 'edit',
           tooltip: {title: $t('device.index.988419-15')},
@@ -384,6 +418,7 @@ const table = {
           onClick: () => table.clickEdit(data),
         },
         {
+          text: $t('device.index.988419-16'),
           permission: `${permission}:bind`,
           key: 'unbind',
           tooltip: {title: $t('device.index.988419-16')},
@@ -511,7 +546,7 @@ const table = {
         ...oParams,
         sorts: [{name: 'createTime', order: 'desc'}],
         terms: [
-          ...oParams.terms,
+          ...(oParams.terms || []),
           {
             column: 'id',
             termType: 'dim-assets',
@@ -589,7 +624,7 @@ const table = {
     const response = unBindDeviceOrProduct_api('device', params)
     response.then(() => {
       onlyMessage($t('device.index.988419-19'));
-      table.refresh();
+      onRefresh()
     });
     return response
   },
@@ -608,7 +643,45 @@ const dialogs = reactive({
   editShow: false,
 });
 
+const onRefresh = () => {
+  emits('refresh', false);
+  table.refresh()
+}
+
 table.init();
+
+//批量导入
+const handleBatchImport = () => {
+    tableRef.value?.reload();
+}
+
+//批量导出
+const handleBatchExport = () => {
+  exportDeviceAssets_api({
+    filter: {
+      terms: [
+        ...(queryParams.value?.terms || []),
+        {
+          column: 'id',
+          termType: 'dim-assets',
+          value: {
+            assetType: 'device',
+            targets: [
+              {
+                type: 'org',
+                id: props.parentId,
+              },
+            ],
+          },
+        },
+      ],
+    }
+  }).then((resp: any) => {
+    const blob = new Blob([resp], {type: 'xlsx'});
+    const url = URL.createObjectURL(blob);
+    downloadFileByUrl(url, '设备资产', 'xlsx');
+  })
+}
 watchEffect(() => {
   props.bindBool && table.clickAdd();
   emits('update:bindBool', false);
@@ -623,12 +696,6 @@ watchEffect(() => {
         .card-item-content-value {
           color: #2f54eb;
         }
-      }
-    }
-
-    .card-tools {
-      span {
-        color: #252525;
       }
     }
   }
