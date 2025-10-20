@@ -35,6 +35,7 @@
               :placeholder="$t('components.PermissionTree.954862-4')"
               mode="multiple"
               :max-tag-count="1"
+              :filter-option="filterOption"
           />
         </div>
         <div v-else-if="column.key === 'data'">
@@ -410,6 +411,10 @@ const getAllPermission = async () => {
     }));
   }
 }
+
+const filterOption = (input, option) => {
+  return option.label.indexOf(input) >= 0;
+};
 
 const onSave = () => {
   const arr = Object.values(flatTableData);

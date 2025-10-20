@@ -43,7 +43,7 @@
                 type="link"
                 style="padding: 0 5px"
                 :danger="i.key === 'delete'"
-                :hasPermission="'system/Role:' + (i.key === 'copy' ? 'update' : i.key)"
+                :hasPermission="'system/Role:' + i.key"
               >
                 <template #icon>
                   <AIcon :type="i.icon" />
@@ -174,7 +174,7 @@ const getActions = (
       icon: 'FormOutlined',
     },
     {
-      key: 'add',
+      key: 'copy',
       text: $t('RoleRight.index.470525-11'),
       tooltip: {
         title: $t('RoleRight.index.470525-11'),
