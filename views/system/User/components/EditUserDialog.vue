@@ -92,7 +92,7 @@
           <a-row :gutter="24" v-if="form.IsShow('add', 'edit') && isNoCommunity">
             <a-col :span="12">
               <a-form-item name="positions" :label="$t('components.EditUserDialog.939453-31')">
-                  <form-item-position :extraData="detail.positions" :extraProps="{disabled: form.data.username === 'admin', multiple: true}" v-model:value="form.data.positions" @change="onChange" />
+                <form-item-position :extraData="detail.positions" :extraProps="{disabled: form.data.username === 'admin', multiple: true}" v-model:value="form.data.positions" @change="onChange" :showAdd="false"/>
               </a-form-item>
             </a-col>
           </a-row>
@@ -243,6 +243,7 @@ const handleData = (data: string[], newData: string[], key: string) => {
 
 const onChange = (value: string[]) => {
   const arr = (value || []).map(i => {
+    console.log('====',positionsMap.get(i));
     return positionsMap.get(i) || i
   })
 
@@ -388,7 +389,10 @@ onMounted(() => {
     }).then(resp => {
       if(resp.success){
         resp.result.map(i => {
-          positionsMap.set(i.id, i)
+          positionsMap.set(i.id, {
+            ...i,
+            name:`${i.orgName}(${i.name})`
+          })
         })
       }
     })

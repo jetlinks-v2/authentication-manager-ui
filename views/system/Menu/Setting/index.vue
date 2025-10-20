@@ -309,8 +309,7 @@ onMounted(() => {
     getMenuTree(params).then((resp: any) => {
       if (resp.status == 200) {
         const filterMenu = handleMenuFilterMessage(resp.result)
-
-        systemMenu.value = handleMergeTree( baseMenu.value, filterMenu);
+        systemMenu.value = handleMergeTree(baseMenu.value, filterMenu);
         // systemMenu.value = resp.result?.filter(
         //   (item: { code: string }) =>
         //     ![USER_CENTER_MENU_CODE, messageSubscribe].includes(item.code),

@@ -7,7 +7,7 @@
         target="category"
         @search="handleSearch"
       />
-      <FullPage>
+      <FullPage :fixed="false">
         <j-pro-table
           ref="tableRef"
           :columns="columns"

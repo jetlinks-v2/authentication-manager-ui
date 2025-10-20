@@ -350,9 +350,36 @@ export const handleSortsArr = (node: any[]) => {
 
 export const handleMergeTree = (treeA: any[], treeB: any[]) => {
     const map = new Map();
+    
+    // 收集treeB中顶层菜单的code（这些是被拖拽到外层的菜单）
+    const topLevelCodesInTreeB = new Set();
+    for (const node of treeB) {
+        if (node && node.code) {
+            topLevelCodesInTreeB.add(node.code);
+        }
+    }
+
+    // 从treeA中移除与treeB顶层菜单code重复的菜单项（包括子菜单中的）
+    function removeConflictingCodes(nodes: any[]): any[] {
+        return nodes.filter(node => {
+            if (!node || typeof node !== 'object') return true;
+            
+            // 如果当前节点的code在treeB的顶层出现，则移除
+            if (node.code && topLevelCodesInTreeB.has(node.code)) {
+                return false;
+            }
+            
+            // 递归处理子菜单
+            if (node.children && Array.isArray(node.children)) {
+                node.children = removeConflictingCodes(node.children);
+            }
+            
+            return true;
+        });
+    }
 
     // 遍历并构建 Map（以 id 为 key）
-    function addNodes(nodes) {
+    function addNodes(nodes: any[]) {
         for (const node of nodes) {
             if (!node || typeof node !== 'object') continue;
 
@@ -372,7 +399,13 @@ export const handleMergeTree = (treeA: any[], treeB: any[]) => {
         }
     }
 
-    addNodes(treeA);
+    // 先处理treeA，移除与treeB顶层冲突的菜单项
+    const cleanedTreeA = removeConflictingCodes(cloneDeep(treeA));
+    
+    // 添加清理后的treeA
+    addNodes(cleanedTreeA);
+    
+    // 添加treeB（包含外层菜单）
     addNodes(treeB);
 
     return Array.from(map.values());

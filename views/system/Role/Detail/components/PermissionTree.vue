@@ -209,7 +209,7 @@ const selectAllChange = (e) => {
     });
     if (checked) {
       // 全选
-      item.selectAccesses = 'creator';
+      item.selectAccesses = item.selectAccesses || 'creator';
     } else {
       // 取消全选
       item.selectAccesses = undefined;
