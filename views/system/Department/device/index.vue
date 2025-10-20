@@ -106,7 +106,7 @@
           >
             <template #img>
               <slot name="img">
-                <img
+                <Image
                   :src="systemImg.deviceProductImg"
                   style="cursor: pointer"
                   alt=""

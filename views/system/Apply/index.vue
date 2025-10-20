@@ -53,7 +53,7 @@
             >
               <template #img>
                 <slot name="img">
-                  <img style="width: 80px" :src="slotProps.logoUrl || systemImg.applyImg" alt=""/>
+                  <Image class="card-list-img-80" :src="slotProps.logoUrl || systemImg.applyImg" />
                 </slot>
               </template>
               <template #content>

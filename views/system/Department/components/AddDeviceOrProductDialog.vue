@@ -64,7 +64,7 @@
                 >
                     <template #img>
                         <slot name="img">
-                            <img :src="systemImg.deviceProductImg" style="cursor: pointer" alt=""/>
+                            <Image :src="systemImg.deviceProductImg" style="cursor: pointer" alt=""/>
                         </slot>
                     </template>
                     <template #content>

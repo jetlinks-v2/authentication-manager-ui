@@ -3,9 +3,11 @@ import {queryRole_api} from "@authentication-manager-ui/api/system/user";
 import {getTreeData_api} from "@authentication-manager-ui/api/system/department";
 import {useRequest} from "@jetlinks-web/hooks";
 import {queryPageNoPage} from "@authentication-manager-ui/api/system/positions";
+import { useTermOptions } from '@jetlinks-web/components/es/Search/hooks/useTermOptions'
 
 export const useColumns = () => {
   const { t: $t } = useI18n();
+  const { termOptions } = useTermOptions({ pick: ['eq']})
   return [
     {
       title: 'ID',
@@ -76,7 +78,7 @@ export const useColumns = () => {
       scopedSlots: true,
       search: {
         type: 'treeSelect',
-        termOptions: ['eq'],
+        termOptions: termOptions,
         options: () =>
           new Promise((resolve) => {
             getTreeData_api({
