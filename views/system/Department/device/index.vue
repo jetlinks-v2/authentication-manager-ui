@@ -645,7 +645,7 @@ table.init();
 
 //批量导入
 const handleBatchImport = () => {
-    tableRef.value?.reload();
+  onRefresh()
 }
 
 //批量导出

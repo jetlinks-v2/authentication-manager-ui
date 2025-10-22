@@ -1364,6 +1364,7 @@
                     mode="multiple"
                     :options="form.roleIdList"
                     :placeholder="$t('components.EditForm.949962-52')"
+                    :filter-option="filterOption"
                 ></a-select>
                 <j-permission-button
                     :hasPermission="`${rolePermission}:update`"
@@ -1395,6 +1396,9 @@
                     multiple
                     :tree-data="form.orgIdList"
                     :placeholder="$t('components.EditForm.949962-57')"
+                    :filterTreeNode="
+                                (v: string, node: any) => filterSelectNode(v, node, 'name')
+                            "
                 >
                   <template #title="{ name }">
                     {{ name }}
@@ -1819,6 +1823,10 @@ function getOrgIdList() {
     }
   });
 }
+
+const filterOption = (input: string, option: any) => {
+  return option.label.indexOf(input) >= 0;
+};
 
 // 添加角色/组织
 function clickAddItem(data: string[], target: string) {
