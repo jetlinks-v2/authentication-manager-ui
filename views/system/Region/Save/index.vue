@@ -15,6 +15,7 @@
             showSearch
             allowClear
             v-model:value="modelRef.parentId"
+            :loadData="onLoadData"
             :placeholder="$t('Save.index.968210-3')"
             :tree-data="areaList"
             :field-names="{
@@ -155,7 +156,7 @@
 import type {PropType} from 'vue';
 import {reactive, ref, watch} from 'vue';
 import BuildIn from './BuildIn.vue';
-import {updateRegion, validateName, validateCode} from '@authentication-manager-ui/api/system/region';
+import {updateRegion, validateName, validateCode,getRegion} from '@authentication-manager-ui/api/system/region';
 import {cloneDeep, omit} from "lodash-es";
 import { onlyMessage } from "@jetlinks-web/utils";
 import RadioButton from '@/components/CardSelect/RadioButton.vue'
@@ -273,6 +274,72 @@ const showEditMap = (type: boolean) => {
 
   emit('close')
 }
+// 异步加载子节点数据
+const onLoadData = async (treeNode: any) => {
+  console.log('onLoadData 被调用:', treeNode);
+  return new Promise<void>(async (resolve) => {
+    // 如果节点已经有子节点且不为空数组，则不需要加载
+    if (treeNode.children && treeNode.children.length > 0) {
+      console.log('节点已有子节点，跳过加载');
+      resolve();
+      return;
+    }
+
+    try {
+      console.log('开始异步加载子节点，父节点ID:', treeNode.id);
+      const params = {
+        paging: false,
+        sorts: [{ name: "sortIndex", order: "asc" }],
+        terms: [{
+          column: 'parentId',
+          value: treeNode.id,
+          termType: "eq",
+        }],
+      };
+
+      const resp = await getRegion(params);
+      if (resp.success) {
+        console.log('获取到子节点数据:', resp.result);
+        const children = (resp.result || []).map((item: any) => ({
+          ...item,
+          key: item.id,
+          title: item.name,
+          value: item.id,
+          isLeaf: false, // 默认都不是叶子节点，允许展开查询
+          children: undefined, // 设置为 undefined，表示可以异步加载
+        }));
+        
+        // 递归更新树节点
+        const updateTreeNode = (nodes: any[], targetId: string, newChildren: any[]): any[] => {
+          return nodes.map(node => {
+            if (node.id === targetId) {
+              return {
+                ...node,
+                children: newChildren.length > 0 ? newChildren : undefined,
+                isLeaf: newChildren.length === 0
+              };
+            }
+            if (node.children && node.children.length > 0) {
+              return {
+                ...node,
+                children: updateTreeNode(node.children, targetId, newChildren)
+              };
+            }
+            return node;
+          });
+        };
+        
+        // 更新树数据
+        areaList.value = updateTreeNode(areaList.value, treeNode.id, children);
+        console.log('树数据已更新:', areaList.value);
+      }
+    } catch (error) {
+      console.error('加载子节点失败:', error);
+    }
+    
+    resolve();
+  });
+};
 const treeSelect = (id: string, label: string, extra: any) => {
   let children: any[]
   if (extra) {
@@ -388,8 +455,20 @@ watch(
 );
 
 
+// 处理树数据，为异步加载设置正确的属性
+const processTreeData = (data: any[]): any[] => {
+  return data.map(item => ({
+    ...item,
+    key: item.id,
+    title: item.name,
+    value: item.id,
+    isLeaf: false, // 默认都不是叶子节点，允许展开查询
+    children: item.children && item.children.length > 0 ? processTreeData(item.children) : undefined, // 如果有子节点则递归处理，否则设为 undefined 以触发异步加载
+  }));
+};
+
 watch(() => JSON.stringify(props.treeData), () => {
-  areaList.value = JSON.parse(JSON.stringify(props.treeData))
+  areaList.value = processTreeData(JSON.parse(JSON.stringify(props.treeData)))
   // if (props.mode === 'add' && modelRef.properties.sync) {
   //   // modelRef.children = props.areaTree?.[0]?.children
   // }
