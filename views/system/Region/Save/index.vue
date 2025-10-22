@@ -238,7 +238,7 @@ const handleCancel = (data: any) => {
       regionState.mapReadOnly(modelRef.geoJson)
     }
   }
-
+  regionState.showGeoJson = true
   emit('close', data);
 };
 
@@ -261,10 +261,11 @@ const showEditMap = (type: boolean) => {
   regionState.treeMask = true
   regionState.saveCache = modelRef
   regionState.showTool()
+  regionState.showGeoJson = false
 
   if (type) {
     regionState.layerSetData(modelRef.geoJson)
-  } else {
+  } else { // 新增
     regionState.type = undefined
   }
 
@@ -323,19 +324,20 @@ const handleSave = () => {
       }
 
       loading.value = true;
-
       const resp = await updateRegion(newData).finally(() => {
         loading.value = false;
+        regionState.showGeoJson = true
       });
       if (resp.status === 200) {
         regionState.stateInit()
         onlyMessage($t('Save.index.968210-20'));
         emit('save');
       }
+      regionState.showGeoJson = true
     })
     .catch((err: any) => {
       console.log('error', err);
-    });
+    })
 }
 
 const vailName = async (_: Record<string, any>, value: string) => {
