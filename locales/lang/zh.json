@@ -742,6 +742,8 @@
   "components.Does.860107-25": "第三方用户可调用的API服务在其应用管理卡片的其他->赋权页面，进行自定义配置。",
   "components.Does.860107-26": "通过第三方平台账号登录到物联网平台。",
   "components.Does.860107-27": "配置成功后，平台用户可以在微信小程序中授权登录物联网平台",
+  "components.Does.860107-51": "钉钉开放平台：",
+  "components.Does.860107-53": "微信开放平台：",
   "ApplyList.MUpload.561504-0": "替换图标",
   "ApplyList.MUpload.561504-1": "删除图标",
   "ApplyList.MUpload.561504-2": "更改图标",
