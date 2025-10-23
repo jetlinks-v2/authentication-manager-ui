@@ -257,6 +257,7 @@
               {
                 "permission": "user",
                 "actions": [
+                  "export",
                   "query"
                 ]
               }
