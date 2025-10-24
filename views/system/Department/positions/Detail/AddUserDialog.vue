@@ -45,19 +45,18 @@
             </a-row>
             <a-row :gutter="24" v-if="IsShow('add', 'edit')">
                 <a-col :span="12">
-                    <a-form-item name="roleIdList" :label="$t('components.EditUserDialog.939453-12')"
-                        :rules="[
-                            { required: form.data.username !== 'admin', message: $t('components.EditUserDialog.939453-13') },
-                        ]">
+                    <a-form-item name="roleIdList" :label="$t('components.EditUserDialog.939453-12')">
                         <form-item-role :extraData="detail.roleList" :extraProps="{ multiple: true }"
                             :disabledData="disabledData.roles" :showAdd="false" v-model:value="form.data.roleIdList"
                             />
+                      <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 4px" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
                     </a-form-item>
                 </a-col>
                 <a-col :span="12">
                     <a-form-item name="orgIdList" :label="$t('components.EditUserDialog.939453-14')">
                         <form-item-org :extraData="detail.orgList" :extraProps="{ multiple: true }"
                             :disabledData="disabledData.orgIds" :showAdd="false" v-model:value="form.data.orgIdList" />
+                      <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 4px" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
                     </a-form-item>
                 </a-col>
             </a-row>
@@ -196,11 +195,19 @@ const handleData = (data: string[], newData: string[], key: string) => {
     // 删除原本的数据，然后加入新的数据
     const _dataSet = new Set(data || []);
     (disabledData[key] || []).map((i: string) => {
-        if (_dataSet.has(i)) {
+        if (_dataSet.has(i) && i !== props.orgId) {
             _dataSet.delete(i)
         }
     })
-    disabledData[key] = [...new Set(newData)]
+
+    const _set = new Set(newData)
+
+    if (!_set.has(props.orgId)) {
+      _set.add(props.orgId);
+    }
+
+    disabledData[key] = [..._set]
+
     return [...new Set([...newData, ..._dataSet])]
 }
 
