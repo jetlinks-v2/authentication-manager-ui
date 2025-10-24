@@ -38,7 +38,8 @@ const regionState = reactive({
   saveCache: undefined,
   stateInit: stateInit,
   mapReadOnly: mapReadOnly,
-  prevSelect: {}
+  prevSelect: {},
+  showGeoJson: true
 })
 
 provide(REGION_KEY, regionState)
@@ -62,7 +63,7 @@ const onSelect = (code: string, node: Record<string, any>) => {
 }
 
 const close = () => {
-  if (regionState.prevSelect.code) {
+  if (regionState.prevSelect.code && regionState.showGeoJson) {
     onSelect(regionState.prevSelect.code, regionState.prevSelect.node)
   }
 }
@@ -95,6 +96,7 @@ function openEdit() {
 
 function layerSetData(geoJson: Record<string, any>, edit = true) {
   regionState.type = geoJson?.features?.[0]?.properties?.type
+
   mapRef.value?.showGeoJson(geoJson?.features?.[0]?.geometry?.coordinates)
   if (edit) {
     mapRef.value?.openEdit()

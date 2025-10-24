@@ -24,6 +24,7 @@
           v-model:expandedKeys="expandedKeys"
           :selectedKeys="selectedKeys"
           :tree-data="_treeData"
+          :load-data="onLoadData"
           :show-line="{ showLeafIcon: false }"
           :show-icon="true"
           :field-names="{ key: 'id' }"
@@ -95,7 +96,7 @@
 import { cloneDeep, debounce } from "lodash-es";
 import { onMounted, ref, watch } from "vue";
 import Save from "../Save/index.vue";
-import { getRegionTree, delRegion, updateRegion } from "@authentication-manager-ui/api/system/region";
+import { getRegionTree, delRegion, updateRegion,getRegion } from "@authentication-manager-ui/api/system/region";
 import { useArea, useRegion } from "../hooks";
 import ResizeObserver from "ant-design-vue/lib/vc-resize-observer";
 import { onlyMessage } from "@jetlinks-web/utils";
@@ -162,7 +163,7 @@ const onSearch = debounce((v: string) => {
 
 const onSave = () => {
   visible.value = false;
-  handleSearch();
+  handleSearch(); // 重新加载根节点数据
 };
 
 const onClose = () => {
@@ -189,7 +190,7 @@ const onRemove = (id: string) => {
   response.then((resp) => {
     if (resp.success) {
       onlyMessage($t("LeftTree.index.191696-6"));
-      handleSearch();
+      handleSearch(); // 重新加载根节点数据
     }
   });
   return response;
@@ -330,12 +331,29 @@ const areaSelect = (key, { node }) => {
 };
 
 const handleSearch = async () => {
-  const resp = await getRegionTree({
+  // 只加载根节点数据（level = 1 或 parentId 为空的节点）
+  const resp = await getRegion({
     paging: false,
     sorts: [{ name: "sortIndex", order: "asc" }],
+    terms: [{
+      column: 'level',
+      value: 1,
+      termType: "eq",
+    }],
   });
+  
   if (resp.success) {
-    treeData.value = resp?.result || [];
+    // 处理根节点数据，设置异步加载所需的属性
+    const rootNodes = (resp.result || []).map((item: any) => ({
+      ...item,
+      key: item.id,
+      title: item.name,
+      isLeaf: false, // 默认都不是叶子节点，允许展开查询
+      children: [], // 设置空数组，表示可以异步加载
+    }));
+    
+    treeData.value = rootNodes;
+    
     // 默认选择第一个数据
     const dt = treeData.value?.[0];
     if (dt) {
@@ -344,6 +362,91 @@ const handleSearch = async () => {
     }
   }
 };
+
+// 异步加载子节点数据
+const onLoadData = async (treeNode: any) => {
+  return new Promise<void>(async (resolve) => {
+    if (treeNode.children && treeNode.children.length > 0) {
+      resolve();
+      return;
+    }
+
+    try {
+      const params = {
+        paging: false,
+        sorts: [{ name: "sortIndex", order: "asc" }],
+        terms: [{
+          column: 'parentId',
+          value: treeNode.id,
+          termType: "eq",
+        }],
+      };
+
+      const resp = await getRegion(params);
+      if (resp.success) {
+        const children = (resp.result || []).map((item: any) => ({
+          ...item,
+          key: item.id,
+          title: item.name,
+          isLeaf: false, // 默认都不是叶子节点，允许展开查询
+          children: [], // 设置空数组，表示可以异步加载
+        }));
+        
+        // 递归更新树节点
+        const updateTreeNode = (nodes: any[], targetId: string, newChildren: any[]): any[] => {
+          return nodes.map(node => {
+            if (node.id === targetId) {
+              return {
+                ...node,
+                children: newChildren.length > 0 ? newChildren : undefined,
+                isLeaf: newChildren.length === 0
+              };
+            }
+            if (node.children && node.children.length > 0) {
+              return {
+                ...node,
+                children: updateTreeNode(node.children, targetId, newChildren)
+              };
+            }
+            return node;
+          });
+        };
+        
+        // 更新树数据
+        treeData.value = updateTreeNode(treeData.value, treeNode.id, children);
+      }
+    } catch (error) {
+      console.error('加载子节点失败:', error);
+    }
+    
+    resolve();
+  });
+};
+
+// const getRegionTreeById = async (id?:string) => {
+//   const params:any = {
+//     paging: false,
+//     sorts: [{ name: "sortIndex", order: "asc" }],
+//     terms: [{
+//       column:'level',
+//       value: 1,
+//       termType: "eq",
+//     }],
+//   }
+//   if(id){
+//     params.terms.push({
+//       column: "id",
+//       value: id,
+//       type: "and",
+//       termType: "eq",
+//     })
+//   }
+//   const resp = await getRegion(params);
+//   if (resp.success) {
+//     console.log('====',resp);
+//     // return resp?.result || [];
+//   }
+// };
 
 const openSave = (geoJson: Record<string, any>) => {
   if (geoJson) {
