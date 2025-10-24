@@ -8,6 +8,7 @@
         @cancel="emits('update:visible', false)"
         class="edit-dialog-container"
         :confirmLoading="loading"
+        destroy-on-close
         :cancelText="$t('components.EditUserDialog.939453-0')"
         :okText="$t('components.EditUserDialog.939453-1')"
     >
@@ -243,7 +244,6 @@ const handleData = (data: string[], newData: string[], key: string) => {
 
 const onChange = (value: string[]) => {
   const arr = (value || []).map(i => {
-    console.log('====',positionsMap.get(i));
     return positionsMap.get(i) || i
   })
 
@@ -381,21 +381,20 @@ const hasNodeWithId = (arr: any, id: any)=>{
     return false;
 }
 
-onMounted(() => {
+onMounted(async () => {
   if(isNoCommunity) {
-    queryPositionDetailNoPage({
+    const resp = await queryPositionDetailNoPage({
       paging: false,
       sorts: [{name: 'sortIndex', order: 'asc'}]
-    }).then(resp => {
-      if(resp.success){
-        resp.result.map(i => {
-          positionsMap.set(i.id, {
-            ...i,
-            name:`${i.orgName}(${i.name})`
-          })
-        })
-      }
     })
+    if(resp.success){
+      resp.result.map(i => {
+        positionsMap.set(i.id, {
+          ...i,
+          name:`${i.orgName}(${i.name})`
+        })
+      })
+    }
   }
   form.init();
 })
