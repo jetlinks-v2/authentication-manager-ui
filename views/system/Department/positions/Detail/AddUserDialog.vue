@@ -54,8 +54,14 @@
                 </a-col>
                 <a-col :span="12">
                     <a-form-item name="orgIdList" :label="$t('components.EditUserDialog.939453-14')">
-                        <form-item-org :extraData="detail.orgList" :extraProps="{ multiple: true }"
-                            :disabledData="disabledData.orgIds" :showAdd="false" v-model:value="form.data.orgIdList" />
+                        <form-item-org
+                          :extraData="detail.orgList"
+                          :extraProps="{ multiple: true }"
+                          :disabledData="disabledData.orgIds"
+                          :showAdd="false"
+                          :disabledShowTips="[orgId]"
+                          v-model:value="form.data.orgIdList"
+                        />
                       <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 4px" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
                     </a-form-item>
                 </a-col>
@@ -202,9 +208,6 @@ const handleData = (data: string[], newData: string[], key: string) => {
 
     const _set = new Set(newData)
 
-    if (!_set.has(props.orgId)) {
-      _set.add(props.orgId);
-    }
 
     disabledData[key] = [..._set]
 
@@ -273,7 +276,7 @@ const init = () => {
 
 const getUserInfo = () => {
     const id = props.data?.id || '';
-    disabledData.orgIds = props.orgId ? [props.orgId] : []
+    // disabledData.orgIds = props.orgId ? [props.orgId] : []
     disabledData.roles = props.roleIds
     disabledData.positions = props.positionId ? [props.positionId] : []
     if (props.type === 'add') form.data = {orgIdList: props.orgId ? [props.orgId] : [], positions: props.positionId ? [props.positionId] : [], roleIdList: props.roleIds} as formType;
