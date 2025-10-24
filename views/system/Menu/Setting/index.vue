@@ -101,6 +101,7 @@ const visible = ref(false);
 const loading = ref(false);
 const treeDataDropChange = ref(false); // 标记treeData拖拽成功
 const hasCollectorService = ref(false)
+const _userCenterMenu = ref()
 
 const params = {
   paging: false,
@@ -208,7 +209,7 @@ const handleOk = async () => {
     const _dataArr = dealTree(cloneDeep(treeData.value), selectedKeys.value);
     const _dataSorts = handleSorts(_dataArr);
     loading.value = true;
-    _dataSorts.push(USER_CENTER_MENU_DATA);
+    _dataSorts.push(_userCenterMenu.value);
     const res = await updateMenus(_dataSorts).catch(() => {}).finally(() => loading.value = false);
     if (res?.status === 200) {
         loading.value = false;
@@ -269,7 +270,7 @@ const onDragend = (info: AntTreeNodeDropEvent) => {
 
 const synchronization = async () => {
   const menu = synchronizationMenu(cloneDeep(systemMenu.value), baseMenu.value);
-  menu.push(USER_CENTER_MENU_DATA);
+  menu.push(_userCenterMenu.value);
   const res = await updateMenus(menu).catch(() => {});
   if (res?.status === 200) {
     onlyMessage($t("Setting.index.113436-8"), "success");
@@ -308,6 +309,7 @@ onMounted(() => {
 
     getMenuTree(params).then((resp: any) => {
       if (resp.status == 200) {
+        _userCenterMenu.value = resp.result?.find((item: any) => item.code === USER_CENTER_MENU_CODE);
         const filterMenu = handleMenuFilterMessage(resp.result)
         systemMenu.value = handleMergeTree(baseMenu.value, filterMenu);
         // systemMenu.value = resp.result?.filter(
