@@ -100,7 +100,7 @@
             }})
           </p>
           <div>
-            <a-monaco-editor
+            <monaco-editor
               language="java"
               style="height: 370px"
               theme="vs-dark"
@@ -121,7 +121,7 @@
       <h3>{{ $t("components.HomePage.726029-22") }}</h3>
       <div class="h3-text">{{ $t("components.HomePage.726029-23") }}</div>
       <div>
-        <a-monaco-editor
+        <monaco-editor
           language="java"
           style="height: 370px"
           theme="vs-dark"
@@ -130,7 +130,7 @@
       </div>
       <h3>{{ $t("components.HomePage.726029-24") }}</h3>
       <div>
-        <a-monaco-editor
+        <monaco-editor
           language="java"
           style="height: 370px"
           theme="vs-dark"
