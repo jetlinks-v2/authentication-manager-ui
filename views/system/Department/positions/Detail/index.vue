@@ -43,7 +43,16 @@ const { data: positionsList } = usePositionList(route.params.id !== ':id' ? { te
     value: route.params.id
   }],
   sorts: [{name: 'createTime', order: 'desc'}]
-} : { sorts: [{name: 'createTime', order: 'desc'}]})
+} : { sorts: [{name: 'createTime', order: 'desc'}]}, (result) => {
+
+  const _map = new Map()
+  result.forEach(item => {
+    const arr = _map.get(item.orgId) || [];
+    arr.push(item);
+    _map.set(item.orgId, arr);
+  })
+  return _map
+})
 
 const { data: treeData } = useRequest(getDepartmentList_api, {
   defaultParams: {
@@ -56,19 +65,35 @@ const { data: treeData } = useRequest(getDepartmentList_api, {
   defaultValue: [],
 });
 
-const handleOrgData = (orgList, positionList, disabledIds = []) => {
+const handleOrgData = (orgList, positionListMap, disabledIds = []) => {
   const _disabledIds = [...disabledIds]
   return orgList.map(item => {
-    const _children = positionList.filter(pos => pos.orgId === item.id).map(pos => {
-      const flag = _disabledIds.includes(pos.parentId)
-      if(flag && !_disabledIds.includes(pos.id)){
-        _disabledIds.push(pos.id)
-      }
-      return {
-        ...pos,
-        disabled: flag
-      }
-    })
+
+    let _children = positionListMap.get(item.id) || []
+
+    if (_children) {
+      _children = _children.map(pos => {
+        const flag = _disabledIds.includes(pos.parentId)
+        if(flag && !_disabledIds.includes(pos.id)){
+          _disabledIds.push(pos.id)
+        }
+        return {
+          ...pos,
+          disabled: flag
+        }
+      })
+    }
+
+    // const _children = positionList.filter(pos => pos.orgId === item.id).map(pos => {
+    //   const flag = _disabledIds.includes(pos.parentId)
+    //   if(flag && !_disabledIds.includes(pos.id)){
+    //     _disabledIds.push(pos.id)
+    //   }
+    //   return {
+    //     ...pos,
+    //     disabled: flag
+    //   }
+    // })
     return {
       ...item,
       disabled: true,
@@ -82,6 +107,7 @@ const _treeData = computed(() => {
   if(oldData.value.id) {
     disabledIds.push(oldData.value.id)
   }
+
   return handleOrgData(treeData.value, positionsList.value, disabledIds)
 })
 
@@ -202,7 +228,7 @@ watch(() => route.query.tab, (v) => {
                 </a-col>
                 <a-col :span="12">
                   <a-form-item :label="$t('positions.index.223804-1')">
-                    <a-tree-select :filterTreeNode="(v, node) => filterSelectNode(v, node, 'name')" showSearch :fieldNames="{ label: 'name', value: 'id' }" allowClear v-model:value="formModel.parentId" :tree-data="_treeData" :placeholder="$t('positions.index.223804-2')" />
+                    <a-tree-select :tree-line="{ showLeafIcon: false }" :filterTreeNode="(v, node) => filterSelectNode(v, node, 'name')" showSearch :fieldNames="{ label: 'name', value: 'id' }" allowClear v-model:value="formModel.parentId" :tree-data="_treeData" :placeholder="$t('positions.index.223804-2')" />
                   </a-form-item>
                 </a-col>
               </a-row>
