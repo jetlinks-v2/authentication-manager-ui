@@ -179,6 +179,7 @@ const dialogVisible = ref<boolean>(false)
 const confirm = (url: string) => {
   dialogVisible.value = false
   formModel.icon = url
+  formRef.value.validate('icon')
 }
 
 const checkCode = async (_rule: any, value: string): Promise<any> => {
