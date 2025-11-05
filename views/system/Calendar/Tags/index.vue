@@ -2,7 +2,7 @@
     <div class="tagsContainer" ref="tags">
         <j-permission-button
             type="primary"
-            hasPermission="system/Calendar:add"
+            :hasPermission="`${permissionKey}:add`"
             ghost
             block
             @click="addTag"
@@ -32,7 +32,7 @@
                 <div class="controls">
                     <j-permission-button
                         type="text"
-                        hasPermission="system/Calendar:update"
+                        :hasPermission="`${permissionKey}:update`"
                         :disabled="i.disabled || rapidOn"
                         :tooltip="{
                         title: $t('Tags.index.675027-1')
@@ -45,7 +45,7 @@
                     </j-permission-button>
                     <j-permission-button
                         type="text"
-                        hasPermission="system/Calendar:delete"
+                        :hasPermission="`${permissionKey}:delete`"
                         :disabled="i.disabled || rapidOn"
                         :tooltip="{
                         title: $t('Tags.index.675027-2')
@@ -87,6 +87,8 @@ const system = useSystemStore();
 const calendarTagColor = system.calendarTagColor;
 const tagsMap = inject('tagsMap');
 const rapidOn = inject('rapidOn');
+const permissionKey = inject('CalendarPermissionKey','system/Calendar');
+
 const editVisible = ref(false);
 const tags = ref();
 const tagsList = ref();
