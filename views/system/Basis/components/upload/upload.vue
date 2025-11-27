@@ -117,7 +117,7 @@ const uploadInfo: UploadInfoType = {
   icoTip: [$t('upload.upload.283727-4'), $t('upload.upload.283727-5')],
   backgroundTip: [$t('upload.upload.283727-6'), $t('upload.upload.283727-7')],
   // 上传的地址
-  action: FileStaticPath,
+  action: FileStaticPath(),
   headers: { [TOKEN_KEY]: getToken() },
   // 是否展示uplaodList
   showUploadList: false,

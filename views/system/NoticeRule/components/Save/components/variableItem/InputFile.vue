@@ -14,7 +14,7 @@
                 :headers="{
                     [TOKEN_KEY]: LocalStore.get(TOKEN_KEY),
                 }"
-                :action="FileStaticPath"
+                :action="FileStaticPath()"
                 @change="handleChange"
                 @beforeUpload="handleBeforeUpload"
             >
