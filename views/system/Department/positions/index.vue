@@ -2,7 +2,7 @@
 import {useI18n} from 'vue-i18n';
 import {queryPage, del, queryPageNoPage} from '@authentication-manager-ui/api/system/positions';
 import BindModal from './Bind.vue'
-import {useMenuStore} from '@/store';
+import {useMenuStore} from '@jetlinks-web-core/store';
 import {onlyMessage} from '@jetlinks-web/utils';
 import {queryRole_api} from "@authentication-manager-ui/api/system/user";
 

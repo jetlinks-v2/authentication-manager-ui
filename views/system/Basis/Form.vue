@@ -143,8 +143,8 @@ import {reactive, ref} from 'vue'
 import type {formDataType} from './typing'
 import {useRequest} from '@jetlinks-web/hooks';
 import {save_api} from '../../../api/system/basis';
-import {useSystemStore} from '@/store/system';
-import Upload from './components/upload/upload.vue'
+import {useSystemStore} from '@jetlinks-web-core/store/system';
+import Upload from '@jetlinks-web-core/views/init-home/Basic/components/upload/upload.vue'
 import {onlyMessage} from '@jetlinks-web/utils';
 import {omit} from "lodash-es";
 import { useI18n } from 'vue-i18n';

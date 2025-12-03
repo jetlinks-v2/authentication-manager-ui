@@ -142,7 +142,7 @@
 import { useRoute } from 'vue-router'
 import ChooseIconDialog from '../../components/ChooseIconDialog.vue'
 import { validMenuCode } from '@authentication-manager-ui/api/system/menu'
-import {OWNER_KEY} from "@/utils/consts";
+import {OWNER_KEY} from "@jetlinks-web-core/utils/consts";
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();

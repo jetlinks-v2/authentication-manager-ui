@@ -115,13 +115,13 @@
 </template>
 
 <script setup name="RolePermissionTree">
-import {USER_CENTER_MENU_CODE} from '@/utils/consts'
+import {USER_CENTER_MENU_CODE} from '@jetlinks-web-core/utils/consts'
 import {useI18n} from 'vue-i18n';
 import MenuCheckbox from './MenuCheckbox.vue'
-import {isNoCommunity} from '@/utils/utils'
+import {isNoCommunity} from '@jetlinks-web-core/utils/utils'
 import {getPermissionTree_api} from "@authentication-manager-ui/api/system/role";
-import {paramsEncodeQuery} from "@/utils";
-import {NotificationSubscriptionCode} from "@/router/menu";
+import {paramsEncodeQuery} from "@jetlinks-web-core/utils";
+import {NotificationSubscriptionCode} from "@jetlinks-web-core/router/menu";
 import {cloneDeep, omit, uniqBy} from "lodash-es";
 
 const {t: $t} = useI18n();

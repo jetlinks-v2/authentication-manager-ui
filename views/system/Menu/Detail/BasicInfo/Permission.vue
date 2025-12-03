@@ -89,7 +89,7 @@
 <script lang="ts" setup>
 import PermissionChoose from '../../components/PermissionChoose.vue'
 import { getAssetsType, getMenuTree } from '@authentication-manager-ui/api/system/menu'
-import { isNoCommunity } from '@/utils';
+import { isNoCommunity } from '@jetlinks-web-core/utils';
 
 const props = defineProps({
   value: {

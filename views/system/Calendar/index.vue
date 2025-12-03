@@ -13,7 +13,7 @@
 import CalendarTags from './Tags/index.vue';
 import CalendarRight from './CalendarRight/index.vue';
 import { provide } from 'vue';
-import FullPage from "@/layout/FullPage.vue";
+import FullPage from "@jetlinks-web-core/layout/FullPage.vue";
 
 const tags = ref();
 const rapidOn = ref();

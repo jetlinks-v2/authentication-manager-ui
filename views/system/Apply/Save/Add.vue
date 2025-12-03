@@ -12,7 +12,7 @@
 
 <script lang="ts" setup>
 import { queryType } from '@authentication-manager-ui/api/system/apply';
-import { useMenuStore } from '@/store/menu';
+import { useMenuStore } from '@jetlinks-web-core/store/menu';
 import { onlyMessage } from '@jetlinks-web/utils';
 import ApplyList from './components/ApplyList/index.vue';
 import { useI18n } from 'vue-i18n';

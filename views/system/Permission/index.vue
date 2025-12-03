@@ -140,10 +140,10 @@ import {
 import {usePermission} from '@jetlinks-web/hooks'
 import {PermissionItem} from './typings'
 import {onlyMessage} from '@jetlinks-web/utils'
-import {downloadJson} from '@/utils/comm'
+import {downloadJson} from '@jetlinks-web-core/utils/comm'
 import {columns} from './util'
 import {useI18n} from 'vue-i18n';
-import {FullPage} from "@/layout";
+import {FullPage} from "@jetlinks-web-core/layout";
 
 const {t: $t} = useI18n();
 const permission = 'system/Permission'

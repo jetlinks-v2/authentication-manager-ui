@@ -1,5 +1,6 @@
-import { getImage } from '@jetlinks-web/utils';
-import i18n from '@/locales';
+import i18n from '@jetlinks-web-core/locales';
+import { DingTalk, DingTalkRebot, Email, Sms, Voice, Webhook, WeixinCorp } from '@jetlinks-web-core/assets/notice'
+
 interface INoticeMethod {
     label: string;
     value: string;
@@ -38,19 +39,19 @@ export const MSG_TYPE = {
         {
             label: i18n.global.t('components.const.001562-5'),
             value: 'dingTalkMessage',
-            logo: getImage('/notice/dingtalk.png'),
+            logo: DingTalk,
         },
         {
             label: i18n.global.t('components.const.001562-6'),
             value: 'dingTalkRobotWebHook',
-            logo: getImage('/notice/dingTalk-rebot.png'),
+            logo: DingTalkRebot,
         },
     ],
     weixin: [
         {
             label: i18n.global.t('components.const.001562-7'),
             value: 'corpMessage',
-            logo: getImage('/notice/weixin-corp.png'),
+            logo: WeixinCorp,
         },
         // {
         //   label: '服务号消息',
@@ -62,28 +63,28 @@ export const MSG_TYPE = {
         {
             label: i18n.global.t('components.const.001562-8'),
             value: 'aliyun',
-            logo: getImage('/notice/voice.png'),
+            logo: Voice,
         },
     ],
     sms: [
         {
             label: i18n.global.t('components.const.001562-9'),
             value: 'aliyunSms',
-            logo: getImage('/notice/sms.png'),
+            logo: Sms,
         },
     ],
     webhook: [
         {
             label: 'WebHook',
             value: 'http',
-            logo: getImage('/notice/webhook.png'),
+            logo: Webhook,
         },
     ],
     email: [
         {
             label: i18n.global.t('components.const.001562-2'),
             value: 'embedded',
-            logo: getImage('/notice/email.png'),
+            logo: Email,
         },
     ],
 }

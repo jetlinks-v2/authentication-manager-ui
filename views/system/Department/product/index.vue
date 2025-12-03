@@ -273,7 +273,7 @@
 import Assign from '../property/components/Assign.vue';
 import EditPermissionDialog from '../components/EditPermissionDialog.vue';
 import NextDialog from '../components/NextDialog.vue';
-import {onlyMessage} from '@/utils/comm';
+import {onlyMessage} from '@jetlinks-web-core/utils/comm';
 import {
   getDeviceOrProductList_api,
   getPermission_api,
@@ -285,11 +285,11 @@ import {
   exportProductAssets_api,
 } from '@authentication-manager-ui/api/system/department';
 import {intersection} from 'lodash-es';
-import {useDepartmentStore} from '@/store/department';
+import {useDepartmentStore} from '@jetlinks-web-core/store/department';
 import {systemImg} from "@authentication-manager-ui/assets";
 import {useI18n} from 'vue-i18n';
 import {downloadFileByUrl} from '@jetlinks-web/utils';
-import {useMenuStore} from "@/store";
+import {useMenuStore} from "@jetlinks-web-core/store";
 
 const {t: $t} = useI18n();
 const permission = 'system/Department';

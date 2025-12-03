@@ -87,11 +87,11 @@
 
 <script setup lang="ts" name="Menu">
 import { getMenuTree, delMenu } from '@authentication-manager-ui/api/system/menu'
-import { useMenuStore } from '@/store/menu'
+import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { onlyMessage } from '@jetlinks-web/utils'
-import {OWNER_KEY} from "@/utils/consts";
+import {OWNER_KEY} from "@jetlinks-web-core/utils/consts";
 import { useI18n } from 'vue-i18n';
-import { useUserStore } from '@/store/user';
+import { useUserStore } from '@jetlinks-web-core/store/user';
 import { storeToRefs } from 'pinia'
 
 const { t: $t } = useI18n();

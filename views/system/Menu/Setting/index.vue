@@ -83,13 +83,13 @@ import {
   handleSorts,
   handleSortsArr, handleMenuFilterMessage, handleMergeTree,
 } from "./utils";
-import BaseMenuData from "@/views/init-home/data";
-import { USER_CENTER_MENU_DATA } from "@/views/init-home/data/baseMenu";
+import BaseMenuData from "@jetlinks-web-core/views/init-home/data";
+import { USER_CENTER_MENU_DATA } from "@jetlinks-web-core/views/init-home/data/baseMenu";
 import type { AntTreeNodeDropEvent } from "ant-design-vue/es/tree";
 import { cloneDeep, unionBy } from "lodash-es";
-import { USER_CENTER_MENU_CODE, messageSubscribe } from "@/utils/consts";
-import { onlyMessage } from "@/utils/comm";
-import { isNoCommunity } from "@/utils/utils";
+import { USER_CENTER_MENU_CODE, messageSubscribe, OWNER_KEY } from '@jetlinks-web-core/utils/consts'
+import { onlyMessage } from "@jetlinks-web-core/utils/comm";
+import { isNoCommunity } from "@jetlinks-web-core/utils/utils";
 import { useI18n } from "vue-i18n";
 
 const { t: $t } = useI18n();
@@ -111,7 +111,7 @@ const params = {
         {
           column: "owner",
           termType: "eq",
-          value: "iot",
+          value: OWNER_KEY,
         },
         {
           column: "owner",

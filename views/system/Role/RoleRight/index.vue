@@ -77,7 +77,7 @@
 import AddDialog from './components/AddDialog.vue'
 import Copy from './components/Copy.vue'
 import { getRoleList_api, delRole_api } from '@authentication-manager-ui/api/system/role'
-import { useMenuStore } from '@/store/menu'
+import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n';
 

@@ -159,7 +159,7 @@ import BuildIn from './BuildIn.vue';
 import {updateRegion, validateName, validateCode,getRegion} from '@authentication-manager-ui/api/system/region';
 import {cloneDeep, omit} from "lodash-es";
 import { onlyMessage } from "@jetlinks-web/utils";
-import RadioButton from '@/components/CardSelect/RadioButton.vue'
+import RadioButton from '@jetlinks-web-core/components/CardSelect/RadioButton.vue'
 import GeoJsonModal from './GeoJsonModal.vue'
 import {useRegion} from "../hooks";
 import {syncChildren} from "../util";
@@ -308,7 +308,7 @@ const onLoadData = async (treeNode: any) => {
           isLeaf: false, // 默认都不是叶子节点，允许展开查询
           children: undefined, // 设置为 undefined，表示可以异步加载
         }));
-        
+
         // 递归更新树节点
         const updateTreeNode = (nodes: any[], targetId: string, newChildren: any[]): any[] => {
           return nodes.map(node => {
@@ -328,7 +328,7 @@ const onLoadData = async (treeNode: any) => {
             return node;
           });
         };
-        
+
         // 更新树数据
         areaList.value = updateTreeNode(areaList.value, treeNode.id, children);
         console.log('树数据已更新:', areaList.value);
@@ -336,7 +336,7 @@ const onLoadData = async (treeNode: any) => {
     } catch (error) {
       console.error('加载子节点失败:', error);
     }
-    
+
     resolve();
   });
 };

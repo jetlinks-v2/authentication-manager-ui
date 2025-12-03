@@ -81,8 +81,8 @@ import { queryEvents, saveEvents } from '@authentication-manager-ui/api/system/c
 import { cloneDeep, flatten } from 'lodash-es';
 import { defineExpose } from 'vue';
 import { inject } from 'vue';
-import { useMenuStore } from '@/store/menu';
-import { useSystemStore } from '@/store/system';
+import { useMenuStore } from '@jetlinks-web-core/store/menu';
+import { useSystemStore } from '@jetlinks-web-core/store/system';
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();

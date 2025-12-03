@@ -96,7 +96,7 @@
 <script name="RegionMap" setup>
 import {useHistory, useRegion} from "../hooks";
 import { MAP_TOOL } from '../util'
-import { DistrictSearch, GeoJson } from '@/components/AMapComponent'
+import { DistrictSearch, GeoJson } from '@jetlinks-web-core/components/AMapComponent'
 import { randomNumber,onlyMessage } from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n';
 

@@ -5,9 +5,9 @@ import {onlyMessage} from "@jetlinks-web/utils";
 import {detail, save, update} from '@authentication-manager-ui/api/system/positions'
 import { useRequest } from '@jetlinks-web/hooks'
 import {usePositionList} from "../data";
-import {getDepartmentList_api} from "@/api/system/user";
+import {getDepartmentList_api} from "@jetlinks-web-core/api/system/user";
 import {cloneDeep} from "lodash-es";
-import {filterSelectNode} from "@/utils";
+import {filterSelectNode} from "@jetlinks-web-core/utils";
 
 const { t: $t } = useI18n();
 

@@ -98,7 +98,7 @@ import { noticeType, _variableMap } from '../../../data';
 import { useI18n } from 'vue-i18n';
 import { cloneDeep } from "lodash-es";
 import { randomString } from '@jetlinks-web/utils';
-import { useTabSaveSuccess } from '@/hooks'
+import { useTabSaveSuccess } from '@jetlinks-web-core/hooks'
 
 const { t: $t } = useI18n();
 const props = defineProps({

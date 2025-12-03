@@ -195,9 +195,9 @@ import {
 } from '@authentication-manager-ui/api/system/user';
 import {downloadFileByUrl, onlyMessage} from '@jetlinks-web/utils';
 import {useI18n} from 'vue-i18n';
-import i18n from "@/locales";
+import i18n from "@jetlinks-web-core/locales";
 import {queryPageNoPage} from "@authentication-manager-ui/api/system/positions";
-import {isNoCommunity} from '@/utils/utils';
+import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
 
 const {t: $t} = useI18n();
 const permission = 'system/User';

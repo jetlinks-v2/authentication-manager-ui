@@ -20,7 +20,7 @@
 import Product from '../product/index.vue'
 import Device from '../device/index.vue'
 import {productIcon, deviceIcon} from '@authentication-manager-ui/assets';
-import {useMenuStore} from '@/store';
+import {useMenuStore} from '@jetlinks-web-core/store';
 import {getDeviceCount, getProductCount} from "@authentication-manager-ui/api/system/department";
 
 const props = defineProps({

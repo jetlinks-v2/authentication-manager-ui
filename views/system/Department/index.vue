@@ -45,7 +45,7 @@
 import LeftTree from "./components/LeftTree.vue";
 import User from "./user/index.vue";
 import Position from "./positions/index.vue";
-import { isNoCommunity } from "@/utils";
+import { isNoCommunity } from "@jetlinks-web-core/utils";
 import Product from './product/index.vue'
 import Device from './device/index.vue'
 import Property from './property/index.vue'

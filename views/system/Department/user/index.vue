@@ -109,7 +109,7 @@ import {useColumns, requestFun} from '../util'
 import {onlyMessage} from '@jetlinks-web/utils'
 import {useI18n} from 'vue-i18n';
 import {useRouteQuery} from '@vueuse/router'
-import {isNoCommunity} from '@/utils/utils';
+import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
 
 const {t: $t} = useI18n();
 const permission = 'system/Department'

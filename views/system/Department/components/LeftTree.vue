@@ -128,7 +128,7 @@ import Save from './Save.vue'
 import { useRoute } from 'vue-router'
 import { ArrayToTree } from '../util'
 import { useI18n } from 'vue-i18n';
-import { useTabSaveSuccessBack } from '@/hooks'
+import { useTabSaveSuccessBack } from '@jetlinks-web-core/hooks'
 
 const { t: $t } = useI18n();
 const permission = 'system/Department'
@@ -198,7 +198,7 @@ const getTree = (cb?: Function) => {
         const parentKeys = expandParentNodes(targetId)
         expandedKeys.value = [...new Set([...expandedKeys.value, ...parentKeys])]
       }
-      
+
       cb && cb()
     })
     .finally(() => {
@@ -256,16 +256,16 @@ const expandParentNodes = (targetId: string) => {
   if (!targetId || !treeMap.has(targetId)) {
     return []
   }
-  
+
   const expandKeys: string[] = []
   let currentNode = treeMap.get(targetId)
-  
+
   // 向上查找所有父级节点
   while (currentNode && currentNode.parentId) {
     expandKeys.push(currentNode.parentId)
     currentNode = treeMap.get(currentNode.parentId)
   }
-  
+
   return expandKeys
 }
 // 删除部门

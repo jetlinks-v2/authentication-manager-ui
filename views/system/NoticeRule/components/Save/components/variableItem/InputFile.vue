@@ -11,10 +11,8 @@
                 :showUploadList="false"
                 :accept="'image/jpeg,image/png'"
                 :disabled="loading"
-                :headers="{
-                    [TOKEN_KEY]: LocalStore.get(TOKEN_KEY),
-                }"
-                :action="FileStaticPath"
+                :headers="getUploadHeaders()"
+                :action="FileStaticPath()"
                 @change="handleChange"
                 @beforeUpload="handleBeforeUpload"
             >
@@ -29,10 +27,10 @@
 </template>
 
 <script lang="ts" setup>
-import { TOKEN_KEY} from '@jetlinks-web/constants'
-import { LocalStore, onlyMessage } from "@jetlinks-web/utils";
-import { FileStaticPath} from '@/api/comm'
+import { onlyMessage } from "@jetlinks-web/utils";
+import { FileStaticPath} from '@jetlinks-web-core/api/comm'
 import { useI18n } from 'vue-i18n';
+import { getUploadHeaders } from '@jetlinks-web-core/utils'
 
 const { t: $t } = useI18n();
 const props = defineProps({

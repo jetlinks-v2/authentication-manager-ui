@@ -65,7 +65,7 @@
 <script lang="ts" name="RoleLeft" setup>
 import { onlyMessage, randomString } from '@jetlinks-web/utils';
 import { queryRoleGroup, saveRoleGroup, deleteRoleGroup } from '@authentication-manager-ui/api/system/role';
-import { useUserStore } from '@/store/user'
+import { useUserStore } from '@jetlinks-web-core/store/user'
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();

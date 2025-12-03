@@ -27,8 +27,8 @@ import Permission from './Permission.vue'
 import { addMenu, updateMenu } from '@authentication-manager-ui/api/system/menu'
 // import { useRequest } from '@jetlinks-web/hooks'
 import { onlyMessage } from '@jetlinks-web/utils'
-import { useMenuStore } from '@/store/menu'
-import {OWNER_KEY} from "@/utils/consts";
+import { useMenuStore } from '@jetlinks-web-core/store/menu'
+import {OWNER_KEY} from "@jetlinks-web-core/utils/consts";
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();

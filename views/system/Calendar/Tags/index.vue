@@ -79,7 +79,7 @@ import EditTag from './components/editTag.vue';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { inject } from 'vue';
 import { omit } from 'lodash-es';
-import { useSystemStore } from '@/store/system';
+import { useSystemStore } from '@jetlinks-web-core/store/system';
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();

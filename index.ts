@@ -1,8 +1,8 @@
-import i18n from "@/locales";
+import i18n from "@jetlinks-web-core/locales";
 
 const routerModules = import.meta.glob('./views/**/index.vue')
 import { getModuleRoutesMap } from '@jetlinks-web/utils'
-import { moduleRegistry } from '@/utils/module-registry'
+import { moduleRegistry } from '@jetlinks-web-core/utils/module-registry'
 import registerSetting from './register'
 import { name } from './package.json'
 

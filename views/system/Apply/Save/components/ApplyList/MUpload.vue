@@ -7,10 +7,8 @@
                 class="avatar-uploader"
                 :show-upload-list="false"
                 :before-upload="beforeUpload"
-                :action="FileStaticPath"
-                :headers="{
-                    [TOKEN_KEY]: LocalStore.get(TOKEN_KEY),
-                }"
+                :action="FileStaticPath()"
+                :headers="getUploadHeaders()"
                 v-bind="props"
             >
                 <div class="upload-image-content" :style="props.style">
@@ -45,12 +43,11 @@
 
 <script lang="ts" setup name='JProUpload'>
 import { UploadProps } from 'ant-design-vue';
-import { FileStaticPath } from '@/api/comm';
-import { TOKEN_KEY } from '@jetlinks-web/constants';
-import { onlyMessage } from '@/utils/comm';
-import { LocalStore, getBase64ByImg } from '@jetlinks-web/utils'
+import { FileStaticPath } from '@jetlinks-web-core/api/comm';
+import { getUploadHeaders, onlyMessage } from '@jetlinks-web-core/utils/comm'
+import { getBase64ByImg } from '@jetlinks-web/utils'
 import { CSSProperties } from 'vue';
-import ImageCropper from '@/components/Upload/Cropper.vue';
+import ImageCropper from '@jetlinks-web-core/components/Upload/Cropper.vue';
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();

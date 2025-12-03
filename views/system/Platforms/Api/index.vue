@@ -77,7 +77,7 @@ import LeftTree from './components/LeftTree.vue';
 import ChooseApi from './components/ChooseApi.vue';
 import ApiDoes from './components/ApiDoes.vue';
 import ApiTest from './components/ApiTest.vue';
-import {useDepartmentStore} from '@/store/department';
+import {useDepartmentStore} from '@jetlinks-web-core/store/department';
 
 const department = useDepartmentStore();
 

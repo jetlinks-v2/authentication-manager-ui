@@ -52,10 +52,10 @@
 
 <script setup lang="ts" name="RoleAddDialog">
 import { saveRole_api , queryRoleGroup , updateRole_api} from '@authentication-manager-ui/api/system/role';
-import { useMenuStore } from '@/store/menu';
+import { useMenuStore } from '@jetlinks-web-core/store/menu';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n';
-import { useTabSaveSuccessBack } from '@/hooks'
+import { useTabSaveSuccessBack } from '@jetlinks-web-core/hooks'
 
 const { t: $t } = useI18n();
 const route = useRoute();

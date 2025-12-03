@@ -244,7 +244,7 @@
 <script setup lang="ts" name="device">
 import Assign from '../property/components/Assign.vue';
 import EditPermissionDialog from '../components/EditPermissionDialog.vue';
-import {onlyMessage} from '@/utils/comm';
+import {onlyMessage} from '@jetlinks-web-core/utils/comm';
 import {
   getDeviceList_api,
   getPermission_api,
@@ -258,7 +258,7 @@ import {
 import {intersection} from 'lodash-es';
 
 import type {dictType} from '../typings';
-import {useDepartmentStore} from '@/store/department';
+import {useDepartmentStore} from '@jetlinks-web-core/store/department';
 import dayjs from 'dayjs';
 import {systemImg} from "@authentication-manager-ui/assets";
 import { useI18n } from 'vue-i18n';

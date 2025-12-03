@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import {  onlyMessage } from '@/utils/comm';
+import {  onlyMessage } from '@jetlinks-web-core/utils/comm';
 import {
   bindDeviceOrProductList_api,
   getDeviceOrProductList_api,
@@ -43,7 +43,7 @@ import {
   getDeviceNoPagingList_api
 } from '@authentication-manager-ui/api/system/department';
 import { dictType } from '../../typings';
-import { useDepartmentStore } from '@/store/department';
+import { useDepartmentStore } from '@jetlinks-web-core/store/department';
 import { useI18n } from 'vue-i18n';
 import Customize from './Customize.vue';
 import All from './All.vue';

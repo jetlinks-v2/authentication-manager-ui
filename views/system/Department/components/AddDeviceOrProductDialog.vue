@@ -127,7 +127,7 @@
 </template>
 
 <script setup lang="ts">
-import {  onlyMessage } from '@/utils/comm';
+import {  onlyMessage } from '@jetlinks-web-core/utils/comm';
 import {
     getDeviceOrProductList_api,
     getDeviceList_api,
@@ -135,7 +135,7 @@ import {
     getBindingsPermission,
 } from '@authentication-manager-ui/api/system/department';
 import { dictType } from '../typings';
-import { useDepartmentStore } from '@/store/department';
+import { useDepartmentStore } from '@jetlinks-web-core/store/department';
 import dayjs from 'dayjs';
 import { systemImg } from '@authentication-manager-ui/assets/index'
 import { useI18n } from 'vue-i18n';

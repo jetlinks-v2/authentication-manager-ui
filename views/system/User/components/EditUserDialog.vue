@@ -181,12 +181,12 @@ import {
 import { Rule } from 'ant-design-vue/es/form';
 import { DefaultOptionType } from 'ant-design-vue/es/vc-tree-select/TreeSelect';
 import { AxiosResponse } from 'axios';
-import { passwordRegEx } from '@/utils/validate';
-import { onlyMessage } from '@/utils/comm';
+import { passwordRegEx } from '@jetlinks-web-core/utils/validate';
+import { onlyMessage } from '@jetlinks-web-core/utils/comm';
 import {cloneDeep, flatten, map} from 'lodash-es';
 import { useI18n } from 'vue-i18n';
 import {queryPositionDetailNoPage} from "@authentication-manager-ui/api/system/positions";
-import {isNoCommunity} from '@/utils/utils';
+import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
 
 const { t: $t } = useI18n();
 

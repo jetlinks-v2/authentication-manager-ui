@@ -4,6 +4,12 @@
   "version": "1.0.0",
   "description": "JetLinks sub module",
   "main": "index.ts",
-  "dependencies": {},
+  "scripts": {
+    "dev": "pnpm --filter jetlinks-ui-core dev -- --module-name authentication-manager",
+    "build": "pnpm --filter jetlinks-ui-core build -- --module-name authentication-manager"
+  },
+  "dependencies": {
+    "colorpicker-v3": "^2.10.2"
+  },
   "peerDependencies": {}
 }

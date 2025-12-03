@@ -10,7 +10,7 @@
 </template>
 
 <script setup>
-import {USER_CENTER_MENU_CODE} from "@/utils/consts";
+import {USER_CENTER_MENU_CODE} from "@jetlinks-web-core/utils/consts";
 
 const props = defineProps({
   data: {

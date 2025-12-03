@@ -18,7 +18,7 @@
 <script setup lang="ts" name="RoleDetail">
 import Permission from './Permission/index.vue';
 import User from './User/index.vue';
-import FullPage from "@/layout/FullPage.vue";
+import FullPage from "@jetlinks-web-core/layout/FullPage.vue";
 import {useI18n} from "vue-i18n";
 
 const { t: $t } = useI18n();

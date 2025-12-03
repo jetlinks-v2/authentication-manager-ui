@@ -1465,7 +1465,7 @@
 </template>
 
 <script setup lang="ts">
-import {passwordRegEx, testIP} from '@/utils/validate';
+import {passwordRegEx, testIP} from '@jetlinks-web-core/utils/validate';
 
 import {
   getDepartmentList_api,
@@ -1483,14 +1483,14 @@ import ThirdMenu from '../../componenets/ThirdMenu.vue';
 import type {formType, dictType, optionsType, applyType} from '../typing';
 import {randomString, onlyMessage} from '@jetlinks-web/utils';
 import {cloneDeep, difference} from 'lodash-es';
-import {useMenuStore} from '@/store';
+import {useMenuStore} from '@jetlinks-web-core/store';
 import {Rule} from 'ant-design-vue/lib/form';
 import ApplyList from './ApplyList/index.vue';
 import InputGroup from './InputGroup.vue'
 import {systemImg} from "@authentication-manager-ui/assets";
 import {useI18n} from 'vue-i18n';
-import { useTabSaveSuccess } from '@/hooks'
-import {filterSelectNode} from "@/utils";
+import { useTabSaveSuccess } from '@jetlinks-web-core/hooks'
+import {filterSelectNode} from "@jetlinks-web-core/utils";
 
 const {t: $t} = useI18n();
 const emit = defineEmits(['changeApplyType']);

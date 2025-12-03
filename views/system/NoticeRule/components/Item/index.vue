@@ -146,7 +146,7 @@
 </template>
 
 <script lang="ts" setup>
-import MCarousel from '@/components/MCarousel/index.vue';
+import MCarousel from '@jetlinks-web-core/components/MCarousel/index.vue';
 import Save from '../Save/index.vue';
 import Detail from '../Detail/index.vue';
 import Auth from '../Auth/index.vue';
@@ -162,7 +162,7 @@ import {
 import { Modal, Checkbox } from 'ant-design-vue';
 import { usePermission } from '@jetlinks-web/hooks'
 import { LocalStore } from '@jetlinks-web/utils';
-import { useUserStore } from '@/store/user'
+import { useUserStore } from '@jetlinks-web-core/store/user'
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();

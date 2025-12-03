@@ -109,7 +109,7 @@ import dayjs from 'dayjs';
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();
-import { modifySearchColumnValue } from '@/utils/comm';
+import { modifySearchColumnValue } from '@jetlinks-web-core/utils/comm';
 
 const tableRef = ref<Record<string, any>>({});
 const params = ref<Record<string, any>>({});

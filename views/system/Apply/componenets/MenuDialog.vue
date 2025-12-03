@@ -30,10 +30,11 @@ import {
     updateApp_api,
 } from '@authentication-manager-ui/api/system/apply';
 import { CheckInfo } from 'ant-design-vue/lib/vc-tree/props';
-import { useMenuStore } from '@/store/menu';
+import { useMenuStore } from '@jetlinks-web-core/store/menu';
 import { getMenuTree_api } from '@authentication-manager-ui/api/system/menu';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n';
+import { OWNER_KEY } from '@jetlinks-web-core/utils/consts'
 
 const { t: $t } = useI18n();
 const menuStory = useMenuStore();
@@ -56,7 +57,7 @@ const handleOk = async () => {
     if (form.checkedSystem) {
         if (items && items.length !== 0) {
             loading.value = true;
-            const resp = await saveOwnerMenu_api('iot', form.id, items).finally(() => (loading.value = false));
+            const resp = await saveOwnerMenu_api(OWNER_KEY, form.id, items).finally(() => (loading.value = false));
             await updateApp_api(form.id as string, {
                 ...props.data,
                 integrationModes: props.data?.integrationModes?.map((item: any) => item?.value || item),
@@ -159,8 +160,8 @@ function getMenus(id: string) {
 function getSystemList(id: string) {
     const api =
         form.provider === 'internal-standalone'
-            ? getOwnerStandalone_api(id, ['iot'])
-            : getOwner_api(['iot']);
+            ? getOwnerStandalone_api(id, [OWNER_KEY])
+            : getOwner_api([OWNER_KEY]);
 
     api.then((resp: any) => {
         if (resp.status === 200) {

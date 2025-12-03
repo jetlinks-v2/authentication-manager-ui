@@ -1,4 +1,4 @@
-import i18n from "@/locales";
+import i18n from "@jetlinks-web-core/locales";
 export const columns = [
     {
       title: i18n.global.t('Permission.util.968438-0'),
