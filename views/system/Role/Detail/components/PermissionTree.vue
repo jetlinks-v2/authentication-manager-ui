@@ -434,6 +434,7 @@ const onSave = () => {
       delete item.selectAccesses;
     }
     delete item.indeterminate;
+    delete item.children;
     item.granted = true;
   });
   return selected
