@@ -8,7 +8,7 @@
           <span>{{ assetsCount[item.name] || 0 }}</span>
         </a-space>
       </template>
-      <component :is="item.component" :parentId="departmentId" @refresh="onRefresh" @open-device-bind="openDeviceBind"/>
+      <component :is="item.component" :parentId="departmentId"  @refresh="onRefresh" @open-device-bind="openDeviceBind"/>
     </a-tab-pane>
   </a-tabs>
   <a-empty v-if="!_extra.length" :description="$t('property.index.675027-4')">
@@ -22,6 +22,9 @@ import Device from '../device/index.vue'
 import {productIcon, deviceIcon} from '@authentication-manager-ui/assets';
 import {useMenuStore} from '@/store';
 import {getDeviceCount, getProductCount} from "@authentication-manager-ui/api/system/department";
+import {useI18n} from 'vue-i18n';
+
+const {t: $t} = useI18n();
 
 const props = defineProps({
   departmentId: {
@@ -49,6 +52,7 @@ const assetsCount = reactive({
   product: 0,
   device: 0
 })
+
 
 const init = async () => {
   if (!menuStore.hasMenu('device/Product')) {

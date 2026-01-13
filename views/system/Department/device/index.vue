@@ -215,6 +215,7 @@
         :query-columns="columns"
         :parent-id="props.parentId"
         :all-permission="table.permissionList.value"
+        :productIds="departmentStore.productId"
         asset-type="device"
         @confirm="onRefresh"
       />
@@ -263,6 +264,7 @@ import dayjs from 'dayjs';
 import {systemImg} from "@authentication-manager-ui/assets";
 import { useI18n } from 'vue-i18n';
 import { downloadFileByUrl } from '@jetlinks-web/utils';
+import { watch } from 'vue'
 
 const { t: $t } = useI18n();
 const departmentStore = useDepartmentStore();
@@ -679,6 +681,15 @@ watchEffect(() => {
   props.bindBool && table.clickAdd();
   emits('update:bindBool', false);
 });
+
+watch(() => departmentStore.productId, (newVal) => {
+  if (newVal?.length) {
+    dialogs.addShow = true
+  }
+}, {
+  immediate: true,
+  deep: true,
+})
 </script>
 
 <style lang="less" scoped>

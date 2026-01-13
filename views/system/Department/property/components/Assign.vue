@@ -27,7 +27,7 @@
           {{ $t('components.AddDeviceOrProductDialog.314014-1') }}
         </div>
       </div>
-      <Customize v-if="activeKey === 'customize'" ref="typeRef" v-bind="props" :bulkBool="bulkBool" :bulkList="bulkList" />
+      <Customize v-if="activeKey === 'customize'" ref="typeRef" v-bind="props" :productIds="productIds" :bulkBool="bulkBool" :bulkList="bulkList" />
       <All v-else-if="activeKey === 'all'" ref="typeRef" v-bind="props" :bulkBool="bulkBool" :bulkList="bulkList" :request="bindAssetsApi"/>
       <Org v-else-if="activeKey === 'org'" ref="typeRef" v-bind="props" :bulkBool="bulkBool" :bulkList="bulkList" :request="bindAssetsApi"/>
   </a-modal>
@@ -48,6 +48,7 @@ import { useI18n } from 'vue-i18n';
 import Customize from './Customize.vue';
 import All from './All.vue';
 import Org from './Org.vue'
+import { watch } from 'vue'
 
 const { t: $t } = useI18n();
 const departmentStore = useDepartmentStore();
@@ -60,6 +61,7 @@ const props = defineProps<{
   parentId: string;
   allPermission: dictType;
   assetType: 'product' | 'device';
+  productIds: array
 }>();
 // 弹窗相关
 const loading = ref(false);
@@ -139,10 +141,10 @@ const confirm = async () => {
       .then(() => {
           onlyMessage($t('components.AddDeviceOrProductDialog.314014-7'));
           emits('confirm');
-          // emits('next',typeRef.value?.selectedRows.map((item: any) => item.id))
-          // if(props.assetType === 'device'){
-          //     departmentStore.setProductId(undefined)
-          // }
+          emits('next',typeRef.value?.selectedRows.map((item: any) => item.id))
+          if(props.assetType === 'device'){
+              departmentStore.setProductId(undefined)
+          }
           emits('update:visible', false);
       })
       .finally(() => {
