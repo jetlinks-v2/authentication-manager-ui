@@ -123,6 +123,7 @@ import {getPermissionTree_api} from "@authentication-manager-ui/api/system/role"
 import {paramsEncodeQuery} from "@jetlinks-web-core/utils";
 import {NotificationSubscriptionCode} from "@jetlinks-web-core/router/menu";
 import {cloneDeep, omit, uniqBy} from "lodash-es";
+import {isIotPlatform} from "@jetlinks-web-core/hooks";
 
 const {t: $t} = useI18n();
 const emits = defineEmits(['update:selectItems']);
@@ -135,6 +136,7 @@ const action = reactive({
   options: [],
   data: []
 });
+const isIot = isIotPlatform()
 
 const dataPermission = reactive({
   visible: false,
@@ -157,7 +159,7 @@ const columns = computed(() => {
       width: '35%',
     },
   ];
-  if (isNoCommunity) {
+  if (isNoCommunity && !isIot) {
     arr.push({
       title: '数据权限',
       dataIndex: 'data',
