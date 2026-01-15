@@ -83,14 +83,14 @@
                       <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 4px" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
                     </a-form-item>
                 </a-col>
-                <a-col :span="12">
+                <a-col :span="12" v-if="isIot">
                     <a-form-item name="orgIdList" :label="$t('components.EditUserDialog.939453-14')">
                       <form-item-org :extraData="detail.orgList" :extraProps="{multiple: true}" :disabledData="disabledData.orgIds" v-model:value="form.data.orgIdList" :disabled="form.data.username === 'admin'" />
                       <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 4px" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
                     </a-form-item>
                 </a-col>
             </a-row>
-          <a-row :gutter="24" v-if="form.IsShow('add', 'edit') && isNoCommunity">
+          <a-row :gutter="24" v-if="form.IsShow('add', 'edit') && isNoCommunity && isIot">
             <a-col :span="12">
               <a-form-item name="positions" :label="$t('components.EditUserDialog.939453-31')">
                 <form-item-position :extraData="detail.positions" :extraProps="{disabled: form.data.username === 'admin', multiple: true}" v-model:value="form.data.positions" @change="onChange" :showAdd="false"/>
@@ -187,6 +187,7 @@ import {cloneDeep, flatten, map} from 'lodash-es';
 import { useI18n } from 'vue-i18n';
 import {queryPositionDetailNoPage} from "@authentication-manager-ui/api/system/positions";
 import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
+import {isIotPlatform} from "@jetlinks-web-core/hooks";
 
 const { t: $t } = useI18n();
 
@@ -199,6 +200,7 @@ const props = defineProps<{
 // 弹窗相关
 const loading = ref(false);
 const positionsMap = new Map()
+const isIot = isIotPlatform()
 
 const disabledData = reactive<{
   roles: any[],
