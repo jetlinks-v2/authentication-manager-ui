@@ -159,7 +159,7 @@ const columns = computed(() => {
       width: '35%',
     },
   ];
-  if (isNoCommunity && !isIot) {
+  if (isNoCommunity && isIot) {
     arr.push({
       title: '数据权限',
       dataIndex: 'data',
