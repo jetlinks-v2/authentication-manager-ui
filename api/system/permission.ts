@@ -13,4 +13,5 @@ export const delPermission_api = (id: string) => request.remove(`/permission/${i
 
 // 导出权限数据
 export const exportPermission_api = (data: any) => request.post(`/permission/_query/no-paging`, data);
+
 export const queryPermission_api = (data: any) => request.get(`/permission/_query/for-grant`, data);
