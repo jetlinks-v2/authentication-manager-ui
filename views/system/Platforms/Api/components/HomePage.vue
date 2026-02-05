@@ -104,7 +104,7 @@
               language="java"
               style="height: 370px"
               theme="vs-dark"
-              v-model:modelValue="javaStr1"
+              :modelValue="javaStr1"
             />
           </div>
         </div>
@@ -125,7 +125,7 @@
           language="java"
           style="height: 370px"
           theme="vs-dark"
-          v-model:modelValue="javaStr2"
+          :modelValue="javaStr2"
         />
       </div>
       <h3>{{ $t("components.HomePage.726029-24") }}</h3>
@@ -134,7 +134,7 @@
           language="java"
           style="height: 370px"
           theme="vs-dark"
-          v-model:modelValue="javaStr"
+          :modelValue="javaStr"
         />
       </div>
     </div>
