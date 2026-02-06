@@ -85,5 +85,6 @@ export default {
   getAsyncRoutesMap: () => getModuleRoutesMap(routerModules),
   getExtraRoutesMap,
   getComponents,
-  register
+  register,
+  priority: -100
 }
