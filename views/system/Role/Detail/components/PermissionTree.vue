@@ -197,9 +197,11 @@ const selectAllChange = (e) => {
     if (flag) {
       item._granted = checked;
       item.indeterminate = !checked;
+      item.granted = true  // 个人中心始终有权限
     } else {
       item._granted = checked;
       item.indeterminate = false;
+      item.granted = checked
     }
     // 改变按钮
     item.buttons?.forEach((button) => {
@@ -225,6 +227,10 @@ const bulkChange = () => {
       item.selectAccesses = dataPermission.data;
     }
   });
+  // 批量修改数据权限后，重新计算所有节点状态
+  Object.keys(flatTableData).forEach(key => {
+    getGrantedData(key);
+  });
 }
 
 const onActionChange = () => {
@@ -235,7 +241,11 @@ const onActionChange = () => {
       item.buttons?.forEach((i) => {
         i.granted = action.data.includes(i.id)
       });
-      actionChange(key, false)
+      // 重新计算节点状态并更新祖先节点
+      getGrantedData(key)
+      if (item.parentId) {
+        updateAllAncestors(item.parentId)
+      }
     }
   });
 }
@@ -249,33 +259,72 @@ const resetBulk = () => {
 
 const getGrantedData = (id) => {
   const row = flatTableData[id]
+  if (!row) return
+
   // children
   const arr = row?.children || []
-  const _data = arr.filter(i => {
-    return flatTableData[i.id]?._granted
-  }) // 1: true, 0: 没值 -1:false
-  const flag = !arr.length ? 0 : arr.length === _data.length ? 1 : -1;
-  // 按钮
+
+  // 按钮状态
   const _buttons = row.buttons || []
-  const __buttons = _buttons.filter(i => i.granted)
-  const _flag = !_buttons.length ? 0 : _buttons.length === __buttons.length ? 1 : -1;
-  if (flag === 0 && _flag === 0) {
-    flatTableData[id]._granted = row.granted
-    flatTableData[id].indeterminate = false
-  } else if ((flag === 1 && _flag === 1) || (flag === 1 && _flag === 0) || (flag === 0 && _flag === 1)) {
+  const fullyGrantedButtons = _buttons.filter(i => i.granted)
+
+  // 分离子节点状态：完全选中、半选、未选中
+  // 确保子节点存在于 flatTableData 中，避免未定义错误
+  const fullyGrantedChildren = arr.filter(i => flatTableData[i.id] && flatTableData[i.id]._granted && !flatTableData[i.id].indeterminate)
+  const indeterminateChildren = arr.filter(i => flatTableData[i.id] && flatTableData[i.id].indeterminate)
+  const notGrantedChildren = arr.filter(i => !flatTableData[i.id] || (!flatTableData[i.id]._granted && !flatTableData[i.id].indeterminate))
+
+  // 逻辑：只有当所有子节点都完全选中（无半选）且所有按钮都选中时，父节点才是全选
+  const allChildrenFullyGranted = arr.length === 0 || (indeterminateChildren.length === 0 && notGrantedChildren.length === 0)
+  const allButtonsGranted = _buttons.length === 0 || fullyGrantedButtons.length === _buttons.length
+  const hasButtons = _buttons.length > 0
+  const hasChildren = arr.length > 0
+
+  if (!hasButtons && !hasChildren) {
+    // 既没有子节点也没有按钮的节点，自己管自己
+    // 保持原有的 granted 状态作为界面显示状态
+    if (row.granted) {
+      flatTableData[id]._granted = true
+      flatTableData[id].indeterminate = false
+    } else {
+      flatTableData[id]._granted = false
+      flatTableData[id].indeterminate = false
+    }
+  } else if (allChildrenFullyGranted && allButtonsGranted) {
+    // 所有子节点和按钮都完全选中
     flatTableData[id]._granted = true
     flatTableData[id].indeterminate = false
   } else {
+    // 部分选中或半选状态（子节点有选中的，或者按钮有选中的）
+    const hasAnySelection = fullyGrantedChildren.length > 0 || indeterminateChildren.length > 0 || fullyGrantedButtons.length > 0
     flatTableData[id]._granted = false
-    flatTableData[id].indeterminate = !!(_data.length || __buttons.length)
+    flatTableData[id].indeterminate = hasAnySelection
+  }
+
+  // 更新后端的 granted 字段：只要界面显示为选中状态（即使是半选），granted 就为 true
+  if (flatTableData[id]._granted || flatTableData[id].indeterminate) {
+    flatTableData[id].granted = true
+  } else {
+    flatTableData[id].granted = false
   }
 }
 
 const updateParent = (id) => {
   if (id) {
     getGrantedData(id)
+    // 递归更新所有祖先节点，确保多级父节点的状态都能正确更新
     if (flatTableData[id].parentId) {
       updateParent(flatTableData[id].parentId)
+    }
+  }
+}
+
+// 新增方法：递归更新所有祖先节点，确保多级父节点的状态都能正确更新
+const updateAllAncestors = (id) => {
+  if (id && flatTableData[id]) {
+    getGrantedData(id)
+    if (flatTableData[id].parentId && flatTableData[flatTableData[id].parentId]) {
+      updateAllAncestors(flatTableData[id].parentId)
     }
   }
 }
@@ -284,6 +333,9 @@ const updateParent = (id) => {
 const updateRowData = (row, checked) => {
   row._granted = checked;
   row.indeterminate = false;
+  // 根据界面显示状态更新后端 granted 字段
+  row.granted = checked
+
   // 修改buttons
   if (row.buttons && row.buttons.length > 0) {
     row.buttons.forEach((button) => {
@@ -295,14 +347,23 @@ const updateRowData = (row, checked) => {
     row.selectAccesses = checked ? (row.selectAccesses || 'creator') : undefined
   }
   // 修改children的值
+  // 注意：对于既没有 buttons 也没有 children 的子节点，它们是"自己管自己"的，不应该被父节点影响
   if (row.children && row.children.length > 0) {
     row.children.forEach((child) => {
-      updateRowData(flatTableData[child.id], checked)
+      const childRow = flatTableData[child.id];
+      if (childRow) {
+        const hasButtons = childRow.buttons && childRow.buttons.length > 0;
+        const hasChildren = childRow.children && childRow.children.length > 0;
+        // 只有当子节点有 buttons 或有 children 时，才递归更新它
+        if (hasButtons || hasChildren) {
+          updateRowData(childRow, checked)
+        }
+      }
     })
   }
-  // 父节点
+  // 递归更新所有祖先节点
   if (row.parentId) {
-    updateParent(row.parentId)
+    updateAllAncestors(row.parentId)
   }
 }
 
@@ -320,14 +381,24 @@ const actionChange = (id, flag) => {
   if (flag) {
     resetBulk()
   }
+
+  // 重新计算当前节点状态
   getGrantedData(id)
-  if (flatTableData[id].parentId) {
-    updateParent(flatTableData[id].parentId)
+
+  // 使用新的方法递归更新所有祖先节点，确保多级父节点的状态都能正确更新
+  const row = flatTableData[id]
+  if (row.parentId) {
+    updateAllAncestors(row.parentId)
   }
 }
 
 const handleData = (_dt = []) => {
   return _dt.filter(i => (i.code !== NotificationSubscriptionCode)).map((item) => {
+    // 确保 granted 字段存在
+    if (item.granted === undefined) {
+      item.granted = false
+    }
+
     // 默认选中个人中心相关设置
     if (item.code === USER_CENTER_MENU_CODE) {
       item.buttons = item.buttons.map(buttonItem => {
@@ -337,17 +408,30 @@ const handleData = (_dt = []) => {
         return buttonItem
       })
     }
+
     // 数据权限处理
     if (item.accessSupport && item.accessSupport.value === 'support') {
       const select = item.assetAccesses?.find((assetItem) => assetItem.granted) || {};
       item.selectAccesses = select.supportId || undefined;
     }
+
+    // 先将当前节点加入 flatTableData
+    flatTableData[item.id] = item;
+
     // 按钮数据组件内部自己处理
     if (item.children && item.children.length > 0) {
       item.children = handleData(item.children)
     }
-    flatTableData[item.id] = item;
-    getGrantedData(item.id)
+
+    // 对于既没有 buttons 也没有 children 的节点，直接根据 granted 设置显示状态
+    if ((!item.buttons || item.buttons.length === 0) && (!item.children || item.children.length === 0)) {
+      item._granted = item.granted
+      item.indeterminate = false
+    } else {
+      // 对于有子节点或有按钮的节点，计算状态
+      getGrantedData(item.id)
+    }
+
     return item
   });
 }
@@ -419,7 +503,8 @@ const filterOption = (input, option) => {
 const onSave = () => {
   const arr = Object.values(flatTableData);
   // 深克隆表格数据的扁平版  因为会做一些改动 该改动只用于反馈给父组件，本组件无需变化
-  const selected = cloneDeep(arr).filter(item => (item.indeterminate && item.buttons) || (item._granted));
+  // 只要是选中状态（无论是全选还是半选）都要保存
+  const selected = cloneDeep(arr).filter(item => item._granted || item.indeterminate);
   selected.forEach((item) => {
     if (item.accessSupport && item.accessSupport.value === 'support' && item.selectAccesses) {
       item.assetAccesses?.forEach((asset) => {
@@ -433,7 +518,7 @@ const onSave = () => {
     }
     delete item.indeterminate;
     delete item.children;
-    item.granted = true;
+    // granted 字段已经在 getGrantedData 函数中正确设置，这里不需要强制设置
   });
   return selected
 }
