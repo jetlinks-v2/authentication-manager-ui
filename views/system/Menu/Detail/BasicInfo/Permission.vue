@@ -20,6 +20,7 @@
         <a-radio-group
           v-model:value="formModel.accessSupport"
           name="radioGroup"
+          @change='onChange'
         >
           <a-radio value="unsupported">{{ $t('BasicInfo.Permission.040830-2') }}</a-radio>
           <a-radio value="support">{{ $t('BasicInfo.Permission.040830-3') }}</a-radio>
@@ -99,7 +100,7 @@ const props = defineProps({
 })
 
 const formModel = reactive({
-  id: '',
+  id: undefined,
   permissions: [],
   accessSupport: 'unsupported',
   assetType: undefined,
@@ -138,6 +139,11 @@ const queryAssetsType = () => {
   })
 }
 
+const onChange = () => {
+  formModel.assetType = ''
+  formModel.indirectMenus = []
+}
+
 onMounted(() => {
   queryMenuTree()
   if(isNoCommunity) {
@@ -149,8 +155,8 @@ const onSave = () =>
   new Promise((resolve, reject) => {
     formRef.value
       .validate()
-      .then((_data) => {
-        resolve(_data)
+      .then(() => {
+        resolve(formModel)
       })
       .catch(() => {
         reject(false)
