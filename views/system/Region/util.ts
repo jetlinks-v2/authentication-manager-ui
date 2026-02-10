@@ -7,7 +7,7 @@ export const MAP_TOOL = {
     'geoJson': 'geoJson',
 }
 
-export const syncChildren = (code: string, area: any[]) => {
+export const syncChildren = (code: string, area: any[], syncAll: boolean) => {
     const findItem = (code: string, children: any[] = []): any[] => {
         let _children: any[] = []
         children.some(item => {
@@ -22,7 +22,8 @@ export const syncChildren = (code: string, area: any[]) => {
         })
 
         return _children?.map(item => {
-            item.children = []
+            debugger
+            item.children = syncAll ? item.children : []
             return item
         })
     }
