@@ -1237,7 +1237,8 @@
               <a-form-item
                   v-if="
                                     form.data.provider !== 'wechat-webapp' &&
-                                    form.data.provider !== 'wechat-miniapp'
+                                    form.data.provider !== 'wechat-miniapp' &&
+                                    form.data.provider !== 'wechat-official-account'
                                 "
                   class="resetLabel"
                   :name="['sso', 'configuration', 'appKey']"
@@ -1269,7 +1270,7 @@
 
               <!-- 钉钉 + 微信 -->
               <a-form-item
-                  v-if="['wechat-miniapp', 'wechat-webapp', 'dingtalk-ent-app'].includes(form.data?.provider)"
+                  v-if="['wechat-miniapp', 'wechat-webapp', 'wechat-official-account', 'dingtalk-ent-app'].includes(form.data?.provider)"
                   class="resetLabel"
                   :name="['sso', 'configuration', 'appSecret']"
                   :rules="[
@@ -1296,6 +1297,27 @@
                                     "
                     :placeholder="$t('components.EditForm.949962-74')"
                 />
+              </a-form-item>
+              <!-- 微信公众号授权 scope -->
+              <a-form-item
+                  v-if="form.data.provider === 'wechat-official-account'"
+                  class="resetLabel"
+                  :name="['sso', 'configuration', 'scope']"
+              >
+                <template #label>
+                  <FormLabel
+                      text="scope"
+                      :tooltip="'微信公众号网页授权 scope，如 snsapi_userinfo（获取用户信息）或 snsapi_base（仅获取 openid），默认 snsapi_userinfo'"
+                  />
+                </template>
+                <a-select
+                    v-model:value="form.data.sso.configuration.scope"
+                    :placeholder="'snsapi_userinfo'"
+                    allow-clear
+                >
+                  <a-select-option value="snsapi_userinfo">snsapi_userinfo</a-select-option>
+                  <a-select-option value="snsapi_base">snsapi_base</a-select-option>
+                </a-select>
               </a-form-item>
             </div>
 
@@ -1502,6 +1524,7 @@ const defaultImg = {
   'dingtalk-ent-app': systemImg.dingTalkEntAppImg,
   'third-party': systemImg.thirdParty,
   'wechat-miniapp': systemImg.wechatMiniapp,
+  'wechat-official-account': systemImg.wechatOfficialAccount,
 };
 
 
@@ -1742,6 +1765,7 @@ watch(
             'wechat-webapp',
             'dingtalk-ent-app',
             'wechat-miniapp',
+            'wechat-official-account',
           ].includes(n)
       ) {
         form.data.integrationModes = ['ssoClient'];
