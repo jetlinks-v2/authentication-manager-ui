@@ -701,14 +701,15 @@ watch(
       if (!val) tableData.selectedRows = [];
     },
 );
-let Temporary: any = '';
+let Temporary: any = ref();
 
 const nextAction = (data: any) => {
-  Temporary = data
+  Temporary.value = data
 }
 const nextConfirm = () => {
-  departmentStore.setProductId(Temporary);
-  emits('openDeviceBind')
+  departmentStore.setProductId(Temporary.value);
+  console.log(nextConfirm, Temporary.value)
+  emits('openDeviceBind', Temporary.value)
 }
 </script>
 
