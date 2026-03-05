@@ -1340,10 +1340,25 @@
                   :name="['sso', 'configuration', 'token']"
               >
                 <template #label>
-                  <FormLabel
-                      :text="$t('components.EditForm.wechatOfficial.token')"
-                      :tooltip="$t('components.EditForm.wechatOfficial.tokenTip')"
-                  />
+                  <div class="wechat-token-label">
+                    <FormLabel
+                        :text="$t('components.EditForm.wechatOfficial.token')"
+                        :tooltip="$t('components.EditForm.wechatOfficial.tokenTip')"
+                    />
+                    <template v-if="form.data.id">
+                      <span class="wechat-event-url-inline">
+                        事件订阅地址：<code>{{ wechatEventUrl }}</code>
+                      </span>
+                      <a-button
+                        type="link"
+                        size="small"
+                        class="wechat-event-copy"
+                        @click.stop="copyWechatEventUrl"
+                      >
+                        复制
+                      </a-button>
+                    </template>
+                  </div>
                 </template>
                 <a-input
                     v-model:value="form.data.sso.configuration.token"
@@ -1705,6 +1720,22 @@ const form = reactive({
   fileList: [] as any[],
   uploadLoading: false,
 });
+const wechatEventUrl = computed(() => {
+  if (!form.data.id) return '';
+  const origin = window.location.origin || '';
+  return `${origin}/api/wx-mp/${form.data.id}`;
+});
+
+const copyWechatEventUrl = () => {
+  if (!form.data.id) return;
+  const url = wechatEventUrl.value;
+  if (!url) return;
+  if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(() => {
+      onlyMessage('事件订阅地址已复制');
+    });
+  }
+};
 const thirdPartyType = ref<any[]>([])
 
 const checkCh = (_rule: Rule, value: string): Promise<any> =>
@@ -2177,5 +2208,24 @@ const queryThirdPartyType = async () => {
       }
     }
   }
+}
+
+.wechat-token-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.wechat-event-url-inline {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.65);
+}
+.wechat-event-url-inline code {
+  background: #f5f5f5;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+.wechat-event-copy {
+  padding: 0 4px;
 }
 </style>
