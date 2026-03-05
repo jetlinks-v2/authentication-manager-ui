@@ -1319,6 +1319,54 @@
                   <a-select-option value="snsapi_base">snsapi_base</a-select-option>
                 </a-select>
               </a-form-item>
+              <!-- 微信公众号：扫码关注登录 -->
+              <a-form-item
+                  v-if="form.data.provider === 'wechat-official-account'"
+                  class="resetLabel"
+                  :name="['sso', 'configuration', 'followRequire']"
+              >
+                <template #label>
+                  <FormLabel
+                      :text="$t('components.EditForm.wechatOfficial.followRequire')"
+                      :tooltip="$t('components.EditForm.wechatOfficial.followRequireTip')"
+                  />
+                </template>
+                <a-switch v-model:checked="form.data.sso.configuration.followRequire" />
+              </a-form-item>
+              <!-- 微信公众号：服务器配置 Token -->
+              <a-form-item
+                  v-if="form.data.provider === 'wechat-official-account'"
+                  class="resetLabel"
+                  :name="['sso', 'configuration', 'token']"
+              >
+                <template #label>
+                  <FormLabel
+                      :text="$t('components.EditForm.wechatOfficial.token')"
+                      :tooltip="$t('components.EditForm.wechatOfficial.tokenTip')"
+                  />
+                </template>
+                <a-input
+                    v-model:value="form.data.sso.configuration.token"
+                    :placeholder="$t('components.EditForm.wechatOfficial.token')"
+                />
+              </a-form-item>
+              <!-- 微信公众号：EncodingAESKey -->
+              <a-form-item
+                  v-if="form.data.provider === 'wechat-official-account'"
+                  class="resetLabel"
+                  :name="['sso', 'configuration', 'aesKey']"
+              >
+                <template #label>
+                  <FormLabel
+                      :text="$t('components.EditForm.wechatOfficial.aesKey')"
+                      :tooltip="$t('components.EditForm.wechatOfficial.aesKeyTip')"
+                  />
+                </template>
+                <a-input
+                    v-model:value="form.data.sso.configuration.aesKey"
+                    :placeholder="$t('components.EditForm.wechatOfficial.aesKey')"
+                />
+              </a-form-item>
             </div>
 
             <a-form-item class="resetLabel">
@@ -1627,6 +1675,10 @@ const initForm: formType = {
       appId: '', // 微信单点登录配置
       appKey: '', // 钉钉单点登录配置
       appSecret: '', // 钉钉、微信单点登录配置
+      scope: '', // 微信公众号授权 scope
+      followRequire: false, // 微信公众号：扫码关注登录
+      token: '', // 微信公众号服务器配置 Token
+      aesKey: '', // 微信公众号 EncodingAESKey
     },
     type: undefined,
     autoCreateUser: false, // 是否自动创建平台用户
