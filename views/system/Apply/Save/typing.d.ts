@@ -4,6 +4,7 @@ export type applyType = 'internal-standalone'
     | 'dingtalk-ent-app'
     | 'third-party'
     | 'wechat-miniapp'
+    | 'wechat-official-account'
 export type dictType = {
     id: string;
     name: string;
@@ -101,6 +102,7 @@ export type formType = {
             appId: string, // 微信单点登录配置
             appKey: string, // 钉钉单点登录配置
             appSecret: string, // 钉钉、微信单点登录配置
+            scope?: string, // 微信公众号授权 scope，如 snsapi_userinfo
         },
         autoCreateUser: boolean, // 是否自动创建平台用户
         usernamePrefix: string, // 用户ID前缀

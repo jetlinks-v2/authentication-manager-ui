@@ -134,6 +134,23 @@
                 <a-image width="100%" :src="img6" />
             </div>
         </div>
+        <div v-show="props.type === 'wechat-official-account'">
+            <div class="url">
+                {{ $t('components.Does.860107-65') }}
+                <a
+                    href="https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/Wechat_webpage_authorization.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/Wechat_webpage_authorization.html
+                </a>
+            </div>
+            <h1>{{ $t('components.Does.860107-0') }}</h1>
+            <div>{{ $t('components.Does.860107-66') }}</div>
+            <div class="image">
+                <a-image width="100%" :src="img3" />
+            </div>
+        </div>
     </div>
 </template>
 

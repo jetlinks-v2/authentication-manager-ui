@@ -29,5 +29,6 @@ export const systemImg = {
     internalStandaloneImg,
     thirdParty,
     wechatMiniapp,
-    wechatWebapp
+    wechatWebapp,
+    wechatOfficialAccount: wechatWebapp,
 }
