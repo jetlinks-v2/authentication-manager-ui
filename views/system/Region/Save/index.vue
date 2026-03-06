@@ -49,6 +49,7 @@
               v-model:value="modelRef.code"
               v-model:name="modelRef.name"
               v-model:sync="modelRef.properties.sync"
+              v-model:syncAll="modelRef.properties.syncAll"
               :areaTree="areaTree"
             />
           </a-form-item>
@@ -204,7 +205,8 @@ const init = {
   properties: {
     type: 'builtin',
     partition: 'none',
-    sync: true
+    sync: true,
+    syncAll: false,
   },
   sortIndex: props.data.sortIndex || 1,
   geoJson: undefined,
@@ -220,7 +222,8 @@ const modelRef = reactive({
   properties: {
     type: 'builtin',
     partition: 'none',
-    sync: true
+    sync: true,
+    syncAll: false,
   },
   sortIndex: props.data.sortIndex || 1,
   geoJson: undefined,
@@ -368,7 +371,8 @@ const handleSave = () => {
 
       if (newData.properties.sync) {
         const arr = cloneDeep(props.areaTree)
-        const _syncChildren = syncChildren(newData.code, arr)
+        const _syncChildren = syncChildren(newData.code, arr, newData.properties.syncAll)
+        debugger
         const different = _syncChildren.filter(item => {
           if (newData.children && newData.children.some(oldItem => oldItem.code === item.code)) {
             return false

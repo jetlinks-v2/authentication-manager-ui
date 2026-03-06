@@ -67,6 +67,7 @@ const defaultImg = {
     'dingtalk-ent-app': systemImg.dingTalkEntAppImg,
     'third-party': systemImg.thirdParty,
     'wechat-miniapp': systemImg.wechatMiniapp,
+    'wechat-official-account': systemImg.wechatOfficialAccount,
 };
 
 const urlValue = ref<any>({ ...defaultImg });

@@ -122,9 +122,12 @@ export const useColumns = () => {
   ]
 }
 
-export const usePositionList = (params: any) => {
+export const usePositionList = (params: any, onSuccess?: (result: Array<Record<string, any>>) => Array<Record<string, any>>) => {
   const { data } = useRequest(queryPositionDetailNoPage, {
     onSuccess(resp) {
+      if (onSuccess) {
+        return onSuccess(resp.result)
+      }
       return resp.result.map((item: any) => ({ ...item, value: item.id, label: item.name }))
     },
     defaultParams: params

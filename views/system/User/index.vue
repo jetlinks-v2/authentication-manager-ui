@@ -22,41 +22,43 @@
             :scroll="{ y: 'calc(100% - 60px)' }"
         >
           <template #headerLeftRender>
-            <a-space>
-              <j-permission-button
-                  :hasPermission="`${permission}:add`"
-                  type="primary"
-                  @click="table.openDialog('add')"
-              >
-                <AIcon type="PlusOutlined"/>
-                {{ $t('User.index.673867-0') }}
-              </j-permission-button>
-              <a-dropdown>
-                <a-button>
-                  批量操作
-                </a-button>
-                <template #overlay>
-                  <a-menu>
-                    <a-menu-item key="import">
-                      <j-permission-button
-                          :hasPermission="`${permission}:import`"
-                          @click="onImport"
-                      >
-                        批量导入
-                      </j-permission-button>
-                    </a-menu-item>
-                    <a-menu-item key="export">
-                      <j-permission-button
-                          :hasPermission="`${permission}:export`"
-                          @click="onExport"
-                      >
-                        批量导出
-                      </j-permission-button>
-                    </a-menu-item>
-                  </a-menu>
-                </template>
-              </a-dropdown>
-            </a-space>
+              <RegistryComponent code="addTool" is="a-space">
+                <j-permission-button
+                    key="add"
+                    :hasPermission="`${permission}:add`"
+                    type="primary"
+                    @click="table.openDialog('add')"
+                    @save="table.refresh()"
+                >
+                  <AIcon type="PlusOutlined"/>
+                  {{ $t('User.index.673867-0') }}
+                </j-permission-button>
+                <a-dropdown key="batch">
+                  <a-button>
+                    批量操作
+                  </a-button>
+                  <template #overlay>
+                    <a-menu>
+                      <a-menu-item key="import">
+                        <j-permission-button
+                            :hasPermission="`${permission}:import`"
+                            @click="onImport"
+                        >
+                          批量导入
+                        </j-permission-button>
+                      </a-menu-item>
+                      <a-menu-item key="export">
+                        <j-permission-button
+                            :hasPermission="`${permission}:export`"
+                            @click="onExport"
+                        >
+                          批量导出
+                        </j-permission-button>
+                      </a-menu-item>
+                    </a-menu>
+                  </template>
+                </a-dropdown>
+              </RegistryComponent>
           </template>
           <template #type="slotProps">
             {{ typeOptions.find(i => i.value === slotProps?.typeId)?.label || slotProps.typeId }}

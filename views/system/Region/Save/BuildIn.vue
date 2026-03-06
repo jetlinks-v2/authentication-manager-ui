@@ -15,12 +15,24 @@
       <span v-if="code">{{ name }} | {{ code }}</span>
     </template>
   </a-tree-select>
-  <a-checkbox
-      v-model:checked="mySync"
-      @change="onCheckChange"
-      style="margin-top: 5px"
-  >{{ $t('Save.BuildIn.317807-1') }}</a-checkbox
-  >
+  <a-space size="middle" align="top" style="margin-top: 8px;">
+    <a-switch
+        v-model:checked="mySync"
+        @change="onCheckChange"
+    ></a-switch>
+    <div>
+      <div>
+        {{ $t('Save.BuildIn.317807-1') }}
+      </div>
+      <a-radio-group v-if="mySync" v-model:value="radioValue" size="small" style="margin-top: 5px;" @change="onRadioChange">
+        <a-radio-button :value="false">添加下一级区域</a-radio-button>
+        <a-radio-button :value="true">添加下级所有区域</a-radio-button>
+      </a-radio-group>
+    </div>
+  </a-space>
+  <a-form-item-rest>
+
+  </a-form-item-rest>
 </template>
 
 <script lang="ts" setup>
@@ -48,14 +60,19 @@ const props = defineProps({
   sync: {
     type: Boolean,
     default: true
+  },
+  syncAll: {
+    type: Boolean,
+    default: false,
   }
 });
 
-const emits = defineEmits(['update:value', 'update:name', 'update:children', 'update:sync']);
+const emits = defineEmits(['update:value', 'update:name', 'update:children', 'update:sync', 'update:syncAll']);
 
 const features = ref<any>({});
 const _value = ref<string>();
 const mySync = ref<boolean>(props.sync);
+const radioValue = ref<boolean>(props.syncAll);
 
 
 const findChildren = (data: any, code: string) => {
@@ -79,7 +96,15 @@ const findChildren = (data: any, code: string) => {
 }
 
 const onCheckChange = (e: any) => {
-  emits('update:sync', e.target.checked)
+  emits('update:sync', e)
+  if (!e) {
+    radioValue.value = 'onlyNextLevel'
+    emits('update:syncAll', radioValue.value)
+  }
+};
+
+const onRadioChange = (e: any) => {
+  emits('update:syncAll', e.target.value)
 };
 
 const getObj = (node: any): any => {

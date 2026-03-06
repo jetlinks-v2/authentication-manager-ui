@@ -745,6 +745,8 @@
   "components.Does.860107-51": "DingTalk Open Platform: ",
   "components.Does.860107-53": "WeChat open platform: ",
   "components.Does.860107-64": "Mini Program Open Platform: ",
+  "components.Does.860107-65": "WeChat Official Account Web Authorization: ",
+  "components.Does.860107-66": "After configuration, users can scan the QR code with WeChat to open the authorization page and log in to the IoT platform after authorizing.",
   "ApplyList.MUpload.561504-0": "Replace Icon",
   "ApplyList.MUpload.561504-1": "Delete Icon",
   "ApplyList.MUpload.561504-2": "Change Icon",

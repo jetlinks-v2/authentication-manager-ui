@@ -3,6 +3,7 @@
     type="simple"
     :columns="columns"
     target="category-bind-modal"
+    ref="searchRef"
     noMargin
     @search="search"
   />
@@ -110,6 +111,7 @@ const props = defineProps<{
   assetType: 'product' | 'device';
   bulkBool: boolean;
   bulkList: string[]
+  productIds: string[]
 }>();
 const queryCount = ref(0);
 const queryParams = ref({});
@@ -121,6 +123,7 @@ const _selectedRowKeys = ref<string[]>([]) // 选中项的id
 const backRowKeys = ref<string[]>([]) // 旧选中项的id
 const selectedRows = ref<any[]>([]) // 选中项
 const tableData = ref<any[]>([]) // 列表的浅拷贝
+const searchRef = ref()
 
 const onChange = (val: string[], record: any) => {
   selectedRows.value.forEach((i: any) => {
@@ -376,6 +379,18 @@ watch(
   },
   { deep: true },
 );
+
+onMounted(() => {
+  if (props.productIds?.length && props.assetType === 'device' && searchRef.value) {
+    searchRef.value.setValues({ terms: [{
+        terms: [{
+          column: 'productName',
+          termType: 'in',
+          value: props.productIds
+        }]
+      }]})
+  }
+})
 
 defineExpose({
   _selectedRowKeys: _selectedRowKeys.value,
