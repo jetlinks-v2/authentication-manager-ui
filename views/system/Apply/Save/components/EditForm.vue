@@ -1319,6 +1319,69 @@
                   <a-select-option value="snsapi_base">snsapi_base</a-select-option>
                 </a-select>
               </a-form-item>
+              <!-- 微信公众号：扫码关注登录 -->
+              <a-form-item
+                  v-if="form.data.provider === 'wechat-official-account'"
+                  class="resetLabel"
+                  :name="['sso', 'configuration', 'followRequire']"
+              >
+                <template #label>
+                  <FormLabel
+                      :text="$t('components.EditForm.wechatOfficial.followRequire')"
+                      :tooltip="$t('components.EditForm.wechatOfficial.followRequireTip')"
+                  />
+                </template>
+                <a-switch v-model:checked="form.data.sso.configuration.followRequire" />
+              </a-form-item>
+              <!-- 微信公众号：服务器配置 Token -->
+              <a-form-item
+                  v-if="form.data.provider === 'wechat-official-account'"
+                  class="resetLabel"
+                  :name="['sso', 'configuration', 'token']"
+              >
+                <template #label>
+                  <div class="wechat-token-label">
+                    <FormLabel
+                        :text="$t('components.EditForm.wechatOfficial.token')"
+                        :tooltip="$t('components.EditForm.wechatOfficial.tokenTip')"
+                    />
+                    <template v-if="form.data.id">
+                      <span class="wechat-event-url-inline">
+                        事件订阅地址：<code>{{ wechatEventUrl }}</code>
+                      </span>
+                      <a-button
+                        type="link"
+                        size="small"
+                        class="wechat-event-copy"
+                        @click.stop="copyWechatEventUrl"
+                      >
+                        复制
+                      </a-button>
+                    </template>
+                  </div>
+                </template>
+                <a-input
+                    v-model:value="form.data.sso.configuration.token"
+                    :placeholder="$t('components.EditForm.wechatOfficial.token')"
+                />
+              </a-form-item>
+              <!-- 微信公众号：EncodingAESKey -->
+              <a-form-item
+                  v-if="form.data.provider === 'wechat-official-account'"
+                  class="resetLabel"
+                  :name="['sso', 'configuration', 'aesKey']"
+              >
+                <template #label>
+                  <FormLabel
+                      :text="$t('components.EditForm.wechatOfficial.aesKey')"
+                      :tooltip="$t('components.EditForm.wechatOfficial.aesKeyTip')"
+                  />
+                </template>
+                <a-input
+                    v-model:value="form.data.sso.configuration.aesKey"
+                    :placeholder="$t('components.EditForm.wechatOfficial.aesKey')"
+                />
+              </a-form-item>
             </div>
 
             <a-form-item class="resetLabel">
@@ -1627,6 +1690,10 @@ const initForm: formType = {
       appId: '', // 微信单点登录配置
       appKey: '', // 钉钉单点登录配置
       appSecret: '', // 钉钉、微信单点登录配置
+      scope: '', // 微信公众号授权 scope
+      followRequire: false, // 微信公众号：扫码关注登录
+      token: '', // 微信公众号服务器配置 Token
+      aesKey: '', // 微信公众号 EncodingAESKey
     },
     type: undefined,
     autoCreateUser: false, // 是否自动创建平台用户
@@ -1653,6 +1720,22 @@ const form = reactive({
   fileList: [] as any[],
   uploadLoading: false,
 });
+const wechatEventUrl = computed(() => {
+  if (!form.data.id) return '';
+  const origin = window.location.origin || '';
+  return `${origin}/api/wx-mp/${form.data.id}`;
+});
+
+const copyWechatEventUrl = () => {
+  if (!form.data.id) return;
+  const url = wechatEventUrl.value;
+  if (!url) return;
+  if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(() => {
+      onlyMessage('事件订阅地址已复制');
+    });
+  }
+};
 const thirdPartyType = ref<any[]>([])
 
 const checkCh = (_rule: Rule, value: string): Promise<any> =>
@@ -2125,5 +2208,24 @@ const queryThirdPartyType = async () => {
       }
     }
   }
+}
+
+.wechat-token-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.wechat-event-url-inline {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.65);
+}
+.wechat-event-url-inline code {
+  background: #f5f5f5;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+.wechat-event-copy {
+  padding: 0 4px;
 }
 </style>

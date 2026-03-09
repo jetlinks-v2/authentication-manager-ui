@@ -200,6 +200,12 @@
       </FullPage>
     </div>
     <div class="dialogs">
+      <OfficialAccountMenuDrawer
+          v-model:visible="officialAccountMenuDrawerVisible"
+          :app-id="menuDrawerApp?.id"
+          :app-name="menuDrawerApp?.name"
+          @done="menuDrawerApp = null"
+      />
       <MenuDialog
           v-if="dialogVisible && current.provider !== 'third-party'"
           v-model:visible="dialogVisible"
@@ -225,6 +231,7 @@
 </template>
 
 <script setup lang="ts" name="Apply">
+import OfficialAccountMenuDrawer from './componenets/OfficialAccountMenuDrawer.vue';
 import MenuDialog from './componenets/MenuDialog.vue';
 import ThirdMenu from './componenets/ThirdMenu.vue';
 import {
@@ -433,6 +440,20 @@ const table = {
           dialogVisible.value = true;
         },
       });
+    // 微信公众号：菜单配置
+    if (data.provider === 'wechat-official-account')
+      others.children?.push({
+        permission: `${permission}:update`,
+        key: 'officialAccountMenu',
+        text: $t('Apply.index.wechatOfficialAccount.menuConfig'),
+        tooltip: { title: $t('Apply.index.wechatOfficialAccount.menuConfigTip') },
+        icon: 'MenuOutlined',
+        disabled: !disabled,
+        onClick: () => {
+          menuDrawerApp.value = data;
+          officialAccountMenuDrawerVisible.value = true;
+        },
+      });
     // 有api操作权限
     if (otherServers.includes('apiServer'))
       others.children?.push(
@@ -488,6 +509,8 @@ const table = {
   },
 };
 const dialogVisible = ref(false);
+const officialAccountMenuDrawerVisible = ref(false);
+const menuDrawerApp = ref<{ id: string; name?: string } | null>(null);
 const selectId = ref<string>('');
 const selectProvider = ref<any>('');
 onMounted(() => {
