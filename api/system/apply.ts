@@ -34,3 +34,16 @@ export const saveOwnerMenu_api = (owner: string, appId: string, data: object) =>
 
 // 获取第三方单点登录授权类型
 export const getThirdPartyType = () => request.get<any>(`/dictionary/third-sso-type/items`);
+
+// --------- 微信公众号自定义菜单 ---------
+/** 执行应用自定义命令（如公众号菜单） */
+export const executeAppCommand_api = (appId: string, commandId: string, data?: Record<string, any>) =>
+  request.post(`/application/${appId}/command/${commandId}`, data || {});
+
+/** 获取公众号菜单 */
+export const getMenu_api = (appId: string) =>
+  executeAppCommand_api(appId, 'GetMenu');
+
+/** 保存公众号菜单（仅同步菜单结构到微信） */
+export const saveMenu_api = (appId: string, data: { buttons: any[] }) =>
+  executeAppCommand_api(appId, 'SaveMenu', data);

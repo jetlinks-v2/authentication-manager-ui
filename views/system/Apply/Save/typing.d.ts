@@ -103,6 +103,9 @@ export type formType = {
             appKey: string, // 钉钉单点登录配置
             appSecret: string, // 钉钉、微信单点登录配置
             scope?: string, // 微信公众号授权 scope，如 snsapi_userinfo
+            followRequire?: boolean, // 微信公众号：扫码关注登录
+            token?: string, // 微信公众号服务器配置 Token
+            aesKey?: string, // 微信公众号 EncodingAESKey
         },
         autoCreateUser: boolean, // 是否自动创建平台用户
         usernamePrefix: string, // 用户ID前缀
