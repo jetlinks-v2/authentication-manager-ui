@@ -381,18 +381,17 @@ const hasNodeWithId = (arr: any, id: any)=>{
     return false;
 }
 
-onMounted(() => {
+onMounted(async () => {
   if(isNoCommunity) {
-    queryPositionDetailNoPage({
+    const resp = await queryPositionDetailNoPage({
       paging: false,
       sorts: [{name: 'sortIndex', order: 'asc'}]
-    }).then(resp => {
-      if(resp.success){
-        resp.result.map(i => {
-          positionsMap.set(i.id, i)
-        })
-      }
     })
+    if(resp.success){
+      resp.result.map(i => {
+        positionsMap.set(i.id, i)
+      })
+    }
   }
   form.init();
 })
