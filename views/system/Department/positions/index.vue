@@ -1,10 +1,11 @@
 <script setup name="Positions">
 import {useI18n} from 'vue-i18n';
-import {queryPage, del, queryPageNoPage} from '@authentication-manager-ui/api/system/positions';
+import {queryPage, del} from '@authentication-manager-ui/api/system/positions';
 import BindModal from './Bind.vue'
 import {useMenuStore} from '@jetlinks-web-core/store';
 import {onlyMessage} from '@jetlinks-web/utils';
 import {queryRole_api} from "@authentication-manager-ui/api/system/user";
+import {getPositionTree} from "./data";
 
 const {t: $t} = useI18n();
 const menuStore = useMenuStore();
@@ -46,6 +47,7 @@ const columns = [
     ellipsis: true,
     search: {
       type: 'select',
+      termFilter: ['not', 'in', 'nin'],
       options: () =>
           new Promise((resolve) => {
             queryRole_api({
@@ -73,25 +75,26 @@ const columns = [
     ellipsis: true,
     scopedSlots: true,
     search: {
-      type: 'select',
+      type: 'treeSelect',
       termFilter: ['not', 'in', 'nin'],
       options() {
-        const params = props.parentId ? {
-          terms: [{column: 'orgId', value: props.parentId}],
-          sorts: [{name: 'createTime', order: 'desc'}],
-          paging: false
-        } : {sorts: [{name: 'createTime', order: 'desc'}], paging: false}
-        return queryPageNoPage(params).then(resp => {
-          if (resp.success) {
-            return resp.result.map(item => {
-              return {
-                label: item.name,
-                value: item.id
-              }
-            })
-          }
-          return []
-        })
+        // const params = props.parentId ? {
+        //   terms: [{column: 'orgId', value: props.parentId}],
+        //   sorts: [{name: 'createTime', order: 'desc'}],
+        //   paging: false
+        // } : {sorts: [{name: 'createTime', order: 'desc'}], paging: false}
+        // return queryPageNoPage(params).then(resp => {
+        //   if (resp.success) {
+        //     return resp.result.map(item => {
+        //       return {
+        //         label: item.name,
+        //         value: item.id
+        //       }
+        //     })
+        //   }
+        //   return []
+        // })
+        return getPositionTree()
       }
     },
   },
@@ -173,6 +176,16 @@ const onSave = () => {
 // }
 
 const handleQuery = (params) => {
+  (params.terms || []).map(a => {
+    return (a.terms || []).map(b => {
+      if (b.column === 'roles') {
+        b.column = 'id$position-role$position'
+        b.termType = undefined
+        b.value = b.value ? [b.value] : []
+      }
+      return b
+    })
+  })
   const _params = {
     ...params,
     terms: [

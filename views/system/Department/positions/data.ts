@@ -3,6 +3,7 @@ import {queryRole_api} from "@authentication-manager-ui/api/system/user";
 import {getTreeData_api} from "@authentication-manager-ui/api/system/department";
 import {useRequest} from "@jetlinks-web/hooks";
 import {queryPageNoPage, queryPositionDetailNoPage} from "@authentication-manager-ui/api/system/positions";
+import {getDepartmentList_api} from "@jetlinks-web-core/api/system/user";
 
 export const useColumns = () => {
   const { t: $t } = useI18n();
@@ -134,4 +135,38 @@ export const usePositionList = (params: any, onSuccess?: (result: Array<Record<s
   })
 
   return { data }
+}
+
+const handleOrgData = (orgList = [], positionList = []): any[] => {
+  return orgList.map((item: any) => {
+    const _children = positionList.filter((pos: any) => pos.orgId === item.id).map((_pos: any) => {
+      return {
+        ..._pos,
+        label: _pos.name,
+        value: _pos.id
+      }
+    })
+    return {
+      ...item,
+      disabled: true,
+      label: item.name,
+      value: item.id,
+      children: [...handleOrgData(item.children || [], positionList), ..._children]
+    }
+  })
+}
+
+export const getPositionTree = async () => {
+  const resp = await getDepartmentList_api({
+    paging: false,
+    sorts: [
+      { name: "sortIndex", order: "asc" },
+      { name: "createTime", order: "asc" },
+    ]
+  })
+  const response = await queryPageNoPage({sorts: [{name: 'createTime', order: 'desc'}], paging: false})
+  if(resp.success && response.success){
+    return handleOrgData(resp.result, response.result)
+  }
+  return []
 }
