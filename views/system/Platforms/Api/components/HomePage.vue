@@ -100,7 +100,7 @@
             }})
           </p>
           <div>
-            <a-monaco-editor
+            <j-monaco-editor
               language="java"
               style="height: 370px"
               theme="vs-dark"
@@ -121,20 +121,20 @@
       <h3>{{ $t("components.HomePage.726029-22") }}</h3>
       <div class="h3-text">{{ $t("components.HomePage.726029-23") }}</div>
       <div>
-        <a-monaco-editor
+        <j-monaco-editor
           language="java"
           style="height: 370px"
           theme="vs-dark"
-          v-model:modelValue="javaStr2"
+          :modelValue="javaStr2"
         />
       </div>
       <h3>{{ $t("components.HomePage.726029-24") }}</h3>
       <div>
-        <a-monaco-editor
+        <j-monaco-editor
           language="java"
           style="height: 370px"
           theme="vs-dark"
-          v-model:modelValue="javaStr"
+          :modelValue="javaStr"
         />
       </div>
     </div>
@@ -183,11 +183,11 @@ const data = [
     data: "1574993804802 ",
   },
 ];
-const javaStr1 = `String secureKey = ...; //密钥\r\nString responseBody = ...;//服务端响应结果\r\nString timestampHeader = ...;//响应头: X-Timestamp\r\nString signHeader = ...; //响应头: X-Sign\r\n\r\nString sign = DigestUtils.md5Hex(responseBody+timestampHeader+secureKey);\r\nif(sign.equalsIgnoreCase(signHeader)){\r\n //验签通过\r\n}`;
+const javaStr1 = `String secureKey = ...; //密钥\r\nString responseBody = ...;//服务端响应结果\r\nString timestampHeader = ...;//响应头: X-Timestamp\r\nString signHeader = ...; //响应头: X-Sign\r\n\r\nString sign = DigestUtils.md5Hex(responseBody+timestampHeader+secureKey);\r\nif(sign.equalsIgnoreCase(signHeader)){\r\n //验签通过\r\n}`
 const javaStr2 =
   "<dependency>\r\n    <groupId>org.jetlinks.sdk</groupId>\r\n    <artifactId>api-sdk</artifactId>\r\n    <version>1.0.0</version>\r\n</dependency>";
 const javaStr =
-  '\r\n        //服务器的baseUrl\r\n        String baseUrl = "http://localhost:9000/jetlinks";\r\n  //客户端Id\r\n        String clientId = "aSoq98aAxzP";\r\n  //访问秘钥\r\n        String secureKey = "DaYsxpiWSfdTAPJyKW8rP2WAGyWErnsR";\r\n\r\n        ClientConfig clientConfig = new ClientConfig(baseUrl, clientId, secureKey);\r\n\r\n        ApiClient client = new WebApiClient(clientConfig);\r\n\r\nApiResponse < PagerResult < DeviceInfo >> response = client\r\n    .request(QueryDeviceRequest\r\n        .of(query -> query\r\n            .where("productId", "demo-device")\r\n            .doPaging(0, 100)));';
+  '\r\n        //服务器的baseUrl\r\n        String baseUrl = "http://localhost:9000/jetlinks";\r\n  //客户端Id\r\n        String clientId = "aSoq98aAxzP";\r\n  //访问秘钥\r\n        String secureKey = "DaYsxpiWSfdTAPJyKW8rP2WAGyWErnsR";\r\n\r\n        ClientConfig clientConfig = new ClientConfig(baseUrl, clientId, secureKey);\r\n\r\n        ApiClient client = new WebApiClient(clientConfig);\r\n\r\nApiResponse < PagerResult < DeviceInfo >> response = client\r\n    .request(QueryDeviceRequest\r\n        .of(query -> query\r\n            .where("productId", "demo-device")\r\n            .doPaging(0, 100)));'
 </script>
 
 <style lang="less" scoped>
