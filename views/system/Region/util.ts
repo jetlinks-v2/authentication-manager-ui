@@ -22,7 +22,6 @@ export const syncChildren = (code: string, area: any[], syncAll: boolean) => {
         })
 
         return _children?.map(item => {
-            debugger
             item.children = syncAll ? item.children : []
             return item
         })

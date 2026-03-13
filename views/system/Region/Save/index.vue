@@ -372,7 +372,7 @@ const handleSave = () => {
       if (newData.properties.sync) {
         const arr = cloneDeep(props.areaTree)
         const _syncChildren = syncChildren(newData.code, arr, newData.properties.syncAll)
-        debugger
+
         const different = _syncChildren.filter(item => {
           if (newData.children && newData.children.some(oldItem => oldItem.code === item.code)) {
             return false
