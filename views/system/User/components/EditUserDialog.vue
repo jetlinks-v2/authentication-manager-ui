@@ -83,7 +83,7 @@
                       <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 4px" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
                     </a-form-item>
                 </a-col>
-                <a-col :span="12" v-if="isIot">
+                <a-col :span="12" v-if="hasDepartmentMenu">
                     <a-form-item name="orgIdList" :label="$t('components.EditUserDialog.939453-14')">
                       <form-item-org :extraData="detail.orgList" :extraProps="{multiple: true}" :disabledData="disabledData.orgIds" v-model:value="form.data.orgIdList" :disabled="form.data.username === 'admin'" />
                       <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 4px" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
@@ -187,7 +187,7 @@ import {cloneDeep, flatten, map} from 'lodash-es';
 import { useI18n } from 'vue-i18n';
 import {queryPositionDetailNoPage} from "@authentication-manager-ui/api/system/positions";
 import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
-import {isIotPlatform} from "@jetlinks-web-core/hooks";
+import { useMenuStore } from '@jetlinks-web-core/store';  
 
 const { t: $t } = useI18n();
 
@@ -200,7 +200,8 @@ const props = defineProps<{
 // 弹窗相关
 const loading = ref(false);
 const positionsMap = new Map()
-const isIot = isIotPlatform()
+const menuStore = useMenuStore();
+const hasDepartmentMenu = menuStore.hasMenu('system/Department');
 
 const disabledData = reactive<{
   roles: any[],

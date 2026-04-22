@@ -123,7 +123,7 @@ import {getPermissionTree_api} from "@authentication-manager-ui/api/system/role"
 import {paramsEncodeQuery} from "@jetlinks-web-core/utils";
 import {NotificationSubscriptionCode} from "@jetlinks-web-core/router/menu";
 import {cloneDeep, omit, uniqBy} from "lodash-es";
-import {isIotPlatform} from "@jetlinks-web-core/hooks";
+import {useRegistryOptions} from "@jetlinks-web-core/hooks";
 
 const {t: $t} = useI18n();
 const emits = defineEmits(['update:selectItems']);
@@ -136,7 +136,6 @@ const action = reactive({
   options: [],
   data: []
 });
-const isIot = isIotPlatform()
 
 const dataPermission = reactive({
   visible: false,
@@ -144,7 +143,7 @@ const dataPermission = reactive({
   data: undefined
 })
 
-const columns = computed(() => {
+const baseColumns = computed(() => {
   const arr = [
     {
       title: $t('components.PermissionTree.954862-0'),
@@ -159,7 +158,7 @@ const columns = computed(() => {
       width: '35%',
     },
   ];
-  if (isNoCommunity && isIot) {
+  if (isNoCommunity) {
     arr.push({
       title: '数据权限',
       dataIndex: 'data',
@@ -168,6 +167,11 @@ const columns = computed(() => {
     })
   }
   return arr
+})
+
+const { mergedOptions: columns } = useRegistryOptions({
+  baseOptions: baseColumns,
+  code: 'permission-tree-columns'
 })
 
 const selectedAll = computed(() => {
