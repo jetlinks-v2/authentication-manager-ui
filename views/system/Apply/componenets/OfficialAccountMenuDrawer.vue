@@ -106,18 +106,25 @@
             <template v-if="editMode === 'welcome'">
               <h4 class="config-title">公众号欢迎语配置</h4>
               <a-form layout="vertical" class="config-form">
-                <a-form-item label="关注自动回复">
+                <a-form-item :label="$t('Apply.components.OfficialAccountMenuDrawer.followAutoReply')">
                   <a-textarea
                     v-model:value="followAutoReply"
                     :rows="4"
-                    placeholder="用户首次关注公众号时自动回复的内容"
+                    :placeholder="$t('Apply.components.OfficialAccountMenuDrawer.followAutoReplyPlaceholder')"
                   />
                 </a-form-item>
-                <a-form-item label="授权自动回复">
+                <a-form-item :label="$t('Apply.components.OfficialAccountMenuDrawer.authAutoReply')">
                   <a-textarea
                     v-model:value="authAutoReply"
                     :rows="4"
-                    placeholder="用户授权登录成功后自动回复的内容"
+                    :placeholder="$t('Apply.components.OfficialAccountMenuDrawer.authAutoReplyPlaceholder')"
+                  />
+                </a-form-item>
+                <a-form-item :label="$t('Apply.components.OfficialAccountMenuDrawer.autoReply')">
+                  <a-textarea
+                    v-model:value="autoReply"
+                    :rows="4"
+                    :placeholder="$t('Apply.components.OfficialAccountMenuDrawer.autoReplyPlaceholder')"
                   />
                 </a-form-item>
               </a-form>
@@ -298,6 +305,7 @@ type EditMode = 'welcome' | 'menu';
 const editMode = ref<EditMode>('welcome');
 const followAutoReply = ref<string>('');
 const authAutoReply = ref<string>('');
+const autoReply = ref<string>('');
 
 interface MenuButton {
   name?: string;
@@ -618,6 +626,7 @@ async function loadMenu() {
     // 欢迎语配置：从应用 configurations 读取
     followAutoReply.value = conf.followWelcomeMsg || '欢迎关注公众号，这里展示的是菜单预览。';
     authAutoReply.value = conf.welcomeMsg || '点击底部菜单可配置回复内容。';
+    autoReply.value = conf.autoReply || '';
   } catch (e) {
     menuButtons.value = [];
   } finally {
@@ -684,6 +693,7 @@ async function handleSave() {
           clickMenuRules,
           followWelcomeMsg: followAutoReply.value,
           welcomeMsg: authAutoReply.value,
+          autoReply: autoReply.value,
         };
         await updateApp_api(props.appId, { configurations: nextConfigurations });
       }
