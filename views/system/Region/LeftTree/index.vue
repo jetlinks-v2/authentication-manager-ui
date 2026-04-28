@@ -139,6 +139,21 @@ const filterTreeNodes = (tree: any[], condition: string) => {
   });
 };
 
+const findNodeById = (nodes: any[], targetId: string): any => {
+  for (const node of nodes) {
+    if (node.id === targetId) {
+      return node;
+    }
+    if (node.children && node.children.length > 0) {
+      const found = findNodeById(node.children, targetId);
+      if (found) {
+        return found;
+      }
+    }
+  }
+  return null;
+};
+
 const getTreeId = (data: any[], cb: (id: string) => void) => {
   data.forEach((item) => {
     if (item.children) {
@@ -161,9 +176,124 @@ const onSearch = debounce((v: string) => {
   }
 }, 300);
 
-const onSave = () => {
+const onSave = async () => {
   visible.value = false;
-  handleSearch(); // 重新加载根节点数据
+
+  // 如果是编辑顶级节点，只更新该节点的数据，保留其children和展开状态
+  if (mode.value === 'edit' && !current.value?.parentId) {
+    // 获取最新的节点数据
+    const resp = await getRegion({
+      paging: false,
+      terms: [{
+        column: 'id',
+        value: current.value.id,
+        termType: "eq",
+      }],
+    });
+
+    if (resp.success && resp.result && resp.result.length > 0) {
+      const updatedData = resp.result[0];
+
+      // 递归更新树节点，保留children
+      const updateNodeData = (nodes: any[]): any[] => {
+        return nodes.map(node => {
+          if (node.id === current.value.id) {
+            return {
+              ...updatedData,
+              key: updatedData.id,
+              title: updatedData.name,
+              isLeaf: node.isLeaf,
+              children: node.children, // 保留原有的children
+            };
+          }
+          if (node.children && node.children.length > 0) {
+            return {
+              ...node,
+              children: updateNodeData(node.children)
+            };
+          }
+          return node;
+        });
+      };
+
+      treeData.value = updateNodeData(treeData.value);
+    }
+  }
+  // 如果是添加顶级节点，重新加载根节点
+  else if (mode.value === 'add' && !current.value?.parentId) {
+    await handleSearch();
+  }
+  // 如果是添加或编辑子节点,重新加载父节点的子节点数据
+  else {
+    const parentNode = findNodeById(treeData.value, current.value.parentId);
+    if (parentNode) {
+      // 保存父节点下已展开的子节点ID
+      const childExpandedKeys = expandedKeys.value.filter(key => {
+        const node = findNodeById(parentNode.children || [], key);
+        return !!node;
+      });
+
+      // 通过重新创建树结构来标记节点需要重新加载
+      const markNodeForReload = (nodes: any[], targetId: string): any[] => {
+        return nodes.map(node => {
+          if (node.id === targetId) {
+            // 删除children属性,标记为需要重新加载
+            const { children, ...rest } = node;
+            return rest;
+          }
+          if (node.children && node.children.length > 0) {
+            return {
+              ...node,
+              children: markNodeForReload(node.children, targetId)
+            };
+          }
+          return node;
+        });
+      };
+
+      // 标记父节点需要重新加载
+      treeData.value = markNodeForReload(treeData.value, current.value.parentId);
+
+      // 重新加载父节点
+      const reloadedParent = findNodeById(treeData.value, current.value.parentId);
+      if (reloadedParent) {
+        await onLoadData(reloadedParent);
+      }
+
+      // 递归重新加载已展开的子节点数据
+      const reloadExpandedChildren = async (parentId: string) => {
+        const parent = findNodeById(treeData.value, parentId);
+        if (!parent || !parent.children || parent.children.length === 0) return;
+
+        // 先收集需要重新加载的子节点ID
+        const childrenToReload = parent.children
+          .filter(child => childExpandedKeys.includes(child.id))
+          .map(child => child.id);
+
+        // 逐个标记并重新加载
+        for (const childId of childrenToReload) {
+          // 标记节点需要重新加载
+          treeData.value = markNodeForReload(treeData.value, childId);
+
+          // 重新获取节点并加载
+          const childNode = findNodeById(treeData.value, childId);
+          if (childNode) {
+            await onLoadData(childNode);
+            await reloadExpandedChildren(childId);
+          }
+        }
+      };
+
+      if (childExpandedKeys.length > 0) {
+        await reloadExpandedChildren(current.value.parentId);
+      }
+
+      // 确保父节点保持展开状态
+      if (!expandedKeys.value.includes(current.value.parentId)) {
+        expandedKeys.value.push(current.value.parentId);
+      }
+    }
+  }
 };
 
 const onClose = () => {
@@ -171,7 +301,7 @@ const onClose = () => {
   emit("close");
 };
 
-const divResize = ({ height }) => {
+const divResize = ({height}) => {
   setTimeout(() => {
     heightSize.value = height;
   }, 300);
@@ -185,12 +315,40 @@ const onEdit = (_data: any) => {
   emit("select", _data?.code, _data);
 };
 
-const onRemove = (id: string) => {
+const onRemove = async (id: string) => {
   const response = delRegion(id);
-  response.then((resp) => {
+  response.then(async (resp) => {
     if (resp.success) {
       onlyMessage($t("LeftTree.index.191696-6"));
-      handleSearch(); // 重新加载根节点数据
+
+      // 从树中移除被删除的节点,保持其他节点的展开状态
+      const removeNodeById = (nodes: any[], targetId: string): any[] => {
+        return nodes.filter(node => {
+          if (node.id === targetId) {
+            return false;
+          }
+          if (node.children && node.children.length > 0) {
+            node.children = removeNodeById(node.children, targetId);
+          }
+          return true;
+        });
+      };
+
+      treeData.value = removeNodeById(treeData.value, id);
+
+      // 从expandedKeys中移除被删除的节点
+      expandedKeys.value = expandedKeys.value.filter(key => key !== id);
+
+      // 如果删除的是当前选中的节点,清空选中状态
+      if (selectedKeys.value.includes(id)) {
+        selectedKeys.value = [];
+        // 默认选择第一个根节点
+        const firstNode = treeData.value?.[0];
+        if (firstNode) {
+          selectedKeys.value = [firstNode.id];
+          emit("select", firstNode.code, firstNode);
+        }
+      }
     }
   });
   return response;
@@ -334,14 +492,14 @@ const handleSearch = async () => {
   // 只加载根节点数据（level = 1 或 parentId 为空的节点）
   const resp = await getRegion({
     paging: false,
-    sorts: [{ name: "sortIndex", order: "asc" }],
+    sorts: [{name: "sortIndex", order: "asc"}],
     terms: [{
       column: 'level',
       value: 1,
       termType: "eq",
     }],
   });
-  
+
   if (resp.success) {
     // 处理根节点数据，设置异步加载所需的属性
     const rootNodes = (resp.result || []).map((item: any) => ({
@@ -349,11 +507,11 @@ const handleSearch = async () => {
       key: item.id,
       title: item.name,
       isLeaf: false, // 默认都不是叶子节点，允许展开查询
-      children: [], // 设置空数组，表示可以异步加载
+      // children设置为undefined表示未加载,空数组表示已加载但没有子节点
     }));
-    
+
     treeData.value = rootNodes;
-    
+
     // 默认选择第一个数据
     const dt = treeData.value?.[0];
     if (dt) {
@@ -366,7 +524,8 @@ const handleSearch = async () => {
 // 异步加载子节点数据
 const onLoadData = async (treeNode: any) => {
   return new Promise<void>(async (resolve) => {
-    if (treeNode.children && treeNode.children.length > 0) {
+    // 修改检查逻辑:只要children不是undefined,就说明已经加载过
+    if (treeNode.children !== undefined && treeNode.children !== null) {
       resolve();
       return;
     }
@@ -374,7 +533,7 @@ const onLoadData = async (treeNode: any) => {
     try {
       const params = {
         paging: false,
-        sorts: [{ name: "sortIndex", order: "asc" }],
+        sorts: [{name: "sortIndex", order: "asc"}],
         terms: [{
           column: 'parentId',
           value: treeNode.id,
@@ -389,16 +548,16 @@ const onLoadData = async (treeNode: any) => {
           key: item.id,
           title: item.name,
           isLeaf: false, // 默认都不是叶子节点，允许展开查询
-          children: [], // 设置空数组，表示可以异步加载
         }));
-        
+
         // 递归更新树节点
         const updateTreeNode = (nodes: any[], targetId: string, newChildren: any[]): any[] => {
           return nodes.map(node => {
             if (node.id === targetId) {
               return {
                 ...node,
-                children: newChildren.length > 0 ? newChildren : undefined,
+                // 不管有没有子节点,都设置为数组,表示已加载
+                children: newChildren,
                 isLeaf: newChildren.length === 0
               };
             }
@@ -411,14 +570,14 @@ const onLoadData = async (treeNode: any) => {
             return node;
           });
         };
-        
+
         // 更新树数据
         treeData.value = updateTreeNode(treeData.value, treeNode.id, children);
       }
     } catch (error) {
       console.error('加载子节点失败:', error);
     }
-    
+
     resolve();
   });
 };
@@ -485,6 +644,7 @@ onMounted(() => {
     width: 100%;
   }
 }
+
 :deep(.ant-tree-node-content-wrapper) {
   transform: translateY(-4px) !important;
 }
