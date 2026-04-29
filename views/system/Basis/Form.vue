@@ -81,6 +81,17 @@
           </template>
           <a-input v-model:value="formData['base-path']" :placeholder="$t('Basis.Form.436809-14')"></a-input>
         </a-form-item>
+        <a-form-item name="exchangeRate">
+          <template #label>
+            <a-space>
+              <span>{{ $t('Basis.Form.436809-27') }}</span>
+              <a-tooltip :title="$t('Basis.Form.436809-28')">
+                <AIcon type="QuestionCircleOutlined"/>
+              </a-tooltip>
+            </a-space>
+          </template>
+          <a-input v-model:value="formData.exchangeRate" :placeholder="$t('Basis.Form.436809-29')"></a-input>
+        </a-form-item>
         <a-form-item
             name="showRecordNumber"
             :label="$t('Basis.Form.436809-24')"
@@ -139,7 +150,8 @@
 </template>
 
 <script lang="ts" name="BasicForm" setup>
-import {reactive, ref} from 'vue'
+import {computed, onMounted, reactive, ref} from 'vue'
+import type { Rule } from 'ant-design-vue/es/form'
 import type {formDataType} from './typing'
 import {useRequest} from '@jetlinks-web/hooks';
 import {save_api} from '../../../api/system/basis';
@@ -165,7 +177,10 @@ const formData = reactive<formDataType>({
   apiKey: "",  // 高德API Key
   webKey: "", // 高德web key
   secretKey: "", // 高德web key
+  exchangeRate: "0.01",
   'base-path': `${window.location.origin}/api`,  // base-path
+  showRecordNumber: false,
+  recordNumber: '',
   logo: "/images/login/logo.png",  // 系统logo
   ico: "/favicon.ico",  // 浏览器页签
   background: "/images/login/login.png"  // 登录背景图
@@ -177,7 +192,7 @@ const showBtn = computed(() => {
   return props.hideSubmitBtn === false
 })
 // 表单验证规则
-const formRules = {
+const formRules: Record<string, Rule[]> = {
   // 系统名称输入框验证规则
   title: [
     {
@@ -201,6 +216,13 @@ const formRules = {
       required: true,
       message: $t('Basis.Form.436809-20'),
       trigger: "blur"
+    }
+  ],
+  exchangeRate: [
+    {
+      required: true,
+      message: $t('Basis.Form.436809-29'),
+      trigger: 'blur'
     }
   ]
 }
@@ -228,6 +250,7 @@ const getDetails = async () => {
     apiKey: configInfo.amap?.apiKey,
     webKey: configInfo.amap?.webKey,
     secretKey: configInfo.amap?.secretKey,
+    exchangeRate: configInfo.points?.exchangeRate || '0.01',
     'base-path': configInfo.paths?.['base-path'],
   })
 }
@@ -276,13 +299,19 @@ const submit = () => {
             'base-path': formData['base-path'],
           },
         },
+        {
+          scope: 'points',
+          properties: {
+            exchangeRate: formData.exchangeRate,
+          },
+        },
       ]
       run(params).then(resp => {
         resolve(true)
       }).catch(() => {
         reject(false)
       })
-    }).catch((e) => {
+    }).catch((e: unknown) => {
       reject(e)
       return false
     })

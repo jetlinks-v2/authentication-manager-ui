@@ -6,7 +6,10 @@ export interface formDataType {
     webKey: string | undefined, // 高德web key
 
     secretKey: string | undefined, // 高德web key
+    exchangeRate: string | undefined,
     'base-path': string | undefined,  // base-path
+    showRecordNumber?: boolean,
+    recordNumber?: string,
     logo: string | undefined,  // 系统logo
     ico: string | undefined,  // 浏览器页签
     background: string | undefined  // 登录背景图
