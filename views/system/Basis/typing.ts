@@ -1,7 +1,9 @@
+import type { ThemeStyleKey } from '@jetlinks-web-core/utils'
+
 // 基本配置表单数据类型接口
 export interface formDataType {
     title: string | undefined,  // 系统名称
-    headerTheme: "light" | "dark",  // 主题色
+    headerTheme: ThemeStyleKey,  // 界面风格
     apiKey: string | undefined,  // 高德API Key
     webKey: string | undefined, // 高德web key
 

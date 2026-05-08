@@ -15,8 +15,11 @@
           />
         </a-form-item>
         <a-form-item :label="$t('Basis.Form.436809-2')" name="headerTheme">
-          <a-select v-model:value="formData.headerTheme" :options="headerThemeAreas">
-          </a-select>
+          <a-select
+            v-model:value="formData.headerTheme"
+            :options="headerThemeAreas"
+            @change="changeHeaderTheme"
+          />
         </a-form-item>
         <!-- 高德地图API Key输入框 <AIcon type="QuestionCircleOutlined" /> -->
 
@@ -148,6 +151,7 @@ import Upload from '@jetlinks-web-core/views/init-home/Basic/components/upload/u
 import {onlyMessage} from '@jetlinks-web/utils';
 import {omit} from "lodash-es";
 import { useI18n } from 'vue-i18n';
+import { useHeaderTheme } from '@jetlinks-web-core/hooks';
 
 const { t: $t } = useI18n();
 const props = defineProps({
@@ -158,6 +162,12 @@ const props = defineProps({
 })
 
 const system = useSystemStore()
+const {
+  headerThemeAreas,
+  normalizeHeaderTheme,
+  applyHeaderTheme,
+  createHeaderThemeChange
+} = useHeaderTheme()
 // 表单数据
 const formData = reactive<formDataType>({
   title: "",  // 系统名称
@@ -205,11 +215,7 @@ const formRules = {
   ]
 }
 
-// 主题色下拉框选项
-const headerThemeAreas = ref([
-  {label: $t('Basis.Form.436809-21'), value: 'light'},
-  {label: $t('Basis.Form.436809-22'), value: 'dark'}
-])
+const changeHeaderTheme = createHeaderThemeChange(formData)
 
 
 // 修改系统信息
@@ -219,7 +225,7 @@ const getDetails = async () => {
 
   Object.assign(formData, {
     title: configInfo.front?.title,
-    headerTheme: configInfo.front?.headerTheme || 'light',
+    headerTheme: normalizeHeaderTheme(configInfo.front?.headerTheme),
     logo: configInfo.front?.logo || '/logo.png',
     ico: configInfo.front?.ico || '/favicon.ico',
     showRecordNumber: configInfo.front?.showRecordNumber || false,
@@ -278,6 +284,9 @@ const submit = () => {
         },
       ]
       run(params).then(resp => {
+        if (resp.success) {
+          applyHeaderTheme(formData.headerTheme)
+        }
         resolve(true)
       }).catch(() => {
         reject(false)
