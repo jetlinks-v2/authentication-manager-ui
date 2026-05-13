@@ -310,7 +310,7 @@ type requestObj = {
         left: 0;
         width: 4px;
         height: 100%;
-        background-color: @primary-color;
+        background-color: var(--jet-theme-primary, #1677FF);
         border-radius: 0 3px 3px 0;
         content: ' ';
       }

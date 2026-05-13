@@ -501,9 +501,9 @@ onMounted(() => {
 }
 
 .user-tag {
-  border: 1px solid var(--ant-info-color-deprecated-border);
-  color: var(--ant-info-color);
-  background-color: var(--ant-info-color-deprecated-bg);
+  border: 1px solid var(--info-line, var(--ant-color-info-border, #91CAFF));
+  color: var(--info, var(--ant-color-info, #1677FF));
+  background-color: var(--info-bg, var(--ant-color-info-bg, #E6F4FF));
   border-radius: 2px;
   padding: 0 7px;
   font-size: 12px;

@@ -445,7 +445,7 @@ const onSave = (_data: any) => {
             }
 
             .child-item-left-auth-lock {
-                color: @primary-color;
+                color: var(--jet-theme-primary, #1677FF);
                 font-size: 18px;
                 margin-right: 10px;
             }

@@ -351,7 +351,7 @@ defineExpose({
           }
 
           &.active {
-            background-color: var(--ant-primary-color);
+            background-color: var(--jet-theme-primary, var(--ant-color-primary, #1677FF));
             color: #fff;
           }
 

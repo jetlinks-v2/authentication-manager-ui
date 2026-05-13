@@ -63,7 +63,7 @@ const clickSave = () => {
         left: 0;
         width: 4px;
         height: calc(100% - 14px);
-        background-color: @primary-color;
+        background-color: var(--jet-theme-primary, #1677FF);
         border-radius: 2px;
         content: ' ';
       }

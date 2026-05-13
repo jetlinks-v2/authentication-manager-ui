@@ -75,12 +75,12 @@ onMounted(() => {
         }
 
         &:hover {
-            color: @primary-color-hover;
+            color: var(--jet-theme-primary-hover, #4096FF);
             opacity: 0.8;
         }
 
         &.active {
-            border-color: @primary-color-active;
+            border-color: var(--jet-theme-primary-active, #0958D9);
             opacity: 1;
         }
     }
