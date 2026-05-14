@@ -26,7 +26,6 @@ provide('rapidOn', rapidOn);
 .calendarContainer {
     display: flex;
     height: 100%;
-    padding: 24px;
-  gap: 24px;
-}
-</style>
+    padding: var(--space-6);
+  gap: var(--space-6);
+}</style>

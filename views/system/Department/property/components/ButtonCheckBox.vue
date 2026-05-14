@@ -34,6 +34,4 @@ watch(() => props.value, (val) => {
 })
 </script>
 
-<style lang="less" scoped>
-
-</style>
+<style lang="less" scoped></style>

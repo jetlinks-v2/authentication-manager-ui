@@ -224,24 +224,23 @@ watch(() => activeKey.value, (val) => {
   }
 
   h5 {
-      padding: 12px;
-      padding-left: 24px;
+      padding: var(--space-3);
+      padding-left: var(--space-6);
       background-color: #f6f6f6;
-      font-size: 14px;
+      font-size: var(--fs-14);
   }
   .batch-config {
       padding: 8px 16px;
       background: #F5F5F5;
-      border-radius: 6px;
+      border-radius: var(--r-2);
       border: 1px solid #CCCCCC;
       display: flex;
       align-items: center;
       justify-content: space-between;
       display: flex;
-      margin: 16px;
+      margin: var(--space-4);
   }
 }
 :deep(.jtable-body-header-left){
   width: 80%;
-}
-</style>
+}</style>

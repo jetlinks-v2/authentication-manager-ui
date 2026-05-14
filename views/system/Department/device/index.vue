@@ -703,5 +703,4 @@ watch(() => departmentStore.productId, (newVal) => {
       }
     }
   }
-}
-</style>
+}</style>

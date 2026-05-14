@@ -219,5 +219,4 @@ const onSelectAll = (selected: boolean, _: any, keys: any[]) => {
   height: 100%;
   display: flex;
   flex-direction: column;
-}
-</style>
+}</style>

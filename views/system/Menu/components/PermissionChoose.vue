@@ -193,16 +193,16 @@ watch(
 <style lang="less" scoped>
 .permission-choose-container {
   .ant-input-affix-wrapper {
-    border-color: #d9d9d9 !important;
+    border-color: var(--line) !important;
   }
   .permission-table {
-    margin-top: 12px;
-    font-size: 14px;
-    border: 1px solid #d9d9d9;
+    margin-top: var(--space-3);
+    font-size: var(--fs-14);
+    border: 1px solid var(--line);
     color: rgba(0, 0, 0, 0.85);
     .table-head {
-      padding: 12px;
-      background-color: #d9d9d9;
+      padding: var(--space-3);
+      background-color: var(--line);
       margin: 0 !important;
     }
     .table-body {
@@ -210,7 +210,7 @@ watch(
       .row {
         margin: 0 !important;
 
-        border-bottom: 1px solid #d9d9d9;
+        border-bottom: 1px solid var(--line);
 
         > div {
           padding: 8px 12px;
@@ -218,10 +218,9 @@ watch(
         .item-name {
           display: flex;
           align-items: center;
-          border-right: 1px solid #d9d9d9;
+          border-right: 1px solid var(--line);
         }
       }
     }
   }
-}
-</style>
+}</style>

@@ -276,18 +276,17 @@ const handleSearch = (e: any) => {
 </script>
 <style scoped lang="less">
 .userName{
-    color: #1677FF;
+    color: var(--jet-theme-primary);
     background: #f0f5ff;
     list-style: none;
     font-feature-settings: 'tnum';
     display: inline-block;
     height: auto;
-    margin-right: 8px;
+    margin-right: var(--space-2);
     padding: 0 7px;
-    font-size: 12px;
+    font-size: var(--fs-12);
     line-height: 20px;
-    border: 1px solid #d9d9d9;
+    border: 1px solid var(--line);
     border-radius: 2px;
     opacity: 1;
-}
-</style>
+}</style>

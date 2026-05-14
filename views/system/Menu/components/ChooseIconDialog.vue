@@ -54,5 +54,4 @@ const selected = ref<string>('');
             border-color: #415ed1;
         }
     }
-}
-</style>
+}</style>

@@ -100,7 +100,7 @@ const onChangeTabs = (id) => {
 .department-container {
   display: flex;
   background-color: #fff;
-  padding: 24px;
+  padding: var(--space-6);
   height: 100%;
   position: relative;
 
@@ -115,8 +115,7 @@ const onChangeTabs = (id) => {
     width: calc(100% - 316px);
     margin-left: 316px;
     :deep(.ant-tabs-nav-wrap) {
-      padding-left: 24px;
+      padding-left: var(--space-6);
     }
   }
-}
-</style>
+}</style>

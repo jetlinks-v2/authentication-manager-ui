@@ -46,16 +46,16 @@ const clickSave = () => {
 <style lang="less" scoped>
 .role-permiss-container {
   .card {
-    margin-bottom: 24px;
+    margin-bottom: var(--space-6);
 
     h5 {
       position: relative;
       display: flex;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: var(--space-5);
       padding: 4px 0 4px 12px;
       font-weight: bold;
-      font-size: 16px;
+      font-size: var(--fs-16);
 
       &::before {
         position: absolute;
@@ -63,7 +63,7 @@ const clickSave = () => {
         left: 0;
         width: 4px;
         height: calc(100% - 14px);
-        background-color: @primary-color;
+        background-color: var(--jet-theme-primary);
         border-radius: 2px;
         content: ' ';
       }
@@ -71,7 +71,7 @@ const clickSave = () => {
 
     .basic-form {
       :deep(.ant-form-item-required) {
-        padding-right: 12px;
+        padding-right: var(--space-3);
 
         &::before {
           right: 0;
@@ -83,5 +83,4 @@ const clickSave = () => {
       }
     }
   }
-}
-</style>
+}</style>

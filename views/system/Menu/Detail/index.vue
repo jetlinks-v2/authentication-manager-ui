@@ -55,12 +55,11 @@ const onRefresh = () => {
 .menu-detail-container {
   :deep(.ant-tabs-nav) {
     background-color: #fff;
-    padding-left: 24px;
+    padding-left: var(--space-6);
     margin-bottom: 0;
   }
   .ant-tabs-tabpane {
     background-color: #f0f2f5;
-    padding-top: 24px;
+    padding-top: var(--space-6);
   }
-}
-</style>
+}</style>

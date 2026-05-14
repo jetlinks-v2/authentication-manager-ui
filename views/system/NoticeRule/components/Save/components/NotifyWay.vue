@@ -99,13 +99,13 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    border-radius: 6px;
+    border-radius: var(--r-2);
     cursor: pointer;
     width: 96px;
     padding: 8px 16px;
 
     .notify-type-item-title {
-      font-size: 14px;
+      font-size: var(--fs-14);
       color: #333333;
       width: 100%;
       text-align: center;
@@ -113,7 +113,7 @@ onMounted(() => {
 
     .notify-type-item-image {
       width: 100%;
-      margin-bottom: 8px;
+      margin-bottom: var(--space-2);
       display: flex;
       justify-content: center;
     }
@@ -126,6 +126,4 @@ onMounted(() => {
       border: 1px solid #2F54EB;
     }
   }
-}
-
-</style>
+}</style>

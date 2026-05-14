@@ -197,7 +197,7 @@ function addRow() {
         color: #000000d9;
 
         &:hover {
-            color: @primary-color;
+            color: var(--jet-theme-primary);
         }
     }
     .add-btn {
@@ -208,5 +208,4 @@ function addRow() {
     :deep(.ant-form-item) {
         margin-bottom: 0;
     }
-}
-</style>
+}</style>

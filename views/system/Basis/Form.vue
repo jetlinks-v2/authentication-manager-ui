@@ -315,7 +315,7 @@ defineExpose({
   }
 
   .form-right {
-    padding-left: 12px;
+    padding-left: var(--space-3);
     width: 50%;
 
     .form-right-bgImage {
@@ -327,5 +327,4 @@ defineExpose({
       }
     }
   }
-}
-</style>
+}</style>

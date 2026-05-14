@@ -79,5 +79,4 @@ const options = computed(() => {
     border-radius: 2px;
     padding: 6px;
     color: rgba(0, 0, 0, 0.55);
-}
-</style>
+}</style>

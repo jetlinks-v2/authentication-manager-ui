@@ -2213,11 +2213,11 @@ const queryThirdPartyType = async () => {
 .wechat-token-label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 .wechat-event-url-inline {
-  font-size: 12px;
+  font-size: var(--fs-12);
   color: rgba(0, 0, 0, 0.65);
 }
 .wechat-event-url-inline code {
@@ -2227,5 +2227,4 @@ const queryThirdPartyType = async () => {
 }
 .wechat-event-copy {
   padding: 0 4px;
-}
-</style>
+}</style>

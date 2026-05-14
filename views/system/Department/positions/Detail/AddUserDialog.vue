@@ -409,7 +409,7 @@ type optionType = {
 <style lang="less" scoped>
 .formName {
     margin-bottom: 10px;
-    font-size: 16px;
+    font-size: var(--fs-16);
 
     &::before {
         width: 2px;
@@ -423,6 +423,5 @@ type optionType = {
 
 .tip {
     color: rgba(0, 0, 0, .65);
-    margin-top: 4px;
-}
-</style>
+    margin-top: var(--space-1);
+}</style>

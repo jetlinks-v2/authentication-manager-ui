@@ -411,18 +411,18 @@ const onSave = (_data: any) => {
     align-items: center;
     height: 68px;
     background: linear-gradient(270deg, #ffffff 0%, #f1f6ff 99%);
-    border-radius: 4px;
+    border-radius: var(--r-1);
     border: 1px solid #ebeef3;
     margin-bottom: 10px;
 
     .child-item-left {
         display: flex;
         align-items: center;
-        margin-left: 24px;
+        margin-left: var(--space-6);
 
         div {
             display: flex;
-            margin-right: 24px;
+            margin-right: var(--space-6);
             flex-direction: column;
             justify-content: center;
             align-items: center;
@@ -440,13 +440,13 @@ const onSave = (_data: any) => {
             }
             .child-item-left-auth-key {
                 color: #00c800;
-                font-size: 18px;
+                font-size: var(--fs-18);
                 margin-right: 10px;
             }
 
             .child-item-left-auth-lock {
-                color: @primary-color;
-                font-size: 18px;
+                color: var(--jet-theme-primary);
+                font-size: var(--fs-18);
                 margin-right: 10px;
             }
 
@@ -479,7 +479,7 @@ const onSave = (_data: any) => {
                 width: 100%;
                 text-align: center;
                 color: #666666;
-                font-size: 12px;
+                font-size: var(--fs-12);
             }
         }
 
@@ -507,5 +507,4 @@ const onSave = (_data: any) => {
             filter: grayscale(100%);
         }
     }
-}
-</style>
+}</style>

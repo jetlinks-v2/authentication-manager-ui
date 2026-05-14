@@ -655,12 +655,11 @@ onMounted(() => {
   align-items: center;
 
   .actions {
-    padding-right: 4px;
+    padding-right: var(--space-1);
 
     .actions-btn {
       margin: 0;
       padding: 0;
     }
   }
-}
-</style>
+}</style>

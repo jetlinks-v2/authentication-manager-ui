@@ -192,7 +192,7 @@ const javaStr =
 
 <style lang="less" scoped>
 .home {
-  padding: 20px;
+  padding: var(--space-5);
   height: 100%;
   overflow-y: auto;
 
@@ -203,7 +203,7 @@ const javaStr =
 
   h2 {
     font-weight: 600;
-    font-size: 18px;
+    font-size: var(--fs-18);
   }
 
   .h2-text {
@@ -213,7 +213,7 @@ const javaStr =
   h3 {
     margin-top: 10px;
     font-weight: 600;
-    font-size: 16px;
+    font-size: var(--fs-16);
   }
 
   .h3-text {
@@ -230,5 +230,4 @@ const javaStr =
     padding: 10px;
     border-left: 10px solid #eee;
   }
-}
-</style>
+}</style>

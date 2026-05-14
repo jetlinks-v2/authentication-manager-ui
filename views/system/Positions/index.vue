@@ -138,6 +138,4 @@ const onSearch = (e) => {
   </j-page-container>
 </template>
 
-<style scoped lang="less">
-
-</style>
+<style scoped lang="less"></style>

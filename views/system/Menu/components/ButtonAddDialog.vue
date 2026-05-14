@@ -164,9 +164,8 @@ const confirm = () => {
     }
 
     .message {
-      font-size: 12px;
+      font-size: var(--fs-12);
       color: rgba(0, 0, 0, 0.4);
     }
   }
-}
-</style>
+}</style>

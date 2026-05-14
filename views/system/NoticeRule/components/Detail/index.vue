@@ -178,7 +178,7 @@ onMounted(() => {
         width: 100%;
         padding: 14px 16px;
         border-bottom: 1px solid #ebeef3;
-        gap: 24px;
+        gap: var(--space-6);
         .label {
             color: #333333;
             width: 125px;
@@ -193,5 +193,4 @@ onMounted(() => {
             border: none;
         }
     }
-}
-</style>
+}</style>

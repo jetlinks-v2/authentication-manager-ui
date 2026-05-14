@@ -103,7 +103,7 @@ onMounted(() => {
 
 <style lang="less" scoped>
 .content {
-  padding: 24px;
+  padding: var(--space-6);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -132,7 +132,7 @@ onMounted(() => {
 
     .ant-collapse-item {
       border: 1px solid #ebeef3;
-      margin-bottom: 24px;
+      margin-bottom: var(--space-6);
     }
 
     .ant-collapse-header {
@@ -147,5 +147,4 @@ onMounted(() => {
       padding: 0;
     }
   }
-}
-</style>
+}</style>

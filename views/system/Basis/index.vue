@@ -11,6 +11,4 @@
 <script setup name="Basis" lang="ts">
 import BasicForm from './Form.vue'
 </script>
-<style lang="less" scoped>
-
-</style>
+<style lang="less" scoped></style>

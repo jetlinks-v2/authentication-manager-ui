@@ -733,7 +733,7 @@ watch(
 
 <style lang="less" scoped>
 .drawer-empty {
-  padding: 24px;
+  padding: var(--space-6);
   color: rgba(0, 0, 0, 0.45);
 }
 .menu-layout {
@@ -743,8 +743,8 @@ watch(
 }
 .phone-panel {
   width: 280px;
-  padding: 20px;
-  border-right: 1px solid #f0f0f0;
+  padding: var(--space-5);
+  border-right: 1px solid var(--line-strong);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -753,7 +753,7 @@ watch(
   flex-direction: column;
 }
 .phone-hint {
-  margin-top: 8px;
+  margin-top: var(--space-2);
   font-size: 11px;
   color: rgba(0, 0, 0, 0.45);
   text-align: left;
@@ -796,7 +796,7 @@ watch(
 .status-icons {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 .status-signal,
 .status-wifi,
@@ -816,7 +816,7 @@ watch(
   border-bottom: 1px solid #e5e5ea;
   display: flex;
   align-items: center;
-  font-size: 12px;
+  font-size: var(--fs-12);
 }
 .nav-back,
 .nav-more {
@@ -841,7 +841,7 @@ watch(
   text-align: center;
   font-size: 10px;
   color: rgba(0, 0, 0, 0.4);
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 .chat-bubble {
   display: flex;
@@ -852,7 +852,7 @@ watch(
 .chat-avatar {
   width: 22px;
   height: 22px;
-  border-radius: 4px;
+  border-radius: var(--r-1);
   background: #bbb;
 }
 .chat-avatar.self {
@@ -861,7 +861,7 @@ watch(
 .chat-text {
   max-width: 150px;
   padding: 6px 8px;
-  border-radius: 8px;
+  border-radius: var(--r-3);
   line-height: 1.4;
   background: #fff;
   margin: 0 6px;
@@ -886,7 +886,7 @@ watch(
   justify-content: space-between;
   padding: 8px 0;
   color: #999;
-  font-size: 18px;
+  font-size: var(--fs-18);
 }
 .phone-back,
 .phone-user {
@@ -899,9 +899,9 @@ watch(
   right: 8px;
   bottom: 48px;
   background: #fefefe;
-  border-radius: 8px;
+  border-radius: var(--r-3);
   box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12);
-  padding: 8px;
+  padding: var(--space-2);
   max-height: 220px;
   overflow-y: auto;
   z-index: 2;
@@ -912,23 +912,23 @@ watch(
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
-  border-radius: 6px;
-  margin-bottom: 4px;
+  border-radius: var(--r-2);
+  margin-bottom: var(--space-1);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--fs-14);
   &.active {
     background: #e6f7ff;
     color: #1890ff;
   }
   &.add {
     color: #999;
-    border: 1px dashed #d9d9d9;
+    border: 1px dashed var(--line);
   }
   &.draggable {
     cursor: move;
   }
   .sub-del {
-    margin-left: 8px;
+    margin-left: var(--space-2);
     color: #ff4d4f;
     opacity: 0.7;
     cursor: pointer;
@@ -940,9 +940,9 @@ watch(
   }
 }
 .sub-drag-handle {
-  margin-left: 8px;
+  margin-left: var(--space-2);
   color: #999;
-  font-size: 16px;
+  font-size: var(--fs-16);
   cursor: move;
 }
 .sub-name {
@@ -991,50 +991,50 @@ watch(
   white-space: nowrap;
 }
 .main-drag-handle {
-  margin-left: 4px;
+  margin-left: var(--space-1);
   color: #999;
-  font-size: 16px;
+  font-size: var(--fs-16);
   cursor: move;
 }
 .article-list {
-  margin-top: 8px;
-  border: 1px solid #f0f0f0;
-  border-radius: 6px;
-  padding: 8px;
+  margin-top: var(--space-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-2);
+  padding: var(--space-2);
   background: #fafafa;
   max-height: 260px;
   overflow-y: auto;
 }
 .article-item {
-  border-radius: 4px;
+  border-radius: var(--r-1);
   background: #fff;
-  padding: 8px;
-  margin-bottom: 8px;
+  padding: var(--space-2);
+  margin-bottom: var(--space-2);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 .article-item-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
-  margin-bottom: 4px;
+  font-size: var(--fs-12);
+  margin-bottom: var(--space-1);
 }
 .article-pic-row {
   display: flex;
   align-items: center;
 }
 .article-pic-row :deep(.upload-image-warp) {
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 .config-panel {
   flex: 1;
-  padding: 24px;
+  padding: var(--space-6);
   overflow-y: auto;
   min-width: 0;
 }
 .config-title {
   margin: 0 0 20px 0;
-  font-size: 16px;
+  font-size: var(--fs-16);
   font-weight: 600;
 }
 .config-form {
@@ -1043,20 +1043,19 @@ watch(
 .menu-content-type {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--space-1);
 }
 .menu-content-type :deep(.ant-radio-button-wrapper) {
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 .form-hint {
-  font-size: 12px;
+  font-size: var(--fs-12);
   color: rgba(0, 0, 0, 0.45);
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 .config-empty {
   color: #999;
-  font-size: 14px;
+  font-size: var(--fs-14);
   padding: 40px 0;
   text-align: center;
-}
-</style>
+}</style>

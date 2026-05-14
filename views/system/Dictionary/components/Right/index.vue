@@ -232,5 +232,4 @@ watch(() => props?.data?.id, () => {
     span {
         color: rgb(127, 127, 127)
     }
-}
-</style>
+}</style>

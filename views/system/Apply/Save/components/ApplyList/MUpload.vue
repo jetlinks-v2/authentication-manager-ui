@@ -178,7 +178,7 @@ const saveImage = (url: string) => {
         transition: all 0.3s;
 
         &:hover {
-            border-color: @primary-color-hover;
+            border-color: var(--jet-theme-primary-hover);
         }
 
         :deep(.ant-upload-picture-card-wrapper) {
@@ -210,7 +210,7 @@ const saveImage = (url: string) => {
                 width: 100%;
                 height: 100%;
                 color: #fff;
-                font-size: 14px;
+                font-size: var(--fs-14);
                 border-radius: 5px;
                 background-color: @mask-color;
             }
@@ -241,5 +241,4 @@ const saveImage = (url: string) => {
         border-radius: 15px;
         background-color: @mask-color;
     }
-}
-</style>
+}</style>

@@ -61,5 +61,4 @@ const onChange = (key: string, option: any) => {
 };
 </script>
 
-<style lang="less" scoped>
-</style>
+<style lang="less" scoped></style>

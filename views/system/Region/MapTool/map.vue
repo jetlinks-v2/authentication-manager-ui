@@ -320,7 +320,7 @@ defineExpose({
 
     .map-tool-content {
       display: flex;
-      gap: 24px;
+      gap: var(--space-6);
       flex-direction: column;
 
       .tool-item-group {
@@ -328,22 +328,22 @@ defineExpose({
         flex-direction: column;
         border: 1px solid #e3e3e3;
         background-color: #fff;
-        border-radius: 4px;
+        border-radius: var(--r-1);
         box-shadow: 0 0 16px rgba(#000, .15);
 
         .tool-item {
           padding: 4px 6px;
           color: #333;
-          font-size: 16px;
+          font-size: var(--fs-16);
 
           &:first-child {
-            border-top-left-radius: 4px;
-            border-top-right-radius: 4px;
+            border-top-left-radius: var(--r-1);
+            border-top-right-radius: var(--r-1);
           }
 
           &:last-child {
-            border-bottom-left-radius: 4px;
-            border-bottom-right-radius: 4px;
+            border-bottom-left-radius: var(--r-1);
+            border-bottom-right-radius: var(--r-1);
           }
 
           &:not(:first-child) {
@@ -351,7 +351,7 @@ defineExpose({
           }
 
           &.active {
-            background-color: var(--ant-primary-color);
+            background-color: var(--jet-theme-primary, var(--ant-color-primary, var(--jet-theme-primary)));
             color: #fff;
           }
 
@@ -369,5 +369,4 @@ defineExpose({
     }
 
   }
-}
-</style>
+}</style>

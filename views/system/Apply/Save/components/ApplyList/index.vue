@@ -112,15 +112,15 @@ const onImgChange = (url: string, _key: string) => {
         justify-content: space-around;
         align-items: center;
         width: 120px;
-        border-radius: 6px;
-        margin-right: 8px;
-        margin-top: 8px;
+        border-radius: var(--r-2);
+        margin-right: var(--space-2);
+        margin-top: var(--space-2);
         cursor: pointer;
 
         span {
             color: #333333;
             opacity: 0.85;
-            margin-top: 8px;
+            margin-top: var(--space-2);
         }
 
         &.active {
@@ -132,5 +132,4 @@ const onImgChange = (url: string, _key: string) => {
     .radio-container-item:hover {
         background-color: #f2f4f7;
     }
-}
-</style>
+}</style>

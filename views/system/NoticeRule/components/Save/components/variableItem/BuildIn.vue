@@ -138,5 +138,4 @@ watch(
 );
 </script>
 
-<style lang="less" scoped>
-</style>
+<style lang="less" scoped></style>

@@ -148,8 +148,8 @@ init();
 }
 
 :deep(.ant-tabs-tab-active) {
-  background: #F0F0F0 !important;
-  border-radius: 6px !important;
+  background: var(--line-strong) !important;
+  border-radius: var(--r-2) !important;
 
   .ant-tabs-tab-btn {
     color: #000;
@@ -160,8 +160,7 @@ init();
 .custom-tag {
   width: 140px;
   height: 40px;
-  border-radius: 6px;
-  background: #F0F0F0;
+  border-radius: var(--r-2);
+  background: var(--line-strong);
   padding: 8px 24px;
-}
-</style>
+}</style>

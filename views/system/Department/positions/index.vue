@@ -342,6 +342,4 @@ watch(
              @close="dialogVisible = false"/>
 </template>
 
-<style scoped lang="less">
-
-</style>
+<style scoped lang="less"></style>
