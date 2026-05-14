@@ -103,7 +103,7 @@ onMounted(() => {
 
 <style lang="less" scoped>
 .content {
-  padding: 24px;
+  padding: var(--space-6);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -111,14 +111,14 @@ onMounted(() => {
   height: 100%;
 
   .btn {
-    padding: 24px 0;
+    padding: var(--space-6) 0;
     width: 100%;
     background-color: #fff;
   }
 }
 .alert {
   padding-left: 10px;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--jet-theme-text-secondary);
 }
 
 .content-collapse {
@@ -140,7 +140,7 @@ onMounted(() => {
       height: 42px;
     }
     .ant-collapse-content {
-      padding: 17px 21px 7px 21px;
+      padding: var(--space-4) var(--space-5) var(--space-2);
     }
 
     .ant-collapse-content-box {

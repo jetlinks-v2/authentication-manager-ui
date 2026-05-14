@@ -348,7 +348,7 @@ const filterMenus = (menus: any[]) => {
   font-weight: 400;
   font-size: 14px;
   line-height: 20px;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--jet-theme-text-secondary);
   margin-bottom: 12px;
 }
 .content {
@@ -399,7 +399,7 @@ const filterMenus = (menus: any[]) => {
         line-height: 24px;
         display: flex;
         align-items: center;
-        color: #333333;
+        color: var(--jet-theme-text-title);
       }
       &-action {
         // width: 20px;

@@ -25,7 +25,7 @@
  .dictionary_contain{
      display: flex;
      background-color: #fff;
-     padding: 24px;
+     padding: var(--space-6);
      height: 100%;
  }
  .dictionary_left{

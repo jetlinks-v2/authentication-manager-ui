@@ -13,7 +13,7 @@
             >
                 <template #url="slotProps">
                     <span
-                        style="color: #1677FF; cursor: pointer"
+                        style="color: var(--jet-theme-primary); cursor: pointer"
                         @click="emits('update:clickApi', slotProps)"
                         >{{ slotProps.url }}</span
                     >

@@ -1,5 +1,5 @@
 <template>
-    <div style="padding: 50px 200px">
+    <div style="padding: var(--space-12) var(--space-page)">
         <a-form
             v-if="variableDefinitions.length"
             :layout="'vertical'"

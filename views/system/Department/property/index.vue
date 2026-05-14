@@ -162,6 +162,6 @@ init();
   height: 40px;
   border-radius: 6px;
   background: #F0F0F0;
-  padding: 8px 24px;
+  padding: var(--space-2) var(--space-6);
 }
 </style>

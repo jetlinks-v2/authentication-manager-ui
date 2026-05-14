@@ -118,7 +118,7 @@ const onImgChange = (url: string, _key: string) => {
         cursor: pointer;
 
         span {
-            color: #333333;
+            color: var(--jet-theme-text-title);
             opacity: 0.85;
             margin-top: 8px;
         }

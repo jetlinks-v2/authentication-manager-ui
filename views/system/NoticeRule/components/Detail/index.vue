@@ -176,16 +176,16 @@ onMounted(() => {
         display: flex;
         justify-content: space-between;
         width: 100%;
-        padding: 14px 16px;
+        padding: var(--space-4);
         border-bottom: 1px solid #ebeef3;
         gap: 24px;
         .label {
-            color: #333333;
+            color: var(--jet-theme-text-title);
             width: 125px;
         }
 
         .value {
-            color: #666666;
+            color: var(--jet-theme-text-secondary);
             text-align: right;
         }
 

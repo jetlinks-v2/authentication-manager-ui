@@ -442,7 +442,7 @@ onMounted(() => {
     }
     .basic-form {
         height: 432px;
-        padding: 32px 20px;
+        padding: var(--space-8) var(--space-5);
         :deep(.ant-form-item-control-input-content) {
             .icon-upload {
                 width: 160px;

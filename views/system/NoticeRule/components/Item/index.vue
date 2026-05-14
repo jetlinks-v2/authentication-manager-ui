@@ -2,7 +2,7 @@
     <a-spin :spinning="spinning">
         <div class="child-item">
             <div class="child-item-left">
-                <div style="color: #333333">
+                <div style="color: var(--jet-theme-text-title)">
                     {{ data?.name }}
                 </div>
                 <div>
@@ -436,7 +436,7 @@ const onSave = (_data: any) => {
             }
 
             .child-item-left-auth-text {
-                color: #666666;
+                color: var(--jet-theme-text-secondary);
             }
             .child-item-left-auth-key {
                 color: #00c800;
@@ -453,7 +453,7 @@ const onSave = (_data: any) => {
             &.disabled {
                 .child-item-left-auth-key,
                 .child-item-left-auth-lock {
-                    color: #666666 !important;
+                    color: var(--jet-theme-text-secondary) !important;
                 }
             }
         }
@@ -478,7 +478,7 @@ const onSave = (_data: any) => {
             .box-item-text {
                 width: 100%;
                 text-align: center;
-                color: #666666;
+                color: var(--jet-theme-text-secondary);
                 font-size: 12px;
             }
         }
@@ -491,7 +491,7 @@ const onSave = (_data: any) => {
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #666666;
+            color: var(--jet-theme-text-secondary);
             border: none;
             padding: 0;
             border-radius: 0;

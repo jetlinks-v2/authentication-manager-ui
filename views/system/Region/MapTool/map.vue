@@ -332,7 +332,7 @@ defineExpose({
         box-shadow: 0 0 16px rgba(#000, .15);
 
         .tool-item {
-          padding: 4px 6px;
+          padding: var(--space-1) var(--space-2);
           color: #333;
           font-size: 16px;
 

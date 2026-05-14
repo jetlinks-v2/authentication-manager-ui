@@ -6,7 +6,7 @@
     @change="(e) => onSearch(e.target.value)"
   >
     <template #prefix>
-      <AIcon type="SearchOutlined" style="color: rgba(0, 0, 0, 0.45)" />
+      <AIcon type="SearchOutlined" style="color: var(--jet-theme-text-disabled)" />
     </template>
   </a-input>
   <div style="display: flex; gap: 8px; margin: 18px 0">

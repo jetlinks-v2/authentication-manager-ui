@@ -13,7 +13,7 @@
             <AIcon
               type="QuestionCircleOutlined"
               class="img-style"
-              style="color: #a6a6a6"
+              style="color: var(--jet-theme-text-disabled)"
             />
           </a-tooltip>
         </template>

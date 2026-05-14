@@ -241,7 +241,7 @@ const onSelectAll = (e: any) => {
 }
 .card {
     width: 100%;
-    background-color: #f8f9fc;
-    padding: 10px 16px;
+    background-color: var(--jet-theme-bg-layout);
+    padding: var(--space-2) var(--space-4);
 }
 </style>

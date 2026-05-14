@@ -12,7 +12,7 @@ const props = defineProps({
 
 <style lang="less" scoped>
 .input-card-container {
-    padding: 4px 15px;
+    padding: var(--space-1) var(--space-4);
     font-size: 14px;
     color: #fff;
 
