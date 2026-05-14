@@ -112,9 +112,9 @@ function mapInit() {
 <style lang="less" scoped>
 .region {
     display: flex;
-    gap: 24px;
+    gap: var(--space-6);
     height: 100%;
-    padding: 16px;
+    padding: var(--space-4);
 
     .left {
         width: 300px;
@@ -155,5 +155,4 @@ function mapInit() {
     .right {
         flex: 1;
     }
-}
-</style>
+}</style>

@@ -278,7 +278,7 @@ type requestObj = {
 
     h5 {
       font-weight: bold;
-      font-size: 16px;
+      font-size: var(--fs-16);
     }
 
     .input {
@@ -287,7 +287,7 @@ type requestObj = {
       .send {
         width: 65px;
         padding: 4px 15px;
-        font-size: 14px;
+        font-size: var(--fs-14);
         color: #fff;
         background-color: #1890ff;
         cursor: pointer;
@@ -296,13 +296,13 @@ type requestObj = {
   }
 
   .api-card {
-    margin-top: 24px;
+    margin-top: var(--space-6);
 
     h5 {
       position: relative;
       padding-left: 10px;
       font-weight: 600;
-      font-size: 16px;
+      font-size: var(--fs-16);
 
       &::before {
         position: absolute;
@@ -310,7 +310,7 @@ type requestObj = {
         left: 0;
         width: 4px;
         height: 100%;
-        background-color: var(--jet-theme-primary, #1677FF);
+        background-color: var(--jet-theme-primary);
         border-radius: 0 3px 3px 0;
         content: ' ';
       }
@@ -341,7 +341,7 @@ type requestObj = {
           margin: 8px 0;
 
           .ant-pagination {
-            margin-left: 8px;
+            margin-left: var(--space-2);
 
             :deep(.ant-pagination-item) {
               display: none;
@@ -355,5 +355,4 @@ type requestObj = {
       }
     }
   }
-}
-</style>
+}</style>

@@ -341,7 +341,7 @@ watch([() => responseStatusCard.activeKey, () => props.selectApi], (n) => {
 
         h5 {
             font-weight: bold;
-            font-size: 16px;
+            font-size: var(--fs-16);
         }
 
         .input {
@@ -352,19 +352,19 @@ watch([() => responseStatusCard.activeKey, () => props.selectApi], (n) => {
     p {
         display: flex;
         justify-content: space-between;
-        font-size: 14px;
+        font-size: var(--fs-14);
 
         .label {
             font-weight: bold;
         }
     }
     .api-card {
-        margin-top: 24px;
+        margin-top: var(--space-6);
         h5 {
             position: relative;
             padding-left: 10px;
             font-weight: 600;
-            font-size: 16px;
+            font-size: var(--fs-16);
 
             &::before {
                 position: absolute;
@@ -372,7 +372,7 @@ watch([() => responseStatusCard.activeKey, () => props.selectApi], (n) => {
                 left: 0;
                 width: 4px;
                 height: 100%;
-                background-color: var(--jet-theme-primary, #1677FF);
+                background-color: var(--jet-theme-primary);
                 border-radius: 0 3px 3px 0;
                 content: ' ';
             }
@@ -389,5 +389,4 @@ watch([() => responseStatusCard.activeKey, () => props.selectApi], (n) => {
             }
         }
     }
-}
-</style>
+}</style>

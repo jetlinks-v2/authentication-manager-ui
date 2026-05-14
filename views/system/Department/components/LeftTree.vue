@@ -362,14 +362,14 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   height: 25px;
-  gap: 12px;
+  gap: var(--space-3);
 
   .title {
     flex: 1;
     min-width: 0;
   }
   .func-btn {
-    font-size: 14px;
+    font-size: var(--fs-14);
     //width: 80px;
   }
 }
@@ -379,5 +379,4 @@ onUnmounted(() => {
   .ant-tree-node-content-wrapper {
     flex: 1 1 auto;
   }
-}
-</style>
+}</style>

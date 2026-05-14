@@ -64,9 +64,9 @@ onMounted(() => {
         transition: all 0.3s;
 
         .type-item-title {
-            margin-bottom: 8px;
+            margin-bottom: var(--space-2);
             font-weight: 500;
-            font-size: 14px;
+            font-size: var(--fs-14);
         }
 
         .type-item-image {
@@ -75,12 +75,12 @@ onMounted(() => {
         }
 
         &:hover {
-            color: var(--jet-theme-primary-hover, #4096FF);
+            color: var(--jet-theme-primary-hover);
             opacity: 0.8;
         }
 
         &.active {
-            border-color: var(--jet-theme-primary-active, #0958D9);
+            border-color: var(--jet-theme-primary-active);
             opacity: 1;
         }
     }
@@ -99,5 +99,4 @@ onMounted(() => {
             }
         }
     }
-}
-</style>
+}</style>

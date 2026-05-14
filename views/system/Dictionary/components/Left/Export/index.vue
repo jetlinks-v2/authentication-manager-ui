@@ -96,5 +96,4 @@ const downLoad = async() =>{
     }
 }
 </script>
-<style lang="less" scoped>
-</style>
+<style lang="less" scoped></style>

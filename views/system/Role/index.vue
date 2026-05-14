@@ -25,12 +25,12 @@
  .dictionary_contain{
      display: flex;
      background-color: #fff;
-     padding: 24px;
+     padding: var(--space-6);
      height: 100%;
  }
  .dictionary_left{
-     border-right: 1px solid #f0f0f0;
-     padding-right: 24px;
+     border-right: 1px solid var(--line-strong);
+     padding-right: var(--space-6);
      height:100%;
    width: 320px;
  }
@@ -38,5 +38,4 @@
      flex:1 1 0;
       min-width: 0;
      height:100%
- }
- </style>
+ }</style>

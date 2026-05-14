@@ -246,7 +246,7 @@ watch(
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: var(--space-4);
 }
 .alert {
     height: 40px;
@@ -258,5 +258,4 @@ watch(
 }
 :deep(.JSearch-warp) {
   margin-bottom: 0 !important;
-}
-</style>
+}</style>

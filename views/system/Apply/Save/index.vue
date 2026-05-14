@@ -26,9 +26,9 @@ const changeType = (newType: applyType) => {
 
 <style lang="less" scoped>
 .save-container {
-    padding: 24px;
+    padding: var(--space-6);
     display: flex;
-    gap: 24px;
+    gap: var(--space-6);
     min-height: 100%;
 
     .left {
@@ -40,5 +40,4 @@ const changeType = (newType: applyType) => {
         min-width: 410px;
         width: 33.33333%;
     }
-}
-</style>
+}</style>

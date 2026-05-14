@@ -199,10 +199,9 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   padding: 6px 12px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  margin-bottom: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-1);
+  margin-bottom: var(--space-4);
   background-color: rgba(#bfbfbf, .5);
   align-items: center;
-}
-</style>
+}</style>

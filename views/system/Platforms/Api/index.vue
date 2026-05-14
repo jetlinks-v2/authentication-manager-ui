@@ -194,7 +194,7 @@ watch(
     .api-page-body {
       position: relative;
       display: flex;
-      gap: 16px;
+      gap: var(--space-4);
 
       .tree-content {
         height: calc(100vh - 230px);
@@ -228,5 +228,4 @@ watch(
 
   }
 
-}
-</style>
+}</style>

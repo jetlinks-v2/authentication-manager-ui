@@ -26,6 +26,4 @@ const menuChange = (e) => {
 }
 </script>
 
-<style lang="less" scoped>
-
-</style>
+<style lang="less" scoped></style>

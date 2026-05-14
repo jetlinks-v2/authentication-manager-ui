@@ -59,5 +59,4 @@ const init = (editor) => {
       height: 19px;
     }
   }
-}
-</style>
+}</style>

@@ -346,10 +346,10 @@ const filterMenus = (menus: any[]) => {
   height: 40px;
   font-style: normal;
   font-weight: 400;
-  font-size: 14px;
+  font-size: var(--fs-14);
   line-height: 20px;
   color: rgba(0, 0, 0, 0.55);
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 .content {
   width: 100%;
@@ -381,9 +381,9 @@ const filterMenus = (menus: any[]) => {
     // flex: 1;
     height: 540px;
     margin: 16px 0;
-    padding: 12px;
+    padding: var(--space-3);
     background: #ffffff;
-    border-radius: 4px;
+    border-radius: var(--r-1);
     overflow: hidden;
     width: 100%;
 
@@ -395,7 +395,7 @@ const filterMenus = (menus: any[]) => {
       &-title {
         flex: 1;
         font-weight: 800;
-        font-size: 12px;
+        font-size: var(--fs-12);
         line-height: 24px;
         display: flex;
         align-items: center;
@@ -406,5 +406,4 @@ const filterMenus = (menus: any[]) => {
       }
     }
   }
-}
-</style>
+}</style>

@@ -182,7 +182,7 @@ onMounted(() => {
     width: 260px;
     background-color: #fff;
     border-right: 1px solid #cccccc;
-    padding-right: 24px;
+    padding-right: var(--space-6);
     .content {
         overflow: auto;
         height: 700px;
@@ -204,7 +204,7 @@ onMounted(() => {
                 width: 16px;
                 height: 16px;
                 border-radius: 2px;
-                margin-right: 8px;
+                margin-right: var(--space-2);
             }
 
           .tagLeftName {
@@ -214,7 +214,7 @@ onMounted(() => {
         }
         .controls{
             display: none;
-            font-size: 14px;
+            font-size: var(--fs-14);
 
             :deep(.ant-btn-text){
                 padding: 4px 8px;
@@ -228,7 +228,6 @@ onMounted(() => {
     }
     .tag:hover{
         background-color: rgb(242, 242, 242);
-        border-radius: 4px;
+        border-radius: var(--r-1);
     }
-}
-</style>
+}</style>

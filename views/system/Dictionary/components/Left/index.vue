@@ -251,7 +251,6 @@ onMounted(() => {
     .itemText {
         line-height: 32px;
         flex: 1 1 0;
-        padding-right: 12px;
+        padding-right: var(--space-3);
     }
-}
-</style>
+}</style>

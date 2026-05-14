@@ -511,17 +511,16 @@ const search = (query: any) => {
     }
 
     h5 {
-        padding: 12px;
-        padding-left: 24px;
+        padding: var(--space-3);
+        padding-left: var(--space-6);
         background-color: #f6f6f6;
-        font-size: 14px;
+        font-size: var(--fs-14);
     }
 
     .row {
-        margin-bottom: 12px;
+        margin-bottom: var(--space-3);
     }
 }
 :deep(.jtable-body-header-left){
     width: 80%;
-}
-</style>
+}</style>

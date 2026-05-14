@@ -502,11 +502,10 @@ onMounted(() => {
 
 .user-tag {
   border: 1px solid var(--info-line, var(--ant-color-info-border, #91CAFF));
-  color: var(--info, var(--ant-color-info, #1677FF));
-  background-color: var(--info-bg, var(--ant-color-info-bg, #E6F4FF));
+  color: var(--info, var(--ant-color-info, var(--jet-theme-primary)));
+  background-color: var(--info-bg, var(--ant-color-info-bg, var(--jet-theme-primary-soft)));
   border-radius: 2px;
   padding: 0 7px;
-  font-size: 12px;
+  font-size: var(--fs-12);
   display: inline-block;
-}
-</style>
+}</style>

@@ -251,8 +251,8 @@ defineExpose({ onSave })
 .icon-upload {
   width: 160px;
   height: 150px;
-  border: 1px dashed #d9d9d9;
-  font-size: 14px;
+  border: 1px dashed var(--line);
+  font-size: var(--fs-14);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -276,7 +276,7 @@ defineExpose({ onSave })
     color: #fff;
     width: 100%;
     height: 100%;
-    font-size: 16px;
+    font-size: var(--fs-16);
     align-items: center;
     justify-content: center;
   }
@@ -286,5 +286,4 @@ defineExpose({ onSave })
 }
 .no-icon {
   background-color: rgba(0, 0, 0, 0.06);
-}
-</style>
+}</style>

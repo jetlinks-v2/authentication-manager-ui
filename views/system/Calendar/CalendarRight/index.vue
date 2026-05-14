@@ -137,7 +137,7 @@ watch(
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 16px;
+        gap: var(--space-4);
         overflow: auto;
         .rapidSwitch {
             padding: 15px 0;
@@ -148,10 +148,9 @@ watch(
             background-color: rgb(239, 249, 254);
             padding: 10px;
             justify-content: space-around;
-            gap: 20px;
+            gap: var(--space-5);
             overflow: auto;
             white-space: nowrap;
         }
     }
-}
-</style>
+}</style>

@@ -29,15 +29,14 @@ const selectData = (i: any) => {
 }
 
 .dictionary_left {
-    border-right: 1px solid #f0f0f0;
+    border-right: 1px solid var(--line-strong);
     width: 324px;
     height: 100%;
-    padding-right: 12px;
+    padding-right: var(--space-3);
 }
 
 .dictionary_right {
-    margin-left: 12px;
+    margin-left: var(--space-3);
     width: calc(100% - 324px);
     height: 100%;
-}
-</style>
+}</style>

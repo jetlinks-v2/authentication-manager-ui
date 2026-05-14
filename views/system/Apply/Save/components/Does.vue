@@ -171,11 +171,11 @@ const img6 = systemImg.apply6;
 
 <style lang="less" scoped>
 .does-container {
-    padding: 24px;
+    padding: var(--space-6);
     overflow-y: auto;
     height: 100%;
     color: rgba(#000, 0.8);
-    font-size: 14px;
+    font-size: var(--fs-14);
     background-color: #fafafa;
 
     .url {
@@ -189,7 +189,7 @@ const img6 = systemImg.apply6;
         margin: 16px 0;
         color: rgba(#000, 0.85);
         font-weight: bold;
-        font-size: 14px;
+        font-size: var(--fs-14);
 
         &:first-child {
             margin-top: 0;
@@ -199,11 +199,10 @@ const img6 = systemImg.apply6;
     h2 {
         margin: 6px 0;
         color: rgba(0, 0, 0, 0.8);
-        font-size: 14px;
+        font-size: var(--fs-14);
     }
 
     .image {
         margin: 16px 0;
     }
-}
-</style>
+}</style>

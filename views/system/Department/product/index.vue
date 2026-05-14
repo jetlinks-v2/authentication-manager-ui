@@ -744,5 +744,4 @@ const nextConfirm = () => {
       }
     }
   }
-}
-</style>
+}</style>

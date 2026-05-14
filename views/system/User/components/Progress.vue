@@ -72,5 +72,4 @@ const valueArr = computed(() => {
         height: 100%;
         position: relative;
     }
-}
-</style>
+}</style>

@@ -36,12 +36,11 @@ getAppInfo_api(clientId).then((resp: any) => {
 <style lang="less" scoped>
 .card {
     background-color: #fff;
-    padding: 24px;
-    margin-bottom: 24px;
+    padding: var(--space-6);
+    margin-bottom: var(--space-6);
 
     p {
         margin: 0;
-        font-size: 16px;
+        font-size: var(--fs-16);
     }
-}
-</style>
+}</style>

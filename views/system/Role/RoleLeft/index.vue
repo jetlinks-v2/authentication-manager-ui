@@ -191,7 +191,7 @@ onMounted(() => {
 	height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .treeItem {
@@ -207,5 +207,4 @@ onMounted(() => {
 .listBox {
 	flex: 1 auto;
 	overflow-y: auto;
-}
-</style>
+}</style>

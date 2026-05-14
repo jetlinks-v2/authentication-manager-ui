@@ -232,7 +232,7 @@ const onSelectAll = (e: any) => {
     }
 
     .role-alert {
-        margin-top: 16px;
+        margin-top: var(--space-4);
     }
 
     .header {
@@ -243,5 +243,4 @@ const onSelectAll = (e: any) => {
     width: 100%;
     background-color: #f8f9fc;
     padding: 10px 16px;
-}
-</style>
+}</style>

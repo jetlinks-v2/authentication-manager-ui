@@ -597,7 +597,7 @@ setTimeout(() => {
 .calendarContainer {
     position: relative;
     padding: 44px 24px 0;
-    border: 1px solid #d9d9d9;
+    border: 1px solid var(--line);
     border-radius: 12px;
     .compareTip {
         position: absolute;
@@ -623,7 +623,7 @@ setTimeout(() => {
         position: relative;
         height: 32px;
         padding: 6px;
-        color: #1a1a1a;
+        color: var(--ink-1);
         display: flex;
 
         .closeBtn {
@@ -632,7 +632,7 @@ setTimeout(() => {
             top: 0;
             color: #777777;
             display: none;
-            font-size: 16px;
+            font-size: var(--fs-16);
         }
     }
     .event:hover {
@@ -652,7 +652,7 @@ setTimeout(() => {
         overflow: hidden; /* 超出部分隐藏 */
         text-overflow: ellipsis; /* 显示省略号 */
         width: calc(100% - 30px);
-        font-size: 14px;
+        font-size: var(--fs-14);
     }
 }
 :deep(.fc-highlight) {
@@ -664,7 +664,7 @@ setTimeout(() => {
     padding: 5px 10px;
     background-color: rgba(0, 0, 0, 0.7);
     border-radius: 5px;
-    color: white;
+    color: var(--accent-ink);
 }
 :deep(.fc-theme-standard th) {
     border: none;
@@ -691,8 +691,8 @@ setTimeout(() => {
     .fc-daygrid-day.fc-day-today {
         background-color: transparent;
         .fc-daygrid-day-number {
-            background-color: #1677ff;
-            color: white;
+            background-color: var(--jet-theme-primary);
+            color: var(--accent-ink);
             border-radius: 50%;
             width: 30px;
             text-align: center;
@@ -704,7 +704,7 @@ setTimeout(() => {
     .fc-daygrid-event-harness {
         margin: 0 4px;
         margin-top: 4px !important;
-        border-radius: 6px;
+        border-radius: var(--r-2);
     }
     .fc-daygrid-day-frame {
         height: 155px;
@@ -713,7 +713,7 @@ setTimeout(() => {
             overflow-y: auto;
             &::-webkit-scrollbar-thumb {
                 background-color: #d0d0d0; /* 滚动条拖动部分颜色 */
-                border-radius: 4px; /* 滚动条拖动部分圆角 */
+                border-radius: var(--r-1); /* 滚动条拖动部分圆角 */
             }
         }
     }
@@ -724,7 +724,7 @@ setTimeout(() => {
         }
         &::-webkit-scrollbar-thumb {
             background-color: #d0d0d0; /* 滚动条拖动部分颜色 */
-            border-radius: 4px; /* 滚动条拖动部分圆角 */
+            border-radius: var(--r-1); /* 滚动条拖动部分圆角 */
         }
     }
 }
@@ -732,10 +732,9 @@ setTimeout(() => {
     border: none !important;
 }
 :deep(.fc-daygrid-day-number) {
-    color: #1a1a1a;
+    color: var(--ink-1);
     font-weight: 600;
-}
-</style>
+}</style>
 <style>
 .calendarContainer {
     .fc-event {
@@ -760,5 +759,4 @@ setTimeout(() => {
             background-color: #edf5ff; /* 滚动条背景色 */
         }
     }
-}
-</style>
+}</style>

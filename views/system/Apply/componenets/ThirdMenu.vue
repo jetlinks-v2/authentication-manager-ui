@@ -427,7 +427,7 @@ onMounted(() => {
 <style lang="less" scoped>
 .menuList {
     width: 35%;
-    margin-right: 20px;
+    margin-right: var(--space-5);
 }
 .configuration {
     width: 60%;
@@ -447,8 +447,8 @@ onMounted(() => {
             .icon-upload {
                 width: 160px;
                 height: 150px;
-                border: 1px dashed #d9d9d9;
-                font-size: 14px;
+                border: 1px dashed var(--line);
+                font-size: var(--fs-14);
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -474,7 +474,7 @@ onMounted(() => {
                     color: #fff;
                     width: 100%;
                     height: 100%;
-                    font-size: 16px;
+                    font-size: var(--fs-16);
                     align-items: center;
                     justify-content: center;
                 }
@@ -507,7 +507,7 @@ onMounted(() => {
             position: absolute;
             right: 10px;
             display: none;
-            font-size: 14px;
+            font-size: var(--fs-14);
             :deep(.ant-btn-link) {
                 padding: 0 4px;
                 height: 24px;
@@ -528,5 +528,4 @@ onMounted(() => {
             }
         }
     }
-}
-</style>
+}</style>
