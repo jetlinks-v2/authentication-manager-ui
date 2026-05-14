@@ -289,7 +289,7 @@ type requestObj = {
         padding: 4px 15px;
         font-size: 14px;
         color: #fff;
-        background-color: #1890ff;
+        background-color: var(--jet-theme-primary);
         cursor: pointer;
       }
     }

@@ -17,16 +17,16 @@ const props = defineProps({
     color: #fff;
 
     &.get {
-        background-color: #1890ff;
+        background-color: var(--jet-theme-primary);
     }
     &.put {
         background-color: #fa8c16;
     }
     &.post {
-        background-color: #52c41a;
+        background-color: var(--jet-theme-success);
     }
     &.delete {
-        background-color: #f5222d;
+        background-color: var(--jet-theme-error);
     }
     &.patch {
         background-color: #a0d911;

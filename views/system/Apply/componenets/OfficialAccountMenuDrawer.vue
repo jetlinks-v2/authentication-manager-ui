@@ -917,8 +917,8 @@ watch(
   cursor: pointer;
   font-size: 14px;
   &.active {
-    background: #e6f7ff;
-    color: #1890ff;
+    background: var(--jet-theme-primary-soft);
+    color: var(--jet-theme-primary);
   }
   &.add {
     color: #999;
@@ -929,7 +929,7 @@ watch(
   }
   .sub-del {
     margin-left: 8px;
-    color: #ff4d4f;
+    color: var(--jet-theme-error);
     opacity: 0.7;
     cursor: pointer;
     display: inline-flex;
@@ -975,8 +975,8 @@ watch(
     border-right: none;
   }
   &.active {
-    background: #e6f7ff;
-    color: #1890ff;
+    background: var(--jet-theme-primary-soft);
+    color: var(--jet-theme-primary);
   }
   &.draggable {
     cursor: move;

@@ -2201,7 +2201,7 @@ const queryThirdPartyType = async () => {
           right: -15px;
           top: -5px;
           font-size: 8px;
-          background-color: #ff4d4f;
+          background-color: var(--jet-theme-error);
           color: #fff;
           border-radius: 7px;
         }

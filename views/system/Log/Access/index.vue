@@ -276,8 +276,8 @@ const handleSearch = (e: any) => {
 </script>
 <style scoped lang="less">
 .userName{
-    color: #1677FF;
-    background: #f0f5ff;
+    color: var(--jet-theme-primary);
+    background: var(--jet-theme-primary-soft);
     list-style: none;
     font-feature-settings: 'tnum';
     display: inline-block;
