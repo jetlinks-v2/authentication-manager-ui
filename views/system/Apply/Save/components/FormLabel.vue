@@ -26,7 +26,6 @@ const props = defineProps<{
         display: inline-block;
         color: #ff4d4f;
         font-size: 14px;
-        font-family: SimSun, sans-serif;
         line-height: 1;
     }
     .icon {
