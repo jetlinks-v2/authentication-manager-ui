@@ -21,14 +21,14 @@
           <span style="">{{ $t('components.PermissionTree.954862-6') }}</span>
           <a-checkbox
               v-model:checked="action.visible"
-              style="margin-left: 10px"
+              style="margin-left: 0.625rem"
               @change="action.data = []"
           >{{ $t('components.PermissionTree.954862-3') }}
           </a-checkbox>
           <a-select
               v-show="action.visible"
               v-model:value="action.data"
-              style="width: 200px"
+              style="width: 12.5rem"
               :options="action.options"
               @change="onActionChange"
               show-search
@@ -47,14 +47,14 @@
           <a-checkbox
               v-model:checked="dataPermission.visible"
               @change="dataPermission.data = undefined"
-              style="margin-left: 10px"
+              style="margin-left: 0.625rem"
           >
             {{ $t('components.PermissionTree.954862-3') }}
           </a-checkbox>
           <a-select
               v-show="dataPermission.visible"
               v-model:value="dataPermission.data"
-              style="width: 200px"
+              style="width: 12.5rem"
               :options="dataPermission.options"
               @change="bulkChange"
               :placeholder="$t('components.PermissionTree.954862-4')"

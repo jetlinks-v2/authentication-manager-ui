@@ -2,7 +2,7 @@
     <a-modal
         open
         :title="$t('components.ChooseIconDialog.390527-0')"
-        width="800px"
+        :width="800"
         @cancel="emits('close')"
         @ok="confirm"
     >
@@ -34,19 +34,19 @@ const selected = ref<string>('');
 <style lang="less" scoped>
 .radio {
     display: grid;
-    grid-gap: 20px;
+    grid-gap: 1.25rem;
     grid-template-columns: repeat(6, 1fr);
-    max-height: 500px;
+    max-height: 31.25rem;
     overflow-y: auto;
 
     .ant-radio-button-wrapper {
         display: flex;
         align-items: center;
         justify-content: center;
-        height: 100px;
-        font-size: 40px;
-        border: 2px solid #efefef;
-        border-radius: 2px;
+        height: 6.25rem;
+        font-size: var(--fs-40);
+        border: 0.125rem solid #efefef;
+        border-radius: 0.125rem;
         cursor: pointer;
 
         &.active {

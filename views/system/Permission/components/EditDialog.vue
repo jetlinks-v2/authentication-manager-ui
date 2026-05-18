@@ -2,7 +2,7 @@
   <a-modal
     open
     :title="dialogTitle"
-    width="1000px"
+    :width="1000"
     @ok="confirm"
     @cancel="emits('close')"
     :confirmLoading="loading"
@@ -17,7 +17,7 @@
         ]"
       >
         <template #label>
-          <span style="margin-right: 5px">{{ $t('components.EditDialog.859823-1') }}</span>
+          <span style="margin-right: 0.3125rem">{{ $t('components.EditDialog.859823-1') }}</span>
           <a-tooltip :title="$t('components.EditDialog.859823-2')">
             <AIcon type="QuestionCircleOutlined" />
           </a-tooltip>
@@ -85,7 +85,7 @@
     </a-form>
     <a-button
       type="dashed"
-      style="width: 100%; margin-top: 5px"
+      style="width: 100%; margin-top: 0.3125rem"
       @click="clickAdd"
     >
       <AIcon type="PlusOutlined" /> {{ $t('components.EditDialog.859823-7') }}

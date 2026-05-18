@@ -1,7 +1,7 @@
 <template>
   <a-modal
     open
-    width="650px"
+    :width="650"
     :title="$t('Save.GeoJsonModal.692990-0')"
     :maskClosable="false"
     @ok="handleSave"
@@ -12,7 +12,7 @@
     </div>
     <monaco-editor
       language="json"
-      style="height: 400px"
+      style="height: 25rem"
       v-model:modelValue="myValue"
     />
   </a-modal>

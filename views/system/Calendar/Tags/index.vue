@@ -7,7 +7,7 @@
             block
             @click="addTag"
             :disabled="rapidOn"
-            style="margin-bottom: 10px"
+            style="margin-bottom: 0.625rem"
         >
             +{{ $t('Tags.index.675027-0') }}
         </j-permission-button>
@@ -179,32 +179,32 @@ onMounted(() => {
 </script>
 <style lang="less" scoped>
 .tagsContainer {
-    width: 260px;
+    width: 16.25rem;
     background-color: #fff;
     border-right: 1px solid #cccccc;
-    padding-right: 24px;
+    padding-right: 1.5rem;
     .content {
         overflow: auto;
-        height: 700px;
+        height: 43.75rem;
     }
     .tag {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 10px;
-        padding: 0 10px;
-        height: 32px;
+        margin-bottom: 0.625rem;
+        padding: 0 0.625rem;
+        height: 2rem;
 
         .tagLeft {
             display: flex;
-            padding-top: 6px;
+            padding-top: 0.375rem;
             flex: 1;
             min-width: 0;
             .colorExtractor {
-                margin-top: 3px;
-                width: 16px;
-                height: 16px;
-                border-radius: 2px;
-                margin-right: 8px;
+                margin-top: 0.1875rem;
+                width: 1rem;
+                height: 1rem;
+                border-radius: 0.125rem;
+                margin-right: 0.5rem;
             }
 
           .tagLeftName {
@@ -214,10 +214,10 @@ onMounted(() => {
         }
         .controls{
             display: none;
-            font-size: 14px;
+            font-size: var(--fs-14);
 
             :deep(.ant-btn-text){
-                padding: 4px 8px;
+                padding: 0.25rem 0.5rem;
             }
         }
         &:hover{
@@ -228,7 +228,7 @@ onMounted(() => {
     }
     .tag:hover{
         background-color: rgb(242, 242, 242);
-        border-radius: 4px;
+        border-radius: 0.25rem;
     }
 }
 </style>

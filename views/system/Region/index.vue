@@ -112,12 +112,12 @@ function mapInit() {
 <style lang="less" scoped>
 .region {
     display: flex;
-    gap: 24px;
+    gap: 1.5rem;
     height: 100%;
-    padding: 16px;
+    padding: 1rem;
 
     .left {
-        width: 300px;
+        width: 18.75rem;
         position: relative;
 
         .left-content {
@@ -138,7 +138,7 @@ function mapInit() {
 
         .btn {
             width: 100%;
-            margin: 18px 0;
+            margin: 1.125rem 0;
         }
 
         .mask {

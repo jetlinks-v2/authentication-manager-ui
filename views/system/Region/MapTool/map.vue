@@ -308,19 +308,19 @@ defineExpose({
 <style lang="less" scoped>
 .region-map {
   position: relative;
-  //height: 800px;
+  //height: 50rem;
   height: 100%;
 
   .map-tool{
     position: absolute;
     top: 20%;
-    right: 20px;
+    right: 1.25rem;
     z-index: 3;
 
 
     .map-tool-content {
       display: flex;
-      gap: 24px;
+      gap: 1.5rem;
       flex-direction: column;
 
       .tool-item-group {
@@ -328,22 +328,22 @@ defineExpose({
         flex-direction: column;
         border: 1px solid #e3e3e3;
         background-color: #fff;
-        border-radius: 4px;
-        box-shadow: 0 0 16px rgba(#000, .15);
+        border-radius: 0.25rem;
+        box-shadow: 0 0 1rem rgba(#000, .15);
 
         .tool-item {
-          padding: 4px 6px;
+          padding: 0.25rem 0.375rem;
           color: #333;
-          font-size: 16px;
+          font-size: var(--fs-16);
 
           &:first-child {
-            border-top-left-radius: 4px;
-            border-top-right-radius: 4px;
+            border-top-left-radius: 0.25rem;
+            border-top-right-radius: 0.25rem;
           }
 
           &:last-child {
-            border-bottom-left-radius: 4px;
-            border-bottom-right-radius: 4px;
+            border-bottom-left-radius: 0.25rem;
+            border-bottom-right-radius: 0.25rem;
           }
 
           &:not(:first-child) {

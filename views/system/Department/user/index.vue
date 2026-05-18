@@ -30,7 +30,7 @@
                 type="primary"
                 :hasPermission="`${permission}:bind-user`"
                 @click="addUserDialogVisible = true"
-                style="margin-right: 15px"
+                style="margin-right: 0.9375rem"
                 :disabled="isShow"
             >
               <AIcon type="PlusOutlined"/>
@@ -40,7 +40,7 @@
                 type="primary"
                 :hasPermission="`${permission}:bind-user`"
                 @click="dialogVisible = true"
-                style="margin-right: 15px"
+                style="margin-right: 0.9375rem"
                 :disabled="isShow"
             >
               <AIcon type="PlusOutlined"/>

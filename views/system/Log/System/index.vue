@@ -48,7 +48,7 @@
                                         }"
                             @click="i.onClick"
                             type="link"
-                            style="padding: 0 5px"
+                            style="padding: 0 0.3125rem"
                         >
                             <template #icon
                             ><AIcon :type="i.icon"
@@ -250,14 +250,14 @@ const handleSearch = (e: any) => {
 
 <style scoped lang="less">
 .mr-10 {
-    margin-right: 10px;
+    margin-right: 0.625rem;
 }
 .mb-10 {
-    margin-bottom: 10px;
+    margin-bottom: 0.625rem;
 }
 .warn-content {
   border: 1px solid #d9d9d9;
-  padding: 12px;
-  border-radius: 2px;
+  padding: 0.75rem;
+  border-radius: 0.125rem;
 }
 </style>

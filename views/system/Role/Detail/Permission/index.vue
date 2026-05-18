@@ -10,7 +10,7 @@
             type="primary"
             :loading="loading"
             @click="clickSave"
-            style="margin-top: 24px"
+            style="margin-top: 1.5rem"
         >{{ $t('Permission.index.071527-1') }}</a-button>
       </div>
     </div>
@@ -46,32 +46,32 @@ const clickSave = () => {
 <style lang="less" scoped>
 .role-permiss-container {
   .card {
-    margin-bottom: 24px;
+    margin-bottom: 1.5rem;
 
     h5 {
       position: relative;
       display: flex;
       align-items: center;
-      margin-bottom: 20px;
-      padding: 4px 0 4px 12px;
+      margin-bottom: 1.25rem;
+      padding: 0.25rem 0 0.25rem 0.75rem;
       font-weight: bold;
-      font-size: 16px;
+      font-size: var(--fs-16);
 
       &::before {
         position: absolute;
-        top: 7px;
+        top: 0.4375rem;
         left: 0;
-        width: 4px;
-        height: calc(100% - 14px);
+        width: 0.25rem;
+        height: calc(100% - 0.875rem);
         background-color: var(--jet-theme-primary, #1677FF);
-        border-radius: 2px;
+        border-radius: 0.125rem;
         content: ' ';
       }
     }
 
     .basic-form {
       :deep(.ant-form-item-required) {
-        padding-right: 12px;
+        padding-right: 0.75rem;
 
         &::before {
           right: 0;

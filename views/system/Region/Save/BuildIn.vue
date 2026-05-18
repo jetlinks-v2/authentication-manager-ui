@@ -15,7 +15,7 @@
       <span v-if="code">{{ name }} | {{ code }}</span>
     </template>
   </a-tree-select>
-  <a-space size="middle" align="top" style="margin-top: 8px;">
+  <a-space size="middle" align="top" style="margin-top: 0.5rem;">
     <a-switch
         v-model:checked="mySync"
         @change="onCheckChange"
@@ -24,7 +24,7 @@
       <div>
         {{ $t('Save.BuildIn.317807-1') }}
       </div>
-      <a-radio-group v-if="mySync" v-model:value="radioValue" size="small" style="margin-top: 5px;" @change="onRadioChange">
+      <a-radio-group v-if="mySync" v-model:value="radioValue" size="small" style="margin-top: 0.3125rem;" @change="onRadioChange">
         <a-radio-button :value="false">添加下一级区域</a-radio-button>
         <a-radio-button :value="true">添加下级所有区域</a-radio-button>
       </a-radio-group>

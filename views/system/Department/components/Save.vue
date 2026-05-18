@@ -3,7 +3,7 @@
     open
     :title="title"
     :maskClosable="false"
-    width="520px"
+    :width="520"
     @cancel="emits('close')"
     @ok="confirm"
     class="edit-dialog-container"

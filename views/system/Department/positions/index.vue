@@ -285,7 +285,7 @@ watch(
           sorts: [{ name: 'createTime', order: 'desc' }],
         }"
           mode="TABLE"
-          :scroll="{y: 'calc(100vh - 450px)'}"
+          :scroll="{y: 'calc(100vh - 28.125rem)'}"
       >
         <template #headerLeftRender>
           <j-permission-button v-if="parentId" hasPermission="system/Department:bind-position" type="primary"

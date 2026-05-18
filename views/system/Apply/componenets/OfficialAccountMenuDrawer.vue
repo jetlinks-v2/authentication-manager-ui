@@ -2,7 +2,7 @@
   <a-drawer
     :open="visible"
     :title="drawerTitle"
-    width="840"
+    :width="840"
     :body-style="{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' }"
     @close="onClose"
   >
@@ -170,7 +170,7 @@
                         v-model:value="selectedItem.menuContentValue"
                         :placeholder="$t('Apply.components.OfficialAccountMenuDrawer.menuContentValueTextPlaceholder')"
                         :rows="4"
-                        style="margin-top: 8px"
+                        style="margin-top: 0.5rem"
                       />
                       <template v-else-if="selectedItem.menuContentType === 'news'">
                         <div class="article-list">
@@ -193,23 +193,23 @@
                             <a-input
                               v-model:value="art.title"
                               placeholder="标题"
-                              style="margin-bottom: 4px"
+                              style="margin-bottom: 0.25rem"
                             />
                             <a-textarea
                               v-model:value="art.description"
                               placeholder="描述"
                               :rows="2"
-                              style="margin-bottom: 4px"
+                              style="margin-bottom: 0.25rem"
                             />
                             <div class="article-pic-row">
                               <a-input
                                 v-model:value="art.picUrl"
                                 placeholder="封面图地址（可选）"
-                                style="margin-bottom: 4px"
+                                style="margin-bottom: 0.25rem"
                               />
                               <MUpload
                                 v-model:modelValue="art.picUrl"
-                                style="margin-left: 8px"
+                                style="margin-left: 0.5rem"
                               />
                             </div>
                             <a-input
@@ -220,7 +220,7 @@
                           <a-button
                             type="dashed"
                             block
-                            style="margin-top: 8px"
+                            style="margin-top: 0.5rem"
                             @click.prevent.stop="addArticle(selectedItem)"
                           >
                             新增图文
@@ -231,7 +231,7 @@
                         v-else
                         v-model:value="selectedItem.menuContentValue"
                         :placeholder="$t('Apply.components.OfficialAccountMenuDrawer.menuContentValueMediaPlaceholder')"
-                        style="margin-top: 8px"
+                        style="margin-top: 0.5rem"
                       />
                     </a-form-item>
                   </template>
@@ -733,17 +733,17 @@ watch(
 
 <style lang="less" scoped>
 .drawer-empty {
-  padding: 24px;
+  padding: 1.5rem;
   color: rgba(0, 0, 0, 0.45);
 }
 .menu-layout {
   display: flex;
   height: 100%;
-  min-height: 400px;
+  min-height: 25rem;
 }
 .phone-panel {
-  width: 280px;
-  padding: 20px;
+  width: 17.5rem;
+  padding: 1.25rem;
   border-right: 1px solid #f0f0f0;
   display: flex;
   align-items: flex-start;
@@ -753,8 +753,8 @@ watch(
   flex-direction: column;
 }
 .phone-hint {
-  margin-top: 8px;
-  font-size: 11px;
+  margin-top: 0.5rem;
+  font-size: var(--fs-12);
   color: rgba(0, 0, 0, 0.45);
   text-align: left;
 }
@@ -762,23 +762,23 @@ watch(
   line-height: 1.4;
 }
 .phone-frame {
-  width: 240px;
-  border-radius: 32px;
-  border: 6px solid #111;
+  width: 15rem;
+  border-radius: 2rem;
+  border: 0.375rem solid #111;
   background: #f5f5f7;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0.625rem 1.5625rem rgba(0, 0, 0, 0.2);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 460px;
+  height: 28.75rem;
   position: relative;
 }
 .phone-status-bar {
-  height: 24px;
-  padding: 0 10px;
+  height: 1.5rem;
+  padding: 0 0.625rem;
   background: #f5f5f7;
   color: #111;
-  font-size: 11px;
+  font-size: var(--fs-12);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -787,40 +787,40 @@ watch(
   font-weight: 600;
 }
 .status-notch {
-  flex: 0 0 64px;
-  height: 18px;
+  flex: 0 0 4rem;
+  height: 1.125rem;
   background: #111;
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 0.75rem 0.75rem;
   margin: 0 auto;
 }
 .status-icons {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
 }
 .status-signal,
 .status-wifi,
 .status-battery {
-  width: 12px;
-  height: 8px;
-  border-radius: 2px;
+  width: 0.75rem;
+  height: 0.5rem;
+  border-radius: 0.125rem;
   background: rgba(0, 0, 0, 0.25);
 }
 .status-battery {
-  width: 18px;
+  width: 1.125rem;
 }
 .phone-nav-bar {
-  height: 32px;
-  padding: 0 8px;
+  height: 2rem;
+  padding: 0 0.5rem;
   background: #f5f5f7;
   border-bottom: 1px solid #e5e5ea;
   display: flex;
   align-items: center;
-  font-size: 12px;
+  font-size: var(--fs-12);
 }
 .nav-back,
 .nav-more {
-  width: 24px;
+  width: 1.5rem;
   text-align: center;
   color: #007aff;
 }
@@ -832,61 +832,61 @@ watch(
 }
 .phone-content {
   flex: 1;
-  padding: 8px 6px;
+  padding: 0.5rem 0.375rem;
   overflow-y: auto;
-  min-height: 120px;
+  min-height: 7.5rem;
   background: #e5e5ea;
 }
 .chat-tip {
   text-align: center;
-  font-size: 10px;
+  font-size: var(--fs-12);
   color: rgba(0, 0, 0, 0.4);
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem;
 }
 .chat-bubble {
   display: flex;
   align-items: flex-end;
-  margin: 4px 0;
-  font-size: 11px;
+  margin: 0.25rem 0;
+  font-size: var(--fs-12);
 }
 .chat-avatar {
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 0.25rem;
   background: #bbb;
 }
 .chat-avatar.self {
   background: #6ac04f;
 }
 .chat-text {
-  max-width: 150px;
-  padding: 6px 8px;
-  border-radius: 8px;
+  max-width: 9.375rem;
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.5rem;
   line-height: 1.4;
   background: #fff;
-  margin: 0 6px;
+  margin: 0 0.375rem;
 }
 .chat-bubble-left .chat-text {
-  border-bottom-left-radius: 2px;
+  border-bottom-left-radius: 0.125rem;
 }
 .chat-bubble-right {
   justify-content: flex-end;
 }
 .chat-bubble-right .chat-text {
   background: #95ec69;
-  border-bottom-right-radius: 2px;
+  border-bottom-right-radius: 0.125rem;
 }
 .phone-chat {
-  padding: 6px;
-  min-height: 120px;
+  padding: 0.375rem;
+  min-height: 7.5rem;
 }
 .phone-placeholder {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 0;
+  padding: 0.5rem 0;
   color: #999;
-  font-size: 18px;
+  font-size: var(--fs-18);
 }
 .phone-back,
 .phone-user {
@@ -895,14 +895,14 @@ watch(
 /* 子菜单悬浮层：紧贴底部栏上方 */
 .phone-sub-floating {
   position: absolute;
-  left: 8px;
-  right: 8px;
-  bottom: 48px;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: 3rem;
   background: #fefefe;
-  border-radius: 8px;
-  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12);
-  padding: 8px;
-  max-height: 220px;
+  border-radius: 0.5rem;
+  box-shadow: 0 -0.125rem 0.75rem rgba(0, 0, 0, 0.12);
+  padding: 0.5rem;
+  max-height: 13.75rem;
   overflow-y: auto;
   z-index: 2;
   border: 1px solid #eee;
@@ -911,11 +911,11 @@ watch(
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
-  border-radius: 6px;
-  margin-bottom: 4px;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.375rem;
+  margin-bottom: 0.25rem;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--fs-14);
   &.active {
     background: #e6f7ff;
     color: #1890ff;
@@ -928,21 +928,21 @@ watch(
     cursor: move;
   }
   .sub-del {
-    margin-left: 8px;
+    margin-left: 0.5rem;
     color: #ff4d4f;
     opacity: 0.7;
     cursor: pointer;
     display: inline-flex;
-    padding: 2px;
+    padding: 0.125rem;
     &:hover {
       opacity: 1;
     }
   }
 }
 .sub-drag-handle {
-  margin-left: 8px;
+  margin-left: 0.5rem;
   color: #999;
-  font-size: 16px;
+  font-size: var(--fs-16);
   cursor: move;
 }
 .sub-name {
@@ -955,7 +955,7 @@ watch(
   flex-shrink: 0;
   display: flex;
   border-top: 1px solid #eee;
-  height: 48px;
+  height: 3rem;
   background: #fff;
   z-index: 1;
 }
@@ -964,13 +964,13 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: var(--fs-13);
   cursor: pointer;
   border-right: 1px solid #eee;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding: 0 4px;
+  padding: 0 0.25rem;
   &:last-child {
     border-right: none;
   }
@@ -981,7 +981,7 @@ watch(
   &.draggable {
     cursor: move;
     justify-content: space-between;
-    padding: 0 8px;
+    padding: 0 0.5rem;
   }
 }
 .main-name {
@@ -991,72 +991,72 @@ watch(
   white-space: nowrap;
 }
 .main-drag-handle {
-  margin-left: 4px;
+  margin-left: 0.25rem;
   color: #999;
-  font-size: 16px;
+  font-size: var(--fs-16);
   cursor: move;
 }
 .article-list {
-  margin-top: 8px;
+  margin-top: 0.5rem;
   border: 1px solid #f0f0f0;
-  border-radius: 6px;
-  padding: 8px;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
   background: #fafafa;
-  max-height: 260px;
+  max-height: 16.25rem;
   overflow-y: auto;
 }
 .article-item {
-  border-radius: 4px;
+  border-radius: 0.25rem;
   background: #fff;
-  padding: 8px;
-  margin-bottom: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 1px 0.1875rem rgba(0, 0, 0, 0.04);
 }
 .article-item-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
-  margin-bottom: 4px;
+  font-size: var(--fs-12);
+  margin-bottom: 0.25rem;
 }
 .article-pic-row {
   display: flex;
   align-items: center;
 }
 .article-pic-row :deep(.upload-image-warp) {
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem;
 }
 .config-panel {
   flex: 1;
-  padding: 24px;
+  padding: 1.5rem;
   overflow-y: auto;
   min-width: 0;
 }
 .config-title {
-  margin: 0 0 20px 0;
-  font-size: 16px;
+  margin: 0 0 1.25rem 0;
+  font-size: var(--fs-16);
   font-weight: 600;
 }
 .config-form {
-  max-width: 400px;
+  max-width: 25rem;
 }
 .menu-content-type {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 0.25rem;
 }
 .menu-content-type :deep(.ant-radio-button-wrapper) {
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem;
 }
 .form-hint {
-  font-size: 12px;
+  font-size: var(--fs-12);
   color: rgba(0, 0, 0, 0.45);
-  margin-top: 4px;
+  margin-top: 0.25rem;
 }
 .config-empty {
   color: #999;
-  font-size: 14px;
-  padding: 40px 0;
+  font-size: var(--fs-14);
+  padding: 2.5rem 0;
   text-align: center;
 }
 </style>

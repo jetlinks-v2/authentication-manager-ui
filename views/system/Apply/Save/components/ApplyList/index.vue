@@ -12,8 +12,8 @@
                 <MUpload
                     :defaultValue="defaultImg[item.value]"
                     :borderStyle="{
-                        width: '64px',
-                        height: '64px',
+                        width: '4rem',
+                        height: '4rem',
                         border: 'none',
                     }"
                     :disabled="!(item.value === _value)"
@@ -25,7 +25,7 @@
             <div v-else>
                 <a-avatar :src="urlValue[item.value] || defaultImg[item.value]" shape="square" :size="64" />
             </div>
-            <j-ellipsis style="margin-top: 8px">{{ item.label }}</j-ellipsis>
+            <j-ellipsis style="margin-top: 0.5rem">{{ item.label }}</j-ellipsis>
         </div>
     </div>
 </template>
@@ -107,20 +107,20 @@ const onImgChange = (url: string, _key: string) => {
     flex-wrap: wrap;
     .radio-container-item {
         display: flex;
-        padding: 8px 0;
+        padding: 0.5rem 0;
         flex-direction: column;
         justify-content: space-around;
         align-items: center;
-        width: 120px;
-        border-radius: 6px;
-        margin-right: 8px;
-        margin-top: 8px;
+        width: 7.5rem;
+        border-radius: 0.375rem;
+        margin-right: 0.5rem;
+        margin-top: 0.5rem;
         cursor: pointer;
 
         span {
             color: #333333;
             opacity: 0.85;
-            margin-top: 8px;
+            margin-top: 0.5rem;
         }
 
         &.active {

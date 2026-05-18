@@ -1,17 +1,17 @@
 <template>
-    <a-modal class="add-device-or-product-dialog-container" :title="$t('components.AddDeviceOrProductDialog.314014-0')" width="1440px" :maskClosable="false" @ok="confirm"
+    <a-modal class="add-device-or-product-dialog-container" :title="$t('components.AddDeviceOrProductDialog.314014-0')" :width="1440" :maskClosable="false" @ok="confirm"
         :confirmLoading="loading" @cancel="cancel" open>
         <h5 class="row">
-            <AIcon type="ExclamationCircleOutlined" style="margin-right: 6px" />
+            <AIcon type="ExclamationCircleOutlined" style="margin-right: 0.375rem" />
             {{ $t('components.AddDeviceOrProductDialog.314014-1') }}
         </h5>
 
-        <div style="display: flex; margin-left: 24px;">
+        <div style="display: flex; margin-left: 1.5rem;">
                 <div class="row">
-                <span style="margin-right: 8px">{{ $t('components.AddDeviceOrProductDialog.314014-2') }}</span>
-                <a-switch v-model:checked="bulkBool" :checked-children="$t('components.AddDeviceOrProductDialog.314014-3')" :un-checked-children="$t('components.AddDeviceOrProductDialog.314014-4')" style="width: 56px" />
+                <span style="margin-right: 0.5rem">{{ $t('components.AddDeviceOrProductDialog.314014-2') }}</span>
+                <a-switch v-model:checked="bulkBool" :checked-children="$t('components.AddDeviceOrProductDialog.314014-3')" :un-checked-children="$t('components.AddDeviceOrProductDialog.314014-4')" style="width: 3.5rem" />
             </div>
-            <div v-show="bulkBool" style="margin-left: 30px;">
+            <div v-show="bulkBool" style="margin-left: 1.875rem;">
                 <a-checkbox-group v-model:value="bulkList" :options="options" />
             </div>
         </div>
@@ -45,7 +45,7 @@
                 }),
             }"
             :columns="columns"
-            style="max-height: 500px; overflow:auto"
+            style="max-height: 31.25rem; overflow:auto"
         >
             <template #card="slotProps">
                 <CardBox
@@ -68,8 +68,8 @@
                         </slot>
                     </template>
                     <template #content>
-                        <h3 class="card-item-content-title" style='margin-bottom: 18px;'>
-                            <j-ellipsis style="width: calc(100% - 100px);">
+                        <h3 class="card-item-content-title" style='margin-bottom: 1.125rem;'>
+                            <j-ellipsis style="width: calc(100% - 6.25rem);">
                                 {{ slotProps.name }}
                             </j-ellipsis>
                         </h3>
@@ -84,7 +84,7 @@
                                 <div class="card-item-content-text">
                                     {{ $t('components.AddDeviceOrProductDialog.314014-5') }}
                                 </div>
-                                <div style="cursor: pointer; height: 30px" class="card-item-content-value"
+                                <div style="cursor: pointer; height: 1.875rem" class="card-item-content-value"
                                     @click="(e) => e.stopPropagation()">
 <!--                                    <a-checkbox-group v-model:value="slotProps.selectPermissions-->
 <!--                                        " :options="slotProps.permissionList" />-->
@@ -506,19 +506,19 @@ const search = (query: any) => {
 <style lang="less" scoped>
 .add-device-or-product-dialog-container {
     .ant-spin-nested-loading {
-        height: calc(100vh - 400px);
+        height: calc(100vh - 25rem);
         overflow-y: auto;
     }
 
     h5 {
-        padding: 12px;
-        padding-left: 24px;
+        padding: 0.75rem;
+        padding-left: 1.5rem;
         background-color: #f6f6f6;
-        font-size: 14px;
+        font-size: var(--fs-14);
     }
 
     .row {
-        margin-bottom: 12px;
+        margin-bottom: 0.75rem;
     }
 }
 :deep(.jtable-body-header-left){

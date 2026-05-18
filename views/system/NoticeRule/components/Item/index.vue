@@ -353,7 +353,7 @@ const onSwitchChange = (e: boolean) => {
                         style: {
                             display: 'flex',
                             justifyContent: 'flex-end',
-                            marginTop: '20px',
+                            marginTop: '1.25rem',
                         },
                     },
                     [
@@ -409,30 +409,30 @@ const onSave = (_data: any) => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 68px;
+    height: 4.25rem;
     background: linear-gradient(270deg, #ffffff 0%, #f1f6ff 99%);
-    border-radius: 4px;
+    border-radius: 0.25rem;
     border: 1px solid #ebeef3;
-    margin-bottom: 10px;
+    margin-bottom: 0.625rem;
 
     .child-item-left {
         display: flex;
         align-items: center;
-        margin-left: 24px;
+        margin-left: 1.5rem;
 
         div {
             display: flex;
-            margin-right: 24px;
+            margin-right: 1.5rem;
             flex-direction: column;
             justify-content: center;
             align-items: center;
         }
 
         .child-item-left-auth {
-            // margin-left: 20px;
+            // margin-left: 1.25rem;
 
             :deep(.ant-btn) {
-                height: 78px;
+                height: 4.875rem;
             }
 
             .child-item-left-auth-text {
@@ -440,14 +440,14 @@ const onSave = (_data: any) => {
             }
             .child-item-left-auth-key {
                 color: #00c800;
-                font-size: 18px;
-                margin-right: 10px;
+                font-size: var(--fs-18);
+                margin-right: 0.625rem;
             }
 
             .child-item-left-auth-lock {
                 color: var(--jet-theme-primary, #1677FF);
-                font-size: 18px;
-                margin-right: 10px;
+                font-size: var(--fs-18);
+                margin-right: 0.625rem;
             }
 
             &.disabled {
@@ -471,23 +471,23 @@ const onSave = (_data: any) => {
             flex-direction: column;
             align-items: center;
             .box-item-img {
-                width: 32px;
-                height: 32px;
+                width: 2rem;
+                height: 2rem;
             }
 
             .box-item-text {
                 width: 100%;
                 text-align: center;
                 color: #666666;
-                font-size: 12px;
+                font-size: var(--fs-12);
             }
         }
 
         .box-item-add {
             cursor: pointer;
             background-color: #f7f8fa;
-            width: 54px;
-            height: 54px;
+            width: 3.375rem;
+            height: 3.375rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -495,7 +495,7 @@ const onSave = (_data: any) => {
             border: none;
             padding: 0;
             border-radius: 0;
-            margin: 0 16px;
+            margin: 0 1rem;
 
             &:hover {
                 background-color: #eff2fe;

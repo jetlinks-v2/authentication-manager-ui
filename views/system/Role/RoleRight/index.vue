@@ -41,7 +41,7 @@
                 }"
                 @click="i.onClick"
                 type="link"
-                style="padding: 0 5px"
+                style="padding: 0 0.3125rem"
                 :danger="i.key === 'delete'"
                 :hasPermission="'system/Role:' + i.key"
               >

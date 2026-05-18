@@ -6,7 +6,7 @@
     open
     @cancel="closeModal"
     @ok="submitData"
-    width="650px"
+    :width="650"
     :maskClosable="false"
     :confirmLoading="loading"
   >

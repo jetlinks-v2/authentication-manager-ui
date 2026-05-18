@@ -2,14 +2,14 @@
     <div class="des">
         <div class="des_head">
             <div>{{ $t('Right.index.572408-0') }}<span>{{ data.id }}</span></div>
-            <div style="display: flex;">{{ $t('Right.index.572408-1') }}<j-ellipsis style="width: calc(100% - 200px);"><span>{{ data.describe }}</span></j-ellipsis></div>
+            <div style="display: flex;">{{ $t('Right.index.572408-1') }}<j-ellipsis style="width: calc(100% - 12.5rem);"><span>{{ data.describe }}</span></j-ellipsis></div>
             <div>{{ $t('Right.index.572408-2') }}{{data?.createTime ? dayjs(data.createTime).format('YYYY-MM-DD HH:mm:ss') : ''}}</div>
         </div>
         <div class="contain">
-            <pro-search style="padding: 18px 0" :columns="columns" noMargin @search="handleSearch" target="system_dictionary" />
+            <pro-search style="padding: 1.125rem 0" :columns="columns" noMargin @search="handleSearch" target="system_dictionary" />
             <JProTable :bodyStyle="{
                 padding: 0,
-            }" :scroll="{ y: 'calc(100vh - 500px)' }" :columns="columns" mode="TABLE" :request="queryItem" :params="params" ref="tableRef">
+            }" :scroll="{ y: 'calc(100vh - 31.25rem)' }" :columns="columns" mode="TABLE" :request="queryItem" :params="params" ref="tableRef">
                 <template #headerLeftRender>
                     <j-permission-button type="primary" @click="add" hasPermission="system/Dictionary:add">
                         {{ $t('Right.index.572408-3') }}
@@ -20,7 +20,7 @@
                         <template v-for="i in getActions(slotProps, 'table')" :key="i.key">
                             <j-permission-button :disabled="i.disabled" :popConfirm="i.popConfirm" :tooltip="{
                                 ...i.tooltip,
-                            }" @click="i.onClick" type="link" style="padding: 0 5px" :danger="i.key === 'delete'"
+                            }" @click="i.onClick" type="link" style="padding: 0 0.3125rem" :danger="i.key === 'delete'"
                                 :hasPermission="'system/Dictionary:' + i.key
                                     ">
                                 <template #icon>
@@ -226,7 +226,7 @@ watch(() => props?.data?.id, () => {
   overflow-y: auto;
 }
 .des_head {
-    padding: 10px 20px;
+    padding: 0.625rem 1.25rem;
     background-color: rgb(242, 242, 242);
 
     span {

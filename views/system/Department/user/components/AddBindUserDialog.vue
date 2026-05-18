@@ -8,7 +8,7 @@
     @cancel="emits('close')"
   >
     <pro-search style="padding: 0" type="simple" :columns="bindUserColumns" target="category" @search="onSearch" />
-    <div class="table" style="height: 450px">
+    <div class="table" style="height: 28.125rem">
       <j-pro-table
         ref="tableRef"
         mode="TABLE"
@@ -21,7 +21,7 @@
           onSelectAll: onSelectAll,
           onSelectNone: cancelSelect,
         }"
-        :bodyStyle="{ padding: '0 24px' }"
+        :bodyStyle="{ padding: '0 1.5rem' }"
         :defaultParams="{
           sorts: [{ name: 'createTime', order: 'desc' }],
         }"
