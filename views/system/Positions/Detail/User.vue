@@ -164,7 +164,7 @@ const columns = [
     title: $t('User.index.667995-11'),
     dataIndex: 'action',
     key: 'action',
-    width: '200px',
+    width: '12.5rem',
     scopedSlots: true,
   },
 ]

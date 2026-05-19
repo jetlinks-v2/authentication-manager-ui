@@ -1,13 +1,13 @@
 <template>
-    <a-modal open :title="$t('componenets.MenuDialog.599618-0')" width="600px" @ok="handleOk" @cancel="cancel" class="edit-dialog-container"
+    <a-modal open :title="$t('componenets.MenuDialog.599618-0')" width="37.5rem" @ok="handleOk" @cancel="cancel" class="edit-dialog-container"
         :confirmLoading="loading">
-        <a-select v-model:value="form.checkedSystem" @change="(value) => value && getTree(value)  " style="width: 200px"
+        <a-select v-model:value="form.checkedSystem" @change="(value) => value && getTree(value)  " style="width: 12.5rem"
             :placeholder="$t('componenets.MenuDialog.599618-1')">
             <a-select-option v-for="item in form.systemList" :value="item.value" :key="item.value">{{ item.label
             }}</a-select-option>
         </a-select>
 
-        <p style="margin: 20px 0 0 0" v-show="form.menuTree.length > 0">
+        <p style="margin: 1.25rem 0 0 0" v-show="form.menuTree.length > 0">
             {{ $t('componenets.MenuDialog.599618-2') }}
         </p>
         <a-tree v-model:checkedKeys="form.checkedMenu" v-model:expandedKeys="form.expandedKeys" checkable

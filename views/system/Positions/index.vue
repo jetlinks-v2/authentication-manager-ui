@@ -81,7 +81,7 @@ const onSearch = (e) => {
                 { name: 'createTime', order: 'desc' },
             ],
         }"
-        :scroll="{ y: 'calc(100% - 60px)' }"
+        :scroll="{ y: 'calc(100% - 3.75rem)' }"
       >
         <template #headerLeftRender>
           <j-permission-button

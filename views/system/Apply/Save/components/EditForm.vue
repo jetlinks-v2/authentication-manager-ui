@@ -63,7 +63,7 @@
           </a-form-item>
         </a-col>
       </a-row>
-      <a-collapse style="margin-bottom: 20px;">
+      <a-collapse style="margin-bottom: 1.25rem;">
         <a-collapse-panel
             v-for="(item, index) in form.data.integrationModes"
             :key="item + index"
@@ -81,7 +81,7 @@
                                 :style="
                                     form.errorNumInfo.ssoClient.size > 9 &&
                                     form.errorNumInfo?.ssoClient?.size
-                                        ? { padding: '0 8px' }
+                                        ? { padding: '0 0.5rem' }
                                         : {}
                                 "
                             >
@@ -739,7 +739,7 @@
                   show-search
                   style="width: 100%"
                   :dropdown-style="{
-                                    maxHeight: '400px',
+                                    maxHeight: '25rem',
                                     overflow: 'auto',
                                 }"
                   :fieldNames="{
@@ -1471,7 +1471,7 @@
                     show-search
                     style="width: 100%"
                     :dropdown-style="{
-                                        maxHeight: '400px',
+                                        maxHeight: '25rem',
                                         overflow: 'auto',
                                     }"
                     :fieldNames="{
@@ -2177,11 +2177,11 @@ const queryThirdPartyType = async () => {
           // .ant-upload-select-picture-card {
           //     width: auto;
           //     height: auto;
-          //     max-width: 150px;
-          //     max-height: 150px;
+          //     max-width: 9.375rem;
+          //     max-height: 9.375rem;
 
           //     > .ant-upload {
-          //         height: 150px;
+          //         height: 9.375rem;
           //     }
           // }
         }
@@ -2195,15 +2195,15 @@ const queryThirdPartyType = async () => {
         .error-info {
           position: absolute;
           text-align: center;
-          line-height: 14px;
-          min-width: 14px;
-          min-height: 14px;
-          right: -15px;
-          top: -5px;
-          font-size: 8px;
+          line-height: 0.875rem;
+          min-width: 0.875rem;
+          min-height: 0.875rem;
+          right: -0.9375rem;
+          top: -0.3125rem;
+          font-size: 0.5rem;
           background-color: #ff4d4f;
           color: #fff;
-          border-radius: 7px;
+          border-radius: 0.4375rem;
         }
       }
     }
@@ -2213,19 +2213,19 @@ const queryThirdPartyType = async () => {
 .wechat-token-label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   flex-wrap: wrap;
 }
 .wechat-event-url-inline {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: rgba(0, 0, 0, 0.65);
 }
 .wechat-event-url-inline code {
   background: #f5f5f5;
-  padding: 1px 4px;
-  border-radius: 2px;
+  padding: 0.0625rem 0.25rem;
+  border-radius: 0.125rem;
 }
 .wechat-event-copy {
-  padding: 0 4px;
+  padding: 0 0.25rem;
 }
 </style>

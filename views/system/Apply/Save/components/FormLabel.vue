@@ -25,13 +25,13 @@ const props = defineProps<{
     .required {
         display: inline-block;
         color: #ff4d4f;
-        font-size: 14px;
+        font-size: 0.875rem;
         line-height: 1;
     }
     .icon {
         color: #00000073;
         cursor: inherit;
-        margin-left: 4px;
+        margin-left: 0.25rem;
     }
 }
 </style>

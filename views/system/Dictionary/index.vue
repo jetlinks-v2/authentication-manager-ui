@@ -23,21 +23,21 @@ const selectData = (i: any) => {
 </script>
 <style lang="less" scoped>
 .dictionary_contain {
-    padding: 24px 24px 0 24px;
+    padding: 1.5rem 1.5rem 0 1.5rem;
     height: 100%;
     display: flex;
 }
 
 .dictionary_left {
-    border-right: 1px solid #f0f0f0;
-    width: 324px;
+    border-right: 0.0625rem solid #f0f0f0;
+    width: 20.25rem;
     height: 100%;
-    padding-right: 12px;
+    padding-right: 0.75rem;
 }
 
 .dictionary_right {
-    margin-left: 12px;
-    width: calc(100% - 324px);
+    margin-left: 0.75rem;
+    width: calc(100% - 20.25rem);
     height: 100%;
 }
 </style>

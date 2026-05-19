@@ -6,7 +6,7 @@
             </template>
         </a-input>
         <div class="controls">
-            <j-permission-button type="primary" hasPermission="system/Dictionary:add" style="width: 120px" @click="showSave" >
+            <j-permission-button type="primary" hasPermission="system/Dictionary:add" style="width: 7.5rem" @click="showSave" >
                 {{ $t('Left.index.036608-1') }}
             </j-permission-button>
             <j-permission-button type="text" hasPermission="system/Dictionary:down" @click="downVisible = true">
@@ -56,7 +56,7 @@
                                         ? { title: $t('Left.index.036608-7') }
                                         : null
                                 "
-                              style="padding: 0 10px"
+                              style="padding: 0 0.625rem"
                             >
                               {{ $t('Left.index.036608-9') }}
                             </j-permission-button>
@@ -69,7 +69,7 @@
                                         ? { title: $t('Left.index.036608-7') }
                                         : null
                                 "
-                              style="padding: 0 10px"
+                              style="padding: 0 0.625rem"
                               @click="showEdit(item.data)"
                             >
                               {{ $t('Left.index.036608-10') }}
@@ -78,7 +78,7 @@
                     </div>
                 </template>
             </a-tree>
-            <j-empty v-else style="margin-top: 100px;" />
+            <j-empty v-else style="margin-top: 6.25rem;" />
         </div>
     </div>
     <Save v-if="saveShow" :type="addType" @close-save="saveShow = false" @success="saveSuccess" :data="editData" />
@@ -227,7 +227,7 @@ onMounted(() => {
 </script>
 <style lang="less" scoped>
 .left-contain {
-    width: 300px;
+    width: 18.75rem;
     height: 100%;
 }
 
@@ -236,12 +236,12 @@ onMounted(() => {
 }
 
 .tree {
-    height: calc(100% - 110px);
+    height: calc(100% - 6.875rem);
     overflow-y: auto;
 }
 
 .controls {
-    margin: 10px 0;
+    margin: 0.625rem 0;
 }
 
 .treeItem {
@@ -249,9 +249,9 @@ onMounted(() => {
     justify-content: space-between;
 
     .itemText {
-        line-height: 32px;
+        line-height: 2rem;
         flex: 1 1 0;
-        padding-right: 12px;
+        padding-right: 0.75rem;
     }
 }
 </style>

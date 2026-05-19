@@ -5,7 +5,7 @@
                 <p>
                     <AIcon
                         type="ExclamationCircleOutlined"
-                        style="margin-right: 12px; font-size: 14px"
+                        style="margin-right: 0.75rem; font-size: 0.875rem"
                     />{{ $t('Platforms.index.366248-0') }}
                 </p>
             </template>

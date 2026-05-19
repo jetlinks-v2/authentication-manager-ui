@@ -133,7 +133,7 @@
       <div class="form-right">
         <div class="form-right-background">
           <a-form-item :label="$t('Basis.Form.436809-18')" name="background">
-            <Upload v-model:img-src="formData.background" height="400px" uploadType="background" width="550px"/>
+            <Upload v-model:img-src="formData.background" height="25rem" uploadType="background" width="34.375rem"/>
           </a-form-item>
         </div>
       </div>
@@ -315,15 +315,15 @@ defineExpose({
   }
 
   .form-right {
-    padding-left: 12px;
+    padding-left: 0.75rem;
     width: 50%;
 
     .form-right-bgImage {
       width: 100%;
 
       .bgImage-div {
-        width: 550px;
-        height: 400px;
+        width: 34.375rem;
+        height: 25rem;
       }
     }
   }

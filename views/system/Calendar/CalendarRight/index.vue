@@ -16,7 +16,7 @@
                 <template #icon
                     ><AIcon
                         type="ClearOutlined"
-                        style="font-size: 16px" /></template
+                        style="font-size: 1rem" /></template
                 >{{ $t('CalendarRight.index.810845-2') }}</j-permission-button
             >
         </div>
@@ -42,7 +42,7 @@
                         {{ $t('CalendarRight.index.810845-5') }}
                     </j-ellipsis>
                     <a-input
-                        style="width: 300px"
+                        style="width: 18.75rem"
                         v-model:value="selectedDate"
                         :disabled="true"
                     ></a-input>
@@ -52,7 +52,7 @@
                         {{ $t('CalendarRight.index.810845-6') }}
                     </j-ellipsis>
                     <a-input-number
-                        style="width: 100px"
+                        style="width: 6.25rem"
                         v-model:value="effectDays"
                         :min="effectMin"
                         :max="999"
@@ -133,22 +133,22 @@ watch(
     }
     .rapidAction {
         width: 100%;
-        margin-top: 10px;
+        margin-top: 0.625rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 16px;
+        gap: 1rem;
         overflow: auto;
         .rapidSwitch {
-            padding: 15px 0;
+            padding: 0.9375rem 0;
         }
         .rapidActionControl {
             display: flex;
             flex: 1;
             background-color: rgb(239, 249, 254);
-            padding: 10px;
+            padding: 0.625rem;
             justify-content: space-around;
-            gap: 20px;
+            gap: 1.25rem;
             overflow: auto;
             white-space: nowrap;
         }

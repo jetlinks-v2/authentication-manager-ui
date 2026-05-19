@@ -8,7 +8,7 @@
     >
       <a-form-item v-if="isNoCommunity" name="accessSupport" required>
         <template #label>
-          <span style="margin-right: 3px">{{ $t('BasicInfo.Permission.040830-0') }}</span>
+          <span style="margin-right: 0.1875rem">{{ $t('BasicInfo.Permission.040830-0') }}</span>
           <a-tooltip :title="$t('BasicInfo.Permission.040830-1')">
             <AIcon
               type="QuestionCircleOutlined"
@@ -25,7 +25,7 @@
           <a-radio value="unsupported">{{ $t('BasicInfo.Permission.040830-2') }}</a-radio>
           <a-radio value="support">{{ $t('BasicInfo.Permission.040830-3') }}</a-radio>
           <a-radio value="indirect">
-            <span style="margin-right: 3px">{{ $t('BasicInfo.Permission.040830-4') }}</span>
+            <span style="margin-right: 0.1875rem">{{ $t('BasicInfo.Permission.040830-4') }}</span>
             <a-tooltip :title="$t('BasicInfo.Permission.040830-5')">
               <AIcon type="QuestionCircleFilled" class="img-style" />
             </a-tooltip>
@@ -36,11 +36,11 @@
           name="assetType"
           v-if="formModel.accessSupport === 'support'"
           :rules="[{ required: true, message: $t('BasicInfo.Permission.040830-6') }]"
-          style="margin-top: 24px; margin-bottom: 0"
+          style="margin-top: 1.5rem; margin-bottom: 0"
         >
           <a-select
             v-model:value="formModel.assetType"
-            style="width: 500px"
+            style="width: 31.25rem"
             :placeholder="$t('BasicInfo.Permission.040830-6')"
             show-search
             option-filter-prop="label"
@@ -53,13 +53,13 @@
           name="indirectMenus"
           v-if="formModel.accessSupport === 'indirect'"
           :rules="[{ required: true, message: $t('BasicInfo.Permission.040830-7') }]"
-          style="margin-top: 24px; margin-bottom: 0"
+          style="margin-top: 1.5rem; margin-bottom: 0"
         >
           <a-tree-select
             v-model:value="formModel.indirectMenus"
-            style="width: 400px"
+            style="width: 25rem"
             :dropdown-style="{
-              maxHeight: '400px',
+              maxHeight: '25rem',
               overflow: 'auto',
             }"
             :placeholder="$t('BasicInfo.Permission.040830-7')"
@@ -78,7 +78,7 @@
       <a-form-item :label="$t('BasicInfo.Permission.040830-8')" name="permissions">
         <PermissionChoose
           :first-width="3"
-          max-height="350px"
+          max-height="21.875rem"
           v-model:value="formModel.permissions"
           :key="formModel.id || ''"
         />

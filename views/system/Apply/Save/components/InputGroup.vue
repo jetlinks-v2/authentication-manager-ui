@@ -10,7 +10,7 @@
                     @change="onChange"
                     v-model:value="_value.first"
                     :options="options"
-                    style="width: 100px"
+                    style="width: 6.25rem"
                     :placeholder="$t('components.InputGroup.573743-1')"
                 />
             </template>

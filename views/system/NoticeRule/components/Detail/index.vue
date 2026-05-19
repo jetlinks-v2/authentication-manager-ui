@@ -170,18 +170,18 @@ onMounted(() => {
 
 <style lang="less" scoped>
 .detail {
-    border: 1px solid #ebeef3;
-    border-radius: 2px;
+    border: 0.0625rem solid #ebeef3;
+    border-radius: 0.125rem;
     .item {
         display: flex;
         justify-content: space-between;
         width: 100%;
-        padding: 14px 16px;
-        border-bottom: 1px solid #ebeef3;
-        gap: 24px;
+        padding: 0.875rem 1rem;
+        border-bottom: 0.0625rem solid #ebeef3;
+        gap: 1.5rem;
         .label {
             color: #333333;
-            width: 125px;
+            width: 7.8125rem;
         }
 
         .value {

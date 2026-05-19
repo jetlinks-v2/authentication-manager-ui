@@ -2,10 +2,10 @@
   <a-modal :width="700" visible :title="$t('components.AddDialog.956922-11')" @cancel="emits('close')" @ok="onSave" :confirm-loading="loading">
     <div class="alert-info">
       <div>
-        <AIcon style="margin-right: 8px" type="InfoCircleFilled"/>
+        <AIcon style="margin-right: 0.5rem" type="InfoCircleFilled"/>
         {{$t('components.AddDialog.956922-12')}}
       </div>
-      <div style="font-weight: 600; min-width: 200px">
+      <div style="font-weight: 600; min-width: 12.5rem">
         <j-ellipsis>{{ data.name }}</j-ellipsis>
       </div>
     </div>
@@ -198,10 +198,10 @@ onMounted(() => {
 .alert-info {
   display: flex;
   justify-content: space-between;
-  padding: 6px 12px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  margin-bottom: 16px;
+  padding: 0.375rem 0.75rem;
+  border: 0.0625rem solid #d9d9d9;
+  border-radius: 0.25rem;
+  margin-bottom: 1rem;
   background-color: rgba(#bfbfbf, .5);
   align-items: center;
 }

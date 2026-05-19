@@ -19,7 +19,7 @@
                             { name: 'username', order: 'asc', value: 'admin' },
                         ],
                     }"
-            :scroll="{ y: 'calc(100% - 60px)' }"
+            :scroll="{ y: 'calc(100% - 3.75rem)' }"
         >
           <template #headerLeftRender>
               <RegistryComponent code="addTool" is="a-space">
@@ -501,12 +501,12 @@ onMounted(() => {
 }
 
 .user-tag {
-  border: 1px solid var(--info-line, var(--ant-color-info-border, #91CAFF));
-  color: var(--info, var(--ant-color-info, #1677FF));
-  background-color: var(--info-bg, var(--ant-color-info-bg, #E6F4FF));
-  border-radius: 2px;
-  padding: 0 7px;
-  font-size: 12px;
+  border: 0.0625rem solid var(--info-line, var(--ant-color-info-border, #91CAFF));
+  color: var(--jet-theme-primary);
+  background-color: var(--jet-theme-primary-soft);
+  border-radius: 0.125rem;
+  padding: 0 0.4375rem;
+  font-size: 0.75rem;
   display: inline-block;
 }
 </style>

@@ -43,11 +43,11 @@ const onSave = () => {
 
 <style lang="less" scoped>
 .alert {
-    height: 40px;
-    padding: 0 20px 0 10px;
-    margin-bottom: 10px;
+    height: 2.5rem;
+    padding: 0 1.25rem 0 0.625rem;
+    margin-bottom: 0.625rem;
     color: rgba(0, 0, 0, 0.55);
-    line-height: 40px;
+    line-height: 2.5rem;
     background-color: #f6f6f6;
 }
 </style>

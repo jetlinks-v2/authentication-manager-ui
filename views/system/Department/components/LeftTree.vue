@@ -16,15 +16,15 @@
           type="primary"
           :hasPermission="`${permission}:add`"
           @click="openDialog()"
-          style="width: 100%; margin: 12px 0"
+          style="width: 100%; margin: 0.75rem 0"
         >
           {{ $t('components.LeftTree.755653-1') }}
         </j-permission-button>
       </a-col>
-      <a-col flex="50px">
+      <a-col flex="3.125rem">
         <j-permission-button
           type="link"
-          style="width: 100%; margin: 12px 0"
+          style="width: 100%; margin: 0.75rem 0"
           @click="batchImportVisible = true"
         >
           <AIcon type="ImportOutlined"/>
@@ -361,16 +361,16 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 25px;
-  gap: 12px;
+  height: 1.5625rem;
+  gap: 0.75rem;
 
   .title {
     flex: 1;
     min-width: 0;
   }
   .func-btn {
-    font-size: 14px;
-    //width: 80px;
+    font-size: 0.875rem;
+    //width: 5rem;
   }
 }
 

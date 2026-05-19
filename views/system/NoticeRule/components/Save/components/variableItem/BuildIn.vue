@@ -5,7 +5,7 @@
                 { label: $t('variableItem.BuildIn.910899-0'), value: 'fixed' },
                 { label: $t('variableItem.BuildIn.910899-1'), value: 'upper' },
             ]"
-            style="width: 120px"
+            style="width: 7.5rem"
             :value="value?.source"
             @change="sourceChange"
         />
@@ -14,7 +14,7 @@
                 v-model:value="upperKey"
                 :treeData="builtInList"
                 :placeholder="$t('variableItem.BuildIn.910899-2')"
-                style="width: calc(100% - 120px)"
+                style="width: calc(100% - 7.5rem)"
                 :fieldNames="{ label: 'name', value: 'id' }"
                 @change="(val) => itemOnChange(undefined, val)"
             >
@@ -26,14 +26,14 @@
                 allowClear
                 valueFormat='YYYY-MM-DD HH:mm:ss'
                 format="YYYY-MM-DD HH:mm:ss"
-                style="width: calc(100% - 120px)"
+                style="width: calc(100% - 7.5rem)"
                 v-if="item.type === 'date'"
                 @change="(_, dateString) => itemOnChange(dateString)"
             />
             <a-input-number
                 :value="value.value"
                 allowClear
-                style="width: calc(100% - 120px)"
+                style="width: calc(100% - 7.5rem)"
                 v-else-if="item.type === 'number'"
                 :placeholder="$t('variableItem.BuildIn.910899-3', [item.name])"
                 @change="itemOnChange"
@@ -41,7 +41,7 @@
             <a-input
                 :value="value.value"
                 allowClear
-                style="width: calc(100% - 120px)"
+                style="width: calc(100% - 7.5rem)"
                 v-else
                 :placeholder="$t('variableItem.BuildIn.910899-3', [item.name])"
                 @change="(e) => itemOnChange(e.target.value)"
