@@ -48,7 +48,10 @@
             <div class="child-item-right" :class="{ disabled: !checked }">
                 <MCarousel :data="data?.channels">
                     <template #card="slotProps">
-                        <div class="box-item">
+                        <div
+                            class="box-item"
+                            @click="onChannelClick(slotProps)"
+                        >
                             <a-dropdown>
                                 <div class="box-item-img">
                                     <img
@@ -259,15 +262,16 @@ const onAuthSave = (_data: string[]) => {
 const onAction = (e: boolean) => {
     if (e) {
         // enable
+        const providerActionId = props.data.id || props.data.provider;
         if (
-            props.data.id &&
+            providerActionId &&
             props.data.channels?.length &&
             props.data.channels.find(
                 (item: any) => item.channelProvider === 'inside-mail',
             )
         ) {
             spinning.value = true;
-            actionChannelConfig(props.data.id, 'enable')
+            actionChannelConfig(providerActionId, 'enable')
                 .then((resp) => {
                     if (resp.status === 200) {
                         onlyMessage($t('Item.index.538002-7'));
@@ -329,6 +333,12 @@ const onAction = (e: boolean) => {
                 emits('refresh');
             }
         });
+    }
+};
+
+const onChannelClick = (dt: any) => {
+    if (dt?.channelProvider === 'inside-mail' && !checked.value) {
+        onAction(true);
     }
 };
 
