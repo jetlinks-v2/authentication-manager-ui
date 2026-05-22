@@ -654,6 +654,7 @@ const handleBatchImport = () => {
 const handleBatchExport = () => {
   exportDeviceAssets_api({
     filter: {
+      paging: false,
       terms: [
         ...(queryParams.value?.terms || []),
         {
