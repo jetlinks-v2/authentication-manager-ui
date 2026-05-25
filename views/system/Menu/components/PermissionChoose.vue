@@ -4,15 +4,15 @@
       v-model:value="searchValue"
       style="width: 300px"
       allowClear
-      :placeholder="$t('components.PermissionChoose.947802-0')"
+      :placeholder="props.searchPlaceholder || $t('components.PermissionChoose.947802-0')"
       @input="onSearch"
       :disabled="disabled"
     />
 
     <div class="permission-table">
       <a-row :gutter="24" class="table-head">
-        <a-col :span="firstWidth">{{ $t('components.PermissionChoose.947802-1') }}</a-col
-        ><a-col :span="24 - firstWidth">{{ $t('components.PermissionChoose.947802-2') }}</a-col>
+        <a-col :span="firstWidth">{{ props.nameTitle || $t('components.PermissionChoose.947802-1') }}</a-col
+        ><a-col :span="24 - firstWidth">{{ props.actionTitle || $t('components.PermissionChoose.947802-2') }}</a-col>
       </a-row>
       <div class="table-body" :style="{ 'max-height': maxHeight }">
         <a-row
@@ -79,6 +79,18 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false,
+  },
+  searchPlaceholder: {
+    type: String,
+    default: '',
+  },
+  nameTitle: {
+    type: String,
+    default: '',
+  },
+  actionTitle: {
+    type: String,
+    default: '',
   },
 })
 const emits = defineEmits(['update:value'])

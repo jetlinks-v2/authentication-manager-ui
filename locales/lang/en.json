@@ -889,5 +889,9 @@
   "AuthorizationTemplate.text.actionCount": "Actions",
   "AuthorizationTemplate.text.noDescription": "No description",
   "AuthorizationTemplate.EditDialog.addTitle": "Add Authorization Template",
-  "AuthorizationTemplate.EditDialog.editTitle": "Edit Authorization Template"
+  "AuthorizationTemplate.EditDialog.editTitle": "Edit Authorization Template",
+  "AuthorizationTemplate.ScopeEditor.searchPlaceholder": "Search permission domain",
+  "AuthorizationTemplate.ScopeEditor.permissionDomain": "Permission Domain",
+  "AuthorizationTemplate.ScopeEditor.permissionAction": "Actions",
+  "AuthorizationTemplate.ScopeEditor.summary": "{0} permission domains / {1} actions selected"
 }

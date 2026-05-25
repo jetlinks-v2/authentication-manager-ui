@@ -889,5 +889,9 @@
   "AuthorizationTemplate.text.actionCount": "动作数",
   "AuthorizationTemplate.text.noDescription": "暂无说明",
   "AuthorizationTemplate.EditDialog.addTitle": "新增授权模板",
-  "AuthorizationTemplate.EditDialog.editTitle": "编辑授权模板"
+  "AuthorizationTemplate.EditDialog.editTitle": "编辑授权模板",
+  "AuthorizationTemplate.ScopeEditor.searchPlaceholder": "请输入权限域名称",
+  "AuthorizationTemplate.ScopeEditor.permissionDomain": "权限域",
+  "AuthorizationTemplate.ScopeEditor.permissionAction": "动作",
+  "AuthorizationTemplate.ScopeEditor.summary": "已选择 {0} 个权限域 / {1} 个动作"
 }
