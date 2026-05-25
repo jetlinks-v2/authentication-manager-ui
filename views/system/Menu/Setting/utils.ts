@@ -348,8 +348,37 @@ export const handleSortsArr = (node: any[]) => {
     })
 }
 
+export const mergeMenuOptions = (baseOptions?: Record<string, any>, currentOptions?: Record<string, any>) => {
+    const hasBaseOptions = !!baseOptions && Object.keys(baseOptions).length > 0;
+    const hasCurrentOptions = !!currentOptions && Object.keys(currentOptions).length > 0;
+
+    if (!hasBaseOptions && !hasCurrentOptions) {
+        return undefined;
+    }
+
+    const options = {
+        ...(currentOptions || {}),
+        ...(baseOptions || {}),
+    };
+    const meta = {
+        ...(currentOptions?.meta || {}),
+        ...(baseOptions?.meta || {}),
+    };
+
+    if (Object.keys(meta).length) {
+        options.meta = meta;
+    }
+
+    if (currentOptions && Object.prototype.hasOwnProperty.call(currentOptions, 'show')) {
+        options.show = currentOptions.show;
+    }
+
+    return options;
+}
+
 export const handleMergeTree = (treeA: any[], treeB: any[]) => {
     const map = new Map();
+    const getMenuKey = (node: any) => node?.code || node?.id;
 
     // 收集treeB中顶层菜单的code（这些是被拖拽到外层的菜单）
     const topLevelCodesInTreeB = new Set();
@@ -360,39 +389,46 @@ export const handleMergeTree = (treeA: any[], treeB: any[]) => {
     }
 
     // 从treeA中移除与treeB顶层菜单code重复的菜单项（包括子菜单中的）
-    function removeConflictingCodes(nodes: any[]): any[] {
+    function removeConflictingCodes(nodes: any[], depth = 0): any[] {
         return nodes.filter(node => {
             if (!node || typeof node !== 'object') return true;
 
-            // 如果当前节点的code在treeB的顶层出现，则移除
-            if (node.code && topLevelCodesInTreeB.has(node.code)) {
+            // 只移除被拖拽到顶层的子菜单，保留 system 等基础根节点用于合并新增子菜单。
+            if (depth > 0 && node.code && topLevelCodesInTreeB.has(node.code)) {
                 return false;
             }
 
             // 递归处理子菜单
             if (node.children && Array.isArray(node.children)) {
-                node.children = removeConflictingCodes(node.children);
+                node.children = removeConflictingCodes(node.children, depth + 1);
             }
 
             return true;
         });
     }
 
-    // 遍历并构建 Map（以 id 为 key）
+    // 遍历并构建 Map，菜单树以 code 作为稳定唯一标识，id 仅用于兜底。
     function addNodes(nodes: any[]) {
         for (const node of nodes) {
             if (!node || typeof node !== 'object') continue;
 
-            const existing = map.get(node.id);
+            const key = getMenuKey(node);
+            const existing = map.get(key);
             if (existing) {
                 // 合并当前节点的 children
                 const childrenA = existing.children || [];
                 const childrenB = node.children || [];
-                existing.children = handleMergeTree(childrenA, childrenB);
+                map.set(key, {
+                    ...existing,
+                    ...node,
+                    options: mergeMenuOptions(existing.options, node.options),
+                    children: handleMergeTree(childrenA, childrenB)
+                });
             } else {
                 // 深拷贝新节点并加入 Map
-                map.set(node.id, {
+                map.set(key, {
                     ...node,
+                    options: mergeMenuOptions(node.options),
                     children: node.children ? handleMergeTree(node.children, []) : []
                 });
             }

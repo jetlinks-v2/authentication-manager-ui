@@ -82,9 +82,13 @@ const register = () => {
 }
 
 export default {
-  getAsyncRoutesMap: () => getModuleRoutesMap(routerModules),
   getExtraRoutesMap,
   getComponents,
   register,
+  getAsyncRoutesMap: () => ({
+    ...getModuleRoutesMap(routerModules),
+    // 新增页面在开发态热更新时可能未被既有 glob 结果拾取，显式补充避免菜单命中空布局。
+    'system/AuthorizationTemplate': () => import('./views/system/AuthorizationTemplate/index.vue'),
+  }),
   priority: -100
 }

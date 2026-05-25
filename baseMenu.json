@@ -1146,6 +1146,134 @@
         "supportDataAccess": false
       },
       {
+        "code": "system/AuthorizationTemplate",
+        "name": "授权模板",
+        "i18nMessages": {
+          "name": {
+            "zh_CN": "授权模板",
+            "en_US": "Authorization Template",
+            "en": "Authorization Template"
+          }
+        },
+        "owner": "iot",
+        "id": "b7c1e88f4f1c4ca9a1f5c2d6ea6f4831",
+        "sortIndex": 7,
+        "url": "/system/AuthorizationTemplate",
+        "icon": "icon-quanxianguanli",
+        "options": {
+          "meta": {
+            "componentCode": "system/AuthorizationTemplate"
+          }
+        },
+        "showPage": [
+          "authorization-template"
+        ],
+        "permissions": [
+          {
+            "permission": "authorization-template",
+            "actions": [
+              "query"
+            ]
+          }
+        ],
+        "buttons": [
+          {
+            "id": "view",
+            "name": "查看",
+            "i18nMessages": {
+              "zh_CN": "查看",
+              "en_US": "View",
+              "en": "View"
+            },
+            "permissions": [
+              {
+                "permission": "authorization-template",
+                "actions": [
+                  "query"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "action",
+            "name": "启/禁用",
+            "i18nMessages": {
+              "zh_CN": "启/禁用",
+              "en_US": "Enable/Disable",
+              "en": "Enable/Disable"
+            },
+            "permissions": [
+              {
+                "permission": "authorization-template",
+                "actions": [
+                  "query",
+                  "save"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "delete",
+            "name": "删除",
+            "i18nMessages": {
+              "zh_CN": "删除",
+              "en_US": "Delete",
+              "en": "Delete"
+            },
+            "permissions": [
+              {
+                "permission": "authorization-template",
+                "actions": [
+                  "query",
+                  "delete"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "update",
+            "name": "编辑",
+            "i18nMessages": {
+              "zh_CN": "编辑",
+              "en_US": "Edit",
+              "en": "Edit"
+            },
+            "permissions": [
+              {
+                "permission": "authorization-template",
+                "actions": [
+                  "query",
+                  "save"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "add",
+            "name": "新增",
+            "i18nMessages": {
+              "zh_CN": "新增",
+              "en_US": "Add",
+              "en": "Add"
+            },
+            "permissions": [
+              {
+                "permission": "authorization-template",
+                "actions": [
+                  "query",
+                  "save"
+                ]
+              }
+            ]
+          }
+        ],
+        "accessSupport": {
+          "text": "不支持",
+          "value": "unsupported"
+        },
+        "supportDataAccess": false
+      },
+      {
         "code": "system/Platforms/Setting",
         "name": "API配置",
         "owner": "iot",
