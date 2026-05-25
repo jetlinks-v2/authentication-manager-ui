@@ -78,7 +78,7 @@
                     </div>
                 </template>
             </a-tree>
-            <j-empty v-else style="margin-top: 6.25rem;" />
+            <CloudEmpty v-else style="margin-top: 6.25rem;" />
         </div>
     </div>
     <Save v-if="saveShow" :type="addType" @close-save="saveShow = false" @success="saveSuccess" :data="editData" />

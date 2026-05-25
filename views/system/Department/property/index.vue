@@ -11,9 +11,9 @@
       <component :is="item.component" :parentId="departmentId"  @refresh="onRefresh" @open-device-bind="openDeviceBind"/>
     </a-tab-pane>
   </a-tabs>
-  <a-empty v-if="!_extra.length" :description="$t('property.index.675027-4')">
+  <CloudEmpty v-if="!_extra.length" :description="$t('property.index.675027-4')">
 
-  </a-empty>
+  </CloudEmpty>
 </template>
 
 <script setup lang="ts" name="property">

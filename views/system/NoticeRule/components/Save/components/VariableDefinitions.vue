@@ -41,7 +41,7 @@
                 />
             </a-form-item>
         </a-form>
-        <j-empty v-else style="margin: 1.25rem 0" :description="$t('components.VariableDefinitions.420465-0')" />
+        <CloudEmpty v-else style="margin: 1.25rem 0" :description="$t('components.VariableDefinitions.420465-0')" />
     </div>
 </template>
 

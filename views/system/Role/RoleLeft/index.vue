@@ -57,7 +57,7 @@
 					</div>
 				</template>
 			</a-tree>
-			<j-empty v-else style="margin-top: 6.25rem;"/>
+			<CloudEmpty v-else style="margin-top: 6.25rem;"/>
 		</div>
 	</div>
 </template>

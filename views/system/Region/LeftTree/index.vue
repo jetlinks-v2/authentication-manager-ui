@@ -79,7 +79,7 @@
       </div>
     </ResizeObserver>
     <div v-else class="tree-empty">
-      <j-empty />
+      <CloudEmpty />
     </div>
   </div>
   <Save
