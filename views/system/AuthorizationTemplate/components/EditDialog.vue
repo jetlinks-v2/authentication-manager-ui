@@ -11,23 +11,7 @@
   >
     <a-form ref="formRef" :model="modelRef" layout="vertical">
       <a-row :gutter="24">
-        <a-col :span="12">
-          <a-form-item
-            name="id"
-            :label="$t('AuthorizationTemplate.field.id')"
-            :rules="[
-              { required: true, message: $t('AuthorizationTemplate.validate.idRequired') },
-              { max: 64, message: $t('AuthorizationTemplate.validate.max64') },
-            ]"
-          >
-            <a-input
-              v-model:value="modelRef.id"
-              :disabled="!!props.data?.id"
-              :placeholder="$t('AuthorizationTemplate.placeholder.id')"
-            />
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
+        <a-col :span="16">
           <a-form-item
             name="name"
             :label="$t('AuthorizationTemplate.field.name')"
@@ -39,40 +23,7 @@
             <a-input v-model:value="modelRef.name" :placeholder="$t('AuthorizationTemplate.placeholder.name')" />
           </a-form-item>
         </a-col>
-      </a-row>
-
-      <a-row :gutter="24">
-        <a-col :span="12">
-          <a-form-item
-            name="scene"
-            :label="$t('AuthorizationTemplate.field.scene')"
-            :rules="[{ required: true, message: $t('AuthorizationTemplate.validate.sceneRequired') }]"
-          >
-            <a-select v-model:value="modelRef.scene" :options="sceneOptions" />
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item
-            name="type"
-            :label="$t('AuthorizationTemplate.field.type')"
-            :rules="[{ required: true, message: $t('AuthorizationTemplate.validate.typeRequired') }]"
-          >
-            <a-select v-model:value="modelRef.type" :options="typeOptions" />
-          </a-form-item>
-        </a-col>
-      </a-row>
-
-      <a-row :gutter="24">
-        <a-col :span="12">
-          <a-form-item
-            name="riskLevel"
-            :label="$t('AuthorizationTemplate.field.riskLevel')"
-            :rules="[{ required: true, message: $t('AuthorizationTemplate.validate.riskRequired') }]"
-          >
-            <a-select v-model:value="modelRef.riskLevel" :options="riskLevelOptions" />
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
+        <a-col :span="8">
           <a-form-item
             name="state"
             :label="$t('AuthorizationTemplate.field.state')"
@@ -82,6 +33,18 @@
           </a-form-item>
         </a-col>
       </a-row>
+
+      <a-form-item
+        v-if="!props.data?.id"
+        name="id"
+        :label="$t('AuthorizationTemplate.field.id')"
+        :rules="[{ max: 64, message: $t('AuthorizationTemplate.validate.max64') }]"
+      >
+        <a-input
+          v-model:value="modelRef.id"
+          :placeholder="$t('AuthorizationTemplate.placeholder.id')"
+        />
+      </a-form-item>
 
       <a-form-item
         name="description"
@@ -94,14 +57,6 @@
           :placeholder="$t('AuthorizationTemplate.placeholder.description')"
         />
       </a-form-item>
-
-      <a-alert
-        v-if="preservedDimensionCount"
-        type="info"
-        show-icon
-        class="dimension-alert"
-        :message="$t('AuthorizationTemplate.EditDialog.preserveDimensions', [preservedDimensionCount])"
-      />
 
       <a-form-item
         name="scopePermissions"
@@ -126,13 +81,10 @@ import ScopeEditor from './ScopeEditor.vue'
 import type { AuthorizationTemplateItem } from '../typings'
 import {
   createEmptyForm,
-  riskLevelOptions,
-  sceneOptions,
   stateOptions,
   toFormData,
   toGrantScopePermissions,
   toTemplatePayload,
-  typeOptions,
 } from '../util'
 
 const { t: $t } = useI18n()
@@ -148,13 +100,12 @@ const props = defineProps({
 const formRef = ref<Record<string, any>>()
 const loading = ref(false)
 const modelRef = reactive(createEmptyForm())
-const preservedDimensionCount = computed(() => props.data?.scope?.dimensions?.length || 0)
 const dialogTitle = computed(() => props.data?.id
   ? $t('AuthorizationTemplate.EditDialog.editTitle')
   : $t('AuthorizationTemplate.EditDialog.addTitle'))
 
 const validateScope = () => {
-  if (toGrantScopePermissions(modelRef.scopePermissions).length || preservedDimensionCount.value) {
+  if (toGrantScopePermissions(modelRef.scopePermissions).length) {
     return Promise.resolve()
   }
   return Promise.reject($t('AuthorizationTemplate.validate.scopeRequired'))
@@ -184,7 +135,4 @@ watchEffect(() => {
 </script>
 
 <style lang="less" scoped>
-.dimension-alert {
-  margin-bottom: 16px;
-}
 </style>

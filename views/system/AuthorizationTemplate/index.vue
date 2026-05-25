@@ -7,7 +7,7 @@
           :sections="quickFilterSections"
           :fields="columns"
           :modelValue="filterTerms"
-          :defaultOpenKeys="['state', 'scene', 'riskLevel']"
+          :defaultOpenKeys="['state']"
           @change="handleQuickFilterChange"
         />
 

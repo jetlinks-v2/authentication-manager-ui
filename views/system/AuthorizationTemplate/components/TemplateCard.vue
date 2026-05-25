@@ -6,7 +6,6 @@
         :text="stateText"
         :statusNames="stateStatusNames"
       />
-      <span class="authorization-template-item__risk">{{ riskText }}</span>
     </div>
 
     <div class="authorization-template-item__main">
@@ -19,8 +18,6 @@
             {{ data.name || data.id || '--' }}
           </j-ellipsis>
           <div class="authorization-template-item__tags">
-            <a-tag>{{ sceneText }}</a-tag>
-            <a-tag>{{ typeText }}</a-tag>
             <a-tag>{{ data.id }}</a-tag>
           </div>
         </div>
@@ -36,8 +33,8 @@
         <strong>{{ permissionCount }}</strong>
       </div>
       <div class="authorization-template-item__meta-block">
-        <span>{{ $t('AuthorizationTemplate.field.version') }}</span>
-        <strong>{{ data.version ?? '--' }}</strong>
+        <span>{{ $t('AuthorizationTemplate.text.actionCount') }}</span>
+        <strong>{{ actionCount }}</strong>
       </div>
       <div class="authorization-template-item__meta-block authorization-template-item__meta-block--time">
         <span>{{ $t('AuthorizationTemplate.field.modifyTime') }}</span>
@@ -74,12 +71,10 @@ import type { AuthorizationTemplateItem } from '../typings'
 import {
   getEnumValue,
   getOptionLabel,
+  getScopeActionCount,
   getScopePermissionCount,
-  riskLevelOptions,
-  sceneOptions,
   stateOptions,
   stateStatusNames,
-  typeOptions,
 } from '../util'
 
 const { t: $t } = useI18n()
@@ -95,12 +90,10 @@ const props = defineProps({
   },
 })
 
-const sceneText = computed(() => getOptionLabel(sceneOptions, props.data.scene))
-const typeText = computed(() => getOptionLabel(typeOptions, props.data.type))
-const riskText = computed(() => getOptionLabel(riskLevelOptions, props.data.riskLevel))
 const stateValue = computed(() => getEnumValue(props.data.state) || 'default')
 const stateText = computed(() => getOptionLabel(stateOptions, props.data.state))
 const permissionCount = computed(() => getScopePermissionCount(props.data))
+const actionCount = computed(() => getScopeActionCount(props.data))
 const modifyTimeText = computed(() => (
   props.data.modifyTime ? dayjs(props.data.modifyTime).format('YYYY-MM-DD HH:mm') : '--'
 ))

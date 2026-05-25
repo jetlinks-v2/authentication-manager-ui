@@ -10,10 +10,7 @@ import type {
   AuthorizationTemplateForm,
   AuthorizationTemplateEnumValue,
   AuthorizationTemplateItem,
-  AuthorizationTemplateRiskLevel,
-  AuthorizationTemplateScene,
   AuthorizationTemplateState,
-  AuthorizationTemplateType,
   GrantScopePermit,
   ScopePermission,
 } from './typings'
@@ -33,26 +30,6 @@ export const getEnumText = (value?: AuthorizationTemplateEnumValue) => {
   }
   return value
 }
-
-export const sceneOptions: { label: string; value: AuthorizationTemplateScene }[] = [
-  { label: t('AuthorizationTemplate.scene.all'), value: 'all' },
-  { label: t('AuthorizationTemplate.scene.personalToken'), value: 'personal_token' },
-  { label: t('AuthorizationTemplate.scene.apiClient'), value: 'api_client' },
-  { label: t('AuthorizationTemplate.scene.application'), value: 'application' },
-  { label: t('AuthorizationTemplate.scene.automation'), value: 'automation' },
-]
-
-export const typeOptions: { label: string; value: AuthorizationTemplateType }[] = [
-  { label: t('AuthorizationTemplate.type.system'), value: 'system' },
-  { label: t('AuthorizationTemplate.type.tenant'), value: 'tenant' },
-  { label: t('AuthorizationTemplate.type.user'), value: 'user' },
-]
-
-export const riskLevelOptions: { label: string; value: AuthorizationTemplateRiskLevel }[] = [
-  { label: t('AuthorizationTemplate.risk.readonly'), value: 'readonly' },
-  { label: t('AuthorizationTemplate.risk.write'), value: 'write' },
-  { label: t('AuthorizationTemplate.risk.admin'), value: 'admin' },
-]
 
 export const stateOptions: { label: string; value: AuthorizationTemplateState }[] = [
   { label: t('AuthorizationTemplate.state.draft'), value: 'draft' },
@@ -92,45 +69,6 @@ export const columns = [
       type: 'string',
       componentProps: {
         placeholder: t('AuthorizationTemplate.placeholder.id'),
-      },
-    },
-  },
-  {
-    title: t('AuthorizationTemplate.field.scene'),
-    dataIndex: 'scene',
-    key: 'scene',
-    scopedSlots: true,
-    search: {
-      type: 'select',
-      options: sceneOptions,
-      componentProps: {
-        placeholder: t('AuthorizationTemplate.placeholder.scene'),
-      },
-    },
-  },
-  {
-    title: t('AuthorizationTemplate.field.type'),
-    dataIndex: 'type',
-    key: 'type',
-    scopedSlots: true,
-    search: {
-      type: 'select',
-      options: typeOptions,
-      componentProps: {
-        placeholder: t('AuthorizationTemplate.placeholder.type'),
-      },
-    },
-  },
-  {
-    title: t('AuthorizationTemplate.field.riskLevel'),
-    dataIndex: 'riskLevel',
-    key: 'riskLevel',
-    scopedSlots: true,
-    search: {
-      type: 'select',
-      options: riskLevelOptions,
-      componentProps: {
-        placeholder: t('AuthorizationTemplate.placeholder.riskLevel'),
       },
     },
   },
@@ -260,6 +198,10 @@ export const getScopePermissionCount = (template: AuthorizationTemplateItem) => 
   return template.scope?.permissions?.length || 0
 }
 
+export const getScopeActionCount = (template: AuthorizationTemplateItem) => {
+  return (template.scope?.permissions || []).reduce((total, item) => total + (item.actions?.length || 0), 0)
+}
+
 export const toFormData = (data?: Partial<AuthorizationTemplateItem>): AuthorizationTemplateForm => {
   const form = createEmptyForm()
   if (!data?.id) {
@@ -300,20 +242,17 @@ export const toTemplatePayload = (
   form: AuthorizationTemplateForm,
   source?: Partial<AuthorizationTemplateItem>,
 ) => {
-  const sourceScope = source?.scope || {}
-
   return {
     ...source,
-    id: form.id,
+    id: form.id || undefined,
     name: form.name,
     description: form.description,
     scene: getEnumValue(form.scene),
     type: getEnumValue(form.type),
     riskLevel: getEnumValue(form.riskLevel),
     state: getEnumValue(form.state),
+    // PermissionChoose 使用 permission 字段，后端 GrantScope.Permit 使用 id，集中转换避免各组件重复适配。
     scope: {
-      ...sourceScope,
-      // PermissionChoose 使用 permission 字段，后端 GrantScope.Permit 使用 id，集中转换避免各组件重复适配。
       permissions: toGrantScopePermissions(form.scopePermissions),
     },
   }

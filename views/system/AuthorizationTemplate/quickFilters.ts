@@ -1,10 +1,6 @@
 import i18n from '@jetlinks-web-core/locales'
 import type { QuickFilterSidebarSection } from '@jetlinks-web-core/components/QuickFilterSidebar'
-import {
-  riskLevelOptions,
-  sceneOptions,
-  stateOptions,
-} from './util'
+import { stateOptions } from './util'
 
 const t = i18n.global.t.bind(i18n.global)
 
@@ -42,25 +38,5 @@ export const quickFilterSections: QuickFilterSidebarSection[] = [
       shortcut: clearShortcut('state'),
     },
     items: toQuickItems('state', stateOptions),
-  },
-  {
-    key: 'scene',
-    title: t('AuthorizationTemplate.field.scene'),
-    allOption: {
-      label: t('AuthorizationTemplate.quick.all'),
-      value: 'all',
-      shortcut: clearShortcut('scene'),
-    },
-    items: toQuickItems('scene', sceneOptions),
-  },
-  {
-    key: 'riskLevel',
-    title: t('AuthorizationTemplate.field.riskLevel'),
-    allOption: {
-      label: t('AuthorizationTemplate.quick.all'),
-      value: 'all',
-      shortcut: clearShortcut('riskLevel'),
-    },
-    items: toQuickItems('riskLevel', riskLevelOptions),
   },
 ]
