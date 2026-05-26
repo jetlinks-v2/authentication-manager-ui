@@ -11,9 +11,12 @@ import type {
   AuthorizationTemplateEnumValue,
   AuthorizationTemplateItem,
   AuthorizationTemplateState,
-  GrantScopePermit,
-  ScopePermission,
 } from './typings'
+import {
+  compileActionPermissions,
+  getTemplateActions,
+  normalizeTemplateActions,
+} from './actionUtil'
 
 const t = i18n.global.t.bind(i18n.global)
 
@@ -186,7 +189,15 @@ export const createEmptyForm = (): AuthorizationTemplateForm => ({
   type: 'user',
   riskLevel: 'write',
   state: 'enabled',
-  scopePermissions: [],
+  actions: [
+    {
+      id: 'read',
+      name: t('AuthorizationTemplate.actionGroup.defaultRead'),
+      description: '',
+      permissions: [],
+    },
+  ],
+  activeActionId: 'read',
 })
 
 export const getOptionLabel = (options: { label: string; value: string }[], value?: AuthorizationTemplateEnumValue) => {
@@ -207,6 +218,7 @@ export const toFormData = (data?: Partial<AuthorizationTemplateItem>): Authoriza
   if (!data?.id) {
     return form
   }
+  const actions = getTemplateActions(data)
   return {
     ...form,
     id: data.id,
@@ -216,32 +228,20 @@ export const toFormData = (data?: Partial<AuthorizationTemplateItem>): Authoriza
     type: getEnumValue(data.type) || form.type,
     riskLevel: getEnumValue(data.riskLevel) || form.riskLevel,
     state: getEnumValue(data.state) || form.state,
-    scopePermissions: fromGrantScopePermissions(data.scope?.permissions),
+    actions: actions.length ? actions : form.actions,
+    activeActionId: actions[0]?.id || form.activeActionId,
   }
-}
-
-export const fromGrantScopePermissions = (permissions?: GrantScopePermit[]): ScopePermission[] => {
-  return (permissions || [])
-    .filter((item) => !!item?.id)
-    .map((item) => ({
-      permission: item.id,
-      actions: item.actions || [],
-    }))
-}
-
-export const toGrantScopePermissions = (permissions: ScopePermission[]): GrantScopePermit[] => {
-  return (permissions || [])
-    .filter((item) => !!item?.permission && item.actions?.length)
-    .map((item) => ({
-      id: item.permission,
-      actions: item.actions,
-    }))
 }
 
 export const toTemplatePayload = (
   form: AuthorizationTemplateForm,
   source?: Partial<AuthorizationTemplateItem>,
 ) => {
+  const actions = normalizeTemplateActions(form.actions)
+  const configuration = {
+    ...(source?.configuration || {}),
+    actions,
+  }
   return {
     ...source,
     id: form.id || undefined,
@@ -251,9 +251,11 @@ export const toTemplatePayload = (
     type: getEnumValue(form.type),
     riskLevel: getEnumValue(form.riskLevel),
     state: getEnumValue(form.state),
-    // PermissionChoose 使用 permission 字段，后端 GrantScope.Permit 使用 id，集中转换避免各组件重复适配。
+    actions,
+    configuration,
+    // 后端会以 actions 为准重新编译 scope；前端同时提交编译结果用于列表即时回显和旧调用方兼容。
     scope: {
-      permissions: toGrantScopePermissions(form.scopePermissions),
+      permissions: compileActionPermissions(actions),
     },
   }
 }

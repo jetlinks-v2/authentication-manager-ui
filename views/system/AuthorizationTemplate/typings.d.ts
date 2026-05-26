@@ -28,6 +28,13 @@ export type GrantScope = {
   [key: string]: any
 }
 
+export type AuthorizationTemplateAction = {
+  id: string
+  name: string
+  description?: string
+  permissions: GrantScopePermit[]
+}
+
 export type AuthorizationTemplateItem = {
   id: string
   name: string
@@ -39,6 +46,7 @@ export type AuthorizationTemplateItem = {
   version?: number
   scope?: GrantScope
   configuration?: Record<string, any>
+  actions?: AuthorizationTemplateAction[]
   createTime?: number
   modifyTime?: number
 }
@@ -51,5 +59,6 @@ export type AuthorizationTemplateForm = {
   type: AuthorizationTemplateType
   riskLevel: AuthorizationTemplateRiskLevel
   state: AuthorizationTemplateState
-  scopePermissions: ScopePermission[]
+  actions: AuthorizationTemplateAction[]
+  activeActionId?: string
 }

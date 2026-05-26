@@ -76,6 +76,7 @@ import {
   stateOptions,
   stateStatusNames,
 } from '../util'
+import { getTemplateActionCount } from '../actionUtil'
 
 const { t: $t } = useI18n()
 
@@ -93,7 +94,7 @@ const props = defineProps({
 const stateValue = computed(() => getEnumValue(props.data.state) || 'default')
 const stateText = computed(() => getOptionLabel(stateOptions, props.data.state))
 const permissionCount = computed(() => getScopePermissionCount(props.data))
-const actionCount = computed(() => getScopeActionCount(props.data))
+const actionCount = computed(() => getTemplateActionCount(props.data) || getScopeActionCount(props.data))
 const modifyTimeText = computed(() => (
   props.data.modifyTime ? dayjs(props.data.modifyTime).format('YYYY-MM-DD HH:mm') : '--'
 ))
