@@ -1,22 +1,22 @@
 <template>
   <div class="authorization-template-item">
-    <div class="authorization-template-item__status">
-      <j-badge-status
-        :status="stateValue"
-        :text="stateText"
-        :statusNames="stateStatusNames"
-      />
-    </div>
-
     <div class="authorization-template-item__main">
       <div class="authorization-template-item__title-row">
         <div class="authorization-template-item__icon">
           <AIcon type="SafetyCertificateOutlined" />
         </div>
         <div class="authorization-template-item__title-block">
-          <j-ellipsis class="authorization-template-item__title">
-            {{ data.name || data.id || '--' }}
-          </j-ellipsis>
+          <div class="authorization-template-item__title-line">
+            <j-ellipsis class="authorization-template-item__title">
+              {{ data.name || data.id || '--' }}
+            </j-ellipsis>
+            <j-badge-status
+              class="authorization-template-item__state"
+              :status="stateValue"
+              :text="stateText"
+              :statusNames="stateStatusNames"
+            />
+          </div>
           <div class="authorization-template-item__tags">
             <a-tag>{{ data.id }}</a-tag>
           </div>
