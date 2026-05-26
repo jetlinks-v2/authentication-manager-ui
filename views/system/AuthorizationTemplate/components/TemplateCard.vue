@@ -1,0 +1,103 @@
+<template>
+  <div class="authorization-template-item">
+    <div class="authorization-template-item__main">
+      <div class="authorization-template-item__title-row">
+        <div class="authorization-template-item__icon">
+          <AIcon type="SafetyCertificateOutlined" />
+        </div>
+        <div class="authorization-template-item__title-block">
+          <div class="authorization-template-item__title-line">
+            <j-ellipsis class="authorization-template-item__title">
+              {{ data.name || data.id || '--' }}
+            </j-ellipsis>
+            <j-badge-status
+              class="authorization-template-item__state"
+              :status="stateValue"
+              :text="stateText"
+              :statusNames="stateStatusNames"
+            />
+          </div>
+          <div class="authorization-template-item__tags">
+            <a-tag>{{ data.id }}</a-tag>
+          </div>
+        </div>
+      </div>
+      <j-ellipsis class="authorization-template-item__desc">
+        {{ data.description || $t('AuthorizationTemplate.text.noDescription') }}
+      </j-ellipsis>
+    </div>
+
+    <div class="authorization-template-item__meta">
+      <div class="authorization-template-item__meta-block">
+        <span>{{ $t('AuthorizationTemplate.field.scope') }}</span>
+        <strong>{{ permissionCount }}</strong>
+      </div>
+      <div class="authorization-template-item__meta-block">
+        <span>{{ $t('AuthorizationTemplate.text.actionCount') }}</span>
+        <strong>{{ actionCount }}</strong>
+      </div>
+      <div class="authorization-template-item__meta-block authorization-template-item__meta-block--time">
+        <span>{{ $t('AuthorizationTemplate.field.modifyTime') }}</span>
+        <strong>{{ modifyTimeText }}</strong>
+      </div>
+    </div>
+
+    <div class="authorization-template-item__actions">
+      <template
+        v-for="action in actions"
+        :key="action.key"
+      >
+        <j-permission-button
+          type="text"
+          size="small"
+          :danger="action.key === 'delete'"
+          :hasPermission="action.hasPermission"
+          :popConfirm="action.popConfirm"
+          @click="(event) => action.onClick?.(data, event)"
+        >
+          <AIcon :type="action.icon" />
+          <span>{{ action.text }}</span>
+        </j-permission-button>
+      </template>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import dayjs from 'dayjs'
+import type { PropType } from 'vue'
+import { useI18n } from 'vue-i18n'
+import type { AuthorizationTemplateItem } from '../typings'
+import {
+  getEnumValue,
+  getOptionLabel,
+  getScopeActionCount,
+  getScopePermissionCount,
+  stateOptions,
+  stateStatusNames,
+} from '../util'
+import { getTemplateActionCount } from '../actionUtil'
+
+const { t: $t } = useI18n()
+
+const props = defineProps({
+  data: {
+    type: Object as PropType<AuthorizationTemplateItem>,
+    required: true,
+  },
+  actions: {
+    type: Array as PropType<Record<string, any>[]>,
+    default: () => [],
+  },
+})
+
+const stateValue = computed(() => getEnumValue(props.data.state) || 'default')
+const stateText = computed(() => getOptionLabel(stateOptions, props.data.state))
+const permissionCount = computed(() => getScopePermissionCount(props.data))
+const actionCount = computed(() => getTemplateActionCount(props.data) || getScopeActionCount(props.data))
+const modifyTimeText = computed(() => (
+  props.data.modifyTime ? dayjs(props.data.modifyTime).format('YYYY-MM-DD HH:mm') : '--'
+))
+</script>
+
+<style lang="less" scoped src="./TemplateCard.less"></style>

@@ -81,7 +81,7 @@ import {
   getMaxDepth,
   findAllParentsAndChildren,
   handleSorts,
-  handleSortsArr, handleMenuFilterMessage, handleMergeTree,
+  handleSortsArr, handleMenuFilterMessage, handleMergeTree, mergeMenuOptions,
 } from "./utils";
 import BaseMenuData from "@jetlinks-web-core/views/init-home/data";
 import { USER_CENTER_MENU_DATA } from "@jetlinks-web-core/views/init-home/data/baseMenu";
@@ -282,11 +282,15 @@ const synchronization = async () => {
 const synchronizationMenu = (menu: any, baseMenu: any) => {
   const newMenu = menu.map((i: any) => {
     baseMenu.find((item: any) => {
-      if (i.id === item.id) {
+      if ((i.code && i.code === item.code) || (!i.code && i.id === item.id)) {
         i.buttons = unionBy(i.buttons, item.buttons, "id");
         i.permissions = unionBy(i.permissions, item.permissions, "permission");
-        if (item.children && i.children) {
-          i.children = synchronizationMenu(i.children, item.children);
+        // 基础菜单携带 appName/componentCode 等路由元数据，同步时保留系统已有显隐配置。
+        i.options = mergeMenuOptions(item.options, i.options);
+        if (item.children) {
+          i.children = i.children
+            ? synchronizationMenu(i.children, item.children)
+            : item.children;
         }
       }
     });
