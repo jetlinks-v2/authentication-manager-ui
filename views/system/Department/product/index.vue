@@ -663,6 +663,7 @@ const handleBatchImport = () => {
 const handleBatchExport = () => {
   exportProductAssets_api({
     filter: {
+      paging: false,
       terms: [
         ...(queryParams.value?.terms || []),
         {
