@@ -103,7 +103,7 @@ const onSave = async () => {
                   ? $t('BasicInfo.index.966110-5')
                   : $t('BasicInfo.index.966110-6'),
     },
-    owner: OWNER_KEY,
+    owner: props.value.owner || OWNER_KEY,
   }
   handleSave(params)
 }
