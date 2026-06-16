@@ -12,7 +12,7 @@
           :request="getPermission_api"
           mode="TABLE"
           :params="params"
-          :scroll="{ y: 'calc(100% - 60px)' }"
+          :scroll="{ y: 'calc(100% - 3.75rem)' }"
           :defaultParams="{
           sorts: [{ name: 'id', order: 'asc' }],
         }"

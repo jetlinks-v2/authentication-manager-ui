@@ -3,7 +3,7 @@
         class="edit-dialog-container"
         :title="$t('components.ThirdMenu.045501-0')"
         open
-        width="800px"
+        width="50rem"
         :maskClosable="false"
         @cancel="cancel"
         @ok="cancel"
@@ -113,7 +113,7 @@
                                         trigger: 'change',
                                     },
                                 ]"
-                                style="flex: 0 0 186px"
+                                style="flex: 0 0 11.625rem"
                             >
                                 <div
                                     class="icon-upload has-icon"
@@ -121,7 +121,7 @@
                                 >
                                     <AIcon
                                         :type="formData.icon"
-                                        style="font-size: 90px"
+                                        style="font-size: 5.625rem"
                                     />
                                     <span
                                         class="mark"
@@ -138,7 +138,7 @@
                                     <span>
                                         <AIcon
                                             type="PlusOutlined"
-                                            style="font-size: 30px"
+                                            style="font-size: 1.875rem"
                                         />
                                         <p>{{ $t('components.ThirdMenu.045501-13') }}</p>
                                     </span>
@@ -427,28 +427,28 @@ onMounted(() => {
 <style lang="less" scoped>
 .menuList {
     width: 35%;
-    margin-right: 20px;
+    margin-right: 1.25rem;
 }
 .configuration {
     width: 60%;
 }
 .content {
-    border: 0.3px solid rgb(220, 220, 220);
+    border: 0.01875rem solid rgb(220, 220, 220);
     position: relative;
     .saveBtn {
         position: absolute;
-        right: 20px;
-        top: 10px;
+        right: 1.25rem;
+        top: 0.625rem;
     }
     .basic-form {
-        height: 432px;
-        padding: 32px 20px;
+        height: 27rem;
+        padding: 2rem 1.25rem;
         :deep(.ant-form-item-control-input-content) {
             .icon-upload {
-                width: 160px;
-                height: 150px;
-                border: 1px dashed #d9d9d9;
-                font-size: 14px;
+                width: 10rem;
+                height: 9.375rem;
+                border: 0.0625rem dashed #d9d9d9;
+                font-size: 0.875rem;
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -474,7 +474,7 @@ onMounted(() => {
                     color: #fff;
                     width: 100%;
                     height: 100%;
-                    font-size: 16px;
+                    font-size: 1rem;
                     align-items: center;
                     justify-content: center;
                 }
@@ -490,7 +490,7 @@ onMounted(() => {
         }
     }
     .treeContainer {
-        height: 400px;
+        height: 25rem;
         overflow-y: auto;
     }
     .tree-item {
@@ -500,17 +500,17 @@ onMounted(() => {
         justify-content: space-around;
         .title {
             flex: 1;
-            min-width: 80px;
-            margin-right: 80px;
+            min-width: 5rem;
+            margin-right: 5rem;
         }
         .menuControls {
             position: absolute;
-            right: 10px;
+            right: 0.625rem;
             display: none;
-            font-size: 14px;
+            font-size: 0.875rem;
             :deep(.ant-btn-link) {
-                padding: 0 4px;
-                height: 24px;
+                padding: 0 0.25rem;
+                height: 1.5rem;
             }
         }
     }

@@ -50,28 +50,28 @@ onMounted(() => {
 .type-warp {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px 24px;
+    gap: 1rem 1.5rem;
     width: 100%;
 
     .type-item {
         display: flex;
         flex-direction: column;
         align-items: center;
-        width: 172px;
-        border: 1px solid #e0e4e8;
-        border-radius: 2px;
+        width: 10.75rem;
+        border: 0.0625rem solid #e0e4e8;
+        border-radius: 0.125rem;
         cursor: pointer;
         transition: all 0.3s;
 
         .type-item-title {
-            margin-bottom: 8px;
+            margin-bottom: 0.5rem;
             font-weight: 500;
-            font-size: 14px;
+            font-size: 0.875rem;
         }
 
         .type-item-image {
-            width: 106px;
-            margin: 16px 33px;
+            width: 6.625rem;
+            margin: 1rem 2.0625rem;
         }
 
         &:hover {

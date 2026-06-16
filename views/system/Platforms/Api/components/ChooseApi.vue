@@ -26,7 +26,7 @@
             hasPermission="system/Platforms/Setting:update"
             @click="save"
             v-if="props.mode !== 'home'"
-            style="margin-left: 20px;"
+            style="margin-left: 1.25rem;"
         >
             {{ $t('components.ChooseApi.726023-0') }}
         </j-permission-button>
@@ -186,7 +186,7 @@ watch(
 <style lang="less" scoped>
 .choose-api-container {
     .table {
-        max-height: calc(100vh - 260px);
+        max-height: calc(100vh - 16.25rem);
         overflow-y: auto;
     }
     :deep(.jtable-body-header) {

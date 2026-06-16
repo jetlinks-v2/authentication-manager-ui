@@ -26,18 +26,18 @@ const changeType = (newType: applyType) => {
 
 <style lang="less" scoped>
 .save-container {
-    padding: 24px;
+    padding: 1.5rem;
     display: flex;
-    gap: 24px;
+    gap: 1.5rem;
     min-height: 100%;
 
     .left {
         flex: 1;
-        height: calc(100vh - 166px);
+        height: calc(100vh - 10.375rem);
     }
 
     .right {
-        min-width: 410px;
+        min-width: 25.625rem;
         width: 33.33333%;
     }
 }

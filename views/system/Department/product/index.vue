@@ -112,13 +112,13 @@
               </slot>
             </template>
             <template #content>
-              <h3 class="card-item-content-title" style='margin-bottom: 18px;'>
+              <h3 class="card-item-content-title" style='margin-bottom: 1.125rem;'>
                 {{ slotProps.name }}
               </h3>
               <a-row>
                 <a-col :span="12">
                   <div class="card-item-content-text">ID</div>
-                  <j-ellipsis style="width: calc(100% - 20px);">
+                  <j-ellipsis style="width: calc(100% - 1.25rem);">
                     <div
                         style="cursor: pointer"
                         class="card-item-content-value"
@@ -131,7 +131,7 @@
                   <div class="card-item-content-text">
                     {{ $t('product.index.083446-5') }}
                   </div>
-                  <j-ellipsis style="width: calc(100% - 20px);">
+                  <j-ellipsis style="width: calc(100% - 1.25rem);">
                     <div
                         style="cursor: pointer"
                         class="card-item-content-value"

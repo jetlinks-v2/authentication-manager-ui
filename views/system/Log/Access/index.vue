@@ -31,7 +31,7 @@
 
                     <!-- <j-tag color="geekblue"> -->
                     <div class="userName">
-                        <j-ellipsis style="max-width: 100px;">
+                        <j-ellipsis style="max-width: 6.25rem;">
                         {{ slotProps.context.userName }}
                         </j-ellipsis>
                         <!-- </j-tag> -->
@@ -49,7 +49,7 @@
                                         }"
                             @click="i.onClick"
                             type="link"
-                            style="padding: 0 5px"
+                            style="padding: 0 0.3125rem"
                         >
                             <template #icon
                             ><AIcon :type="i.icon"
@@ -62,7 +62,7 @@
                 </div>
             </div>
             <a-modal :width="1100" v-model:open="visible" :title="$t('Access.index.480752-0')">
-                <a-descriptions :labelStyle="{width: '200px'}" :data="descriptionsData" title="" bordered :column="2">
+                <a-descriptions :labelStyle="{width: '12.5rem'}" :data="descriptionsData" title="" bordered :column="2">
                     <a-descriptions-item label="URL">
                         {{ descriptionsData?.url }}
                     </a-descriptions-item>
@@ -282,12 +282,12 @@ const handleSearch = (e: any) => {
     font-feature-settings: 'tnum';
     display: inline-block;
     height: auto;
-    margin-right: 8px;
-    padding: 0 7px;
-    font-size: 12px;
-    line-height: 20px;
-    border: 1px solid #d9d9d9;
-    border-radius: 2px;
+    margin-right: 0.5rem;
+    padding: 0 0.4375rem;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    border: 0.0625rem solid #d9d9d9;
+    border-radius: 0.125rem;
     opacity: 1;
 }
 </style>

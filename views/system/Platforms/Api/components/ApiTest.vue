@@ -71,7 +71,7 @@
           <a-button
             type="dashed"
             @click="requestBody.addRow"
-            style="width: 100%; text-align: center; margin-top: 5px"
+            style="width: 100%; text-align: center; margin-top: 0.3125rem"
           >
             <AIcon type="PlusOutlined"/>
             {{ $t('components.ApiTest.726024-4') }}
@@ -88,7 +88,7 @@
             v-if="bodyType === 'json'"
             ref="editorRef"
             language="json"
-            style="height: 100% ; min-height: 200px;"
+            style="height: 100% ; min-height: 12.5rem;"
             theme="vs"
             v-model:modelValue="requestBody.code"
           />
@@ -96,7 +96,7 @@
             v-else
             ref="editorRef"
             language="text"
-            style="height: 100% ; min-height: 200px;"
+            style="height: 100% ; min-height: 12.5rem;"
             theme="vs"
             v-model:modelValue="requestBody.code"
           />
@@ -154,7 +154,7 @@ const requestBody = reactive({
       title: $t('components.ApiTest.726024-8'),
       dataIndex: 'action',
       key: 'action',
-      width: '80px',
+      width: '5rem',
       scopedSlots: true,
     },
   ],
@@ -278,16 +278,16 @@ type requestObj = {
 
     h5 {
       font-weight: bold;
-      font-size: 16px;
+      font-size: 1rem;
     }
 
     .input {
       display: flex;
 
       .send {
-        width: 65px;
-        padding: 4px 15px;
-        font-size: 14px;
+        width: 4.0625rem;
+        padding: 0.25rem 0.9375rem;
+        font-size: 0.875rem;
         color: #fff;
         background-color: #1890ff;
         cursor: pointer;
@@ -296,28 +296,28 @@ type requestObj = {
   }
 
   .api-card {
-    margin-top: 24px;
+    margin-top: 1.5rem;
 
     h5 {
       position: relative;
-      padding-left: 10px;
+      padding-left: 0.625rem;
       font-weight: 600;
-      font-size: 16px;
+      font-size: 1rem;
 
       &::before {
         position: absolute;
         top: 0;
         left: 0;
-        width: 4px;
+        width: 0.25rem;
         height: 100%;
         background-color: var(--jet-theme-primary, #1677FF);
-        border-radius: 0 3px 3px 0;
+        border-radius: 0 0.1875rem 0.1875rem 0;
         content: ' ';
       }
     }
 
     .content {
-      padding-left: 10px;
+      padding-left: 0.625rem;
 
       :deep(.jtable-body) {
         padding: 0;
@@ -328,20 +328,20 @@ type requestObj = {
       }
 
       .table {
-        margin-bottom: 22px;
+        margin-bottom: 1.375rem;
 
         :deep(.ant-table-cell) {
-          padding: 0 8px;
-          height: 56px;
+          padding: 0 0.5rem;
+          height: 3.5rem;
         }
 
         .pager {
           display: flex;
           justify-content: center;
-          margin: 8px 0;
+          margin: 0.5rem 0;
 
           .ant-pagination {
-            margin-left: 8px;
+            margin-left: 0.5rem;
 
             :deep(.ant-pagination-item) {
               display: none;

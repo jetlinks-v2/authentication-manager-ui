@@ -7,7 +7,7 @@
     noMargin
     @search="search"
   />
-  <div style="height: 500px">
+  <div style="height: 31.25rem">
     <j-pro-table ref="tableRef" :request="requestFun" :gridColumn="2" :gridColumns="[2]" :params="queryParams"
     :rowSelection="{
       selectedRowKeys: _selectedRowKeys,
@@ -34,8 +34,8 @@
           </slot>
         </template>
         <template #content>
-          <h3 class="card-item-content-title" style='margin-bottom: 18px;'>
-            <j-ellipsis style="width: calc(100% - 100px);">
+          <h3 class="card-item-content-title" style='margin-bottom: 1.125rem;'>
+            <j-ellipsis style="width: calc(100% - 6.25rem);">
               {{ slotProps.name }}
             </j-ellipsis>
           </h3>
@@ -50,7 +50,7 @@
               <div class="card-item-content-text">
                 {{ $t('components.AddDeviceOrProductDialog.314014-5') }}
               </div>
-              <div style="cursor: pointer; height: 30px" class="card-item-content-value"
+              <div style="cursor: pointer; height: 1.875rem" class="card-item-content-value"
                 @click="(e) => e.stopPropagation()">
                 <!--                                    <a-checkbox-group v-model:value="slotProps.selectPermissions-->
                 <!--                                        " :options="slotProps.permissionList" />-->

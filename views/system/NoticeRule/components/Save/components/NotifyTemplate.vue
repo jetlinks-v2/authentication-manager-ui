@@ -19,7 +19,7 @@
         <AIcon type="InfoCircleOutlined" />
         {{ $t('components.NotifyTemplate.016284-1') }}
     </div>
-    <div style="max-height: 400px; overflow-y: auto">
+    <div style="max-height: 25rem; overflow-y: auto">
         <JProTable
             :columns="columns"
             :request="(e) => handleData(e)"
@@ -58,8 +58,8 @@
                         </slot>
                     </template>
                     <template #content>
-                        <j-ellipsis style="width: calc(100% - 100px)">
-                            <span style="font-size: 16px; font-weight: 600">
+                        <j-ellipsis style="width: calc(100% - 6.25rem)">
+                            <span style="font-size: 1rem; font-weight: 600">
                                 {{ slotProps.name }}
                             </span>
                         </j-ellipsis>
@@ -79,7 +79,7 @@
                                 </j-ellipsis>
                             </a-col>
                         </a-row>
-                        <div style="height: 30px">
+                        <div style="height: 1.875rem">
                             <j-ellipsis :lineClamp="2">
                                 {{ slotProps.template?.message || '' }}
                             </j-ellipsis>
@@ -239,21 +239,21 @@ watch(
 }
 
 .notify-logo {
-    width: 88px;
-    height: 88px;
+    width: 5.5rem;
+    height: 5.5rem;
 }
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 1rem;
 }
 .alert {
-    height: 40px;
-    padding: 0 20px 0 10px;
-    margin-bottom: 10px;
+    height: 2.5rem;
+    padding: 0 1.25rem 0 0.625rem;
+    margin-bottom: 0.625rem;
     color: rgba(0, 0, 0, 0.55);
-    line-height: 40px;
+    line-height: 2.5rem;
     background-color: #f6f6f6;
 }
 :deep(.JSearch-warp) {

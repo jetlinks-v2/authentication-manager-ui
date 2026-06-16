@@ -2,7 +2,7 @@
     <a-modal
         open
         :title="$t('components.NextDialog.372830-0')"
-        width="520px"
+        width="32.5rem"
         @ok="handleOk"
         :maskClosable="false"
         class="edit-dialog-container"

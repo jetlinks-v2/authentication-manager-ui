@@ -13,8 +13,8 @@
     <div
       style="
         display: flex;
-        border: 1px solid #e6e6e6;
-        padding: 15px;
+        border: 0.0625rem solid #e6e6e6;
+        padding: 0.9375rem;
         justify-content: space-between;
       "
     >
@@ -79,7 +79,7 @@
     <div
       :style="{
         display: 'flex',
-        border: '1px solid #e6e6e6',
+        border: '0.0625rem solid #e6e6e6',
         padding: 15,
         justifyContent: 'space-between',
         marginTop: 20,
@@ -91,7 +91,7 @@
           <img :src="apiHome" />
         </div>
       </div>
-      <div style="width: 505px">
+      <div style="width: 31.5625rem">
         <h3>{{ $t("components.HomePage.726029-17") }}</h3>
         <div>
           <p>
@@ -102,7 +102,7 @@
           <div>
             <a-monaco-editor
               language="java"
-              style="height: 370px"
+              style="height: 23.125rem"
               theme="vs-dark"
               :modelValue="javaStr1"
             />
@@ -123,7 +123,7 @@
       <div>
         <a-monaco-editor
           language="java"
-          style="height: 370px"
+          style="height: 23.125rem"
           theme="vs-dark"
           :modelValue="javaStr2"
         />
@@ -132,7 +132,7 @@
       <div>
         <a-monaco-editor
           language="java"
-          style="height: 370px"
+          style="height: 23.125rem"
           theme="vs-dark"
           :modelValue="javaStr"
         />
@@ -192,18 +192,18 @@ const javaStr =
 
 <style lang="less" scoped>
 .home {
-  padding: 20px;
+  padding: 1.25rem;
   height: 100%;
   overflow-y: auto;
 
   h1 {
     font-weight: 600;
-    font-size: 20px;
+    font-size: 1.25rem;
   }
 
   h2 {
     font-weight: 600;
-    font-size: 18px;
+    font-size: 1.125rem;
   }
 
   .h2-text {
@@ -211,14 +211,14 @@ const javaStr =
   }
 
   h3 {
-    margin-top: 10px;
+    margin-top: 0.625rem;
     font-weight: 600;
-    font-size: 16px;
+    font-size: 1rem;
   }
 
   .h3-text {
-    max-width: 530px;
-    margin-top: 3px;
+    max-width: 33.125rem;
+    margin-top: 0.1875rem;
     color: #999;
   }
 
@@ -227,8 +227,8 @@ const javaStr =
   }
 
   .div-border {
-    padding: 10px;
-    border-left: 10px solid #eee;
+    padding: 0.625rem;
+    border-left: 0.625rem solid #eee;
   }
 }
 </style>

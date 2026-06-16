@@ -1,8 +1,8 @@
 <template>
-    <a-modal open :title="$t('components.AddUserDialog.659587-0')" width="1000px" @ok="confirm" @cancel="emits('update:visible', false)">
+    <a-modal open :title="$t('components.AddUserDialog.659587-0')" width="62.5rem" @ok="confirm" @cancel="emits('update:visible', false)">
         <pro-search style="padding: 0" :columns="columns" type="simple" @search="(params) => queryParams = { ...params }" />
 
-        <div style="height: 480px;">
+        <div style="height: 30rem;">
           <j-pro-table style="padding: 0" ref="tableRef" :columns="columns" :request="getUserList" mode="TABLE" :params="queryParams"
                        :rowSelection="{
                 selectedRowKeys: selectedRowKeys,

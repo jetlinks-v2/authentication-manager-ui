@@ -6,7 +6,7 @@
     <div class="api-page-content" :style="styles">
       <div
         v-if="props.showTitle"
-        style="font-size: 16px;margin-bottom: 48px;"
+        style="font-size: 1rem;margin-bottom: 3rem;"
       >
         {{ $t('Api.index.558884-0') }}
       </div>
@@ -39,7 +39,7 @@
             >
               <a-button
                 @click="selectedApi = initSelectedApi"
-                style="margin-bottom: 24px; width: 80px">{{ $t('Api.index.558884-1') }}</a-button>
+                style="margin-bottom: 1.5rem; width: 5rem">{{ $t('Api.index.558884-1') }}</a-button>
               <div class="api-details-tabs">
                 <a-tabs v-model:activeKey="activeKey" type="card">
                   <a-tab-pane key="does" :tab="$t('Api.index.558884-2')">
@@ -92,7 +92,7 @@ const tableData = ref([]);
 
 const styles = computed(() => {
   return {
-    padding: props.mode === 'api' ? 0 : '24px'
+    padding: props.mode === 'api' ? 0 : '1.5rem'
   }
 })
 const treeSelect = (node: treeNodeTpye, nodeSchemas: object = {}) => {
@@ -194,18 +194,18 @@ watch(
     .api-page-body {
       position: relative;
       display: flex;
-      gap: 16px;
+      gap: 1rem;
 
       .tree-content {
-        height: calc(100vh - 230px);
-        width: 280px;
+        height: calc(100vh - 14.375rem);
+        width: 17.5rem;
         overflow-y: auto;
-        border-right: 1px solid #e9e9e9;
+        border-right: 0.0625rem solid #e9e9e9;
       }
 
       .api-page-detail {
         position: absolute;
-        left: 296px;
+        left: 18.5rem;
         top: 0;
         bottom: 0;
         right: 0;

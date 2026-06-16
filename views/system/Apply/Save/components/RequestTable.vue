@@ -203,7 +203,7 @@ function addRow() {
     .add-btn {
         width: 100%;
         display: block;
-        margin-top: 10px;
+        margin-top: 0.625rem;
     }
     :deep(.ant-form-item) {
         margin-bottom: 0;

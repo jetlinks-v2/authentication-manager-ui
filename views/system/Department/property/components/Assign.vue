@@ -1,16 +1,16 @@
 <template>
-  <a-modal class="add-device-or-product-dialog-container" :title="$t('components.AddDeviceOrProductDialog.314014-0')" width="1440px" :maskClosable="false" @ok="confirm"
+  <a-modal class="add-device-or-product-dialog-container" :title="$t('components.AddDeviceOrProductDialog.314014-0')" width="90rem" :maskClosable="false" @ok="confirm"
       :confirmLoading="loading" @cancel="cancel" open>
       <div class="batch-config">
           <a-space>
               <div class="row">
-              <span style="margin-right: 8px">{{ $t('components.AddDeviceOrProductDialog.314014-2') }}</span>
+              <span style="margin-right: 0.5rem">{{ $t('components.AddDeviceOrProductDialog.314014-2') }}</span>
               </div>
               <div v-show="bulkBool">
                   <a-checkbox-group v-model:value="bulkList" :options="options" />
               </div>
           </a-space>
-          <a-switch v-model:checked="bulkBool" :disabled="activeKey !== 'customize'" :checked-children="$t('components.AddDeviceOrProductDialog.314014-3')" :un-checked-children="$t('components.AddDeviceOrProductDialog.314014-4')" style="width: 56px" />
+          <a-switch v-model:checked="bulkBool" :disabled="activeKey !== 'customize'" :checked-children="$t('components.AddDeviceOrProductDialog.314014-3')" :un-checked-children="$t('components.AddDeviceOrProductDialog.314014-4')" style="width: 3.5rem" />
       </div>
 
       <!-- <pro-search
@@ -19,7 +19,7 @@
           target="category-bind-modal"
           @search="search"
       /> -->
-      <div style="display: flex; align-items: flex-end; margin: 16px; justify-content: space-between">
+      <div style="display: flex; align-items: flex-end; margin: 1rem; justify-content: space-between">
         <div>
           <TabsCard :options="typeOptions" v-model:activeKey="activeKey"/>
         </div>
@@ -219,26 +219,26 @@ watch(() => activeKey.value, (val) => {
 <style lang="less" scoped>
 .add-device-or-product-dialog-container {
   .ant-spin-nested-loading {
-      height: calc(100vh - 400px);
+      height: calc(100vh - 25rem);
       overflow-y: auto;
   }
 
   h5 {
-      padding: 12px;
-      padding-left: 24px;
+      padding: 0.75rem;
+      padding-left: 1.5rem;
       background-color: #f6f6f6;
-      font-size: 14px;
+      font-size: 0.875rem;
   }
   .batch-config {
-      padding: 8px 16px;
+      padding: 0.5rem 1rem;
       background: #F5F5F5;
-      border-radius: 6px;
-      border: 1px solid #CCCCCC;
+      border-radius: 0.375rem;
+      border: 0.0625rem solid #CCCCCC;
       display: flex;
       align-items: center;
       justify-content: space-between;
       display: flex;
-      margin: 16px;
+      margin: 1rem;
   }
 }
 :deep(.jtable-body-header-left){

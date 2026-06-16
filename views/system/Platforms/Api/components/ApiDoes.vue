@@ -341,44 +341,44 @@ watch([() => responseStatusCard.activeKey, () => props.selectApi], (n) => {
 
         h5 {
             font-weight: bold;
-            font-size: 16px;
+            font-size: 1rem;
         }
 
         .input {
             display: flex;
-            margin: 24px 0;
+            margin: 1.5rem 0;
         }
     }
     p {
         display: flex;
         justify-content: space-between;
-        font-size: 14px;
+        font-size: 0.875rem;
 
         .label {
             font-weight: bold;
         }
     }
     .api-card {
-        margin-top: 24px;
+        margin-top: 1.5rem;
         h5 {
             position: relative;
-            padding-left: 10px;
+            padding-left: 0.625rem;
             font-weight: 600;
-            font-size: 16px;
+            font-size: 1rem;
 
             &::before {
                 position: absolute;
                 top: 0;
                 left: 0;
-                width: 4px;
+                width: 0.25rem;
                 height: 100%;
                 background-color: var(--jet-theme-primary, #1677FF);
-                border-radius: 0 3px 3px 0;
+                border-radius: 0 0.1875rem 0.1875rem 0;
                 content: ' ';
             }
         }
         .content {
-            padding-left: 10px;
+            padding-left: 0.625rem;
 
             :deep(.jtable-body) {
                 padding: 0;

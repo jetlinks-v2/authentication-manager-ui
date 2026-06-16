@@ -16,7 +16,7 @@
                 @change="handleChange"
                 @beforeUpload="handleBeforeUpload"
             >
-                <a-button type="link" style="height: 30px">
+                <a-button type="link" style="height: 1.875rem">
                     <AIcon type="LoadingOutlined" v-if="loading" />
                     <AIcon type="PlusOutlined" v-else />
                     {{ $t('variableItem.InputFile.277580-1') }}

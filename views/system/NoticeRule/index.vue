@@ -2,7 +2,7 @@
   <j-page-container>
     <FullPage>
       <div class="content">
-        <div style="margin-bottom: 15px">
+        <div style="margin-bottom: 0.9375rem">
           <div class="alert">
             <AIcon type="InfoCircleOutlined" />
             {{ $t("NoticeRule.index.804848-0") }}
@@ -27,7 +27,7 @@
                 <div>
                   {{ item.name }}
 <!--                  <span-->
-<!--                    style="margin-left: 10px"-->
+<!--                    style="margin-left: 0.625rem"-->
 <!--                    class="alert"-->
 <!--                    v-if="item.provider === 'alarm'"-->
 <!--                    >{{ $t("NoticeRule.index.804848-1") }}</span-->
@@ -103,7 +103,7 @@ onMounted(() => {
 
 <style lang="less" scoped>
 .content {
-  padding: 24px;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -111,13 +111,13 @@ onMounted(() => {
   height: 100%;
 
   .btn {
-    padding: 24px 0;
+    padding: 1.5rem 0;
     width: 100%;
     background-color: #fff;
   }
 }
 .alert {
-  padding-left: 10px;
+  padding-left: 0.625rem;
   color: rgba(0, 0, 0, 0.55);
 }
 
@@ -131,16 +131,16 @@ onMounted(() => {
     background-color: #fff;
 
     .ant-collapse-item {
-      border: 1px solid #ebeef3;
-      margin-bottom: 24px;
+      border: 0.0625rem solid #ebeef3;
+      margin-bottom: 1.5rem;
     }
 
     .ant-collapse-header {
       background-color: #f7f8fa;
-      height: 42px;
+      height: 2.625rem;
     }
     .ant-collapse-content {
-      padding: 17px 21px 7px 21px;
+      padding: 1.0625rem 1.3125rem 0.4375rem 1.3125rem;
     }
 
     .ant-collapse-content-box {

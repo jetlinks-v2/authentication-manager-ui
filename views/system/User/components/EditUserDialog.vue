@@ -3,7 +3,7 @@
         open
         :title="dialogTitle"
         :maskClosable="false"
-        width="675px"
+        width="42.1875rem"
         @ok="confirm"
         @cancel="emits('update:visible', false)"
         class="edit-dialog-container"
@@ -80,13 +80,13 @@
 <!--                      { required: form.data.username !== 'admin', message: $t('components.EditUserDialog.939453-13') },-->
 <!--                      ]"-->
                       <form-item-role :extraData="detail.roleList" :extraProps="{multiple: true}" :disabledData="disabledData.roles" v-model:value="form.data.roleIdList" :disabled="form.data.username === 'admin'" />
-                      <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 4px" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
+                      <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 0.25rem" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
                     </a-form-item>
                 </a-col>
                 <a-col :span="12" v-if="hasDepartmentMenu">
                     <a-form-item name="orgIdList" :label="$t('components.EditUserDialog.939453-14')">
                       <form-item-org :extraData="detail.orgList" :extraProps="{multiple: true}" :disabledData="disabledData.orgIds" v-model:value="form.data.orgIdList" :disabled="form.data.username === 'admin'" />
-                      <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 4px" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
+                      <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 0.25rem" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
                     </a-form-item>
                 </a-col>
             </a-row>
@@ -448,20 +448,20 @@ type optionType = {
 
 <style lang="less" scoped>
 .formName{
-    margin-bottom: 10px;
-    font-size: 16px;
+    margin-bottom: 0.625rem;
+    font-size: 1rem;
     &::before{
-        width: 2px;
+        width: 0.125rem;
         background-color: rgb(184, 184, 184);
         display: inline-block;
-        height: 13px;
-        margin-right: 3px;
+        height: 0.8125rem;
+        margin-right: 0.1875rem;
         content:''
     }
 }
 
 .tip {
   color: rgba(0,0,0,.65);
-  margin-top: 4px;
+  margin-top: 0.25rem;
 }
 </style>

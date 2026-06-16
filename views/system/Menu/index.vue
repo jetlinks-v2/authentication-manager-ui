@@ -29,7 +29,7 @@
             </j-permission-button>
             <a-button
               v-if="admin"
-              style="margin-left: 12px"
+              style="margin-left: 0.75rem"
               @click="router.push('/system/Menu/Setting')"
             >{{ $t('Menu.index.599742-17') }}</a-button
             >

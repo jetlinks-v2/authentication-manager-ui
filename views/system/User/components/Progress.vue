@@ -41,7 +41,7 @@ const valueStyle = computed(() => {
 
     return {
         background,
-        'clip-path': `polygon(0px 0px, ${props.percent}% 0px, ${props.percent}% 100%, 0px 100%)`,
+        'clip-path': `polygon(0 0, ${props.percent}% 0, ${props.percent}% 100%, 0 100%)`,
     };
 });
 
@@ -57,13 +57,13 @@ const valueArr = computed(() => {
     width: 100%;
     position: relative;
     background-color: #e0e0e0;
-    height: 8px;
-    margin: 3px 0;
+    height: 0.5rem;
+    margin: 0.1875rem 0;
 
     .split {
         position: absolute;
         top: 0;
-        width: 1px;
+        width: 0.0625rem;
         height: 100%;
         background-color: #fff;
     }
