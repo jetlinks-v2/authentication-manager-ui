@@ -286,10 +286,10 @@ type requestObj = {
 
       .send {
         width: 65px;
-        padding: 4px 15px;
+        padding: var(--space-1) var(--space-4);
         font-size: 14px;
         color: #fff;
-        background-color: #1890ff;
+        background-color: var(--jet-theme-primary);
         cursor: pointer;
       }
     }

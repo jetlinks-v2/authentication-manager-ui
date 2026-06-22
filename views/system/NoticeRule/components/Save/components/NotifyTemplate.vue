@@ -252,7 +252,7 @@ watch(
     height: 40px;
     padding: 0 20px 0 10px;
     margin-bottom: 10px;
-    color: rgba(0, 0, 0, 0.55);
+    color: var(--jet-theme-text-secondary);
     line-height: 40px;
     background-color: #f6f6f6;
 }

@@ -184,7 +184,7 @@ watch(() => route.params.id, (v) => {
 
 <style scoped lang="less">
   .menu-detail-container {
-    padding: 24px;
+    padding: var(--space-6);
     height: 100%;
 
      :deep(.ant-tabs) {

@@ -165,7 +165,7 @@ const confirm = () => {
 
     .message {
       font-size: 12px;
-      color: rgba(0, 0, 0, 0.4);
+      color: var(--jet-theme-text-disabled);
     }
   }
 }

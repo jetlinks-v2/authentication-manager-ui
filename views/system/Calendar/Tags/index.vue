@@ -217,7 +217,7 @@ onMounted(() => {
             font-size: 14px;
 
             :deep(.ant-btn-text){
-                padding: 4px 8px;
+                padding: var(--space-1) var(--space-2);
             }
         }
         &:hover{

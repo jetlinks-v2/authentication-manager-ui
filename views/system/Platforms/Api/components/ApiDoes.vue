@@ -42,7 +42,7 @@
                     size="small"
                 >
                     <template #required="slotProps">
-                        <span :style="{ color: Boolean(slotProps.required) ? '#f81d22' : ''}">{{ Boolean(slotProps.required) + '' }}</span>
+                        <span :style="{ color: Boolean(slotProps.required) ? 'var(--jet-theme-error)' : ''}">{{ Boolean(slotProps.required) + '' }}</span>
                     </template>
                 </j-pro-table>
             </div>

@@ -6,7 +6,7 @@
         @cancel="emit('close')"
         :bodyStyle="{ padding: 0 }"
     >
-        <div style="background-color: #f8f9fc; padding: 25px 100px">
+        <div style="background-color: var(--jet-theme-bg-layout); padding: 25px 100px">
             <a-steps :current="current" size="small" @change="onChange">
                 <a-step v-for="(item, index) in stepList" :key="item">
                     <template #title>
@@ -366,7 +366,7 @@ const onSave = async () => {
     height: 40px;
     padding: 0 20px 0 10px;
     margin-bottom: 10px;
-    color: rgba(0, 0, 0, 0.55);
+    color: var(--jet-theme-text-secondary);
     line-height: 40px;
     background-color: #f6f6f6;
 }

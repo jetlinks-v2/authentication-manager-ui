@@ -78,6 +78,6 @@ const options = computed(() => {
     background: #f3f3f3;
     border-radius: 2px;
     padding: 6px;
-    color: rgba(0, 0, 0, 0.55);
+    color: var(--jet-theme-text-secondary);
 }
 </style>

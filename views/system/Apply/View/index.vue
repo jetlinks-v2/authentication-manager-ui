@@ -36,7 +36,7 @@ getAppInfo_api(clientId).then((resp: any) => {
 <style lang="less" scoped>
 .card {
     background-color: #fff;
-    padding: 24px;
+    padding: var(--space-6);
     margin-bottom: 24px;
 
     p {

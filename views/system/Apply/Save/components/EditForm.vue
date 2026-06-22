@@ -2201,7 +2201,7 @@ const queryThirdPartyType = async () => {
           right: -15px;
           top: -5px;
           font-size: 8px;
-          background-color: #ff4d4f;
+          background-color: var(--jet-theme-error);
           color: #fff;
           border-radius: 7px;
         }
@@ -2218,11 +2218,11 @@ const queryThirdPartyType = async () => {
 }
 .wechat-event-url-inline {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--jet-theme-text-secondary);
 }
 .wechat-event-url-inline code {
   background: #f5f5f5;
-  padding: 1px 4px;
+  padding: calc(var(--space-1) / 2) var(--space-1);
   border-radius: 2px;
 }
 .wechat-event-copy {

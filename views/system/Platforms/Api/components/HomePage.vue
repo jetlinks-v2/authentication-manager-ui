@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <h1>{{ $t("components.HomePage.726029-0") }}</h1>
-    <div style="color: #666666">
+    <div style="color: var(--jet-theme-text-secondary)">
       {{ $t("components.HomePage.726029-1") }}
       {{ $t("components.HomePage.726029-2") }}
     </div>

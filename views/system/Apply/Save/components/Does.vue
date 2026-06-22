@@ -171,7 +171,7 @@ const img6 = systemImg.apply6;
 
 <style lang="less" scoped>
 .does-container {
-    padding: 24px;
+    padding: var(--space-6);
     overflow-y: auto;
     height: 100%;
     color: rgba(#000, 0.8);
@@ -179,7 +179,7 @@ const img6 = systemImg.apply6;
     background-color: #fafafa;
 
     .url {
-        padding: 8px 16px;
+        padding: var(--space-2) var(--space-4);
         color: #2f54eb;
         background-color: rgba(#a7bdf7, 0.2);
         word-wrap: break-word;

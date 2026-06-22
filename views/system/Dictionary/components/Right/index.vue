@@ -226,7 +226,7 @@ watch(() => props?.data?.id, () => {
   overflow-y: auto;
 }
 .des_head {
-    padding: 10px 20px;
+    padding: var(--space-2) var(--space-5);
     background-color: rgb(242, 242, 242);
 
     span {

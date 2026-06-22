@@ -596,7 +596,7 @@ setTimeout(() => {
 }
 .calendarContainer {
     position: relative;
-    padding: 44px 24px 0;
+    padding: var(--space-11) var(--space-6) 0;
     border: 1px solid #d9d9d9;
     border-radius: 12px;
     .compareTip {
@@ -661,7 +661,7 @@ setTimeout(() => {
 .tips {
     position: fixed;
     z-index: 99999;
-    padding: 5px 10px;
+    padding: var(--space-1) var(--space-2);
     background-color: rgba(0, 0, 0, 0.7);
     border-radius: 5px;
     color: white;

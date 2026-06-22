@@ -24,7 +24,7 @@ const props = defineProps<{
 
     .required {
         display: inline-block;
-        color: #ff4d4f;
+        color: var(--jet-theme-error);
         font-size: 14px;
         line-height: 1;
     }

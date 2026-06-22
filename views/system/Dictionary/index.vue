@@ -23,7 +23,7 @@ const selectData = (i: any) => {
 </script>
 <style lang="less" scoped>
 .dictionary_contain {
-    padding: 24px 24px 0 24px;
+    padding: var(--space-6) var(--space-6) 0;
     height: 100%;
     display: flex;
 }

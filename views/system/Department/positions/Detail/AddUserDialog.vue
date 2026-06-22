@@ -422,7 +422,7 @@ type optionType = {
 }
 
 .tip {
-    color: rgba(0, 0, 0, .65);
+    color: var(--jet-theme-text-secondary);
     margin-top: 4px;
 }
 </style>

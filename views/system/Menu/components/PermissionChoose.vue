@@ -199,7 +199,7 @@ watch(
     margin-top: 12px;
     font-size: 14px;
     border: 1px solid #d9d9d9;
-    color: rgba(0, 0, 0, 0.85);
+    color: var(--jet-theme-text-title);
     .table-head {
       padding: 12px;
       background-color: #d9d9d9;
@@ -213,7 +213,7 @@ watch(
         border-bottom: 1px solid #d9d9d9;
 
         > div {
-          padding: 8px 12px;
+          padding: var(--space-2) var(--space-3);
         }
         .item-name {
           display: flex;

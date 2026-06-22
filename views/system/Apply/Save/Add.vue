@@ -50,7 +50,7 @@ onMounted(() => {
 .type-warp {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px 24px;
+    gap: var(--space-4) var(--space-6);
     width: 100%;
 
     .type-item {

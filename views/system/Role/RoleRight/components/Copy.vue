@@ -198,7 +198,7 @@ onMounted(() => {
 .alert-info {
   display: flex;
   justify-content: space-between;
-  padding: 6px 12px;
+  padding: var(--space-1) var(--space-3);
   border: 1px solid #d9d9d9;
   border-radius: 4px;
   margin-bottom: 16px;

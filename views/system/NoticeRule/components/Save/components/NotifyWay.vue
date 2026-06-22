@@ -92,8 +92,8 @@ onMounted(() => {
   display: flex;
   flex-wrap: wrap;
   width: 100%;
-  padding: 50px 200px;
-  gap: 16px 24px;
+  padding: var(--space-12) var(--space-page);
+  gap: var(--space-4) var(--space-6);
 
   .notify-type-item {
     display: flex;
@@ -102,11 +102,11 @@ onMounted(() => {
     border-radius: 6px;
     cursor: pointer;
     width: 96px;
-    padding: 8px 16px;
+    padding: var(--space-2) var(--space-4);
 
     .notify-type-item-title {
       font-size: 14px;
-      color: #333333;
+      color: var(--jet-theme-text-title);
       width: 100%;
       text-align: center;
     }

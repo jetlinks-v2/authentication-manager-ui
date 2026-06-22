@@ -733,8 +733,8 @@ watch(
 
 <style lang="less" scoped>
 .drawer-empty {
-  padding: 24px;
-  color: rgba(0, 0, 0, 0.45);
+  padding: var(--space-6);
+  color: var(--jet-theme-text-disabled);
 }
 .menu-layout {
   display: flex;
@@ -755,7 +755,7 @@ watch(
 .phone-hint {
   margin-top: 8px;
   font-size: 11px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--jet-theme-text-disabled);
   text-align: left;
 }
 .phone-hint-line {
@@ -832,7 +832,7 @@ watch(
 }
 .phone-content {
   flex: 1;
-  padding: 8px 6px;
+  padding: var(--space-2) var(--space-1);
   overflow-y: auto;
   min-height: 120px;
   background: #e5e5ea;
@@ -840,7 +840,7 @@ watch(
 .chat-tip {
   text-align: center;
   font-size: 10px;
-  color: rgba(0, 0, 0, 0.4);
+  color: var(--jet-theme-text-disabled);
   margin-bottom: 4px;
 }
 .chat-bubble {
@@ -860,7 +860,7 @@ watch(
 }
 .chat-text {
   max-width: 150px;
-  padding: 6px 8px;
+  padding: var(--space-1) var(--space-2);
   border-radius: 8px;
   line-height: 1.4;
   background: #fff;
@@ -911,14 +911,14 @@ watch(
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: var(--space-2) var(--space-3);
   border-radius: 6px;
   margin-bottom: 4px;
   cursor: pointer;
   font-size: 14px;
   &.active {
-    background: #e6f7ff;
-    color: #1890ff;
+    background: var(--jet-theme-primary-soft);
+    color: var(--jet-theme-primary);
   }
   &.add {
     color: #999;
@@ -929,7 +929,7 @@ watch(
   }
   .sub-del {
     margin-left: 8px;
-    color: #ff4d4f;
+    color: var(--jet-theme-error);
     opacity: 0.7;
     cursor: pointer;
     display: inline-flex;
@@ -975,8 +975,8 @@ watch(
     border-right: none;
   }
   &.active {
-    background: #e6f7ff;
-    color: #1890ff;
+    background: var(--jet-theme-primary-soft);
+    color: var(--jet-theme-primary);
   }
   &.draggable {
     cursor: move;
@@ -1028,7 +1028,7 @@ watch(
 }
 .config-panel {
   flex: 1;
-  padding: 24px;
+  padding: var(--space-6);
   overflow-y: auto;
   min-width: 0;
 }
@@ -1050,7 +1050,7 @@ watch(
 }
 .form-hint {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--jet-theme-text-disabled);
   margin-top: 4px;
 }
 .config-empty {
