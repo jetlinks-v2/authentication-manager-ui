@@ -90,6 +90,21 @@
                     </a-form-item>
                 </a-col>
             </a-row>
+          <a-row :gutter="24" v-if="form.IsShow('add', 'edit')">
+            <a-col :span="24">
+              <a-form-item name="parkIds" :label="$t('components.EditUserDialog.939453-38')">
+                <a-select
+                  v-model:value="form.data.parkIds"
+                  mode="multiple"
+                  allow-clear
+                  show-search
+                  option-filter-prop="label"
+                  :options="parkOptions"
+                  :placeholder="$t('components.EditUserDialog.939453-39')"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
           <a-row :gutter="24" v-if="form.IsShow('add', 'edit') && isNoCommunity && isIot">
             <a-col :span="12">
               <a-form-item name="positions" :label="$t('components.EditUserDialog.939453-31')">
@@ -177,6 +192,10 @@ import {
     updateUser_api,
     updatePassword_api,
     getUser_api,
+    getUserParks_api,
+    queryParkListNoPaging_api,
+    replaceUserParks_api,
+    unbindUserParks_api,
 } from '@authentication-manager-ui/api/system/user';
 import { Rule } from 'ant-design-vue/es/form';
 import { DefaultOptionType } from 'ant-design-vue/es/vc-tree-select/TreeSelect';
@@ -197,11 +216,12 @@ const props = defineProps<{
     data: any;
     visible: boolean;
 }>();
-// å¼¹çª—ç›¸å…³
+// µ¯´°Ïà¹Ø
 const loading = ref(false);
 const positionsMap = new Map()
 const menuStore = useMenuStore();
 const hasDepartmentMenu = menuStore.hasMenu('system/Department');
+const parkOptions = ref<optionType[]>([]);
 
 const disabledData = reactive<{
   roles: any[],
@@ -218,6 +238,56 @@ const dialogTitle = computed(() => {
     else if (props.type === 'reset') return $t('components.EditUserDialog.939453-25');
     else return '';
 });
+
+const loadParkOptions = async () => {
+    const resp = await queryParkListNoPaging_api({
+        paging: false,
+        sorts: [{ name: 'name', order: 'asc' }],
+    });
+    const parks = Array.isArray(resp?.result) ? resp.result : Array.isArray(resp) ? resp : [];
+    parkOptions.value = parks.map((item: any) => ({
+        label: item.name,
+        value: item.id,
+    }));
+};
+
+const syncUserParks = async (userId: string, parkIds: string[] = [], oldParkIds: string[] = []) => {
+    if (!userId) {
+        return;
+    }
+
+    if (parkIds.length) {
+        await replaceUserParks_api({
+            userIds: [userId],
+            parkIds,
+        });
+        return;
+    }
+
+    if (oldParkIds.length) {
+        await unbindUserParks_api({
+            userIds: [userId],
+            parkIds: oldParkIds,
+        });
+    }
+};
+
+const buildUserPayload = (data: formType, includePassword: boolean) => {
+    const payload: Record<string, unknown> = {
+        name: data.name,
+        username: data.username,
+        telephone: data.telephone,
+        email: data.email,
+    };
+
+    if (includePassword) {
+        payload.password = data.password;
+        payload.confirmPassword = data.confirmPassword;
+    }
+
+    return payload;
+};
+
 const confirm = () => {
     loading.value = true;
     formRef.value
@@ -234,7 +304,7 @@ const confirm = () => {
 };
 
 const handleData = (data: string[], newData: string[], key: string) => {
-  // åˆ é™¤åŽŸæœ¬çš„æ•°æ®ï¼Œç„¶åŽåŠ å…¥æ–°çš„æ•°æ®
+  // É¾³ýÔ­±¾µÄÊý¾Ý£¬È»ºó¼ÓÈëÐÂµÄÊý¾Ý
   const _dataSet = new Set(data || []);
   (disabledData[key] || []).map((i: string) => {
     if(_dataSet.has(i)){
@@ -261,6 +331,7 @@ const formRef = ref<FormInstance>();
 const _roleDetail = ref([] as any[]);
 const form = reactive({
     data: {} as formType,
+    originalParkIds: [] as string[],
     rules: {
         checkUserName: (_rule: Rule, value: string): Promise<any> =>
             new Promise((resolve, reject) => {
@@ -302,12 +373,21 @@ const form = reactive({
     },
     getUserInfo: () => {
         const id = props.data.id || '';
-        if (props.type === 'add') form.data = {} as formType;
+        if (props.type === 'add') {
+            form.data = {
+                roleIdList: [],
+                positions: [],
+                orgIdList: [],
+                parkIds: [],
+            } as formType;
+            form.originalParkIds = [];
+        }
         else if (props.type === 'reset') form.data = { id } as formType;
         else if (props.type === 'edit') {
-            getUser_api(id).then((resp: any) => {
+            Promise.all([getUser_api(id), getUserParks_api(id)]).then(([resp, parkResp]: any[]) => {
                 detail.value = resp.result;
                 _roleDetail.value = resp.result.roleList;
+                const parkIds = Array.isArray(parkResp?.result) ? parkResp.result : Array.isArray(parkResp) ? parkResp : [];
                 form.data = {
                     ...(resp.result as formType),
                     orgIdList: resp.result.orgList.map(
@@ -316,8 +396,10 @@ const form = reactive({
                     roleIdList: resp.result.roleList.map(
                         (item: dictType) => item.id,
                     ),
-                  positions: resp.result.positions?.map(item => item.id)
+                  positions: resp.result.positions?.map(item => item.id) || [],
+                  parkIds,
                 };
+                form.originalParkIds = [...parkIds];
                 onChange(form.data.positions)
 
                 form.data.roleIdList = resp.result?.roleList?.map((i: any) => {
@@ -333,22 +415,27 @@ const form = reactive({
     submit: (): Promise<any> => {
         let api: axiosFunType;
         let params = {};
-        const { positions, ...extraFormData} = form.data
+        const {
+            positions,
+            parkIds = [],
+            roleIdList,
+            orgIdList,
+        } = form.data
         if (props.type === 'add') {
             api = addUser_api;
             params = {
-                user: extraFormData,
-                orgIdList: form.data.orgIdList,
-                roleIdList: form.data.roleIdList,
+                user: buildUserPayload(form.data, true),
+                orgIdList,
+                roleIdList,
                 positions: positions,
             };
         } else if (props.type === 'edit') {
             api = updateUser_api;
             params = {
                 id: form.data.id,
-                user: extraFormData,
-                orgIdList: form.data.orgIdList,
-                roleIdList: form.data.roleIdList,
+                user: buildUserPayload(form.data, false),
+                orgIdList,
+                roleIdList,
                 positions: positions,
             };
         } else if (props.type === 'reset') {
@@ -358,7 +445,14 @@ const form = reactive({
                 password: form.data.password,
             };
         } else return Promise.reject();
-        return api(params);
+        return api(params).then(async (resp: any) => {
+            if (props.type === 'add' || props.type === 'edit') {
+                const userId = props.type === 'edit' ? form.data.id : resp?.result?.id;
+                await syncUserParks(userId, parkIds, form.originalParkIds);
+                form.originalParkIds = [...parkIds];
+            }
+            return resp;
+        });
     },
     IsShow: (...typeList: modalType[]) => typeList.includes(props.type),
 });
@@ -367,7 +461,7 @@ const checkCh = async(_rule:Rule,value:string) => {
                 else return Promise.resolve('')
             }
 
-// ç»„ç»‡å·²åˆ é™¤åœ¨ä»æ˜¾ç¤ºåœ¨åˆ—è¡¨ä¸­
+// ×éÖ¯ÒÑÉ¾³ýÔÚÈÔÏÔÊ¾ÔÚÁÐ±íÖÐ
 // const _departmentOptions = computed(() => {
 //     return uniqBy([...form.departmentOptions, ...form._departmentOptions], 'id')
 // })
@@ -385,6 +479,7 @@ const hasNodeWithId = (arr: any, id: any)=>{
 }
 
 onMounted(async () => {
+  await loadParkOptions();
   if(isNoCommunity) {
     const resp = await queryPositionDetailNoPage({
       paging: false,
@@ -432,6 +527,7 @@ type formType = {
     roleIdList: string[];
     positions: string[];
     orgIdList: string[];
+    parkIds: string[];
     telephone: string;
     email: string;
 };

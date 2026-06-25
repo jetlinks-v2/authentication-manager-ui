@@ -10,15 +10,6 @@ export const useColumns = () => {
   const { termOptions } = useTermOptions({ pick: ['eq']})
   return [
     {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
-      ellipsis: true,
-      search: {
-        type: 'string',
-      },
-    },
-    {
       title: $t('components.Save.069696-2'),
       dataIndex: 'name',
       key: 'name',
@@ -73,7 +64,7 @@ export const useColumns = () => {
     },
     {
       dataIndex: 'orgId',
-      title: $t('Instance.index.133466-16'),
+      title: $t('components.EditUserDialog.939453-14-1'),
       // hideInTable: true,
       scopedSlots: true,
       search: {

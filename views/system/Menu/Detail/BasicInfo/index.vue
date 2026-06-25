@@ -36,6 +36,12 @@ const permission = 'system/Menu'
 const menuStore = useMenuStore()
 const route = useRoute()
 
+const isConfigContext = computed(() => route.path.startsWith('/config/system'))
+
+const menuDetailRouteName = computed(() =>
+  isConfigContext.value ? 'smart-park-config/system/menu/detail' : 'system/Menu/Detail',
+)
+
 const basicFormRef = ref<any>()
 const permissionFormRef = ref<any>()
 
@@ -79,7 +85,7 @@ const handleSave = async (params: any) => {
   if (resp.success) {
     onlyMessage($t('BasicInfo.index.966110-3'))
     if (!props.value?.id) {
-      menuStore.jumpPage('system/Menu/Detail', {
+      menuStore.jumpPage(menuDetailRouteName.value, {
         params: { id: resp.result.id },
       })
     }

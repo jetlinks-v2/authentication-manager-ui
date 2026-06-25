@@ -1,29 +1,29 @@
 import { request, ndJson } from '@jetlinks-web/core'
 
 /**
- * è·å–ç”¨æˆ·åŸºæœ¬ä¿¡æ¯
+ * »ñÈ¡ÓÃ»§»ù±¾ĞÅÏ¢
  * @returns
  */
 export const detail = () => request.get('/user/detail')
 
-// è·å–ç”¨æˆ·ç±»å‹
+// »ñÈ¡ÓÃ»§ÀàĞÍ
 export const getUserType_api = () => request.get(`/user/detail/types`);
 
-// è·å–ç”¨æˆ·åˆ—è¡¨
+// »ñÈ¡ÓÃ»§ÁĞ±í
 export const getUserList_api = (data: any) => request.post(`/user/detail/_query`, data);
 
-// æ ¡éªŒå­—æ®µåˆæ³•æ€§
+// Ğ£Ñé×Ö¶ÎºÏ·¨ĞÔ
 export const validateField_api = (type: 'username' | 'password', name: string) => request.post(`/user/${type}/_validate`, name, {
     headers: {
         'Content-Type': 'text/plain'
     }
 })
 
-// è·å–è§’è‰²åˆ—è¡¨
+// »ñÈ¡½ÇÉ«ÁĞ±í
 export const getRoleList_api = () => request.get(`/role/_query/no-paging?paging=false`);
 
 /**
- * æŸ¥è¯¢ç”¨æˆ·åˆ—è¡¨
+ * ²éÑ¯ÓÃ»§ÁĞ±í
  * @returns
  */
 export const queryUserListNoPaging = () => request.post(`/user/_query/no-paging`, {
@@ -31,45 +31,54 @@ export const queryUserListNoPaging = () => request.post(`/user/_query/no-paging`
     sorts: [{ name: 'name', order: "asc" }]
 })
 
-//è·å–è§’è‰²åˆ—è¡¨
+//»ñÈ¡½ÇÉ«ÁĞ±í
 export const getRoleList = (data:any) => request.post('/role/group/detail/_query/tree',data)
-// è·å–ç»„ç»‡åˆ—è¡¨
+// »ñÈ¡×éÖ¯ÁĞ±í
 export const getDepartmentList_api = (data:any) => request.post(`/organization/_all/tree`,data);
 
-// è·å–ç”¨æˆ·ä¿¡æ¯
+// »ñÈ¡ÓÃ»§ĞÅÏ¢
 export const getUser_api = (id: string) => request.get(`/user/detail/${id}`);
-// æ·»åŠ ç”¨æˆ·
+export const getUserParks_api = (id: string) => request.get(`/user/park/${id}`);
+export const queryParkListNoPaging_api = (data: any = {
+    paging: false,
+    sorts: [{ name: 'name', order: 'asc' }]
+}) => request.post(`/park/basic/park/_query/no-paging`, data);
+// Ìí¼ÓÓÃ»§
 export const addUser_api = (data: any) => request.post(`/user/detail/_create`, data);
-// æ›´æ–°ç”¨æˆ·
+// ¸üĞÂÓÃ»§
 export const updateUser_api = (data: any) => request.put(`/user/detail/${data.id}/_update`, data);
-// æ›´æ–°å¯†ç 
+export const replaceUserParks_api = (data: { userIds: string[]; parkIds: string[] }) =>
+    request.post('/user/park/replace', data);
+export const unbindUserParks_api = (data: { userIds: string[]; parkIds: string[] }) =>
+    request.post('/user/park/unbind', data);
+// ¸üĞÂÃÜÂë
 export const updatePassword_api = (data: { id: string, password: string }) => request.post(`/user/${data.id}/password/_reset`, data.password, {
     headers: {
         'Content-Type': 'text/plain'
     }
 });
-// ä¿®æ”¹ç”¨æˆ·çŠ¶æ€
+// ĞŞ¸ÄÓÃ»§×´Ì¬
 export const changeUserStatus_api = (data: object) => request.patch(`/user`,data);
-// åˆ é™¤ç”¨æˆ·
+// É¾³ıÓÃ»§
 export const deleteUser_api = (id: string) => request.remove(`/user/${id}`);
 
-// æŸ¥è¯¢è§’è‰²ä¸åˆ†é¡µ
+// ²éÑ¯½ÇÉ«²»·ÖÒ³
 export const queryRole_api = (data: any): Promise<any> => request.post(`/role/_query/no-paging`, data)
 
 /**
- * å¯¼å…¥ç”¨æˆ·æ¨¡æ¿
- * @param format æ–‡ä»¶æ ¼å¼
+ * µ¼ÈëÓÃ»§Ä£°å
+ * @param format ÎÄ¼ş¸ñÊ½
  */
 export const importUserTemplate_api = (format: string) => request.get(`/user/detail/template.${format}`, {}, { responseType: 'blob' });
 
 /**
- * å¯¼å…¥ç”¨æˆ·
- * @param fileUrl æ–‡ä»¶åœ°å€
+ * µ¼ÈëÓÃ»§
+ * @param fileUrl ÎÄ¼şµØÖ·
  */
 export const importUser_api = (fileUrl: string) => ndJson.get(`/user/detail/_import?fileUrl=${fileUrl}`);
 
 /**
- * å¯¼å‡ºç”¨æˆ·
- * @param data æŸ¥è¯¢å‚æ•°
+ * µ¼³öÓÃ»§
+ * @param data ²éÑ¯²ÎÊı
  */
 export const exportUser_api = (format: string = 'xlsx') => request.get(`/user/detail/download.${format}/_query`, {}, { responseType: 'blob' });

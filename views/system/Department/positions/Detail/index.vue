@@ -16,6 +16,10 @@ const formRef = ref()
 const route = useRoute()
 const router = useRouter()
 const oldData = ref({})
+const isConfigContext = computed(() => route.path.startsWith('/config/system'))
+const positionDetailRouteName = computed(() =>
+  isConfigContext.value ? 'smart-park-config/system/department/positions/detail' : 'system/Department/positions/Detail',
+)
 const { loading, run } = useRequest(save, {
   onSuccess: (resp) => {
     onlyMessage($t('Detail.index.707691-33'))
@@ -23,7 +27,7 @@ const { loading, run } = useRequest(save, {
       window.onTabSaveSuccess(resp.result.id);
       setTimeout(() => window.close(), 300);
     } else {
-      router.replace({ name: 'system/Department/positions/Detail', params: { id: resp.result.id }, query: { ...route.query } })
+      router.replace({ name: positionDetailRouteName.value, params: { id: resp.result.id }, query: { ...route.query } })
     }
   },
   immediate: false
@@ -36,7 +40,7 @@ const { loading: updateLoading, run: updateRun } = useRequest(update, {
   immediate: false
 })
 
-// 改成组织树，职位展示在子节点，只能选择职位，而且在编辑的时候不能选择当前已经选择的职位的下级职位
+// �ĳ���֯����ְλչʾ���ӽڵ㣬ֻ��ѡ��ְλ�������ڱ༭��ʱ����ѡ��ǰ�Ѿ�ѡ���ְλ���¼�ְλ
 const { data: positionsList } = usePositionList(route.params.id !== ':id' ? { terms: [{
     column: 'id',
     termType: 'not',
@@ -213,7 +217,7 @@ watch(() => route.query.tab, (v) => {
               </a-row>
               <a-row :gutter="24">
                 <a-col :span="12">
-                  <a-form-item name="orgId" :label="$t('components.EditUserDialog.939453-14-1')" :rules="[{ required : true, message: '请选择组织'}]">
+                  <a-form-item name="orgId" :label="$t('components.EditUserDialog.939453-14-1')" :rules="[{ required : true, message: '��ѡ����֯'}]">
                     <form-item-org v-model:value="formModel.orgId" :extraProps="{ multiple: false, disabled: true }" />
                   </a-form-item>
                 </a-col>

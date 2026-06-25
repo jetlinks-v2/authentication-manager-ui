@@ -161,7 +161,7 @@ const props = defineProps<{
 }>();
 
 const route = useRoute()
-// å¼¹çª—ç›¸å…³
+// µ¯´°Ïà¹Ø
 const loading = ref(false);
 const positionsMap = new Map()
 
@@ -198,7 +198,7 @@ const confirm = () => {
 };
 
 const handleData = (data: string[], newData: string[], key: string) => {
-    // åˆ é™¤åŽŸæœ¬çš„æ•°æ®ï¼Œç„¶åŽåŠ å…¥æ–°çš„æ•°æ®
+    // É¾³ýÔ­±¾µÄÊý¾Ý£¬È»ºó¼ÓÈëÐÂµÄÊý¾Ý
     const _dataSet = new Set(data || []);
     (disabledData[key] || []).map((i: string) => {
         if (_dataSet.has(i) && i !== props.orgId) {
@@ -311,14 +311,47 @@ const getUserInfo = () => {
 const submit = (): Promise<any> => {
     let api: axiosFunType;
     let params = {};
-    const { positions, ...extraFormData } = form.data
-    params = {
-        user: extraFormData,
-        orgIdList: form.data.orgIdList,
-        roleIdList: form.data.roleIdList,
-        positions: positions,
+    const {
+        positions,
+        password,
+        confirmPassword,
+        roleIdList,
+        orgIdList,
+        ...extraFormData
+    } = form.data
+
+    if (props.type === 'add') {
+        api = addUser_api;
+        params = {
+            user: {
+                ...extraFormData,
+                password,
+                confirmPassword,
+            },
+            orgIdList,
+            roleIdList,
+            positions,
+        };
+    } else if (props.type === 'edit') {
+        api = updateUser_api;
+        params = {
+            id: form.data.id,
+            user: extraFormData,
+            orgIdList,
+            roleIdList,
+            positions,
+        };
+    } else if (props.type === 'reset') {
+        api = updatePassword_api;
+        params = {
+            id: form.data.id,
+            password: form.data.password,
+        };
+    } else {
+        return Promise.reject();
     }
-    return addUser_api(params);
+
+    return api(params);
 }
 
 const IsShow = (...typeList: modalType[]) => typeList.includes(props.type)
@@ -329,7 +362,7 @@ const checkCh = async (_rule: Rule, value: string) => {
 }
 
 
-// ç»„ç»‡å·²åˆ é™¤åœ¨ä»æ˜¾ç¤ºåœ¨åˆ—è¡¨ä¸­
+// ×éÖ¯ÒÑÉ¾³ýÔÚÈÔÏÔÊ¾ÔÚÁÐ±íÖÐ
 // const _departmentOptions = computed(() => {
 //     return uniqBy([...form.departmentOptions, ...form._departmentOptions], 'id')
 // })

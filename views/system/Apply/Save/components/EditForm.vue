@@ -89,7 +89,7 @@
                             </span>
                         </span>
           </template>
-          <!-- é¡µé¢é›†æˆ -->
+          <!-- Ò³Ãæ¼¯³É -->
           <template v-if="item === 'page'">
             <a-form-item
                 :name="['page', 'baseUrl']"
@@ -155,7 +155,7 @@
               />
             </a-form-item>
           </template>
-          <!-- APIå®¢æˆ·ç«¯ -->
+          <!-- API¿Í»§¶Ë -->
           <template v-if="item === 'apiClient'">
             <a-form-item
                 class="resetLabel"
@@ -625,7 +625,7 @@
               </a-form-item>
             </div>
           </template>
-          <!-- APIæœåŠ¡ -->
+          <!-- API·şÎñ -->
           <template v-if="item === 'apiServer'">
             <a-form-item
                 class="resetLabel"
@@ -807,9 +807,9 @@
               </a-form-item>
             </div>
           </template>
-          <!-- å•ç‚¹ç™»å½• -->
+          <!-- µ¥µãµÇÂ¼ -->
           <template v-if="item === 'ssoClient'">
-            <!-- ç¬¬ä¸‰æ–¹åº”ç”¨ -->
+            <!-- µÚÈı·½Ó¦ÓÃ -->
             <div v-if="form.data.provider === 'third-party'">
               <a-form-item
                   :label="$t('components.EditForm.949962-30')"
@@ -977,7 +977,7 @@
               />
             </a-form-item>
 
-            <!-- ç¬¬ä¸‰æ–¹åº”ç”¨ -->
+            <!-- µÚÈı·½Ó¦ÓÃ -->
             <div v-if="form.data.provider === 'third-party' && form.data.sso.configuration.type">
               <template v-if="form.data.sso.configuration.type === 'oauth2'">
                 <a-form-item
@@ -1176,7 +1176,7 @@
                 />
               </a-form-item>
             </div>
-            <!-- éç¬¬ä¸‰æ–¹åº”ç”¨ -->
+            <!-- ·ÇµÚÈı·½Ó¦ÓÃ -->
             <div
                 v-else-if="
                                 !form.data.integrationModes.includes(
@@ -1203,7 +1203,7 @@
                     :placeholder="$t('components.EditForm.949962-25')"
                 />
               </a-form-item>
-              <!-- éé’‰é’‰ -->
+              <!-- ·Ç¶¤¶¤ -->
               <a-form-item
                   v-if="form.data.provider !== 'dingtalk-ent-app'"
                   class="resetLabel"
@@ -1233,7 +1233,7 @@
                     :placeholder="$t('components.EditForm.949962-26')"
                 />
               </a-form-item>
-              <!-- éå¾®ä¿¡ -->
+              <!-- ·ÇÎ¢ĞÅ -->
               <a-form-item
                   v-if="
                                     form.data.provider !== 'wechat-webapp' &&
@@ -1268,7 +1268,7 @@
                 />
               </a-form-item>
 
-              <!-- é’‰é’‰ + å¾®ä¿¡ -->
+              <!-- ¶¤¶¤ + Î¢ĞÅ -->
               <a-form-item
                   v-if="['wechat-miniapp', 'wechat-webapp', 'wechat-official-account', 'dingtalk-ent-app'].includes(form.data?.provider)"
                   class="resetLabel"
@@ -1298,7 +1298,7 @@
                     :placeholder="$t('components.EditForm.949962-74')"
                 />
               </a-form-item>
-              <!-- å¾®ä¿¡å…¬ä¼—å·æˆæƒ scope -->
+              <!-- Î¢ĞÅ¹«ÖÚºÅÊÚÈ¨ scope -->
               <a-form-item
                   v-if="form.data.provider === 'wechat-official-account'"
                   class="resetLabel"
@@ -1307,7 +1307,7 @@
                 <template #label>
                   <FormLabel
                       text="scope"
-                      :tooltip="'å¾®ä¿¡å…¬ä¼—å·ç½‘é¡µæˆæƒ scopeï¼Œå¦‚ snsapi_userinfoï¼ˆè·å–ç”¨æˆ·ä¿¡æ¯ï¼‰æˆ– snsapi_baseï¼ˆä»…è·å– openidï¼‰ï¼Œé»˜è®¤ snsapi_userinfo'"
+                      :tooltip="'Î¢ĞÅ¹«ÖÚºÅÍøÒ³ÊÚÈ¨ scope£¬Èç snsapi_userinfo£¨»ñÈ¡ÓÃ»§ĞÅÏ¢£©»ò snsapi_base£¨½ö»ñÈ¡ openid£©£¬Ä¬ÈÏ snsapi_userinfo'"
                   />
                 </template>
                 <a-select
@@ -1319,7 +1319,7 @@
                   <a-select-option value="snsapi_base">snsapi_base</a-select-option>
                 </a-select>
               </a-form-item>
-              <!-- å¾®ä¿¡å…¬ä¼—å·ï¼šæ‰«ç å…³æ³¨ç™»å½• -->
+              <!-- Î¢ĞÅ¹«ÖÚºÅ£ºÉ¨Âë¹Ø×¢µÇÂ¼ -->
               <a-form-item
                   v-if="form.data.provider === 'wechat-official-account'"
                   class="resetLabel"
@@ -1333,7 +1333,7 @@
                 </template>
                 <a-switch v-model:checked="form.data.sso.configuration.followRequire" />
               </a-form-item>
-              <!-- å¾®ä¿¡å…¬ä¼—å·ï¼šæœåŠ¡å™¨é…ç½® Token -->
+              <!-- Î¢ĞÅ¹«ÖÚºÅ£º·şÎñÆ÷ÅäÖÃ Token -->
               <a-form-item
                   v-if="form.data.provider === 'wechat-official-account'"
                   class="resetLabel"
@@ -1347,7 +1347,7 @@
                     />
                     <template v-if="form.data.id">
                       <span class="wechat-event-url-inline">
-                        äº‹ä»¶è®¢é˜…åœ°å€ï¼š<code>{{ wechatEventUrl }}</code>
+                        ÊÂ¼ş¶©ÔÄµØÖ·£º<code>{{ wechatEventUrl }}</code>
                       </span>
                       <a-button
                         type="link"
@@ -1355,7 +1355,7 @@
                         class="wechat-event-copy"
                         @click.stop="copyWechatEventUrl"
                       >
-                        å¤åˆ¶
+                        ¸´ÖÆ
                       </a-button>
                     </template>
                   </div>
@@ -1365,7 +1365,7 @@
                     :placeholder="$t('components.EditForm.wechatOfficial.token')"
                 />
               </a-form-item>
-              <!-- å¾®ä¿¡å…¬ä¼—å·ï¼šEncodingAESKey -->
+              <!-- Î¢ĞÅ¹«ÖÚºÅ£ºEncodingAESKey -->
               <a-form-item
                   v-if="form.data.provider === 'wechat-official-account'"
                   class="resetLabel"
@@ -1426,7 +1426,7 @@
                                     },
                                     // {
                                     //     min: 8,
-                                    //     message: 'æœ€å°‘è¾“å…¥8ä¸ªå­—ç¬¦',
+                                    //     message: '×îÉÙÊäÈë8¸ö×Ö·û',
                                     // },
                                     // {
                                     //     max: 64,
@@ -1535,7 +1535,7 @@
           v-model:visible="dialog.visible"
           :data="dialog.current"
           :mode="routeQuery.id ? 'edit' : 'add'"
-          @refresh="menuStory.jumpPage('system/Apply', {})"
+          @refresh="navigateAfterSave"
       />
       <ThirdMenu
           v-if="dialog.visible && dialog.current.provider === 'third-party'"
@@ -1543,7 +1543,7 @@
           :mode="routeQuery.id ? 'edit' : 'add'"
           mode="add"
           @cancel="dialog.visible = false"
-          @ok="menuStory.jumpPage('system/Apply', {})"
+          @ok="navigateAfterSave"
       />
     </div>
   </div>
@@ -1593,6 +1593,7 @@ const defaultImg = {
 
 const routeQuery = useRoute().query;
 const menuStory = useMenuStore();
+const returnMenuCode = computed(() => String(routeQuery.returnTo || 'system/Apply'));
 
 const deptPermission = 'system/Department';
 const rolePermission = 'system/Role';
@@ -1602,7 +1603,11 @@ const typeOptions = ref<any[]>([]);
 const loading = ref<boolean>(false);
 const { onOpen } = useTabSaveSuccess('system/Role')
 
-// åˆå§‹åŒ–è¡¨å•
+const navigateAfterSave = () => {
+  menuStory.routerPush(returnMenuCode.value, {});
+};
+
+// ³õÊ¼»¯±íµ¥
 const initForm: formType = {
   name: '',
   provider: 'internal-standalone',
@@ -1610,72 +1615,72 @@ const initForm: formType = {
   integrationModes: [],
   description: '',
   page: {
-    // é¡µé¢é›†æˆ
+    // Ò³Ãæ¼¯³É
     baseUrl: '',
     routeType: 'hash',
     parameters: [],
     configuration: {},
   },
   apiClient: {
-    // APIå®¢æˆ·ç«¯
+    // API¿Í»§¶Ë
     baseUrl: '',
-    headers: [], // è¯·æ±‚å¤´
-    parameters: [], // è¯·æ±‚å‚æ•°
+    headers: [], // ÇëÇóÍ·
+    parameters: [], // ÇëÇó²ÎÊı
     authConfig: {
-      // APIå®¢æˆ·ç«¯
-      type: 'oauth2', // ç±»å‹, å¯é€‰å€¼ï¼šnone, bearer, oauth2, basic, other
-      bearer: {token: ''}, // æˆæƒä¿¡æ¯
-      basic: {username: '', password: ''}, // åŸºæœ¬ä¿¡æ¯
+      // API¿Í»§¶Ë
+      type: 'oauth2', // ÀàĞÍ, ¿ÉÑ¡Öµ£ºnone, bearer, oauth2, basic, other
+      bearer: {token: ''}, // ÊÚÈ¨ĞÅÏ¢
+      basic: {username: '', password: ''}, // »ù±¾ĞÅÏ¢
       // token: '',
       oauth2: {
-        // OAuth2ä¿¡æ¯
-        authorizationUrl: '', // æˆæƒåœ°å€
-        tokenUrl: '', // tokenåœ°å€
-        redirectUri: '', // é‡å®šå‘åœ°å€
-        clientId: '', // å®¢æˆ·ç«¯ID
-        clientSecret: '', // å®¢æˆ·ç«¯å¯†é’¥
-        grantType: '', // ç±»å‹
-        accessTokenProperty: '', // tokenå±æ€§å
-        tokenRequestType: undefined, // tokenè¯·æ±‚æ–¹å¼, å¯é€‰å€¼ï¼šPOST_URIï¼ŒPOST_BODY
+        // OAuth2ĞÅÏ¢
+        authorizationUrl: '', // ÊÚÈ¨µØÖ·
+        tokenUrl: '', // tokenµØÖ·
+        redirectUri: '', // ÖØ¶¨ÏòµØÖ·
+        clientId: '', // ¿Í»§¶ËID
+        clientSecret: '', // ¿Í»§¶ËÃÜÔ¿
+        grantType: '', // ÀàĞÍ
+        accessTokenProperty: '', // tokenÊôĞÔÃû
+        tokenRequestType: undefined, // tokenÇëÇó·½Ê½, ¿ÉÑ¡Öµ£ºPOST_URI£¬POST_BODY
       },
     },
   },
   apiServer: {
-    // APIæœåŠ¡
+    // API·şÎñ
     appId: randomString(16),
-    secureKey: randomString(), // å¯†é’¥
-    redirectUri: '', // é‡å®šå‘URL
-    roleIdList: [], // è§’è‰²åˆ—è¡¨
-    orgIdList: [], // éƒ¨é—¨åˆ—è¡¨
-    ipWhiteList: '', // IPç™½åå•
-    enableOAuth2: false, // æ˜¯å¦å¯ç”¨OAuth2
+    secureKey: randomString(), // ÃÜÔ¿
+    redirectUri: '', // ÖØ¶¨ÏòURL
+    roleIdList: [], // ½ÇÉ«ÁĞ±í
+    orgIdList: [], // ²¿ÃÅÁĞ±í
+    ipWhiteList: '', // IP°×Ãûµ¥
+    enableOAuth2: false, // ÊÇ·ñÆôÓÃOAuth2
   },
   sso: {
-    // ç»Ÿä¸€å•ç‚¹ç™»é™†é›†æˆ
+    // Í³Ò»µ¥µãµÇÂ½¼¯³É
     configuration: {
-      // é…ç½®
+      // ÅäÖÃ
       oauth2: {
-        // Oauth2å•ç‚¹ç™»å½•é…ç½®
-        authorizationUrl: '', // æˆæƒåœ°å€
-        redirectUri: '', // é‡å®šå‘åœ°å€
-        clientId: '', // å®¢æˆ·ç«¯ID
-        clientSecret: '', // å®¢æˆ·ç«¯å¯†é’¥
-        userInfoUrl: '', // ç”¨æˆ·ä¿¡æ¯æ¥å£
+        // Oauth2µ¥µãµÇÂ¼ÅäÖÃ
+        authorizationUrl: '', // ÊÚÈ¨µØÖ·
+        redirectUri: '', // ÖØ¶¨ÏòµØÖ·
+        clientId: '', // ¿Í»§¶ËID
+        clientSecret: '', // ¿Í»§¶ËÃÜÔ¿
+        userInfoUrl: '', // ÓÃ»§ĞÅÏ¢½Ó¿Ú
         scope: '', // scope
         userProperty: {
-          // ç”¨æˆ·å±æ€§å­—æ®µä¿¡æ¯
-          userId: '', // ç”¨æˆ·ID
-          username: '', // ç”¨æˆ·å
-          name: '', // åç§°
-          avatar: '', // å¤´åƒ
-          email: '', // é‚®ç®±
-          telephone: '', // ç”µè¯
-          description: '', // è¯´æ˜
+          // ÓÃ»§ÊôĞÔ×Ö¶ÎĞÅÏ¢
+          userId: '', // ÓÃ»§ID
+          username: '', // ÓÃ»§Ãû
+          name: '', // Ãû³Æ
+          avatar: '', // Í·Ïñ
+          email: '', // ÓÊÏä
+          telephone: '', // µç»°
+          description: '', // ËµÃ÷
         },
-        grantType: '', // ç±»å‹
-        tokenUrl: '', // tokenåœ°å€
-        accessTokenProperty: '', // tokenå±æ€§å
-        tokenRequestType: '', // tokenè¯·æ±‚æ–¹å¼
+        grantType: '', // ÀàĞÍ
+        tokenUrl: '', // tokenµØÖ·
+        accessTokenProperty: '', // tokenÊôĞÔÃû
+        tokenRequestType: '', // tokenÇëÇó·½Ê½
       },
       // bearer: {
       //   loginUrl: undefined,
@@ -1687,28 +1692,28 @@ const initForm: formType = {
       //     name: undefined
       //   }
       // },
-      appId: '', // å¾®ä¿¡å•ç‚¹ç™»å½•é…ç½®
-      appKey: '', // é’‰é’‰å•ç‚¹ç™»å½•é…ç½®
-      appSecret: '', // é’‰é’‰ã€å¾®ä¿¡å•ç‚¹ç™»å½•é…ç½®
-      scope: '', // å¾®ä¿¡å…¬ä¼—å·æˆæƒ scope
-      followRequire: false, // å¾®ä¿¡å…¬ä¼—å·ï¼šæ‰«ç å…³æ³¨ç™»å½•
-      token: '', // å¾®ä¿¡å…¬ä¼—å·æœåŠ¡å™¨é…ç½® Token
-      aesKey: '', // å¾®ä¿¡å…¬ä¼—å· EncodingAESKey
+      appId: '', // Î¢ĞÅµ¥µãµÇÂ¼ÅäÖÃ
+      appKey: '', // ¶¤¶¤µ¥µãµÇÂ¼ÅäÖÃ
+      appSecret: '', // ¶¤¶¤¡¢Î¢ĞÅµ¥µãµÇÂ¼ÅäÖÃ
+      scope: '', // Î¢ĞÅ¹«ÖÚºÅÊÚÈ¨ scope
+      followRequire: false, // Î¢ĞÅ¹«ÖÚºÅ£ºÉ¨Âë¹Ø×¢µÇÂ¼
+      token: '', // Î¢ĞÅ¹«ÖÚºÅ·şÎñÆ÷ÅäÖÃ Token
+      aesKey: '', // Î¢ĞÅ¹«ÖÚºÅ EncodingAESKey
     },
     type: undefined,
-    autoCreateUser: false, // æ˜¯å¦è‡ªåŠ¨åˆ›å»ºå¹³å°ç”¨æˆ·
-    usernamePrefix: '', // ç”¨æˆ·IDå‰ç¼€
-    roleIdList: [], // è‡ªåŠ¨åˆ›å»ºå¹³å°ç”¨æˆ·æ—¶è§’è‰²åˆ—è¡¨
-    orgIdList: [], // è‡ªåŠ¨åˆ›å»ºå¹³å°ç”¨æˆ·æ—¶éƒ¨é—¨åˆ—è¡¨
-    defaultPasswd: '', // é»˜è®¤å¯†ç 
+    autoCreateUser: false, // ÊÇ·ñ×Ô¶¯´´½¨Æ½Ì¨ÓÃ»§
+    usernamePrefix: '', // ÓÃ»§IDÇ°×º
+    roleIdList: [], // ×Ô¶¯´´½¨Æ½Ì¨ÓÃ»§Ê±½ÇÉ«ÁĞ±í
+    orgIdList: [], // ×Ô¶¯´´½¨Æ½Ì¨ÓÃ»§Ê±²¿ÃÅÁĞ±í
+    defaultPasswd: '', // Ä¬ÈÏÃÜÂë
   },
 };
 const formRef = ref<any>();
 const form = reactive({
   data: {...initForm},
-  // integrationModesISO: [] as string[], // æ¥å…¥æ–¹å¼é•œåƒ  æŠ˜å é¢æ¿ä½¿ç”¨
-  roleIdList: [] as optionsType, // è§’è‰²åˆ—è¡¨
-  orgIdList: [] as dictType, // ç»„ç»‡åˆ—è¡¨
+  // integrationModesISO: [] as string[], // ½ÓÈë·½Ê½¾µÏñ  ÕÛµşÃæ°åÊ¹ÓÃ
+  roleIdList: [] as optionsType, // ½ÇÉ«ÁĞ±í
+  orgIdList: [] as dictType, // ×éÖ¯ÁĞ±í
 
   errorNumInfo: {
     page: new Set(),
@@ -1720,6 +1725,8 @@ const form = reactive({
   fileList: [] as any[],
   uploadLoading: false,
 });
+
+form.data.configurations = form.data.configurations || {};
 const wechatEventUrl = computed(() => {
   if (!form.data.id) return '';
   const origin = window.location.origin || '';
@@ -1732,7 +1739,7 @@ const copyWechatEventUrl = () => {
   if (!url) return;
   if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(url).then(() => {
-      onlyMessage('äº‹ä»¶è®¢é˜…åœ°å€å·²å¤åˆ¶');
+      onlyMessage('ÊÂ¼ş¶©ÔÄµØÖ·ÒÑ¸´ÖÆ');
     });
   }
 };
@@ -1744,7 +1751,7 @@ const checkCh = (_rule: Rule, value: string): Promise<any> =>
       else return resolve('')
     })
 
-// è¯·æ±‚å¤´å’Œå‚æ•°å¿…å¡«éªŒ
+// ÇëÇóÍ·ºÍ²ÎÊı±ØÌîÑé
 const headerValid = ref(true);
 const paramsValid = ref(true);
 const headerValidator = () => {
@@ -1779,6 +1786,12 @@ onMounted(async () => {
   getRoleIdList();
   getOrgIdList();
   queryThirdPartyType()
+  if (routeQuery.appGroup) {
+    form.data.configurations = {
+      ...(form.data.configurations || {}),
+      smartParkAppGroup: String(routeQuery.appGroup),
+    };
+  }
   if (routeQuery.id) {
     getInfo(routeQuery.id as string);
   }
@@ -1804,7 +1817,7 @@ const checkPassword = (_rule: Rule, value: string) => {
   })
 }
 
-// æ¥å…¥æ–¹å¼çš„é€‰é¡¹
+// ½ÓÈë·½Ê½µÄÑ¡Ïî
 const joinOptions = computed(() => {
   return (
       typeOptions.value.find((item) => form.data?.provider === item.value)
@@ -1821,7 +1834,7 @@ watch(
     () => form.data.provider,
     (n) => {
       if (!form.data.id) {
-        // æ–°å¢æ—¶, åˆ‡æ¢åº”ç”¨ç±»å‹, æ¸…ç©ºå…¬ç”¨å­—æ®µçš„å€¼
+        // ĞÂÔöÊ±, ÇĞ»»Ó¦ÓÃÀàĞÍ, Çå¿Õ¹«ÓÃ×Ö¶ÎµÄÖµ
         form.data.page.baseUrl = '';
         form.data.apiClient.baseUrl = '';
         form.data.page.parameters = [];
@@ -1870,7 +1883,7 @@ watch(
 
 function getInfo(id: string) {
   getAppInfo_api(id).then((resp: any) => {
-    // åç«¯è¿”å›çš„headerså’Œparametersä¸­, keyè½¬ä¸ºlabel
+    // ºó¶Ë·µ»ØµÄheadersºÍparametersÖĞ, key×ªÎªlabel
     if (resp.result.apiClient) {
       resp.result.apiClient.headers = resp.result.apiClient.headers?.map(
           (m: any) => ({
@@ -1893,12 +1906,16 @@ function getInfo(id: string) {
       );
     }
     form.data = {
-      ...initForm, // æŸ¥è¯¢è¯¦æƒ…, èµ‹å€¼åˆå§‹å­—æ®µ. è§£å†³ç¼–è¾‘æ”¹å˜æ¥å…¥æ–¹å¼æŠ¥é”™çš„é—®é¢˜: bug#10892
+      ...initForm, // ²éÑ¯ÏêÇé, ¸³Öµ³õÊ¼×Ö¶Î. ½â¾ö±à¼­¸Ä±ä½ÓÈë·½Ê½±¨´íµÄÎÊÌâ: bug#10892
       ...resp.result,
       integrationModes: resp.result.integrationModes?.map(
           (item: any) => item.value,
       ),
     } as formType;
+    form.data.configurations = {
+      ...(form.data.configurations || {}),
+      ...(routeQuery.appGroup ? { smartParkAppGroup: String(routeQuery.appGroup) } : {}),
+    };
     form.data.apiServer && (form.data.apiServer.appId = id);
 
     if (routeQuery.id) {
@@ -1909,7 +1926,7 @@ function getInfo(id: string) {
   });
 }
 
-// è·å–è§’è‰²åˆ—è¡¨
+// »ñÈ¡½ÇÉ«ÁĞ±í
 function getRoleIdList() {
   getRoleList_api().then((resp) => {
     if (resp.status === 200) {
@@ -1922,7 +1939,7 @@ function getRoleIdList() {
   });
 }
 
-// è·å–ç»„ç»‡åˆ—è¡¨
+// »ñÈ¡×éÖ¯ÁĞ±í
 function getOrgIdList() {
   getDepartmentList_api({paging: false}).then((resp) => {
     if (resp.status === 200) {
@@ -1935,7 +1952,7 @@ const filterOption = (input: string, option: any) => {
   return option.label.indexOf(input) >= 0;
 };
 
-// æ·»åŠ è§’è‰²/ç»„ç»‡
+// Ìí¼Ó½ÇÉ«/×éÖ¯
 function clickAddItem(data: string[], target: string) {
   onOpen({ save: true},{
     menuCode: `system/${target}`
@@ -1949,11 +1966,18 @@ function clickAddItem(data: string[], target: string) {
   })
 }
 
-// ä¿å­˜
+// ±£´æ
 function clickSave() {
   formRef.value?.validate().then(() => {
     const params = cloneDeep(form.data);
-    // åˆ é™¤å¤šä½™çš„å‚æ•°
+    const appGroup = String(routeQuery.appGroup || params.configurations?.smartParkAppGroup || '');
+    if (appGroup) {
+      params.configurations = {
+        ...(params.configurations || {}),
+        smartParkAppGroup: appGroup,
+      };
+    }
+    // É¾³ı¶àÓàµÄ²ÎÊı
     const list = ['page', 'apiClient', 'apiServer', 'ssoClient'];
     difference(list, params.integrationModes).forEach((item) => {
       if (item === 'ssoClient') {
@@ -1972,7 +1996,7 @@ function clickSave() {
     }
 
     if (params.provider === 'internal-standalone') {
-      // åªé€‰æ‹©äº†APIæœåŠ¡å’Œå•ç‚¹ç™»å½• æˆ–è€…åªé€‰æ‹©äº†å•ç‚¹ç™»å½•
+      // Ö»Ñ¡ÔñÁËAPI·şÎñºÍµ¥µãµÇÂ¼ »òÕßÖ»Ñ¡ÔñÁËµ¥µãµÇÂ¼
       if (
           (params.integrationModes.includes('ssoClient') &&
               params.integrationModes.length === 1) ||
@@ -1984,7 +2008,7 @@ function clickSave() {
       }
     }
 
-    //ç‹¬ç«‹åº”ç”¨-apiå®¢æˆ·ç«¯ id?clientId:appId
+    //¶ÀÁ¢Ó¦ÓÃ-api¿Í»§¶Ë id?clientId:appId
     if (['internal-standalone', 'third-party'].includes(params.provider)) {
       if (params.integrationModes.includes('apiClient')) {
         params.id = params.apiClient.authConfig.oauth2.clientId;
@@ -1997,7 +2021,7 @@ function clickSave() {
       }
     }
 
-    // headerså’Œparamså‚æ•°labeléœ€æ”¹ä¸ºkeyä¼ ç»™åç«¯
+    // headersºÍparams²ÎÊılabelĞè¸ÄÎªkey´«¸øºó¶Ë
     if (params.integrationModes.includes('apiClient')) {
       params.apiClient.headers = params.apiClient.headers?.map(
           (m: any) => ({
@@ -2034,7 +2058,7 @@ function clickSave() {
               dialog.visible = true;
             } else {
               onlyMessage($t('components.EditForm.949962-91'));
-              menuStory.jumpPage('system/Apply', {});
+              navigateAfterSave();
             }
           }
         })
@@ -2054,7 +2078,7 @@ function getErrorNum(
   if (props.includes(prop + '')) {
     const key = name.slice(1).join();
     const set = form.errorNumInfo[prop] as Set<string>;
-    // å¦‚æœæ­¤é¡¹æ ¡éªŒæˆåŠŸä¸”åœ¨å¤±è´¥åˆ—è¡¨ä¸­ï¼Œåˆ™ä»æ­¤åˆ—è¡¨ä¸­ç§»é™¤ï¼Œåä¹‹åˆ™åŠ ä¸Š
+    // Èç¹û´ËÏîĞ£Ñé³É¹¦ÇÒÔÚÊ§°ÜÁĞ±íÖĞ£¬Ôò´Ó´ËÁĞ±íÖĞÒÆ³ı£¬·´Ö®Ôò¼ÓÉÏ
     if (status) {
       if (set.has(key)) set.delete(key);
     } else if (!set.has(key)) set.add(key);
@@ -2073,7 +2097,7 @@ function clearNullProp(obj: object) {
 }
 
 /**
- * éªŒè¯IPåˆæ³•æ€§
+ * ÑéÖ¤IPºÏ·¨ĞÔ
  * @param _rule
  * @param value
  */
@@ -2096,7 +2120,7 @@ const validateIP = (_rule: Rule, value: string) => {
 };
 
 /**
- * æ ¡éªŒæ¥å…¥åœ°å€
+ * Ğ£Ñé½ÓÈëµØÖ·
  */
 const validateBaseUrl = (_rule: Rule, value: string) => {
   if (value) {
@@ -2112,27 +2136,27 @@ const validateBaseUrl = (_rule: Rule, value: string) => {
 const onSsoTypeChange = (val) => {
   if (val === 'oauth2') {
     form.data.sso.configuration.oauth2 = {
-      // Oauth2å•ç‚¹ç™»å½•é…ç½®
-      authorizationUrl: '', // æˆæƒåœ°å€
-      redirectUri: '', // é‡å®šå‘åœ°å€
-      clientId: '', // å®¢æˆ·ç«¯ID
-      clientSecret: '', // å®¢æˆ·ç«¯å¯†é’¥
-      userInfoUrl: '', // ç”¨æˆ·ä¿¡æ¯æ¥å£
+      // Oauth2µ¥µãµÇÂ¼ÅäÖÃ
+      authorizationUrl: '', // ÊÚÈ¨µØÖ·
+      redirectUri: '', // ÖØ¶¨ÏòµØÖ·
+      clientId: '', // ¿Í»§¶ËID
+      clientSecret: '', // ¿Í»§¶ËÃÜÔ¿
+      userInfoUrl: '', // ÓÃ»§ĞÅÏ¢½Ó¿Ú
       scope: '', // scope
       userProperty: {
-        // ç”¨æˆ·å±æ€§å­—æ®µä¿¡æ¯
-        userId: '', // ç”¨æˆ·ID
-        username: '', // ç”¨æˆ·å
-        name: '', // åç§°
-        avatar: '', // å¤´åƒ
-        email: '', // é‚®ç®±
-        telephone: '', // ç”µè¯
-        description: '', // è¯´æ˜
+        // ÓÃ»§ÊôĞÔ×Ö¶ÎĞÅÏ¢
+        userId: '', // ÓÃ»§ID
+        username: '', // ÓÃ»§Ãû
+        name: '', // Ãû³Æ
+        avatar: '', // Í·Ïñ
+        email: '', // ÓÊÏä
+        telephone: '', // µç»°
+        description: '', // ËµÃ÷
       },
-      grantType: '', // ç±»å‹
-      tokenUrl: '', // tokenåœ°å€
-      accessTokenProperty: '', // tokenå±æ€§å
-      tokenRequestType: '', // tokenè¯·æ±‚æ–¹å¼
+      grantType: '', // ÀàĞÍ
+      tokenUrl: '', // tokenµØÖ·
+      accessTokenProperty: '', // tokenÊôĞÔÃû
+      tokenRequestType: '', // tokenÇëÇó·½Ê½
     }
     form.data.sso.configuration.bearer = undefined
   }

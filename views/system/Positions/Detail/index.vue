@@ -12,6 +12,10 @@ const activeKey = ref('basic')
 const formRef = ref()
 const route = useRoute()
 const router = useRouter()
+const isConfigContext = computed(() => route.path.startsWith('/config/system'))
+const positionDetailRouteName = computed(() =>
+  isConfigContext.value ? 'smart-park-config/system/position/detail' : 'system/Positions/Detail',
+)
 const { loading, run } = useRequest(save, {
   onSuccess: (resp) => {
     onlyMessage($t('Detail.index.707691-33'))
@@ -20,7 +24,7 @@ const { loading, run } = useRequest(save, {
       window.onTabSaveSuccess(sourceId, resp.result.id);
       setTimeout(() => window.close(), 300);
     } else {
-      router.replace({ name: 'system/Positions/Detail', params: { id: resp.result.id } })
+      router.replace({ name: positionDetailRouteName.value, params: { id: resp.result.id } })
     }
   },
   immediate: false
@@ -106,11 +110,11 @@ watch(() => route.params.id, (v) => {
             <a-form ref="formRef" :model="formModel" layout="vertical">
               <a-row :gutter="24">
                 <!-- <a-col :span="12">
-                  <a-form-item label="ç¼–å·" name="" :rules="[
-                    { required: true, message: 'è¯·è¾“å…¥ç¼–å·' },
+                  <a-form-item label="±àºÅ" name="" :rules="[
+                    { required: true, message: 'ÇëÊäÈë±àºÅ' },
                     { max: 64, message: $t('components.EditUserDialog.939453-5') }
                   ]">
-                    <a-input placeholder="è¯·è¾“å…¥ç¼–å·"></a-input>
+                    <a-input placeholder="ÇëÊäÈë±àºÅ"></a-input>
                   </a-form-item>
                 </a-col> -->
                 <a-col :span="12">
@@ -131,7 +135,7 @@ watch(() => route.params.id, (v) => {
               </a-row>
               <a-row :gutter="24">
                 <a-col :span="12">
-                  <a-form-item name="orgId" :label="$t('components.EditUserDialog.939453-14-1')" :rules="[{ required : true, message: 'è¯·é€‰æ‹©ç»„ç»‡'}]">
+                  <a-form-item name="orgId" :label="$t('components.EditUserDialog.939453-14-1')" :rules="[{ required : true, message: 'ÇëÑ¡Ôñ×éÖ¯'}]">
                     <form-item-org v-model:value="formModel.orgId" :extraProps="{ multiple: false, disabled: formModel.id }" />
                   </a-form-item>
                 </a-col>

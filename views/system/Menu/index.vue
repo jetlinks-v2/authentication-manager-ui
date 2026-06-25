@@ -30,7 +30,7 @@
             <a-button
               v-if="admin"
               style="margin-left: 12px"
-              @click="router.push('/system/Menu/Setting')"
+              @click="router.push(menuSettingRoutePath)"
             >{{ $t('Menu.index.599742-17') }}</a-button
             >
           </template>
@@ -99,6 +99,7 @@ const permission = 'system/Menu'
 
 const menuStore = useMenuStore()
 const router = useRouter();
+const route = useRoute();
 
 const userInfoStore = useUserStore();
 const { userInfo } = storeToRefs(userInfoStore);
@@ -106,6 +107,16 @@ const { userInfo } = storeToRefs(userInfoStore);
 const admin = computed(() => {
   return userInfo.value?.username === 'admin';
 });
+
+const isConfigContext = computed(() => route.path.startsWith('/config/system'))
+
+const menuSettingRoutePath = computed(() =>
+  isConfigContext.value ? '/config/system/menu/setting' : '/system/Menu/Setting',
+)
+
+const menuDetailRouteName = computed(() =>
+  isConfigContext.value ? 'smart-park-config/system/menu/detail' : 'system/Menu/Detail',
+)
 
 const columns = [
   {
@@ -197,7 +208,7 @@ const defaultParams = {
   type:'and'
 }
 const expandedRowKeys = ref<string[]>([])
-const tableRef = ref<Record<string, any>>({}) // è¡¨æ ¼å®žä¾‹
+const tableRef = ref<Record<string, any>>({}) // ±í¸ñÊµÀý
 const total = ref<number>(0)
 
 const handleSearch = (e: any) => {
@@ -208,7 +219,7 @@ const handleSearch = (e: any) => {
 }
 
 const getList = async (_params: any) => {
-  //è¿‡æ»¤éžé›†æˆçš„èœå•
+  //¹ýÂË·Ç¼¯³ÉµÄ²Ëµ¥
   const item = {
     terms: [
       {
@@ -250,7 +261,7 @@ const getList = async (_params: any) => {
     (i: any) => i.code !== 'account-center',
   );
   const lastItem = menuArr[menuArr.length - 1];
-  //ä¸ªäººä¸­å¿ƒæŽ’åºä¸º9999éœ€è¦åšè¿‡æ»¤ç‰¹æ®Šå¤„ç†
+  //¸öÈËÖÐÐÄÅÅÐòÎª9999ÐèÒª×ö¹ýÂËÌØÊâ´¦Àí
   total.value = lastItem
     ? lastItem.sortIndex + 1 === 9999
       ? 10000
@@ -269,7 +280,7 @@ const addChildren = (row: any) => {
   if (row && row.children) {
     sortIndex = row.children.filter(a => a.sortIndex !== 9999).sort((a, b) => a.sortIndex - b.sortIndex).pop().sortIndex
   }
-  menuStore.jumpPage('system/Menu/Detail', {
+  menuStore.jumpPage(menuDetailRouteName.value, {
     params: {
       id: ':id',
     },
@@ -280,9 +291,9 @@ const addChildren = (row: any) => {
     },
   })
 }
-// è·³è½¬è‡³è¯¦æƒ…é¡µ
+// Ìø×ªÖÁÏêÇéÒ³
 const toDetails = (row: any) => {
-  menuStore.jumpPage('system/Menu/Detail', {
+  menuStore.jumpPage(menuDetailRouteName.value, {
     params: {
       id: row.id || ':id',
     },
@@ -293,7 +304,7 @@ const toDetails = (row: any) => {
     },
   })
 }
-// åˆ é™¤
+// É¾³ý
 const clickDel = (row: any) => {
   delMenu(row.id).then((resp: any) => {
     if (resp.status === 200) {

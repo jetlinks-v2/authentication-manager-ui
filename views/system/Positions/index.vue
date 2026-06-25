@@ -13,10 +13,15 @@ const columns = useColumns(permission);
 const menuStore = useMenuStore()
 const tableRef = ref()
 
-const _query = useRoute().query
+const route = useRoute()
+const _query = route.query
+const isConfigContext = computed(() => route.path.startsWith('/config/system'))
+const positionDetailRouteName = computed(() =>
+  isConfigContext.value ? 'smart-park-config/system/position/detail' : 'system/Positions/Detail',
+)
 
 const onAdd = (dt = {}) => {
-  menuStore.jumpPage('system/Positions/Detail', {
+  menuStore.jumpPage(positionDetailRouteName.value, {
     params: {
       id: ':id',
     },
@@ -25,7 +30,7 @@ const onAdd = (dt = {}) => {
 }
 
 const onEdit = (record) => {
-  menuStore.jumpPage('system/Positions/Detail', {
+  menuStore.jumpPage(positionDetailRouteName.value, {
     params: {
       id: record.id,
     },

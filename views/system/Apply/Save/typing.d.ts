@@ -24,69 +24,70 @@ export type formType = {
     provider: applyType | undefined;
     logoUrl: string | undefined,
     integrationModes: string[];
+    configurations?: Record<string, any>;
     config?: string;
     description: string;
-    page: { // é¡µé¢é›†æˆ
+    page: { // Ò³Ãæ¼¯³É
         baseUrl: string,
         routeType: 'hash' | 'history',
         parameters: optionsType,
         configuration: any
     },
-    apiClient: { // APIå®¢æˆ·ç«¯
-        baseUrl: string, // æ¥å£åœ°å€
-        headers: optionsType, // è¯·æ±‚å¤´
-        parameters: optionsType, // è¯·æ±‚å‚æ•°
-        authConfig: { // è®¤è¯é…ç½®
-            type: 'none' | 'bearer' | 'oauth2' | 'basic' | 'other', // ç±»å‹, å¯é€‰å€¼ï¼šnone, bearer, oauth2, basic, other
-            bearer: { token: string }, // æˆæƒä¿¡æ¯
-            basic: { username: string, password: string }, // åŸºæœ¬ä¿¡æ¯
+    apiClient: { // API¿Í»§¶Ë
+        baseUrl: string, // ½Ó¿ÚµØÖ·
+        headers: optionsType, // ÇëÇóÍ·
+        parameters: optionsType, // ÇëÇó²ÎÊı
+        authConfig: { // ÈÏÖ¤ÅäÖÃ
+            type: 'none' | 'bearer' | 'oauth2' | 'basic' | 'other', // ÀàĞÍ, ¿ÉÑ¡Öµ£ºnone, bearer, oauth2, basic, other
+            bearer: { token: string }, // ÊÚÈ¨ĞÅÏ¢
+            basic: { username: string, password: string }, // »ù±¾ĞÅÏ¢
             token?: string,
-            oauth2: { // OAuth2ä¿¡æ¯
-                authorizationUrl: string, // æˆæƒåœ°å€
-                tokenUrl: string, // tokenåœ°å€
-                redirectUri: string, // é‡å®šå‘åœ°å€
-                clientId: string, // å®¢æˆ·ç«¯ID
-                clientSecret: string, // å®¢æˆ·ç«¯å¯†é’¥
-                grantType: 'authorization_code' | 'client_credentials' | '', // ç±»å‹
-                accessTokenProperty: string, // tokenå±æ€§å
-                tokenRequestType: 'POST_URI' | 'POST_BODY' | '' | undefined // tokenè¯·æ±‚æ–¹å¼, å¯é€‰å€¼ï¼šPOST_URIï¼ŒPOST_BODY
+            oauth2: { // OAuth2ĞÅÏ¢
+                authorizationUrl: string, // ÊÚÈ¨µØÖ·
+                tokenUrl: string, // tokenµØÖ·
+                redirectUri: string, // ÖØ¶¨ÏòµØÖ·
+                clientId: string, // ¿Í»§¶ËID
+                clientSecret: string, // ¿Í»§¶ËÃÜÔ¿
+                grantType: 'authorization_code' | 'client_credentials' | '', // ÀàĞÍ
+                accessTokenProperty: string, // tokenÊôĞÔÃû
+                tokenRequestType: 'POST_URI' | 'POST_BODY' | '' | undefined // tokenÇëÇó·½Ê½, ¿ÉÑ¡Öµ£ºPOST_URI£¬POST_BODY
             }
         }
     },
-    apiServer: { // APIæœåŠ¡
+    apiServer: { // API·şÎñ
         appId: string,
-        secureKey: string, // å¯†é’¥
-        redirectUri: string, // é‡å®šå‘URL
-        roleIdList: string[], // è§’è‰²åˆ—è¡¨
-        orgIdList: string[], // éƒ¨é—¨åˆ—è¡¨
-        ipWhiteList: string, // IPç™½åå•
-        signature?: 'MD5' | 'SHA256' | '', // ç­¾åæ–¹å¼, å¯é€‰å€¼ï¼šMD5ï¼ŒSHA256
-        enableOAuth2: boolean, // æ˜¯å¦å¯ç”¨OAuth2
+        secureKey: string, // ÃÜÔ¿
+        redirectUri: string, // ÖØ¶¨ÏòURL
+        roleIdList: string[], // ½ÇÉ«ÁĞ±í
+        orgIdList: string[], // ²¿ÃÅÁĞ±í
+        ipWhiteList: string, // IP°×Ãûµ¥
+        signature?: 'MD5' | 'SHA256' | '', // Ç©Ãû·½Ê½, ¿ÉÑ¡Öµ£ºMD5£¬SHA256
+        enableOAuth2: boolean, // ÊÇ·ñÆôÓÃOAuth2
     },
-    sso: { // ç»Ÿä¸€å•ç‚¹ç™»é™†é›†æˆ
-        configuration: { // é…ç½®
-            oauth2?: { // Oauth2å•ç‚¹ç™»å½•é…ç½®
-                type?: string, // è®¤è¯æ–¹å¼
-                authorizationUrl: string, // æˆæƒåœ°å€
-                redirectUri: string, // é‡å®šå‘åœ°å€
-                clientId: string, // å®¢æˆ·ç«¯ID
-                clientSecret: string, // å®¢æˆ·ç«¯å¯†é’¥
-                userInfoUrl: string, // ç”¨æˆ·ä¿¡æ¯æ¥å£
+    sso: { // Í³Ò»µ¥µãµÇÂ½¼¯³É
+        configuration: { // ÅäÖÃ
+            oauth2?: { // Oauth2µ¥µãµÇÂ¼ÅäÖÃ
+                type?: string, // ÈÏÖ¤·½Ê½
+                authorizationUrl: string, // ÊÚÈ¨µØÖ·
+                redirectUri: string, // ÖØ¶¨ÏòµØÖ·
+                clientId: string, // ¿Í»§¶ËID
+                clientSecret: string, // ¿Í»§¶ËÃÜÔ¿
+                userInfoUrl: string, // ÓÃ»§ĞÅÏ¢½Ó¿Ú
                 scope: string, // scope
                 logoUrl?:string, // logo
-                userProperty: { // ç”¨æˆ·å±æ€§å­—æ®µä¿¡æ¯
-                    userId: string, // ç”¨æˆ·ID
-                    username: string, // ç”¨æˆ·å
-                    name: string, // åç§°
-                    avatar: string, // å¤´åƒ
-                    email: string, // é‚®ç®±
-                    telephone: string, // ç”µè¯
-                    description: string, // è¯´æ˜
+                userProperty: { // ÓÃ»§ÊôĞÔ×Ö¶ÎĞÅÏ¢
+                    userId: string, // ÓÃ»§ID
+                    username: string, // ÓÃ»§Ãû
+                    name: string, // Ãû³Æ
+                    avatar: string, // Í·Ïñ
+                    email: string, // ÓÊÏä
+                    telephone: string, // µç»°
+                    description: string, // ËµÃ÷
                 },
-                grantType: 'authorization_code' | 'client_credentials' | '', // ç±»å‹
-                tokenUrl: string, // tokenåœ°å€
-                accessTokenProperty: string, // tokenå±æ€§å
-                tokenRequestType: 'POST_URI' | 'POST_BODY' | '', // tokenè¯·æ±‚æ–¹å¼
+                grantType: 'authorization_code' | 'client_credentials' | '', // ÀàĞÍ
+                tokenUrl: string, // tokenµØÖ·
+                accessTokenProperty: string, // tokenÊôĞÔÃû
+                tokenRequestType: 'POST_URI' | 'POST_BODY' | '', // tokenÇëÇó·½Ê½
             },
             bearer?: {
                 loginUrl: string,
@@ -98,19 +99,19 @@ export type formType = {
                     name: string
                 }
             },
-            type: string, // è®¤è¯æ–¹å¼
-            appId: string, // å¾®ä¿¡å•ç‚¹ç™»å½•é…ç½®
-            appKey: string, // é’‰é’‰å•ç‚¹ç™»å½•é…ç½®
-            appSecret: string, // é’‰é’‰ã€å¾®ä¿¡å•ç‚¹ç™»å½•é…ç½®
-            scope?: string, // å¾®ä¿¡å…¬ä¼—å·æˆæƒ scopeï¼Œå¦‚ snsapi_userinfo
-            followRequire?: boolean, // å¾®ä¿¡å…¬ä¼—å·ï¼šæ‰«ç å…³æ³¨ç™»å½•
-            token?: string, // å¾®ä¿¡å…¬ä¼—å·æœåŠ¡å™¨é…ç½® Token
-            aesKey?: string, // å¾®ä¿¡å…¬ä¼—å· EncodingAESKey
+            type: string, // ÈÏÖ¤·½Ê½
+            appId: string, // Î¢ĞÅµ¥µãµÇÂ¼ÅäÖÃ
+            appKey: string, // ¶¤¶¤µ¥µãµÇÂ¼ÅäÖÃ
+            appSecret: string, // ¶¤¶¤¡¢Î¢ĞÅµ¥µãµÇÂ¼ÅäÖÃ
+            scope?: string, // Î¢ĞÅ¹«ÖÚºÅÊÚÈ¨ scope£¬Èç snsapi_userinfo
+            followRequire?: boolean, // Î¢ĞÅ¹«ÖÚºÅ£ºÉ¨Âë¹Ø×¢µÇÂ¼
+            token?: string, // Î¢ĞÅ¹«ÖÚºÅ·şÎñÆ÷ÅäÖÃ Token
+            aesKey?: string, // Î¢ĞÅ¹«ÖÚºÅ EncodingAESKey
         },
-        autoCreateUser: boolean, // æ˜¯å¦è‡ªåŠ¨åˆ›å»ºå¹³å°ç”¨æˆ·
-        usernamePrefix: string, // ç”¨æˆ·IDå‰ç¼€
-        roleIdList: string[], // è‡ªåŠ¨åˆ›å»ºå¹³å°ç”¨æˆ·æ—¶è§’è‰²åˆ—è¡¨
-        orgIdList: string[], // è‡ªåŠ¨åˆ›å»ºå¹³å°ç”¨æˆ·æ—¶éƒ¨é—¨åˆ—è¡¨
-        defaultPasswd: string, // é»˜è®¤å¯†ç 
+        autoCreateUser: boolean, // ÊÇ·ñ×Ô¶¯´´½¨Æ½Ì¨ÓÃ»§
+        usernamePrefix: string, // ÓÃ»§IDÇ°×º
+        roleIdList: string[], // ×Ô¶¯´´½¨Æ½Ì¨ÓÃ»§Ê±½ÇÉ«ÁĞ±í
+        orgIdList: string[], // ×Ô¶¯´´½¨Æ½Ì¨ÓÃ»§Ê±²¿ÃÅÁĞ±í
+        defaultPasswd: string, // Ä¬ÈÏÃÜÂë
     }
 }

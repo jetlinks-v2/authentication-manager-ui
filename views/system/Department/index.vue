@@ -12,7 +12,7 @@
             v-model:activeKey="activeKey"
             destroyInactiveTabPane
           >
-            <a-tab-pane key="position" :tab="$t('Department.index.945805-3')">
+            <a-tab-pane v-if="!isConfigContext" key="position" :tab="$t('Department.index.945805-3')">
               <Position :parentId="departmentId" @changeTabs="onChangeTabs" />
             </a-tab-pane>
             <a-tab-pane key="user" :tab="$t('Department.index.945805-2')">
@@ -51,6 +51,8 @@ import Device from './device/index.vue'
 import Property from './property/index.vue'
 
 const activeKey = ref<"product" | "device" | "user" | "position">("position");
+const route = useRoute()
+const isConfigContext = computed(() => route.path.startsWith('/config/system'))
 
 const departmentId = ref<string>("");
 const positionId = ref<string>("");
@@ -90,6 +92,12 @@ const onChangeTabs = (id) => {
     positionId.value = undefined;
   }, 100);
 };
+
+watchEffect(() => {
+  if (isConfigContext.value && activeKey.value === 'position') {
+    activeKey.value = 'user'
+  }
+})
 
 // onMounted(() => {
 //   extraComponents.value = getModulesComponents("department");

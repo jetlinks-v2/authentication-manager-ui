@@ -10,6 +10,13 @@ import {getPositionTree} from "./data";
 const {t: $t} = useI18n();
 const menuStore = useMenuStore();
 const permission = 'system/Department'
+const route = useRoute()
+
+const isConfigContext = computed(() => route.path.startsWith('/config/system'))
+
+const positionDetailRouteName = computed(() =>
+  isConfigContext.value ? 'smart-park-config/system/department/positions/detail' : 'system/Department/positions/Detail',
+)
 
 const props = defineProps({
   parentId: {
@@ -41,7 +48,7 @@ const columns = [
     },
   },
   {
-    title: 'è§’è‰²',
+    title: '½ÇÉ«',
     dataIndex: 'roles',
     key: 'roles',
     ellipsis: true,
@@ -69,7 +76,7 @@ const columns = [
     scopedSlots: true
   },
   {
-    title: 'ä¸Šçº§èŒä½',
+    title: 'ÉÏ¼¶Ö°Î»',
     dataIndex: 'parentId',
     key: 'parentId',
     ellipsis: true,
@@ -123,17 +130,17 @@ const columns = [
   },
 ]
 
-// æœç´¢å‚æ•°
+// ËÑË÷²ÎÊý
 const queryParams = ref({})
 const dialogVisible = ref(false)
-// è¡¨æ ¼
-const tableRef = ref() // è¡¨æ ¼å®žä¾‹
+// ±í¸ñ
+const tableRef = ref() // ±í¸ñÊµÀý
 // const _selectedRowKeys = ref([])
 const searchRef = ref()
 
 const positionId = ref()
 
-// åˆ·æ–°åˆ—è¡¨
+// Ë¢ÐÂÁÐ±í
 const refresh = () => {
   tableRef.value?.reload()
 }
@@ -142,12 +149,12 @@ const onSave = () => {
   dialogVisible.value = false
   refresh()
 }
-//å–æ¶ˆé€‰æ‹©
+//È¡ÏûÑ¡Ôñ
 // const cancelSelect = () => {
 //   _selectedRowKeys.value = []
 // }
 
-// é€‰æ‹©
+// Ñ¡Ôñ
 // const onSelect = (record, selected) => {
 //   const rowSet = new Set([..._selectedRowKeys.value])
 //
@@ -160,7 +167,7 @@ const onSave = () => {
 //   _selectedRowKeys.value = [...rowSet.values()]
 // }
 
-// å…¨é€‰
+// È«Ñ¡
 // const onSelectAll = (selected, _, changeRows) => {
 //   const rowSet = new Set([..._selectedRowKeys.value])
 //
@@ -201,13 +208,13 @@ const handleQuery = (params) => {
   return queryPage(_params)
 }
 
-// æœç´¢
+// ËÑË÷
 const handleParams = (e) => {
   queryParams.value = e
 }
 
 const onJumpPage = (record) => {
-  menuStore.jumpPage('system/Department/positions/Detail', {
+  menuStore.jumpPage(positionDetailRouteName.value, {
     params: {
       id: record.id,
     },
@@ -218,9 +225,9 @@ const onJumpPage = (record) => {
   })
 }
 
-//è·³è½¬èŒä½è¯¦æƒ…é¡µé¢
+//Ìø×ªÖ°Î»ÏêÇéÒ³Ãæ
 const toPositionDetail = (data) => {
-  menuStore.jumpPage('system/Department/positions/Detail', {
+  menuStore.jumpPage(positionDetailRouteName.value, {
     params: {
       id: data.id
     },
@@ -230,7 +237,7 @@ const toPositionDetail = (data) => {
   })
 }
 
-//åˆ é™¤èŒä½
+//É¾³ýÖ°Î»
 const deletePosition = async (id) => {
   const res = await del(id)
   if (res.success) {
@@ -244,9 +251,9 @@ const showBindUser = (record) => {
   dialogVisible.value = true
 }
 
-//æ–°å¢žç»„ç»‡
+//ÐÂÔö×éÖ¯
 const handleAdd = () => {
-  menuStore.jumpPage('system/Department/positions/Detail', {
+  menuStore.jumpPage(positionDetailRouteName.value, {
     params: {
       id: ':id',
     },
