@@ -48,7 +48,7 @@ const columns = [
     },
   },
   {
-    title: '½ÇÉ«',
+    title: $t('User.index.673867-13'),
     dataIndex: 'roles',
     key: 'roles',
     ellipsis: true,
@@ -76,7 +76,7 @@ const columns = [
     scopedSlots: true
   },
   {
-    title: 'ÉÏ¼¶Ö°Î»',
+    title: $t('positions.index.223804-1'),
     dataIndex: 'parentId',
     key: 'parentId',
     ellipsis: true,
@@ -130,17 +130,17 @@ const columns = [
   },
 ]
 
-// ËÑË÷²ÎÊý
+// æœç´¢å‚æ•°
 const queryParams = ref({})
 const dialogVisible = ref(false)
-// ±í¸ñ
-const tableRef = ref() // ±í¸ñÊµÀý
+// è¡¨æ ¼
+const tableRef = ref() // è¡¨æ ¼å®žä¾‹
 // const _selectedRowKeys = ref([])
 const searchRef = ref()
 
 const positionId = ref()
 
-// Ë¢ÐÂÁÐ±í
+// åˆ·æ–°åˆ—è¡¨
 const refresh = () => {
   tableRef.value?.reload()
 }
@@ -149,12 +149,12 @@ const onSave = () => {
   dialogVisible.value = false
   refresh()
 }
-//È¡ÏûÑ¡Ôñ
+//å–æ¶ˆé€‰æ‹©
 // const cancelSelect = () => {
 //   _selectedRowKeys.value = []
 // }
 
-// Ñ¡Ôñ
+// é€‰æ‹©
 // const onSelect = (record, selected) => {
 //   const rowSet = new Set([..._selectedRowKeys.value])
 //
@@ -167,7 +167,7 @@ const onSave = () => {
 //   _selectedRowKeys.value = [...rowSet.values()]
 // }
 
-// È«Ñ¡
+// å…¨é€‰
 // const onSelectAll = (selected, _, changeRows) => {
 //   const rowSet = new Set([..._selectedRowKeys.value])
 //
@@ -208,7 +208,7 @@ const handleQuery = (params) => {
   return queryPage(_params)
 }
 
-// ËÑË÷
+// æœç´¢
 const handleParams = (e) => {
   queryParams.value = e
 }
@@ -225,7 +225,7 @@ const onJumpPage = (record) => {
   })
 }
 
-//Ìø×ªÖ°Î»ÏêÇéÒ³Ãæ
+//è·³è½¬èŒä½è¯¦æƒ…é¡µé¢
 const toPositionDetail = (data) => {
   menuStore.jumpPage(positionDetailRouteName.value, {
     params: {
@@ -237,7 +237,7 @@ const toPositionDetail = (data) => {
   })
 }
 
-//É¾³ýÖ°Î»
+//åˆ é™¤èŒä½
 const deletePosition = async (id) => {
   const res = await del(id)
   if (res.success) {
@@ -251,7 +251,7 @@ const showBindUser = (record) => {
   dialogVisible.value = true
 }
 
-//ÐÂÔö×éÖ¯
+//æ–°å¢žç»„ç»‡
 const handleAdd = () => {
   menuStore.jumpPage(positionDetailRouteName.value, {
     params: {

@@ -177,7 +177,7 @@
     v-if="importData.visible"
     :downloadUrlBuilder="importUserTemplate_api"
     :request="importUser_api"
-    message="若系统中已存在相同用户名，若为更新该用户信息模板字段为空，将清空该字段；若有值，则更新该字段"
+    message="若系统中已存在相同用户名，且模板中的用户信息字段为空，将清空该字段；若有值，则更新该字段。"
     @close="importData.visible = false"
     @save="handleImportDone"
   />
