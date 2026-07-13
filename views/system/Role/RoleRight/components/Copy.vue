@@ -56,7 +56,7 @@
 import {useI18n} from "vue-i18n";
 import {
   bindUser_api,
-  getPermissionTree_api,
+  getPermissionDetail_api,
   getUserByRoleNoPaging_api,
   queryRoleGroup, saveRole_api, updatePermissionTree_api
 } from "@authentication-manager-ui/api/system/role";
@@ -84,6 +84,7 @@ const groupOptions = ref([])
 const _data = reactive({
   user: [],
   menu: [],
+  assetAccesses: [],
 })
 
 const getGroupOptions = async () => {
@@ -111,7 +112,7 @@ const flattenArray = (arr = []) => {
 // 查询角色的权限菜单
 const queryGrant = async (id) => {
   // 查询权限树
-  const resp = await getPermissionTree_api(id, paramsEncodeQuery({
+  const resp = await getPermissionDetail_api(id, paramsEncodeQuery({
     terms: [
       {
         value: "%show\":false%",
@@ -121,7 +122,9 @@ const queryGrant = async (id) => {
     ]
   }));
   if (resp.success) {
-    _data.menu = flattenArray(resp.result).filter(i => i.granted);
+    const detail = resp.result || {};
+    _data.menu = flattenArray(detail.menus).map(({ children, ...menu }) => menu);
+    _data.assetAccesses = Array.isArray(detail.assetAccesses) ? detail.assetAccesses : [];
   }
   // 查询绑定用户
   const resp2 = await getUserByRoleNoPaging_api({
@@ -154,10 +157,11 @@ const onSave = async () => {
       const id = resp1.result?.id
       if (id) {
         let resp2, resp3;
-        if (_data.menu.length) {
+        if (_data.menu.length || _data.assetAccesses.length) {
           // 保存权限信息
           resp2 = await updatePermissionTree_api(id, {
             menus: _data.menu,
+            assetAccesses: _data.assetAccesses,
           }).catch(() => {
             loading.value = false
           })

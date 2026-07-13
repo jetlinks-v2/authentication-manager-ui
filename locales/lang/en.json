@@ -522,6 +522,7 @@
   "Permission.index.071527-0": "Permission Allocation",
   "Permission.index.071527-1": "Save",
   "Permission.index.071527-2": "Operation successful",
+  "Permission.index.071527-3": "Failed to load permissions",
   "components.AddUserDialog.659587-0": "Add",
   "components.AddUserDialog.659587-1": "Name",
   "components.AddUserDialog.659587-2": "Username",

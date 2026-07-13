@@ -29,11 +29,10 @@ const roleId = route.params.id as string
 const loading = ref(false)
 const permissionTreeRef = ref<any>()
 const clickSave = () => {
-  const resp = permissionTreeRef.value?.onSave();
+  const snapshot = permissionTreeRef.value?.onSave();
+  if (!snapshot) return
   loading.value = true
-  updatePermissionTree_api(roleId, {
-    menus: resp,
-  }).then((res:any)=>{
+  updatePermissionTree_api(roleId, snapshot).then((res:any)=>{
     if(res.success){
         onlyMessage($t('Permission.index.071527-2'))
     }
