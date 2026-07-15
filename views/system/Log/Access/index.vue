@@ -27,6 +27,11 @@
                         {{ slotProps.responseTime - slotProps.requestTime }} ms
                     </a-tag>
                     </template>
+                    <template #responseStatus="slotProps">
+                    <a-tag :color="getResponseStatusColor(slotProps.responseStatus)">
+                        {{ slotProps.responseStatus ?? '-' }}
+                    </a-tag>
+                    </template>
                     <template #username="slotProps">
 
                     <!-- <j-tag color="geekblue"> -->
@@ -95,6 +100,9 @@
                             'ms'
                         }}
                     </a-descriptions-item>
+                    <a-descriptions-item :label="$t('Access.index.responseStatus')">
+                        {{ descriptionsData?.responseStatus ?? '-' }}
+                    </a-descriptions-item>
                     <a-descriptions-item :label="$t('Access.index.480752-7')" :span="2">
                         {{ descriptionsData?.httpHeaders }}
                     </a-descriptions-item>
@@ -122,6 +130,10 @@ import { useI18n } from 'vue-i18n';
 const { t: $t } = useI18n();
 const tableRef = ref<Record<string, any>>({});
 const params = ref<Record<string, any>>({});
+const responseStatusOptions = [200, 400, 401, 403, 404, 500, 502, 503].map((code) => ({
+    label: String(code),
+    value: code,
+}));
 
 const columns = [
     {
@@ -187,6 +199,17 @@ const columns = [
         width: 100,
     },
     {
+        title: $t('Access.index.responseStatus'),
+        dataIndex: 'responseStatus',
+        key: 'responseStatus',
+        search: {
+            type: 'select',
+            options: responseStatusOptions,
+        },
+        scopedSlots: true,
+        width: 120,
+    },
+    {
         title: $t('Access.index.480752-5'),
         dataIndex: 'requestTime',
         key: 'requestTime',
@@ -228,6 +251,7 @@ const descriptionsData = ref<any>({
     action: '',
     target: '',
     method: '',
+    responseStatus: 0,
     ip: '',
     requestTime: 0,
     responseTime: 0,
@@ -259,6 +283,22 @@ const getActions = (data: Partial<Record<string, any>>): ActionsType[] => {
             },
         },
     ];
+};
+
+const getResponseStatusColor = (status?: number) => {
+    if (!status) {
+        return 'default';
+    }
+    if (status >= 500) {
+        return 'error';
+    }
+    if (status >= 400) {
+        return 'warning';
+    }
+    if (status >= 300) {
+        return 'processing';
+    }
+    return 'success';
 };
 
 const column = {
