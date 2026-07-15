@@ -878,6 +878,7 @@
   "Access.index.480752-13": "Request User",
   "Access.index.480752-14": "Action",
   "Access.index.480752-15": "View",
+  "Access.index.responseStatus": "Status Code",
   "device-manager-ui.index.106686-0": "Details",
   "router.extraMenu.260658-4": "Position Details",
   "components.AddDeviceOrProductDialog.314014-0": "Asset Assignment",

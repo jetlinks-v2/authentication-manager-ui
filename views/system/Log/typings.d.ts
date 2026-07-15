@@ -1,4 +1,6 @@
-import type { PopconfirmProps } from "ant-design-vue/es/popconfirm";
+import type { CSSProperties } from 'vue';
+import type { TooltipProps } from 'ant-design-vue';
+import type { PopconfirmProps } from 'ant-design-vue/es/popconfirm';
 export type AccessLogItem = {
   id: string;
   context: any;
@@ -6,6 +8,7 @@ export type AccessLogItem = {
   exception: string;
   httpHeaders: any;
   httpMethod: string;
+  responseStatus: number;
   ip: string;
   method: string;
   parameters: any;
