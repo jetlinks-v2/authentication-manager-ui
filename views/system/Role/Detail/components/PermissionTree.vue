@@ -14,18 +14,20 @@ import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { MenuAssetPermissionEditor } from '@jetlinks-web-core/components'
 import { useMenuAssetPermissionEditor, useRegistryOptions } from '@jetlinks-web-core/hooks'
+import type { AssetTypeName } from '@jetlinks-web-core/hooks'
 import { paramsEncodeQuery } from '@jetlinks-web-core/utils'
 import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
 import { USER_CENTER_MENU_CODE } from '@jetlinks-web-core/utils/consts'
 import { NotificationSubscriptionCode } from '@jetlinks-web-core/router/menu'
 import {
-  getGrantableAssetAccesses_api,
   getPermissionDetail_api,
 } from '@authentication-manager-ui/api/system/role'
+import { getAssetsType } from '@authentication-manager-ui/api/system/menu'
 
 const { t: $t } = useI18n()
 const route = useRoute()
 const loading = ref(false)
+const initialized = ref(false)
 const editor = useMenuAssetPermissionEditor({
   defaultSupportIds: ['creator'],
   protectedMenuCode: USER_CENTER_MENU_CODE,
@@ -46,24 +48,38 @@ const filterMenus = (menus: any[] = []): any[] => menus
   .filter(item => item.code !== NotificationSubscriptionCode)
   .map(item => ({ ...item, children: filterMenus(item.children || []) }))
 
+const loadAssetTypes = async (): Promise<AssetTypeName[]> => {
+  if (!isNoCommunity) return []
+  try {
+    const response = await getAssetsType()
+    if (response?.success === false) throw new Error(response.message)
+    return Array.isArray(response?.result) ? response.result : []
+  } catch (error: any) {
+    // 名称字典只增强展示，请求失败时保留授权能力并使用编辑器内置回退名称。
+    onlyMessage(error?.message || $t('Permission.index.071527-3'), 'error')
+    return []
+  }
+}
+
 const load = async () => {
   const roleId = String(route.params.id || '')
   if (!roleId) return
+  initialized.value = false
   loading.value = true
   try {
-    const response = await getPermissionDetail_api(roleId, query)
+    const [response, assetTypes] = await Promise.all([
+      getPermissionDetail_api(roleId, query),
+      loadAssetTypes(),
+    ])
     if (response?.success === false) throw new Error(response.message)
     const detail = response?.result || {}
     const menus = filterMenus(detail.menus || [])
-    const grantableResponse = isNoCommunity
-      ? await getGrantableAssetAccesses_api(menus)
-      : undefined
-    if (grantableResponse?.success === false) throw new Error(grantableResponse.message)
     editor.reset({
       menus,
       assetAccesses: detail.assetAccesses,
-      grantableAssets: isNoCommunity ? (grantableResponse?.result || []) : undefined,
+      assetTypes,
     })
+    initialized.value = true
   } catch (error: any) {
     onlyMessage(error?.message || $t('Permission.index.071527-3'), 'error')
   } finally {
@@ -71,7 +87,8 @@ const load = async () => {
   }
 }
 
-const onSave = () => editor.getSnapshot()
+// 详情加载失败时禁止生成空快照，避免覆盖已有授权。
+const onSave = () => initialized.value ? editor.getSnapshot() : undefined
 onMounted(load)
 defineExpose({ onSave, load })
 </script>
