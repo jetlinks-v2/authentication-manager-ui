@@ -176,9 +176,9 @@ const formData = reactive<formDataType>({
   webKey: "", // 高德web key
   secretKey: "", // 高德web key
   'base-path': `${window.location.origin}/api`,  // base-path
-  logo: "/images/login/logo.png",  // 系统logo
-  ico: "/favicon.ico",  // 浏览器页签
-  background: "/images/login/login.png"  // 登录背景图
+  logo: "images/login/logo.png",  // 系统logo
+  ico: "favicon.ico",  // 浏览器页签
+  background: "images/login/login.png"  // 登录背景图
 })
 
 const formRef = ref()
@@ -226,11 +226,11 @@ const getDetails = async () => {
   Object.assign(formData, {
     title: configInfo.front?.title,
     headerTheme: normalizeHeaderTheme(configInfo.front?.headerTheme),
-    logo: configInfo.front?.logo || '/logo.png',
-    ico: configInfo.front?.ico || '/favicon.ico',
+    logo: configInfo.front?.logo || 'logo.png',
+    ico: configInfo.front?.ico || 'favicon.ico',
     showRecordNumber: configInfo.front?.showRecordNumber || false,
     recordNumber: configInfo.front?.recordNumber,
-    background: configInfo.front?.background || '/images/login.png',
+    background: configInfo.front?.background || 'images/login/login.png',
     apiKey: configInfo.amap?.apiKey,
     webKey: configInfo.amap?.webKey,
     secretKey: configInfo.amap?.secretKey,
