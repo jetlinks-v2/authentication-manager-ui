@@ -1591,7 +1591,8 @@ const defaultImg = {
 };
 
 
-const routeQuery = useRoute().query;
+const route = useRoute();
+const routeQuery = reactive({...route.query});
 const menuStory = useMenuStore();
 
 const deptPermission = 'system/Department';
@@ -1703,9 +1704,17 @@ const initForm: formType = {
     defaultPasswd: '', // 默认密码
   },
 };
+
+const createInitialForm = (): formType => {
+  const data = cloneDeep(initForm);
+  data.apiServer.appId = randomString(16);
+  data.apiServer.secureKey = randomString();
+  return data;
+};
+
 const formRef = ref<any>();
 const form = reactive({
-  data: {...initForm},
+  data: createInitialForm(),
   // integrationModesISO: [] as string[], // 接入方式镜像  折叠面板使用
   roleIdList: [] as optionsType, // 角色列表
   orgIdList: [] as dictType, // 组织列表
@@ -1720,6 +1729,27 @@ const form = reactive({
   fileList: [] as any[],
   uploadLoading: false,
 });
+
+const resetCreateForm = () => {
+  form.data = createInitialForm();
+  form.fileList = [];
+  Object.values(form.errorNumInfo).forEach(item => item.clear());
+};
+
+const syncRouteQuery = () => {
+  Object.keys(routeQuery).forEach(key => delete routeQuery[key]);
+  Object.assign(routeQuery, route.query);
+};
+
+const applyCreateProvider = () => {
+  if (!routeQuery.provider) {
+    return;
+  }
+  const provider = routeQuery.provider as applyType;
+  form.data.provider = provider;
+  typeOptions.value = typeOptions.value.filter((item: any) => item.value === provider);
+  form.data.logoUrl = defaultImg[provider];
+};
 const wechatEventUrl = computed(() => {
   if (!form.data.id) return '';
   const origin = window.location.origin || '';
@@ -1775,20 +1805,10 @@ const getType = async () => {
 }
 
 onMounted(async () => {
-  await getType();
   getRoleIdList();
   getOrgIdList();
   queryThirdPartyType()
-  if (routeQuery.id) {
-    getInfo(routeQuery.id as string);
-  }
-  if (routeQuery.provider) {
-    form.data.provider = routeQuery?.provider as applyType;
-    typeOptions.value = typeOptions.value.filter((i: any) => {
-      return i.value === routeQuery.provider;
-    });
-    form.data.logoUrl = defaultImg[typeOptions.value[0].value]
-  }
+  await loadFormByRoute();
 });
 
 const checkPassword = (_rule: Rule, value: string) => {
@@ -1811,6 +1831,27 @@ const joinOptions = computed(() => {
           ?.integrationModes || []
   );
 });
+
+async function loadFormByRoute() {
+  const isEditing = Boolean(routeQuery.id);
+  if (!isEditing) {
+    resetCreateForm();
+  }
+  await getType();
+  if (isEditing) {
+    getInfo(routeQuery.id as string);
+    return;
+  }
+  applyCreateProvider();
+}
+
+watch(
+    () => route.fullPath,
+    () => {
+      syncRouteQuery();
+      void loadFormByRoute();
+    },
+);
 
 const dialog = reactive({
   visible: false,
