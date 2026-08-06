@@ -88,7 +88,7 @@
       {
         "code": "system/User",
         "name": "用户管理",
-        "owner": "iot",
+        "owner": "cloud",
         "id": "fe2e557bcf09a5503cbb5bebeb0b7f1c",
         "sortIndex": 2,
         "url": "/system/user",
@@ -305,7 +305,7 @@
             "en": "Organization Management"
           }
         },
-        "owner": "iot",
+        "owner": "cloud",
         "id": "3962ec0835f3b4a68c1f63b955625046",
         "sortIndex": 3,
         "url": "/system/Department",
@@ -682,7 +682,7 @@
             "en": "Role Management"
           }
         },
-        "owner": "iot",
+        "owner": "cloud",
         "id": "9d1e96f17649ef5e7b8e7c6bb8e7b775",
         "sortIndex": 4,
         "url": "/system/Role",
@@ -1866,7 +1866,7 @@
             "en": "Log Management"
           }
         },
-        "owner": "iot",
+        "owner": "cloud",
         "id": "7bfca91e0accad83c96ad8b3a79153c0",
         "sortIndex": 17,
         "url": "/system/log",
