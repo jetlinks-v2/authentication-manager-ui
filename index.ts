@@ -71,6 +71,18 @@ const getExtraRoutesMap = () => {
         url: '/positions/Detail/:id',
         name: '职位详情'
       }
+    ],
+    'application-center/ProjectApplication': [
+      {
+        code: 'Create',
+        url: '/Create',
+        name: i18n.global.t('ProjectApplication.route.create')
+      },
+      {
+        code: 'Detail',
+        url: '/Detail/:id',
+        name: i18n.global.t('ProjectApplication.route.detail')
+      }
     ]
   }
 }

@@ -1948,5 +1948,100 @@
         ]
       }
     ]
+  },
+  {
+    "code": "application-center",
+    "name": "应用中心",
+    "owner": "iot",
+    "i18nMessages": {
+      "name": {
+        "zh_CN": "应用中心",
+        "en_US": "Application Center",
+        "en": "Application Center"
+      }
+    },
+    "id": "4984e88a42a44b22896c058742d0782d",
+    "url": "/application-center",
+    "icon": "AppstoreOutlined",
+    "sortIndex": 5,
+    "permissions": [],
+    "buttons": [],
+    "children": [
+      {
+        "code": "application-center/ProjectApplication",
+        "name": "项目应用",
+        "owner": "iot",
+        "i18nMessages": {
+          "name": {
+            "zh_CN": "项目应用",
+            "en_US": "Project Applications",
+            "en": "Project Applications"
+          }
+        },
+        "id": "4fbd197474134f7fb947f96d85a5a23d",
+        "url": "/application-center/project-application",
+        "icon": "AppstoreAddOutlined",
+        "sortIndex": 1,
+        "showPage": ["application"],
+        "permissions": [
+          {
+            "permission": "application",
+            "actions": ["query"]
+          }
+        ],
+        "buttons": [
+          {
+            "id": "add",
+            "name": "创建应用",
+            "i18nMessages": {
+              "zh_CN": "创建应用",
+              "en_US": "Create Application",
+              "en": "Create Application"
+            },
+            "permissions": [
+              {
+                "permission": "application",
+                "actions": ["save"]
+              }
+            ]
+          },
+          {
+            "id": "update",
+            "name": "编辑",
+            "i18nMessages": {
+              "zh_CN": "编辑",
+              "en_US": "Edit",
+              "en": "Edit"
+            },
+            "permissions": [
+              {
+                "permission": "application",
+                "actions": ["save"]
+              }
+            ]
+          },
+          {
+            "id": "action",
+            "name": "启用/停用",
+            "i18nMessages": {
+              "zh_CN": "启用/停用",
+              "en_US": "Enable/Disable",
+              "en": "Enable/Disable"
+            },
+            "permissions": [
+              {
+                "permission": "application",
+                "actions": ["save"]
+              }
+            ]
+          }
+        ],
+        "accessSupport": {
+          "text": "不支持",
+          "value": "unsupported"
+        },
+        "supportDataAccess": false
+      }
+    ]
   }
 ]
