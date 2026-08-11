@@ -23,16 +23,16 @@
         <a-form ref="formRef" :model="form" :rules="rules" layout="vertical">
           <a-form-item :label="$t('ProjectApplication.create.icon')">
             <div class="icon-upload-row">
-              <a-upload :show-upload-list="false" accept="image/png,image/jpeg,image/svg+xml" :before-upload="beforeUpload">
-                <button type="button" class="icon-upload">
-                  <img v-if="form.icon" :src="form.icon" alt="" />
-                  <AIcon v-else type="PlusOutlined" />
-                </button>
-              </a-upload>
+              <div class="icon-upload">
+                <ImageUpload
+                  v-model:value="form.icon"
+                  accept="image/png,image/jpeg"
+                  :types="iconTypes"
+                  :border-style="iconUploadBorderStyle"
+                  :cropper-props="iconCropperProps"
+                />
+              </div>
               <div class="upload-copy">
-                <a-upload :show-upload-list="false" accept="image/png,image/jpeg,image/svg+xml" :before-upload="beforeUpload">
-                  <a-button type="link">{{ $t('ProjectApplication.create.uploadIcon') }}</a-button>
-                </a-upload>
                 <span>{{ $t('ProjectApplication.create.iconHint') }}</span>
               </div>
             </div>
@@ -64,7 +64,9 @@
                 <span>{{ $t('ProjectApplication.create.templateHint') }}</span>
               </div>
             </template>
-            <TemplateSelector v-model="form.templateId" :templates="store.templates" />
+            <a-spin :spinning="templatesLoading">
+              <TemplateSelector v-model="form.templateId" :templates="availableTemplates" />
+            </a-spin>
           </a-form-item>
         </a-form>
       </main>
@@ -73,10 +75,10 @@
 </template>
 
 <script setup lang="ts" name="ProjectApplicationCreate">
-import type { UploadProps } from 'ant-design-vue'
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
+import { useProjectRouter } from '@jetlinks-web-core/hooks/useProjectRouter'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import TemplateSelector from './TemplateSelector.vue'
 import { useProjectApplication } from '../useProjectApplication'
@@ -84,10 +86,20 @@ import type { ProjectApplicationDraft } from '../types'
 
 const { t: $t } = useI18n()
 const menuStore = useMenuStore()
+const { projectId } = useProjectRouter()
 const store = useProjectApplication()
 const formRef = ref()
 const submitting = ref(false)
+const templatesLoading = ref(false)
+const availableTemplates = computed(() => store.templates.filter(template => !template.disabled))
 const form = reactive<ProjectApplicationDraft>({ name: '', description: '', templateId: '' })
+const iconTypes = ['image/jpeg', 'image/png']
+const iconUploadBorderStyle = { borderRadius: 'var(--r-3)' }
+const iconCropperProps = {
+  fixedNumber: [1, 1],
+  autoCropWidth: 256,
+  autoCropHeight: 256,
+}
 
 const rules = computed(() => ({
   name: [
@@ -97,16 +109,24 @@ const rules = computed(() => ({
   templateId: [{ required: true, message: $t('ProjectApplication.create.templateRequired') }],
 }))
 
-const beforeUpload: UploadProps['beforeUpload'] = (file) => {
-  const reader = new FileReader()
-  reader.addEventListener('load', () => { form.icon = String(reader.result || '') })
-  reader.readAsDataURL(file)
-  return false
-}
-
 const backToList = () => menuStore.jumpPage('application-center/ProjectApplication', {})
 
+onMounted(async () => {
+  templatesLoading.value = true
+  try {
+    await store.loadTemplates()
+  } catch {
+    // The shared request layer reports the backend error.
+  } finally {
+    templatesLoading.value = false
+  }
+})
+
 const submit = async () => {
+  if (!projectId.value) {
+    onlyMessage($t('ProjectApplication.list.missingProject'), 'warning')
+    return
+  }
   try {
     await formRef.value?.validate()
   } catch {
@@ -114,7 +134,7 @@ const submit = async () => {
   }
   submitting.value = true
   try {
-    const application = await store.createApplication({ ...form })
+    const application = await store.createApplication(projectId.value, { ...form })
     onlyMessage($t('ProjectApplication.create.success', { name: application.name }))
     menuStore.jumpPage('application-center/ProjectApplication/Detail', { params: { id: application.id } })
   } finally {
@@ -154,23 +174,12 @@ const submit = async () => {
 .icon-upload-row { display: flex; align-items: center; gap: var(--space-3); }
 
 .icon-upload {
-  display: grid;
   width: 4.5rem;
   height: 4.5rem;
-  place-items: center;
-  overflow: hidden;
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--r-3);
-  background: var(--bg);
-  color: var(--ink-3);
-  cursor: pointer;
 }
 
-.icon-upload:hover { border-color: var(--accent); color: var(--accent); }
-.icon-upload img { width: 100%; height: 100%; object-fit: cover; }
 .upload-copy { display: flex; flex-direction: column; align-items: flex-start; }
 .upload-copy span { color: var(--ink-4); font-size: var(--fs-12); }
-.upload-copy :deep(.ant-btn) { padding-inline: 0; }
 
 .template-label { display: flex; flex-direction: column; gap: var(--space-1); }
 .template-label span { color: var(--ink-3); font-size: var(--fs-12); font-weight: 400; }

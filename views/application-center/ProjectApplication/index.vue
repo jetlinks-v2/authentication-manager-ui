@@ -6,7 +6,7 @@
           <h1>{{ $t('ProjectApplication.list.title') }}</h1>
           <p>{{ $t('ProjectApplication.list.description') }}</p>
         </div>
-        <a-button type="primary" @click="openCreate">
+        <a-button type="primary" :disabled="!projectId" @click="openCreate">
           <template #icon><AIcon type="PlusOutlined" /></template>
           {{ $t('ProjectApplication.list.create') }}
         </a-button>
@@ -42,7 +42,7 @@
             :item="item"
             @open="openDetail(item.application.id)"
           />
-          <button class="create-card" type="button" @click="openCreate">
+          <button v-if="projectId" class="create-card" type="button" @click="openCreate">
             <AIcon type="PlusOutlined" />
             <span>{{ $t('ProjectApplication.list.createCard') }}</span>
           </button>
@@ -50,9 +50,9 @@
         <CloudEmpty
           v-else
           type="page"
-          :description="$t('ProjectApplication.list.empty')"
+          :description="$t(projectId ? 'ProjectApplication.list.empty' : 'ProjectApplication.list.missingProject')"
         >
-          <a-button type="primary" @click="openCreate">
+          <a-button v-if="projectId" type="primary" @click="openCreate">
             {{ $t('ProjectApplication.list.create') }}
           </a-button>
         </CloudEmpty>
@@ -62,8 +62,9 @@
 </template>
 
 <script setup lang="ts" name="ProjectApplication">
-import { computed, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useProjectRouter } from '@jetlinks-web-core/hooks/useProjectRouter'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import ApplicationCard from './components/ApplicationCard.vue'
 import { useProjectApplication } from './useProjectApplication'
@@ -71,29 +72,55 @@ import type { ApplicationFilters } from './types'
 
 const { t: $t } = useI18n()
 const menuStore = useMenuStore()
+const { projectId } = useProjectRouter()
 const store = useProjectApplication()
 const loading = ref(false)
 const filters = reactive<ApplicationFilters>({ keyword: '' })
-const filteredApplications = store.queryApplications(filters)
 
 const statusOptions = computed(() => [
   { label: $t('ProjectApplication.common.enabled'), value: 'enabled' },
   { label: $t('ProjectApplication.common.disabled'), value: 'disabled' },
 ])
 
-const templateOptions = computed(() => store.templates
-  .filter((item) => !item.disabled)
-  .map((item) => ({ label: $t(item.nameKey), value: item.id })))
+const templateOptions = computed(() => store.templates.map(item => ({ label: item.name, value: item.id })))
 
-const cardItems = computed(() => filteredApplications.value.map((application) => {
-  const detail = store.getDetail(application.id).value
-  return {
-    application,
-    template: store.templates.find((item) => item.id === application.templateId) || store.templates[0],
-    gatewayCount: new Set(detail?.devices.map((item) => item.gateway)).size,
-    cameraCount: detail?.cameras.length || 0,
+const cardItems = computed(() => store.applications.map(application => ({
+  application,
+  template: store.templates.find(item => item.id === application.templateId) || {
+    id: application.templateId,
+    name: application.templateId,
+    code: application.templateId,
+    description: '',
+    status: 'disabled' as const,
+    statusText: '',
+    sortIndex: 0,
+    disabled: true,
+  },
+})))
+
+let refreshTimer: ReturnType<typeof setTimeout> | undefined
+const refresh = async () => {
+  loading.value = true
+  try {
+    await store.loadApplications(projectId.value || '', filters)
+  } catch {
+    // The shared request layer reports the backend error.
+  } finally {
+    loading.value = false
   }
-}))
+}
+
+watch(
+  () => [projectId.value, filters.keyword, filters.status, filters.templateId],
+  () => {
+    if (refreshTimer) clearTimeout(refreshTimer)
+    refreshTimer = setTimeout(refresh, 250)
+  },
+  { immediate: true },
+)
+
+onMounted(() => store.loadTemplates().catch(() => undefined))
+onBeforeUnmount(() => refreshTimer && clearTimeout(refreshTimer))
 
 const openCreate = () => menuStore.jumpPage('application-center/ProjectApplication/Create', {})
 const openDetail = (id: string) => menuStore.jumpPage('application-center/ProjectApplication/Detail', { params: { id } })

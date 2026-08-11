@@ -1,27 +1,30 @@
 export type ApplicationStatus = 'enabled' | 'disabled'
-export type ResourceStatus = 'online' | 'offline' | 'muted'
-export type PermissionAction = 'view' | 'edit' | 'delete'
+export type ResourceStatus = string
 
 export interface ApplicationTemplate {
   id: string
-  nameKey: string
-  descriptionKey: string
-  detailKey: string
-  icon: string
-  disabled?: boolean
+  name: string
+  code: string
+  description: string
+  icon?: string
+  status: ApplicationStatus
+  statusText: string
+  sortIndex: number
+  disabled: boolean
 }
 
 export interface ProjectApplication {
   id: string
+  projectId: string
   name: string
   description: string
   templateId: string
   status: ApplicationStatus
+  statusText: string
   createdAt: string
   icon?: string
-  defaultLanguage: 'zh-CN' | 'en-US'
+  defaultLanguage: string
   domain: string
-  allowDirectDevice: boolean
 }
 
 export interface ProjectApplicationDraft {
@@ -37,27 +40,8 @@ export interface ApplicationResource {
   serial: string
   category: string
   status: ResourceStatus
+  statusText: string
   group: string
-  gateway: string
-  area?: string
-  supportsPtz?: boolean
-}
-
-export interface UsageMetric {
-  id: string
-  labelKey: string
-  current: number
-  limit: number
-  unit?: string
-}
-
-export interface UsageService {
-  id: string
-  nameKey: string
-  editionKey: string
-  icon: string
-  metrics: UsageMetric[]
-  noteKey?: string
 }
 
 export interface ApplicationUser {
@@ -65,8 +49,11 @@ export interface ApplicationUser {
   name: string
   username: string
   phone: string
-  email?: string
+  email: string
   roleId: string
+  roleIds: string[]
+  orgIds: string[]
+  positionIds: string[]
   enabled: boolean
 }
 
@@ -76,20 +63,16 @@ export interface ApplicationUserDraft {
   phone: string
   email: string
   roleId: string
-}
-
-export interface MenuPermissionNode {
-  key: string
-  titleKey: string
-  children?: MenuPermissionNode[]
+  password: string
+  confirmPassword: string
 }
 
 export interface ApplicationRole {
   id: string
   name: string
   description: string
-  builtIn: boolean
-  permissions: Record<string, PermissionAction[]>
+  status: ApplicationStatus
+  statusText: string
 }
 
 export interface ApplicationRoleDraft {
@@ -99,10 +82,8 @@ export interface ApplicationRoleDraft {
 
 export interface ApplicationDetailState {
   devices: ApplicationResource[]
-  cameras: ApplicationResource[]
   users: ApplicationUser[]
   roles: ApplicationRole[]
-  usage: UsageService[]
 }
 
 export interface ApplicationFilters {
@@ -113,7 +94,7 @@ export interface ApplicationFilters {
 
 export interface ResourcePickerGroupMode {
   label: string
-  value: 'category' | 'group' | 'gateway'
+  value: 'category' | 'group'
 }
 
 export interface ResourcePickerData {
@@ -123,5 +104,4 @@ export interface ResourcePickerData {
   resources: ApplicationResource[]
   boundIds: string[]
   groupModes: ResourcePickerGroupMode[]
-  showArea?: boolean
 }

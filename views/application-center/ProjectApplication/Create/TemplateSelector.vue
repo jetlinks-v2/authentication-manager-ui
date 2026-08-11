@@ -9,17 +9,20 @@
       :disabled="item.disabled"
       @click="selectTemplate(item)"
     >
-      <span class="template-icon"><AIcon :type="item.icon" /></span>
+      <span class="template-icon">
+        <img v-if="isImageIcon(item.icon)" :src="item.icon" :alt="item.name" />
+        <AIcon v-else :type="item.icon || 'AppstoreOutlined'" />
+      </span>
       <span class="template-copy">
-        <strong>{{ $t(item.nameKey) }}</strong>
-        <span>{{ $t(item.descriptionKey) }}</span>
+        <strong>{{ item.name }}</strong>
+        <span>{{ item.description || '--' }}</span>
       </span>
       <a-button
         v-if="!item.disabled"
         type="link"
         size="small"
         class="detail-link"
-        @click.prevent.stop="previewTemplate = item"
+        @click.prevent.stop="openPreview(item)"
       >
         {{ $t('ProjectApplication.template.detail') }}
         <AIcon type="RightOutlined" />
@@ -29,13 +32,24 @@
 
     <a-modal
       :open="!!previewTemplate"
-      :title="previewTemplate ? $t(previewTemplate.nameKey) : ''"
+      :title="previewTemplate?.name || ''"
       :footer="null"
       @cancel="previewTemplate = undefined"
     >
       <div v-if="previewTemplate" class="template-preview">
-        <span class="preview-icon"><AIcon :type="previewTemplate.icon" /></span>
-        <p>{{ $t(previewTemplate.detailKey) }}</p>
+        <span class="preview-icon">
+          <img v-if="isImageIcon(previewTemplate.icon)" :src="previewTemplate.icon" :alt="previewTemplate.name" />
+          <AIcon v-else :type="previewTemplate.icon || 'AppstoreOutlined'" />
+        </span>
+        <div class="preview-copy">
+          <p>{{ previewTemplate.description || '--' }}</p>
+          <a-spin :spinning="menusLoading">
+            <div v-if="previewMenus.length" class="preview-menus">
+              <a-tag v-for="menu in previewMenus" :key="menu">{{ menu }}</a-tag>
+            </div>
+            <span v-else-if="!menusLoading" class="preview-empty">{{ $t('ProjectApplication.template.noMenus') }}</span>
+          </a-spin>
+        </div>
       </div>
     </a-modal>
   </div>
@@ -46,6 +60,7 @@ import type { PropType } from 'vue'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ApplicationTemplate } from '../types'
+import { useProjectApplication } from '../useProjectApplication'
 
 const props = defineProps({
   templates: {
@@ -60,10 +75,28 @@ const props = defineProps({
 
 const emits = defineEmits(['update:modelValue'])
 const { t: $t } = useI18n()
+const store = useProjectApplication()
 const previewTemplate = ref<ApplicationTemplate>()
+const previewMenus = ref<string[]>([])
+const menusLoading = ref(false)
 
 const selectTemplate = (item: ApplicationTemplate) => {
   if (!item.disabled) emits('update:modelValue', item.id)
+}
+
+const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(icon) || icon.includes('.'))
+
+const openPreview = async (item: ApplicationTemplate) => {
+  previewTemplate.value = item
+  previewMenus.value = []
+  menusLoading.value = true
+  try {
+    previewMenus.value = await store.loadTemplateMenus(item.id)
+  } catch {
+    previewMenus.value = []
+  } finally {
+    menusLoading.value = false
+  }
 }
 </script>
 
@@ -117,6 +150,9 @@ const selectTemplate = (item: ApplicationTemplate) => {
   font-size: var(--fs-16);
 }
 
+.template-icon img,
+.preview-icon img { width: 100%; height: 100%; object-fit: cover; }
+
 .template-copy {
   display: flex;
   min-width: 0;
@@ -146,6 +182,9 @@ const selectTemplate = (item: ApplicationTemplate) => {
 }
 
 .template-preview p { margin: 0; }
+.preview-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: var(--space-3); }
+.preview-menus { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.preview-empty { color: var(--ink-4); font-size: var(--fs-12); }
 
 @media (max-width: 62rem) {
   .template-selector { grid-template-columns: repeat(2, minmax(0, 1fr)); }

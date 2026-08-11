@@ -1952,7 +1952,7 @@
   {
     "code": "application-center",
     "name": "应用中心",
-    "owner": "iot",
+    "owner": "cloud",
     "i18nMessages": {
       "name": {
         "zh_CN": "应用中心",
@@ -1969,23 +1969,27 @@
     "children": [
       {
         "code": "application-center/ProjectApplication",
-        "name": "项目应用",
-        "owner": "iot",
+        "name": "应用管理",
+        "owner": "cloud",
         "i18nMessages": {
           "name": {
-            "zh_CN": "项目应用",
-            "en_US": "Project Applications",
-            "en": "Project Applications"
+            "zh_CN": "应用管理",
+            "en_US": "Application Management",
+            "en": "Application Management"
           }
         },
         "id": "4fbd197474134f7fb947f96d85a5a23d",
         "url": "/application-center/project-application",
         "icon": "AppstoreAddOutlined",
         "sortIndex": 1,
-        "showPage": ["application"],
+        "showPage": ["business-application"],
         "permissions": [
           {
-            "permission": "application",
+            "permission": "business-application",
+            "actions": ["query"]
+          },
+          {
+            "permission": "business-application-template",
             "actions": ["query"]
           }
         ],
@@ -2000,7 +2004,7 @@
             },
             "permissions": [
               {
-                "permission": "application",
+                "permission": "business-application",
                 "actions": ["save"]
               }
             ]
@@ -2015,7 +2019,7 @@
             },
             "permissions": [
               {
-                "permission": "application",
+                "permission": "business-application",
                 "actions": ["save"]
               }
             ]
@@ -2030,8 +2034,77 @@
             },
             "permissions": [
               {
-                "permission": "application",
+                "permission": "business-application",
                 "actions": ["save"]
+              }
+            ]
+          },
+          {
+            "id": "manage-user",
+            "name": "用户管理",
+            "i18nMessages": {
+              "zh_CN": "用户管理",
+              "en_US": "User Management",
+              "en": "User Management"
+            },
+            "permissions": [
+              {
+                "permission": "business-application",
+                "actions": ["save"]
+              },
+              {
+                "permission": "user",
+                "actions": ["query", "save", "delete"]
+              },
+              {
+                "permission": "role",
+                "actions": ["query"]
+              }
+            ]
+          },
+          {
+            "id": "manage-role",
+            "name": "角色管理",
+            "i18nMessages": {
+              "zh_CN": "角色管理",
+              "en_US": "Role Management",
+              "en": "Role Management"
+            },
+            "permissions": [
+              {
+                "permission": "business-application",
+                "actions": ["save"]
+              },
+              {
+                "permission": "role",
+                "actions": ["query", "save", "delete"]
+              },
+              {
+                "permission": "menu",
+                "actions": ["grant"]
+              }
+            ]
+          },
+          {
+            "id": "bind-device",
+            "name": "设备绑定",
+            "i18nMessages": {
+              "zh_CN": "设备绑定",
+              "en_US": "Device Binding",
+              "en": "Device Binding"
+            },
+            "permissions": [
+              {
+                "permission": "business-application",
+                "actions": ["save"]
+              },
+              {
+                "permission": "device-instance",
+                "actions": ["query"]
+              },
+              {
+                "permission": "assets-bind",
+                "actions": ["query", "permission", "bind", "unbind"]
               }
             ]
           }

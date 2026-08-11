@@ -1,34 +1,41 @@
 <template>
   <div class="role-workspace">
     <header class="role-heading">
-      <h2>{{ $t('ProjectApplication.role.title') }}</h2>
-      <p>{{ $t('ProjectApplication.role.subtitle') }}</p>
+      <div>
+        <h2>{{ $t('ProjectApplication.role.title') }}</h2>
+        <p>{{ $t('ProjectApplication.role.subtitle') }}</p>
+      </div>
+      <a-button type="primary" @click="openRole()">
+        <template #icon><AIcon type="PlusOutlined" /></template>
+        {{ $t('ProjectApplication.role.add') }}
+      </a-button>
     </header>
 
-    <div class="role-layout">
+    <div v-if="roles.length" class="role-layout">
       <aside class="role-sidebar">
-        <div class="sidebar-heading">
-          <strong>{{ $t('ProjectApplication.role.list') }}</strong>
-          <a-button type="link" size="small" @click="openRole()">
-            <AIcon type="PlusOutlined" />{{ $t('ProjectApplication.role.add') }}
-          </a-button>
-        </div>
+        <strong class="sidebar-title">{{ $t('ProjectApplication.role.list') }}</strong>
         <button
-          v-for="role in data.roles"
+          v-for="role in roles"
           :key="role.id"
           type="button"
           class="role-item"
           :class="{ active: role.id === activeRoleId }"
           @click="activeRoleId = role.id"
         >
-          <span class="role-name">
-            <strong>{{ role.name }}</strong>
-            <MetaChip v-if="role.builtIn">{{ $t('ProjectApplication.role.builtIn') }}</MetaChip>
+          <span class="role-name"><strong>{{ role.name }}</strong></span>
+          <span class="role-description">{{ role.description || '--' }}</span>
+          <span class="role-actions">
+            <a-tooltip :title="$t('ProjectApplication.common.edit')">
+              <a-button type="text" size="small" @click.prevent.stop="openRole(role)">
+                <AIcon type="EditOutlined" />
+              </a-button>
+            </a-tooltip>
+            <a-popconfirm :title="$t('ProjectApplication.role.deleteConfirm', { name: role.name })" @confirm="emits('delete-role', role)">
+              <a-button type="text" danger size="small" @click.prevent.stop>
+                <AIcon type="DeleteOutlined" />
+              </a-button>
+            </a-popconfirm>
           </span>
-          <span class="role-description">{{ role.description }}</span>
-          <a-button type="text" size="small" class="role-edit" @click.prevent.stop="openRole(role)">
-            <AIcon type="EditOutlined" />
-          </a-button>
         </button>
       </aside>
 
@@ -36,33 +43,26 @@
         <div class="permission-heading">
           <div>
             <h3>{{ activeRole.name }}</h3>
-            <MetaChip>{{ $t(activeRole.builtIn ? 'ProjectApplication.role.builtInRole' : 'ProjectApplication.role.customRole') }}</MetaChip>
-            <p>{{ activeRole.description }}</p>
+            <p>{{ activeRole.description || '--' }}</p>
           </div>
+          <a-button type="primary" :loading="savingPermissions" :disabled="!initialized" @click="savePermissions">
+            <template #icon><AIcon type="SaveOutlined" /></template>
+            {{ $t('ProjectApplication.common.save') }}
+          </a-button>
         </div>
-
-        <div class="permission-title">
-          <strong>{{ $t('ProjectApplication.role.menuPermissions') }}</strong>
-          <span>{{ $t('ProjectApplication.role.authorized', permissionSummary) }}</span>
-        </div>
-        <div class="permission-columns">
-          <strong>{{ $t('ProjectApplication.role.menu') }}</strong>
-          <span>{{ $t('ProjectApplication.role.view') }}</span>
-          <span>{{ $t('ProjectApplication.role.edit') }}</span>
-          <span>{{ $t('ProjectApplication.role.delete') }}</span>
-        </div>
-        <a-tree :tree-data="treeData" default-expand-all block-node :selectable="false">
-          <template #title="node">
-            <div class="permission-row">
-              <span>{{ node.title }}</span>
-              <a-checkbox :checked="isChecked(String(node.key), 'view')" @change="togglePermission(String(node.key), 'view', $event.target.checked)" />
-              <a-checkbox :checked="isChecked(String(node.key), 'edit')" @change="togglePermission(String(node.key), 'edit', $event.target.checked)" />
-              <a-checkbox :checked="isChecked(String(node.key), 'delete')" @change="togglePermission(String(node.key), 'delete', $event.target.checked)" />
-            </div>
-          </template>
-        </a-tree>
+        <a-spin :spinning="permissionLoading">
+          <MenuAssetPermissionEditor
+            :context="editor"
+            :columns="columns"
+            :show-asset-permissions="isNoCommunity"
+            height="32rem"
+          />
+        </a-spin>
       </main>
     </div>
+    <CloudEmpty v-else :description="$t('ProjectApplication.role.empty')">
+      <a-button type="primary" @click="openRole()">{{ $t('ProjectApplication.role.add') }}</a-button>
+    </CloudEmpty>
 
     <a-modal
       :open="roleModalOpen"
@@ -88,71 +88,81 @@
 import type { PropType } from 'vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type {
-  ApplicationRole,
-  ApplicationRoleDraft,
-  MenuPermissionNode,
-  PermissionAction,
-} from '../../types'
-
-interface RoleManagementData {
-  roles: ApplicationRole[]
-  permissionTree: MenuPermissionNode[]
-}
-
-interface PermissionTreeItem {
-  key: string
-  title: string
-  children?: PermissionTreeItem[]
-}
+import { onlyMessage } from '@jetlinks-web/utils'
+import { MenuAssetPermissionEditor } from '@jetlinks-web-core/components'
+import { useMenuAssetPermissionEditor } from '@jetlinks-web-core/hooks'
+import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
+import {
+  getPermissionDetail_api as getRolePermissionDetail,
+  updatePermissionTree_api as saveRolePermission,
+} from '@authentication-manager-ui/api/system/role'
+import { getAssetsType as queryAssetTypes } from '@authentication-manager-ui/api/system/menu'
+import type { ApplicationRole, ApplicationRoleDraft } from '../../types'
 
 const props = defineProps({
-  data: {
-    type: Object as PropType<RoleManagementData>,
-    required: true,
-  },
+  roles: { type: Array as PropType<ApplicationRole[]>, default: () => [] },
 })
-
-const emits = defineEmits(['save-role', 'update-permissions'])
+const emits = defineEmits(['save-role', 'delete-role'])
 const { t: $t } = useI18n()
 const activeRoleId = ref('')
 const roleModalOpen = ref(false)
 const editingRoleId = ref<string>()
 const formRef = ref()
 const form = reactive<ApplicationRoleDraft>({ name: '', description: '' })
+const permissionLoading = ref(false)
+const savingPermissions = ref(false)
+const initialized = ref(false)
+const editor = useMenuAssetPermissionEditor({ defaultSupportIds: ['creator'] })
 
-watch(() => props.data.roles, (roles) => {
-  if (!roles.some((item) => item.id === activeRoleId.value)) activeRoleId.value = roles[0]?.id || ''
-}, { immediate: true, deep: true })
-
-const activeRole = computed(() => props.data.roles.find((item) => item.id === activeRoleId.value))
-const treeData = computed(() => props.data.permissionTree.map(mapTreeNode))
+const activeRole = computed(() => props.roles.find(item => item.id === activeRoleId.value))
+const columns = computed(() => [
+  { title: $t('ProjectApplication.role.menu'), dataIndex: 'menu', key: 'menu', width: '38%' },
+  { title: $t('ProjectApplication.role.operationPermissions'), dataIndex: 'action', key: 'action' },
+])
 const rules = computed(() => ({ name: [{ required: true, message: $t('ProjectApplication.role.nameRequired') }] }))
+const resultOf = <T,>(response: any): T => response && Object.prototype.hasOwnProperty.call(response, 'result')
+  ? response.result as T
+  : response as T
 
-const permissionSummary = computed(() => {
-  const permissions = activeRole.value?.permissions || {}
-  return {
-    menus: Object.values(permissions).filter((actions) => actions.length).length,
-    permissions: Object.values(permissions).reduce((total, actions) => total + actions.length, 0),
-  }
-})
-
-function mapTreeNode(node: MenuPermissionNode): PermissionTreeItem {
-  return {
-    key: node.key,
-    title: $t(node.titleKey),
-    children: node.children?.map(mapTreeNode),
+const loadPermissions = async () => {
+  if (!activeRoleId.value) return
+  initialized.value = false
+  permissionLoading.value = true
+  try {
+    const [detailResponse, assetTypeResponse] = await Promise.all([
+      getRolePermissionDetail(activeRoleId.value),
+      isNoCommunity ? queryAssetTypes() : Promise.resolve([]),
+    ])
+    const detail = resultOf<any>(detailResponse) || {}
+    editor.reset({
+      menus: Array.isArray(detail.menus) ? detail.menus : [],
+      assetAccesses: detail.assetAccesses,
+      assetTypes: resultOf<any[]>(assetTypeResponse) || [],
+    })
+    initialized.value = true
+  } catch {
+    editor.reset({ menus: [], assetTypes: [] })
+  } finally {
+    permissionLoading.value = false
   }
 }
 
-const isChecked = (key: string, action: PermissionAction) => activeRole.value?.permissions[key]?.includes(action) || false
+watch(() => props.roles, roles => {
+  if (!roles.some(item => item.id === activeRoleId.value)) activeRoleId.value = roles[0]?.id || ''
+}, { immediate: true, deep: true })
+watch(activeRoleId, loadPermissions, { immediate: true })
 
-const togglePermission = (key: string, action: PermissionAction, checked: boolean) => {
-  if (!activeRole.value) return
-  const permissions = Object.fromEntries(Object.entries(activeRole.value.permissions).map(([menuKey, actions]) => [menuKey, [...actions]]))
-  const actions = permissions[key] || []
-  permissions[key] = checked ? [...new Set([...actions, action])] : actions.filter((item) => item !== action)
-  emits('update-permissions', activeRole.value.id, permissions)
+const savePermissions = async () => {
+  if (!initialized.value || !activeRoleId.value) return
+  savingPermissions.value = true
+  try {
+    await saveRolePermission(activeRoleId.value, editor.getSnapshot())
+    onlyMessage($t('ProjectApplication.role.permissionSuccess', { name: activeRole.value?.name || '' }))
+  } catch {
+    // The shared request layer reports the backend error.
+  } finally {
+    savingPermissions.value = false
+  }
 }
 
 const openRole = (role?: ApplicationRole) => {
@@ -173,28 +183,21 @@ const confirmRole = async () => {
 </script>
 
 <style scoped>
-.role-heading { margin-bottom: var(--space-4); }
+.role-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-4); }
 .role-heading h2 { margin: 0; color: var(--ink-1); font-size: var(--fs-16); }
 .role-heading p { margin: var(--space-1) 0 0; color: var(--ink-3); }
 .role-layout { display: grid; grid-template-columns: 17rem minmax(0, 1fr); min-height: 34rem; border: 1px solid var(--line); border-radius: var(--r-3); background: var(--bg); overflow: hidden; }
 .role-sidebar { padding: var(--space-3); border-right: 1px solid var(--line); background: var(--bg-sunken); }
-.sidebar-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-2); }
-.role-item { position: relative; display: flex; width: 100%; flex-direction: column; gap: var(--space-1); padding: var(--space-3); border: 0; border-radius: var(--r-2); background: transparent; text-align: left; cursor: pointer; }
+.sidebar-title { display: block; margin-bottom: var(--space-2); }
+.role-item { position: relative; display: flex; width: 100%; flex-direction: column; gap: var(--space-1); padding: var(--space-3) 5rem var(--space-3) var(--space-3); border: 0; border-radius: var(--r-2); background: transparent; text-align: left; cursor: pointer; }
 .role-item:hover,
 .role-item.active { background: var(--bg); }
-.role-name { display: flex; align-items: center; gap: var(--space-2); color: var(--ink-1); }
-.role-description { padding-right: var(--space-5); color: var(--ink-4); font-size: var(--fs-12); line-height: 1.5; }
-.role-edit { position: absolute; right: var(--space-1); top: var(--space-2); }
-.permission-panel { min-width: 0; padding: var(--space-4); overflow-x: auto; }
-.permission-heading h3 { display: inline; margin: 0 var(--space-2) 0 0; color: var(--ink-1); font-size: var(--fs-18); }
-.permission-heading p { margin: var(--space-2) 0 var(--space-4); color: var(--ink-3); }
-.permission-title { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-2); }
-.permission-title span { color: var(--ink-4); font-size: var(--fs-12); }
-.permission-columns,
-.permission-row { display: grid; min-width: 36rem; grid-template-columns: minmax(16rem, 1fr) repeat(3, 5rem); align-items: center; gap: var(--space-2); }
-.permission-columns { padding: var(--space-2) var(--space-3); background: var(--bg-sunken); color: var(--ink-3); font-size: var(--fs-12); }
-.permission-columns span { text-align: center; }
-.permission-row { padding: var(--space-2) 0; }
-.permission-row :deep(.ant-checkbox-wrapper) { justify-self: center; }
+.role-name { color: var(--ink-1); }
+.role-description { color: var(--ink-4); font-size: var(--fs-12); line-height: 1.5; }
+.role-actions { position: absolute; right: var(--space-1); top: var(--space-2); display: flex; }
+.permission-panel { min-width: 0; padding: var(--space-4); overflow: hidden; }
+.permission-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
+.permission-heading h3 { margin: 0; color: var(--ink-1); font-size: var(--fs-18); }
+.permission-heading p { margin: var(--space-1) 0 0; color: var(--ink-3); }
 @media (max-width: 52rem) { .role-layout { grid-template-columns: 1fr; } .role-sidebar { border-right: 0; border-bottom: 1px solid var(--line); } }
 </style>

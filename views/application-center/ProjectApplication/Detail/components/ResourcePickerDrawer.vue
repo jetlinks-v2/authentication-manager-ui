@@ -42,9 +42,9 @@
             <a-checkbox :checked="selectedIds.includes(item.id)" @change="toggleResource(item.id, $event)" />
             <span class="resource-copy">
               <strong>{{ item.name }}</strong>
-              <small>{{ data.showArea ? item.area : `${item.category} · ${item.serial}` }}</small>
+              <small>{{ item.category }} · {{ item.serial }}</small>
             </span>
-            <MetaChip :tone="item.status === 'online' ? 'ok' : 'warn'">{{ statusText(item.status) }}</MetaChip>
+            <MetaChip :tone="item.status === 'online' ? 'ok' : 'warn'">{{ item.statusText }}</MetaChip>
           </label>
           <CloudEmpty v-if="!filteredResources.length" :description="$t('ProjectApplication.list.empty')" />
         </div>
@@ -65,7 +65,7 @@
 import type { PropType } from 'vue'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { ResourcePickerData, ResourceStatus } from '../../types'
+import type { ResourcePickerData } from '../../types'
 
 interface CheckboxEvent { target: { checked: boolean } }
 
@@ -117,8 +117,6 @@ const filteredResources = computed(() => {
 
 const allVisibleSelected = computed(() => !!filteredResources.value.length
   && filteredResources.value.every((item) => selectedIds.value.includes(item.id)))
-
-const statusText = (status: ResourceStatus) => $t(`ProjectApplication.common.${status}`)
 
 const toggleResource = (id: string, event: CheckboxEvent) => {
   selectedIds.value = event.target.checked

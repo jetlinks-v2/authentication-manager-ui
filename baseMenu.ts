@@ -40,7 +40,8 @@ import p from './package.json'
 const handleMenu = (menus: any[]): any[] => menus.map(item => ({
   ...item,
   children: item.children ? handleMenu(item.children) : undefined,
-  options: { appName: p.id || p.name, ...item.options }
+  options: { appName: p.id || p.name, ...item.options },
+  runtime: item.owner === 'cloud'
 }))
 
 export default () => {

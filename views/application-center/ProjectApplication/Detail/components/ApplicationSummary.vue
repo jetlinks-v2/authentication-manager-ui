@@ -2,7 +2,8 @@
   <section class="application-summary">
     <div class="summary-icon">
       <img v-if="data.application.icon" :src="data.application.icon" :alt="data.application.name" />
-      <AIcon v-else :type="data.template.icon" />
+      <img v-else-if="isImageIcon(data.template.icon)" :src="data.template.icon" :alt="data.template.name" />
+      <AIcon v-else :type="data.template.icon || 'AppstoreOutlined'" />
     </div>
 
     <div class="summary-main">
@@ -14,9 +15,9 @@
           @change="updateName"
         />
         <MetaChip :tone="data.application.status === 'enabled' ? 'ok' : 'default'">
-          {{ statusText }}
+          {{ data.application.statusText }}
         </MetaChip>
-        <AppTag>{{ $t(data.template.nameKey) }}</AppTag>
+        <AppTag>{{ data.template.name }}</AppTag>
       </div>
       <InputEditable
         :value="data.application.description"
@@ -66,10 +67,6 @@ const { t: $t } = useI18n()
 const titleStyle: CSSProperties = { fontSize: 'var(--fs-20)', fontWeight: 600, color: 'var(--ink-1)' }
 const descriptionStyle: CSSProperties = { color: 'var(--ink-2)', lineHeight: 1.6 }
 
-const statusText = computed(() => $t(props.data.application.status === 'enabled'
-  ? 'ProjectApplication.common.enabled'
-  : 'ProjectApplication.common.disabled'))
-
 const statusActionText = computed(() => $t(props.data.application.status === 'enabled'
   ? 'ProjectApplication.common.disable'
   : 'ProjectApplication.common.enable'))
@@ -84,6 +81,7 @@ const updateName = (name: string) => {
 }
 
 const updateDescription = (description: string) => emits('update', { description: description.trim() }, 'description')
+const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(icon) || icon.includes('.'))
 </script>
 
 <style scoped>

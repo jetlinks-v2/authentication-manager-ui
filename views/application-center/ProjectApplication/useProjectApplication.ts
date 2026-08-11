@@ -1,307 +1,300 @@
 import { computed, reactive } from 'vue'
+import {
+  bindBusinessApplicationDevices,
+  createBusinessApplication,
+  createBusinessApplicationRole,
+  createBusinessApplicationUser,
+  deleteBusinessApplicationRole,
+  deleteBusinessApplicationUser,
+  getBusinessApplication,
+  getBusinessApplicationTemplateMenus,
+  queryBusinessApplicationRoles,
+  queryBusinessApplications,
+  queryBusinessApplicationTemplates,
+  unbindBusinessApplicationDevice,
+  updateBusinessApplication,
+  updateBusinessApplicationRole,
+  updateBusinessApplicationUser,
+  type BusinessApplicationEntity,
+  type BusinessApplicationRoleEntity,
+  type BusinessApplicationTemplateEntity,
+  type MenuView,
+  type UserDetailEntity,
+} from '@authentication-manager-ui/api/application-center/businessApplication'
+import {
+  buildApplicationTerms,
+  flattenMenuNames,
+  listOf,
+  normalizeApplication,
+  normalizeRole,
+  normalizeTemplate,
+  normalizeUser,
+  resultOf,
+} from './applicationModel'
+import { loadBusinessApplicationDevices } from './applicationDeviceService'
+import { loadBusinessApplicationUsers } from './applicationUserService'
 import type {
   ApplicationDetailState,
   ApplicationFilters,
   ApplicationResource,
-  ApplicationRole,
   ApplicationRoleDraft,
   ApplicationTemplate,
   ApplicationUser,
   ApplicationUserDraft,
-  MenuPermissionNode,
-  PermissionAction,
   ProjectApplication,
   ProjectApplicationDraft,
 } from './types'
 
-const templates: ApplicationTemplate[] = [
-  { id: 'general', nameKey: 'ProjectApplication.template.general', descriptionKey: 'ProjectApplication.template.generalDesc', detailKey: 'ProjectApplication.template.generalDetail', icon: 'AppstoreOutlined' },
-  { id: 'security', nameKey: 'ProjectApplication.template.security', descriptionKey: 'ProjectApplication.template.securityDesc', detailKey: 'ProjectApplication.template.securityDetail', icon: 'SafetyCertificateOutlined' },
-  { id: 'commerce', nameKey: 'ProjectApplication.template.commerce', descriptionKey: 'ProjectApplication.template.commerceDesc', detailKey: 'ProjectApplication.template.commerceDetail', icon: 'ShopOutlined' },
-  { id: 'elderly', nameKey: 'ProjectApplication.template.elderly', descriptionKey: 'ProjectApplication.template.elderlyDesc', detailKey: 'ProjectApplication.template.elderlyDetail', icon: 'MedicineBoxOutlined' },
-  { id: 'construction', nameKey: 'ProjectApplication.template.construction', descriptionKey: 'ProjectApplication.template.constructionDesc', detailKey: 'ProjectApplication.template.constructionDetail', icon: 'ToolOutlined' },
-  { id: 'device', nameKey: 'ProjectApplication.template.device', descriptionKey: 'ProjectApplication.template.deviceDesc', detailKey: 'ProjectApplication.template.deviceDetail', icon: 'CloudServerOutlined' },
-  { id: 'custom', nameKey: 'ProjectApplication.template.custom', descriptionKey: 'ProjectApplication.template.customDesc', detailKey: 'ProjectApplication.template.customDetail', icon: 'BgColorsOutlined', disabled: true },
-]
-
-const permissionTree: MenuPermissionNode[] = [
-  { key: 'overview', titleKey: 'ProjectApplication.permission.overview' },
-  {
-    key: 'visualization', titleKey: 'ProjectApplication.permission.visualization', children: [
-      { key: 'visualization-workbench', titleKey: 'ProjectApplication.permission.visualizationWorkbench' },
-      { key: 'dashboard', titleKey: 'ProjectApplication.permission.dashboard' },
-      { key: 'data-asset', titleKey: 'ProjectApplication.permission.dataAsset' },
-    ],
-  },
-  {
-    key: 'iot', titleKey: 'ProjectApplication.permission.iot', children: [
-      { key: 'gateway', titleKey: 'ProjectApplication.permission.gateway' },
-      { key: 'device', titleKey: 'ProjectApplication.permission.device' },
-      { key: 'device-health', titleKey: 'ProjectApplication.permission.deviceHealth' },
-      { key: 'device-group', titleKey: 'ProjectApplication.permission.deviceGroup' },
-    ],
-  },
-  {
-    key: 'video', titleKey: 'ProjectApplication.permission.video', children: [
-      { key: 'camera', titleKey: 'ProjectApplication.permission.camera' },
-      { key: 'video-event', titleKey: 'ProjectApplication.permission.videoEvent' },
-      { key: 'video-alarm', titleKey: 'ProjectApplication.permission.videoAlarm' },
-      { key: 'image-search', titleKey: 'ProjectApplication.permission.imageSearch' },
-      { key: 'passenger-flow', titleKey: 'ProjectApplication.permission.passengerFlow' },
-      { key: 'heat-map', titleKey: 'ProjectApplication.permission.heatMap' },
-    ],
-  },
-  {
-    key: 'space', titleKey: 'ProjectApplication.permission.space', children: [
-      { key: 'space-dashboard', titleKey: 'ProjectApplication.permission.spaceDashboard' },
-      { key: 'space-management', titleKey: 'ProjectApplication.permission.spaceManagement' },
-    ],
-  },
-  {
-    key: 'alarm', titleKey: 'ProjectApplication.permission.alarm', children: [
-      { key: 'alarm-rule', titleKey: 'ProjectApplication.permission.alarmRule' },
-      { key: 'alarm-history', titleKey: 'ProjectApplication.permission.alarmHistory' },
-    ],
-  },
-  {
-    key: 'scene', titleKey: 'ProjectApplication.permission.scene', children: [
-      { key: 'scene-linkage', titleKey: 'ProjectApplication.permission.sceneLinkage' },
-      { key: 'rule-orchestration', titleKey: 'ProjectApplication.permission.ruleOrchestration' },
-    ],
-  },
-  {
-    key: 'application', titleKey: 'ProjectApplication.permission.application', children: [
-      { key: 'project-application', titleKey: 'ProjectApplication.permission.projectApplication' },
-      { key: 'open-api', titleKey: 'ProjectApplication.permission.openApi' },
-    ],
-  },
-  {
-    key: 'settings', titleKey: 'ProjectApplication.permission.settings', children: [
-      { key: 'project-settings', titleKey: 'ProjectApplication.permission.projectSettings' },
-      { key: 'role-management', titleKey: 'ProjectApplication.permission.roleManagement' },
-    ],
-  },
-]
-
-const allPermissionKeys = permissionTree.flatMap((item) => [item.key, ...(item.children?.map((child) => child.key) || [])])
-const allActions: PermissionAction[] = ['view', 'edit', 'delete']
-
-const createPermissions = (actions: PermissionAction[]) => Object.fromEntries(
-  allPermissionKeys.map((key) => [key, [...actions]]),
-)
-
-const seedApplications: ProjectApplication[] = [
-  {
-    id: 'app-1', name: '园区安防助手', description: '面向园区安保人员的移动安防应用，覆盖告警处置与视频巡查',
-    templateId: 'security', status: 'enabled', createdAt: '2026-06-12 10:24', defaultLanguage: 'zh-CN',
-    domain: 'https://security.jetlinks.cn', allowDirectDevice: false,
-  },
-  {
-    id: 'app-2', name: '商场运营看板', description: '商业综合体运营管理应用，包含客流、车流与工单处理',
-    templateId: 'commerce', status: 'enabled', createdAt: '2026-06-28 16:48', defaultLanguage: 'zh-CN',
-    domain: 'https://mall.jetlinks.cn', allowDirectDevice: true,
-  },
-  {
-    id: 'app-3', name: '智慧养老守护', description: '养老机构看护应用，老人行为分析与护工协同',
-    templateId: 'elderly', status: 'disabled', createdAt: '2026-07-05 09:12', defaultLanguage: 'zh-CN',
-    domain: '', allowDirectDevice: false,
-  },
-]
-
-const seedDevices: ApplicationResource[] = [
-  { id: 'device-1', name: 'WIFI雷达传感器', serial: '2074432663984652288', category: 'WIFI雷达传感器', status: 'online', group: '研发楼', gateway: 'E栋网关1' },
-  { id: 'device-2', name: '导轨温湿度', serial: '2074377763485499392', category: '导轨温湿度', status: 'online', group: '研发楼', gateway: 'E栋网关1' },
-]
-
-const availableDevices: ApplicationResource[] = [
-  { id: 'device-3', name: '海湾主机-研发楼', serial: '2074432663984652289', category: '海湾主机', status: 'online', group: '研发楼', gateway: 'E栋网关1' },
-  { id: 'device-4', name: '烟雾探测器A', serial: '2072990507820392450', category: '烟雾探测器', status: 'online', group: '研发楼', gateway: 'E栋网关1' },
-  { id: 'device-5', name: '烟雾探测器B', serial: '2072990507820392451', category: '烟雾探测器', status: 'muted', group: '研发楼', gateway: 'E栋网关2' },
-  { id: 'device-6', name: '电参数采集仪', serial: '2072990507820392455', category: '电参数采集仪', status: 'online', group: '配电室', gateway: 'A栋网关' },
-  { id: 'device-7', name: '智能电表', serial: '2072990507820392457', category: '智能电表', status: 'online', group: '配电室', gateway: 'A栋网关' },
-]
-
-const seedCameras: ApplicationResource[] = [
-  { id: 'camera-1', name: '东门摄像头', serial: 'CAM-E-001', category: '枪机', status: 'online', group: '公共区域', gateway: 'E栋网关1', area: '物联网产业园区 / 东门', supportsPtz: false },
-  { id: 'camera-2', name: '大厅摄像头A', serial: 'CAM-E-002', category: '球机', status: 'online', group: '公共区域', gateway: 'E栋网关1', area: '物联网产业园区 / E栋 / 1F', supportsPtz: true },
-  { id: 'camera-3', name: '运营办公室摄像头', serial: 'CAM-E-003', category: '枪机', status: 'online', group: '办公区域', gateway: 'E栋网关2', area: '物联网产业园区 / E栋 / 4F', supportsPtz: false },
-]
-
-const availableCameras: ApplicationResource[] = [
-  { id: 'camera-4', name: '会议室摄像头', serial: 'CAM-E-004', category: '球机', status: 'online', group: '办公区域', gateway: 'E栋网关1', area: '物联网产业园区 / E栋 / 4F / 项目部办公区', supportsPtz: true },
-  { id: 'camera-5', name: '车库摄像头', serial: 'CAM-E-005', category: '枪机', status: 'online', group: '公共区域', gateway: 'E栋网关1', area: '物联网产业园区 / E栋 / 2F / 公共区域', supportsPtz: false },
-  { id: 'camera-6', name: '南门摄像头', serial: 'CAM-E-006', category: '枪机', status: 'online', group: '公共区域', gateway: 'E栋网关2', area: '物联网产业园区 / 南门', supportsPtz: false },
-  { id: 'camera-7', name: '北门摄像头', serial: 'CAM-A-001', category: '枪机', status: 'online', group: '未分配区域', gateway: 'A栋网关', area: '未分配区域', supportsPtz: false },
-]
-
-const usageSeed = [
-  { id: 'basic', nameKey: 'ProjectApplication.usage.basic', editionKey: 'ProjectApplication.edition.free', icon: 'UserOutlined', metrics: [
-    { id: 'users', labelKey: 'ProjectApplication.usage.users', current: 7, limit: 10 },
-    { id: 'roles', labelKey: 'ProjectApplication.usage.roles', current: 5, limit: 10 },
-  ] },
-  { id: 'development', nameKey: 'ProjectApplication.usage.development', editionKey: 'ProjectApplication.edition.basic', icon: 'CodeOutlined', metrics: [
-    { id: 'entities', labelKey: 'ProjectApplication.usage.deviceEntities', current: 740, limit: 1200 },
-    { id: 'messages', labelKey: 'ProjectApplication.usage.deviceMessages', current: 860000, limit: 1000000 },
-    { id: 'frequency', labelKey: 'ProjectApplication.usage.frequency', current: 8, limit: 10 },
-    { id: 'properties', labelKey: 'ProjectApplication.usage.properties', current: 42, limit: 50 },
-  ] },
-  { id: 'alarm', nameKey: 'ProjectApplication.usage.alarm', editionKey: 'ProjectApplication.edition.free', icon: 'AlertOutlined', metrics: [
-    { id: 'alarm-config', labelKey: 'ProjectApplication.usage.alarmConfig', current: 120, limit: 200 },
-  ] },
-  { id: 'gateway', nameKey: 'ProjectApplication.usage.gateway', editionKey: 'ProjectApplication.edition.basic', icon: 'ApiOutlined', metrics: [], noteKey: 'ProjectApplication.usage.gatewayNote' },
-  { id: 'iot', nameKey: 'ProjectApplication.usage.iot', editionKey: 'ProjectApplication.edition.enterprise', icon: 'CloudServerOutlined', metrics: [
-    { id: 'iot-entities', labelKey: 'ProjectApplication.usage.deviceEntities', current: 1280, limit: 10000 },
-    { id: 'iot-messages', labelKey: 'ProjectApplication.usage.deviceMessages', current: 860000, limit: 5000000 },
-    { id: 'iot-frequency', labelKey: 'ProjectApplication.usage.frequency', current: 9, limit: 20 },
-    { id: 'iot-properties', labelKey: 'ProjectApplication.usage.properties', current: 45, limit: 100 },
-    { id: 'groups', labelKey: 'ProjectApplication.usage.groups', current: 18, limit: 550 },
-  ] },
-  { id: 'visualization', nameKey: 'ProjectApplication.usage.visualization', editionKey: 'ProjectApplication.edition.basic', icon: 'BarChartOutlined', metrics: [
-    { id: 'pages', labelKey: 'ProjectApplication.usage.pages', current: 3, limit: 10 },
-    { id: 'components', labelKey: 'ProjectApplication.usage.components', current: 42, limit: 100 },
-  ] },
-  { id: 'space', nameKey: 'ProjectApplication.usage.space', editionKey: 'ProjectApplication.edition.basic', icon: 'EnvironmentOutlined', metrics: [
-    { id: 'spaces', labelKey: 'ProjectApplication.usage.spaces', current: 86, limit: 500 },
-  ] },
-  { id: 'inspection', nameKey: 'ProjectApplication.usage.inspection', editionKey: 'ProjectApplication.edition.free', icon: 'ScheduleOutlined', metrics: [
-    { id: 'plans', labelKey: 'ProjectApplication.usage.plans', current: 2, limit: 5 },
-    { id: 'routes', labelKey: 'ProjectApplication.usage.routes', current: 4, limit: 10 },
-  ] },
-  { id: 'vision', nameKey: 'ProjectApplication.usage.vision', editionKey: 'ProjectApplication.edition.basic', icon: 'VideoCameraOutlined', metrics: [
-    { id: 'channels', labelKey: 'ProjectApplication.usage.channels', current: 12, limit: 32 },
-    { id: 'storage', labelKey: 'ProjectApplication.usage.storage', current: 180, limit: 500, unit: 'GB' },
-  ] },
-]
-
-const seedRoles: ApplicationRole[] = [
-  { id: 'admin', name: '管理员', description: '可访问并管理项目内所有功能模块', builtIn: true, permissions: createPermissions(allActions) },
-  { id: 'member', name: '普通成员', description: '可查看项目内所有功能，不可删除', builtIn: true, permissions: createPermissions(['view']) },
-]
-
-const seedUsers: ApplicationUser[] = [
-  { id: 'user-1', name: '张伟', username: 'zhangwei', phone: '138****0001', roleId: 'admin', enabled: true },
-  { id: 'user-2', name: '刘芳', username: 'liufang', phone: '139****0002', roleId: 'member', enabled: true },
-  { id: 'user-3', name: '陈强', username: 'chenqiang', phone: '137****0003', roleId: 'member', enabled: false },
-]
-
-const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value))
+const applications = reactive<ProjectApplication[]>([])
+const templates = reactive<ApplicationTemplate[]>([])
 const details = reactive<Record<string, ApplicationDetailState>>({})
-const applications = reactive<ProjectApplication[]>(clone(seedApplications))
+const availableDevices = reactive<ApplicationResource[]>([])
+const templateMenus = reactive<Record<string, string[]>>({})
+const applicationEntities = new Map<string, BusinessApplicationEntity>()
+const roleEntities = new Map<string, BusinessApplicationRoleEntity>()
+const userEntities = new Map<string, UserDetailEntity>()
 
-const createDetailState = (seeded = false): ApplicationDetailState => ({
-  devices: seeded ? clone(seedDevices) : [],
-  cameras: seeded ? clone(seedCameras) : [],
-  users: seeded ? clone(seedUsers) : [],
-  roles: clone(seedRoles),
-  usage: clone(usageSeed),
-})
+const replace = <T>(target: T[], values: T[]) => target.splice(0, target.length, ...values)
 
-seedApplications.forEach((application, index) => {
-  details[application.id] = createDetailState(index === 0)
-})
+const ensureDetail = (applicationId: string) => {
+  if (!details[applicationId]) details[applicationId] = { devices: [], users: [], roles: [] }
+  return details[applicationId]
+}
 
-let sequence = 10
-const createId = (prefix: string) => `${prefix}-${Date.now()}-${sequence++}`
+const rememberApplications = (entities: BusinessApplicationEntity[]) => {
+  entities.forEach(entity => applicationEntities.set(entity.id, entity))
+  return entities.map(normalizeApplication)
+}
 
-/**
- * Frontend prototype data boundary. Replace these methods with request wrappers when the
- * project-application backend contract is available; consuming pages do not depend on storage details.
- */
+const upsertApplication = (entity: BusinessApplicationEntity) => {
+  applicationEntities.set(entity.id, entity)
+  const application = normalizeApplication(entity)
+  const index = applications.findIndex(item => item.id === application.id)
+  if (index < 0) applications.unshift(application)
+  else applications.splice(index, 1, application)
+  return application
+}
+
 export const useProjectApplication = () => {
-  const queryApplications = (filters: ApplicationFilters) => computed(() => {
-    const keyword = filters.keyword.trim().toLocaleLowerCase()
-    return applications.filter((item) => {
-      const keywordMatched = !keyword || `${item.name} ${item.description}`.toLocaleLowerCase().includes(keyword)
-      return keywordMatched && (!filters.status || item.status === filters.status) && (!filters.templateId || item.templateId === filters.templateId)
-    })
-  })
-
-  const getApplication = (id: string) => computed(() => applications.find((item) => item.id === id))
-  const getDetail = (id: string) => computed(() => details[id])
-
-  const createApplication = async (draft: ProjectApplicationDraft) => {
-    const id = createId('app')
-    const application: ProjectApplication = {
-      ...draft,
-      id,
-      status: 'enabled',
-      createdAt: new Date().toLocaleString('zh-CN', { hour12: false }).replaceAll('/', '-'),
-      defaultLanguage: 'zh-CN',
-      domain: '',
-      allowDirectDevice: false,
+  const loadApplications = async (projectId: string, filters: ApplicationFilters) => {
+    if (!projectId) {
+      replace(applications, [])
+      return applications
     }
-    applications.unshift(application)
-    details[id] = createDetailState()
-    return application
+    const response = await queryBusinessApplications({
+      paging: false,
+      terms: buildApplicationTerms(projectId, filters),
+      sorts: [{ name: 'createTime', order: 'desc' }],
+    })
+    replace(applications, rememberApplications(listOf<BusinessApplicationEntity>(response)))
+    return applications
+  }
+
+  const loadTemplates = async () => {
+    const response = await queryBusinessApplicationTemplates({
+      paging: false,
+      sorts: [{ name: 'sortIndex', order: 'asc' }],
+    })
+    const values = listOf<BusinessApplicationTemplateEntity>(response)
+      .map(normalizeTemplate)
+      .sort((left, right) => left.sortIndex - right.sortIndex)
+    replace(templates, values)
+    return templates
+  }
+
+  const loadTemplateMenus = async (templateId: string) => {
+    if (Object.prototype.hasOwnProperty.call(templateMenus, templateId)) return templateMenus[templateId]
+    const response = await getBusinessApplicationTemplateMenus(templateId)
+    const names = flattenMenuNames(listOf<MenuView>(response))
+    templateMenus[templateId] = names
+    return names
+  }
+
+  const loadApplication = async (id: string) => {
+    const entity = resultOf<BusinessApplicationEntity>(await getBusinessApplication(id))
+    return entity?.id ? upsertApplication(entity) : undefined
+  }
+
+  const createApplication = async (projectId: string, draft: ProjectApplicationDraft) => {
+    const response = await createBusinessApplication({
+      projectId,
+      templateId: draft.templateId,
+      name: draft.name,
+      icon: draft.icon,
+      description: draft.description,
+      configuration: { defaultLanguage: 'zh-CN', customDomain: '' },
+      state: 'enabled',
+    })
+    const result = resultOf<unknown>(response)
+    if (typeof result === 'string') {
+      const created = await loadApplication(result)
+      if (created) return created
+    }
+    if (typeof result === 'object' && result !== null && 'id' in result) {
+      return upsertApplication(result as BusinessApplicationEntity)
+    }
+
+    await loadApplications(projectId, { keyword: '' })
+    const created = applications.find(item => item.name === draft.name && item.templateId === draft.templateId)
+    if (!created) throw new Error('Created business application could not be loaded')
+    return created
   }
 
   const updateApplication = async (id: string, patch: Partial<ProjectApplication>) => {
-    const target = applications.find((item) => item.id === id)
-    if (!target) return undefined
-    Object.assign(target, patch)
-    return target
+    const current = applications.find(item => item.id === id) || await loadApplication(id)
+    if (!current) return undefined
+    const raw = applicationEntities.get(id)
+    const next = { ...current, ...patch }
+
+    // projectId and templateId are immutable backend fields and must never re-enter update payloads.
+    await updateBusinessApplication(id, {
+      id,
+      name: next.name,
+      icon: next.icon,
+      description: next.description,
+      state: next.status,
+      configuration: {
+        ...raw?.configuration,
+        defaultLanguage: next.defaultLanguage,
+        customDomain: next.domain,
+      },
+    })
+    return loadApplication(id)
   }
 
-  const bindResources = async (applicationId: string, type: 'devices' | 'cameras', resourceIds: string[]) => {
-    const detail = details[applicationId]
-    if (!detail) return
-    const source = type === 'devices' ? availableDevices : availableCameras
-    const existingIds = new Set(detail[type].map((item) => item.id))
-    detail[type].push(...clone(source.filter((item) => resourceIds.includes(item.id) && !existingIds.has(item.id))))
+  const loadRoles = async (applicationId: string) => {
+    const response = await queryBusinessApplicationRoles(applicationId)
+    const entities = listOf<BusinessApplicationRoleEntity>(response)
+    entities.forEach(entity => roleEntities.set(entity.id, entity))
+    const detail = ensureDetail(applicationId)
+    replace(detail.roles, entities.map(normalizeRole))
+    return detail.roles
   }
 
-  const unbindResource = async (applicationId: string, type: 'devices' | 'cameras', resourceId: string) => {
-    const resources = details[applicationId]?.[type]
-    if (!resources) return
-    const index = resources.findIndex((item) => item.id === resourceId)
-    if (index >= 0) resources.splice(index, 1)
+  const loadUsers = async (applicationId: string) => {
+    const entities = await loadBusinessApplicationUsers(applicationId)
+    const applicationRoleIds = new Set(ensureDetail(applicationId).roles.map(role => role.id))
+    entities.forEach(entity => userEntities.set(`${applicationId}:${entity.id}`, entity))
+    const detail = ensureDetail(applicationId)
+    replace(detail.users, entities.map(entity => normalizeUser(entity, applicationRoleIds)))
+    return detail.users
+  }
+
+  const loadDevices = async (applicationId: string) => {
+    const result = await loadBusinessApplicationDevices(applicationId)
+    const detail = ensureDetail(applicationId)
+    replace(detail.devices, result.bound)
+    replace(availableDevices, result.available)
+    return detail.devices
+  }
+
+  const loadDetail = async (applicationId: string) => {
+    ensureDetail(applicationId)
+    await loadRoles(applicationId)
+    await Promise.all([loadUsers(applicationId), loadDevices(applicationId)])
+    return details[applicationId]
+  }
+
+  const bindDevices = async (applicationId: string, ids: string[]) => {
+    if (!ids.length) return
+    await bindBusinessApplicationDevices(applicationId, ids)
+    await loadDevices(applicationId)
+  }
+
+  const unbindDevice = async (applicationId: string, resourceId: string) => {
+    await unbindBusinessApplicationDevice(applicationId, resourceId)
+    await loadDevices(applicationId)
   }
 
   const addUser = async (applicationId: string, draft: ApplicationUserDraft) => {
-    details[applicationId]?.users.push({ ...draft, id: createId('user'), enabled: true })
+    await createBusinessApplicationUser({
+      user: {
+        name: draft.name,
+        username: draft.username,
+        password: draft.password,
+        telephone: draft.phone,
+        email: draft.email,
+        status: 1,
+      },
+      roleIdList: [draft.roleId],
+      businessApplicationIdList: [applicationId],
+    })
+    await loadUsers(applicationId)
   }
 
   const updateUser = async (applicationId: string, userId: string, patch: Partial<ApplicationUser>) => {
-    const user = details[applicationId]?.users.find((item) => item.id === userId)
-    if (user) Object.assign(user, patch)
+    const current = ensureDetail(applicationId).users.find(item => item.id === userId)
+    if (!current) return
+    const raw = userEntities.get(`${applicationId}:${userId}`)
+    const next = { ...current, ...patch }
+    const applicationRoleIds = new Set(ensureDetail(applicationId).roles.map(role => role.id))
+    const roleIds = patch.roleId === undefined
+      ? next.roleIds
+      : [...next.roleIds.filter(id => !applicationRoleIds.has(id)), patch.roleId].filter(Boolean)
+
+    // Omitting businessApplicationIdList preserves every existing application membership on update.
+    await updateBusinessApplicationUser(userId, {
+      user: {
+        ...raw,
+        id: userId,
+        name: next.name,
+        username: next.username,
+        telephone: next.phone,
+        email: next.email,
+        status: next.enabled ? 1 : 0,
+      },
+      roleIdList: roleIds,
+      orgIdList: next.orgIds,
+      positions: next.positionIds,
+    })
+    await loadUsers(applicationId)
   }
 
   const removeUser = async (applicationId: string, userId: string) => {
-    const users = details[applicationId]?.users
-    const index = users?.findIndex((item) => item.id === userId) ?? -1
-    if (index >= 0) users?.splice(index, 1)
+    await deleteBusinessApplicationUser(userId)
+    await loadUsers(applicationId)
   }
 
   const saveRole = async (applicationId: string, draft: ApplicationRoleDraft, roleId?: string) => {
-    const roles = details[applicationId]?.roles
-    if (!roles) return
-    const role = roles.find((item) => item.id === roleId)
-    if (role) Object.assign(role, draft)
-    else roles.push({ id: createId('role'), ...draft, builtIn: false, permissions: createPermissions(['view']) })
+    if (roleId) {
+      const raw = roleEntities.get(roleId)
+      await updateBusinessApplicationRole(roleId, { role: { ...raw, ...draft, id: roleId } })
+    } else {
+      await createBusinessApplicationRole({
+        role: { ...draft, state: 'enabled' },
+        businessApplicationIdList: [applicationId],
+      })
+    }
+    await loadRoles(applicationId)
   }
 
-  const updateRolePermissions = async (applicationId: string, roleId: string, permissions: Record<string, PermissionAction[]>) => {
-    const role = details[applicationId]?.roles.find((item) => item.id === roleId)
-    if (role) role.permissions = clone(permissions)
+  const removeRole = async (applicationId: string, roleId: string) => {
+    await deleteBusinessApplicationRole(roleId)
+    await loadRoles(applicationId)
+    await loadUsers(applicationId)
   }
 
   return {
     applications,
     templates,
-    permissionTree,
+    details,
     availableDevices,
-    availableCameras,
-    queryApplications,
-    getApplication,
-    getDetail,
+    templateMenus,
+    getApplication: (id: string) => computed(() => applications.find(item => item.id === id)),
+    getDetail: (id: string) => computed(() => details[id]),
+    loadApplications,
+    loadTemplates,
+    loadTemplateMenus,
+    loadApplication,
     createApplication,
     updateApplication,
-    bindResources,
-    unbindResource,
+    loadDetail,
+    bindDevices,
+    unbindDevice,
     addUser,
     updateUser,
     removeUser,
     saveRole,
-    updateRolePermissions,
+    removeRole,
   }
 }

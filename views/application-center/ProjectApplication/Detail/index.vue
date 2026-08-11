@@ -1,6 +1,7 @@
 <template>
   <j-page-container>
     <div class="detail-page">
+      <a-spin :spinning="loading">
       <template v-if="application && detail && template">
         <div class="detail-navigation">
           <a-tooltip :title="$t('ProjectApplication.list.title')">
@@ -19,24 +20,18 @@
 
         <a-tabs v-model:active-key="activeTab" class="detail-tabs">
           <a-tab-pane key="settings" :tab="$t('ProjectApplication.detail.tab.settings')">
-            <ApplicationSettings :application="application" @update="updateSettings" />
+            <ApplicationSettings
+              :application="application"
+              :template="template"
+              @update="updateSettings"
+            />
           </a-tab-pane>
           <a-tab-pane key="devices" :tab="$t('ProjectApplication.detail.tab.devices')">
             <DeviceBinding
               :data="deviceBindingData"
-              @bind="bindResources('devices', $event)"
-              @unbind="unbindResource('devices', $event)"
+              @bind="bindDevices"
+              @unbind="unbindDevice"
             />
-          </a-tab-pane>
-          <a-tab-pane key="cameras" :tab="$t('ProjectApplication.detail.tab.cameras')">
-            <CameraBinding
-              :data="cameraBindingData"
-              @bind="bindResources('cameras', $event)"
-              @unbind="unbindResource('cameras', $event)"
-            />
-          </a-tab-pane>
-          <a-tab-pane key="usage" :tab="$t('ProjectApplication.detail.tab.usage')">
-            <UsageOverview :services="detail.usage" />
           </a-tab-pane>
           <a-tab-pane key="users" :tab="$t('ProjectApplication.detail.tab.users')">
             <UserManagement
@@ -48,35 +43,35 @@
           </a-tab-pane>
           <a-tab-pane key="roles" :tab="$t('ProjectApplication.detail.tab.roles')">
             <RoleManagement
-              :data="{ roles: detail.roles, permissionTree: store.permissionTree }"
+              :roles="detail.roles"
               @save-role="saveRole"
-              @update-permissions="updateRolePermissions"
+              @delete-role="removeRole"
             />
           </a-tab-pane>
         </a-tabs>
       </template>
 
-      <CloudEmpty v-else type="page" :description="$t('ProjectApplication.detail.notFound')">
+      <CloudEmpty v-else-if="!loading" type="page" :description="$t('ProjectApplication.detail.notFound')">
         <a-button type="primary" @click="backToList">
           {{ $t('ProjectApplication.list.title') }}
         </a-button>
       </CloudEmpty>
+      </a-spin>
     </div>
   </j-page-container>
 </template>
 
 <script setup lang="ts" name="ProjectApplicationDetail">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
+import { createApplicationScopeUrl } from '@jetlinks-web-core/utils/application-scope'
 import ApplicationSummary from './components/ApplicationSummary.vue'
 import ApplicationSettings from './components/ApplicationSettings.vue'
-import CameraBinding from './components/CameraBinding.vue'
 import DeviceBinding from './components/DeviceBinding.vue'
 import RoleManagement from './components/RoleManagement.vue'
-import UsageOverview from './components/UsageOverview.vue'
 import UserManagement from './components/UserManagement.vue'
 import { useProjectApplication } from '../useProjectApplication'
 import type {
@@ -84,7 +79,6 @@ import type {
   ApplicationRoleDraft,
   ApplicationUser,
   ApplicationUserDraft,
-  PermissionAction,
   ProjectApplication,
 } from '../types'
 
@@ -93,13 +87,33 @@ const menuStore = useMenuStore()
 const store = useProjectApplication()
 const { t: $t } = useI18n()
 const activeTab = ref('settings')
+const loading = ref(false)
 
 const applicationId = computed(() => String(route.params.id || ''))
 const application = computed(() => store.applications.find((item) => item.id === applicationId.value))
 const detail = computed(() => store.getDetail(applicationId.value).value)
 const template = computed(() => store.templates.find((item) => item.id === application.value?.templateId))
 const deviceBindingData = computed(() => ({ bound: detail.value?.devices || [], available: store.availableDevices }))
-const cameraBindingData = computed(() => ({ bound: detail.value?.cameras || [], available: store.availableCameras }))
+const settingsMessageKeys = {
+  icon: 'ProjectApplication.settings.updated',
+  name: 'ProjectApplication.detail.nameSuccess',
+  description: 'ProjectApplication.detail.descriptionSuccess',
+  domain: 'ProjectApplication.settings.updated',
+  language: 'ProjectApplication.settings.updated',
+} as const
+
+watch(applicationId, async id => {
+  if (!id) return
+  loading.value = true
+  try {
+    await Promise.all([store.loadTemplates(), store.loadApplication(id)])
+    await store.loadDetail(id)
+  } catch {
+    // The shared request layer reports the backend error.
+  } finally {
+    loading.value = false
+  }
+}, { immediate: true })
 
 const backToList = () => menuStore.jumpPage('application-center/ProjectApplication', {})
 
@@ -129,21 +143,27 @@ const openApplication = () => {
     onlyMessage($t('ProjectApplication.detail.noDomain'), 'warning')
     return
   }
-  window.open(application.value.domain, '_blank', 'noopener,noreferrer')
+  const scopedUrl = createApplicationScopeUrl(application.value.domain, application.value.id)
+  window.open(scopedUrl, '_blank', 'noopener,noreferrer')
 }
 
-const updateSettings = async (patch: Partial<ProjectApplication>) => {
+const updateSettings = async (
+  patch: Partial<ProjectApplication>,
+  field: 'icon' | 'name' | 'description' | 'domain' | 'language',
+) => {
   const updated = await store.updateApplication(applicationId.value, patch)
-  if (updated) onlyMessage($t('ProjectApplication.settings.updated', { name: updated.name }))
+  if (!updated) return
+
+  onlyMessage($t(settingsMessageKeys[field], { name: updated.name }))
 }
 
-const bindResources = async (type: 'devices' | 'cameras', ids: string[]) => {
-  await store.bindResources(applicationId.value, type, ids)
+const bindDevices = async (ids: string[]) => {
+  await store.bindDevices(applicationId.value, ids)
   onlyMessage($t('ProjectApplication.resource.bindSuccess', { count: ids.length }))
 }
 
-const unbindResource = async (type: 'devices' | 'cameras', resource: ApplicationResource) => {
-  await store.unbindResource(applicationId.value, type, resource.id)
+const unbindDevice = async (resource: ApplicationResource) => {
+  await store.unbindDevice(applicationId.value, resource.id)
   onlyMessage($t('ProjectApplication.resource.unbindSuccess', { name: resource.name }))
 }
 
@@ -167,10 +187,10 @@ const saveRole = async (draft: ApplicationRoleDraft, roleId?: string) => {
   onlyMessage($t('ProjectApplication.role.saveSuccess', { name: draft.name }))
 }
 
-const updateRolePermissions = (
-  roleId: string,
-  permissions: Record<string, PermissionAction[]>,
-) => store.updateRolePermissions(applicationId.value, roleId, permissions)
+const removeRole = async (role: { id: string; name: string }) => {
+  await store.removeRole(applicationId.value, role.id)
+  onlyMessage($t('ProjectApplication.role.deleteSuccess', { name: role.name }))
+}
 </script>
 
 <style scoped>

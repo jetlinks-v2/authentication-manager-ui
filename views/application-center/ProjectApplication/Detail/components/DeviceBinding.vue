@@ -24,7 +24,7 @@
           <a-space><AIcon type="RadarChartOutlined" />{{ record.name }}</a-space>
         </template>
         <template v-else-if="column.key === 'status'">
-          <MetaChip :tone="record.status === 'online' ? 'ok' : 'warn'">{{ statusText(record.status) }}</MetaChip>
+          <MetaChip :tone="record.status === 'online' ? 'ok' : 'warn'">{{ record.statusText }}</MetaChip>
         </template>
         <template v-else-if="column.key === 'actions'">
           <a-popconfirm
@@ -52,7 +52,7 @@
 import type { PropType } from 'vue'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { ApplicationResource, ResourceStatus } from '../../types'
+import type { ApplicationResource } from '../../types'
 import ResourcePickerDrawer from './ResourcePickerDrawer.vue'
 
 interface ResourceBindingData {
@@ -86,12 +86,9 @@ const pickerData = computed(() => ({
   boundIds: props.data.bound.map((item) => item.id),
   groupModes: [
     { label: $t('ProjectApplication.resource.byProduct'), value: 'category' as const },
-    { label: $t('ProjectApplication.resource.byGroup'), value: 'group' as const },
-    { label: $t('ProjectApplication.resource.byGateway'), value: 'gateway' as const },
   ],
 }))
 
-const statusText = (status: ResourceStatus) => $t(`ProjectApplication.common.${status}`)
 const openPicker = () => { pickerOpen.value = true }
 </script>
 

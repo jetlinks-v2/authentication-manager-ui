@@ -3,28 +3,19 @@
     <template #icon>
       <div class="application-icon">
         <img v-if="item.application.icon" :src="item.application.icon" :alt="item.application.name" />
-        <AIcon v-else :type="item.template.icon" />
+        <img v-else-if="isImageIcon(item.template.icon)" :src="item.template.icon" :alt="item.template.name" />
+        <AIcon v-else :type="item.template.icon || 'AppstoreOutlined'" />
       </div>
     </template>
     <template #title>{{ item.application.name }}</template>
     <template #badges>
       <MetaChip :tone="item.application.status === 'enabled' ? 'ok' : 'default'">
-        {{ statusText }}
+        {{ item.application.statusText }}
       </MetaChip>
     </template>
-    <template #subtitle>{{ $t(item.template.nameKey) }}</template>
+    <template #subtitle>{{ item.template.name }}</template>
     <template #body>
       <p class="application-description">{{ item.application.description || '--' }}</p>
-      <div class="application-metrics">
-        <MetaChip>
-          <template #prefix><AIcon type="ApiOutlined" /></template>
-          {{ $t('ProjectApplication.list.gatewayCount', { count: item.gatewayCount }) }}
-        </MetaChip>
-        <MetaChip>
-          <template #prefix><AIcon type="VideoCameraOutlined" /></template>
-          {{ $t('ProjectApplication.list.cameraCount', { count: item.cameraCount }) }}
-        </MetaChip>
-      </div>
     </template>
     <template #footer>
       <span class="created-at">
@@ -38,15 +29,12 @@
 
 <script setup lang="ts" name="ProjectApplicationCard">
 import type { PropType } from 'vue'
-import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ApplicationTemplate, ProjectApplication } from '../types'
 
 interface ApplicationCardItem {
   application: ProjectApplication
   template: ApplicationTemplate
-  gatewayCount: number
-  cameraCount: number
 }
 
 const props = defineProps({
@@ -58,12 +46,8 @@ const props = defineProps({
 
 const emits = defineEmits(['open'])
 const { t: $t } = useI18n()
+const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(icon) || icon.includes('.'))
 
-const statusText = computed(() => $t(
-  props.item.application.status === 'enabled'
-    ? 'ProjectApplication.common.enabled'
-    : 'ProjectApplication.common.disabled',
-))
 </script>
 
 <style scoped>
@@ -98,12 +82,6 @@ const statusText = computed(() => $t(
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-}
-
-.application-metrics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
 }
 
 .created-at {

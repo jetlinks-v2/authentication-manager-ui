@@ -52,7 +52,7 @@
               </a-button>
             </a-popconfirm>
             <a-popconfirm :title="$t('ProjectApplication.user.removeConfirm', { name: record.name })" @confirm="emits('remove', record)">
-              <a-button type="link" danger size="small">{{ $t('ProjectApplication.common.remove') }}</a-button>
+              <a-button type="link" danger size="small">{{ $t('ProjectApplication.user.delete') }}</a-button>
             </a-popconfirm>
           </a-space>
         </template>
@@ -83,6 +83,12 @@
         <a-form-item :label="$t('ProjectApplication.user.email')" name="email">
           <a-input v-model:value="form.email" :placeholder="$t('ProjectApplication.user.emailPlaceholder')" />
         </a-form-item>
+        <a-form-item :label="$t('ProjectApplication.user.password')" name="password">
+          <a-input-password v-model:value="form.password" :maxlength="64" :placeholder="$t('ProjectApplication.user.passwordPlaceholder')" />
+        </a-form-item>
+        <a-form-item :label="$t('ProjectApplication.user.confirmPassword')" name="confirmPassword">
+          <a-input-password v-model:value="form.confirmPassword" :maxlength="64" :placeholder="$t('ProjectApplication.user.confirmPasswordPlaceholder')" />
+        </a-form-item>
         <a-form-item :label="$t('ProjectApplication.user.role')" name="roleId">
           <a-select v-model:value="form.roleId" :options="roleOptions" />
         </a-form-item>
@@ -95,6 +101,9 @@
 import type { PropType } from 'vue'
 import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import type { Rule } from 'ant-design-vue/es/form'
+import { passwordRegEx } from '@jetlinks-web-core/utils/validate'
+import { validateField_api as validateUserField } from '@authentication-manager-ui/api/system/user'
 import type { ApplicationRole, ApplicationUser, ApplicationUserDraft } from '../../types'
 
 interface UserManagementData {
@@ -114,7 +123,15 @@ const { t: $t } = useI18n()
 const keyword = ref('')
 const addOpen = ref(false)
 const formRef = ref()
-const form = reactive<ApplicationUserDraft>({ name: '', username: '', phone: '', email: '', roleId: 'member' })
+const form = reactive<ApplicationUserDraft>({
+  name: '',
+  username: '',
+  phone: '',
+  email: '',
+  roleId: '',
+  password: '',
+  confirmPassword: '',
+})
 
 const columns = computed(() => [
   { title: $t('ProjectApplication.user.user'), key: 'user', width: '10rem' },
@@ -131,14 +148,46 @@ const filteredUsers = computed(() => {
   return props.data.users.filter((user) => !searchText || `${user.name} ${user.username} ${user.phone}`.toLocaleLowerCase().includes(searchText))
 })
 
-const rules = computed(() => ({
+const resultOf = <T,>(response: any): T => response && Object.prototype.hasOwnProperty.call(response, 'result')
+  ? response.result as T
+  : response as T
+
+const validateUsername = async (_rule: Rule, value: string) => {
+  if (!value) return Promise.reject($t('ProjectApplication.user.usernamePlaceholder'))
+  const result = resultOf<{ passed: boolean; reason?: string }>(await validateUserField('username', value))
+  return result?.passed ? Promise.resolve() : Promise.reject(result?.reason || $t('ProjectApplication.user.usernameInvalid'))
+}
+
+const validatePassword = async (_rule: Rule, value: string) => {
+  if (!value) return Promise.reject($t('ProjectApplication.user.passwordPlaceholder'))
+  if (value.length < 8) return Promise.reject($t('ProjectApplication.user.passwordLength'))
+  if (!passwordRegEx(value)) return Promise.reject($t('ProjectApplication.user.passwordFormat'))
+  const result = resultOf<{ passed: boolean; reason?: string }>(await validateUserField('password', value))
+  return result?.passed ? Promise.resolve() : Promise.reject(result?.reason || $t('ProjectApplication.user.passwordFormat'))
+}
+
+const validateConfirmPassword = (_rule: Rule, value: string) => value === form.password
+  ? Promise.resolve()
+  : Promise.reject($t('ProjectApplication.user.passwordMismatch'))
+
+const rules = computed<Record<string, Rule[]>>(() => ({
   name: [{ required: true, message: $t('ProjectApplication.user.namePlaceholder') }],
-  username: [{ required: true, message: $t('ProjectApplication.user.usernamePlaceholder') }],
+  username: [{ required: true, validator: validateUsername, trigger: 'blur' }],
   email: [{ type: 'email' as const, message: $t('ProjectApplication.user.emailPlaceholder') }],
+  password: [{ required: true, validator: validatePassword, trigger: 'blur' }],
+  confirmPassword: [{ required: true, validator: validateConfirmPassword, trigger: 'blur' }],
   roleId: [{ required: true, message: $t('ProjectApplication.user.role') }],
 }))
 
-const resetForm = () => Object.assign(form, { name: '', username: '', phone: '', email: '', roleId: 'member' })
+const resetForm = () => Object.assign(form, {
+  name: '',
+  username: '',
+  phone: '',
+  email: '',
+  roleId: props.data.roles[0]?.id || '',
+  password: '',
+  confirmPassword: '',
+})
 const openAdd = () => { resetForm(); addOpen.value = true }
 
 const confirmAdd = async () => {

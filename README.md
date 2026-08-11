@@ -2,74 +2,68 @@
 
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.
 
-## Project Application Center
+## System Basis Navigation Layout
 
-### Goal
+The system basis form stores the selected menu layout in `front.layout`. The selector supports `side`, `mix`, and `top` with CSS-only layout previews. During application startup or page refresh, `jetlinks-web-core/src/store/system.ts` validates the configured value and applies it to the shared shell layout; missing or invalid legacy values fall back to `side`.
 
-Add an application center with a project application ledger, application creation flow, and a single-application workspace matching the approved prototype behavior.
+The owning UI files are `views/system/Basis/Form.vue`, `views/system/Basis/components/LayoutModeSelector.vue`, and `views/system/Basis/typing.ts`. The shared refresh-time state boundary remains `jetlinks-web-core/src/store/system.ts`.
 
-Owning module: `modules/authentication-manager-ui`.
+Verification: the `authentication-manager-ui` production build through the `jetlinks-web-core` Vite entry passes. Workspace-wide Vue type-checking is currently blocked by the existing `modules/device-manager-ui/views/link/Certificate/type.d.ts` syntax error and other legacy core diagnostics; the two new Basis components and their form-data type add no targeted diagnostics.
 
-Out of scope: `runtime-ui/`, Java backend modules, shared `jetlinks-web-core` behavior, generated `dist/`, and unrelated system-management pages.
+## Application Center
 
-### Business And Interaction Profile
+### Goal And Scope
 
-- Target users: project administrators who create end-user applications and maintain their resources, users, roles, and quotas.
-- First task: locate an existing project application or create one.
-- Success criterion: the administrator can create an application, open its detail workspace, and complete every configuration action shown by the prototype.
-- Object scope: the ledger operates on an application collection; the detail workspace operates on one application.
-- Metrics: only the quota and usage values supplied by the project-application data source are shown. No decorative KPI or trend data is added.
-- Ledger solution: `资产卡片台账页`. The card grid is the first-screen visual anchor, with status before secondary fields and at most five core facts per card.
-- Creation solution: a focused single-page form with template-card selection. A multi-step wizard is rejected because the prototype has no ordered stages or cross-step validation.
-- Detail solution: `对象详情工作区`. The application summary stays visible above Tabs; name and description use inline editing, status uses a quick action, and resource/user/role operations use focused dialogs or drawers.
-- Search shell: lightweight fixed Ant Design Vue controls for application name, status, and template. This is the fixed-filter exception: there is no route echo, saved search, remote option loading, or generic condition composition in the prototype. `ProSearch` is not used.
-- Main reusable components to verify and reuse: `EntityCard`, `ResponsiveGrid`, `SectionCard`, `KvGrid`, `TabsCard`, `InputEditable`, `JlDrawerShell`, `StickyActionBar`, `CloudEmpty`, `MetaChip`, `AppTag`, `AIcon`, plus Ant Design Vue form, upload, tabs, table, tree, progress, modal, switch, and select controls.
-- Style source: `jetlinks-web-core/src/style.css` tokens and Ant Design Vue defaults. Do not add a second palette, nested cards, one-sided status bars, decorative statistics, or hard-coded spacing values.
+The operations UI provides an application ledger, creation flow, and single-application workspace for project administrators. The page keeps the approved `资产卡片台账页` and `对象详情工作区` interaction profile while using the authentication-manager business-application contract as its only data source.
 
-### Code Boundaries
+Owning module: `ui/modules/authentication-manager-ui`. The application menu Scope requires a narrow shared change in `ui/jetlinks-web-core`; `runtime-ui/`, backend behavior, generated artifacts, and unrelated management pages remain out of scope.
 
-- `baseMenu.json`: register the application center and project application menu with existing permission identifiers only.
-- `index.ts`: register create and detail child routes under the project application page.
-- `views/application-center/ProjectApplication/types.ts`: shared application, template, resource, usage, user, role, and permission types.
-- `views/application-center/ProjectApplication/index.vue`: thin ledger-page composition and navigation only.
-- `views/application-center/ProjectApplication/components/ApplicationCard.vue`: one application summary card.
-- `views/application-center/ProjectApplication/Create/index.vue`: application form composition and submit orchestration.
-- `views/application-center/ProjectApplication/Create/TemplateSelector.vue`: selectable template cards and template detail preview.
-- `views/application-center/ProjectApplication/Detail/index.vue`: detail summary, tab routing, and child-panel composition.
-- `views/application-center/ProjectApplication/Detail/components/ApplicationSummary.vue`: persistent object identity, status action, and inline edits.
-- `views/application-center/ProjectApplication/Detail/components/ApplicationSettings.vue`: icon, language, domain, and direct-device settings.
-- `views/application-center/ProjectApplication/Detail/components/DeviceBinding.vue`: bound-device table plus resource selection and unbind actions.
-- `views/application-center/ProjectApplication/Detail/components/CameraBinding.vue`: bound-camera grid plus resource selection, settings, and unbind actions.
-- `views/application-center/ProjectApplication/Detail/components/UsageOverview.vue`: service quota sections and usage progress.
-- `views/application-center/ProjectApplication/Detail/components/UserManagement.vue`: search, add, role change, enable/disable, and remove actions.
-- `views/application-center/ProjectApplication/Detail/components/RoleManagement.vue`: role list, role create/edit, and menu permission tree.
-- `views/application-center/ProjectApplication/useProjectApplication.ts`: typed prototype data boundary and mutations; replace its methods with request wrappers when backend contracts are available.
+### Delivered Contract
+
+- Applications: standard CRUD under `/business-application`; list queries always include the current `projectId`. `projectId` and `templateId` are create-only fields and are omitted from updates.
+- Templates: list and menu preview use `/business-application-template` and `GET /business-application-template/{id}/menus`. Disabled templates remain visible but cannot be selected for creation.
+- Enums: backend `{value,text}` values are normalized centrally; comparisons and submissions use `value`, while the page displays `text`.
+- Users: creation and updates use `/user/detail/_create` and `/user/detail/{id}/_update`; members are queried through `/user/detail/business_application/{applicationId}/_query` and batch-hydrated through `/user/detail/_query`. Creation includes the current `businessApplicationIdList`; updates omit that field and preserve the user's unrelated roles, organizations, positions, and other application memberships.
+- Roles: creation and updates use `/role/_create` and `/role/{roleId}/_update`; application roles are queried through `/role/business_application/{applicationId}/_query`. Creation includes the current `businessApplicationIdList`; updates omit it for the same preservation rule.
+- Role permissions: the existing role menu editor and `/menu/role/{roleId}/_grant/detail` plus `/menu/role/{roleId}/_grant` contracts are reused.
+- Devices: bound assets use the `dim-assets` term with target type `business_application`. Bindable candidates must expose `share`; binding and unbinding use `/assets/bind/device` and `/assets/unbind/device`.
+- Deletion: users and roles use the global generic delete endpoints. Confirmation text explicitly warns that the operation is not limited to the current application.
+
+### Application Menu Scope
+
+Opening a configured application appends `applicationScope=<applicationId>` to its URL. The opened tab stores this value in `sessionStorage` so reloads preserve the context. Only `POST /menu/user-own/tree` receives `X-Application-Scope`; the header is not installed on the global request client and is not propagated to device or other downstream APIs. An explicit empty `applicationScope` query clears the stored value.
+
+The related shared code is limited to:
+
+- `jetlinks-web-core/src/utils/application-scope.ts`: URL creation and per-tab Scope resolution.
+- `jetlinks-web-core/src/api/system/menu.ts`: optional menu-request header.
+- `jetlinks-web-core/src/store/menu.ts`: resolve the current tab Scope when menus are queried.
+
+### UI And Code Boundaries
+
+- `api/application-center/businessApplication.ts`: typed application, template, generic user/role, and asset request boundary.
+- `views/application-center/ProjectApplication/applicationModel.ts`: response envelope, enum, list, menu, and view-model normalization.
+- `views/application-center/ProjectApplication/applicationDeviceService.ts`: bound and shareable device loading.
+- `views/application-center/ProjectApplication/applicationUserService.ts`: application member lookup plus batched full-detail hydration for relation-safe updates.
+- `views/application-center/ProjectApplication/useProjectApplication.ts`: remote state and mutation orchestration.
+- Ledger/create/detail components: loading, empty, validation, confirmation, submit, and post-mutation refresh behavior.
+- `baseMenu.json`: visible name “应用管理” and backend resource actions required by the page.
 - `locales/lang/zh.json` and `locales/lang/en.json`: synchronized user-visible copy.
 
-Every created or substantially edited Vue file must remain at or below 300 lines. Repeated resource selection and mutation feedback will be extracted only when two concrete usages share the same contract.
+Unsupported prototype surfaces were removed: fake quotas and metrics, independent camera binding, and the direct-device switch. No `/project-application*`, `project_application`, or `X-Project-Application-Id` compatibility contract is used; the internal route and source folder name remain unchanged to avoid breaking existing bookmarks and menu codes.
 
-### Delivered Behavior
-
-- The project-application ledger supports application-name, status, and template filtering plus create and detail navigation.
-- Creation supports icon upload, validated name and description fields, six available templates, template detail previews, and a disabled custom-template option.
-- The detail workspace supports inline identity editing, application status changes, application entry, icon/language/domain/direct-device settings, device and camera binding, camera settings, nine quota sections, user lifecycle actions, role creation/editing, and per-menu view/edit/delete permissions.
-- Empty states, confirmations, validation feedback, mutation feedback, responsive layouts, menu registration, child routes, and synchronized Chinese/English UI copy are included.
-- All project-application Vue files are below 300 lines; the largest is `views/application-center/ProjectApplication/Detail/components/RoleManagement.vue` at 200 lines.
-
-### Data Source Decision
-
-No backend contract was found for project applications, resources, quotas, application users, or application roles. The implementation therefore uses a typed in-memory prototype data boundary and does not invent API paths. All page consumers call boundary methods so the storage implementation can be replaced without changing the page components.
-
-This mode is suitable for UI review but does not persist changes across a page reload. Production delivery still requires confirmed backend contracts and request-wrapper integration.
+Every created or substantially edited Vue file remains at or below 300 lines.
 
 ### Verification
 
-The module production build completed successfully with 8,019 transformed modules. The workspace's historical `build:modules` script currently forwards `--module-name` as an unknown Vite 7 CLI option, so validation used the equivalent Vite API entry from `jetlinks-web-core`:
+- Targeted Vue diagnostics report no new errors in the application-center API/page and application-Scope files. The full module check still exits non-zero because of pre-existing shared-core and legacy-module diagnostics.
+- Application-Scope checks cover a plain tab, query bootstrap, reload restore, explicit clear, absolute domain, host with port, and relative URL behavior.
+- `baseMenu.json`, `locales/lang/zh.json`, and `locales/lang/en.json` parse as valid JSON.
+- The target implementation contains no legacy application API path, dimension type, header, or direct-device setting.
+- Production build and authenticated backend E2E results are recorded in the backend integration plan referenced below.
+
+The production build command for this module is:
 
 ```bash
 node --max_old_space_size=8192 --max-semi-space-size=64 -e "process.argv.push('--module-name','authentication-manager-ui'); import('vite').then(({ build }) => build())"
 ```
-
-Targeted Vue diagnostics report no errors under `views/application-center/ProjectApplication`. The repository-wide type check remains blocked by pre-existing errors in `jetlinks-web-core` and unrelated legacy modules.
-
-Browser verification covered desktop and 390-pixel mobile layouts, ledger filtering, creation validation and submit routing, inline edits, settings, status confirmation, device and camera bind/unbind flows, camera details, all nine quota sections, user search/add/role/status/remove actions, role creation, and permission editing. The browser console remained error-free after the expected invalid-form rejection was handled. Full authenticated E2E navigation was not run because the available backend requires non-default credentials; pages were mounted with the running application's Vue, Pinia, i18n, and global-component context without changing application code.
