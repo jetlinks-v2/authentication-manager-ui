@@ -21,69 +21,15 @@
             @change="changeHeaderTheme"
           />
         </a-form-item>
-        <!-- 高德地图API Key输入框 <AIcon type="QuestionCircleOutlined" /> -->
-
-        <a-form-item name="webKey">
-          <template #label>
-            <a-space>
-              <span>{{ $t('Basis.Form.436809-3') }} </span>
-              <a-tooltip
-                :title="$t('Basis.Form.436809-4')"
-              >
-                <AIcon type="QuestionCircleOutlined"/>
-              </a-tooltip>
-            </a-space>
-          </template>
-          <a-input v-model:value="formData.webKey" :placeholder="$t('Basis.Form.436809-5')"></a-input>
+        <a-form-item :label="$t('Basis.Form.436809-27')" name="layout">
+          <LayoutModeSelector v-model:value="formData.layout" />
         </a-form-item>
-        <a-form-item name="apiKey">
-          <template #label>
-            <a-space>
-              <span>{{ $t('Basis.Form.436809-6') }}</span>
-              <a-tooltip :title="$t('Basis.Form.436809-7')">
-                <AIcon type="QuestionCircleOutlined"/>
-              </a-tooltip>
-            </a-space>
-          </template>
-          <a-input v-model:value="formData.apiKey" :placeholder="$t('Basis.Form.436809-8')"></a-input>
-        </a-form-item>
-        <a-form-item>
-          <template #label>
-            <a-space>
-              <span>{{ $t('Basis.Form.436809-9') }}</span>
-              <a-tooltip
-                :title="$t('Basis.Form.436809-10')"
-              >
-                <AIcon type="QuestionCircleOutlined"/>
-              </a-tooltip>
-            </a-space>
-          </template>
-          <a-input
-            v-model:value="formData.secretKey"
-            :placeholder="$t('Basis.Form.436809-11')"
-          />
-        </a-form-item>
-        <!-- base-path输入框 -->
-        <a-form-item name="base-path">
-          <template #label>
-            <a-space>
-              <span>base-path</span>
-              <a-tooltip>
-                <template #title>
-                  <div style="word-break: break-all">
-                    <div>{{ $t('Basis.Form.436809-12') }}</div>
-                    <div>
-                      {{ $t('Basis.Form.436809-13') }}{http/https}:
-                      //{前端所在服务器IP地址}:{前端暴露的服务端口}/api
-                    </div>
-                  </div>
-                </template>
-                <AIcon type="QuestionCircleOutlined"/>
-              </a-tooltip>
-            </a-space>
-          </template>
-          <a-input v-model:value="formData['base-path']" :placeholder="$t('Basis.Form.436809-14')"></a-input>
-        </a-form-item>
+        <MapSettings
+          v-model:web-key="formData.webKey"
+          v-model:api-key="formData.apiKey"
+          v-model:secret-key="formData.secretKey"
+          v-model:base-path="formData['base-path']"
+        />
         <a-form-item
             name="showRecordNumber"
             :label="$t('Basis.Form.436809-24')"
@@ -146,8 +92,10 @@ import {reactive, ref} from 'vue'
 import type {formDataType} from './typing'
 import {useRequest} from '@jetlinks-web/hooks';
 import {save_api} from '../../../api/system/basis';
-import {useSystemStore} from '@jetlinks-web-core/store/system';
+import {normalizeLayoutMode, useSystemStore} from '@jetlinks-web-core/store/system';
 import Upload from '@jetlinks-web-core/views/init-home/Basic/components/upload/upload.vue'
+import LayoutModeSelector from './components/LayoutModeSelector.vue'
+import MapSettings from './components/MapSettings.vue'
 import {onlyMessage} from '@jetlinks-web/utils';
 import {omit} from "lodash-es";
 import { useI18n } from 'vue-i18n';
@@ -172,6 +120,7 @@ const {
 const formData = reactive<formDataType>({
   title: "",  // 系统名称
   headerTheme: "light",  // 主题色
+  layout: "side", // 导航模式
   apiKey: "",  // 高德API Key
   webKey: "", // 高德web key
   secretKey: "", // 高德web key
@@ -206,6 +155,11 @@ const formRules = {
       required: true,
     }
   ],
+  layout: [
+    {
+      required: true,
+    }
+  ],
   'base-path': [
     {
       required: true,
@@ -226,6 +180,7 @@ const getDetails = async () => {
   Object.assign(formData, {
     title: configInfo.front?.title,
     headerTheme: normalizeHeaderTheme(configInfo.front?.headerTheme),
+    layout: normalizeLayoutMode(configInfo.front?.layout),
     logo: configInfo.front?.logo || 'logo.png',
     ico: configInfo.front?.ico || 'favicon.ico',
     showRecordNumber: configInfo.front?.showRecordNumber || false,
@@ -315,7 +270,7 @@ defineExpose({
   }
 
   .form-right {
-    padding-left: 0.75rem;
+    padding-left: var(--space-3);
     width: 50%;
 
     .form-right-bgImage {
