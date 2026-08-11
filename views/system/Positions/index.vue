@@ -5,6 +5,7 @@ import {useMenuStore} from "@jetlinks-web-core/store";
 import { queryPage, del } from '@authentication-manager-ui/api/system/positions';
 import {useRoute} from "vue-router";
 import {onlyMessage} from "@jetlinks-web/utils";
+import {transformConditionTerms} from '@authentication-manager-ui/views/system/conditionFilterUtils';
 
 const { t: $t } = useI18n();
 const params = ref({});
@@ -47,27 +48,31 @@ onMounted(() => {
   }
 })
 
-const onSearch = (e) => {
-  e?.terms.map(a => {
-    return a.terms.map(b => {
-      if (b.column === 'roles') {
-        b.column = 'id$position-role$position'
-        b.termType = undefined
+const onSearch = ({filter}) => {
+  params.value = {
+    terms: transformConditionTerms(filter.terms, (term) => {
+      if (term.column !== 'roles') {
+        return term
       }
-      return b
-    })
-  })
-  params.value = e
+
+      // 关联查询列已包含查询语义，后端不接收额外的 termType。
+      const {termType, ...rest} = term
+      return {
+        ...rest,
+        column: 'id$position-role$position',
+      }
+    }),
+  }
 }
 
 </script>
 
 <template>
   <j-page-container>
-    <pro-search
+    <ConditionFilter
       :columns="columns"
       target="system-position"
-      @search="onSearch"
+      @change="onSearch"
     />
     <full-page>
       <j-pro-table

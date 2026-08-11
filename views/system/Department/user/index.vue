@@ -1,12 +1,12 @@
 <template>
   <div :key="parentId" style="height: 100%; display: flex; flex-direction: column">
-    <pro-search
+    <ConditionFilter
         v-if="show"
         noMargin
         target="category-user"
         style="margin: 0;"
         :columns="columns"
-        @search="handleParams"
+        @change="handleParams"
         ref="searchRef"
     />
     <FullPage>
@@ -110,6 +110,8 @@ import {onlyMessage} from '@jetlinks-web/utils'
 import {useI18n} from 'vue-i18n';
 import {useRouteQuery} from '@vueuse/router'
 import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
+import type {ConditionFilterChangePayload} from '@jetlinks-web-core/components/ConditionFilter'
+import {transformConditionTerms} from '@authentication-manager-ui/views/system/conditionFilterUtils'
 
 const {t: $t} = useI18n();
 const permission = 'system/Department'
@@ -195,17 +197,21 @@ const onSelectAll = (selected: boolean, _: any[], changeRows: any) => {
 }
 
 // 搜索
-const handleParams = (e: any) => {
-  e?.terms.map(a => {
-    return a.terms.map(b => {
-      if (b.column === 'positions') {
-        b.column = 'id$in-dimension$position'
-        b.termType = undefined
+const handleParams = ({filter}: ConditionFilterChangePayload) => {
+  queryParams.value = {
+    terms: transformConditionTerms(filter.terms, (term) => {
+      if (term.column !== 'positions') {
+        return term
       }
-      return b
-    })
-  })
-  queryParams.value = e
+
+      // 关联查询列已包含查询语义，后端不接收额外的 termType。
+      const {termType, ...rest} = term
+      return {
+        ...rest,
+        column: 'id$in-dimension$position',
+      }
+    }),
+  }
 }
 
 const handleAddUser = () => {

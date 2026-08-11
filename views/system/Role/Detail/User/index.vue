@@ -1,9 +1,9 @@
 <template>
   <div class="role-user-container">
-    <pro-search
+    <ConditionFilter
       :columns="columns"
       target="system-role-user"
-      @search="(params)=> queryParams = {...params}"
+      @change="({filter})=> queryParams = {...filter}"
       style="padding: 0"
     />
     <div style="min-height: 0; flex: 1">

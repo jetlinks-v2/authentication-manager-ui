@@ -13,11 +13,11 @@
           <a-switch v-model:checked="bulkBool" :disabled="activeKey !== 'customize'" :checked-children="$t('components.AddDeviceOrProductDialog.314014-3')" :un-checked-children="$t('components.AddDeviceOrProductDialog.314014-4')" style="width: 3.5rem" />
       </div>
 
-      <!-- <pro-search
+      <!-- <ConditionFilter
           type="simple"
           :columns="searchColumns"
           target="category-bind-modal"
-          @search="search"
+          @change="({filter}) => search(filter)"
       /> -->
       <div style="display: flex; align-items: flex-end; margin: 1rem; justify-content: space-between">
         <div>

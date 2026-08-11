@@ -1,10 +1,10 @@
 <template>
-  <pro-search
+  <ConditionFilter
     type="simple"
     :columns="columns"
     target="category-bind-modal"
     noMargin
-    @search="search"
+    @change="({filter}) => search(filter)"
   />
   <div style="height: 31.25rem">
     <j-pro-table ref="tableRef" :request="requestFun" :gridColumn="2" :gridColumns="[2]" :params="queryParams"

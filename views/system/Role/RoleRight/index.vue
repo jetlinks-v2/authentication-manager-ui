@@ -1,10 +1,10 @@
 <template>
   <div class="role-container">
-    <pro-search
+    <ConditionFilter
       noMargin
       :columns="columns"
       target="system-role"
-      @search="handelSearch"
+      @change="({filter}) => handelSearch(filter)"
     />
     <div class="role-table">
       <j-pro-table

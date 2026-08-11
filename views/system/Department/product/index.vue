@@ -1,10 +1,10 @@
 <template>
   <div class="product-container">
-    <pro-search
+    <ConditionFilter
         :columns="columns"
         target="category-product"
         noMargin
-        @search="(params:any)=>queryParams = {...params}"
+        @change="({filter})=>queryParams = {...filter}"
         ref="searchRef"
     />
     <FullPage :extraHeight="24">

@@ -1,10 +1,10 @@
 <template>
   <j-page-container>
     <div class="user-container">
-      <pro-search
+      <ConditionFilter
           :columns="columns"
           target="system-user"
-          @search="handleParams"
+          @change="handleParams"
       />
       <FullPage>
         <j-pro-table
@@ -200,6 +200,8 @@ import {useI18n} from 'vue-i18n';
 import i18n from "@jetlinks-web-core/locales";
 import {queryPageNoPage} from "@authentication-manager-ui/api/system/positions";
 import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
+import type {ConditionFilterChangePayload} from '@jetlinks-web-core/components/ConditionFilter';
+import {transformConditionTerms} from '@authentication-manager-ui/views/system/conditionFilterUtils';
 
 const {t: $t} = useI18n();
 const permission = 'system/User';
@@ -249,7 +251,6 @@ const columns = [
     key: 'roleList',
     search: {
       type: 'select',
-      // rename:'id$in-dimension$role',
       options: () =>
           new Promise((resolve) => {
             queryRole_api({
@@ -392,69 +393,56 @@ type dictType = {
 };
 type modalType = '' | 'add' | 'edit' | 'reset';
 
-const handleParams = (params: any) => {
-  const newParams = (params?.terms as any[])?.map((termsGroupA) => {
-    let arr: any[] = [];
-    termsGroupA.terms = termsGroupA.terms.map((termsItem: any) => {
-      if (termsItem.column === 'id$in-dimension$role') {
-        let _termType =
-            termsItem.termType === 'nin'
-                ? 'not$in'
-                : termsItem.termType;
-        termsItem.column = `${termsItem.column}$${_termType}`;
-        delete termsItem.termType;
-      }
-      if (['telephone', 'email'].includes(termsItem.column)) {
+const handleParams = ({filter}: ConditionFilterChangePayload) => {
+  queryParams.value = {
+    terms: transformConditionTerms(filter.terms, (term) => {
+      if (['telephone', 'email'].includes(term.column || '')) {
+        // 电话和邮箱属于用户详情，按后端关联查询结构提交。
+        const {type, ...detailTerm} = term;
         return {
+          type,
           column: 'id$user-detail',
-          value: [termsItem],
+          value: [detailTerm],
         };
       }
-      if (
-          ['type'].includes(termsItem.column) &&
-          termsItem.value === 'other'
-      ) {
-        arr = [
-          {
-            ...termsItem,
-            type: 'or',
-            termType: 'isnull',
-            value: 1,
-          },
-          {
-            ...termsItem,
-            type: 'or',
-            termType: 'empty',
-            value: 1,
-          },
-        ];
-      }
-      if (termsItem.column === 'roleList') {
-        const isIncludeTermType = ['eq', 'in'].includes(termsItem.termType);
-        return {
-          column: `id$in-dimension$role${!isIncludeTermType ? '$not' : ''}`,
-          type: termsItem.type,
-          value: termsItem.value,
-        };
-      }
-      if (termsItem.column === 'positions') {
-        const isIncludeTermType = ['eq', 'in'].includes(termsItem.termType);
-        return {
-          column: `id$in-dimension$position${!isIncludeTermType ? '$not' : ''}`,
-          type: termsItem.type,
-          value: termsItem.value,
-        };
-      }
-      return termsItem;
-    });
 
-    if (arr.length) {
-      termsGroupA.terms = [...termsGroupA.terms, ...arr];
-    }
+      if (term.column === 'type' && term.value === 'other') {
+        // “其他”同时匹配显式 other、空值和 null，并限制在独立 OR 条件组内。
+        const {type, ...baseTerm} = term;
+        return {
+          type,
+          terms: [
+            baseTerm,
+            {
+              ...baseTerm,
+              type: 'or',
+              termType: 'isnull',
+              value: 1,
+            },
+            {
+              ...baseTerm,
+              type: 'or',
+              termType: 'empty',
+              value: 1,
+            },
+          ],
+        };
+      }
 
-    return termsGroupA;
-  });
-  queryParams.value = {terms: newParams || []};
+      if (term.column === 'roleList' || term.column === 'positions') {
+        // 角色和职位通过关联列查询，排除条件由列名的 $not 后缀表达。
+        const {termType, ...rest} = term;
+        const relation = term.column === 'roleList' ? 'role' : 'position';
+        const suffix = ['eq', 'in'].includes(termType || '') ? '' : '$not';
+        return {
+          ...rest,
+          column: `id$in-dimension$${relation}${suffix}`,
+        };
+      }
+
+      return term;
+    }),
+  };
 };
 
 const onImport = () => {

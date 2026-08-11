@@ -1,12 +1,12 @@
 `<template>
   <div class="role-user-container">
-    <pro-search
+    <ConditionFilter
       :columns="columns"
       target="system-position-user"
       :style="{
         padding: 0,
       }"
-      @search="(params)=>queryParams = {...params}"
+      @change="({filter})=>queryParams = {...filter}"
     />
 
     <div class="table-content">

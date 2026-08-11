@@ -1,6 +1,6 @@
 <template>
   <a-modal visible title="绑定用户" :width="1000" @ok="confirm" @cancel="emits('update:visible', false)">
-    <pro-search style="margin: 0; padding: 0;" :columns="columns" type="simple" @search="(params) => queryParams = { ...params }" />
+    <ConditionFilter style="margin: 0; padding: 0;" :columns="columns" type="simple" @change="({ filter }) => queryParams = { ...filter }" />
 
     <div style="height: 28.125rem;">
       <j-pro-table
@@ -128,4 +128,3 @@ const selectAll = (selected: Boolean, selectedRows: any,changeRows:any) => {
   }
 }
 </script>
-  

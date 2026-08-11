@@ -1,12 +1,12 @@
 <template>
     <div class="header">
-        <pro-search
+        <ConditionFilter
             :columns="columns"
             target="action-notice-config"
             type="simple"
             class="action-search"
             style="padding: 0"
-            @search="handleSearch"
+            @change="({filter}) => handleSearch(filter)"
         />
         <j-permission-button
             @click="onAdd"

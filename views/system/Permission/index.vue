@@ -1,9 +1,9 @@
 <template>
   <j-page-container>
-    <pro-search
+    <ConditionFilter
         :columns="columns"
         target="system-permission"
-        @search="handleSearch"
+        @change="({filter}) => handleSearch(filter)"
     />
     <FullPage>
       <j-pro-table

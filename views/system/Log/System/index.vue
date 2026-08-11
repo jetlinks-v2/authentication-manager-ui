@@ -2,7 +2,7 @@
     <j-page-container>
         <full-page>
             <div style="height: 100%; display: flex;flex-direction: column">
-                <pro-search style="margin-bottom: 0" :columns="columns" target="search-system" @search="handleSearch" />
+                <ConditionFilter style="margin-bottom: 0" :columns="columns" target="search-system" @change="handleSearch" />
                 <div style="min-height: 0; flex: 1">
                 <j-pro-table
                     ref="tableRef"
@@ -104,12 +104,12 @@
 <script lang="ts" setup name="SystemLog">
 import type { ActionsType } from '../typings';
 import type { SystemLogItem } from '../typings';
+import type { ConditionFilterChangePayload } from '@jetlinks-web-core/components/ConditionFilter';
 import { querySystem } from '@authentication-manager-ui/api/log';
 import dayjs from 'dayjs';
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();
-import { modifySearchColumnValue } from '@jetlinks-web-core/utils/comm';
 
 const tableRef = ref<Record<string, any>>({});
 const params = ref<Record<string, any>>({});
@@ -172,6 +172,7 @@ const columns = [
         scopedSlots: true,
         search: {
             type: 'string',
+            rename: 'context.server',
         },
         width: 200,
         ellipsis: true,
@@ -235,16 +236,11 @@ const getActions = (data: Partial<Record<string, any>>): ActionsType[] => {
     ];
 };
 
-const column = {
-    server: 'context.server',
-};
-
 /**
  * 搜索
- * @param params
  */
-const handleSearch = (e: any) => {
-    params.value = modifySearchColumnValue(e, column);
+const handleSearch = ({ filter }: ConditionFilterChangePayload) => {
+    params.value = filter;
 };
 </script>
 

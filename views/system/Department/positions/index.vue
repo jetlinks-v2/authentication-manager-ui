@@ -267,12 +267,12 @@ watch(
 
 <template>
   <div style="overflow-y: auto;" :key="parentId">
-    <pro-search
+    <ConditionFilter
         :columns="columns"
         noMargin
         target="category-position"
         style="margin: 0;"
-        @search="handleParams"
+        @change="({filter}) => handleParams(filter)"
         ref="searchRef"
     />
     <FullPage>

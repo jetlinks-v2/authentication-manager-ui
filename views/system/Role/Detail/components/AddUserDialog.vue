@@ -1,6 +1,6 @@
 <template>
     <a-modal open :title="$t('components.AddUserDialog.659587-0')" :width="1000" @ok="confirm" @cancel="emits('update:visible', false)">
-        <pro-search style="padding: 0" :columns="columns" type="simple" @search="(params) => queryParams = { ...params }" />
+        <ConditionFilter style="padding: 0" :columns="columns" type="simple" @change="({ filter }) => queryParams = { ...filter }" />
 
         <div style="height: 30rem;">
           <j-pro-table style="padding: 0" ref="tableRef" :columns="columns" :request="getUserList" mode="TABLE" :params="queryParams"

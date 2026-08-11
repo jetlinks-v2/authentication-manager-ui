@@ -16,18 +16,18 @@
             </div>
         </div>
 
-        <!-- <pro-search
+        <!-- <ConditionFilter
             type="simple"
             :columns="searchColumns"
             target="category-bind-modal"
-            @search="search"
+            @change="({filter}) => search(filter)"
         /> -->
-        <pro-search
+        <ConditionFilter
             type="simple"
             :columns="searchColumns"
             target="category-bind-modal"
             noMargin
-            @search="search"
+            @change="({filter}) => search(filter)"
         />
         <j-pro-table
             ref="tableRef"

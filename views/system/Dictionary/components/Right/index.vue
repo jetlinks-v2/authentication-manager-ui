@@ -6,7 +6,7 @@
             <div>{{ $t('Right.index.572408-2') }}{{data?.createTime ? dayjs(data.createTime).format('YYYY-MM-DD HH:mm:ss') : ''}}</div>
         </div>
         <div class="contain">
-            <pro-search style="padding: 1.125rem 0" :columns="columns" noMargin @search="handleSearch" target="system_dictionary" />
+            <ConditionFilter style="padding: 1.125rem 0" :columns="columns" noMargin @change="({filter}) => handleSearch(filter)" target="system_dictionary" />
             <JProTable :bodyStyle="{
                 padding: 0,
             }" :scroll="{ y: 'calc(100vh - 31.25rem)' }" :columns="columns" mode="TABLE" :request="queryItem" :params="params" ref="tableRef">

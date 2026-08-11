@@ -86,7 +86,7 @@ const onConfirm = () => {
     @ok="onConfirm"
     @cancel="emits('close')"
   >
-    <pro-search type="simple" :columns="bindUserColumns" target="category" @search="onSearch" />
+    <ConditionFilter type="simple" :columns="bindUserColumns" target="category" @change="({filter}) => onSearch(filter)" />
     <div class="table">
       <j-pro-table
         ref="tableRef"

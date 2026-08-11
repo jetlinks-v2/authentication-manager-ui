@@ -7,7 +7,7 @@
     @ok="confirm"
     @cancel="emits('close')"
   >
-    <pro-search style="padding: 0" type="simple" :columns="bindUserColumns" target="category" @search="onSearch" />
+    <ConditionFilter style="padding: 0" type="simple" :columns="bindUserColumns" target="category" @change="({filter}) => onSearch(filter)" />
     <div class="table" style="height: 28.125rem">
       <j-pro-table
         ref="tableRef"

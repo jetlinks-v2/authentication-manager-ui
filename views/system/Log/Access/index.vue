@@ -2,7 +2,7 @@
     <j-page-container>
         <full-page>
             <div style="height: 100%; display: flex;flex-direction: column">
-                <pro-search style="margin-bottom: 0" :columns="columns" target="search-access" @search="handleSearch" />
+                <ConditionFilter style="margin-bottom: 0" :columns="columns" target="search-access" @change="handleSearch" />
                 <div style="min-height: 0; flex: 1">
                 <j-pro-table
                     ref="tableRef"
@@ -122,9 +122,9 @@
 </template>
 <script lang="ts" setup name="AccessLog">
 import type { ActionsType } from '../typings';
+import type { ConditionFilterChangePayload } from '@jetlinks-web-core/components/ConditionFilter';
 import { queryAccess } from '@authentication-manager-ui/api/log';
 import dayjs from 'dayjs';
-import { modifySearchColumnValue } from '@jetlinks-web-core/utils/comm';
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();
@@ -163,6 +163,7 @@ const columns = [
         scopedSlots: true,
         search: {
             type: 'string',
+            rename: 'action',
         },
         ellipsis: true,
     },
@@ -232,6 +233,7 @@ const columns = [
         key: 'username',
         // search: {
         //     type: 'string',
+        //     rename: 'context.username',
         // },
         width: 150,
         scopedSlots: true,
@@ -301,17 +303,11 @@ const getResponseStatusColor = (status?: number) => {
     return 'success';
 };
 
-const column = {
-    username: 'context.username',
-    description: 'action',
-};
-
 /**
  * 搜索
- * @param params
  */
-const handleSearch = (e: any) => {
-    params.value = modifySearchColumnValue(e, column);
+const handleSearch = ({ filter }: ConditionFilterChangePayload) => {
+    params.value = filter;
 };
 </script>
 <style scoped lang="less">

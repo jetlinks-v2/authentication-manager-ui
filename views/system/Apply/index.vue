@@ -1,10 +1,10 @@
 <template>
   <j-page-container>
     <div class="apply-container">
-      <pro-search
+      <ConditionFilter
           :columns="columns"
           target="system-apply"
-          @search="(params:any)=>queryParams = {...params}"
+          @change="({filter})=>queryParams = {...filter}"
       />
       <FullPage>
         <j-pro-table

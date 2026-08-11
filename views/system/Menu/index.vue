@@ -1,11 +1,11 @@
  <template>
   <j-page-container>
     <div class="menu-container">
-      <pro-search
+      <ConditionFilter
         :labelWidth="56"
         :columns="columns"
         target="category"
-        @search="handleSearch"
+        @change="handleSearch"
       />
       <FullPage :fixed="false">
         <j-pro-table
@@ -93,6 +93,7 @@ import {OWNER_KEY} from "@jetlinks-web-core/utils/consts";
 import { useI18n } from 'vue-i18n';
 import { useUserStore } from '@jetlinks-web-core/store/user';
 import { storeToRefs } from 'pinia'
+import type {ConditionFilterChangePayload} from '@jetlinks-web-core/components/ConditionFilter'
 
 const { t: $t } = useI18n();
 const permission = 'system/Menu'
@@ -185,7 +186,7 @@ const columns = [
     width: 140,
   },
 ]
-const queryParams = ref({ terms: [] })
+const queryParams = ref<ConditionFilterChangePayload['filter']>({ terms: [] })
 const defaultParams = {
   terms: [
     {
@@ -200,9 +201,9 @@ const expandedRowKeys = ref<string[]>([])
 const tableRef = ref<Record<string, any>>({}) // 表格实例
 const total = ref<number>(0)
 
-const handleSearch = (e: any) => {
-  queryParams.value = e
-  if (!e.length) {
+const handleSearch = ({filter}: ConditionFilterChangePayload) => {
+  queryParams.value = filter
+  if (!filter.terms.length) {
     expandedRowKeys.value = []
   }
 }
