@@ -1,8 +1,17 @@
 <template>
     <j-page-container>
+        <PageHeader class="authentication-system-list-page__header" :title="$t('SystemList.accessLog')">
+            <template #actions>
+                <ConditionFilter
+                    class="authentication-system-list-page__filter"
+                    :columns="columns"
+                    target="search-access"
+                    @change="handleSearch"
+                />
+            </template>
+        </PageHeader>
         <full-page>
             <div style="height: 100%; display: flex;flex-direction: column">
-                <ConditionFilter style="margin-bottom: 0" :columns="columns" target="search-access" @change="handleSearch" />
                 <div style="min-height: 0; flex: 1">
                 <j-pro-table
                     ref="tableRef"
@@ -126,6 +135,7 @@ import type { ConditionFilterChangePayload } from '@jetlinks-web-core/components
 import { queryAccess } from '@authentication-manager-ui/api/log';
 import dayjs from 'dayjs';
 import { useI18n } from 'vue-i18n';
+import PageHeader from '@jetlinks-web-core/components/PageHeader';
 
 const { t: $t } = useI18n();
 const tableRef = ref<Record<string, any>>({});

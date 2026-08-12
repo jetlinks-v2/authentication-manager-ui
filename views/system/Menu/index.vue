@@ -1,12 +1,25 @@
  <template>
   <j-page-container>
     <div class="menu-container">
-      <ConditionFilter
-        :labelWidth="56"
-        :columns="columns"
-        target="category"
-        @change="handleSearch"
-      />
+      <PageHeader class="authentication-system-list-page__header" :title="$t('SystemList.menu')">
+        <template #actions>
+          <ConditionFilter
+            class="authentication-system-list-page__filter"
+            :labelWidth="56"
+            :columns="columns"
+            target="category"
+            @change="handleSearch"
+          />
+          <j-permission-button
+            class="authentication-system-list-page__primary-action"
+            type="primary"
+            :hasPermission="`${permission}:add`"
+            @click="toDetails({})"
+          >
+            <AIcon type="PlusOutlined" />{{ $t('Menu.index.599742-0') }}
+          </j-permission-button>
+        </template>
+      </PageHeader>
       <FullPage :fixed="false">
         <j-pro-table
           ref="tableRef"
@@ -20,16 +33,8 @@
           v-model:expandedRowKeys="expandedRowKeys"
         >
           <template #headerLeftRender>
-            <j-permission-button
-              type="primary"
-              :hasPermission="`${permission}:add`"
-              @click="toDetails({})"
-            >
-              <AIcon type="PlusOutlined" />{{ $t('Menu.index.599742-0') }}
-            </j-permission-button>
             <a-button
               v-if="admin"
-              style="margin-left: 0.75rem"
               @click="router.push('/system/Menu/Setting')"
             >{{ $t('Menu.index.599742-17') }}</a-button
             >
@@ -94,6 +99,7 @@ import { useI18n } from 'vue-i18n';
 import { useUserStore } from '@jetlinks-web-core/store/user';
 import { storeToRefs } from 'pinia'
 import type {ConditionFilterChangePayload} from '@jetlinks-web-core/components/ConditionFilter'
+import PageHeader from '@jetlinks-web-core/components/PageHeader'
 
 const { t: $t } = useI18n();
 const permission = 'system/Menu'

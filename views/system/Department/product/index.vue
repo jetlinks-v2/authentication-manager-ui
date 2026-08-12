@@ -1,12 +1,27 @@
 <template>
   <div class="product-container">
-    <ConditionFilter
-        :columns="columns"
-        target="category-product"
-        noMargin
-        @change="({filter})=>queryParams = {...filter}"
-        ref="searchRef"
-    />
+    <PageHeader class="authentication-system-list-page__header" :title="$t('SystemList.departmentProduct')">
+      <template #actions>
+        <ConditionFilter
+          class="authentication-system-list-page__filter"
+          :columns="columns"
+          target="category-product"
+          noMargin
+          @change="({filter})=>queryParams = {...filter}"
+          ref="searchRef"
+        />
+        <j-permission-button
+          v-if="parentId"
+          class="authentication-system-list-page__primary-action"
+          :hasPermission="`${permission}:assert`"
+          type="primary"
+          @click="dialogs.addShow = true"
+        >
+          <AIcon type="PlusOutlined"/>
+          {{ $t('product.index.083446-0') }}
+        </j-permission-button>
+      </template>
+    </PageHeader>
     <FullPage :extraHeight="24">
       <j-pro-table
           ref="tableRef"
@@ -24,16 +39,7 @@
           :columns="columns"
       >
         <template #headerLeftRender>
-          <a-space v-if="parentId">
-            <j-permission-button
-                :hasPermission="`${permission}:assert`"
-                type="primary"
-                @click="dialogs.addShow = true"
-            >
-              <AIcon type="PlusOutlined"/>
-              {{ $t('product.index.083446-0') }}
-            </j-permission-button>
-            <a-dropdown trigger="hover">
+          <a-dropdown v-if="parentId" trigger="hover">
               <a-button>{{ $t('product.index.083446-1') }}</a-button>
               <template #overlay>
                 <a-menu>
@@ -83,8 +89,7 @@
                   </a-menu-item>
                 </a-menu>
               </template>
-            </a-dropdown>
-          </a-space>
+          </a-dropdown>
         </template>
 
         <template #card="slotProps">
@@ -290,6 +295,7 @@ import {systemImg} from "@authentication-manager-ui/assets";
 import {useI18n} from 'vue-i18n';
 import {downloadFileByUrl} from '@jetlinks-web/utils';
 import {useMenuStore} from "@jetlinks-web-core/store";
+import PageHeader from '@jetlinks-web-core/components/PageHeader';
 
 const {t: $t} = useI18n();
 const permission = 'system/Department';
@@ -449,7 +455,6 @@ const table = {
   },
   // 取消全选
   cancelSelect: () => {
-    // console.log(1111);
     tableData._selectedRowKeys = [];
     tableData.selectedRows = [];
   },
@@ -709,7 +714,6 @@ const nextAction = (data: any) => {
 }
 const nextConfirm = () => {
   departmentStore.setProductId(Temporary.value);
-  console.log(nextConfirm, Temporary.value)
   emits('openDeviceBind', Temporary.value)
 }
 </script>

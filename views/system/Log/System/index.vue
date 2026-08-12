@@ -1,8 +1,17 @@
 <template>
     <j-page-container>
+        <PageHeader class="authentication-system-list-page__header" :title="$t('SystemList.systemLog')">
+            <template #actions>
+                <ConditionFilter
+                    class="authentication-system-list-page__filter"
+                    :columns="columns"
+                    target="search-system"
+                    @change="handleSearch"
+                />
+            </template>
+        </PageHeader>
         <full-page>
             <div style="height: 100%; display: flex;flex-direction: column">
-                <ConditionFilter style="margin-bottom: 0" :columns="columns" target="search-system" @change="handleSearch" />
                 <div style="min-height: 0; flex: 1">
                 <j-pro-table
                     ref="tableRef"
@@ -89,11 +98,6 @@
             <div class="warn-content">
                 {{ descriptionsData.exceptionStack }}
             </div>
-        <!--        <j-textarea-->
-        <!--            v-model:value=""-->
-        <!--            placeholder="暂无数据"-->
-        <!--            :auto-size="{ minRows: 24, maxRows: 28 }"-->
-        <!--        />-->
                 <template #footer>
                     <a-button type="primary" @click="handleOk">{{ $t('System.index.112006-1') }}</a-button>
                 </template>
@@ -108,6 +112,7 @@ import type { ConditionFilterChangePayload } from '@jetlinks-web-core/components
 import { querySystem } from '@authentication-manager-ui/api/log';
 import dayjs from 'dayjs';
 import { useI18n } from 'vue-i18n';
+import PageHeader from '@jetlinks-web-core/components/PageHeader';
 
 const { t: $t } = useI18n();
 

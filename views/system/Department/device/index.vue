@@ -1,12 +1,27 @@
 <template>
   <div class="product-container">
-    <ConditionFilter
-      :columns="columns"
-      target="category-device"
-      noMargin
-      @change="({filter})=>queryParams = {...filter}"
-      ref="searchRef"
-    />
+    <PageHeader class="authentication-system-list-page__header" :title="$t('SystemList.departmentDevice')">
+      <template #actions>
+        <ConditionFilter
+          class="authentication-system-list-page__filter"
+          :columns="columns"
+          target="category-device"
+          noMargin
+          @change="({filter})=>queryParams = {...filter}"
+          ref="searchRef"
+        />
+        <j-permission-button
+          v-if="parentId"
+          class="authentication-system-list-page__primary-action"
+          :hasPermission="`${permission}:assert`"
+          type="primary"
+          @click="table.clickAdd('handle')"
+        >
+          <AIcon type="PlusOutlined"/>
+          {{ $t('device.index.988419-0') }}
+        </j-permission-button>
+      </template>
+    </PageHeader>
     <FullPage>
       <j-pro-table
         ref="tableRef"
@@ -24,16 +39,7 @@
         :columns="columns"
       >
         <template #headerLeftRender>
-          <a-space v-if="parentId">
-            <j-permission-button
-              :hasPermission="`${permission}:assert`"
-              type="primary"
-              @click="table.clickAdd('handle')"
-            >
-              <AIcon type="PlusOutlined"/>
-              {{ $t('device.index.988419-0') }}
-            </j-permission-button>
-            <a-dropdown trigger="hover">
+          <a-dropdown v-if="parentId" trigger="hover">
               <a-button>{{ $t('device.index.988419-1') }}</a-button>
               <template #overlay>
                 <a-menu>
@@ -83,8 +89,7 @@
                   </a-menu-item>
                 </a-menu>
               </template>
-            </a-dropdown>
-          </a-space>
+          </a-dropdown>
         </template>
 
         <template #card="slotProps">
@@ -265,6 +270,7 @@ import {systemImg} from "@authentication-manager-ui/assets";
 import { useI18n } from 'vue-i18n';
 import { downloadFileByUrl } from '@jetlinks-web/utils';
 import { watch } from 'vue'
+import PageHeader from '@jetlinks-web-core/components/PageHeader';
 
 const { t: $t } = useI18n();
 const departmentStore = useDepartmentStore();

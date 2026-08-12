@@ -1,14 +1,28 @@
 <template>
-  <div :key="parentId" style="height: 100%; display: flex; flex-direction: column">
-    <ConditionFilter
-        v-if="show"
-        noMargin
-        target="category-user"
-        style="margin: 0;"
-        :columns="columns"
-        @change="handleParams"
-        ref="searchRef"
-    />
+  <div :key="parentId" class="authentication-system-list-page">
+    <PageHeader class="authentication-system-list-page__header" :title="$t('User.index.673867-23')">
+      <template #actions>
+        <ConditionFilter
+          v-if="show"
+          class="authentication-system-list-page__filter"
+          noMargin
+          target="category-user"
+          :columns="columns"
+          @change="handleParams"
+          ref="searchRef"
+        />
+        <j-permission-button
+          class="authentication-system-list-page__primary-action"
+          type="primary"
+          :hasPermission="`${permission}:bind-user`"
+          @click="addUserDialogVisible = true"
+          :disabled="isShow"
+        >
+          <AIcon type="PlusOutlined"/>
+          {{ $t('position.User.473212-0') }}
+        </j-permission-button>
+      </template>
+    </PageHeader>
     <FullPage>
       <j-pro-table
           v-if="show"
@@ -27,20 +41,8 @@
         <template #headerLeftRender>
           <a-space>
             <j-permission-button
-                type="primary"
-                :hasPermission="`${permission}:bind-user`"
-                @click="addUserDialogVisible = true"
-                style="margin-right: 0.9375rem"
-                :disabled="isShow"
-            >
-              <AIcon type="PlusOutlined"/>
-              {{ $t('position.User.473212-0') }}
-            </j-permission-button>
-            <j-permission-button
-                type="primary"
                 :hasPermission="`${permission}:bind-user`"
                 @click="dialogVisible = true"
-                style="margin-right: 0.9375rem"
                 :disabled="isShow"
             >
               <AIcon type="PlusOutlined"/>
@@ -112,6 +114,7 @@ import {useRouteQuery} from '@vueuse/router'
 import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
 import type {ConditionFilterChangePayload} from '@jetlinks-web-core/components/ConditionFilter'
 import {transformConditionTerms} from '@authentication-manager-ui/views/system/conditionFilterUtils'
+import PageHeader from '@jetlinks-web-core/components/PageHeader'
 
 const {t: $t} = useI18n();
 const permission = 'system/Department'

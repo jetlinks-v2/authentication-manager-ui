@@ -1,11 +1,26 @@
 <template>
   <j-page-container>
     <div class="user-container">
-      <ConditionFilter
-          :columns="columns"
-          target="system-user"
-          @change="handleParams"
-      />
+      <PageHeader class="authentication-system-list-page__header" :title="$t('User.index.673867-23')">
+        <template #actions>
+          <ConditionFilter
+            class="authentication-system-list-page__filter"
+            :columns="columns"
+            target="system-user"
+            @change="handleParams"
+          />
+          <j-permission-button
+            class="authentication-system-list-page__primary-action"
+            :hasPermission="`${permission}:add`"
+            type="primary"
+            @click="table.openDialog('add')"
+            @save="table.refresh()"
+          >
+            <AIcon type="PlusOutlined"/>
+            {{ $t('User.index.673867-0') }}
+          </j-permission-button>
+        </template>
+      </PageHeader>
       <FullPage>
         <j-pro-table
             ref="tableRef"
@@ -23,19 +38,9 @@
         >
           <template #headerLeftRender>
               <RegistryComponent code="addTool" is="a-space">
-                <j-permission-button
-                    key="add"
-                    :hasPermission="`${permission}:add`"
-                    type="primary"
-                    @click="table.openDialog('add')"
-                    @save="table.refresh()"
-                >
-                  <AIcon type="PlusOutlined"/>
-                  {{ $t('User.index.673867-0') }}
-                </j-permission-button>
                 <a-dropdown key="batch">
                   <a-button>
-                    批量操作
+                    {{ $t('User.index.673867-19') }}
                   </a-button>
                   <template #overlay>
                     <a-menu>
@@ -44,7 +49,7 @@
                             :hasPermission="`${permission}:import`"
                             @click="onImport"
                         >
-                          批量导入
+                          {{ $t('User.index.673867-20') }}
                         </j-permission-button>
                       </a-menu-item>
                       <a-menu-item key="export">
@@ -52,7 +57,7 @@
                             :hasPermission="`${permission}:export`"
                             @click="onExport"
                         >
-                          批量导出
+                          {{ $t('User.index.673867-21') }}
                         </j-permission-button>
                       </a-menu-item>
                     </a-menu>
@@ -177,7 +182,7 @@
     v-if="importData.visible"
     :downloadUrlBuilder="importUserTemplate_api"
     :request="importUser_api"
-    message="若系统中已存在相同用户名，若为更新该用户信息模板字段为空，将清空该字段；若有值，则更新该字段"
+    :message="$t('User.index.673867-22')"
     @close="importData.visible = false"
     @save="handleImportDone"
   />
@@ -202,6 +207,7 @@ import {queryPageNoPage} from "@authentication-manager-ui/api/system/positions";
 import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
 import type {ConditionFilterChangePayload} from '@jetlinks-web-core/components/ConditionFilter';
 import {transformConditionTerms} from '@authentication-manager-ui/views/system/conditionFilterUtils';
+import PageHeader from '@jetlinks-web-core/components/PageHeader';
 
 const {t: $t} = useI18n();
 const permission = 'system/User';
@@ -454,7 +460,7 @@ const onExport = async () => {
   if(res) {
     const blob = new Blob([res], { type: 'xlsx' });
     const url = URL.createObjectURL(blob);
-    downloadFileByUrl(url, '用户列表', 'xlsx')
+    downloadFileByUrl(url, $t('User.index.673867-23'), 'xlsx')
   }
 }
 

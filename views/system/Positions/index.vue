@@ -6,6 +6,7 @@ import { queryPage, del } from '@authentication-manager-ui/api/system/positions'
 import {useRoute} from "vue-router";
 import {onlyMessage} from "@jetlinks-web/utils";
 import {transformConditionTerms} from '@authentication-manager-ui/views/system/conditionFilterUtils';
+import PageHeader from '@jetlinks-web-core/components/PageHeader';
 
 const { t: $t } = useI18n();
 const params = ref({});
@@ -69,11 +70,24 @@ const onSearch = ({filter}) => {
 
 <template>
   <j-page-container>
-    <ConditionFilter
-      :columns="columns"
-      target="system-position"
-      @change="onSearch"
-    />
+    <PageHeader class="authentication-system-list-page__header" :title="$t('SystemList.positions')">
+      <template #actions>
+        <ConditionFilter
+          class="authentication-system-list-page__filter"
+          :columns="columns"
+          target="system-position"
+          @change="onSearch"
+        />
+        <j-permission-button
+          class="authentication-system-list-page__primary-action"
+          :hasPermission="`${permission}:add`"
+          type="primary"
+          @click="onAdd"
+        >
+          <AIcon type="PlusOutlined" />{{ $t('User.index.673867-0') }}
+        </j-permission-button>
+      </template>
+    </PageHeader>
     <full-page>
       <j-pro-table
         ref="tableRef"
@@ -88,15 +102,6 @@ const onSearch = ({filter}) => {
         }"
         :scroll="{ y: 'calc(100% - 3.75rem)' }"
       >
-        <template #headerLeftRender>
-          <j-permission-button
-            :hasPermission="`${permission}:add`"
-            type="primary"
-            @click="onAdd"
-          >
-            <AIcon type="PlusOutlined" />{{ $t('User.index.673867-0') }}
-          </j-permission-button>
-        </template>
         <template #roles="record">
           <j-ellipsis>
             {{ record.roles?.map(item => item.name).join(',') || '' }}

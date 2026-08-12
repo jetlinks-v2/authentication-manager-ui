@@ -1,11 +1,22 @@
 <template>
   <div class="role-user-container">
-    <ConditionFilter
-      :columns="columns"
-      target="system-role-user"
-      @change="({filter})=> queryParams = {...filter}"
-      style="padding: 0"
-    />
+    <PageHeader class="authentication-system-list-page__header" :title="$t('User.index.673867-23')">
+      <template #actions>
+        <ConditionFilter
+          class="authentication-system-list-page__filter"
+          :columns="columns"
+          target="system-role-user"
+          @change="({filter})=> queryParams = {...filter}"
+        />
+        <a-button
+          class="authentication-system-list-page__primary-action"
+          type="primary"
+          @click="dialogVisible = true"
+        >
+          <AIcon type="PlusOutlined" />{{ $t('User.index.667995-0') }}
+        </a-button>
+      </template>
+    </PageHeader>
     <div style="min-height: 0; flex: 1">
       <j-pro-table
           ref="tableRef"
@@ -25,19 +36,14 @@
                     }"
       >
         <template #headerLeftRender>
-          <a-space>
-            <a-button type="primary" @click="dialogVisible = true">
-              <AIcon type="PlusOutlined" />{{ $t('User.index.667995-0') }}
-            </a-button>
-            <j-permission-button
-                :popConfirm="{
+          <j-permission-button
+              :popConfirm="{
               title: $t('User.index.667995-1'),
               onConfirm: () => table.unbind(),
             }"
-            >
-              <AIcon type="DisconnectOutlined" />{{ $t('User.index.667995-2') }}
-            </j-permission-button>
-          </a-space>
+          >
+            <AIcon type="DisconnectOutlined" />{{ $t('User.index.667995-2') }}
+          </j-permission-button>
         </template>
         <template #status="slotProps">
           <j-badge-status
@@ -81,6 +87,7 @@ import { getUserByRole_api, unbindUser_api } from '@authentication-manager-ui/ap
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n';
 import dayjs from "dayjs";
+import PageHeader from '@jetlinks-web-core/components/PageHeader';
 
 const { t: $t } = useI18n();
 const roleId = useRoute().params.id as string

@@ -1,11 +1,24 @@
 <template>
   <div class="role-container">
-    <ConditionFilter
-      noMargin
-      :columns="columns"
-      target="system-role"
-      @change="({filter}) => handelSearch(filter)"
-    />
+    <PageHeader class="authentication-system-list-page__header" :title="$t('SystemList.role')">
+      <template #actions>
+        <ConditionFilter
+          class="authentication-system-list-page__filter"
+          noMargin
+          :columns="columns"
+          target="system-role"
+          @change="({filter}) => handelSearch(filter)"
+        />
+        <j-permission-button
+          class="authentication-system-list-page__primary-action"
+          type="primary"
+          :hasPermission="`${permission}:add`"
+          @click="addRole"
+        >
+          <AIcon type="PlusOutlined" />{{ $t('RoleRight.index.470525-0') }}
+        </j-permission-button>
+      </template>
+    </PageHeader>
     <div class="role-table">
       <j-pro-table
         ref="tableRef"
@@ -20,16 +33,6 @@
           ]
         }"
       >
-        <template #headerLeftRender>
-          <j-permission-button
-            type="primary"
-            :hasPermission="`${permission}:add`"
-            @click="addRole"
-          >
-            <AIcon type="PlusOutlined" />{{ $t('RoleRight.index.470525-0') }}
-          </j-permission-button>
-        </template>
-
         <template #action="slotProps">
           <a-space>
             <template v-for="i in getActions(slotProps, 'table')" :key="i.key">
@@ -80,6 +83,7 @@ import { getRoleList_api, delRole_api } from '@authentication-manager-ui/api/sys
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n';
+import PageHeader from '@jetlinks-web-core/components/PageHeader';
 
 const { t: $t } = useI18n();
 const props = defineProps({
@@ -270,7 +274,7 @@ watch(
   .role-table {
     flex: 1 1 0;
     min-height: 0;
-    background-color: #e50012;
+    background-color: var(--jet-theme-bg-container);
   }
   :deep(.ant-table-cell) {
     .ant-btn-link {

@@ -6,6 +6,7 @@ import {useMenuStore} from '@jetlinks-web-core/store';
 import {onlyMessage} from '@jetlinks-web/utils';
 import {queryRole_api} from "@authentication-manager-ui/api/system/user";
 import {getPositionTree} from "./data";
+import PageHeader from '@jetlinks-web-core/components/PageHeader';
 
 const {t: $t} = useI18n();
 const menuStore = useMenuStore();
@@ -41,7 +42,7 @@ const columns = [
     },
   },
   {
-    title: '角色',
+    title: $t('User.index.673867-13'),
     dataIndex: 'roles',
     key: 'roles',
     ellipsis: true,
@@ -69,7 +70,7 @@ const columns = [
     scopedSlots: true
   },
   {
-    title: '上级职位',
+    title: $t('positions.index.223804-1'),
     dataIndex: 'parentId',
     key: 'parentId',
     ellipsis: true,
@@ -266,15 +267,29 @@ watch(
 </script>
 
 <template>
-  <div style="overflow-y: auto;" :key="parentId">
-    <ConditionFilter
-        :columns="columns"
-        noMargin
-        target="category-position"
-        style="margin: 0;"
-        @change="({filter}) => handleParams(filter)"
-        ref="searchRef"
-    />
+  <div class="authentication-system-list-page" style="overflow-y: auto;" :key="parentId">
+    <PageHeader class="authentication-system-list-page__header" :title="$t('SystemList.positions')">
+      <template #actions>
+        <ConditionFilter
+          class="authentication-system-list-page__filter"
+          :columns="columns"
+          noMargin
+          target="category-position"
+          @change="({filter}) => handleParams(filter)"
+          ref="searchRef"
+        />
+        <j-permission-button
+          v-if="parentId"
+          class="authentication-system-list-page__primary-action"
+          hasPermission="system/Department:bind-position"
+          type="primary"
+          @click="handleAdd"
+        >
+          <AIcon type="PlusOutlined"/>
+          {{ $t('position.index.252066-2') }}
+        </j-permission-button>
+      </template>
+    </PageHeader>
     <FullPage>
       <j-pro-table
           ref="tableRef"
@@ -287,13 +302,6 @@ watch(
           mode="TABLE"
           :scroll="{y: 'calc(100vh - 28.125rem)'}"
       >
-        <template #headerLeftRender>
-          <j-permission-button v-if="parentId" hasPermission="system/Department:bind-position" type="primary"
-                               @click="handleAdd">
-            <AIcon type="PlusOutlined"/>
-            {{ $t('position.index.252066-2') }}
-          </j-permission-button>
-        </template>
         <template #roles="slotProps">
           {{ slotProps.roles?.map(item => item.name).join(',') }}
         </template>
