@@ -1,28 +1,10 @@
  <template>
   <j-page-container>
     <div class="menu-container">
-      <PageHeader class="authentication-system-list-page__header" :title="$t('SystemList.menu')">
-        <template #actions>
-          <ConditionFilter
-            class="authentication-system-list-page__filter"
-            :labelWidth="56"
-            :columns="columns"
-            target="category"
-            @change="handleSearch"
-          />
-          <j-permission-button
-            class="authentication-system-list-page__primary-action"
-            type="primary"
-            :hasPermission="`${permission}:add`"
-            @click="toDetails({})"
-          >
-            <AIcon type="PlusOutlined" />{{ $t('Menu.index.599742-0') }}
-          </j-permission-button>
-        </template>
-      </PageHeader>
       <FullPage :fixed="false">
         <j-pro-table
           ref="tableRef"
+          class="pro-table__no-padding"
           :columns="columns"
           :request="getList"
           :params="queryParams"
@@ -33,11 +15,27 @@
           v-model:expandedRowKeys="expandedRowKeys"
         >
           <template #headerLeftRender>
-            <a-button
-              v-if="admin"
-              @click="router.push('/system/Menu/Setting')"
-            >{{ $t('Menu.index.599742-17') }}</a-button
-            >
+              <a-flex gap="small">
+                  <ConditionFilter
+                      class="authentication-system-list-page__filter"
+                      :labelWidth="56"
+                      :columns="columns"
+                      target="category"
+                      @change="handleSearch"
+                  />
+                  <j-permission-button
+                      class="authentication-system-list-page__primary-action"
+                      type="primary"
+                      :hasPermission="`${permission}:add`"
+                      @click="toDetails({})"
+                  >
+                      <AIcon type="PlusOutlined" />{{ $t('Menu.index.599742-0') }}
+                  </j-permission-button>
+                <a-button
+                  v-if="admin"
+                  @click="router.push('/system/Menu/Setting')"
+                >{{ $t('Menu.index.599742-17') }}</a-button>
+              </a-flex>
           </template>
           <template #createTime="slotProps">
             <span v-time-format="'YYYY-MM-DD HH:mm:ss'">

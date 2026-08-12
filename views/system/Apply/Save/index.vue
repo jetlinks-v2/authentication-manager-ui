@@ -1,14 +1,22 @@
 <template>
     <j-page-container>
         <full-page :fixed="false">
-            <div class="save-container">
-                <div class="left">
+            <EqualHeightColumns
+                class="save-layout"
+                left-width="18.75rem"
+                right-width="1fr"
+            >
+                <template #left>
+                  <div class="save-layout__form">
                     <j-scrollbar>
                         <EditForm @change-apply-type="changeType" />
                     </j-scrollbar>
-                </div>
-                <div class="right"><Does :type="rightType" /></div>
-            </div>
+                  </div>
+                </template>
+                <template #right>
+                  <Does :type="rightType" />
+                </template>
+            </EqualHeightColumns>
         </full-page>
     </j-page-container>
 </template>
@@ -25,20 +33,7 @@ const changeType = (newType: applyType) => {
 </script>
 
 <style lang="less" scoped>
-.save-container {
-    padding: 1.5rem;
-    display: flex;
-    gap: 1.5rem;
-    min-height: 100%;
-
-    .left {
-        flex: 1;
-        height: calc(100vh - 10.375rem);
-    }
-
-    .right {
-        min-width: 25.625rem;
-        width: 33.33333%;
-    }
+.save-layout__form {
+    height: 100%;
 }
 </style>

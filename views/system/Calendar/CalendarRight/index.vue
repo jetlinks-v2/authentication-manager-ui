@@ -122,14 +122,14 @@ watch(
 </script>
 <style lang="less" scoped>
 .calendarRight {
-  flex: 1 1 0;
-  min-width: 0;
+    height: 100%;
     background: #fff;
 
 
     .tips {
         display: flex;
         justify-content: space-between;
+        margin-bottom: 0.5rem;
     }
     .rapidAction {
         width: 100%;

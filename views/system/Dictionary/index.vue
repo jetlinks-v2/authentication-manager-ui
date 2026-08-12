@@ -1,14 +1,18 @@
 <template>
     <j-page-container>
         <FullPage>
-            <div class="dictionary_contain">
-                <div class="dictionary_left">
+            <EqualHeightColumns
+                class="dictionary-layout"
+                left-width="18.75rem"
+                right-width="1fr"
+            >
+                <template #left>
                     <Left @selectData="selectData" />
-                </div>
-                <div class="dictionary_right">
+                </template>
+                <template #right>
                     <Right :data="data" />
-                </div>
-            </div>
+                </template>
+            </EqualHeightColumns>
         </FullPage>
     </j-page-container>
 </template>
@@ -22,22 +26,7 @@ const selectData = (i: any) => {
 }
 </script>
 <style lang="less" scoped>
-.dictionary_contain {
-    padding: 1.5rem 1.5rem 0 1.5rem;
-    height: 100%;
-    display: flex;
-}
-
-.dictionary_left {
-    border-right: 1px solid #f0f0f0;
-    width: 20.25rem;
-    height: 100%;
-    padding-right: 0.75rem;
-}
-
-.dictionary_right {
-    margin-left: 0.75rem;
-    width: calc(100% - 20.25rem);
-    height: 100%;
+.dictionary-layout {
+    background-color: #fff;
 }
 </style>

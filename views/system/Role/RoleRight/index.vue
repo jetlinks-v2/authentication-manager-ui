@@ -1,28 +1,10 @@
 <template>
   <div class="role-container">
-    <PageHeader class="authentication-system-list-page__header" :title="$t('SystemList.role')">
-      <template #actions>
-        <ConditionFilter
-          class="authentication-system-list-page__filter"
-          noMargin
-          :columns="columns"
-          target="system-role"
-          @change="({filter}) => handelSearch(filter)"
-        />
-        <j-permission-button
-          class="authentication-system-list-page__primary-action"
-          type="primary"
-          :hasPermission="`${permission}:add`"
-          @click="addRole"
-        >
-          <AIcon type="PlusOutlined" />{{ $t('RoleRight.index.470525-0') }}
-        </j-permission-button>
-      </template>
-    </PageHeader>
     <div class="role-table">
       <j-pro-table
         ref="tableRef"
         mode="TABLE"
+        class="pro-table__no-padding"
         :columns="columns"
         :request="getRoleList_api"
         :params="queryParams"
@@ -33,6 +15,25 @@
           ]
         }"
       >
+          <template #headerLeftRender>
+              <a-flex gap="small">
+                  <ConditionFilter
+                      class="authentication-system-list-page__filter"
+                      noMargin
+                      :columns="columns"
+                      target="system-role"
+                      @change="({filter}) => handelSearch(filter)"
+                  />
+                  <j-permission-button
+                      class="authentication-system-list-page__primary-action"
+                      type="primary"
+                      :hasPermission="`${permission}:add`"
+                      @click="addRole"
+                  >
+                      <AIcon type="PlusOutlined" />{{ $t('RoleRight.index.470525-0') }}
+                  </j-permission-button>
+              </a-flex>
+          </template>
         <template #action="slotProps">
           <a-space>
             <template v-for="i in getActions(slotProps, 'table')" :key="i.key">

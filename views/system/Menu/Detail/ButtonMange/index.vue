@@ -3,6 +3,7 @@
     <j-pro-table
       ref="tableRef"
       mode="TABLE"
+      style="padding: 1rem 0 0 0"
       noPagination
       :columns="columns"
       :dataSource="tableData"

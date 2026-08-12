@@ -2,6 +2,7 @@
     <div class="choose-api-container">
         <div class="table">
             <j-pro-table
+                class="pro-table__no-padding"
                 :columns="columns"
                 :dataSource="_tableData"
                 :rowSelection="props.mode !== 'home' ? {

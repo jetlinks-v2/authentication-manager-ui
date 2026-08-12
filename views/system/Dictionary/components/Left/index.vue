@@ -6,18 +6,21 @@
             </template>
         </a-input>
         <div class="controls">
-            <j-permission-button type="primary" hasPermission="system/Dictionary:add" style="width: 7.5rem" @click="showSave" >
-                {{ $t('Left.index.036608-1') }}
-            </j-permission-button>
-            <j-permission-button type="text" hasPermission="system/Dictionary:down" @click="downVisible = true">
-                {{ $t('Left.index.036608-2') }}
-            </j-permission-button>
-            <a-upload :before-upload="beforeUpload" accept=".json" :show-upload-list="false"
-                :disabled="!hasPerm">
-                <j-permission-button type="text" hasPermission="system/Dictionary:import">
-                    {{ $t('Left.index.036608-3') }}
+            <a-flex gap="small">
+                <j-permission-button type="primary" hasPermission="system/Dictionary:add" style="flex: 1;min-width: 0;"
+                                     @click="showSave" >
+                    {{ $t('Left.index.036608-1') }}
                 </j-permission-button>
-            </a-upload>
+                <j-permission-button type="text" hasPermission="system/Dictionary:down" @click="downVisible = true">
+                    {{ $t('Left.index.036608-2') }}
+                </j-permission-button>
+                <a-upload :before-upload="beforeUpload" accept=".json" :show-upload-list="false"
+                    :disabled="!hasPerm">
+                    <j-permission-button type="text" hasPermission="system/Dictionary:import">
+                        {{ $t('Left.index.036608-3') }}
+                    </j-permission-button>
+                </a-upload>
+            </a-flex>
         </div>
         <div class="tree">
             <a-tree :tree-data="listData" v-if="listData.length" :fieldNames="{ title: 'name', key: 'id' }" blockNode

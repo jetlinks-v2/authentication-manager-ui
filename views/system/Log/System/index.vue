@@ -1,21 +1,19 @@
 <template>
     <j-page-container>
-        <PageHeader class="authentication-system-list-page__header" :title="$t('SystemList.systemLog')">
-            <template #actions>
-                <ConditionFilter
-                    class="authentication-system-list-page__filter"
-                    :columns="columns"
-                    target="search-system"
-                    @change="handleSearch"
-                />
-            </template>
-        </PageHeader>
+
         <full-page>
             <div style="height: 100%; display: flex;flex-direction: column">
                 <div style="min-height: 0; flex: 1">
+                    <ConditionFilter
+                        class="authentication-system-list-page__filter"
+                        :columns="columns"
+                        target="search-system"
+                        @change="handleSearch"
+                    />
                 <j-pro-table
                     ref="tableRef"
                     mode="TABLE"
+                    style="padding: 1rem 0 0"
                     :columns="columns"
                     :request="querySystem"
                     :defaultParams="{

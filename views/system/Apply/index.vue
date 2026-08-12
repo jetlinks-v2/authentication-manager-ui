@@ -9,6 +9,7 @@
       <FullPage>
         <j-pro-table
             ref="tableRef"
+            style="padding: 1rem 0 0"
             :columns="columns"
             modeValue="CARD"
             :request="getApplyList_api"

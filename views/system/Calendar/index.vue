@@ -1,10 +1,18 @@
 <template>
     <j-page-container>
       <full-page :fixed="false">
-        <div class="calendarContainer">
+        <EqualHeightColumns
+          class="calendar-layout"
+          left-width="18.75rem"
+          right-width="1fr"
+        >
+          <template #left>
             <CalendarTags />
+          </template>
+          <template #right>
             <CalendarRight />
-        </div>
+          </template>
+        </EqualHeightColumns>
       </full-page>
     </j-page-container>
 </template>
@@ -23,10 +31,7 @@ provide('rapidOn', rapidOn);
 
 </script>
 <style lang="less" scoped>
-.calendarContainer {
-    display: flex;
+.calendar-layout {
     height: 100%;
-    padding: 1.5rem;
-  gap: 1.5rem;
 }
 </style>

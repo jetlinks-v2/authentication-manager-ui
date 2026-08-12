@@ -103,7 +103,6 @@ onMounted(() => {
 
 <style lang="less" scoped>
 .content {
-  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -117,7 +116,6 @@ onMounted(() => {
   }
 }
 .alert {
-  padding-left: 0.625rem;
   color: rgba(0, 0, 0, 0.55);
 }
 

@@ -3,63 +3,75 @@
     <div class="top">
       <slot name="top" />
     </div>
-    <div class="api-page-content" :style="styles">
+    <div class="api-page-content">
       <div
         v-if="props.showTitle"
         style="font-size: var(--fs-16);margin-bottom: 3rem;"
       >
         {{ $t('Api.index.558884-0') }}
       </div>
-      <div class="api-page-body">
-        <div class="tree-content">
-          <LeftTree
-            @select="treeSelect"
-            :mode="props.mode"
-            :has-home="props.hasHome"
-            :code="props.code"
-          />
-        </div>
-        <div class="api-page-detail">
-          <HomePage v-show="showHome" />
-          <div class="url-page" v-show="!showHome">
-            <ChooseApi
-              v-show="!selectedApi.url"
-              v-model:click-api="selectedApi"
-              v-model:selectedRowKeys="selectedKeys"
-              v-model:changedApis="changedApis"
-              :table-data="tableData"
-              :source-keys="selectSourceKeys"
+      <EqualHeightColumns
+        class="api-page-body"
+        height="auto"
+        left-width="18.75rem"
+        right-width="1fr"
+      >
+        <template #left>
+          <div class="tree-content">
+            <LeftTree
+              @select="treeSelect"
               :mode="props.mode"
-              @refresh="getSelectKeys"
+              :has-home="props.hasHome"
+              :code="props.code"
             />
+          </div>
+        </template>
+        <template #right>
+          <div class="api-page-detail">
+            <HomePage v-show="showHome" />
+            <div class="url-page" v-show="!showHome">
+              <ChooseApi
+                v-show="!selectedApi.url"
+                v-model:click-api="selectedApi"
+                v-model:selectedRowKeys="selectedKeys"
+                v-model:changedApis="changedApis"
+                :table-data="tableData"
+                :source-keys="selectSourceKeys"
+                :mode="props.mode"
+                @refresh="getSelectKeys"
+              />
 
-            <div
-              class="api-details"
-              v-if="selectedApi.url && tableData.length > 0"
-            >
-              <a-button
-                @click="selectedApi = initSelectedApi"
-                style="margin-bottom: 1.5rem; width: 5rem">{{ $t('Api.index.558884-1') }}</a-button>
-              <div class="api-details-tabs">
-                <a-tabs v-model:activeKey="activeKey" type="card">
-                  <a-tab-pane key="does" :tab="$t('Api.index.558884-2')">
-                    <ApiDoes
-                      :select-api="selectedApi"
-                      :schemas="schemas"
-                    />
-                  </a-tab-pane>
-                  <a-tab-pane key="test" :tab="$t('Api.index.558884-3')">
-                    <ApiTest
-                      :select-api="selectedApi"
-                      :schemas="schemas"
-                    />
-                  </a-tab-pane>
-                </a-tabs>
+              <div
+                class="api-details"
+                v-if="selectedApi.url && tableData.length > 0"
+              >
+                <a-button
+                  @click="selectedApi = initSelectedApi"
+                  style="margin-bottom: 1.5rem; width: 5rem"
+                >
+                  {{ $t('Api.index.558884-1') }}
+                </a-button>
+                <div class="api-details-tabs">
+                  <a-tabs v-model:activeKey="activeKey" type="card">
+                    <a-tab-pane key="does" :tab="$t('Api.index.558884-2')">
+                      <ApiDoes
+                        :select-api="selectedApi"
+                        :schemas="schemas"
+                      />
+                    </a-tab-pane>
+                    <a-tab-pane key="test" :tab="$t('Api.index.558884-3')">
+                      <ApiTest
+                        :select-api="selectedApi"
+                        :schemas="schemas"
+                      />
+                    </a-tab-pane>
+                  </a-tabs>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </template>
+      </EqualHeightColumns>
     </div>
   </div>
 </template>
@@ -90,11 +102,6 @@ const props = defineProps<{
 const showHome = ref<boolean>(Boolean(props.hasHome)); // 是否展示home页面
 const tableData = ref([]);
 
-const styles = computed(() => {
-  return {
-    padding: props.mode === 'api' ? 0 : '1.5rem'
-  }
-})
 const treeSelect = (node: treeNodeTpye, nodeSchemas: object = {}) => {
   if (node.key === 'home') return (showHome.value = true);
   schemas.value = nodeSchemas;
@@ -186,29 +193,28 @@ watch(
 <style lang="less" scoped>
 .api-page-container {
   height: 100%;
+  display: flex;
+  flex-direction: column;
 
   .api-page-content {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
     background-color: #fff;
     margin: 0 !important;
 
     .api-page-body {
-      position: relative;
-      display: flex;
-      gap: 1rem;
+      flex: 1;
+      min-height: 0;
 
       .tree-content {
-        height: calc(100vh - 14.375rem);
-        width: 17.5rem;
+        height: 100%;
         overflow-y: auto;
-        border-right: 1px solid #e9e9e9;
       }
 
       .api-page-detail {
-        position: absolute;
-        left: 18.5rem;
-        top: 0;
-        bottom: 0;
-        right: 0;
+        height: 100%;
 
         .url-page {
           height: 100%;

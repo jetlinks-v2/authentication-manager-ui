@@ -112,8 +112,7 @@ const onSave = async () => {
 <style lang="less" scoped>
 .basic-info-container {
   .card {
-    margin-bottom: 1.5rem;
-    padding: 1.5rem;
+    padding-top: 1.5rem;
     background-color: #fff;
   }
 }

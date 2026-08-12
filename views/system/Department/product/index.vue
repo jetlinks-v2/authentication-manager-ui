@@ -1,30 +1,9 @@
 <template>
   <div class="product-container">
-    <PageHeader class="authentication-system-list-page__header" :title="$t('SystemList.departmentProduct')">
-      <template #actions>
-        <ConditionFilter
-          class="authentication-system-list-page__filter"
-          :columns="columns"
-          target="category-product"
-          noMargin
-          @change="({filter})=>queryParams = {...filter}"
-          ref="searchRef"
-        />
-        <j-permission-button
-          v-if="parentId"
-          class="authentication-system-list-page__primary-action"
-          :hasPermission="`${permission}:assert`"
-          type="primary"
-          @click="dialogs.addShow = true"
-        >
-          <AIcon type="PlusOutlined"/>
-          {{ $t('product.index.083446-0') }}
-        </j-permission-button>
-      </template>
-    </PageHeader>
     <FullPage :extraHeight="24">
       <j-pro-table
           ref="tableRef"
+          class="pro-table__no-padding"
           :request="table.requestFun"
           :gridColumn="2"
           :gridColumns="[2]"
@@ -39,57 +18,78 @@
           :columns="columns"
       >
         <template #headerLeftRender>
-          <a-dropdown v-if="parentId" trigger="hover">
-              <a-button>{{ $t('product.index.083446-1') }}</a-button>
-              <template #overlay>
-                <a-menu>
-                  <a-menu-item>
-                    <j-permission-button
-                        :hasPermission="`${permission}:bind`"
-                        :popConfirm="{
-                                                title: $t('product.index.083446-2'),
-                                                onConfirm: () =>
-                                                    table.clickUnBind(),
-                                            }"
-                    >
-                      <AIcon
-                          type="DisconnectOutlined"
-                      />
-                      {{ $t('product.index.083446-3') }}
-                    </j-permission-button>
-                  </a-menu-item>
-                  <a-menu-item>
-                    <j-permission-button
-                        :hasPermission="`${permission}:assert`"
-                        @click="() => table.clickEdit()"
-                    >
-                      <AIcon
-                          type="EditOutlined"
-                      />
-                      {{ $t('product.index.083446-4') }}
-                    </j-permission-button>
-                  </a-menu-item>
-                  <a-menu-item>
-                    <j-permission-button
-                        :hasPermission="`${permission}:assert`"
-                        @click="batchImportVisible = true"
-                    >
-                      <AIcon type="ImportOutlined"/>
-                      {{ $t('Department.device.398213-0') }}
-                    </j-permission-button>
-                  </a-menu-item>
-                  <a-menu-item>
-                    <j-permission-button
-                        :hasPermission="`${permission}:assert`"
-                        @click="handleBatchExport"
-                    >
-                      <AIcon type="ExportOutlined"/>
-                      {{ $t('Department.device.398213-1') }}
-                    </j-permission-button>
-                  </a-menu-item>
-                </a-menu>
-              </template>
-          </a-dropdown>
+            <a-flex gap="small">
+
+                <ConditionFilter
+                    class="authentication-system-list-page__filter"
+                    :columns="columns"
+                    target="category-product"
+                    noMargin
+                    @change="({filter})=>queryParams = {...filter}"
+                    ref="searchRef"
+                />
+                <j-permission-button
+                    v-if="parentId"
+                    class="authentication-system-list-page__primary-action"
+                    :hasPermission="`${permission}:assert`"
+                    type="primary"
+                    @click="dialogs.addShow = true"
+                >
+                    <AIcon type="PlusOutlined"/>
+                    {{ $t('product.index.083446-0') }}
+                </j-permission-button>
+              <a-dropdown v-if="parentId" trigger="hover">
+                  <a-button>{{ $t('product.index.083446-1') }}</a-button>
+                  <template #overlay>
+                    <a-menu>
+                      <a-menu-item>
+                        <j-permission-button
+                            :hasPermission="`${permission}:bind`"
+                            :popConfirm="{
+                                                    title: $t('product.index.083446-2'),
+                                                    onConfirm: () =>
+                                                        table.clickUnBind(),
+                                                }"
+                        >
+                          <AIcon
+                              type="DisconnectOutlined"
+                          />
+                          {{ $t('product.index.083446-3') }}
+                        </j-permission-button>
+                      </a-menu-item>
+                      <a-menu-item>
+                        <j-permission-button
+                            :hasPermission="`${permission}:assert`"
+                            @click="() => table.clickEdit()"
+                        >
+                          <AIcon
+                              type="EditOutlined"
+                          />
+                          {{ $t('product.index.083446-4') }}
+                        </j-permission-button>
+                      </a-menu-item>
+                      <a-menu-item>
+                        <j-permission-button
+                            :hasPermission="`${permission}:assert`"
+                            @click="batchImportVisible = true"
+                        >
+                          <AIcon type="ImportOutlined"/>
+                          {{ $t('Department.device.398213-0') }}
+                        </j-permission-button>
+                      </a-menu-item>
+                      <a-menu-item>
+                        <j-permission-button
+                            :hasPermission="`${permission}:assert`"
+                            @click="handleBatchExport"
+                        >
+                          <AIcon type="ExportOutlined"/>
+                          {{ $t('Department.device.398213-1') }}
+                        </j-permission-button>
+                      </a-menu-item>
+                    </a-menu>
+                  </template>
+              </a-dropdown>
+            </a-flex>
         </template>
 
         <template #card="slotProps">

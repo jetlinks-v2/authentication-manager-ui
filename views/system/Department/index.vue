@@ -1,122 +1,109 @@
 <template>
   <j-page-container>
     <FullPage>
-      <div class="department-container">
-        <div class="left">
+      <EqualHeightColumns
+        class="department-container"
+        left-width="18.75rem"
+        right-width="1fr"
+      >
+        <template #left>
           <LeftTree @change="onChange" />
-        </div>
-        <div class="right">
-<!--           && extraComponents?.length-->
+        </template>
+        <template #right>
           <a-tabs
             v-if="isNoCommunity"
             v-model:activeKey="activeKey"
             destroyInactiveTabPane
           >
-            <a-tab-pane key="position" :tab="$t('Department.index.945805-3')">
-              <Position :parentId="departmentId" @changeTabs="onChangeTabs" />
-            </a-tab-pane>
-            <a-tab-pane key="user" :tab="$t('Department.index.945805-2')">
-              <User :parentId="departmentId" :positionId="positionId" />
-            </a-tab-pane>
-            <a-tab-pane key="property" :tab="$t('Department.index.945805-4')">
-              <Property :department-id="departmentId" />
-            </a-tab-pane>
-            <!-- <a-tab-pane
-              v-for="item in _extra"
-              :key="item.name"
-              :tab="$t(item.label)"
+            <a-tab-pane
+              v-for="tab in departmentTabs"
+              :key="tab.key"
+              :tab="$t(tab.label)"
             >
-              <component
-                :is="item.component"
+              <Position
+                v-if="tab.key === 'position'"
                 :parentId="departmentId"
-                @open-device-bind="openDeviceBind"
-                v-model:bindBool="bindBool"
+                @changeTabs="onChangeTabs"
               />
-            </a-tab-pane> -->
+              <User
+                v-else-if="tab.key === 'user'"
+                :parentId="departmentId"
+                :positionId="positionId"
+              />
+              <Property
+                v-else-if="tab.key === 'property'"
+                :department-id="departmentId"
+              />
+            </a-tab-pane>
           </a-tabs>
           <User v-else :parentId="departmentId" />
-        </div>
-      </div>
+        </template>
+      </EqualHeightColumns>
     </FullPage>
   </j-page-container>
 </template>
 
 <script setup lang="ts" name="Department">
-import LeftTree from "./components/LeftTree.vue";
-import User from "./user/index.vue";
-import Position from "./positions/index.vue";
-import { isNoCommunity } from "@jetlinks-web-core/utils";
-import Product from './product/index.vue'
-import Device from './device/index.vue'
-import Property from './property/index.vue'
+import { useRegistryOptions } from '@jetlinks-web-core/hooks'
+import { isNoCommunity } from '@jetlinks-web-core/utils'
+import LeftTree from './components/LeftTree.vue'
 
-const activeKey = ref<"product" | "device" | "user" | "position">("position");
+type DepartmentTabKey = 'position' | 'user' | 'property'
 
-const departmentId = ref<string>("");
-const positionId = ref<string>("");
-const extraComponents = ref([]);
+interface DepartmentTabOption {
+  key: DepartmentTabKey
+  label: string
+}
 
-const bindBool = ref<boolean>(false);
+const Position = defineAsyncComponent(() => import('./positions/index.vue'))
+const User = defineAsyncComponent(() => import('./user/index.vue'))
+const Property = defineAsyncComponent(() => import('./property/index.vue'))
 
-// const hasPerm = useAuthStore().hasPermission(
-//     // `${USER_CENTER_MENU_CODE}:${USER_CENTER_MENU_BUTTON_CODE}`,
-// )
-
-const _extra = [
+const baseTabs = shallowRef<DepartmentTabOption[]>([
   {
-    name: 'product',
-    label: 'Department.index.945805-0',
-    component: Product
+    key: 'position',
+    label: 'Department.index.945805-3',
   },
   {
-    name: 'device',
-    label: 'Department.index.945805-1',
-    component: Device
+    key: 'user',
+    label: 'Department.index.945805-2',
   },
-]
-const openDeviceBind = () => {
-  bindBool.value = true;
-  activeKey.value = "device";
-};
+  {
+    key: 'property',
+    label: 'Department.index.945805-4',
+  },
+])
+const { mergedOptions: departmentTabs } = useRegistryOptions<DepartmentTabOption>({
+  baseOptions: baseTabs,
+  code: 'department-tabs',
+})
+
+const activeKey = ref<DepartmentTabKey | undefined>('position')
+const departmentId = ref('')
+const positionId = ref<string>()
 
 const onChange = (id: string) => {
-  departmentId.value = id;
-};
+  departmentId.value = id
+}
 
-const onChangeTabs = (id) => {
-  positionId.value = id;
-  activeKey.value = "user";
+const onChangeTabs = (id: string) => {
+  positionId.value = id
+  activeKey.value = 'user'
   setTimeout(() => {
-    positionId.value = undefined;
-  }, 100);
-};
+    positionId.value = undefined
+  }, 100)
+}
 
-// onMounted(() => {
-//   extraComponents.value = getModulesComponents("department");
-// });
+watch(departmentTabs, (tabs) => {
+  if (tabs.some(tab => tab.key === activeKey.value)) return
+
+  // 外部模块隐藏当前页签时切到首个可见项，避免内容区停留在无效 key。
+  activeKey.value = tabs[0]?.key
+}, { immediate: true })
 </script>
 
 <style lang="less" scoped>
 .department-container {
-  display: flex;
   background-color: #fff;
-  padding: 1.5rem;
-  height: 100%;
-  position: relative;
-
-  .left {
-    position: absolute;
-    width: 18.75rem;
-    top: 1.5rem;
-    bottom: 1.5rem;
-  }
-
-  .right {
-    width: calc(100% - 19.75rem);
-    margin-left: 19.75rem;
-    :deep(.ant-tabs-nav-wrap) {
-      padding-left: 1.5rem;
-    }
-  }
 }
 </style>

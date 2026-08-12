@@ -268,31 +268,10 @@ watch(
 
 <template>
   <div class="authentication-system-list-page" style="overflow-y: auto;" :key="parentId">
-    <PageHeader class="authentication-system-list-page__header" :title="$t('SystemList.positions')">
-      <template #actions>
-        <ConditionFilter
-          class="authentication-system-list-page__filter"
-          :columns="columns"
-          noMargin
-          target="category-position"
-          @change="({filter}) => handleParams(filter)"
-          ref="searchRef"
-        />
-        <j-permission-button
-          v-if="parentId"
-          class="authentication-system-list-page__primary-action"
-          hasPermission="system/Department:bind-position"
-          type="primary"
-          @click="handleAdd"
-        >
-          <AIcon type="PlusOutlined"/>
-          {{ $t('position.index.252066-2') }}
-        </j-permission-button>
-      </template>
-    </PageHeader>
     <FullPage>
       <j-pro-table
           ref="tableRef"
+          class="pro-table__no-padding"
           :columns="columns"
           :request="handleQuery"
           :params="queryParams"
@@ -302,6 +281,28 @@ watch(
           mode="TABLE"
           :scroll="{y: 'calc(100vh - 28.125rem)'}"
       >
+          <template #headerLeftRender>
+              <a-flex gap="small">
+                  <ConditionFilter
+                      class="authentication-system-list-page__filter"
+                      :columns="columns"
+                      noMargin
+                      target="category-position"
+                      @change="({filter}) => handleParams(filter)"
+                      ref="searchRef"
+                  />
+                  <j-permission-button
+                      v-if="parentId"
+                      class="authentication-system-list-page__primary-action"
+                      hasPermission="system/Department:bind-position"
+                      type="primary"
+                      @click="handleAdd"
+                  >
+                      <AIcon type="PlusOutlined"/>
+                      {{ $t('position.index.252066-2') }}
+                  </j-permission-button>
+              </a-flex>
+          </template>
         <template #roles="slotProps">
           {{ slotProps.roles?.map(item => item.name).join(',') }}
         </template>

@@ -1,32 +1,10 @@
 <template>
   <div :key="parentId" class="authentication-system-list-page">
-    <PageHeader class="authentication-system-list-page__header" :title="$t('User.index.673867-23')">
-      <template #actions>
-        <ConditionFilter
-          v-if="show"
-          class="authentication-system-list-page__filter"
-          noMargin
-          target="category-user"
-          :columns="columns"
-          @change="handleParams"
-          ref="searchRef"
-        />
-        <j-permission-button
-          class="authentication-system-list-page__primary-action"
-          type="primary"
-          :hasPermission="`${permission}:bind-user`"
-          @click="addUserDialogVisible = true"
-          :disabled="isShow"
-        >
-          <AIcon type="PlusOutlined"/>
-          {{ $t('position.User.473212-0') }}
-        </j-permission-button>
-      </template>
-    </PageHeader>
     <FullPage>
       <j-pro-table
           v-if="show"
           ref="tableRef"
+          class="pro-table__no-padding"
           :columns="columns"
           :request="handleSearch"
           :params="queryParams"
@@ -39,26 +17,48 @@
           mode="TABLE"
       >
         <template #headerLeftRender>
-          <a-space>
-            <j-permission-button
-                :hasPermission="`${permission}:bind-user`"
-                @click="dialogVisible = true"
-                :disabled="isShow"
-            >
-              <AIcon type="PlusOutlined"/>
-              {{ $t('user.index.252066-0') }}
-            </j-permission-button>
-            <j-permission-button
-                :hasPermission="`${permission}:bind`"
-                :popConfirm="{
-                title: !isNoCommunity ? $t('device.index.988419-6') : $t('user.index.252066-1'),
-                onConfirm: () => unBind(),
-              }"
-            >
-              <AIcon type="DisconnectOutlined"/>
-              {{ $t('user.index.252066-2') }}
-            </j-permission-button>
-          </a-space>
+            <a-flex gap="small">
+
+                <ConditionFilter
+                    v-if="show"
+                    class="authentication-system-list-page__filter"
+                    noMargin
+                    target="category-user"
+                    :columns="columns"
+                    @change="handleParams"
+                    ref="searchRef"
+                />
+              <a-space>
+                  <j-permission-button
+                      class="authentication-system-list-page__primary-action"
+                      type="primary"
+                      :hasPermission="`${permission}:bind-user`"
+                      @click="addUserDialogVisible = true"
+                      :disabled="isShow"
+                  >
+                      <AIcon type="PlusOutlined"/>
+                      {{ $t('position.User.473212-0') }}
+                  </j-permission-button>
+                <j-permission-button
+                    :hasPermission="`${permission}:bind-user`"
+                    @click="dialogVisible = true"
+                    :disabled="isShow"
+                >
+                  <AIcon type="PlusOutlined"/>
+                  {{ $t('user.index.252066-0') }}
+                </j-permission-button>
+                <j-permission-button
+                    :hasPermission="`${permission}:bind`"
+                    :popConfirm="{
+                    title: !isNoCommunity ? $t('device.index.988419-6') : $t('user.index.252066-1'),
+                    onConfirm: () => unBind(),
+                  }"
+                >
+                  <AIcon type="DisconnectOutlined"/>
+                  {{ $t('user.index.252066-2') }}
+                </j-permission-button>
+              </a-space>
+            </a-flex>
         </template>
         <template #positions="slotProps">
           {{ slotProps.positions?.filter(item => item.orgId === props.parentId)?.map(item => item.name).join(',') || '--' }}

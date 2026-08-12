@@ -179,10 +179,8 @@ onMounted(() => {
 </script>
 <style lang="less" scoped>
 .tagsContainer {
-    width: 16.25rem;
+    height: 100%;
     background-color: #fff;
-    border-right: 1px solid #cccccc;
-    padding-right: 1.5rem;
     .content {
         overflow: auto;
         height: 43.75rem;

@@ -1,14 +1,18 @@
 <template>
     <j-page-container>
          <FullPage>
-             <div class="dictionary_contain">
-                 <div class="dictionary_left">
-                     <Left @select-data="selectData"/>
-                 </div>
-                 <div class="dictionary_right">
-                     <Right :groupId="groupId"/>
-                 </div>
-             </div>
+             <EqualHeightColumns
+                 class="role-layout"
+                 left-width="18.75rem"
+                 right-width="1fr"
+             >
+                 <template #left>
+                   <Left @select-data="selectData"/>
+                 </template>
+                 <template #right>
+                   <Right :groupId="groupId"/>
+                 </template>
+             </EqualHeightColumns>
          </FullPage>
     </j-page-container>
  </template>
@@ -22,21 +26,7 @@
  }
  </script>
  <style lang="less" scoped>
- .dictionary_contain{
-     display: flex;
+ .role-layout {
      background-color: #fff;
-     padding: 1.5rem;
-     height: 100%;
- }
- .dictionary_left{
-     border-right: 1px solid #f0f0f0;
-     padding-right: 1.5rem;
-     height:100%;
-   width: 20rem;
- }
- .dictionary_right{
-     flex:1 1 0;
-      min-width: 0;
-     height:100%
- }
+  }
  </style>

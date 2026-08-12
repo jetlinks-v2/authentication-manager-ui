@@ -1,17 +1,23 @@
 <template>
     <j-page-container>
         <full-page fixed>
-            <div class="region">
-                <div class="left">
+            <EqualHeightColumns
+                class="region-layout"
+                left-width="18.75rem"
+                right-width="1fr"
+            >
+              <template #left>
+                <div class="region-layout__left">
                   <div v-if="regionState.treeMask" class="left-mask"></div>
                   <div class="left-content">
                     <LeftTree ref="treeRef" @select="onSelect" @close="close"/>
                   </div>
                 </div>
-                <div class="right">
-                  <Map ref="mapRef" :selectCode="selectCode" />
-                </div>
-            </div>
+              </template>
+              <template #right>
+                <Map ref="mapRef" :selectCode="selectCode" />
+              </template>
+            </EqualHeightColumns>
         </full-page>
     </j-page-container>
 </template>
@@ -110,50 +116,25 @@ function mapInit() {
 </script>
 
 <style lang="less" scoped>
-.region {
-    display: flex;
-    gap: 1.5rem;
+.region-layout {
     height: 100%;
-    padding: 1rem;
+}
 
-    .left {
-        width: 18.75rem;
-        position: relative;
+.region-layout__left {
+    position: relative;
+    height: 100%;
 
-        .left-content {
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-        }
-
-        .left-mask {
-          position: absolute;
-          left: 0;
-          top: 0;
-          right: 0;
-          bottom: 0;
-          z-index: 2;
-          background-color: rgba(0,0,0, .2);
-        }
-
-        .btn {
-            width: 100%;
-            margin: 1.125rem 0;
-        }
-
-        .mask {
-            width: 100%;
-            position: absolute;
-            height: 100%;
-            background-color: lightgray;
-            opacity: .5;
-            left: 0;
-            top: 0;
-            z-index: 10;
-        }
+    .left-content {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
-    .right {
-        flex: 1;
+
+    .left-mask {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      background-color: rgba(0,0,0, .2);
     }
 }
 </style>

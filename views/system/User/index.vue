@@ -1,29 +1,10 @@
 <template>
   <j-page-container>
     <div class="user-container">
-      <PageHeader class="authentication-system-list-page__header" :title="$t('User.index.673867-23')">
-        <template #actions>
-          <ConditionFilter
-            class="authentication-system-list-page__filter"
-            :columns="columns"
-            target="system-user"
-            @change="handleParams"
-          />
-          <j-permission-button
-            class="authentication-system-list-page__primary-action"
-            :hasPermission="`${permission}:add`"
-            type="primary"
-            @click="table.openDialog('add')"
-            @save="table.refresh()"
-          >
-            <AIcon type="PlusOutlined"/>
-            {{ $t('User.index.673867-0') }}
-          </j-permission-button>
-        </template>
-      </PageHeader>
       <FullPage>
         <j-pro-table
             ref="tableRef"
+            class="pro-table__no-padding"
             :columns="columns"
             :request="getUserList_api"
             mode="TABLE"
@@ -37,7 +18,24 @@
             :scroll="{ y: 'calc(100% - 3.75rem)' }"
         >
           <template #headerLeftRender>
+              <a-flex gap="small">
+                  <ConditionFilter
+                      class="authentication-system-list-page__filter"
+                      :columns="columns"
+                      target="system-user"
+                      @change="handleParams"
+                  />
               <RegistryComponent code="addTool" is="a-space">
+                  <j-permission-button
+                      class="authentication-system-list-page__primary-action"
+                      :hasPermission="`${permission}:add`"
+                      type="primary"
+                      @click="table.openDialog('add')"
+                      @save="table.refresh()"
+                  >
+                      <AIcon type="PlusOutlined"/>
+                      {{ $t('User.index.673867-0') }}
+                  </j-permission-button>
                 <a-dropdown key="batch">
                   <a-button>
                     {{ $t('User.index.673867-19') }}
@@ -64,6 +62,7 @@
                   </template>
                 </a-dropdown>
               </RegistryComponent>
+              </a-flex>
           </template>
           <template #type="slotProps">
             {{ typeOptions.find(i => i.value === slotProps?.typeId)?.label || slotProps.typeId }}

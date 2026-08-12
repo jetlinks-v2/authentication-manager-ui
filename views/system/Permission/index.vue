@@ -1,27 +1,9 @@
 <template>
   <j-page-container>
-    <PageHeader class="authentication-system-list-page__header" :title="$t('SystemList.permission')">
-      <template #actions>
-        <ConditionFilter
-          class="authentication-system-list-page__filter"
-          :columns="columns"
-          target="system-permission"
-          @change="({filter}) => handleSearch(filter)"
-        />
-        <j-permission-button
-          class="authentication-system-list-page__primary-action"
-          type="primary"
-          :hasPermission="`${permission}:add`"
-          @click="openDialog()"
-        >
-          <AIcon type="PlusOutlined"/>
-          {{ $t('Permission.index.473829-0') }}
-        </j-permission-button>
-      </template>
-    </PageHeader>
     <FullPage>
       <j-pro-table
           ref="tableRef"
+          class="pro-table__no-padding"
           :columns="columns"
           :request="getPermission_api"
           mode="TABLE"
@@ -32,41 +14,58 @@
         }"
       >
         <template #headerLeftRender>
-          <a-dropdown trigger="hover">
-            <a-button>{{ $t('Permission.index.473829-1') }}</a-button>
-            <template #overlay>
-              <a-menu>
-                <a-menu-item>
-                  <a-upload
-                      v-show="false"
-                      name="file"
-                      action="#"
-                      accept=".json"
-                      :showUploadList="false"
-                      :before-upload="clickImport"
-                      :disabled="!hasPerm"
-                  >
-                    <button ref="uploadRef"></button>
-                  </a-upload>
-                  <j-permission-button style="width: 100%" :hasPermission="`${permission}:import`" @click="triggerUpload">
-                    {{ $t('Permission.index.473829-2') }}
-                  </j-permission-button>
-                </a-menu-item>
-                <a-menu-item>
-                  <j-permission-button
-                      style="width: 100%"
-                      :hasPermission="`${permission}:export`"
-                      :popConfirm="{
-                        title: $t('Permission.index.473829-3'),
-                        onConfirm: () => clickExport(),
-                      }"
-                  >
-                    {{ $t('Permission.index.473829-4') }}
-                  </j-permission-button>
-                </a-menu-item>
-              </a-menu>
-            </template>
-          </a-dropdown>
+            <a-flex gap="small">
+                <ConditionFilter
+                    class="authentication-system-list-page__filter"
+                    :columns="columns"
+                    target="system-permission"
+                    @change="({filter}) => handleSearch(filter)"
+                />
+                <j-permission-button
+                    class="authentication-system-list-page__primary-action"
+                    type="primary"
+                    :hasPermission="`${permission}:add`"
+                    @click="openDialog()"
+                >
+                    <AIcon type="PlusOutlined"/>
+                    {{ $t('Permission.index.473829-0') }}
+                </j-permission-button>
+              <a-dropdown trigger="hover">
+                <a-button>{{ $t('Permission.index.473829-1') }}</a-button>
+                <template #overlay>
+                  <a-menu>
+                    <a-menu-item>
+                      <a-upload
+                          v-show="false"
+                          name="file"
+                          action="#"
+                          accept=".json"
+                          :showUploadList="false"
+                          :before-upload="clickImport"
+                          :disabled="!hasPerm"
+                      >
+                        <button ref="uploadRef"></button>
+                      </a-upload>
+                      <j-permission-button style="width: 100%" :hasPermission="`${permission}:import`" @click="triggerUpload">
+                        {{ $t('Permission.index.473829-2') }}
+                      </j-permission-button>
+                    </a-menu-item>
+                    <a-menu-item>
+                      <j-permission-button
+                          style="width: 100%"
+                          :hasPermission="`${permission}:export`"
+                          :popConfirm="{
+                            title: $t('Permission.index.473829-3'),
+                            onConfirm: () => clickExport(),
+                          }"
+                      >
+                        {{ $t('Permission.index.473829-4') }}
+                      </j-permission-button>
+                    </a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+            </a-flex>
         </template>
         <template #status="slotProps">
           <j-badge-status

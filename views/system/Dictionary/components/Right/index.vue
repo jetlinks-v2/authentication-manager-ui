@@ -6,14 +6,17 @@
             <div>{{ $t('Right.index.572408-2') }}{{data?.createTime ? dayjs(data.createTime).format('YYYY-MM-DD HH:mm:ss') : ''}}</div>
         </div>
         <div class="contain">
-            <ConditionFilter style="padding: 1.125rem 0" :columns="columns" noMargin @change="({filter}) => handleSearch(filter)" target="system_dictionary" />
-            <JProTable :bodyStyle="{
-                padding: 0,
-            }" :scroll="{ y: 'calc(100vh - 31.25rem)' }" :columns="columns" mode="TABLE" :request="queryItem" :params="params" ref="tableRef">
+
+            <JProTable style="padding: 1rem 0 0" :scroll="{ y: 'calc(100vh - 23rem)' }" :columns="columns"
+                       mode="TABLE"
+                        :request="queryItem" :params="params" ref="tableRef">
                 <template #headerLeftRender>
+                    <a-flex gap="small">
+                        <ConditionFilter :columns="columns" noMargin @change="({filter}) => handleSearch(filter)" target="system_dictionary" />
                     <j-permission-button type="primary" @click="add" hasPermission="system/Dictionary:add">
                         {{ $t('Right.index.572408-3') }}
                     </j-permission-button>
+                    </a-flex>
                 </template>
                 <template #action="slotProps">
                     <a-space>

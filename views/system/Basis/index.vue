@@ -1,9 +1,7 @@
 <template>
   <j-page-container>
     <FullPage :fixed="false">
-      <div style="padding: 1.5rem;">
-          <BasicForm />
-      </div>
+        <BasicForm />
     </FullPage>
   </j-page-container>
 </template>
