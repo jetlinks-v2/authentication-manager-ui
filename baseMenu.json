@@ -2110,6 +2110,117 @@
           }
         ],
         "accessSupport": {
+          "text": "支持",
+          "value": "support"
+        },
+        "supportDataAccess": true,
+        "assetTypes": [
+          "business_application",
+          "user",
+          "role",
+          "device"
+        ]
+      },
+      {
+        "code": "application-center/ApplicationTemplate",
+        "name": "应用模版",
+        "owner": "cloud",
+        "i18nMessages": {
+          "name": {
+            "zh_CN": "应用模版",
+            "en_US": "Application Templates",
+            "en": "Application Templates"
+          }
+        },
+        "id": "9b8016a4e7d24af08fa34ab939ef4f5d",
+        "url": "/application-center/application-template",
+        "icon": "ProfileOutlined",
+        "sortIndex": 2,
+        "showPage": ["business-application-template"],
+        "permissions": [
+          {
+            "permission": "business-application-template",
+            "actions": ["query"]
+          }
+        ],
+        "buttons": [
+          {
+            "id": "view",
+            "name": "查看",
+            "i18nMessages": {
+              "zh_CN": "查看",
+              "en_US": "View",
+              "en": "View"
+            },
+            "permissions": [
+              {
+                "permission": "business-application-template",
+                "actions": ["query"]
+              }
+            ]
+          },
+          {
+            "id": "add",
+            "name": "新增",
+            "i18nMessages": {
+              "zh_CN": "新增",
+              "en_US": "Add",
+              "en": "Add"
+            },
+            "permissions": [
+              {
+                "permission": "business-application-template",
+                "actions": ["query", "save"]
+              }
+            ]
+          },
+          {
+            "id": "update",
+            "name": "编辑",
+            "i18nMessages": {
+              "zh_CN": "编辑",
+              "en_US": "Edit",
+              "en": "Edit"
+            },
+            "permissions": [
+              {
+                "permission": "business-application-template",
+                "actions": ["query", "save", "grant"]
+              }
+            ]
+          },
+          {
+            "id": "delete",
+            "name": "删除",
+            "i18nMessages": {
+              "zh_CN": "删除",
+              "en_US": "Delete",
+              "en": "Delete"
+            },
+            "permissions": [
+              {
+                "permission": "business-application-template",
+                "actions": ["query", "delete"]
+              }
+            ]
+          },
+          {
+            "id": "action",
+            "name": "启用/停用",
+            "i18nMessages": {
+              "zh_CN": "启用/停用",
+              "en_US": "Enable/Disable",
+              "en": "Enable/Disable"
+            },
+            "permissions": [
+              {
+                "permission": "business-application-template",
+                "actions": ["query", "save"]
+              }
+            ]
+          }
+        ],
+        "accessSupport": {
           "text": "不支持",
           "value": "unsupported"
         },
