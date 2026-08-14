@@ -139,10 +139,10 @@ const confirm = () => {
 
 <style scoped>
 .resource-picker { display: grid; min-height: 24rem; grid-template-columns: 11rem minmax(0, 1fr); border: 1px solid var(--line); border-radius: var(--r-3); overflow: hidden; }
-.resource-groups { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-2); border-right: 1px solid var(--line); background: var(--bg-sunken); }
+.resource-groups { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-2); border-right: 1px solid var(--line); }
 .resource-groups button { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--r-2); background: transparent; color: var(--ink-2); cursor: pointer; text-align: left; }
 .resource-groups button:hover,
-.resource-groups button.active { background: var(--bg); color: var(--ink-1); font-weight: 500; }
+.resource-groups button.active { color: var(--ink-1); font-weight: 500; }
 .resource-groups b { color: var(--ink-4); font-size: var(--fs-12); }
 .resource-list { display: flex; min-width: 0; flex-direction: column; gap: var(--space-3); padding: var(--space-3); }
 .picker-hint { margin: 0; color: var(--ink-3); font-size: var(--fs-12); }

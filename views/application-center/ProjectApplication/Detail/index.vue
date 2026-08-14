@@ -26,10 +26,18 @@
               @unbind="unbindDevice"
             />
           </a-tab-pane>
+          <a-tab-pane key="cameras" :tab="$t('ProjectApplication.detail.tab.cameras')">
+            <VideoConfiguration
+              :data="cameraBindingData"
+              @bind="bindCameras"
+              @unbind="unbindCamera"
+            />
+          </a-tab-pane>
           <a-tab-pane key="users" :tab="$t('ProjectApplication.detail.tab.users')">
             <UserManagement
-              :data="{ users: detail.users, roles: detail.roles }"
+              :data="{ users: detail.users, roles: detail.roles, candidates: store.bindableUsers }"
               @add="addUser"
+              @bind="bindUsers"
               @update="updateUser"
               @remove="removeUser"
             />
@@ -37,6 +45,7 @@
           <a-tab-pane key="roles" :tab="$t('ProjectApplication.detail.tab.roles')">
             <RoleManagement
               :roles="detail.roles"
+              :template-id="application.templateId"
               @save-role="saveRole"
               @delete-role="removeRole"
             />
@@ -60,14 +69,16 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
-import { createApplicationScopeUrl } from '@jetlinks-web-core/utils/application-scope'
+import { prepareApplicationAccess } from '@jetlinks-web-core/utils/application-access'
 import ApplicationSummary from './components/ApplicationSummary.vue'
 import ApplicationSettings from './components/ApplicationSettings.vue'
 import DeviceBinding from './components/DeviceBinding.vue'
 import RoleManagement from './components/RoleManagement.vue'
 import UserManagement from './components/UserManagement.vue'
+import VideoConfiguration from './components/VideoConfiguration.vue'
 import { useProjectApplication } from '../useProjectApplication'
 import type {
+  ApplicationCameraResource,
   ApplicationResource,
   ApplicationRoleDraft,
   ApplicationUser,
@@ -84,9 +95,10 @@ const loading = ref(false)
 
 const applicationId = computed(() => String(route.params.id || ''))
 const application = computed(() => store.applications.find((item) => item.id === applicationId.value))
-const detail = computed(() => store.getDetail(applicationId.value).value)
+const detail = computed(() => store.details[applicationId.value])
 const template = computed(() => store.templates.find((item) => item.id === application.value?.templateId))
 const deviceBindingData = computed(() => ({ bound: detail.value?.devices || [], available: store.availableDevices }))
+const cameraBindingData = computed(() => ({ bound: detail.value?.cameras || [], available: store.availableCameras }))
 const settingsMessageKeys = {
   icon: 'ProjectApplication.settings.updated',
   name: 'ProjectApplication.detail.nameSuccess',
@@ -132,12 +144,18 @@ const toggleStatus = async () => {
 }
 
 const openApplication = () => {
-  if (!application.value?.domain) {
-    onlyMessage($t('ProjectApplication.detail.noDomain'), 'warning')
+  if (!application.value) return
+
+  const access = prepareApplicationAccess({
+    applicationId: application.value.id,
+    applicationName: application.value.name,
+    domain: application.value.domain,
+  })
+  if (!access.success) {
+    onlyMessage($t('ProjectApplication.detail.accessFailed'), 'warning')
     return
   }
-  const scopedUrl = createApplicationScopeUrl(application.value.domain, application.value.id)
-  window.open(scopedUrl, '_blank', 'noopener,noreferrer')
+  window.open(access.url, '_blank', 'noopener,noreferrer')
 }
 
 const updateSettings = async (
@@ -160,9 +178,24 @@ const unbindDevice = async (resource: ApplicationResource) => {
   onlyMessage($t('ProjectApplication.resource.unbindSuccess', { name: resource.name }))
 }
 
+const bindCameras = async (ids: string[]) => {
+  await store.bindCameras(applicationId.value, ids)
+  onlyMessage($t('ProjectApplication.camera.bindSuccess', { count: ids.length }))
+}
+
+const unbindCamera = async (camera: ApplicationCameraResource) => {
+  await store.unbindCamera(applicationId.value, camera)
+  onlyMessage($t('ProjectApplication.camera.unbindSuccess', { name: camera.name }))
+}
+
 const addUser = async (draft: ApplicationUserDraft) => {
   await store.addUser(applicationId.value, draft)
   onlyMessage($t('ProjectApplication.user.addSuccess', { name: draft.name }))
+}
+
+const bindUsers = async (ids: string[]) => {
+  await store.bindUsers(applicationId.value, ids)
+  onlyMessage($t('ProjectApplication.user.bindSuccess', { count: ids.length }))
 }
 
 const updateUser = async (user: ApplicationUser, patch: Partial<ApplicationUser>) => {
@@ -196,7 +229,17 @@ const removeRole = async (role: { id: string; name: string }) => {
   padding: 0 var(--space-4) var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--r-3);
-  background: var(--bg);
+}
+
+.detail-page :deep(.section),
+.detail-page :deep(.section .ic),
+.detail-page :deep(.section-sub code),
+.detail-page :deep(.ant-table),
+.detail-page :deep(.ant-table-container),
+.detail-page :deep(.ant-table-thead > tr > th),
+.detail-page :deep(.ant-table-tbody > tr > td),
+.detail-page :deep(.ant-table-cell-fix-right) {
+  background: transparent !important;
 }
 
 @media (max-width: 48rem) {

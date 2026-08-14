@@ -5,16 +5,20 @@ import type {
   BusinessApplicationTemplateEntity,
   DeviceEntity,
   EnumValue,
+  MediaChannelEntity,
   MenuView,
+  ProjectMemberInfo,
   UserDetailEntity,
 } from '@authentication-manager-ui/api/application-center/businessApplication'
 import type {
+  ApplicationCameraResource,
   ApplicationResource,
   ApplicationFilters,
   ApplicationRole,
   ApplicationStatus,
   ApplicationTemplate,
   ApplicationUser,
+  ApplicationUserCandidate,
   ProjectApplication,
 } from './types'
 
@@ -36,11 +40,16 @@ export const listOf = <T>(response: unknown): T[] => {
   return []
 }
 
-export const enumValue = (value: string | EnumValue | undefined, fallback: string) =>
+export const enumValue = (value: string | number | EnumValue | undefined, fallback: string) =>
   typeof value === 'object' ? String(value.value || fallback) : String(value || fallback)
 
-export const enumText = (value: string | EnumValue | undefined, fallback: string) =>
+export const enumText = (value: string | number | EnumValue | undefined, fallback: string) =>
   typeof value === 'object' ? String(value.text || value.value || fallback) : String(value || fallback)
+
+const recordOf = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' ? value as Record<string, unknown> : {}
+
+const textOf = (value: unknown) => value === undefined || value === null ? '' : String(value)
 
 export const buildApplicationTerms = (projectId: string, filters: ApplicationFilters) => {
   const terms: Array<Record<string, unknown>> = [
@@ -121,6 +130,23 @@ export const normalizeUser = (
   }
 }
 
+export const normalizeProjectMember = (entity: ProjectMemberInfo): ApplicationUserCandidate => {
+  const status = enumValue(entity.status, '1')
+  const type = enumValue(entity.type, '')
+  const id = entity.userId || entity.id || ''
+  return {
+    id,
+    name: entity.name || entity.username || id,
+    username: entity.username || '',
+    phone: '',
+    status,
+    statusText: enumText(entity.status, status),
+    enabled: status !== 'disabled' && status !== '0',
+    type,
+    typeText: enumText(entity.type, type),
+  }
+}
+
 export const normalizeDevice = (entity: DeviceEntity): ApplicationResource => {
   const status = enumValue(entity.state, 'offline')
   return {
@@ -131,6 +157,30 @@ export const normalizeDevice = (entity: DeviceEntity): ApplicationResource => {
     status,
     statusText: enumText(entity.state, status),
     group: entity.classifiedName || '--',
+  }
+}
+
+export const normalizeCamera = (entity: MediaChannelEntity): ApplicationCameraResource => {
+  const others = recordOf(entity.others)
+  const status = enumValue(entity.status || entity.state, 'offline')
+  const features = Array.isArray(entity.features) ? entity.features.map(item => enumValue(item, '')) : []
+  const ptzType = enumValue(entity.ptzType, '0')
+  const id = entity.id || `${entity.deviceId || ''}:${entity.channelId || ''}`
+  const previewUrl = textOf(others.playerScreenshotCover) || textOf(others.latestSnapshotUrl) || entity.photoUrl
+
+  return {
+    id,
+    deviceId: entity.deviceId || '',
+    channelId: entity.channelId || id,
+    name: entity.name || entity.channelId || id,
+    serial: entity.channelId || id,
+    category: entity.deviceName || entity.provider || '--',
+    group: entity.deviceName || entity.provider || '--',
+    area: textOf(others.areaName) || entity.address || entity.civilCode || '--',
+    status,
+    statusText: enumText(entity.status || entity.state, status),
+    supportsPtz: features.includes('ptz') || ['1', '2', '4', 'ball', 'hemisphere', 'remoteControl'].includes(ptzType),
+    previewUrl,
   }
 }
 

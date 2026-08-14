@@ -1,20 +1,14 @@
-import { computed, reactive } from 'vue'
+import { reactive } from 'vue'
 import {
   bindBusinessApplicationDevices,
   createBusinessApplication,
-  createBusinessApplicationRole,
-  createBusinessApplicationUser,
-  deleteBusinessApplicationRole,
   deleteBusinessApplicationUser,
   getBusinessApplication,
   getBusinessApplicationTemplateMenus,
-  queryBusinessApplicationRoles,
   queryBusinessApplications,
   queryBusinessApplicationTemplates,
   unbindBusinessApplicationDevice,
   updateBusinessApplication,
-  updateBusinessApplicationRole,
-  updateBusinessApplicationUser,
   type BusinessApplicationEntity,
   type BusinessApplicationRoleEntity,
   type BusinessApplicationTemplateEntity,
@@ -31,15 +25,29 @@ import {
   normalizeUser,
   resultOf,
 } from './applicationModel'
+import { loadBusinessApplicationCameras } from './applicationCameraService'
 import { loadBusinessApplicationDevices } from './applicationDeviceService'
-import { loadBusinessApplicationUsers } from './applicationUserService'
+import {
+  bindBusinessApplicationUsers,
+  createUserForBusinessApplication,
+  loadBindableProjectUsers,
+  loadBusinessApplicationUsers,
+  updateBoundBusinessApplicationUser,
+} from './applicationUserService'
+import {
+  deleteBusinessApplicationRoleEntity,
+  loadBusinessApplicationRoles,
+  saveBusinessApplicationRole,
+} from './applicationRoleService'
 import type {
+  ApplicationCameraResource,
   ApplicationDetailState,
   ApplicationFilters,
   ApplicationResource,
   ApplicationRoleDraft,
   ApplicationTemplate,
   ApplicationUser,
+  ApplicationUserCandidate,
   ApplicationUserDraft,
   ProjectApplication,
   ProjectApplicationDraft,
@@ -49,6 +57,8 @@ const applications = reactive<ProjectApplication[]>([])
 const templates = reactive<ApplicationTemplate[]>([])
 const details = reactive<Record<string, ApplicationDetailState>>({})
 const availableDevices = reactive<ApplicationResource[]>([])
+const availableCameras = reactive<ApplicationCameraResource[]>([])
+const bindableUsers = reactive<ApplicationUserCandidate[]>([])
 const templateMenus = reactive<Record<string, string[]>>({})
 const applicationEntities = new Map<string, BusinessApplicationEntity>()
 const roleEntities = new Map<string, BusinessApplicationRoleEntity>()
@@ -57,9 +67,14 @@ const userEntities = new Map<string, UserDetailEntity>()
 const replace = <T>(target: T[], values: T[]) => target.splice(0, target.length, ...values)
 
 const ensureDetail = (applicationId: string) => {
-  if (!details[applicationId]) details[applicationId] = { devices: [], users: [], roles: [] }
+  if (!details[applicationId]) details[applicationId] = { devices: [], cameras: [], users: [], roles: [] }
   return details[applicationId]
 }
+
+const projectIdOf = (applicationId: string) =>
+  applications.find(item => item.id === applicationId)?.projectId
+  || applicationEntities.get(applicationId)?.projectId
+  || ''
 
 const rememberApplications = (entities: BusinessApplicationEntity[]) => {
   entities.forEach(entity => applicationEntities.set(entity.id, entity))
@@ -117,7 +132,6 @@ export const useProjectApplication = () => {
 
   const createApplication = async (projectId: string, draft: ProjectApplicationDraft) => {
     const response = await createBusinessApplication({
-      projectId,
       templateId: draft.templateId,
       name: draft.name,
       icon: draft.icon,
@@ -163,8 +177,7 @@ export const useProjectApplication = () => {
   }
 
   const loadRoles = async (applicationId: string) => {
-    const response = await queryBusinessApplicationRoles(applicationId)
-    const entities = listOf<BusinessApplicationRoleEntity>(response)
+    const entities = await loadBusinessApplicationRoles(applicationId)
     entities.forEach(entity => roleEntities.set(entity.id, entity))
     const detail = ensureDetail(applicationId)
     replace(detail.roles, entities.map(normalizeRole))
@@ -180,6 +193,13 @@ export const useProjectApplication = () => {
     return detail.users
   }
 
+  const loadBindableUsers = async (applicationId: string) => {
+    const detail = ensureDetail(applicationId)
+    const values = await loadBindableProjectUsers(projectIdOf(applicationId), detail.users)
+    replace(bindableUsers, values)
+    return bindableUsers
+  }
+
   const loadDevices = async (applicationId: string) => {
     const result = await loadBusinessApplicationDevices(applicationId)
     const detail = ensureDetail(applicationId)
@@ -188,10 +208,19 @@ export const useProjectApplication = () => {
     return detail.devices
   }
 
+  const loadCameras = async (applicationId: string) => {
+    const result = await loadBusinessApplicationCameras(applicationId)
+    const detail = ensureDetail(applicationId)
+    replace(detail.cameras, result.bound)
+    replace(availableCameras, result.available)
+    return detail.cameras
+  }
+
   const loadDetail = async (applicationId: string) => {
     ensureDetail(applicationId)
     await loadRoles(applicationId)
-    await Promise.all([loadUsers(applicationId), loadDevices(applicationId)])
+    await Promise.all([loadUsers(applicationId), loadDevices(applicationId), loadCameras(applicationId)])
+    await loadBindableUsers(applicationId)
     return details[applicationId]
   }
 
@@ -206,70 +235,63 @@ export const useProjectApplication = () => {
     await loadDevices(applicationId)
   }
 
-  const addUser = async (applicationId: string, draft: ApplicationUserDraft) => {
-    await createBusinessApplicationUser({
-      user: {
-        name: draft.name,
-        username: draft.username,
-        password: draft.password,
-        telephone: draft.phone,
-        email: draft.email,
-        status: 1,
-      },
-      roleIdList: [draft.roleId],
-      businessApplicationIdList: [applicationId],
-    })
+  const bindCameras = async (applicationId: string, cameraIds: string[]) => {
+    const selected = new Set(cameraIds)
+    const deviceIds = [...new Set(availableCameras
+      .filter(camera => selected.has(camera.id))
+      .map(camera => camera.deviceId)
+      .filter(Boolean))]
+    if (!deviceIds.length) return
+    await bindBusinessApplicationDevices(applicationId, deviceIds)
+    await loadCameras(applicationId)
+  }
+
+  const unbindCamera = async (applicationId: string, camera: ApplicationCameraResource) => {
+    if (!camera.deviceId) return
+    await unbindBusinessApplicationDevice(applicationId, camera.deviceId)
+    await loadCameras(applicationId)
+  }
+
+  const bindUsers = async (applicationId: string, userIds: string[]) => {
+    await bindBusinessApplicationUsers(applicationId, userIds)
     await loadUsers(applicationId)
+    await loadBindableUsers(applicationId)
+  }
+
+  const addUser = async (applicationId: string, draft: ApplicationUserDraft) => {
+    await createUserForBusinessApplication(applicationId, draft)
+    await loadUsers(applicationId)
+    await loadBindableUsers(applicationId)
   }
 
   const updateUser = async (applicationId: string, userId: string, patch: Partial<ApplicationUser>) => {
     const current = ensureDetail(applicationId).users.find(item => item.id === userId)
     if (!current) return
-    const raw = userEntities.get(`${applicationId}:${userId}`)
-    const next = { ...current, ...patch }
     const applicationRoleIds = new Set(ensureDetail(applicationId).roles.map(role => role.id))
-    const roleIds = patch.roleId === undefined
-      ? next.roleIds
-      : [...next.roleIds.filter(id => !applicationRoleIds.has(id)), patch.roleId].filter(Boolean)
-
-    // Omitting businessApplicationIdList preserves every existing application membership on update.
-    await updateBusinessApplicationUser(userId, {
-      user: {
-        ...raw,
-        id: userId,
-        name: next.name,
-        username: next.username,
-        telephone: next.phone,
-        email: next.email,
-        status: next.enabled ? 1 : 0,
-      },
-      roleIdList: roleIds,
-      orgIdList: next.orgIds,
-      positions: next.positionIds,
-    })
+    await updateBoundBusinessApplicationUser(
+      userId,
+      current,
+      patch,
+      userEntities.get(`${applicationId}:${userId}`),
+      applicationRoleIds,
+    )
     await loadUsers(applicationId)
+    await loadBindableUsers(applicationId)
   }
 
   const removeUser = async (applicationId: string, userId: string) => {
     await deleteBusinessApplicationUser(userId)
     await loadUsers(applicationId)
+    await loadBindableUsers(applicationId)
   }
 
   const saveRole = async (applicationId: string, draft: ApplicationRoleDraft, roleId?: string) => {
-    if (roleId) {
-      const raw = roleEntities.get(roleId)
-      await updateBusinessApplicationRole(roleId, { role: { ...raw, ...draft, id: roleId } })
-    } else {
-      await createBusinessApplicationRole({
-        role: { ...draft, state: 'enabled' },
-        businessApplicationIdList: [applicationId],
-      })
-    }
+    await saveBusinessApplicationRole(applicationId, draft, roleId, roleId ? roleEntities.get(roleId) : undefined)
     await loadRoles(applicationId)
   }
 
   const removeRole = async (applicationId: string, roleId: string) => {
-    await deleteBusinessApplicationRole(roleId)
+    await deleteBusinessApplicationRoleEntity(roleId)
     await loadRoles(applicationId)
     await loadUsers(applicationId)
   }
@@ -279,9 +301,9 @@ export const useProjectApplication = () => {
     templates,
     details,
     availableDevices,
+    availableCameras,
+    bindableUsers,
     templateMenus,
-    getApplication: (id: string) => computed(() => applications.find(item => item.id === id)),
-    getDetail: (id: string) => computed(() => details[id]),
     loadApplications,
     loadTemplates,
     loadTemplateMenus,
@@ -291,7 +313,10 @@ export const useProjectApplication = () => {
     loadDetail,
     bindDevices,
     unbindDevice,
+    bindCameras,
+    unbindCamera,
     addUser,
+    bindUsers,
     updateUser,
     removeUser,
     saveRole,

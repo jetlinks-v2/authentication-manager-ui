@@ -62,7 +62,7 @@
         <div class="setting-label">{{ $t('ProjectApplication.settings.domain') }}</div>
         <InputEditable
           class="setting-control"
-          :value="application.domain"
+          :value="domainDisplayValue"
           :max-length="128"
           @change="updateDomain"
         />
@@ -80,6 +80,7 @@
 import type { PropType } from 'vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { createApplicationAccessDisplayUrl } from '@jetlinks-web-core/utils/application-access'
 import type { ApplicationTemplate, ProjectApplication } from '../../types'
 
 const props = defineProps({
@@ -109,6 +110,8 @@ const languageOptions = computed(() => [
   { label: $t('ProjectApplication.settings.zhCN'), value: 'zh-CN' },
   { label: $t('ProjectApplication.settings.enUS'), value: 'en-US' },
 ])
+const fallbackDomainUrl = computed(() => createApplicationAccessDisplayUrl(props.application.id))
+const domainDisplayValue = computed(() => props.application.domain || fallbackDomainUrl.value)
 
 const updateIcon = (icon: string) => emits('update', { icon }, 'icon')
 const updateName = (name: string) => {
@@ -116,7 +119,11 @@ const updateName = (name: string) => {
   if (nextName) emits('update', { name: nextName }, 'name')
 }
 const updateDescription = (description: string) => emits('update', { description: description.trim() }, 'description')
-const updateDomain = (domain: string) => emits('update', { domain: domain.trim() }, 'domain')
+const updateDomain = (domain: string) => {
+  const nextDomain = domain.trim()
+  if (!props.application.domain && nextDomain === fallbackDomainUrl.value) return
+  emits('update', { domain: nextDomain }, 'domain')
+}
 const updateLanguage = (defaultLanguage: unknown) => {
   if (typeof defaultLanguage === 'string') emits('update', { defaultLanguage }, 'language')
 }

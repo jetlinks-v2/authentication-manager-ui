@@ -200,6 +200,45 @@ const flattenMenus = (menus: MenuPermissionNode[] = []) => {
   return result
 }
 
+const menuCodeOf = (menu: MenuPermissionNode) => String(menu.code || '').trim()
+
+const flattenMenusForRuntimeFilter = (menus: MenuPermissionNode[] = []) => {
+  const result: MenuPermissionNode[] = []
+  const visit = (items: MenuPermissionNode[], parentId?: string) => items.forEach(item => {
+    result.push({
+      ...item,
+      parentId: item.parentId || parentId,
+      children: null,
+    })
+    visit(Array.isArray(item.children) ? item.children : [], item.id)
+  })
+  visit(menus)
+  return result
+}
+
+const buildMenuTreeByParentId = (menus: MenuPermissionNode[] = []) => {
+  const menuMap = new Map<string, MenuPermissionNode>()
+  const roots: MenuPermissionNode[] = []
+  menus.forEach(menu => {
+    if (menu.id) menuMap.set(String(menu.id), { ...menu, children: null })
+  })
+  menuMap.forEach(menu => {
+    const parent = menu.parentId ? menuMap.get(String(menu.parentId)) : undefined
+    if (parent) parent.children = [...(parent.children || []), menu]
+    else roots.push(menu)
+  })
+  return roots
+}
+
+export const filterMenuTreeByRuntimeCodes = (
+  menus: MenuPermissionNode[] = [],
+  runtimeMenus: MenuPermissionNode[] = [],
+) => {
+  const runtimeCodes = new Set(flattenMenusForRuntimeFilter(runtimeMenus).map(menuCodeOf).filter(Boolean))
+  const filteredMenus = flattenMenusForRuntimeFilter(menus).filter(menu => runtimeCodes.has(menuCodeOf(menu)))
+  return buildMenuTreeByParentId(filteredMenus)
+}
+
 export const normalizeGrantedMenus = (
   menus: MenuPermissionNode[] = [],
   sourceMenus: MenuPermissionNode[] = [],

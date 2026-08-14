@@ -44,6 +44,14 @@ export interface ApplicationResource {
   group: string
 }
 
+export interface ApplicationCameraResource extends ApplicationResource {
+  deviceId: string
+  channelId: string
+  area: string
+  supportsPtz: boolean
+  previewUrl?: string
+}
+
 export interface ApplicationUser {
   id: string
   name: string
@@ -67,6 +75,18 @@ export interface ApplicationUserDraft {
   confirmPassword: string
 }
 
+export interface ApplicationUserCandidate {
+  id: string
+  name: string
+  username: string
+  phone: string
+  status: string
+  statusText: string
+  enabled: boolean
+  type: string
+  typeText: string
+}
+
 export interface ApplicationRole {
   id: string
   name: string
@@ -82,6 +102,7 @@ export interface ApplicationRoleDraft {
 
 export interface ApplicationDetailState {
   devices: ApplicationResource[]
+  cameras: ApplicationCameraResource[]
   users: ApplicationUser[]
   roles: ApplicationRole[]
 }

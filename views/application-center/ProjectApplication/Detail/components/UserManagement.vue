@@ -5,10 +5,16 @@
     :sub="$t('ProjectApplication.user.subtitle', { count: data.users.length })"
   >
     <template #actions>
-      <a-button type="primary" @click="openAdd">
-        <template #icon><AIcon type="UserAddOutlined" /></template>
-        {{ $t('ProjectApplication.user.add') }}
-      </a-button>
+      <a-space>
+        <a-button @click="openBind">
+          <template #icon><AIcon type="LinkOutlined" /></template>
+          {{ $t('ProjectApplication.user.bind') }}
+        </a-button>
+        <a-button type="primary" @click="createOpen = true">
+          <template #icon><AIcon type="UserAddOutlined" /></template>
+          {{ $t('ProjectApplication.user.add') }}
+        </a-button>
+      </a-space>
     </template>
 
     <a-input v-model:value="keyword" allow-clear class="user-search" :placeholder="$t('ProjectApplication.user.searchPlaceholder')">
@@ -30,10 +36,11 @@
         </template>
         <template v-else-if="column.key === 'role'">
           <a-select
+            allow-clear
             :value="record.roleId"
             class="role-select"
             :options="roleOptions"
-            @change="emits('update', record, { roleId: $event })"
+            @change="emits('update', record, { roleId: $event || '' })"
           />
         </template>
         <template v-else-if="column.key === 'status'">
@@ -59,56 +66,72 @@
       </template>
     </a-table>
     <CloudEmpty v-else :description="$t('ProjectApplication.user.empty')">
-      <a-button type="primary" @click="openAdd">{{ $t('ProjectApplication.user.add') }}</a-button>
+      <a-space>
+        <a-button @click="openBind">{{ $t('ProjectApplication.user.bind') }}</a-button>
+        <a-button type="primary" @click="createOpen = true">{{ $t('ProjectApplication.user.add') }}</a-button>
+      </a-space>
     </CloudEmpty>
 
+    <UserCreateModal
+      v-model:open="createOpen"
+      :roles="data.roles"
+      @confirm="emits('add', $event)"
+    />
+
     <a-modal
-      :open="addOpen"
-      :title="$t('ProjectApplication.user.add')"
-      :ok-text="$t('ProjectApplication.user.add')"
+      :open="bindOpen"
+      :title="$t('ProjectApplication.user.bindTitle')"
+      :ok-text="$t('ProjectApplication.user.bindCount', { count: selectedIds.length })"
       :cancel-text="$t('ProjectApplication.common.cancel')"
-      @ok="confirmAdd"
-      @cancel="addOpen = false"
+      :ok-button-props="{ disabled: !selectedIds.length }"
+      @ok="confirmBind"
+      @cancel="bindOpen = false"
     >
-      <a-form ref="formRef" :model="form" :rules="rules" layout="vertical">
-        <a-form-item :label="$t('ProjectApplication.user.name')" name="name">
-          <a-input v-model:value="form.name" :maxlength="32" :placeholder="$t('ProjectApplication.user.namePlaceholder')" />
-        </a-form-item>
-        <a-form-item :label="$t('ProjectApplication.user.username')" name="username">
-          <a-input v-model:value="form.username" :maxlength="32" :placeholder="$t('ProjectApplication.user.usernamePlaceholder')" />
-        </a-form-item>
-        <a-form-item :label="$t('ProjectApplication.user.phone')" name="phone">
-          <a-input v-model:value="form.phone" :maxlength="20" :placeholder="$t('ProjectApplication.user.phonePlaceholder')" />
-        </a-form-item>
-        <a-form-item :label="$t('ProjectApplication.user.email')" name="email">
-          <a-input v-model:value="form.email" :placeholder="$t('ProjectApplication.user.emailPlaceholder')" />
-        </a-form-item>
-        <a-form-item :label="$t('ProjectApplication.user.password')" name="password">
-          <a-input-password v-model:value="form.password" :maxlength="64" :placeholder="$t('ProjectApplication.user.passwordPlaceholder')" />
-        </a-form-item>
-        <a-form-item :label="$t('ProjectApplication.user.confirmPassword')" name="confirmPassword">
-          <a-input-password v-model:value="form.confirmPassword" :maxlength="64" :placeholder="$t('ProjectApplication.user.confirmPasswordPlaceholder')" />
-        </a-form-item>
-        <a-form-item :label="$t('ProjectApplication.user.role')" name="roleId">
-          <a-select v-model:value="form.roleId" :options="roleOptions" />
-        </a-form-item>
-      </a-form>
+      <a-input
+        v-model:value="candidateKeyword"
+        allow-clear
+        class="candidate-search"
+        :placeholder="$t('ProjectApplication.user.candidateSearchPlaceholder')"
+      >
+        <template #prefix><AIcon type="SearchOutlined" /></template>
+      </a-input>
+
+      <div class="candidate-list">
+        <label
+          v-for="item in filteredCandidates"
+          :key="item.id"
+          class="candidate-item"
+          :class="{ disabled: !item.enabled }"
+        >
+          <a-checkbox :checked="selectedIds.includes(item.id)" :disabled="!item.enabled" @change="toggleCandidate(item.id, $event)" />
+          <a-avatar>{{ item.name.slice(0, 1) }}</a-avatar>
+          <span class="candidate-copy">
+            <strong>{{ item.name }}</strong>
+            <small>{{ [item.username, memberTypeText(item)].filter(Boolean).join(' · ') || '--' }}</small>
+          </span>
+          <MetaChip :tone="item.enabled ? 'ok' : 'default'">
+            {{ $t(item.enabled ? 'ProjectApplication.user.normal' : 'ProjectApplication.user.disabled') }}
+          </MetaChip>
+        </label>
+        <CloudEmpty v-if="!filteredCandidates.length" :description="$t('ProjectApplication.user.bindEmpty')" />
+      </div>
     </a-modal>
   </SectionCard>
 </template>
 
 <script setup lang="ts" name="ProjectApplicationUserManagement">
 import type { PropType } from 'vue'
-import { computed, reactive, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { Rule } from 'ant-design-vue/es/form'
-import { passwordRegEx } from '@jetlinks-web-core/utils/validate'
-import { validateField_api as validateUserField } from '@authentication-manager-ui/api/system/user'
-import type { ApplicationRole, ApplicationUser, ApplicationUserDraft } from '../../types'
+import UserCreateModal from './UserCreateModal.vue'
+import type { ApplicationRole, ApplicationUser, ApplicationUserCandidate, ApplicationUserDraft } from '../../types'
+
+interface CheckboxEvent { target: { checked: boolean } }
 
 interface UserManagementData {
   users: ApplicationUser[]
   roles: ApplicationRole[]
+  candidates: ApplicationUserCandidate[]
 }
 
 const props = defineProps({
@@ -118,20 +141,19 @@ const props = defineProps({
   },
 })
 
-const emits = defineEmits(['add', 'update', 'remove'])
+const emits = defineEmits<{
+  (e: 'add', draft: ApplicationUserDraft): void
+  (e: 'bind', ids: string[]): void
+  (e: 'update', user: ApplicationUser, patch: Partial<ApplicationUser>): void
+  (e: 'remove', user: ApplicationUser): void
+}>()
 const { t: $t } = useI18n()
 const keyword = ref('')
-const addOpen = ref(false)
-const formRef = ref()
-const form = reactive<ApplicationUserDraft>({
-  name: '',
-  username: '',
-  phone: '',
-  email: '',
-  roleId: '',
-  password: '',
-  confirmPassword: '',
-})
+const candidateKeyword = ref('')
+const createOpen = ref(false)
+const bindOpen = ref(false)
+const selectedIds = ref<string[]>([])
+const knownMemberTypes = new Set(['manager', 'member', 'customer'])
 
 const columns = computed(() => [
   { title: $t('ProjectApplication.user.user'), key: 'user', width: '10rem' },
@@ -142,66 +164,49 @@ const columns = computed(() => [
   { title: $t('ProjectApplication.common.actions'), key: 'actions', width: '10rem', fixed: 'right' as const },
 ])
 
-const roleOptions = computed(() => props.data.roles.map((role) => ({ label: role.name, value: role.id })))
+const roleOptions = computed(() => props.data.roles.map(role => ({ label: role.name, value: role.id })))
+const boundIds = computed(() => new Set(props.data.users.map(user => user.id)))
+const memberTypeText = (item: ApplicationUserCandidate) =>
+  knownMemberTypes.has(item.type) ? $t(`ProjectApplication.user.memberType.${item.type}`) : item.typeText
 const filteredUsers = computed(() => {
   const searchText = keyword.value.trim().toLocaleLowerCase()
-  return props.data.users.filter((user) => !searchText || `${user.name} ${user.username} ${user.phone}`.toLocaleLowerCase().includes(searchText))
+  return props.data.users.filter(user => !searchText || `${user.name} ${user.username} ${user.phone}`.toLocaleLowerCase().includes(searchText))
+})
+const selectableCandidates = computed(() => props.data.candidates.filter(item => item.id && !boundIds.value.has(item.id)))
+const filteredCandidates = computed(() => {
+  const searchText = candidateKeyword.value.trim().toLocaleLowerCase()
+  return selectableCandidates.value.filter(item =>
+    !searchText || `${item.name} ${item.username} ${item.phone} ${item.typeText} ${memberTypeText(item)}`.toLocaleLowerCase().includes(searchText))
 })
 
-const resultOf = <T,>(response: any): T => response && Object.prototype.hasOwnProperty.call(response, 'result')
-  ? response.result as T
-  : response as T
-
-const validateUsername = async (_rule: Rule, value: string) => {
-  if (!value) return Promise.reject($t('ProjectApplication.user.usernamePlaceholder'))
-  const result = resultOf<{ passed: boolean; reason?: string }>(await validateUserField('username', value))
-  return result?.passed ? Promise.resolve() : Promise.reject(result?.reason || $t('ProjectApplication.user.usernameInvalid'))
+const openBind = () => {
+  selectedIds.value = []
+  candidateKeyword.value = ''
+  bindOpen.value = true
 }
 
-const validatePassword = async (_rule: Rule, value: string) => {
-  if (!value) return Promise.reject($t('ProjectApplication.user.passwordPlaceholder'))
-  if (value.length < 8) return Promise.reject($t('ProjectApplication.user.passwordLength'))
-  if (!passwordRegEx(value)) return Promise.reject($t('ProjectApplication.user.passwordFormat'))
-  const result = resultOf<{ passed: boolean; reason?: string }>(await validateUserField('password', value))
-  return result?.passed ? Promise.resolve() : Promise.reject(result?.reason || $t('ProjectApplication.user.passwordFormat'))
+const toggleCandidate = (id: string, event: CheckboxEvent) => {
+  selectedIds.value = event.target.checked
+    ? [...new Set([...selectedIds.value, id])]
+    : selectedIds.value.filter(item => item !== id)
 }
 
-const validateConfirmPassword = (_rule: Rule, value: string) => value === form.password
-  ? Promise.resolve()
-  : Promise.reject($t('ProjectApplication.user.passwordMismatch'))
-
-const rules = computed<Record<string, Rule[]>>(() => ({
-  name: [{ required: true, message: $t('ProjectApplication.user.namePlaceholder') }],
-  username: [{ required: true, validator: validateUsername, trigger: 'blur' }],
-  email: [{ type: 'email' as const, message: $t('ProjectApplication.user.emailPlaceholder') }],
-  password: [{ required: true, validator: validatePassword, trigger: 'blur' }],
-  confirmPassword: [{ required: true, validator: validateConfirmPassword, trigger: 'blur' }],
-  roleId: [{ required: true, message: $t('ProjectApplication.user.role') }],
-}))
-
-const resetForm = () => Object.assign(form, {
-  name: '',
-  username: '',
-  phone: '',
-  email: '',
-  roleId: props.data.roles[0]?.id || '',
-  password: '',
-  confirmPassword: '',
-})
-const openAdd = () => { resetForm(); addOpen.value = true }
-
-const confirmAdd = async () => {
-  try {
-    await formRef.value?.validate()
-  } catch {
-    return
-  }
-  emits('add', { ...form })
-  addOpen.value = false
+const confirmBind = () => {
+  if (!selectedIds.value.length) return
+  emits('bind', [...selectedIds.value])
+  bindOpen.value = false
 }
 </script>
 
 <style scoped>
 .user-search { width: min(100%, 22rem); margin-bottom: var(--space-3); }
 .role-select { width: 100%; }
+.candidate-search { margin-bottom: var(--space-3); }
+.candidate-list { display: flex; max-height: 26rem; flex-direction: column; gap: var(--space-2); overflow-y: auto; }
+.candidate-item { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--r-2); cursor: pointer; }
+.candidate-item:hover { border-color: var(--accent); }
+.candidate-item.disabled { cursor: not-allowed; opacity: 0.56; }
+.candidate-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: var(--space-1); }
+.candidate-copy strong { color: var(--ink-1); }
+.candidate-copy small { overflow: hidden; color: var(--ink-4); text-overflow: ellipsis; white-space: nowrap; }
 </style>

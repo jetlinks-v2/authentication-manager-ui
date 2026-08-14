@@ -2080,6 +2080,10 @@
                 "actions": ["query", "save", "delete"]
               },
               {
+                "permission": "business-application-template",
+                "actions": ["query", "grant"]
+              },
+              {
                 "permission": "menu",
                 "actions": ["grant"]
               }

@@ -7,6 +7,7 @@ interface TypedRequest {
   get<T>(url: string, data?: unknown, config?: RequestConfig): Promise<AxiosResponseRewrite<T>>
   post<T>(url: string, data?: unknown, config?: RequestConfig): Promise<AxiosResponseRewrite<T>>
   put<T>(url: string, data?: unknown, config?: RequestConfig): Promise<AxiosResponseRewrite<T>>
+  patch<T>(url: string, data?: unknown, config?: RequestConfig): Promise<AxiosResponseRewrite<T>>
   remove<T>(url: string, data?: unknown, config?: RequestConfig): Promise<AxiosResponseRewrite<T>>
 }
 
@@ -53,6 +54,7 @@ export interface BusinessApplicationRoleEntity {
   description?: string
   state?: string | EnumValue
   groupId?: string
+  applicationId?: string
   [key: string]: unknown
 }
 
@@ -75,16 +77,21 @@ export interface UserDetailEntity {
   [key: string]: unknown
 }
 
+export interface ProjectMemberInfo {
+  id?: string
+  projectId?: string
+  userId: string
+  username?: string
+  name?: string
+  status?: string | number | EnumValue
+  type?: string | EnumValue
+}
+
 export interface SaveBusinessApplicationUserRequest {
   user: Partial<UserDetailEntity>
   roleIdList: string[]
   orgIdList?: string[]
   positions?: string[]
-  businessApplicationIdList?: string[]
-}
-
-export interface SaveBusinessApplicationRoleRequest {
-  role: Partial<BusinessApplicationRoleEntity>
   businessApplicationIdList?: string[]
 }
 
@@ -95,6 +102,26 @@ export interface DeviceEntity {
   classifiedName?: string
   parentId?: string
   state?: string | EnumValue
+}
+
+export interface MediaChannelEntity {
+  id?: string
+  deviceId?: string
+  deviceName?: string
+  channelId?: string
+  name?: string
+  manufacturer?: string
+  model?: string
+  address?: string
+  civilCode?: string
+  provider?: string
+  status?: string | EnumValue
+  state?: string | EnumValue
+  features?: Array<string | EnumValue>
+  ptzType?: string | number | EnumValue
+  channelType?: string | EnumValue
+  photoUrl?: string
+  others?: Record<string, unknown>
 }
 
 export interface QueryPayload {
@@ -149,18 +176,25 @@ export const getBusinessApplicationTemplateMenus = (id: string) =>
 export const queryBusinessApplicationRoles = (
   applicationId: string,
   data: QueryPayload = { pageIndex: 0, pageSize: 500 },
-) => apiRequest.post<PagerResult<BusinessApplicationRoleEntity>>(
-  `/role/business_application/${applicationId}/_query`,
-  data,
-)
+) => apiRequest.post<PagerResult<BusinessApplicationRoleEntity>>('/role/_query/', {
+  ...data,
+  terms: [
+    { column: 'applicationId', termType: 'eq', value: applicationId },
+    ...(data.terms || []),
+  ],
+})
 
-export const createBusinessApplicationRole = (data: SaveBusinessApplicationRoleRequest) =>
-  apiRequest.post<string>('/role/_create', data)
+export const createBusinessApplicationRole = (
+  applicationId: string,
+  data: Partial<BusinessApplicationRoleEntity>,
+) => apiRequest.post<BusinessApplicationRoleEntity>('/role', {
+  ...data,
+  applicationId,
+  state: data.state || 'enabled',
+})
 
-export const updateBusinessApplicationRole = (
-  roleId: string,
-  data: SaveBusinessApplicationRoleRequest,
-) => apiRequest.put<string>(`/role/${roleId}/_update`, data)
+export const updateBusinessApplicationRole = (data: Partial<BusinessApplicationRoleEntity>) =>
+  apiRequest.patch<BusinessApplicationRoleEntity>('/role', data)
 
 export const deleteBusinessApplicationRole = (roleId: string) =>
   apiRequest.remove<void>(`/role/${roleId}`)
@@ -179,6 +213,13 @@ export const queryUserDetails = (data: QueryPayload) =>
 export const createBusinessApplicationUser = (data: SaveBusinessApplicationUserRequest) =>
   apiRequest.post<string>('/user/detail/_create', data)
 
+export const queryConsoleProjectMembers = (projectId: string, data: QueryPayload) =>
+  apiRequest.post<PagerResult<ProjectMemberInfo>>(
+    `/console/project/${projectId}/members/_query`,
+    data,
+    { projectContext: false },
+  )
+
 export const updateBusinessApplicationUser = (
   userId: string,
   data: SaveBusinessApplicationUserRequest,
@@ -189,6 +230,9 @@ export const deleteBusinessApplicationUser = (userId: string) =>
 
 export const queryDevices = (data: QueryPayload) =>
   apiRequest.post<DeviceEntity[]>('/device/instance/_query/no-paging?paging=false', data)
+
+export const queryMediaChannels = (data: QueryPayload) =>
+  apiRequest.post<MediaChannelEntity[]>('/media/channel/_query/no-paging?paging=false', data)
 
 export const queryDevicePermissions = (ids: string[]) =>
   apiRequest.post<AssetPermissionInfo[]>('/assets/bindings/device', ids)

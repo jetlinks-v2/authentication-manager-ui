@@ -111,7 +111,6 @@ const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(ico
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--r-3);
-  background: var(--bg);
 }
 
 .summary-back {
@@ -131,7 +130,6 @@ const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(ico
   flex: none;
   overflow: hidden;
   border-radius: var(--r-3);
-  background: var(--accent-soft);
   color: var(--accent);
   font-size: var(--fs-20);
 }
