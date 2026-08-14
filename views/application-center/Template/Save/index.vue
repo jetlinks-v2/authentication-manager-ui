@@ -3,9 +3,6 @@
     <template #title>
       <TemplateSummary
         :detail="detailState.detail.value"
-        :tags="detailState.tags.value"
-        :tag-ids="detailState.tagIds.value"
-        :tag-tree="detailState.tagTree.value"
         :state="detailState.state.value"
         :can-update="canUpdate"
         :saving="detailState.saving.value"
@@ -13,8 +10,6 @@
         @update-description="detailState.updateDescription"
         @update-icon="detailState.updateIcon"
         @toggle-state="detailState.toggleState"
-        @load-tag-options="detailState.loadTagOptions"
-        @save-tags="detailState.saveTags"
       />
     </template>
 

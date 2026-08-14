@@ -2,16 +2,15 @@
   <j-page-container>
     <div class="application-template-page">
       <div class="application-template-page__body">
-        <div class="application-template-page__sidebar">
-          <ApplicationTemplateTagSidebar
-            v-model:selectedTagIds="selectedTagIds"
-            :permission="permission"
-            @change="table.refresh"
-            @refresh="table.refresh"
-          />
-        </div>
-
         <FullPage class="application-template-page__content">
+          <ApplicationTemplateSearch
+            class="application-template-page__search"
+            :model-value="searchModel"
+            :state-options="stateOptions"
+            @search="table.search"
+            @reset="table.resetSearch"
+          />
+
           <a-spin :spinning="tableLoading" class="application-template-page__table-spin">
             <j-pro-table
               ref="tableRef"
@@ -43,7 +42,7 @@
                 <a-switch
                   :checked="slotProps._switchChecked ?? normalizeState(slotProps.state) === 'enabled'"
                   :loading="slotProps._statusLoading"
-                  @change="checked => table.changeStatus(slotProps, checked)"
+                  @change="checked => table.changeStatus(slotProps, checked === true)"
                 />
               </template>
 
@@ -80,16 +79,17 @@
 </template>
 
 <script setup lang="ts" name="ApplicationTemplateManage">
+import ApplicationTemplateSearch from './components/ApplicationTemplateSearch.vue'
 import ApplicationTemplateCreateDialog from './components/ApplicationTemplateCreateDialog.vue'
-import ApplicationTemplateTagSidebar from './components/ApplicationTemplateTagSidebar.vue'
 import { useApplicationTemplateList } from './useApplicationTemplateList'
 
 const {
   permission,
-  selectedTagIds,
   tableRef,
   tableLoading,
   createDialogOpen,
+  searchModel,
+  stateOptions,
   columns,
   defaultParams,
   tableParams,
@@ -107,16 +107,18 @@ const {
   height: 100%;
 
   &__body {
-    display: grid;
-    grid-template-columns: 20rem minmax(0, 1fr);
-    gap: var(--space-4);
     min-height: 0;
     flex: 1;
   }
 
-  &__sidebar,
   &__content {
+    display: flex;
+    flex-direction: column;
     min-height: 0;
+  }
+
+  &__search {
+    flex-shrink: 0;
   }
 
   &__link {
@@ -126,11 +128,14 @@ const {
 
   &__table-spin {
     display: block;
+    flex: 1;
     height: 100%;
+    min-height: 0;
 
     :deep(.ant-spin-container),
     :deep(.ant-spin-nested-loading) {
       height: 100%;
+      min-height: 0;
     }
   }
 

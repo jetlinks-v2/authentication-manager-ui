@@ -30,6 +30,7 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import type { FormInstance } from 'ant-design-vue'
+import type { RuleObject } from 'ant-design-vue/es/form/interface'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { createApplicationTemplate } from '@authentication-manager-ui/api/application-center/applicationTemplate'
@@ -51,7 +52,7 @@ const dialogOpen = computed({
   set: (value: boolean) => emit('update:open', value),
 })
 const formData = reactive({ name: '', code: '' })
-const rules = {
+const rules: Record<string, RuleObject[]> = {
   name: [
     { required: true, message: $t('ApplicationTemplate.message.nameRequired'), trigger: 'blur' },
     { max: 64, message: $t('ApplicationTemplate.message.nameMaxLength'), trigger: 'blur' },

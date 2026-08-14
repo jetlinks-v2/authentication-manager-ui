@@ -23,15 +23,18 @@
         height="min(62vh, 42rem)"
       >
         <template #asset-title-extra="{ asset }">
-          <a-select
-            class="template-menu-config__scope-strategy"
-            size="small"
-            :value="scopeStrategies[asset.assetType] || defaultScopeStrategy"
-            :options="scopeStrategyOptions"
-            :disabled="!canUpdate || !scopeStrategyOptions.length"
-            :placeholder="$t('ApplicationTemplate.config.scopeStrategyPlaceholder')"
-            @update:value="$emit('set-scope-strategy', asset.assetType, $event)"
-          />
+          <div class="template-menu-config__scope-strategy-field">
+            <span>{{ $t('ApplicationTemplate.config.scopeStrategyLabel') }}</span>
+            <a-select
+              class="template-menu-config__scope-strategy"
+              size="small"
+              :value="scopeStrategies[asset.assetType] || defaultScopeStrategy"
+              :options="scopeStrategyOptions"
+              :disabled="!canUpdate || !scopeStrategyOptions.length"
+              :placeholder="$t('ApplicationTemplate.config.scopeStrategyPlaceholder')"
+              @update:value="handleScopeStrategyChange(asset.assetType, $event)"
+            />
+          </div>
         </template>
       </MenuAssetPermissionEditor>
     </a-spin>
@@ -68,7 +71,7 @@ defineProps({
   initialized: { type: Boolean, default: false },
 })
 
-defineEmits<{
+const emit = defineEmits<{
   (event: 'set-scope-strategy', assetType: string, strategy?: string): void
   (event: 'save'): void
 }>()
@@ -79,6 +82,9 @@ const ownerLabels = computed(() => ({
   cloud: $t('ApplicationTemplate.config.menuOwnerCloud'),
   default: $t('ApplicationTemplate.config.menuOwnerDefault'),
 }))
+const handleScopeStrategyChange = (assetType: string, value: unknown) => {
+  emit('set-scope-strategy', assetType, value == null ? undefined : String(value))
+}
 </script>
 
 <style scoped>
@@ -86,6 +92,7 @@ const ownerLabels = computed(() => ({
 .template-menu-config__header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); }
 .template-menu-config__header h2 { margin: 0; color: var(--ink-1); font-size: var(--fs-16); }
 .template-menu-config__header p { margin: var(--space-1) 0 0; color: var(--ink-3); line-height: 1.6; }
+.template-menu-config__scope-strategy-field { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--ink-3); white-space: nowrap; }
 .template-menu-config__scope-strategy { width: 9rem; }
 .template-menu-config__spin { min-height: 24rem; }
 .template-menu-config__spin :deep(.ant-spin-container) { height: 100%; }

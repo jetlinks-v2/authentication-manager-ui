@@ -23,6 +23,7 @@ import {
   findMissingMenuIds,
   normalizeAssetTypeNames,
   normalizeCandidateMenus,
+  normalizeGrantedMenus,
   normalizeGrantableAssets,
   normalizeScopeStrategyOptions,
   unwrapResult,
@@ -111,20 +112,25 @@ export const useApplicationTemplateMenuConfig = (
       if (sequence !== loadSequence) return
 
       const detail = assertSuccess<GrantDetail>(grantResponse, {})
-      const sourceMenus = normalizeCandidateMenus(assertSuccess<MenuPermissionNode[]>(menuResponse, []))
-      const grantableResponse = await getGrantableAssetAccesses(sourceMenus)
+      const ownMenus = assertSuccess<MenuPermissionNode[]>(menuResponse, [])
+      const sourceMenus = normalizeCandidateMenus(ownMenus)
+      const grantableResponse = await getGrantableAssetAccesses(ownMenus)
       if (sequence !== loadSequence) return
 
-      grantedMenus.value = Array.isArray(detail.menus) ? detail.menus : []
+      grantedMenus.value = normalizeGrantedMenus(
+        Array.isArray(detail.menus) ? detail.menus : [],
+        sourceMenus,
+      )
       savedAssetAccesses.value = Array.isArray(detail.assetAccesses) ? detail.assetAccesses : []
       missingMenuIds.value = findMissingMenuIds(grantedMenus.value, sourceMenus)
       strategyDraft.value = buildStrategyDraft(savedAssetAccesses.value)
+      const grantableAssets = normalizeGrantableAssets(grantableResponse)
       editor.reset({
         menus: sourceMenus,
         grantedMenus: grantedMenus.value,
         assetAccesses: savedAssetAccesses.value as AssetAccessPolicy[],
         assetTypes: normalizeAssetTypeNames(assetTypesResponse) as AssetTypeName[],
-        grantableAssets: normalizeGrantableAssets(grantableResponse),
+        grantableAssets: grantableAssets.length ? grantableAssets : undefined,
       })
       initialized.value = true
     } catch (error: any) {
