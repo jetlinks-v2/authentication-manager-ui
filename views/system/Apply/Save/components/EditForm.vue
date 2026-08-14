@@ -1535,7 +1535,7 @@
           v-model:visible="dialog.visible"
           :data="dialog.current"
           :mode="routeQuery.id ? 'edit' : 'add'"
-          @refresh="menuStory.jumpPage('config/system/Apply', {})"
+          @refresh="menuStory.jumpPage('system/Apply', {})"
       />
       <ThirdMenu
           v-if="dialog.visible && dialog.current.provider === 'third-party'"
@@ -1543,7 +1543,7 @@
           :mode="routeQuery.id ? 'edit' : 'add'"
           mode="add"
           @cancel="dialog.visible = false"
-          @ok="menuStory.jumpPage('config/system/Apply', {})"
+          @ok="menuStory.jumpPage('system/Apply', {})"
       />
     </div>
   </div>
@@ -2034,7 +2034,7 @@ function clickSave() {
               dialog.visible = true;
             } else {
               onlyMessage($t('components.EditForm.949962-91'));
-              menuStory.jumpPage('config/system/Apply', {});
+              menuStory.jumpPage('system/Apply', {});
             }
           }
         })

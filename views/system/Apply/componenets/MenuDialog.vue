@@ -83,7 +83,7 @@ const handleOk = async () => {
 };
 const cancel = () => {
     if (props.mode === 'add')
-        menuStory.jumpPage('config/system/Apply/Save', {}, { id: form.id });
+        menuStory.jumpPage('system/Apply/Save', {}, { id: form.id });
     emits('update:visible', false);
 };
 

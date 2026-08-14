@@ -22,24 +22,6 @@ import { name } from './package.json'
  *  }
  * }
  */
-const applyExtraRoutes = [
-  {
-    code: 'Save',
-    url: '/Save',
-    name: i18n.global.t('router.extraMenu.260658-3')
-  },
-  {
-    code: 'View',
-    url: '/View',
-    name: i18n.global.t('Apply.index.483342-20')
-  },
-  {
-    code: 'Api',
-    url: '/Api',
-    name: i18n.global.t('Apply.index.483342-19')
-  },
-]
-
 const getExtraRoutesMap = () => {
   return {
     'system/Role': [{ // 角色管理
@@ -59,8 +41,23 @@ const getExtraRoutesMap = () => {
         name: i18n.global.t('router.extraMenu.260658-2')
       },
     ],
-    'system/Apply': applyExtraRoutes,
-    'config/system/Apply': applyExtraRoutes,
+    'system/Apply': [
+      {
+        code: 'Save',
+        url: '/Save',
+        name: i18n.global.t('router.extraMenu.260658-3')
+      },
+      {
+        code: 'View',
+        url: '/View',
+        name: i18n.global.t('Apply.index.483342-20')
+      },
+      {
+        code: 'Api',
+        url: '/Api',
+        name: i18n.global.t('Apply.index.483342-19')
+      },
+    ],
     'system/Positions': [
       {
         code: 'Detail',

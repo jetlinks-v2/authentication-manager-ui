@@ -1,7 +1,7 @@
 <template>
   <j-page-container>
     <div class="apply-container">
-      <Search
+      <pro-search
           :columns="columns"
           target="system-apply"
           @search="(params:any)=>queryParams = {...params}"
@@ -10,23 +10,160 @@
         <j-pro-table
             ref="tableRef"
             :columns="columns"
-            mode="TABLE"
+            modeValue="CARD"
             :request="getApplyList_api"
             :defaultParams="{
                         sorts: [{ name: 'createTime', order: 'desc' }],
                     }"
             :params="queryParams"
+            :gridColumn="3"
         >
           <template #headerLeftRender>
-            <j-permission-button
-                :hasPermission="`${permission}:add`"
-                type="primary"
-                @click="() => table.toAdd()"
-            >
-              <AIcon type="PlusOutlined"/>
-              {{ $t('Apply.index.483342-0') }}
-            </j-permission-button>
+            <div style="display: flex; align-items: center">
+              <j-permission-button
+                  :hasPermission="`${permission}:add`"
+                  type="primary"
+                  @click="() => table.toAdd()"
+              >
+                <AIcon type="PlusOutlined"/>
+                {{ $t('Apply.index.483342-0') }}
+              </j-permission-button>
+              <p style="margin: 0 0 0 30px; color: #0000008c">
+                <j-ellipsis>
+                  <AIcon
+                      type="ExclamationCircleOutlined"
+                      style="margin-right: 12px"
+                  />
+                  {{ $t('Apply.index.483342-1') }}
+                </j-ellipsis>
+              </p>
+            </div>
           </template>
+          <template #card="slotProps">
+            <CardBox
+                :value="slotProps"
+                :actions="table.getActions(slotProps, 'card')"
+                v-bind="slotProps"
+                :status="slotProps.state?.value"
+                :statusText="slotProps.state?.text"
+                :statusNames="{
+                                enabled: 'processing',
+                                disabled: 'error',
+                            }"
+            >
+              <template #img>
+                <slot name="img">
+                  <Image class="card-list-img-80" :src="slotProps.logoUrl || systemImg.applyImg" />
+                </slot>
+              </template>
+              <template #content>
+                <j-ellipsis
+                    style="
+                                        width: calc(100% - 100px);
+                                        font-size: 16px;
+                                        color: rgb(49, 94, 251);
+                                        font-weight: 700;
+                                        margin-bottom: 8px;
+                                    "
+                >
+                  {{ slotProps.name }}
+                </j-ellipsis>
+                <a-row>
+                  <a-col :span="12">
+                    <div class="card-item-content-text">
+                      {{ $t('Apply.index.483342-2') }}
+                    </div>
+                    <div>
+                      {{
+                        table.getTypeLabel(
+                            slotProps.provider,
+                        )
+                      }}
+                    </div>
+                  </a-col>
+                  <a-col :span="12">
+                    <div class="card-item-content-text">
+                      {{ $t('Apply.index.483342-3') }}
+                    </div>
+                    <j-ellipsis>
+                      {{ slotProps.description }}
+                    </j-ellipsis>
+                  </a-col>
+                </a-row>
+              </template>
+              <template #actions="item">
+                <a-tooltip
+                    v-bind="item.tooltip"
+                    :title="item.disabled && item.tooltip.title"
+                >
+                  <a-dropdown
+                      placement="bottomRight"
+                      v-if="item.key === 'others'"
+                  >
+                    <a-button>
+                      <AIcon :type="item.icon"/>
+                      <span>{{ item.text }}</span>
+                    </a-button>
+                    <template #overlay>
+                      <a-menu>
+                        <a-menu-item
+                            v-for="(
+                                                        o, i
+                                                    ) in item.children"
+                            :key="i"
+                        >
+                          <a-tooltip
+                              :title="
+                                                            o?.tooltip?.title
+                                                        "
+                          >
+                            <a-button
+                                type="link"
+                                @click="o.onClick"
+                                :disabled="
+                                                                o.disabled
+                                                            "
+                            >
+                              <AIcon
+                                  :type="o.icon"
+                              />
+                              <span>{{
+                                  o.text
+                                }}</span>
+                            </a-button>
+                          </a-tooltip>
+                        </a-menu-item>
+                      </a-menu>
+                    </template>
+                  </a-dropdown>
+                  <j-permission-button
+                      v-else
+                      :hasPermission="item.permission"
+                      :tooltip="item.tooltip"
+                      :pop-confirm="item.popConfirm"
+                      @click="item.onClick"
+                      :disabled="item.disabled"
+                  >
+                    <AIcon :type="item.icon"/>
+                    <span v-if="item.key !== 'delete'">{{
+                        item.text
+                      }}</span>
+                  </j-permission-button>
+                </a-tooltip>
+              </template>
+
+              <!-- <template #mark>
+                  <AIcon
+                      type="EyeOutlined"
+                      style="font-size: 24px"
+                      @click="
+                          () => table.toSave(slotProps.id, true)
+                      "
+                  />
+              </template> -->
+            </CardBox>
+          </template>
+
           <template #provider="slotProps">
             {{ table.getTypeLabel(slotProps.provider) }}
           </template>
@@ -43,7 +180,10 @@
           <template #action="slotProps">
             <a-space :size="16">
               <j-permission-button
-                  v-for="i in table.getActions(slotProps)"
+                  v-for="i in table.getActions(
+                                    slotProps,
+                                    'table',
+                                )"
                   :hasPermission="i.permission"
                   type="link"
                   :key="i.key"
@@ -52,7 +192,7 @@
                   @click="i.onClick"
                   :disabled="i.disabled"
               >
-                {{ i.text }}
+                <AIcon :type="i.icon"/>
               </j-permission-button>
             </a-space>
           </template>
@@ -102,13 +242,13 @@ import {
 } from '@authentication-manager-ui/api/system/apply';
 import {onlyMessage} from '@jetlinks-web/utils';
 import {useMenuStore} from '@jetlinks-web-core/store/menu';
-import Search from '@config-manager-ui/components/Search';
 import Add from './Save/Add.vue';
+import {systemImg} from "@authentication-manager-ui/assets";
 import {useI18n} from 'vue-i18n';
 
 const {t: $t} = useI18n();
 const menuStory = useMenuStore();
-const permission = 'config/system/Apply';
+const permission = 'system/Apply';
 
 const typeOptions = ref<any[]>([]);
 const visible = ref<boolean>(false);
@@ -181,7 +321,7 @@ const columns = [
     dataIndex: 'action',
     key: 'action',
     scopedSlots: true,
-    width: '220px',
+    width: '200px',
     fixed: 'right',
   },
 ];
@@ -198,13 +338,13 @@ const table = {
     visible.value = true;
   },
   toSave: (id?: string, view = false) => {
-    if (id) menuStory.jumpPage('config/system/Apply/Save', {
+    if (id) menuStory.jumpPage('system/Apply/Save', {
       query: {
         id,
         view
       }
     },);
-    else menuStory.jumpPage('config/system/Apply/Save', {});
+    else menuStory.jumpPage('system/Apply/Save', {});
   },
   changeStatus: (row: any) => {
     const state = row.state.value === 'enabled' ? 'disabled' : 'enabled';
@@ -227,7 +367,10 @@ const table = {
     });
     return response;
   },
-  getActions: (data: Partial<Record<string, any>>) => {
+  getActions: (
+      data: Partial<Record<string, any>>,
+      type: 'card' | 'table',
+  ) => {
     if (!data) return [];
     const disabled = data.state.value === 'enabled';
 
@@ -324,7 +467,7 @@ const table = {
             icon: 'icon-fuquan',
             onClick: () => {
               menuStory.jumpPage(
-                  'config/system/Apply/Api',
+                  'system/Apply/Api',
                   {
                     query: {code: data.id}
                   },
@@ -341,7 +484,7 @@ const table = {
             icon: 'icon-chakanAPI',
             onClick: () => {
               menuStory.jumpPage(
-                  'config/system/Apply/View',
+                  'system/Apply/View',
                   {
                     query: {code: data.id}
                   },
@@ -350,8 +493,13 @@ const table = {
           },
       );
     // 其他不为空
-    if (others.children.length > 0)
-      result.splice(result.length - 1, 0, ...others.children);
+    if (others.children.length > 0) {
+      if (type === 'card') {
+        result.splice(result.length - 1, 0, others);
+      } else {
+        result.splice(result.length - 1, 0, ...others.children);
+      }
+    }
 
     return result;
   },
