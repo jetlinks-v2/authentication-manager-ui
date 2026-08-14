@@ -1,5 +1,18 @@
 <template>
   <section class="application-summary">
+    <div class="summary-back">
+      <a-tooltip :title="$t('ProjectApplication.list.title')">
+        <a-button
+          type="text"
+          shape="circle"
+          :aria-label="$t('ProjectApplication.list.title')"
+          @click="emits('back')"
+        >
+          <template #icon><AIcon type="ArrowLeftOutlined" /></template>
+        </a-button>
+      </a-tooltip>
+    </div>
+
     <div class="summary-icon">
       <img v-if="data.application.icon" :src="data.application.icon" :alt="data.application.name" />
       <img v-else-if="isImageIcon(data.template.icon)" :src="data.template.icon" :alt="data.template.name" />
@@ -62,7 +75,12 @@ const props = defineProps({
   },
 })
 
-const emits = defineEmits(['update', 'toggle-status', 'open'])
+const emits = defineEmits<{
+  back: []
+  update: [patch: Partial<ProjectApplication>, field: 'name' | 'description']
+  'toggle-status': []
+  open: []
+}>()
 const { t: $t } = useI18n()
 const titleStyle: CSSProperties = { fontSize: 'var(--fs-20)', fontWeight: 600, color: 'var(--ink-1)' }
 const descriptionStyle: CSSProperties = { color: 'var(--ink-2)', lineHeight: 1.6 }
@@ -87,19 +105,30 @@ const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(ico
 <style scoped>
 .application-summary {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: var(--space-4);
-  padding: var(--space-5);
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--r-3);
   background: var(--bg);
 }
 
+.summary-back {
+  display: flex;
+  align-items: center;
+}
+
+.summary-back :deep(.ant-btn) {
+  color: var(--ink-2);
+}
+
 .summary-icon {
   display: grid;
-  width: 3rem;
-  height: 3rem;
+  width: var(--space-11);
+  height: var(--space-11);
   place-items: center;
+  flex: none;
   overflow: hidden;
   border-radius: var(--r-3);
   background: var(--accent-soft);
@@ -108,15 +137,33 @@ const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(ico
 }
 
 .summary-icon img { width: 100%; height: 100%; object-fit: cover; }
-.summary-main { display: flex; min-width: 0; flex-direction: column; gap: var(--space-2); }
+.summary-main { display: flex; min-width: 0; flex-direction: column; gap: var(--space-1); }
 .identity-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
-.identity-row > :first-child { min-width: 12rem; }
+.identity-row > :first-child {
+  min-width: 8rem;
+  max-width: 100%;
+}
+
 .meta-row { display: flex; flex-wrap: wrap; gap: var(--space-3); color: var(--ink-4); font-size: var(--fs-12); }
 .meta-row span { display: inline-flex; align-items: center; gap: var(--space-1); }
-.summary-actions { display: flex; align-items: flex-start; gap: var(--space-2); }
+.summary-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--line);
+}
 
 @media (max-width: 48rem) {
-  .application-summary { grid-template-columns: auto minmax(0, 1fr); padding: var(--space-3); }
-  .summary-actions { grid-column: 1 / -1; }
+  .application-summary {
+    grid-template-columns: auto auto minmax(0, 1fr);
+    padding: var(--space-3);
+  }
+
+  .summary-actions {
+    grid-column: 1 / -1;
+    padding-left: 0;
+    border-left: 0;
+  }
 }
 </style>

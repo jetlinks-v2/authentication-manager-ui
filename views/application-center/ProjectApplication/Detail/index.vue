@@ -3,16 +3,9 @@
     <div class="detail-page">
       <a-spin :spinning="loading">
       <template v-if="application && detail && template">
-        <div class="detail-navigation">
-          <a-tooltip :title="$t('ProjectApplication.list.title')">
-            <a-button type="text" shape="circle" @click="backToList">
-              <template #icon><AIcon type="ArrowLeftOutlined" /></template>
-            </a-button>
-          </a-tooltip>
-        </div>
-
         <ApplicationSummary
           :data="{ application, template }"
+          @back="backToList"
           @update="updateSummary"
           @toggle-status="toggleStatus"
           @open="openApplication"
@@ -196,11 +189,7 @@ const removeRole = async (role: { id: string; name: string }) => {
 <style scoped>
 .detail-page {
   min-height: 100%;
-  padding: var(--space-4) var(--space-5) var(--space-5);
-  background: var(--bg-sunken);
 }
-
-.detail-navigation { margin-bottom: var(--space-2); }
 
 .detail-tabs {
   margin-top: var(--space-4);
