@@ -1,19 +1,20 @@
 <template>
-    <a-modal
-        :width="810"
+    <SystemFormModal
+        width="550px"
         open
         :title="$t('Save.Add.112184-0')"
         @cancel="emit('close')"
         @ok="onSave"
     >
         <ApplyList type="add" :options="typeOptions" v-model:value="type" />
-    </a-modal>
+    </SystemFormModal>
 </template>
 
 <script lang="ts" setup>
 import { queryType } from '@authentication-manager-ui/api/system/apply';
 import { useMenuStore } from '@jetlinks-web-core/store/menu';
 import { onlyMessage } from '@jetlinks-web/utils';
+import SystemFormModal from '@config-manager-ui/components/SystemFormModal.vue';
 import ApplyList from './components/ApplyList/index.vue';
 import { useI18n } from 'vue-i18n';
 
@@ -24,10 +25,11 @@ const menuStory = useMenuStore();
 
 const type = ref('');
 const typeOptions = ref<any[]>([]);
+const enabledProviders = new Set(['dingtalk-ent-app', 'third-party']);
 
 const onSave = () => {
     if(type.value){
-        menuStory.jumpPage('system/Apply/Save', {query: {provider: type.value}});
+        menuStory.jumpPage('config/system/Apply/Save', {query: {provider: type.value}});
     } else {
         onlyMessage($t('Save.Add.112184-1'), 'error')
     }
@@ -36,10 +38,12 @@ const onSave = () => {
 onMounted(() => {
     queryType().then((resp: any) => {
         if (resp.status === 200) {
-            const arr = resp.result.map((item: any) => ({
-                label: item.name,
-                value: item.provider,
-            }));
+            const arr = resp.result
+                .filter((item: any) => enabledProviders.has(item.provider))
+                .map((item: any) => ({
+                    label: item.name,
+                    value: item.provider,
+                }));
             typeOptions.value = arr;
         }
     });
