@@ -85,7 +85,7 @@ const getExtraRoutesMap = () => {
         name: i18n.global.t('ProjectApplication.route.detail')
       }
     ],
-    'application-center/ApplicationTemplate': [
+    'application-center/Template': [
       {
         code: 'Save',
         url: '/Save',

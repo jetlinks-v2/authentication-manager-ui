@@ -32,7 +32,7 @@ import {
 
 const props = defineProps({
   selectedTagIds: { type: Array as PropType<string[]>, default: () => [] },
-  permission: { type: String, default: 'application-center/ApplicationTemplate' },
+  permission: { type: String, default: 'application-center/Template' },
 })
 
 const emit = defineEmits<{

@@ -23,7 +23,7 @@ const stateValue = (value: unknown) => {
 export const useApplicationTemplateList = () => {
   const { t: $t } = useI18n()
   const menuStore = useMenuStore()
-  const permission = 'application-center/ApplicationTemplate'
+  const permission = 'application-center/Template'
   const selectedTagIds = ref<string[]>([])
   const tableRef = ref<Record<string, any>>({})
   const tableLoading = ref(false)
@@ -124,7 +124,7 @@ export const useApplicationTemplateList = () => {
   }
 
   const viewDetail = (row: { id: string }) =>
-    menuStore.jumpPage('application-center/ApplicationTemplate/Save', { query: { id: row.id } })
+    menuStore.jumpPage('application-center/Template/Save', { query: { id: row.id } })
   const changeStatus = (row: Record<string, any>, checked: boolean) => {
     if (row._switchChecked === undefined) row._switchChecked = stateValue(row.state) === 'enabled'
     const oldChecked = row._switchChecked

@@ -2122,9 +2122,9 @@
         ]
       },
       {
-        "code": "application-center/ApplicationTemplate",
+        "code": "application-center/Template",
         "name": "应用模版",
-        "owner": "cloud",
+        "owner": "iot",
         "i18nMessages": {
           "name": {
             "zh_CN": "应用模版",
@@ -2133,7 +2133,7 @@
           }
         },
         "id": "9b8016a4e7d24af08fa34ab939ef4f5d",
-        "url": "/application-center/application-template",
+        "url": "/application-center/template",
         "icon": "ProfileOutlined",
         "sortIndex": 2,
         "showPage": ["business-application-template"],

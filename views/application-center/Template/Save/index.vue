@@ -68,7 +68,7 @@ const { t: $t } = useI18n()
 const route = useRoute()
 const authStore = useAuthStore()
 const menuStore = useMenuStore()
-const permission = 'application-center/ApplicationTemplate'
+const permission = 'application-center/Template'
 const activeTab = ref('document')
 const templateId = computed(() => String(route.query.id || ''))
 const canUpdate = computed(() => authStore.hasPermission(`${permission}:update`))
@@ -100,7 +100,7 @@ const resetDocument = () => {
 
 watch(templateId, id => {
   if (!id) {
-    menuStore.jumpPage('application-center/ApplicationTemplate', {})
+    menuStore.jumpPage('application-center/Template', {})
     return
   }
   activeTab.value = 'document'
