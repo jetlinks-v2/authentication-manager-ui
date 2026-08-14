@@ -37,16 +37,78 @@ export const normalizeAssetTypeNames = (response: any): AssetTypeName[] =>
     }))
     .filter(item => !!item.id)
 
+const supportIdOf = (access: unknown) => {
+  if (access == null) return ''
+  if (typeof access !== 'object') return String(access)
+  const item = access as Record<string, unknown>
+  return String(
+    item.supportId
+    || item.id
+    || item.value
+    || item.type
+    || item.permission
+    || item.permissionId
+    || '',
+  )
+}
+
+const supportNameOf = (access: unknown) => {
+  if (!access || typeof access !== 'object') return supportIdOf(access)
+  const item = access as Record<string, unknown>
+  return String(item.i18nName || item.name || item.text || item.label || supportIdOf(access))
+}
+
+const accessListOf = (item: Record<string, any>) => {
+  const fields = [
+    item.accesses,
+    item.permissions,
+    item.permissionList,
+    item.supports,
+    item.options,
+    item.children,
+    item.data,
+  ]
+  const list = fields.find(Array.isArray)
+  if (list) return list
+  return supportIdOf(item) ? [item] : []
+}
+
+const grantableAssetListOf = (response: any): Record<string, any>[] => {
+  const result = response?.result ?? response
+  if (Array.isArray(result)) return result
+  if (Array.isArray(result?.data)) return result.data
+  if (Array.isArray(result?.items)) return result.items
+  if (result?.assetType) return [result]
+  if (!result || typeof result !== 'object') return []
+  return Object.entries(result)
+    .filter(([key]) => !['success', 'message', 'code'].includes(key))
+    .map(([assetType, value]) => {
+      if (Array.isArray(value)) return { assetType, accesses: value }
+      if (value && typeof value === 'object') {
+        const item = value as Record<string, any>
+        return {
+          ...item,
+          assetType: item.assetType || assetType,
+        }
+      }
+      return { assetType, accesses: value ? [value] : [] }
+    })
+}
+
 export const normalizeGrantableAssets = (response: any): GrantableAssetType[] =>
-  unwrapList<Record<string, any>>(response)
+  grantableAssetListOf(response)
     .map(item => ({
-      assetType: String(item.assetType || item.id || ''),
-      name: String(item.name || item.i18nName || item.assetType || item.id || ''),
-      accesses: Array.isArray(item.accesses) ? item.accesses.map((access: any) => ({
-        ...access,
-        supportId: String(access.supportId || access.id || access.value || ''),
-        name: String(access.name || access.i18nName || access.supportId || access.id || ''),
-      })).filter((access: any) => !!access.supportId) : [],
+      assetType: String(item.assetType || item.id || item.value || item.type || ''),
+      name: String(item.name || item.i18nName || item.text || item.label || item.assetType || item.id || ''),
+      accesses: accessListOf(item)
+        .map((access: any) => ({
+          ...(access && typeof access === 'object' ? access : {}),
+          supportId: supportIdOf(access),
+          name: supportNameOf(access),
+          disabled: access?.disabled === true,
+        }))
+        .filter((access, index, all) =>
+          !!access.supportId && all.findIndex(current => current.supportId === access.supportId) === index),
     }))
     .filter(item => !!item.assetType)
 
@@ -78,15 +140,91 @@ export const findMissingMenuIds = (
   return flattenMenuIds(grantedMenus).filter(id => !sourceIds.has(id))
 }
 
+const grantedFlagOf = (item: unknown, fallback = false) => {
+  if (!item || typeof item !== 'object') return fallback
+  const value = (item as Record<string, unknown>).granted
+    ?? (item as Record<string, unknown>).enabled
+    ?? (item as Record<string, unknown>).checked
+    ?? (item as Record<string, unknown>).selected
+  return value === undefined ? fallback : value !== false && value !== 'false' && value !== 0
+}
+
+const fieldArrayOf = (item: Record<string, any>, fields: string[]) =>
+  fields.map(field => item[field]).find(Array.isArray) || []
+
+const buttonListOf = (item: Record<string, any>) =>
+  fieldArrayOf(item, ['buttons', 'actions'])
+
+const assetAccessListOf = (item: Record<string, any>) => {
+  const direct = fieldArrayOf(item, ['assetAccesses', 'dataAccesses', 'selectAccesses'])
+  const byType = item.selectAccessesByAssetType
+  if (!byType || typeof byType !== 'object' || Array.isArray(byType)) return direct
+  const grouped = Object.entries(byType).flatMap(([assetType, accesses]) =>
+    Array.isArray(accesses)
+      ? accesses.map(access => ({
+        ...(access && typeof access === 'object' ? access : { supportId: access }),
+        assetType,
+      }))
+      : [])
+  return [...direct, ...grouped]
+}
+
+const normalizeMenuAssetAccesses = (
+  item: Record<string, any>,
+  fallbackGranted = false,
+) => assetAccessListOf(item)
+  .map((access: any) => ({
+    ...(access && typeof access === 'object' ? access : {}),
+    supportId: supportIdOf(access),
+    granted: grantedFlagOf(access, fallbackGranted),
+  }))
+  .filter(access => !!access.supportId || !!access.assetType)
+
 export const normalizeCandidateMenus = (menus: MenuPermissionNode[] = []): MenuPermissionNode[] =>
   menus.map(source => ({
     ...source,
     granted: false,
-    buttons: (source.buttons || source.actions || []).map(button => ({ ...button, granted: false })),
+    buttons: buttonListOf(source).map(button => ({ ...button, granted: false })),
     actions: undefined,
-    assetAccesses: (source.assetAccesses || []).map(access => ({ ...access, granted: false })),
+    assetAccesses: normalizeMenuAssetAccesses(source),
     children: source.children?.length ? normalizeCandidateMenus(source.children) : null,
   }))
+
+const flattenMenus = (menus: MenuPermissionNode[] = []) => {
+  const result: MenuPermissionNode[] = []
+  const visit = (items: MenuPermissionNode[]) => items.forEach(item => {
+    result.push(item)
+    visit(Array.isArray(item.children) ? item.children : [])
+  })
+  visit(menus)
+  return result
+}
+
+export const normalizeGrantedMenus = (
+  menus: MenuPermissionNode[] = [],
+  sourceMenus: MenuPermissionNode[] = [],
+): MenuPermissionNode[] => {
+  const sourceMap = new Map(flattenMenus(sourceMenus).map(menu => [String(menu.id || ''), menu]))
+  const visit = (items: MenuPermissionNode[]): MenuPermissionNode[] => items.map(item => {
+    const source = sourceMap.get(String(item.id || ''))
+    const granted = grantedFlagOf(item, true)
+    const buttons = buttonListOf(item)
+    const normalized = {
+      ...item,
+      granted,
+      buttons: buttons.length
+        ? buttons.map(button => ({ ...button, granted: grantedFlagOf(button, true) }))
+        : (granted && source?.buttons?.length
+          ? source.buttons.map(button => ({ ...button, granted: true }))
+          : []),
+      actions: undefined,
+      assetAccesses: normalizeMenuAssetAccesses(item, true),
+      children: item.children?.length ? visit(item.children) : null,
+    }
+    return normalized
+  })
+  return visit(menus)
+}
 
 export const buildFullMenuGrantTree = (menus: MenuPermissionNode[] = []): MenuPermissionNode[] =>
   menus.map(source => {
