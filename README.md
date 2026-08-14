@@ -2,6 +2,10 @@
 
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.
 
+## Project Owner Role Editing Guard
+
+The system user edit dialog keeps profile fields editable for project owners while disabling the role selector when the stable runtime user type is `projectOwner`. The guard accepts the user-list `typeId` and the detail response enum object so list and detail response shapes behave consistently. It reuses the existing `FormItemRole` disabled contract, which also hides the add-role action and prevents tag removal. Scope is limited to `views/system/User/components/EditUserDialog.vue`; user APIs, backend authorization, other user types, organizations, positions, and password operations remain unchanged. The module production build (`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`) and `git diff --check` pass. The touched Vue file remains over the preferred 300-line limit because this is a narrow fix in an existing 491-line component; no structural refactor is included.
+
 ## System Two-column Layout Unification
 
 The page-level left/right shells under `views/system/` now use the shared `EqualHeightColumns` component. Every matching page uses a `18.75rem` left track and `1fr` right track, with no outer padding, column divider, or hand-written flex/absolute/calc width compensation.

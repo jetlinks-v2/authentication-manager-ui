@@ -79,7 +79,7 @@
 <!--                      :rules="[-->
 <!--                      { required: form.data.username !== 'admin', message: $t('components.EditUserDialog.939453-13') },-->
 <!--                      ]"-->
-                      <form-item-role :extraData="detail.roleList" :extraProps="{multiple: true}" :disabledData="disabledData.roles" v-model:value="form.data.roleIdList" :disabled="form.data.username === 'admin'" />
+                      <form-item-role :extraData="detail.roleList" :extraProps="{multiple: true}" :disabledData="disabledData.roles" v-model:value="form.data.roleIdList" :disabled="isRoleReadonly" />
                       <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 0.25rem" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
                     </a-form-item>
                 </a-col>
@@ -259,6 +259,18 @@ const onChange = (value: string[]) => {
 
 const formRef = ref<FormInstance>();
 const _roleDetail = ref([] as any[]);
+const PROJECT_OWNER_USER_TYPE = 'projectOwner';
+
+const resolveUserTypeId = (value: unknown): string => {
+    if (typeof value === 'string') return value;
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+        const record = value as Record<string, unknown>;
+        const typeId = record.id ?? record.value;
+        return typeof typeId === 'string' ? typeId : '';
+    }
+    return '';
+};
+
 const form = reactive({
     data: {} as formType,
     rules: {
@@ -362,6 +374,16 @@ const form = reactive({
     },
     IsShow: (...typeList: modalType[]) => typeList.includes(props.type),
 });
+
+// 列表使用 typeId，详情可能返回 type 枚举对象；两种形态都必须锁定项目所有者的角色。
+const isProjectOwner = computed(() => [
+    form.data.typeId,
+    props.data?.typeId,
+    resolveUserTypeId(form.data.type),
+    resolveUserTypeId(props.data?.type),
+].some(typeId => typeId === PROJECT_OWNER_USER_TYPE));
+const isRoleReadonly = computed(() => form.data.username === 'admin' || isProjectOwner.value);
+
 const checkCh = async(_rule:Rule,value:string) => {
                 if (/[\u4e00-\u9fa5]/.test(value)) return Promise.reject($t('components.EditUserDialog.939453-30'));
                 else return Promise.resolve('')
@@ -425,6 +447,8 @@ type axiosFunType = (data: any) => Promise<AxiosResponseRewrite<unknown>>;
 type modalType = '' | 'add' | 'edit' | 'reset';
 type formType = {
     id?: string;
+    typeId?: string;
+    type?: string | { id?: string; value?: string };
     name: string;
     username: string;
     password: string;
