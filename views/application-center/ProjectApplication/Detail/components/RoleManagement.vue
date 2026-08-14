@@ -91,7 +91,7 @@ import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { MenuAssetPermissionEditor } from '@jetlinks-web-core/components'
 import { useMenuAssetPermissionEditor } from '@jetlinks-web-core/hooks'
-import type { AssetTypeName, MenuPermissionNode } from '@jetlinks-web-core/hooks'
+import type { AssetAccessPolicy, AssetTypeName, MenuPermissionNode } from '@jetlinks-web-core/hooks'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
 import {
@@ -101,6 +101,8 @@ import {
 import { getAssetsType as queryAssetTypes } from '@authentication-manager-ui/api/system/menu'
 import { getApplicationTemplateMenus } from '@authentication-manager-ui/api/application-center/applicationTemplate'
 import {
+  filterAssetAccessPoliciesByMenuScope,
+  filterGrantedMenuAssetAccessesByMenuScope,
   filterMenuTreeByRuntimeCodes,
   normalizeAssetTypeNames,
   normalizeCandidateMenus,
@@ -111,7 +113,7 @@ import type { ApplicationRole, ApplicationRoleDraft } from '../../types'
 
 interface GrantDetail {
   menus?: MenuPermissionNode[]
-  assetAccesses?: Array<{ assetType: string; accesses: Array<{ supportId: string; [key: string]: unknown }> }>
+  assetAccesses?: AssetAccessPolicy[]
 }
 
 const props = defineProps({
@@ -180,13 +182,21 @@ const loadPermissions = async () => {
       Array.isArray(menuStore.menuResultCache) ? menuStore.menuResultCache : [],
     )
     const templateMenus = normalizeCandidateMenus(filteredTemplateMenus)
-    const roleMenus = normalizeGrantedMenus(Array.isArray(roleDetail.menus) ? roleDetail.menus : [], templateMenus)
+    const scopedRoleMenus = filterGrantedMenuAssetAccessesByMenuScope(
+      Array.isArray(roleDetail.menus) ? roleDetail.menus : [],
+      templateMenus,
+    )
+    const roleMenus = normalizeGrantedMenus(scopedRoleMenus, templateMenus)
+    const assetAccesses = filterAssetAccessPoliciesByMenuScope(
+      Array.isArray(roleDetail.assetAccesses) ? roleDetail.assetAccesses : [],
+      templateMenus,
+    )
 
-    // 应用角色只能在模板与 runtime 已订阅菜单的 code 交集内配置；角色详情只负责勾选回显。
+    // 角色详情可能保存过模板侧高资产范围；回显前按当前项目菜单裁剪，避免保存时再次提交越权 supportId。
     editor.reset({
       menus: templateMenus,
       grantedMenus: roleMenus,
-      assetAccesses: roleDetail.assetAccesses,
+      assetAccesses,
       assetTypes,
     })
     initialized.value = true

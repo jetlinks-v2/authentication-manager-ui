@@ -38,10 +38,21 @@ export interface ApplicationResource {
   id: string
   name: string
   serial: string
+  product: string
+  productId: string
   category: string
+  groupId: string
   status: ResourceStatus
   statusText: string
   group: string
+  gateway: string
+  gatewayId: string
+  groups?: ApplicationResourceGroup[]
+}
+
+export interface ApplicationResourceGroup {
+  id: string
+  name: string
 }
 
 export interface ApplicationCameraResource extends ApplicationResource {
@@ -113,16 +124,35 @@ export interface ApplicationFilters {
   templateId?: string
 }
 
-export interface ResourcePickerGroupMode {
-  label: string
-  value: 'category' | 'group'
+export interface ResourcePickerQuery {
+  pageIndex?: number
+  pageSize?: number
+  terms?: Array<Record<string, unknown>>
+}
+
+export interface ResourcePickerPage<T extends ApplicationResource = ApplicationResource> {
+  data: T[]
+  total: number
+  pageIndex: number
+  pageSize: number
+}
+
+export interface ResourcePickerGateway {
+  id: string
+  name: string
+  provider: string
+  channelNumber: number
+  status: ResourceStatus
+  statusText: string
 }
 
 export interface ResourcePickerData {
+  type: 'device' | 'camera'
   title: string
   subtitle: string
   hint?: string
-  resources: ApplicationResource[]
+  loadResources: (query: ResourcePickerQuery, gatewayId?: string) => Promise<ResourcePickerPage>
+  loadGateways?: () => Promise<ResourcePickerGateway[]>
+  getBindingId?: (resource: ApplicationResource) => string
   boundIds: string[]
-  groupModes: ResourcePickerGroupMode[]
 }

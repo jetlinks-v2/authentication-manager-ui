@@ -97,8 +97,12 @@ const applicationId = computed(() => String(route.params.id || ''))
 const application = computed(() => store.applications.find((item) => item.id === applicationId.value))
 const detail = computed(() => store.details[applicationId.value])
 const template = computed(() => store.templates.find((item) => item.id === application.value?.templateId))
-const deviceBindingData = computed(() => ({ bound: detail.value?.devices || [], available: store.availableDevices }))
-const cameraBindingData = computed(() => ({ bound: detail.value?.cameras || [], available: store.availableCameras }))
+const deviceBindingData = computed(() => ({ bound: detail.value?.devices || [], loadAvailable: store.loadAvailableDevices }))
+const cameraBindingData = computed(() => ({
+  bound: detail.value?.cameras || [],
+  loadAvailable: store.loadAvailableCameras,
+  loadGateways: store.loadCameraGateways,
+}))
 const settingsMessageKeys = {
   icon: 'ProjectApplication.settings.updated',
   name: 'ProjectApplication.detail.nameSuccess',

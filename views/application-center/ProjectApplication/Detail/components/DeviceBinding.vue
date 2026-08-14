@@ -52,12 +52,16 @@
 import type { PropType } from 'vue'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { ApplicationResource } from '../../types'
+import type {
+  ApplicationResource,
+  ResourcePickerPage,
+  ResourcePickerQuery,
+} from '../../types'
 import ResourcePickerDrawer from './ResourcePickerDrawer.vue'
 
 interface ResourceBindingData {
   bound: ApplicationResource[]
-  available: ApplicationResource[]
+  loadAvailable: (query: ResourcePickerQuery) => Promise<ResourcePickerPage>
 }
 
 const props = defineProps({
@@ -80,13 +84,11 @@ const columns = computed(() => [
 ])
 
 const pickerData = computed(() => ({
+  type: 'device' as const,
   title: $t('ProjectApplication.device.bind'),
   subtitle: $t('ProjectApplication.device.subtitle'),
-  resources: props.data.available,
+  loadResources: props.data.loadAvailable,
   boundIds: props.data.bound.map((item) => item.id),
-  groupModes: [
-    { label: $t('ProjectApplication.resource.byProduct'), value: 'category' as const },
-  ],
 }))
 
 const openPicker = () => { pickerOpen.value = true }

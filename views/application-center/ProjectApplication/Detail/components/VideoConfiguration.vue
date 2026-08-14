@@ -78,12 +78,19 @@
 import type { PropType } from 'vue'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { ApplicationCameraResource } from '../../types'
+import type {
+  ApplicationCameraResource,
+  ApplicationResource,
+  ResourcePickerGateway,
+  ResourcePickerPage,
+  ResourcePickerQuery,
+} from '../../types'
 import ResourcePickerDrawer from './ResourcePickerDrawer.vue'
 
 interface CameraBindingData {
   bound: ApplicationCameraResource[]
-  available: ApplicationCameraResource[]
+  loadAvailable: (query: ResourcePickerQuery, gatewayId?: string) => Promise<ResourcePickerPage>
+  loadGateways: () => Promise<ResourcePickerGateway[]>
 }
 
 const props = defineProps({
@@ -104,15 +111,14 @@ const activeCamera = ref<ApplicationCameraResource>()
 
 const statusTone = (status: string) => status === 'online' ? 'ok' : status === 'offline' ? 'warn' : 'default'
 const pickerData = computed(() => ({
+  type: 'camera' as const,
   title: $t('ProjectApplication.camera.bind'),
   subtitle: $t('ProjectApplication.camera.subtitle'),
   hint: $t('ProjectApplication.camera.bindHint'),
-  resources: props.data.available,
+  loadResources: props.data.loadAvailable,
+  loadGateways: props.data.loadGateways,
+  getBindingId: (camera: ApplicationResource) => (camera as ApplicationCameraResource).deviceId,
   boundIds: props.data.bound.map(item => item.id),
-  groupModes: [
-    { label: $t('ProjectApplication.resource.byGateway'), value: 'group' as const },
-    { label: $t('ProjectApplication.resource.byProduct'), value: 'category' as const },
-  ],
 }))
 
 const openPicker = () => { pickerOpen.value = true }

@@ -98,9 +98,17 @@ export interface SaveBusinessApplicationUserRequest {
 export interface DeviceEntity {
   id: string
   name: string
+  productId?: string
   productName?: string
+  classifiedId?: string
   classifiedName?: string
+  groupId?: string
+  groupName?: string
   parentId?: string
+  parentName?: string
+  accessId?: string
+  accessName?: string
+  accessProvider?: string
   state?: string | EnumValue
 }
 
@@ -124,12 +132,21 @@ export interface MediaChannelEntity {
   others?: Record<string, unknown>
 }
 
+export interface MediaDeviceEntity {
+  id: string
+  name?: string
+  provider?: string
+  channelNumber?: number | string
+  state?: string | EnumValue
+}
+
 export interface QueryPayload {
   paging?: boolean
   pageIndex?: number
   pageSize?: number
   terms?: Array<Record<string, unknown>>
   sorts?: Array<Record<string, unknown>>
+  context?: Record<string, unknown>
 }
 
 export interface PagerResult<T> {
@@ -137,11 +154,6 @@ export interface PagerResult<T> {
   total?: number
   pageIndex?: number
   pageSize?: number
-}
-
-export interface AssetPermissionInfo {
-  assetId: string
-  permissionInfoList?: Array<{ id: string; name?: string }>
 }
 
 export interface MenuView {
@@ -231,20 +243,30 @@ export const deleteBusinessApplicationUser = (userId: string) =>
 export const queryDevices = (data: QueryPayload) =>
   apiRequest.post<DeviceEntity[]>('/device/instance/_query/no-paging?paging=false', data)
 
+export const queryDeviceDetails = (data: QueryPayload) =>
+  apiRequest.post<PagerResult<DeviceEntity>>('/device/instance/detail/_query', data)
+
 export const queryMediaChannels = (data: QueryPayload) =>
   apiRequest.post<MediaChannelEntity[]>('/media/channel/_query/no-paging?paging=false', data)
 
-export const queryDevicePermissions = (ids: string[]) =>
-  apiRequest.post<AssetPermissionInfo[]>('/assets/bindings/device', ids)
+export const queryMediaDevices = (data: QueryPayload) =>
+  apiRequest.post<PagerResult<MediaDeviceEntity>>('/media/device/_query', data)
 
+export const queryMediaDeviceChannels = (gatewayId: string, data: QueryPayload) =>
+  apiRequest.post<PagerResult<MediaChannelEntity>>(
+    `/media/device/${encodeURIComponent(gatewayId)}/channel/_query`,
+    data,
+  )
+
+/** Bind a selected device batch to one business application with the full device permission set. */
 export const bindBusinessApplicationDevices = (applicationId: string, ids: string[]) =>
-  apiRequest.post<void>('/assets/bind/device', [{
+  apiRequest.post<void>('/assets/bind/device', {
     targetType: 'business_application',
     targetId: applicationId,
     assetType: 'device',
     assetIdList: ids,
-    permission: ['read'],
-  }])
+    permission: ['read', 'save', 'delete', 'share'],
+  })
 
 export const unbindBusinessApplicationDevice = (applicationId: string, id: string) =>
   apiRequest.post<void>('/assets/unbind/device', [{

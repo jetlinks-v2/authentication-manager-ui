@@ -25,8 +25,15 @@ import {
   normalizeUser,
   resultOf,
 } from './applicationModel'
-import { loadBusinessApplicationCameras } from './applicationCameraService'
-import { loadBusinessApplicationDevices } from './applicationDeviceService'
+import {
+  loadBusinessApplicationAvailableCameras,
+  loadBusinessApplicationCameraGateways,
+  loadBusinessApplicationCameras,
+} from './applicationCameraService'
+import {
+  loadBusinessApplicationAvailableDevices,
+  loadBusinessApplicationDevices,
+} from './applicationDeviceService'
 import {
   bindBusinessApplicationUsers,
   createUserForBusinessApplication,
@@ -51,13 +58,12 @@ import type {
   ApplicationUserDraft,
   ProjectApplication,
   ProjectApplicationDraft,
+  ResourcePickerQuery,
 } from './types'
 
 const applications = reactive<ProjectApplication[]>([])
 const templates = reactive<ApplicationTemplate[]>([])
 const details = reactive<Record<string, ApplicationDetailState>>({})
-const availableDevices = reactive<ApplicationResource[]>([])
-const availableCameras = reactive<ApplicationCameraResource[]>([])
 const bindableUsers = reactive<ApplicationUserCandidate[]>([])
 const templateMenus = reactive<Record<string, string[]>>({})
 const applicationEntities = new Map<string, BusinessApplicationEntity>()
@@ -204,16 +210,31 @@ export const useProjectApplication = () => {
     const result = await loadBusinessApplicationDevices(applicationId)
     const detail = ensureDetail(applicationId)
     replace(detail.devices, result.bound)
-    replace(availableDevices, result.available)
     return detail.devices
   }
+
+  const loadAvailableDevices = (query: ResourcePickerQuery) =>
+    loadBusinessApplicationAvailableDevices(query)
 
   const loadCameras = async (applicationId: string) => {
     const result = await loadBusinessApplicationCameras(applicationId)
     const detail = ensureDetail(applicationId)
     replace(detail.cameras, result.bound)
-    replace(availableCameras, result.available)
     return detail.cameras
+  }
+
+  const loadCameraGateways = () => loadBusinessApplicationCameraGateways()
+
+  const loadAvailableCameras = (query: ResourcePickerQuery, gatewayId?: string) => {
+    if (!gatewayId) {
+      return Promise.resolve({
+        data: [],
+        total: 0,
+        pageIndex: Number(query.pageIndex ?? 0),
+        pageSize: Number(query.pageSize ?? 10),
+      })
+    }
+    return loadBusinessApplicationAvailableCameras(gatewayId, query)
   }
 
   const loadDetail = async (applicationId: string) => {
@@ -235,14 +256,9 @@ export const useProjectApplication = () => {
     await loadDevices(applicationId)
   }
 
-  const bindCameras = async (applicationId: string, cameraIds: string[]) => {
-    const selected = new Set(cameraIds)
-    const deviceIds = [...new Set(availableCameras
-      .filter(camera => selected.has(camera.id))
-      .map(camera => camera.deviceId)
-      .filter(Boolean))]
+  const bindCameras = async (applicationId: string, deviceIds: string[]) => {
     if (!deviceIds.length) return
-    await bindBusinessApplicationDevices(applicationId, deviceIds)
+    await bindBusinessApplicationDevices(applicationId, [...new Set(deviceIds)])
     await loadCameras(applicationId)
   }
 
@@ -300,8 +316,6 @@ export const useProjectApplication = () => {
     applications,
     templates,
     details,
-    availableDevices,
-    availableCameras,
     bindableUsers,
     templateMenus,
     loadApplications,
@@ -311,6 +325,9 @@ export const useProjectApplication = () => {
     createApplication,
     updateApplication,
     loadDetail,
+    loadAvailableDevices,
+    loadCameraGateways,
+    loadAvailableCameras,
     bindDevices,
     unbindDevice,
     bindCameras,

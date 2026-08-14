@@ -169,6 +169,26 @@ const assetAccessListOf = (item: Record<string, any>) => {
   return [...direct, ...grouped]
 }
 
+const valueOf = (value: unknown) => {
+  if (value && typeof value === 'object') {
+    const item = value as Record<string, unknown>
+    return String(item.id || item.value || item.assetType || '')
+  }
+  return String(value || '')
+}
+
+const unique = (values: string[]) => Array.from(new Set(values.filter(Boolean)))
+
+const menuAssetTypesOf = (menu: MenuPermissionNode): string[] => {
+  if (Array.isArray(menu.assetTypes)) return unique(menu.assetTypes.map(valueOf))
+  if (menu.assetTypes) return unique([valueOf(menu.assetTypes)])
+
+  const assetType = valueOf(menu.assetType)
+  if (assetType) return [assetType]
+
+  return unique(assetAccessListOf(menu).map((access: any) => valueOf(access?.assetType)))
+}
+
 const normalizeMenuAssetAccesses = (
   item: Record<string, any>,
   fallbackGranted = false,
@@ -202,6 +222,90 @@ const flattenMenus = (menus: MenuPermissionNode[] = []) => {
 
 const menuCodeOf = (menu: MenuPermissionNode) => String(menu.code || '').trim()
 
+const assetScopeFields = [
+  'assetType',
+  'assetTypes',
+  'assetAccesses',
+  'dataAccesses',
+  'selectAccesses',
+  'selectAccessesByAssetType',
+] as const
+
+const withProjectMenuAssetScope = (
+  templateMenu: MenuPermissionNode,
+  projectMenu: MenuPermissionNode,
+): MenuPermissionNode => {
+  const result = { ...templateMenu }
+  assetScopeFields.forEach(field => {
+    if (Object.prototype.hasOwnProperty.call(projectMenu, field)) {
+      result[field] = projectMenu[field]
+    } else {
+      delete result[field]
+    }
+  })
+  return result
+}
+
+const buildAllowedAssetAccessMap = (menus: MenuPermissionNode[] = []) => {
+  const allowed = new Map<string, Set<string>>()
+  const add = (assetType: string, supportId: string) => {
+    if (!assetType || !supportId) return
+    if (!allowed.has(assetType)) allowed.set(assetType, new Set())
+    allowed.get(assetType)!.add(supportId)
+  }
+  flattenMenus(menus).forEach(menu => {
+    const menuAssetTypes = menuAssetTypesOf(menu)
+    normalizeMenuAssetAccesses(menu).forEach(access => {
+      const supportId = supportIdOf(access)
+      const assetTypes = valueOf(access.assetType) ? [valueOf(access.assetType)] : menuAssetTypes
+      assetTypes.forEach(assetType => add(assetType, supportId))
+    })
+  })
+  return allowed
+}
+
+export const filterAssetAccessPoliciesByMenuScope = (
+  policies: AssetAccessPolicy[] = [],
+  sourceMenus: MenuPermissionNode[] = [],
+): AssetAccessPolicy[] => {
+  const allowed = buildAllowedAssetAccessMap(sourceMenus)
+  return policies
+    .map(policy => {
+      const assetType = String(policy.assetType || '')
+      const supports = allowed.get(assetType)
+      if (!assetType || !supports?.size) return undefined
+      const accesses = (policy.accesses || []).filter(access => supports.has(supportIdOf(access)))
+      return accesses.length ? { ...policy, assetType, accesses } : undefined
+    })
+    .filter((policy): policy is AssetAccessPolicy => !!policy)
+}
+
+export const filterGrantedMenuAssetAccessesByMenuScope = (
+  menus: MenuPermissionNode[] = [],
+  sourceMenus: MenuPermissionNode[] = [],
+): MenuPermissionNode[] => {
+  const allowed = buildAllowedAssetAccessMap(sourceMenus)
+  const visit = (items: MenuPermissionNode[]): MenuPermissionNode[] => items.map(item => {
+    const menuAssetTypes = menuAssetTypesOf(item)
+    const assetAccesses = normalizeMenuAssetAccesses(item, true)
+      .map(access => {
+        const supportId = supportIdOf(access)
+        const accessAssetType = valueOf(access.assetType)
+        const assetType = (accessAssetType ? [accessAssetType] : menuAssetTypes)
+          .find(type => allowed.get(type)?.has(supportId))
+        return assetType ? { ...access, assetType } : undefined
+      })
+      .filter((access): access is Record<string, any> => !!access)
+
+    return {
+      ...item,
+      assetAccesses,
+      children: item.children?.length ? visit(item.children) : null,
+    }
+  })
+  return visit(menus)
+}
+
 const flattenMenusForRuntimeFilter = (menus: MenuPermissionNode[] = []) => {
   const result: MenuPermissionNode[] = []
   const visit = (items: MenuPermissionNode[], parentId?: string) => items.forEach(item => {
@@ -234,8 +338,19 @@ export const filterMenuTreeByRuntimeCodes = (
   menus: MenuPermissionNode[] = [],
   runtimeMenus: MenuPermissionNode[] = [],
 ) => {
-  const runtimeCodes = new Set(flattenMenusForRuntimeFilter(runtimeMenus).map(menuCodeOf).filter(Boolean))
-  const filteredMenus = flattenMenusForRuntimeFilter(menus).filter(menu => runtimeCodes.has(menuCodeOf(menu)))
+  const runtimeMenuMap = new Map<string, MenuPermissionNode>()
+  flattenMenusForRuntimeFilter(runtimeMenus).forEach(menu => {
+    const code = menuCodeOf(menu)
+    if (code) runtimeMenuMap.set(code, menu)
+  })
+  const filteredMenus = flattenMenusForRuntimeFilter(menus)
+    .map(menu => {
+      const runtimeMenu = runtimeMenuMap.get(menuCodeOf(menu))
+      if (!runtimeMenu) return undefined
+      // 菜单集合来自模板，资产范围必须降到当前项目菜单，避免应用角色授出模板侧高权限范围。
+      return withProjectMenuAssetScope(menu, runtimeMenu)
+    })
+    .filter((menu): menu is MenuPermissionNode => !!menu)
   return buildMenuTreeByParentId(filteredMenus)
 }
 

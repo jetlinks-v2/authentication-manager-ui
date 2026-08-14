@@ -12,6 +12,7 @@ import type {
 } from '@authentication-manager-ui/api/application-center/businessApplication'
 import type {
   ApplicationCameraResource,
+  ApplicationResourceGroup,
   ApplicationResource,
   ApplicationFilters,
   ApplicationRole,
@@ -147,16 +148,33 @@ export const normalizeProjectMember = (entity: ProjectMemberInfo): ApplicationUs
   }
 }
 
-export const normalizeDevice = (entity: DeviceEntity): ApplicationResource => {
+export const normalizeDevice = (
+  entity: DeviceEntity,
+  groups: ApplicationResourceGroup[] = [],
+): ApplicationResource => {
   const status = enumValue(entity.state, 'offline')
+  const product = entity.productName || entity.productId || entity.classifiedName || '--'
+  const groupId = entity.groupId || ''
+  const inferredGroups = groupId || entity.groupName
+    ? [{ id: groupId || entity.groupName || '--', name: entity.groupName || groupId || '--' }]
+    : []
+  const resourceGroups = groups.length ? groups : inferredGroups
+  const group = resourceGroups.map(item => item.name).filter(Boolean).join('、') || '--'
+  const gateway = entity.parentName || entity.accessName || entity.parentId || entity.accessProvider || '--'
   return {
     id: entity.id,
     name: entity.name || entity.id,
     serial: entity.id,
-    category: entity.productName || entity.classifiedName || '--',
+    product,
+    productId: entity.productId || product,
+    category: product,
+    groupId: resourceGroups[0]?.id || group,
     status,
     statusText: enumText(entity.state, status),
-    group: entity.classifiedName || '--',
+    group,
+    gateway,
+    gatewayId: entity.parentId || entity.accessId || gateway,
+    groups: resourceGroups,
   }
 }
 
@@ -174,8 +192,13 @@ export const normalizeCamera = (entity: MediaChannelEntity): ApplicationCameraRe
     channelId: entity.channelId || id,
     name: entity.name || entity.channelId || id,
     serial: entity.channelId || id,
+    product: entity.provider || entity.deviceName || '--',
+    productId: entity.provider || entity.deviceId || '--',
     category: entity.deviceName || entity.provider || '--',
+    groupId: entity.deviceId || entity.provider || '--',
     group: entity.deviceName || entity.provider || '--',
+    gateway: entity.deviceName || entity.deviceId || entity.provider || '--',
+    gatewayId: entity.deviceId || entity.deviceName || entity.provider || '--',
     area: textOf(others.areaName) || entity.address || entity.civilCode || '--',
     status,
     statusText: enumText(entity.status || entity.state, status),
