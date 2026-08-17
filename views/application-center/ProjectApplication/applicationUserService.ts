@@ -1,14 +1,13 @@
 import {
   createBusinessApplicationUser,
   queryBusinessApplicationUsers,
-  queryConsoleProjectMembers,
   queryUserDetails,
   updateBusinessApplicationUser,
-  type ProjectMemberInfo,
+  type PagerResult,
   type UserDetailEntity,
 } from '@authentication-manager-ui/api/application-center/businessApplication'
-import { listOf, normalizeProjectMember } from './applicationModel'
-import type { ApplicationUser, ApplicationUserDraft } from './types'
+import { listOf, normalizeUserCandidate, resultOf } from './applicationModel'
+import type { ApplicationUser, ApplicationUserDraft, UserPickerPage, UserPickerQuery } from './types'
 
 /**
  * The dimension query only returns membership rows plus basic user fields. Hydrate them
@@ -30,20 +29,29 @@ export const loadBusinessApplicationUsers = async (applicationId: string) => {
   return members.map(member => ({ ...member, ...detailById.get(member.id) }))
 }
 
-export const loadBindableProjectUsers = async (
-  projectId: string,
-  boundUsers: ApplicationUser[],
-) => {
-  if (!projectId) return []
-  const response = await queryConsoleProjectMembers(projectId, {
-    pageIndex: 0,
-    pageSize: 1000,
-    sorts: [{ name: 'createTime', order: 'desc' }],
+export const loadBusinessApplicationUserCandidates = async (
+  applicationId: string,
+  query: UserPickerQuery,
+): Promise<UserPickerPage> => {
+  const pageIndex = Number(query.pageIndex ?? 0)
+  const pageSize = Number(query.pageSize ?? 10)
+  const response = await queryUserDetails({
+    pageIndex,
+    pageSize,
+    terms: [
+      // The table owns paging; this service only pins the required unbound-user scope.
+      { column: 'id$in-dimension$business_application$not', value: [applicationId] },
+      ...(query.terms || []),
+    ],
   })
-  const boundIds = new Set(boundUsers.map(user => user.id))
-  return listOf<ProjectMemberInfo>(response)
-    .map(normalizeProjectMember)
-    .filter(user => user.id && !boundIds.has(user.id))
+  const result = resultOf<PagerResult<UserDetailEntity>>(response)
+  const data = listOf<UserDetailEntity>(response).map(normalizeUserCandidate)
+  return {
+    data,
+    total: Number(result?.total ?? data.length),
+    pageIndex: Number(result?.pageIndex ?? pageIndex),
+    pageSize: Number(result?.pageSize ?? pageSize),
+  }
 }
 
 const hydrateUsers = async (

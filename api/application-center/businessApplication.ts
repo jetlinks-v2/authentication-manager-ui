@@ -70,21 +70,11 @@ export interface UserDetailEntity {
   password?: string
   telephone?: string
   email?: string
-  status?: number
+  status?: number | string | EnumValue
   roleList?: RoleInfo[]
   orgList?: Array<{ id: string }>
   positions?: Array<{ id: string }>
   [key: string]: unknown
-}
-
-export interface ProjectMemberInfo {
-  id?: string
-  projectId?: string
-  userId: string
-  username?: string
-  name?: string
-  status?: string | number | EnumValue
-  type?: string | EnumValue
 }
 
 export interface SaveBusinessApplicationUserRequest {
@@ -224,13 +214,6 @@ export const queryUserDetails = (data: QueryPayload) =>
 
 export const createBusinessApplicationUser = (data: SaveBusinessApplicationUserRequest) =>
   apiRequest.post<string>('/user/detail/_create', data)
-
-export const queryConsoleProjectMembers = (projectId: string, data: QueryPayload) =>
-  apiRequest.post<PagerResult<ProjectMemberInfo>>(
-    `/console/project/${projectId}/members/_query`,
-    data,
-    { projectContext: false },
-  )
 
 export const updateBusinessApplicationUser = (
   userId: string,

@@ -102,6 +102,7 @@ import { getAssetsType as queryAssetTypes } from '@authentication-manager-ui/api
 import { getApplicationTemplateMenus } from '@authentication-manager-ui/api/application-center/applicationTemplate'
 import {
   filterAssetAccessPoliciesByMenuScope,
+  filterApplicationMenuInterfacePermissions,
   filterGrantedMenuAssetAccessesByMenuScope,
   filterMenuTreeByRuntimeCodes,
   normalizeAssetTypeNames,
@@ -177,13 +178,19 @@ const loadPermissions = async () => {
 
     const templateDetail = assertSuccess<GrantDetail>(templateResponse, {})
     const roleDetail = assertSuccess<GrantDetail>(detailResponse, {})
-    const filteredTemplateMenus = filterMenuTreeByRuntimeCodes(
+    const candidateTemplateMenus = filterApplicationMenuInterfacePermissions(
       Array.isArray(templateDetail.menus) ? templateDetail.menus : [],
+    )
+    const filteredTemplateMenus = filterMenuTreeByRuntimeCodes(
+      candidateTemplateMenus,
       Array.isArray(menuStore.menuResultCache) ? menuStore.menuResultCache : [],
     )
     const templateMenus = normalizeCandidateMenus(filteredTemplateMenus)
-    const scopedRoleMenus = filterGrantedMenuAssetAccessesByMenuScope(
+    const candidateRoleMenus = filterApplicationMenuInterfacePermissions(
       Array.isArray(roleDetail.menus) ? roleDetail.menus : [],
+    )
+    const scopedRoleMenus = filterGrantedMenuAssetAccessesByMenuScope(
+      candidateRoleMenus,
       templateMenus,
     )
     const roleMenus = normalizeGrantedMenus(scopedRoleMenus, templateMenus)

@@ -78,44 +78,12 @@
       @confirm="emits('add', $event)"
     />
 
-    <a-modal
-      :open="bindOpen"
-      :title="$t('ProjectApplication.user.bindTitle')"
-      :ok-text="$t('ProjectApplication.user.bindCount', { count: selectedIds.length })"
-      :cancel-text="$t('ProjectApplication.common.cancel')"
-      :ok-button-props="{ disabled: !selectedIds.length }"
-      @ok="confirmBind"
-      @cancel="bindOpen = false"
-    >
-      <a-input
-        v-model:value="candidateKeyword"
-        allow-clear
-        class="candidate-search"
-        :placeholder="$t('ProjectApplication.user.candidateSearchPlaceholder')"
-      >
-        <template #prefix><AIcon type="SearchOutlined" /></template>
-      </a-input>
-
-      <div class="candidate-list">
-        <label
-          v-for="item in filteredCandidates"
-          :key="item.id"
-          class="candidate-item"
-          :class="{ disabled: !item.enabled }"
-        >
-          <a-checkbox :checked="selectedIds.includes(item.id)" :disabled="!item.enabled" @change="toggleCandidate(item.id, $event)" />
-          <a-avatar>{{ item.name.slice(0, 1) }}</a-avatar>
-          <span class="candidate-copy">
-            <strong>{{ item.name }}</strong>
-            <small>{{ [item.username, memberTypeText(item)].filter(Boolean).join(' · ') || '--' }}</small>
-          </span>
-          <MetaChip :tone="item.enabled ? 'ok' : 'default'">
-            {{ $t(item.enabled ? 'ProjectApplication.user.normal' : 'ProjectApplication.user.disabled') }}
-          </MetaChip>
-        </label>
-        <CloudEmpty v-if="!filteredCandidates.length" :description="$t('ProjectApplication.user.bindEmpty')" />
-      </div>
-    </a-modal>
+    <UserBindModal
+      v-model:open="bindOpen"
+      :application-id="applicationId"
+      :load-users="loadUsers"
+      @confirm="emits('bind', $event)"
+    />
   </SectionCard>
 </template>
 
@@ -123,20 +91,26 @@
 import type { PropType } from 'vue'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import UserBindModal from './UserBindModal.vue'
 import UserCreateModal from './UserCreateModal.vue'
-import type { ApplicationRole, ApplicationUser, ApplicationUserCandidate, ApplicationUserDraft } from '../../types'
-
-interface CheckboxEvent { target: { checked: boolean } }
+import type { ApplicationRole, ApplicationUser, ApplicationUserDraft, UserPickerPage, UserPickerQuery } from '../../types'
 
 interface UserManagementData {
   users: ApplicationUser[]
   roles: ApplicationRole[]
-  candidates: ApplicationUserCandidate[]
 }
 
 const props = defineProps({
   data: {
     type: Object as PropType<UserManagementData>,
+    required: true,
+  },
+  applicationId: {
+    type: String,
+    required: true,
+  },
+  loadUsers: {
+    type: Function as PropType<(applicationId: string, query: UserPickerQuery) => Promise<UserPickerPage>>,
     required: true,
   },
 })
@@ -149,11 +123,8 @@ const emits = defineEmits<{
 }>()
 const { t: $t } = useI18n()
 const keyword = ref('')
-const candidateKeyword = ref('')
 const createOpen = ref(false)
 const bindOpen = ref(false)
-const selectedIds = ref<string[]>([])
-const knownMemberTypes = new Set(['manager', 'member', 'customer'])
 
 const columns = computed(() => [
   { title: $t('ProjectApplication.user.user'), key: 'user', width: '10rem' },
@@ -165,48 +136,15 @@ const columns = computed(() => [
 ])
 
 const roleOptions = computed(() => props.data.roles.map(role => ({ label: role.name, value: role.id })))
-const boundIds = computed(() => new Set(props.data.users.map(user => user.id)))
-const memberTypeText = (item: ApplicationUserCandidate) =>
-  knownMemberTypes.has(item.type) ? $t(`ProjectApplication.user.memberType.${item.type}`) : item.typeText
 const filteredUsers = computed(() => {
   const searchText = keyword.value.trim().toLocaleLowerCase()
   return props.data.users.filter(user => !searchText || `${user.name} ${user.username} ${user.phone}`.toLocaleLowerCase().includes(searchText))
 })
-const selectableCandidates = computed(() => props.data.candidates.filter(item => item.id && !boundIds.value.has(item.id)))
-const filteredCandidates = computed(() => {
-  const searchText = candidateKeyword.value.trim().toLocaleLowerCase()
-  return selectableCandidates.value.filter(item =>
-    !searchText || `${item.name} ${item.username} ${item.phone} ${item.typeText} ${memberTypeText(item)}`.toLocaleLowerCase().includes(searchText))
-})
 
-const openBind = () => {
-  selectedIds.value = []
-  candidateKeyword.value = ''
-  bindOpen.value = true
-}
-
-const toggleCandidate = (id: string, event: CheckboxEvent) => {
-  selectedIds.value = event.target.checked
-    ? [...new Set([...selectedIds.value, id])]
-    : selectedIds.value.filter(item => item !== id)
-}
-
-const confirmBind = () => {
-  if (!selectedIds.value.length) return
-  emits('bind', [...selectedIds.value])
-  bindOpen.value = false
-}
+const openBind = () => { bindOpen.value = true }
 </script>
 
 <style scoped>
 .user-search { width: min(100%, 22rem); margin-bottom: var(--space-3); }
 .role-select { width: 100%; }
-.candidate-search { margin-bottom: var(--space-3); }
-.candidate-list { display: flex; max-height: 26rem; flex-direction: column; gap: var(--space-2); overflow-y: auto; }
-.candidate-item { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--r-2); cursor: pointer; }
-.candidate-item:hover { border-color: var(--accent); }
-.candidate-item.disabled { cursor: not-allowed; opacity: 0.56; }
-.candidate-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: var(--space-1); }
-.candidate-copy strong { color: var(--ink-1); }
-.candidate-copy small { overflow: hidden; color: var(--ink-4); text-overflow: ellipsis; white-space: nowrap; }
 </style>

@@ -35,7 +35,9 @@
           </a-tab-pane>
           <a-tab-pane key="users" :tab="$t('ProjectApplication.detail.tab.users')">
             <UserManagement
-              :data="{ users: detail.users, roles: detail.roles, candidates: store.bindableUsers }"
+              :data="{ users: detail.users, roles: detail.roles }"
+              :application-id="applicationId"
+              :load-users="store.loadUserCandidates"
               @add="addUser"
               @bind="bindUsers"
               @update="updateUser"
@@ -189,7 +191,7 @@ const bindCameras = async (ids: string[]) => {
 
 const unbindCamera = async (camera: ApplicationCameraResource) => {
   await store.unbindCamera(applicationId.value, camera)
-  onlyMessage($t('ProjectApplication.camera.unbindSuccess', { name: camera.name }))
+  onlyMessage($t('ProjectApplication.camera.unbindSuccess', { name: camera.gateway || camera.deviceId }))
 }
 
 const addUser = async (draft: ApplicationUserDraft) => {
