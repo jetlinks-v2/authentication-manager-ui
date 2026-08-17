@@ -64,7 +64,7 @@
           </div>
         </dl>
         <a-popconfirm
-          :title="$t('ProjectApplication.camera.unbindConfirm', { name: activeCamera.name })"
+          :title="$t('ProjectApplication.camera.unbindConfirm', { name: activeCamera.gateway || activeCamera.deviceId })"
           @confirm="confirmUnbind"
         >
           <a-button danger block>{{ $t('ProjectApplication.camera.unbind') }}</a-button>
@@ -80,7 +80,6 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type {
   ApplicationCameraResource,
-  ApplicationResource,
   ResourcePickerGateway,
   ResourcePickerPage,
   ResourcePickerQuery,
@@ -117,8 +116,7 @@ const pickerData = computed(() => ({
   hint: $t('ProjectApplication.camera.bindHint'),
   loadResources: props.data.loadAvailable,
   loadGateways: props.data.loadGateways,
-  getBindingId: (camera: ApplicationResource) => (camera as ApplicationCameraResource).deviceId,
-  boundIds: props.data.bound.map(item => item.id),
+  boundIds: [...new Set(props.data.bound.map(item => item.deviceId).filter(Boolean))],
 }))
 
 const openPicker = () => { pickerOpen.value = true }
@@ -134,10 +132,10 @@ const confirmUnbind = () => {
 </script>
 
 <style scoped>
-.camera-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: var(--space-3); }
-.camera-card { overflow: hidden; border: 1px solid var(--line); border-radius: var(--r-3); }
-.camera-preview { position: relative; display: grid; min-height: 9rem; place-items: center; color: var(--ink-4); font-size: var(--fs-24); }
-.camera-preview img { width: 100%; height: 100%; min-height: 9rem; object-fit: cover; }
+.camera-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); align-items: start; gap: var(--space-3); }
+.camera-card { display: flex; min-width: 0; flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-radius: var(--r-3); }
+.camera-preview { position: relative; display: grid; width: 100%; height: 10.5rem; min-height: 10.5rem; max-height: 10.5rem; flex: 0 0 10.5rem; place-items: center; overflow: hidden; color: var(--ink-4); font-size: var(--fs-24); }
+.camera-preview img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
 .camera-status { position: absolute; right: var(--space-2); top: var(--space-2); }
 .camera-body { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3); }
 .camera-title { display: flex; min-width: 0; flex-direction: column; gap: var(--space-1); }

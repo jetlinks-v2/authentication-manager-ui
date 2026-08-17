@@ -37,7 +37,7 @@ import {
 import {
   bindBusinessApplicationUsers,
   createUserForBusinessApplication,
-  loadBindableProjectUsers,
+  loadBusinessApplicationUserCandidates,
   loadBusinessApplicationUsers,
   updateBoundBusinessApplicationUser,
 } from './applicationUserService'
@@ -54,17 +54,16 @@ import type {
   ApplicationRoleDraft,
   ApplicationTemplate,
   ApplicationUser,
-  ApplicationUserCandidate,
   ApplicationUserDraft,
   ProjectApplication,
   ProjectApplicationDraft,
   ResourcePickerQuery,
+  UserPickerQuery,
 } from './types'
 
 const applications = reactive<ProjectApplication[]>([])
 const templates = reactive<ApplicationTemplate[]>([])
 const details = reactive<Record<string, ApplicationDetailState>>({})
-const bindableUsers = reactive<ApplicationUserCandidate[]>([])
 const templateMenus = reactive<Record<string, string[]>>({})
 const applicationEntities = new Map<string, BusinessApplicationEntity>()
 const roleEntities = new Map<string, BusinessApplicationRoleEntity>()
@@ -76,11 +75,6 @@ const ensureDetail = (applicationId: string) => {
   if (!details[applicationId]) details[applicationId] = { devices: [], cameras: [], users: [], roles: [] }
   return details[applicationId]
 }
-
-const projectIdOf = (applicationId: string) =>
-  applications.find(item => item.id === applicationId)?.projectId
-  || applicationEntities.get(applicationId)?.projectId
-  || ''
 
 const rememberApplications = (entities: BusinessApplicationEntity[]) => {
   entities.forEach(entity => applicationEntities.set(entity.id, entity))
@@ -199,12 +193,8 @@ export const useProjectApplication = () => {
     return detail.users
   }
 
-  const loadBindableUsers = async (applicationId: string) => {
-    const detail = ensureDetail(applicationId)
-    const values = await loadBindableProjectUsers(projectIdOf(applicationId), detail.users)
-    replace(bindableUsers, values)
-    return bindableUsers
-  }
+  const loadUserCandidates = (applicationId: string, query: UserPickerQuery) =>
+    loadBusinessApplicationUserCandidates(applicationId, query)
 
   const loadDevices = async (applicationId: string) => {
     const result = await loadBusinessApplicationDevices(applicationId)
@@ -241,7 +231,6 @@ export const useProjectApplication = () => {
     ensureDetail(applicationId)
     await loadRoles(applicationId)
     await Promise.all([loadUsers(applicationId), loadDevices(applicationId), loadCameras(applicationId)])
-    await loadBindableUsers(applicationId)
     return details[applicationId]
   }
 
@@ -256,9 +245,9 @@ export const useProjectApplication = () => {
     await loadDevices(applicationId)
   }
 
-  const bindCameras = async (applicationId: string, deviceIds: string[]) => {
-    if (!deviceIds.length) return
-    await bindBusinessApplicationDevices(applicationId, [...new Set(deviceIds)])
+  const bindCameras = async (applicationId: string, gatewayDeviceIds: string[]) => {
+    if (!gatewayDeviceIds.length) return
+    await bindBusinessApplicationDevices(applicationId, [...new Set(gatewayDeviceIds)])
     await loadCameras(applicationId)
   }
 
@@ -271,13 +260,11 @@ export const useProjectApplication = () => {
   const bindUsers = async (applicationId: string, userIds: string[]) => {
     await bindBusinessApplicationUsers(applicationId, userIds)
     await loadUsers(applicationId)
-    await loadBindableUsers(applicationId)
   }
 
   const addUser = async (applicationId: string, draft: ApplicationUserDraft) => {
     await createUserForBusinessApplication(applicationId, draft)
     await loadUsers(applicationId)
-    await loadBindableUsers(applicationId)
   }
 
   const updateUser = async (applicationId: string, userId: string, patch: Partial<ApplicationUser>) => {
@@ -292,13 +279,11 @@ export const useProjectApplication = () => {
       applicationRoleIds,
     )
     await loadUsers(applicationId)
-    await loadBindableUsers(applicationId)
   }
 
   const removeUser = async (applicationId: string, userId: string) => {
     await deleteBusinessApplicationUser(userId)
     await loadUsers(applicationId)
-    await loadBindableUsers(applicationId)
   }
 
   const saveRole = async (applicationId: string, draft: ApplicationRoleDraft, roleId?: string) => {
@@ -316,7 +301,6 @@ export const useProjectApplication = () => {
     applications,
     templates,
     details,
-    bindableUsers,
     templateMenus,
     loadApplications,
     loadTemplates,
@@ -326,6 +310,7 @@ export const useProjectApplication = () => {
     updateApplication,
     loadDetail,
     loadAvailableDevices,
+    loadUserCandidates,
     loadCameraGateways,
     loadAvailableCameras,
     bindDevices,

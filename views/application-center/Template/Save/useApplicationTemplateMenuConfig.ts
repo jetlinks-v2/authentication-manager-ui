@@ -20,6 +20,7 @@ import {
   buildStrategyDraft,
   buildTemplateAssetAccesses,
   DEFAULT_SCOPE_STRATEGY,
+  filterApplicationMenuInterfacePermissions,
   findMissingMenuIds,
   normalizeAssetTypeNames,
   normalizeCandidateMenus,
@@ -112,13 +113,18 @@ export const useApplicationTemplateMenuConfig = (
       if (sequence !== loadSequence) return
 
       const detail = assertSuccess<GrantDetail>(grantResponse, {})
-      const ownMenus = assertSuccess<MenuPermissionNode[]>(menuResponse, [])
+      const ownMenus = filterApplicationMenuInterfacePermissions(
+        assertSuccess<MenuPermissionNode[]>(menuResponse, []),
+      )
       const sourceMenus = normalizeCandidateMenus(ownMenus)
       const grantableResponse = await getGrantableAssetAccesses(ownMenus)
       if (sequence !== loadSequence) return
 
-      grantedMenus.value = normalizeGrantedMenus(
+      const savedMenus = filterApplicationMenuInterfacePermissions(
         Array.isArray(detail.menus) ? detail.menus : [],
+      )
+      grantedMenus.value = normalizeGrantedMenus(
+        savedMenus,
         sourceMenus,
       )
       savedAssetAccesses.value = Array.isArray(detail.assetAccesses) ? detail.assetAccesses : []

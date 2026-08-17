@@ -7,7 +7,6 @@ import type {
   EnumValue,
   MediaChannelEntity,
   MenuView,
-  ProjectMemberInfo,
   UserDetailEntity,
 } from '@authentication-manager-ui/api/application-center/businessApplication'
 import type {
@@ -117,6 +116,7 @@ export const normalizeUser = (
   applicationRoleIds: ReadonlySet<string> = new Set(),
 ): ApplicationUser => {
   const roleIds = (entity.roleList || []).map(item => item.id).filter(Boolean)
+  const status = enumValue(entity.status, '1')
   return {
     id: entity.id,
     name: entity.name || entity.username,
@@ -127,24 +127,21 @@ export const normalizeUser = (
     roleIds,
     orgIds: (entity.orgList || []).map(item => item.id).filter(Boolean),
     positionIds: (entity.positions || []).map(item => item.id).filter(Boolean),
-    enabled: entity.status !== 0,
+    enabled: status !== '0' && status !== 'disabled',
   }
 }
 
-export const normalizeProjectMember = (entity: ProjectMemberInfo): ApplicationUserCandidate => {
+export const normalizeUserCandidate = (entity: UserDetailEntity): ApplicationUserCandidate => {
   const status = enumValue(entity.status, '1')
-  const type = enumValue(entity.type, '')
-  const id = entity.userId || entity.id || ''
+  const id = entity.id || ''
   return {
     id,
     name: entity.name || entity.username || id,
     username: entity.username || '',
-    phone: '',
+    phone: entity.telephone || '',
     status,
     statusText: enumText(entity.status, status),
-    enabled: status !== 'disabled' && status !== '0',
-    type,
-    typeText: enumText(entity.type, type),
+    enabled: status !== '0' && status !== 'disabled',
   }
 }
 

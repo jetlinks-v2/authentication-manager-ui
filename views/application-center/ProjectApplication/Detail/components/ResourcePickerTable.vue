@@ -6,7 +6,7 @@
     type="PAGE"
     :columns="columns"
     :request="requestPage"
-    :rowSelection="rowSelection"
+    :rowSelection="selectable ? rowSelection : undefined"
     :alert-show="false"
     :bodyStyle="{ padding: 0 }"
     :scroll="{ x: type === 'camera' ? 760 : 560, y: 420 }"
@@ -66,6 +66,10 @@ const props = defineProps({
   selectedIds: {
     type: Array as PropType<string[]>,
     default: () => [],
+  },
+  selectable: {
+    type: Boolean,
+    default: true,
   },
 })
 

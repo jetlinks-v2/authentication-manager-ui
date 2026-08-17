@@ -94,8 +94,8 @@ export interface ApplicationUserCandidate {
   status: string
   statusText: string
   enabled: boolean
-  type: string
-  typeText: string
+  type?: string
+  typeText?: string
 }
 
 export interface ApplicationRole {
@@ -130,6 +130,19 @@ export interface ResourcePickerQuery {
   terms?: Array<Record<string, unknown>>
 }
 
+export interface UserPickerQuery {
+  pageIndex?: number
+  pageSize?: number
+  terms?: Array<Record<string, unknown>>
+}
+
+export interface UserPickerPage {
+  data: ApplicationUserCandidate[]
+  total: number
+  pageIndex: number
+  pageSize: number
+}
+
 export interface ResourcePickerPage<T extends ApplicationResource = ApplicationResource> {
   data: T[]
   total: number
@@ -153,6 +166,5 @@ export interface ResourcePickerData {
   hint?: string
   loadResources: (query: ResourcePickerQuery, gatewayId?: string) => Promise<ResourcePickerPage>
   loadGateways?: () => Promise<ResourcePickerGateway[]>
-  getBindingId?: (resource: ApplicationResource) => string
   boundIds: string[]
 }

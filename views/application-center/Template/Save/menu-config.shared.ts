@@ -179,6 +179,66 @@ const valueOf = (value: unknown) => {
 
 const unique = (values: string[]) => Array.from(new Set(values.filter(Boolean)))
 
+const APPLICATION_INTERFACE_PERMISSION_CODES = new Set(['open-api'])
+
+const permissionCodeOf = (value: unknown) => {
+  if (value && typeof value === 'object') {
+    const item = value as Record<string, unknown>
+    return String(item.permission || item.id || item.value || item.code || '')
+  }
+  return String(value || '')
+}
+
+const hasApplicationInterfacePermission = (value: unknown) => {
+  const values = Array.isArray(value) ? value : [value]
+  return values.some(item => APPLICATION_INTERFACE_PERMISSION_CODES.has(permissionCodeOf(item)))
+}
+
+const withoutApplicationInterfacePermissions = <T extends Record<string, any>>(item: T): T => {
+  const result = { ...item }
+  if (Array.isArray(result.permissions)) {
+    result.permissions = result.permissions.filter(permission => !hasApplicationInterfacePermission(permission))
+  }
+  return result
+}
+
+const isApplicationInterfaceMenu = (menu: MenuPermissionNode) =>
+  hasApplicationInterfacePermission(menu.code)
+  || hasApplicationInterfacePermission(menu.permission)
+  || hasApplicationInterfacePermission(menu.showPage)
+
+const filterMenuButtons = (menu: MenuPermissionNode, field: 'buttons' | 'actions') => {
+  const buttons = menu[field]
+  if (!Array.isArray(buttons)) return buttons
+  return buttons
+    .map(button => withoutApplicationInterfacePermissions(button))
+    .filter((button, index) => {
+      if (hasApplicationInterfacePermission(button.id) || hasApplicationInterfacePermission(button.permission)) return false
+      const sourceButton = buttons[index]
+      return !(Array.isArray(sourceButton.permissions)
+        && sourceButton.permissions.length
+        && Array.isArray(button.permissions)
+        && !button.permissions.length)
+    })
+}
+
+export const filterApplicationMenuInterfacePermissions = (
+  menus: MenuPermissionNode[] = [],
+): MenuPermissionNode[] => {
+  const visit = (items: MenuPermissionNode[]): MenuPermissionNode[] => items
+    .map(item => {
+      // 应用菜单暂不开放接口权限；历史模板和角色授权回显也在进入编辑器前统一裁剪。
+      if (isApplicationInterfaceMenu(item)) return undefined
+      const menu = withoutApplicationInterfacePermissions(item)
+      menu.buttons = filterMenuButtons(menu, 'buttons')
+      menu.actions = filterMenuButtons(menu, 'actions')
+      menu.children = item.children?.length ? visit(item.children) : null
+      return menu
+    })
+    .filter((item): item is MenuPermissionNode => !!item)
+  return visit(menus)
+}
+
 const menuAssetTypesOf = (menu: MenuPermissionNode): string[] => {
   if (Array.isArray(menu.assetTypes)) return unique(menu.assetTypes.map(valueOf))
   if (menu.assetTypes) return unique([valueOf(menu.assetTypes)])

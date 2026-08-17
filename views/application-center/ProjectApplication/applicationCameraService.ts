@@ -9,18 +9,17 @@ import {
 import { enumText, enumValue, listOf, normalizeCamera, resultOf } from './applicationModel'
 import type { ResourcePickerGateway, ResourcePickerPage, ResourcePickerQuery } from './types'
 
-const deviceAssetTerm = (applicationId: string) => ({
+const gatewayBindingTerm = (applicationId: string) => ({
   column: 'deviceId',
   termType: 'dim-assets',
   value: { assetType: 'device', targets: [{ type: 'business_application', id: applicationId }] },
 })
 
 /**
- * Media channels inherit device asset permissions through `deviceId`, so binding a
- * camera is represented by binding its related IoT device to the application.
+ * 视频通道通过 deviceId 继承网关设备资产权限，绑定网关后展示其全部通道。
  */
 export const loadBusinessApplicationCameras = async (applicationId: string) => {
-  const boundResponse = await queryMediaChannels({ paging: false, terms: [deviceAssetTerm(applicationId)] })
+  const boundResponse = await queryMediaChannels({ paging: false, terms: [gatewayBindingTerm(applicationId)] })
   const bound = listOf<MediaChannelEntity>(boundResponse).map(normalizeCamera).filter(item => item.deviceId)
 
   return {
