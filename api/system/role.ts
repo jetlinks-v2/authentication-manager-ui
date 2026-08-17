@@ -12,6 +12,8 @@ export const updateRole_api = (data: any): Promise<any> => request.patch(`/role`
 export const getRoleDetails_api = (id: string): Promise<any> => request.get(`/role/${id}`);
 // 获取角色对应的权限树
 export const getPermissionTree_api = (id: string, data?: any): Promise<any> => request.get(`/menu/role/${id}/_grant/tree`, data);
+export const getPermissionDetail_api = (id: string, data?: any): Promise<any> => request.get(`/menu/role/${id}/_grant/detail`, data);
+export const getGrantableAssetAccesses_api = (menus: any[]): Promise<any> => request.post('/menu/asset-accesses/grantable', menus);
 // 更新角色对应的权限树
 export const updatePermissionTree_api = (id: string, data:any): Promise<any> => request.put(`/menu/role/${id}/_grant`,data);
 // 获取角色列表

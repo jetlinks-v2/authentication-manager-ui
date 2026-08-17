@@ -6,7 +6,7 @@
           <p>
             <AIcon
                 type="ExclamationCircleOutlined"
-                style="margin-right: 12px; font-size: 14px"
+                style="margin-right: 0.75rem; font-size: var(--fs-14)"
             />
             {{ $t('Platforms.index.366248-0') }}
           </p>
@@ -23,7 +23,7 @@ import Api from '../Api/index.vue';
 <style lang="less" scoped>
 .api-container {
   background-color: #fff;
-  padding: 24px;
+  padding: 1.5rem;
 }
 
 </style>

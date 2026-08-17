@@ -63,7 +63,7 @@
           </a-form-item>
         </a-col>
       </a-row>
-      <a-collapse style="margin-bottom: 20px;">
+      <a-collapse style="margin-bottom: 1.25rem;">
         <a-collapse-panel
             v-for="(item, index) in form.data.integrationModes"
             :key="item + index"
@@ -81,7 +81,7 @@
                                 :style="
                                     form.errorNumInfo.ssoClient.size > 9 &&
                                     form.errorNumInfo?.ssoClient?.size
-                                        ? { padding: '0 8px' }
+                                        ? { padding: '0 0.5rem' }
                                         : {}
                                 "
                             >
@@ -739,7 +739,7 @@
                   show-search
                   style="width: 100%"
                   :dropdown-style="{
-                                    maxHeight: '400px',
+                                    maxHeight: '25rem',
                                     overflow: 'auto',
                                 }"
                   :fieldNames="{
@@ -1471,7 +1471,7 @@
                     show-search
                     style="width: 100%"
                     :dropdown-style="{
-                                        maxHeight: '400px',
+                                        maxHeight: '25rem',
                                         overflow: 'auto',
                                     }"
                     :fieldNames="{
@@ -1591,7 +1591,8 @@ const defaultImg = {
 };
 
 
-const routeQuery = useRoute().query;
+const route = useRoute();
+const routeQuery = reactive({...route.query});
 const menuStory = useMenuStore();
 
 const deptPermission = 'system/Department';
@@ -1703,9 +1704,17 @@ const initForm: formType = {
     defaultPasswd: '', // 默认密码
   },
 };
+
+const createInitialForm = (): formType => {
+  const data = cloneDeep(initForm);
+  data.apiServer.appId = randomString(16);
+  data.apiServer.secureKey = randomString();
+  return data;
+};
+
 const formRef = ref<any>();
 const form = reactive({
-  data: {...initForm},
+  data: createInitialForm(),
   // integrationModesISO: [] as string[], // 接入方式镜像  折叠面板使用
   roleIdList: [] as optionsType, // 角色列表
   orgIdList: [] as dictType, // 组织列表
@@ -1720,6 +1729,27 @@ const form = reactive({
   fileList: [] as any[],
   uploadLoading: false,
 });
+
+const resetCreateForm = () => {
+  form.data = createInitialForm();
+  form.fileList = [];
+  Object.values(form.errorNumInfo).forEach(item => item.clear());
+};
+
+const syncRouteQuery = () => {
+  Object.keys(routeQuery).forEach(key => delete routeQuery[key]);
+  Object.assign(routeQuery, route.query);
+};
+
+const applyCreateProvider = () => {
+  if (!routeQuery.provider) {
+    return;
+  }
+  const provider = routeQuery.provider as applyType;
+  form.data.provider = provider;
+  typeOptions.value = typeOptions.value.filter((item: any) => item.value === provider);
+  form.data.logoUrl = defaultImg[provider];
+};
 const wechatEventUrl = computed(() => {
   if (!form.data.id) return '';
   const origin = window.location.origin || '';
@@ -1775,20 +1805,10 @@ const getType = async () => {
 }
 
 onMounted(async () => {
-  await getType();
   getRoleIdList();
   getOrgIdList();
   queryThirdPartyType()
-  if (routeQuery.id) {
-    getInfo(routeQuery.id as string);
-  }
-  if (routeQuery.provider) {
-    form.data.provider = routeQuery?.provider as applyType;
-    typeOptions.value = typeOptions.value.filter((i: any) => {
-      return i.value === routeQuery.provider;
-    });
-    form.data.logoUrl = defaultImg[typeOptions.value[0].value]
-  }
+  await loadFormByRoute();
 });
 
 const checkPassword = (_rule: Rule, value: string) => {
@@ -1811,6 +1831,27 @@ const joinOptions = computed(() => {
           ?.integrationModes || []
   );
 });
+
+async function loadFormByRoute() {
+  const isEditing = Boolean(routeQuery.id);
+  if (!isEditing) {
+    resetCreateForm();
+  }
+  await getType();
+  if (isEditing) {
+    getInfo(routeQuery.id as string);
+    return;
+  }
+  applyCreateProvider();
+}
+
+watch(
+    () => route.fullPath,
+    () => {
+      syncRouteQuery();
+      void loadFormByRoute();
+    },
+);
 
 const dialog = reactive({
   visible: false,
@@ -2177,11 +2218,11 @@ const queryThirdPartyType = async () => {
           // .ant-upload-select-picture-card {
           //     width: auto;
           //     height: auto;
-          //     max-width: 150px;
-          //     max-height: 150px;
+          //     max-width: 9.375rem;
+          //     max-height: 9.375rem;
 
           //     > .ant-upload {
-          //         height: 150px;
+          //         height: 9.375rem;
           //     }
           // }
         }
@@ -2195,15 +2236,15 @@ const queryThirdPartyType = async () => {
         .error-info {
           position: absolute;
           text-align: center;
-          line-height: 14px;
-          min-width: 14px;
-          min-height: 14px;
-          right: -15px;
-          top: -5px;
-          font-size: 8px;
+          line-height: 0.875rem;
+          min-width: 0.875rem;
+          min-height: 0.875rem;
+          right: -0.9375rem;
+          top: -0.3125rem;
+          font-size: var(--fs-12);
           background-color: #ff4d4f;
           color: #fff;
-          border-radius: 7px;
+          border-radius: 0.4375rem;
         }
       }
     }
@@ -2213,19 +2254,19 @@ const queryThirdPartyType = async () => {
 .wechat-token-label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   flex-wrap: wrap;
 }
 .wechat-event-url-inline {
-  font-size: 12px;
+  font-size: var(--fs-12);
   color: rgba(0, 0, 0, 0.65);
 }
 .wechat-event-url-inline code {
   background: #f5f5f5;
-  padding: 1px 4px;
-  border-radius: 2px;
+  padding: 0.0625rem 0.25rem;
+  border-radius: 0.125rem;
 }
 .wechat-event-copy {
-  padding: 0 4px;
+  padding: 0 0.25rem;
 }
 </style>

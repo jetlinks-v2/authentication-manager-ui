@@ -1,5 +1,5 @@
 <template>
-    <div style="padding: 50px 200px">
+    <div style="padding: 3.125rem 12.5rem">
         <a-form
             v-if="variableDefinitions.length"
             :layout="'vertical'"
@@ -41,7 +41,7 @@
                 />
             </a-form-item>
         </a-form>
-        <j-empty v-else style="margin: 20px 0" :description="$t('components.VariableDefinitions.420465-0')" />
+        <CloudEmpty v-else style="margin: 1.25rem 0" :description="$t('components.VariableDefinitions.420465-0')" />
     </div>
 </template>
 

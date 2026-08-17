@@ -378,7 +378,7 @@ const calendarOptions = {
     unselectAuto: false,
     locale: locale,
     droppable: true,
-    height: props.preview ? '600px' : '620px',
+    height: props.preview ? '37.5rem' : '38.75rem',
     // select: handleSelect, //原生拖拽多选日期逻辑
     eventReceive: handleEventAdd,
     datesSet: handleViewDidMount,
@@ -596,33 +596,33 @@ setTimeout(() => {
 }
 .calendarContainer {
     position: relative;
-    padding: 44px 24px 0;
+    padding: 2.75rem 1.5rem 0;
     border: 1px solid #d9d9d9;
-    border-radius: 12px;
+    border-radius: 0.75rem;
     .compareTip {
         position: absolute;
         right: 20%;
-        top: 27px;
+        top: 1.6875rem;
         transform: translateX(40%);
     }
     .skip {
         position: absolute;
         right: 0;
-        top: 27px;
+        top: 1.6875rem;
     }
     .compareSave {
         position: absolute;
-        right: 10px;
-        top: 22px;
+        right: 0.625rem;
+        top: 1.375rem;
     }
     .calenderButton {
         position: absolute;
-        top: 22px;
+        top: 1.375rem;
     }
     .event {
         position: relative;
-        height: 32px;
-        padding: 6px;
+        height: 2rem;
+        padding: 0.375rem;
         color: #1a1a1a;
         display: flex;
 
@@ -632,7 +632,7 @@ setTimeout(() => {
             top: 0;
             color: #777777;
             display: none;
-            font-size: 16px;
+            font-size: var(--fs-16);
         }
     }
     .event:hover {
@@ -641,18 +641,18 @@ setTimeout(() => {
         }
     }
     .decoration {
-        width: 4px;
-        height: 16px;
-        border-radius: 2px;
-        margin: 2px 4px;
+        width: 0.25rem;
+        height: 1rem;
+        border-radius: 0.125rem;
+        margin: 0.125rem 0.25rem;
         display: inline-block;
     }
     .event-title {
         white-space: nowrap; /* 不换行 */
         overflow: hidden; /* 超出部分隐藏 */
         text-overflow: ellipsis; /* 显示省略号 */
-        width: calc(100% - 30px);
-        font-size: 14px;
+        width: calc(100% - 1.875rem);
+        font-size: var(--fs-14);
     }
 }
 :deep(.fc-highlight) {
@@ -661,9 +661,9 @@ setTimeout(() => {
 .tips {
     position: fixed;
     z-index: 99999;
-    padding: 5px 10px;
+    padding: 0.3125rem 0.625rem;
     background-color: rgba(0, 0, 0, 0.7);
-    border-radius: 5px;
+    border-radius: 0.3125rem;
     color: white;
 }
 :deep(.fc-theme-standard th) {
@@ -686,7 +686,7 @@ setTimeout(() => {
     }
     table {
         border-collapse: separate;
-        border-spacing: 5px 0;
+        border-spacing: 0.3125rem 0;
     }
     .fc-daygrid-day.fc-day-today {
         background-color: transparent;
@@ -694,7 +694,7 @@ setTimeout(() => {
             background-color: #1677ff;
             color: white;
             border-radius: 50%;
-            width: 30px;
+            width: 1.875rem;
             text-align: center;
         }
     }
@@ -702,29 +702,29 @@ setTimeout(() => {
         border: none !important;
     }
     .fc-daygrid-event-harness {
-        margin: 0 4px;
-        margin-top: 4px !important;
-        border-radius: 6px;
+        margin: 0 0.25rem;
+        margin-top: 0.25rem !important;
+        border-radius: 0.375rem;
     }
     .fc-daygrid-day-frame {
-        height: 155px;
+        height: 9.6875rem;
         .fc-daygrid-day-events {
-            max-height: 120px;
+            max-height: 7.5rem;
             overflow-y: auto;
             &::-webkit-scrollbar-thumb {
                 background-color: #d0d0d0; /* 滚动条拖动部分颜色 */
-                border-radius: 4px; /* 滚动条拖动部分圆角 */
+                border-radius: 0.25rem; /* 滚动条拖动部分圆角 */
             }
         }
     }
     .fc-scroller {
         &::-webkit-scrollbar {
-            width: 5px; /* 滚动条宽度 */
+            width: 0.3125rem; /* 滚动条宽度 */
             background-color: #fff; /* 滚动条背景色 */
         }
         &::-webkit-scrollbar-thumb {
             background-color: #d0d0d0; /* 滚动条拖动部分颜色 */
-            border-radius: 4px; /* 滚动条拖动部分圆角 */
+            border-radius: 0.25rem; /* 滚动条拖动部分圆角 */
         }
     }
 }
@@ -743,7 +743,7 @@ setTimeout(() => {
     }
     .fc-daygrid-day-events {
         &::-webkit-scrollbar {
-            width: 5px; /* 滚动条宽度 */
+            width: 0.3125rem; /* 滚动条宽度 */
             background-color: #fff; /* 滚动条背景色 */
         }
     }
@@ -756,7 +756,7 @@ setTimeout(() => {
     }
     .fc-daygrid-day-events {
         &::-webkit-scrollbar {
-            width: 5px; /* 滚动条宽度 */
+            width: 0.3125rem; /* 滚动条宽度 */
             background-color: #edf5ff; /* 滚动条背景色 */
         }
     }

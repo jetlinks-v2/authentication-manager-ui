@@ -3,7 +3,7 @@
         <Api :mode="'home'" hasHome showTitle :code="clientId">
             <template #top>
                 <div class="card">
-                    <h3 style="margin: 0 0 24px 0">{{ $t('View.index.700449-0') }}</h3>
+                    <h3 style="margin: 0 0 1.5rem 0">{{ $t('View.index.700449-0') }}</h3>
                     <p>
                         <span style="font-weight: bold">clientId: </span>
                         <span>{{ clientId }}</span>
@@ -36,12 +36,12 @@ getAppInfo_api(clientId).then((resp: any) => {
 <style lang="less" scoped>
 .card {
     background-color: #fff;
-    padding: 24px;
-    margin-bottom: 24px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
 
     p {
         margin: 0;
-        font-size: 16px;
+        font-size: var(--fs-16);
     }
 }
 </style>

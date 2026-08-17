@@ -2,7 +2,7 @@
   <div>
     <a-form ref="formRef" :model="formModel" layout="vertical">
       <a-row type="flex">
-        <a-col flex="186px">
+        <a-col flex="11.625rem">
           <a-form-item
             :label="$t('BasicInfo.Info.607342-0')"
             name="icon"
@@ -15,7 +15,7 @@
             ]"
           >
             <div class="icon-upload has-icon" v-if="formModel.icon">
-              <AIcon :type="formModel.icon" style="font-size: 90px" />
+              <AIcon :type="formModel.icon" style="font-size: var(--fs-90)" />
               <span class="mark" @click="dialogVisible = true">{{ $t('BasicInfo.Info.607342-2') }}</span>
             </div>
 
@@ -25,7 +25,7 @@
               class="icon-upload no-icon"
             >
               <span>
-                <AIcon type="PlusOutlined" style="font-size: 30px" />
+                <AIcon type="PlusOutlined" style="font-size: var(--fs-30)" />
                 <p>{{ $t('BasicInfo.Info.607342-3') }}</p>
               </span>
             </div>
@@ -249,10 +249,10 @@ defineExpose({ onSave })
 
 <style lang="less" scoped>
 .icon-upload {
-  width: 160px;
-  height: 150px;
+  width: 10rem;
+  height: 9.375rem;
   border: 1px dashed #d9d9d9;
-  font-size: 14px;
+  font-size: var(--fs-14);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -276,7 +276,7 @@ defineExpose({ onSave })
     color: #fff;
     width: 100%;
     height: 100%;
-    font-size: 16px;
+    font-size: var(--fs-16);
     align-items: center;
     justify-content: center;
   }

@@ -2,7 +2,7 @@
   <div class="permission-choose-container">
     <a-input
       v-model:value="searchValue"
-      style="width: 300px"
+      style="width: 18.75rem"
       allowClear
       :placeholder="$t('components.PermissionChoose.947802-0')"
       @input="onSearch"
@@ -74,7 +74,7 @@ const props = defineProps({
   },
   maxHeight: {
     type: String,
-    default: '350px',
+    default: '21.875rem',
   },
   disabled: {
     type: Boolean,
@@ -196,12 +196,12 @@ watch(
     border-color: #d9d9d9 !important;
   }
   .permission-table {
-    margin-top: 12px;
-    font-size: 14px;
+    margin-top: 0.75rem;
+    font-size: var(--fs-14);
     border: 1px solid #d9d9d9;
     color: rgba(0, 0, 0, 0.85);
     .table-head {
-      padding: 12px;
+      padding: 0.75rem;
       background-color: #d9d9d9;
       margin: 0 !important;
     }
@@ -213,7 +213,7 @@ watch(
         border-bottom: 1px solid #d9d9d9;
 
         > div {
-          padding: 8px 12px;
+          padding: 0.5rem 0.75rem;
         }
         .item-name {
           display: flex;

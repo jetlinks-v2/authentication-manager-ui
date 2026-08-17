@@ -2,7 +2,7 @@
     <a-modal
         class="edit-permission-dialog-container"
         :title="$t('components.EditPermissionDialog.173936-0')"
-        width="500px"
+        :width="500"
         @ok="confirm"
         :maskClosable="false"
         :confirmLoading="loading"
@@ -15,7 +15,7 @@
                 <span>{{ $t('components.EditPermissionDialog.173936-1') }}</span>
             </a-space>
         </div>
-        <div style="margin-top: 5px">
+        <div style="margin-top: 0.3125rem">
             <span>{{ $t('components.EditPermissionDialog.173936-4') }}</span>
             <a-checkbox-group
                 v-model:value="form.permission"
@@ -76,8 +76,8 @@ const options = computed(() => {
 <style scoped lang="less">
 .alert-info {
     background: #f3f3f3;
-    border-radius: 2px;
-    padding: 6px;
+    border-radius: 0.125rem;
+    padding: 0.375rem;
     color: rgba(0, 0, 0, 0.55);
 }
 </style>

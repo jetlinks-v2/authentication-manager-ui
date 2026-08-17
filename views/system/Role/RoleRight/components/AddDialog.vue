@@ -2,7 +2,7 @@
     <a-modal
         open
         :title="modalType ==='add' ? $t('components.AddDialog.956922-0') : $t('components.AddDialog.956922-1')"
-        width="670px"
+        :width="670"
         @cancel="emits('update:visible', false)"
         @ok="confirm"
         :confirm-loading="loading"

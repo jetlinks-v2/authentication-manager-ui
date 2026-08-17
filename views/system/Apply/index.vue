@@ -28,11 +28,11 @@
                 <AIcon type="PlusOutlined"/>
                 {{ $t('Apply.index.483342-0') }}
               </j-permission-button>
-              <p style="margin: 0 0 0 30px; color: #0000008c">
+              <p style="margin: 0 0 0 1.875rem; color: #0000008c">
                 <j-ellipsis>
                   <AIcon
                       type="ExclamationCircleOutlined"
-                      style="margin-right: 12px"
+                      style="margin-right: 0.75rem"
                   />
                   {{ $t('Apply.index.483342-1') }}
                 </j-ellipsis>
@@ -59,11 +59,11 @@
               <template #content>
                 <j-ellipsis
                     style="
-                                        width: calc(100% - 100px);
-                                        font-size: 16px;
+                                        width: calc(100% - 6.25rem);
+                                        font-size: var(--fs-16);
                                         color: rgb(49, 94, 251);
                                         font-weight: 700;
-                                        margin-bottom: 8px;
+                                        margin-bottom: 0.5rem;
                                     "
                 >
                   {{ slotProps.name }}
@@ -155,7 +155,7 @@
               <!-- <template #mark>
                   <AIcon
                       type="EyeOutlined"
-                      style="font-size: 24px"
+                      style="font-size: var(--fs-24)"
                       @click="
                           () => table.toSave(slotProps.id, true)
                       "
@@ -321,7 +321,7 @@ const columns = [
     dataIndex: 'action',
     key: 'action',
     scopedSlots: true,
-    width: '200px',
+    width: '12.5rem',
     fixed: 'right',
   },
 ];

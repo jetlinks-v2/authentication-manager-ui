@@ -11,9 +11,9 @@
       <component :is="item.component" :parentId="departmentId"  @refresh="onRefresh" @open-device-bind="openDeviceBind"/>
     </a-tab-pane>
   </a-tabs>
-  <a-empty v-if="!_extra.length" :description="$t('property.index.675027-4')">
+  <CloudEmpty v-if="!_extra.length" :description="$t('property.index.675027-4')">
 
-  </a-empty>
+  </CloudEmpty>
 </template>
 
 <script setup lang="ts" name="property">
@@ -142,14 +142,14 @@ init();
 }
 
 :deep(.ant-tabs-tab) {
-  min-width: 140px;
+  min-width: 8.75rem;
   border: none !important;
   background: transparent !important;
 }
 
 :deep(.ant-tabs-tab-active) {
   background: #F0F0F0 !important;
-  border-radius: 6px !important;
+  border-radius: 0.375rem !important;
 
   .ant-tabs-tab-btn {
     color: #000;
@@ -158,10 +158,10 @@ init();
 }
 
 .custom-tag {
-  width: 140px;
-  height: 40px;
-  border-radius: 6px;
+  width: 8.75rem;
+  height: 2.5rem;
+  border-radius: 0.375rem;
   background: #F0F0F0;
-  padding: 8px 24px;
+  padding: 0.5rem 1.5rem;
 }
 </style>

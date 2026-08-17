@@ -34,7 +34,7 @@
           <div v-else class="treeItem" @click="() => selectGroup(item.data.id)">
 						<template v-if="!item?.children">
 							<div class="itemText">
-								<j-ellipsis style="width: calc(100%-100px)">{{ item.i18nName || item.name }}</j-ellipsis>
+								<j-ellipsis style="width: calc(100%-6.25rem)">{{ item.i18nName || item.name }}</j-ellipsis>
 							</div>
 							<div v-if="item.id !== 'default_group' && isAdmin" @click="(e) => e.stopPropagation()">
 								<j-permission-button :disabled="item.id === 'default_group'" :popConfirm="{
@@ -52,12 +52,12 @@
 							</div>
 						</template>
 						<template v-else>
-							<j-ellipsis style="width: calc(100% - 100px)">{{ item.name }}</j-ellipsis>
+							<j-ellipsis style="width: calc(100% - 6.25rem)">{{ item.name }}</j-ellipsis>
 						</template>
 					</div>
 				</template>
 			</a-tree>
-			<j-empty v-else style="margin-top: 100px;"/>
+			<CloudEmpty v-else style="margin-top: 6.25rem;"/>
 		</div>
 	</div>
 </template>
@@ -191,7 +191,7 @@ onMounted(() => {
 	height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .treeItem {
@@ -199,7 +199,7 @@ onMounted(() => {
 	justify-content: space-between;
 
 	.itemText {
-		line-height: 32px;
+		line-height: 2rem;
 		max-width: 40%
 	}
 }

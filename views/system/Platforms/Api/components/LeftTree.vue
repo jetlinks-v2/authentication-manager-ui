@@ -187,7 +187,7 @@ const filterPath = (path: object, filterArr: string[]) => {
 
 <style lang="less">
 .left-tree-container {
-    min-height: 200px;
+    min-height: 12.5rem;
     .ant-tree-list {
         .ant-tree-list-holder-inner {
             .ant-tree-switcher-noop {

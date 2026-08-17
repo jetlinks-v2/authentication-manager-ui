@@ -2,7 +2,7 @@
   <j-page-container>
     <a-card>
       <div class="top">
-        <AIcon style="padding: 12px" type="ExclamationCircleOutlined" />
+        <AIcon style="padding: 0.75rem" type="ExclamationCircleOutlined" />
         <span>{{ $t("Setting.index.113436-0") }} </span>
       </div>
       <div class="content">
@@ -25,7 +25,7 @@
                   <div class="tree-content">
                     <div class="tree-content-title">
                       <AIcon type="HolderOutlined" />
-                      <div style="margin-left: 8px">
+                      <div style="margin-left: 0.5rem">
                         {{ row.i18nName || row.name }}
                       </div>
                     </div>
@@ -50,7 +50,7 @@
           cancelText: $t('Setting.index.113436-5'),
           onConfirm: synchronization,
         }"
-        style="margin-left: 20px"
+        style="margin-left: 1.25rem"
         >{{ $t("Setting.index.113436-6") }}
       </j-permission-button>
     </a-card>
@@ -343,17 +343,17 @@ const filterMenus = (menus: any[]) => {
 <style lang="less" scoped>
 .top {
   background: #f6f6f6;
-  height: 40px;
+  height: 2.5rem;
   font-style: normal;
   font-weight: 400;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--fs-14);
+  line-height: 1.25rem;
   color: rgba(0, 0, 0, 0.55);
-  margin-bottom: 12px;
+  margin-bottom: 0.75rem;
 }
 .content {
   width: 100%;
-  margin: 12px 0;
+  margin: 0.75rem 0;
   display: flex;
   justify-content: center;
   // flex-direction: row;
@@ -379,30 +379,30 @@ const filterMenus = (menus: any[]) => {
 
   .tree {
     // flex: 1;
-    height: 540px;
-    margin: 16px 0;
-    padding: 12px;
+    height: 33.75rem;
+    margin: 1rem 0;
+    padding: 0.75rem;
     background: #ffffff;
-    border-radius: 4px;
+    border-radius: 0.25rem;
     overflow: hidden;
     width: 100%;
 
     &-content {
       display: flex;
       justify-content: space-between;
-      margin: 5px 0;
+      margin: 0.3125rem 0;
 
       &-title {
         flex: 1;
         font-weight: 800;
-        font-size: 12px;
-        line-height: 24px;
+        font-size: var(--fs-12);
+        line-height: 1.5rem;
         display: flex;
         align-items: center;
         color: #333333;
       }
       &-action {
-        // width: 20px;
+        // width: 1.25rem;
       }
     }
   }

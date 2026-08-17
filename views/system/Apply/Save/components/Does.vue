@@ -171,25 +171,25 @@ const img6 = systemImg.apply6;
 
 <style lang="less" scoped>
 .does-container {
-    padding: 24px;
+    padding: 1.5rem;
     overflow-y: auto;
     height: 100%;
     color: rgba(#000, 0.8);
-    font-size: 14px;
+    font-size: var(--fs-14);
     background-color: #fafafa;
 
     .url {
-        padding: 8px 16px;
+        padding: 0.5rem 1rem;
         color: #2f54eb;
         background-color: rgba(#a7bdf7, 0.2);
         word-wrap: break-word;
     }
 
     h1 {
-        margin: 16px 0;
+        margin: 1rem 0;
         color: rgba(#000, 0.85);
         font-weight: bold;
-        font-size: 14px;
+        font-size: var(--fs-14);
 
         &:first-child {
             margin-top: 0;
@@ -197,13 +197,13 @@ const img6 = systemImg.apply6;
     }
 
     h2 {
-        margin: 6px 0;
+        margin: 0.375rem 0;
         color: rgba(0, 0, 0, 0.8);
-        font-size: 14px;
+        font-size: var(--fs-14);
     }
 
     .image {
-        margin: 16px 0;
+        margin: 1rem 0;
     }
 }
 </style>

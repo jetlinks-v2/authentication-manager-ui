@@ -6,7 +6,7 @@
         @cancel="emit('close')"
         :bodyStyle="{ padding: 0 }"
     >
-        <div style="background-color: #f8f9fc; padding: 25px 100px">
+        <div style="background-color: #f8f9fc; padding: 1.5625rem 6.25rem">
             <a-steps :current="current" size="small" @change="onChange">
                 <a-step v-for="(item, index) in stepList" :key="item">
                     <template #title>
@@ -29,7 +29,7 @@
                 </a-step>
             </a-steps>
         </div>
-        <div style="margin: 20px">
+        <div style="margin: 1.25rem">
             <template v-if="current === 0">
                 <NotifyWay
                     :value="formModel.channelProvider"
@@ -73,7 +73,7 @@
                         <AIcon type="InfoCircleOutlined" />
                         {{ $t('Save.index.320308-12') }}
                     </div>
-                    <div style="margin: 50px 200px">
+                    <div style="margin: 3.125rem 12.5rem">
                         <a-form
                             ref="formRef"
                             :model="formModel"
@@ -363,11 +363,11 @@ const onSave = async () => {
 
 <style lang="less" scoped>
 .alert {
-    height: 40px;
-    padding: 0 20px 0 10px;
-    margin-bottom: 10px;
+    height: 2.5rem;
+    padding: 0 1.25rem 0 0.625rem;
+    margin-bottom: 0.625rem;
     color: rgba(0, 0, 0, 0.55);
-    line-height: 40px;
+    line-height: 2.5rem;
     background-color: #f6f6f6;
 }
 </style>

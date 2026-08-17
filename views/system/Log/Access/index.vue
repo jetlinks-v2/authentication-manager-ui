@@ -27,11 +27,16 @@
                         {{ slotProps.responseTime - slotProps.requestTime }} ms
                     </a-tag>
                     </template>
+                    <template #responseStatus="slotProps">
+                    <a-tag :color="getResponseStatusColor(slotProps.responseStatus)">
+                        {{ slotProps.responseStatus ?? '-' }}
+                    </a-tag>
+                    </template>
                     <template #username="slotProps">
 
                     <!-- <j-tag color="geekblue"> -->
                     <div class="userName">
-                        <j-ellipsis style="max-width: 100px;">
+                        <j-ellipsis style="max-width: 6.25rem;">
                         {{ slotProps.context.userName }}
                         </j-ellipsis>
                         <!-- </j-tag> -->
@@ -49,7 +54,7 @@
                                         }"
                             @click="i.onClick"
                             type="link"
-                            style="padding: 0 5px"
+                            style="padding: 0 0.3125rem"
                         >
                             <template #icon
                             ><AIcon :type="i.icon"
@@ -62,7 +67,7 @@
                 </div>
             </div>
             <a-modal :width="1100" v-model:open="visible" :title="$t('Access.index.480752-0')">
-                <a-descriptions :labelStyle="{width: '200px'}" :data="descriptionsData" title="" bordered :column="2">
+                <a-descriptions :labelStyle="{width: '12.5rem'}" :data="descriptionsData" title="" bordered :column="2">
                     <a-descriptions-item label="URL">
                         {{ descriptionsData?.url }}
                     </a-descriptions-item>
@@ -95,6 +100,9 @@
                             'ms'
                         }}
                     </a-descriptions-item>
+                    <a-descriptions-item :label="$t('Access.index.responseStatus')">
+                        {{ descriptionsData?.responseStatus ?? '-' }}
+                    </a-descriptions-item>
                     <a-descriptions-item :label="$t('Access.index.480752-7')" :span="2">
                         {{ descriptionsData?.httpHeaders }}
                     </a-descriptions-item>
@@ -122,6 +130,10 @@ import { useI18n } from 'vue-i18n';
 const { t: $t } = useI18n();
 const tableRef = ref<Record<string, any>>({});
 const params = ref<Record<string, any>>({});
+const responseStatusOptions = [200, 400, 401, 403, 404, 500, 502, 503].map((code) => ({
+    label: String(code),
+    value: code,
+}));
 
 const columns = [
     {
@@ -187,6 +199,17 @@ const columns = [
         width: 100,
     },
     {
+        title: $t('Access.index.responseStatus'),
+        dataIndex: 'responseStatus',
+        key: 'responseStatus',
+        search: {
+            type: 'select',
+            options: responseStatusOptions,
+        },
+        scopedSlots: true,
+        width: 120,
+    },
+    {
         title: $t('Access.index.480752-5'),
         dataIndex: 'requestTime',
         key: 'requestTime',
@@ -228,6 +251,7 @@ const descriptionsData = ref<any>({
     action: '',
     target: '',
     method: '',
+    responseStatus: 0,
     ip: '',
     requestTime: 0,
     responseTime: 0,
@@ -261,6 +285,22 @@ const getActions = (data: Partial<Record<string, any>>): ActionsType[] => {
     ];
 };
 
+const getResponseStatusColor = (status?: number) => {
+    if (!status) {
+        return 'default';
+    }
+    if (status >= 500) {
+        return 'error';
+    }
+    if (status >= 400) {
+        return 'warning';
+    }
+    if (status >= 300) {
+        return 'processing';
+    }
+    return 'success';
+};
+
 const column = {
     username: 'context.username',
     description: 'action',
@@ -282,12 +322,12 @@ const handleSearch = (e: any) => {
     font-feature-settings: 'tnum';
     display: inline-block;
     height: auto;
-    margin-right: 8px;
-    padding: 0 7px;
-    font-size: 12px;
-    line-height: 20px;
+    margin-right: 0.5rem;
+    padding: 0 0.4375rem;
+    font-size: var(--fs-12);
+    line-height: 1.25rem;
     border: 1px solid #d9d9d9;
-    border-radius: 2px;
+    border-radius: 0.125rem;
     opacity: 1;
 }
 </style>

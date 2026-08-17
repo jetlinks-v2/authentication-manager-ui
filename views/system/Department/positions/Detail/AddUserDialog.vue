@@ -1,5 +1,5 @@
 <template>
-    <a-modal open :title="dialogTitle" :maskClosable="false" width="675px" @ok="confirm"
+    <a-modal open :title="dialogTitle" :maskClosable="false" :width="675" @ok="confirm"
         @cancel="emits('update:visible', false)" class="edit-dialog-container" :confirmLoading="loading"
         :cancelText="$t('components.EditUserDialog.939453-0')" :okText="$t('components.EditUserDialog.939453-1')">
         <a-form ref="formRef" :model="form.data" layout="vertical">
@@ -49,7 +49,7 @@
                         <form-item-role :extraData="detail.roleList" :extraProps="{ multiple: true }"
                             :disabledData="disabledData.roles" :showAdd="false" v-model:value="form.data.roleIdList"
                             />
-                      <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 4px" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
+                      <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 0.25rem" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
                     </a-form-item>
                 </a-col>
                 <a-col :span="12">
@@ -62,7 +62,7 @@
                           :disabledShowTips="[orgId]"
                           v-model:value="form.data.orgIdList"
                         />
-                      <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 4px" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
+                      <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 0.25rem" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
                     </a-form-item>
                 </a-col>
             </a-row>
@@ -408,21 +408,21 @@ type optionType = {
 
 <style lang="less" scoped>
 .formName {
-    margin-bottom: 10px;
-    font-size: 16px;
+    margin-bottom: 0.625rem;
+    font-size: var(--fs-16);
 
     &::before {
-        width: 2px;
+        width: 0.125rem;
         background-color: rgb(184, 184, 184);
         display: inline-block;
-        height: 13px;
-        margin-right: 3px;
+        height: 0.8125rem;
+        margin-right: 0.1875rem;
         content: ''
     }
 }
 
 .tip {
     color: rgba(0, 0, 0, .65);
-    margin-top: 4px;
+    margin-top: 0.25rem;
 }
 </style>

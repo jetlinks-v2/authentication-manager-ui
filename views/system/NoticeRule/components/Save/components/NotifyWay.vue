@@ -92,20 +92,20 @@ onMounted(() => {
   display: flex;
   flex-wrap: wrap;
   width: 100%;
-  padding: 50px 200px;
-  gap: 16px 24px;
+  padding: 3.125rem 12.5rem;
+  gap: 1rem 1.5rem;
 
   .notify-type-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    border-radius: 6px;
+    border-radius: 0.375rem;
     cursor: pointer;
-    width: 96px;
-    padding: 8px 16px;
+    width: 6rem;
+    padding: 0.5rem 1rem;
 
     .notify-type-item-title {
-      font-size: 14px;
+      font-size: var(--fs-14);
       color: #333333;
       width: 100%;
       text-align: center;
@@ -113,7 +113,7 @@ onMounted(() => {
 
     .notify-type-item-image {
       width: 100%;
-      margin-bottom: 8px;
+      margin-bottom: 0.5rem;
       display: flex;
       justify-content: center;
     }

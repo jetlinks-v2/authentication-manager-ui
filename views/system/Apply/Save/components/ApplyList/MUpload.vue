@@ -21,14 +21,14 @@
                         <AIcon
                             type="LoadingOutlined"
                             v-if="loading"
-                            style="font-size: 20px"
+                            style="font-size: var(--fs-20)"
                         />
                     </template>
                 </div>
             </a-upload>
             <div class="upload-loading-mask" v-if="props.disabled"></div>
             <div class="upload-loading-mask" v-if="imageUrl && loading">
-                <AIcon type="LoadingOutlined" style="font-size: 20px" />
+                <AIcon type="LoadingOutlined" style="font-size: var(--fs-20)" />
             </div>
         </div>
     </div>
@@ -156,8 +156,8 @@ const saveImage = (url: string) => {
 <style lang="less" scoped>
 @border: 1px dashed @border-color-base;
 @mask-color: rgba(#000, 0.35);
-@with: 150px;
-@height: 150px;
+@with: 9.375rem;
+@height: 9.375rem;
 
 .flex-center() {
     align-items: center;
@@ -174,7 +174,7 @@ const saveImage = (url: string) => {
         width: @with;
         height: @height;
         overflow: hidden;
-        border-radius: 5px;
+        border-radius: 0.3125rem;
         transition: all 0.3s;
 
         &:hover {
@@ -210,8 +210,8 @@ const saveImage = (url: string) => {
                 width: 100%;
                 height: 100%;
                 color: #fff;
-                font-size: 14px;
-                border-radius: 5px;
+                font-size: var(--fs-14);
+                border-radius: 0.3125rem;
                 background-color: @mask-color;
             }
 
@@ -238,7 +238,7 @@ const saveImage = (url: string) => {
         width: 100%;
         height: 100%;
         color: #fff;
-        border-radius: 15px;
+        border-radius: 0.9375rem;
         background-color: @mask-color;
     }
 }

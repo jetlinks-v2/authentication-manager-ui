@@ -2,7 +2,7 @@
   <a-modal
     open
     :title="props.mode"
-    width="660px"
+    :width="660"
     @ok="confirm"
     @cancel="emits('close')"
     :maskClosable="false"
@@ -56,7 +56,7 @@
       >
         <PermissionChoose
           :first-width="8"
-          max-height="350px"
+          max-height="21.875rem"
           v-model:value="formModel.permissions"
           :disabled="props.mode === $t('components.ButtonAddDialog.947292-6')"
           :key="formModel.id || ''"
@@ -164,7 +164,7 @@ const confirm = () => {
     }
 
     .message {
-      font-size: 12px;
+      font-size: var(--fs-12);
       color: rgba(0, 0, 0, 0.4);
     }
   }

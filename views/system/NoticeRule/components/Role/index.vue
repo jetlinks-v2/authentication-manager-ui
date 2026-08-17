@@ -21,7 +21,7 @@
                                     >{{ $t('Role.index.617700-2') }}{{ _selectedRowKeys.length }}{{ $t('Role.index.617700-3') }}</span
                                 >
                                 <a-button
-                                    style="padding: 0; height: 22px"
+                                    style="padding: 0; height: 1.375rem"
                                     type="link"
                                     @click="cancelSelect"
                                     >{{ $t('Role.index.617700-4') }}</a-button
@@ -33,7 +33,7 @@
             </div>
         </template>
         <template v-else>
-            <div class="role-alert" style="margin-bottom: 10px;">
+            <div class="role-alert" style="margin-bottom: 0.625rem;">
                 <a-alert type="info">
                     <template #message>
                         <div style="justify-content: space-between; display: flex; align-items: center;">
@@ -41,7 +41,7 @@
                                 allowClear
                                 @search="onSearch"
                                 :placeholder="$t('Role.index.617700-0')"
-                                style="width: 300px"
+                                style="width: 18.75rem"
                             />
                             <a-space>
                                 <template v-if="_selectedRowKeys.length">
@@ -51,7 +51,7 @@
                                         }}{{ $t('Role.index.617700-3') }}</span
                                     >
                                     <a-button
-                                        style="padding: 0; height: 22px"
+                                        style="padding: 0; height: 1.375rem"
                                         type="link"
                                         @click="cancelSelect"
                                         >{{ $t('Role.index.617700-4') }}</a-button
@@ -70,7 +70,7 @@
                 </a-alert>
             </div>
         </template>
-        <j-scrollbar :height="gridColumn <= 2 ? '320px' : '250px'">
+        <j-scrollbar :height="gridColumn <= 2 ? '20rem' : '15.625rem'">
             <j-pro-table
                 ref="tableRef"
                 :columns="columns"
@@ -225,14 +225,14 @@ const onSelectAll = (e: any) => {
 <style lang="less" scoped>
 .role {
     :deep(.jtable-content) {
-        padding: 2px 0 16px 0;
+        padding: 0.125rem 0 1rem 0;
     }
     :deep(.jtable-card-items) {
-        grid-gap: 2px !important;
+        grid-gap: 0.125rem !important;
     }
 
     .role-alert {
-        margin-top: 16px;
+        margin-top: 1rem;
     }
 
     .header {
@@ -242,6 +242,6 @@ const onSelectAll = (e: any) => {
 .card {
     width: 100%;
     background-color: #f8f9fc;
-    padding: 10px 16px;
+    padding: 0.625rem 1rem;
 }
 </style>

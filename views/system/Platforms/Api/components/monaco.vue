@@ -42,21 +42,21 @@ const init = (editor) => {
 
 <style scoped lang="less">
 .api-example {
-  height: 350px;
+  height: 21.875rem;
   position: relative;
   overflow: hidden;
 
   .api-example-tips {
     position: absolute;
     left: 50%;
-    top: 19px;
+    top: 1.1875rem;
     bottom: 0;
     right: 0;
     pointer-events: none;
     color: #608b4e;
 
     .tips-line {
-      height: 19px;
+      height: 1.1875rem;
     }
   }
 }

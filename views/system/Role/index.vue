@@ -25,14 +25,14 @@
  .dictionary_contain{
      display: flex;
      background-color: #fff;
-     padding: 24px;
+     padding: 1.5rem;
      height: 100%;
  }
  .dictionary_left{
      border-right: 1px solid #f0f0f0;
-     padding-right: 24px;
+     padding-right: 1.5rem;
      height:100%;
-   width: 320px;
+   width: 20rem;
  }
  .dictionary_right{
      flex:1 1 0;

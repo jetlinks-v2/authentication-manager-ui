@@ -1,14 +1,14 @@
 <template>
   <a-modal
     :maskClosable="false"
-    width="650px"
+    :width="650"
     :open="true"
     :title="mode === 'edit' ? $t('Save.index.968210-0') : $t('Save.index.968210-1')"
     :confirmLoading="loading"
     @ok="handleSave"
     @cancel="() => { handleCancel() }"
   >
-    <div style="margin-top: 10px">
+    <div style="margin-top: 0.625rem">
       <a-form :layout="'vertical'" ref="formRef" :model="modelRef">
         <a-form-item name="parentId" :label="$t('Save.index.968210-2')">
           <a-tree-select

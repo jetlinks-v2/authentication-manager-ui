@@ -9,7 +9,7 @@
       <AIcon type="SearchOutlined" style="color: rgba(0, 0, 0, 0.45)" />
     </template>
   </a-input>
-  <div style="display: flex; gap: 8px; margin: 18px 0">
+  <div style="display: flex; gap: 0.5rem; margin: 1.125rem 0">
     <a-button type="primary" class="btn" @click="() => onAdd()">{{
       $t("LeftTree.index.191696-1")
     }}</a-button>
@@ -79,7 +79,7 @@
       </div>
     </ResizeObserver>
     <div v-else class="tree-empty">
-      <j-empty />
+      <CloudEmpty />
     </div>
   </div>
   <Save
@@ -640,13 +640,13 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 100px;
+    margin-top: 6.25rem;
     width: 100%;
   }
 }
 
 :deep(.ant-tree-node-content-wrapper) {
-  transform: translateY(-4px) !important;
+  transform: translateY(-0.25rem) !important;
 }
 
 .tree-box {
@@ -655,7 +655,7 @@ onMounted(() => {
   align-items: center;
 
   .actions {
-    padding-right: 4px;
+    padding-right: 0.25rem;
 
     .actions-btn {
       margin: 0;
