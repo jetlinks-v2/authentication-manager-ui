@@ -280,18 +280,23 @@ const synchronization = async () => {
 
 //双重遍历系统菜单和初始化菜单做菜单和按钮权限和接口权限的合并处理
 const synchronizationMenu = (menu: any, baseMenu: any) => {
-  const newMenu = menu.map((i: any) => {
-    baseMenu.find((item: any) => {
-      if (i.id === item.id) {
+  const baseByCode = new Map(baseMenu.map((item: any) => [item.code, item]));
+  // 只清理本模块拥有且已从 baseMenu 移除的节点；其他模块/人工菜单必须原样保留。
+  const isEnergyStationMenu = (item: any) =>
+    item.owner === 'energy-station' || item.options?.appName === 'energy-station';
+  const newMenu = menu
+    .filter((item: any) => !isEnergyStationMenu(item) || baseByCode.has(item.code))
+    .map((i: any) => {
+      const item = baseByCode.get(i.code) || baseMenu.find((candidate: any) => candidate.id === i.id);
+      if (item) {
         i.buttons = unionBy(i.buttons, item.buttons, "id");
         i.permissions = unionBy(i.permissions, item.permissions, "permission");
-        if (item.children && i.children) {
-          i.children = synchronizationMenu(i.children, item.children);
+        if (item.children || i.children) {
+          i.children = synchronizationMenu(i.children || [], item.children || []);
         }
       }
+      return i;
     });
-    return i;
-  });
   return unionBy(newMenu, baseMenu, "code");
 };
 onMounted(() => {
