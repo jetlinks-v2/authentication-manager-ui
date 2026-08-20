@@ -1,28 +1,29 @@
 <template>
   <j-page-container>
     <div class="project-application-page">
-      <div class="page-toolbar">
-        <div class="page-filters">
-          <a-input
-            v-model:value="keyword"
-            allow-clear
-            :placeholder="$t('ProjectApplication.list.searchPlaceholder')"
-          >
-            <template #prefix><AIcon type="SearchOutlined" /></template>
-          </a-input>
-          <a-select
-            v-model:value="status"
-            allow-clear
-            :placeholder="$t('ProjectApplication.list.allStatus')"
-            :options="statusOptions"
+      <PageHeader
+        class="project-application-header"
+        :title="$t('ProjectApplication.list.title')"
+        :description="$t('ProjectApplication.list.description')"
+      >
+        <template #actions>
+          <ConditionFilter
+            class="page-filters"
+            :fields="filterFields"
+            @change="handleSearch"
           />
-        </div>
 
-        <a-button type="primary" :disabled="!projectId" @click="createOpen = true">
-          <template #icon><AIcon type="PlusOutlined" /></template>
-          {{ $t('ProjectApplication.list.create') }}
-        </a-button>
-      </div>
+          <a-button
+            class="create-application-button"
+            type="primary"
+            :disabled="!projectId"
+            @click="createOpen = true"
+          >
+            <template #icon><AIcon type="PlusOutlined" /></template>
+            {{ $t('ProjectApplication.list.create') }}
+          </a-button>
+        </template>
+      </PageHeader>
 
       <a-spin :spinning="loading">
         <ResponsiveGrid
@@ -70,17 +71,21 @@
 </template>
 
 <script setup lang="ts" name="ProjectApplication">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { debounce } from 'lodash-es'
 import { onlyMessage } from '@jetlinks-web/utils'
+import ConditionFilter, {
+  type ConditionFilterChangePayload,
+  type ConditionFilterField,
+} from '@jetlinks-web-core/components/ConditionFilter'
+import PageHeader from '@jetlinks-web-core/components/PageHeader'
 import { useProjectRouter } from '@jetlinks-web-core/hooks/useProjectRouter'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { prepareApplicationAccess } from '@jetlinks-web-core/utils/application-access'
 import ApplicationCreateDialog from './Create/index.vue'
 import ApplicationCard from './components/ApplicationCard.vue'
 import { useProjectApplication } from './useProjectApplication'
-import type { ApplicationStatus, ProjectApplication } from './types'
+import type { ProjectApplication } from './types'
 
 const { t: $t } = useI18n()
 const menuStore = useMenuStore()
@@ -88,8 +93,7 @@ const { projectId } = useProjectRouter()
 const store = useProjectApplication()
 const loading = ref(false)
 const createOpen = ref(false)
-const keyword = ref('')
-const status = ref<ApplicationStatus>()
+const filters = ref<ConditionFilterChangePayload['filter']>({ terms: [] })
 const updatingApplicationIds = ref<string[]>([])
 let refreshSequence = 0
 
@@ -97,7 +101,32 @@ const statusOptions = computed(() => [
   { label: $t('ProjectApplication.common.enabled'), value: 'enabled' },
   { label: $t('ProjectApplication.common.disabled'), value: 'disabled' },
 ])
-const hasFilters = computed(() => !!keyword.value.trim() || !!status.value)
+const filterFields = computed<ConditionFilterField[]>(() => [
+  {
+    title: $t('ProjectApplication.create.name'),
+    dataIndex: 'name',
+    search: {
+      type: 'string',
+      defaultTermType: 'like',
+      componentProps: {
+        placeholder: $t('ProjectApplication.list.searchPlaceholder'),
+      },
+    },
+  },
+  {
+    title: $t('ProjectApplication.detail.status'),
+    dataIndex: 'state',
+    search: {
+      type: 'select',
+      defaultTermType: 'eq',
+      options: statusOptions,
+      componentProps: {
+        placeholder: $t('ProjectApplication.list.allStatus'),
+      },
+    },
+  },
+])
+const hasFilters = computed(() => filters.value.terms.length > 0)
 
 const cardItems = computed(() => store.applications.map(application => ({
   application,
@@ -113,15 +142,12 @@ const cardItems = computed(() => store.applications.map(application => ({
   },
 })))
 
-// Name filtering is debounced, but status/project changes can still overtake an older request.
+// Project switches and filter changes can overlap; only the latest request controls page loading.
 const refresh = async () => {
   const sequence = ++refreshSequence
   loading.value = true
   try {
-    await store.loadApplications(projectId.value || '', {
-      keyword: keyword.value,
-      status: status.value,
-    })
+    await store.loadApplications(projectId.value || '', filters.value)
   } catch {
     // The shared request layer reports the backend error.
   } finally {
@@ -129,21 +155,16 @@ const refresh = async () => {
   }
 }
 
-const refreshByKeyword = debounce(() => {
-  if (projectId.value) void refresh()
-}, 300)
-
 watch(projectId, () => {
-  refreshByKeyword.cancel()
   void refresh()
 }, { immediate: true })
-watch(keyword, refreshByKeyword)
-watch(status, () => {
+
+const handleSearch = ({ filter }: ConditionFilterChangePayload) => {
+  filters.value = filter
   if (projectId.value) void refresh()
-})
+}
 
 onMounted(() => store.loadTemplates().catch(() => undefined))
-onBeforeUnmount(() => refreshByKeyword.cancel())
 
 const openDetail = (id: string) => menuStore.jumpPage('application-center/ProjectApplication/Detail', { params: { id } })
 
@@ -191,23 +212,10 @@ const handleCreated = () => {
   background: var(--bg);
 }
 
-.page-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  margin-bottom: var(--space-4);
-}
-
 .page-filters {
-  display: flex;
+  width: min(34rem, 46vw);
   min-width: 0;
-  flex-wrap: wrap;
-  gap: var(--space-2);
 }
-
-.page-filters :deep(.ant-input-affix-wrapper) { width: min(100%, 17.5rem); }
-.page-filters :deep(.ant-select) { width: 9.5rem; }
 
 .create-card {
   display: grid;
@@ -242,11 +250,13 @@ const handleCreated = () => {
 
 @media (max-width: 48rem) {
   .project-application-page { padding: var(--space-3); }
-  .page-toolbar { align-items: stretch; flex-direction: column; }
-  .page-filters { flex-direction: column; }
-  .page-filters :deep(.ant-input-affix-wrapper),
-  .page-filters :deep(.ant-select),
-  .page-toolbar > :deep(.ant-btn) { width: 100%; }
+  .project-application-header :deep(.cloud-page-header__actions) {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .page-filters,
+  .create-application-button { width: 100%; }
 }
 
 @media (max-width: 40rem) {

@@ -1,3 +1,5 @@
+import type { ConditionFilterChangePayload } from '@jetlinks-web-core/components/ConditionFilter'
+
 export type ApplicationStatus = 'enabled' | 'disabled'
 export type ResourceStatus = string
 
@@ -107,11 +109,7 @@ export interface ApplicationDetailState {
   roles: ApplicationRole[]
 }
 
-export interface ApplicationFilters {
-  keyword: string
-  status?: ApplicationStatus
-  templateId?: string
-}
+export type ApplicationFilters = ConditionFilterChangePayload['filter']
 
 export interface ResourcePickerQuery {
   pageIndex?: number

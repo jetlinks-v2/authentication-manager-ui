@@ -53,12 +53,8 @@ const textOf = (value: unknown) => value === undefined || value === null ? '' : 
 export const buildApplicationTerms = (projectId: string, filters: ApplicationFilters) => {
   const terms: Array<Record<string, unknown>> = [
     { column: 'projectId', termType: 'eq', value: projectId },
+    ...filters.terms.map(term => ({ ...term })),
   ]
-  if (filters.keyword.trim()) {
-    terms.push({ column: 'name', termType: 'like', value: filters.keyword.trim() })
-  }
-  if (filters.status) terms.push({ column: 'state', termType: 'eq', value: filters.status })
-  if (filters.templateId) terms.push({ column: 'templateId', termType: 'eq', value: filters.templateId })
   return terms
 }
 

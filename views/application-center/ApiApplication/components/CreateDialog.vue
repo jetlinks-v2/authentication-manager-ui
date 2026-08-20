@@ -5,13 +5,12 @@
     :schema="schema"
     :data="form"
     :request="submit"
-    :handle-request-data="value => value"
     @close="emit('update:open', false)"
     @save="handleSaved"
   >
     <template #businessApplicationIds="slotProps">
       <a-select
-        :value="slotProps.value"
+        :value="normalizeBusinessApplicationIds(slotProps.value)"
         mode="multiple"
         allow-clear
         show-search
@@ -72,6 +71,9 @@ const businessApplicationOptions = computed(() => props.businessApplications.map
   value: item.id,
 })))
 
+const normalizeBusinessApplicationIds = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter(id => typeof id === 'string' && id.length > 0) : []
+
 watch(() => props.open, open => {
   if (open) {
     form.name = ''
@@ -82,7 +84,10 @@ watch(() => props.open, open => {
 })
 
 const submit = async (value: ApiApplicationForm) => {
-  await props.create(value)
+  await props.create({
+    ...value,
+    businessApplicationIds: normalizeBusinessApplicationIds(value.businessApplicationIds),
+  })
   return { success: true }
 }
 

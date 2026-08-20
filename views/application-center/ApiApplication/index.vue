@@ -76,7 +76,7 @@ import { onlyMessage } from '@jetlinks-web/utils'
 import { queryApiApplications } from '@authentication-manager-ui/api/application-center/apiApplication'
 import type { ConditionFilterChangePayload, ConditionFilterField } from '@jetlinks-web-core/components/ConditionFilter'
 import type { ApiApplication } from './types'
-import { useApiApplication } from './useApiApplication'
+import { createApiApplicationTerms, useApiApplication } from './useApiApplication'
 import CreateDialog from './components/CreateDialog.vue'
 import PermissionDrawer from './components/PermissionDrawer.vue'
 import DebugDrawer from './components/DebugDrawer.vue'
@@ -121,8 +121,7 @@ const columns = [
 const requestPage = (params: Record<string, unknown>) => queryApiApplications({
   ...params,
   terms: [
-    { column: 'provider', termType: 'eq', value: 'internal-standalone' },
-    { column: 'integrationModes', termType: 'like', value: 'apiServer' },
+    ...createApiApplicationTerms(),
     ...(params.terms as Array<Record<string, unknown>> || queryParams.value.terms),
   ],
 })

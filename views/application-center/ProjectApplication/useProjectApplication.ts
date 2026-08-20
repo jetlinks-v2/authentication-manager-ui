@@ -139,7 +139,7 @@ export const useProjectApplication = () => {
       return upsertApplication(result as BusinessApplicationEntity)
     }
 
-    await loadApplications(projectId, { keyword: '' })
+    await loadApplications(projectId, { terms: [] })
     const created = applications.find(item => item.name === draft.name && item.templateId === draft.templateId)
     if (!created) throw new Error('Created business application could not be loaded')
     return created

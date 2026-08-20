@@ -26,6 +26,12 @@ const enumValue = (value: unknown) =>
     ? String((value as { value: unknown }).value)
     : String(value ?? '')
 
+// integrationModes is stored as a bitmask; in$any also matches applications with additional integration modes.
+export const createApiApplicationTerms = (): Array<Record<string, unknown>> => [
+  { column: 'provider', termType: 'eq', value: 'internal-standalone' },
+  { column: 'integrationModes', termType: 'in$any', value: ['apiServer'] },
+]
+
 const randomKey = (length: number) => {
   const alphabet = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
   const bytes = new Uint8Array(length)
@@ -90,8 +96,7 @@ export function useApiApplication() {
     pageSize: pageSize.value,
     sorts: [{ name: 'createTime', order: 'desc' }],
     terms: [
-      { column: 'provider', termType: 'eq', value: 'internal-standalone' },
-      { column: 'integrationModes', termType: 'like', value: 'apiServer' },
+      ...createApiApplicationTerms(),
       ...(filter.value.terms || []),
     ],
   }))
