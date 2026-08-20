@@ -3,11 +3,10 @@ import {
   queryBusinessApplicationUsers,
   queryUserDetails,
   updateBusinessApplicationUser,
-  type PagerResult,
   type UserDetailEntity,
 } from '@authentication-manager-ui/api/application-center/businessApplication'
-import { listOf, normalizeUserCandidate, resultOf } from './applicationModel'
-import type { ApplicationUser, ApplicationUserDraft, UserPickerPage, UserPickerQuery } from './types'
+import { listOf } from './applicationModel'
+import type { ApplicationUser, ApplicationUserDraft } from './types'
 
 /**
  * The dimension query only returns membership rows plus basic user fields. Hydrate them
@@ -27,73 +26,6 @@ export const loadBusinessApplicationUsers = async (applicationId: string) => {
   const detailById = new Map(listOf<UserDetailEntity>(detailResponse)
     .map(entity => [entity.id, entity] as const))
   return members.map(member => ({ ...member, ...detailById.get(member.id) }))
-}
-
-export const loadBusinessApplicationUserCandidates = async (
-  applicationId: string,
-  query: UserPickerQuery,
-): Promise<UserPickerPage> => {
-  const pageIndex = Number(query.pageIndex ?? 0)
-  const pageSize = Number(query.pageSize ?? 10)
-  const response = await queryUserDetails({
-    pageIndex,
-    pageSize,
-    terms: [
-      // The table owns paging; this service only pins the required unbound-user scope.
-      { column: 'id$in-dimension$business_application$not', value: [applicationId] },
-      ...(query.terms || []),
-    ],
-  })
-  const result = resultOf<PagerResult<UserDetailEntity>>(response)
-  const data = listOf<UserDetailEntity>(response).map(normalizeUserCandidate)
-  return {
-    data,
-    total: Number(result?.total ?? data.length),
-    pageIndex: Number(result?.pageIndex ?? pageIndex),
-    pageSize: Number(result?.pageSize ?? pageSize),
-  }
-}
-
-const hydrateUsers = async (
-  userIds: string[],
-) => {
-  const response = await queryUserDetails({
-    pageIndex: 0,
-    pageSize: userIds.length,
-    terms: [{ column: 'id', termType: 'in', value: userIds }],
-  })
-  const detailById = new Map(listOf<UserDetailEntity>(response).map(entity => [entity.id, entity] as const))
-  const users = userIds.map(id => detailById.get(id)).filter((user): user is UserDetailEntity => !!user)
-  if (users.length !== userIds.length) throw new Error('Selected users must be hydrated before binding')
-  return users
-}
-
-export const bindBusinessApplicationUsers = async (
-  applicationId: string,
-  userIds: string[],
-) => {
-  const ids = [...new Set(userIds)].filter(Boolean)
-  if (!ids.length) return
-  const users = await hydrateUsers(ids)
-
-  await Promise.all(users.map((user) => {
-    // UserDetailService merges existing application dimensions before full-binding on update.
-    return updateBusinessApplicationUser(user.id, {
-      user: {
-        ...user,
-        id: user.id,
-        name: user.name || user.username,
-        username: user.username,
-        telephone: user.telephone,
-        email: user.email,
-        status: user.status ?? 1,
-      },
-      roleIdList: (user.roleList || []).map(role => role.id).filter(Boolean),
-      orgIdList: (user.orgList || []).map(org => org.id).filter(Boolean),
-      positions: (user.positions || []).map(position => position.id).filter(Boolean),
-      businessApplicationIdList: [applicationId],
-    })
-  }))
 }
 
 export const createUserForBusinessApplication = async (

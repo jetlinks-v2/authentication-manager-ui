@@ -18,7 +18,6 @@ import type {
   ApplicationStatus,
   ApplicationTemplate,
   ApplicationUser,
-  ApplicationUserCandidate,
   ProjectApplication,
 } from './types'
 
@@ -79,6 +78,7 @@ export const normalizeApplication = (entity: BusinessApplicationEntity): Project
     statusText: enumText(entity.state, status),
     createdAt: entity.createTime ? dayjs(entity.createTime).format('YYYY-MM-DD HH:mm') : '--',
     defaultLanguage: String(entity.configuration?.defaultLanguage || 'zh-CN'),
+    timezone: String(entity.configuration?.timezone || 'Asia/Shanghai'),
     domain: String(entity.configuration?.customDomain || ''),
   }
 }
@@ -123,24 +123,12 @@ export const normalizeUser = (
     username: entity.username,
     phone: entity.telephone || '',
     email: entity.email || '',
+    position: (entity.positions || []).map(item => item.name || item.id).filter(Boolean).join('、'),
+    organization: (entity.orgList || []).map(item => item.name || item.id).filter(Boolean).join('、'),
     roleId: roleIds.find(id => applicationRoleIds.has(id)) || '',
     roleIds,
     orgIds: (entity.orgList || []).map(item => item.id).filter(Boolean),
     positionIds: (entity.positions || []).map(item => item.id).filter(Boolean),
-    enabled: status !== '0' && status !== 'disabled',
-  }
-}
-
-export const normalizeUserCandidate = (entity: UserDetailEntity): ApplicationUserCandidate => {
-  const status = enumValue(entity.status, '1')
-  const id = entity.id || ''
-  return {
-    id,
-    name: entity.name || entity.username || id,
-    username: entity.username || '',
-    phone: entity.telephone || '',
-    status,
-    statusText: enumText(entity.status, status),
     enabled: status !== '0' && status !== 'disabled',
   }
 }

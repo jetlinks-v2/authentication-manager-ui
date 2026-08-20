@@ -1,12 +1,31 @@
 <template>
-  <CardSummary class="application-card" :data="cardData" @click="emits('open')">
+  <CardSummary class="application-card" :data="cardData" @click="emits('edit')">
+    <template #meta>
+      <span class="created-at">
+        <AIcon type="ClockCircleOutlined" />
+        {{ $t('ProjectApplication.list.createdAt', { time: item.application.createdAt }) }}
+      </span>
+    </template>
+
     <template #footer>
-      <div class="application-card__footer">
-        <span class="created-at">
-          <AIcon type="ClockCircleOutlined" />
-          {{ $t('ProjectApplication.list.createdAt', { time: item.application.createdAt }) }}
-        </span>
-        <AIcon class="open-icon" type="RightOutlined" />
+      <div class="application-card__footer" @click.stop>
+        <a-space :size="8">
+          <a-button size="small" @click="emits('edit')">
+            <template #icon><AIcon type="EditOutlined" /></template>
+            {{ $t('ProjectApplication.common.edit') }}
+          </a-button>
+          <a-button size="small" :loading="loading" @click="emits('toggle-status')">
+            <template #icon>
+              <AIcon :type="item.application.status === 'enabled' ? 'PauseCircleOutlined' : 'PlayCircleOutlined'" />
+            </template>
+            {{ statusActionText }}
+          </a-button>
+        </a-space>
+
+        <a-button type="primary" size="small" @click="emits('open')">
+          <template #icon><AIcon type="ExportOutlined" /></template>
+          {{ $t('ProjectApplication.detail.open') }}
+        </a-button>
       </div>
     </template>
   </CardSummary>
@@ -29,13 +48,23 @@ const props = defineProps({
     type: Object as PropType<ApplicationCardItem>,
     required: true,
   },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emits = defineEmits<{
-  (event: 'open'): void
+  edit: []
+  open: []
+  'toggle-status': []
 }>()
 const { t: $t } = useI18n()
 const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(icon) || icon.includes('.'))
+
+const statusActionText = computed(() => $t(props.item.application.status === 'enabled'
+  ? 'ProjectApplication.common.disable'
+  : 'ProjectApplication.common.enable'))
 
 const cardData = computed<CardSummaryData>(() => {
   const { application, template } = props.item
@@ -62,30 +91,42 @@ const cardData = computed<CardSummaryData>(() => {
 <style scoped>
 .application-card {
   display: block;
-  min-height: 18rem;
+  height: 13.75rem;
 }
 
-.application-card__footer,
+.application-card :deep(.card-summary) {
+  padding: var(--space-4) var(--space-4) 0;
+}
+
+.application-card :deep(.card-summary__header) { gap: var(--space-3); }
+.application-card :deep(.card-summary__title-row) { justify-content: flex-start; gap: var(--space-2); }
+.application-card :deep(.card-summary__description) { min-height: 2.75rem; margin-top: var(--space-4); }
+.application-card :deep(.card-summary__meta) { margin-top: auto; }
+.application-card :deep(.card-summary__footer) {
+  margin: var(--space-3) calc(var(--space-4) * -1) 0;
+  padding: var(--space-3) var(--space-4);
+}
+
 .created-at {
-  display: flex;
-  align-items: center;
-}
-
-.application-card__footer {
-  width: 100%;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-
-.created-at {
+  display: inline-flex;
   min-width: 0;
+  align-items: center;
   gap: var(--space-1);
   color: var(--ink-4);
   font-size: var(--fs-meta);
 }
 
-.open-icon {
-  flex: none;
-  color: var(--ink-4);
+.application-card__footer {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+@media (max-width: 30rem) {
+  .application-card { height: auto; min-height: 14.5rem; }
+  .application-card__footer { align-items: stretch; flex-direction: column; }
+  .application-card__footer > :deep(.ant-btn) { width: 100%; }
 }
 </style>

@@ -5,8 +5,9 @@
       <template v-if="application && detail && template">
         <ApplicationSummary
           :data="{ application, template }"
+          :deleting="deleting"
           @back="backToList"
-          @update="updateSummary"
+          @delete="deleteApplication"
           @toggle-status="toggleStatus"
           @open="openApplication"
         />
@@ -14,39 +15,23 @@
         <a-tabs v-model:active-key="activeTab" class="detail-tabs">
           <a-tab-pane key="settings" :tab="$t('ProjectApplication.detail.tab.settings')">
             <ApplicationSettings
-              :application="application"
-              :template="template"
-              @update="updateSettings"
-            />
-          </a-tab-pane>
-          <a-tab-pane key="devices" :tab="$t('ProjectApplication.detail.tab.devices')">
-            <DeviceBinding
-              :data="deviceBindingData"
-              @bind="bindDevices"
-              @unbind="unbindDevice"
-            />
-          </a-tab-pane>
-          <a-tab-pane key="cameras" :tab="$t('ProjectApplication.detail.tab.cameras')">
-            <VideoConfiguration
-              :data="cameraBindingData"
-              @bind="bindCameras"
-              @unbind="unbindCamera"
+              v-model:editing="settingsEditing"
+              :data="{ application, template }"
+              :saving="settingsSaving"
+              @save="updateSettings"
             />
           </a-tab-pane>
           <a-tab-pane key="users" :tab="$t('ProjectApplication.detail.tab.users')">
             <UserManagement
               :data="{ users: detail.users, roles: detail.roles }"
-              :application-id="applicationId"
-              :load-users="store.loadUserCandidates"
               @add="addUser"
-              @bind="bindUsers"
               @update="updateUser"
-              @remove="removeUser"
             />
           </a-tab-pane>
           <a-tab-pane key="roles" :tab="$t('ProjectApplication.detail.tab.roles')">
             <RoleManagement
               :roles="detail.roles"
+              :users="detail.users"
               :template-id="application.templateId"
               @save-role="saveRole"
               @delete-role="removeRole"
@@ -74,14 +59,10 @@ import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { prepareApplicationAccess } from '@jetlinks-web-core/utils/application-access'
 import ApplicationSummary from './components/ApplicationSummary.vue'
 import ApplicationSettings from './components/ApplicationSettings.vue'
-import DeviceBinding from './components/DeviceBinding.vue'
 import RoleManagement from './components/RoleManagement.vue'
 import UserManagement from './components/UserManagement.vue'
-import VideoConfiguration from './components/VideoConfiguration.vue'
 import { useProjectApplication } from '../useProjectApplication'
 import type {
-  ApplicationCameraResource,
-  ApplicationResource,
   ApplicationRoleDraft,
   ApplicationUser,
   ApplicationUserDraft,
@@ -94,27 +75,18 @@ const store = useProjectApplication()
 const { t: $t } = useI18n()
 const activeTab = ref('settings')
 const loading = ref(false)
+const settingsEditing = ref(false)
+const settingsSaving = ref(false)
+const deleting = ref(false)
 
 const applicationId = computed(() => String(route.params.id || ''))
 const application = computed(() => store.applications.find((item) => item.id === applicationId.value))
 const detail = computed(() => store.details[applicationId.value])
 const template = computed(() => store.templates.find((item) => item.id === application.value?.templateId))
-const deviceBindingData = computed(() => ({ bound: detail.value?.devices || [], loadAvailable: store.loadAvailableDevices }))
-const cameraBindingData = computed(() => ({
-  bound: detail.value?.cameras || [],
-  loadAvailable: store.loadAvailableCameras,
-  loadGateways: store.loadCameraGateways,
-}))
-const settingsMessageKeys = {
-  icon: 'ProjectApplication.settings.updated',
-  name: 'ProjectApplication.detail.nameSuccess',
-  description: 'ProjectApplication.detail.descriptionSuccess',
-  domain: 'ProjectApplication.settings.updated',
-  language: 'ProjectApplication.settings.updated',
-} as const
-
 watch(applicationId, async id => {
   if (!id) return
+  activeTab.value = 'settings'
+  settingsEditing.value = false
   loading.value = true
   try {
     await Promise.all([store.loadTemplates(), store.loadApplication(id)])
@@ -127,14 +99,6 @@ watch(applicationId, async id => {
 }, { immediate: true })
 
 const backToList = () => menuStore.jumpPage('application-center/ProjectApplication', {})
-
-const updateSummary = async (patch: Partial<ProjectApplication>, field: 'name' | 'description') => {
-  const updated = await store.updateApplication(applicationId.value, patch)
-  if (!updated) return
-  onlyMessage($t(field === 'name'
-    ? 'ProjectApplication.detail.nameSuccess'
-    : 'ProjectApplication.detail.descriptionSuccess', { name: updated.name }))
-}
 
 const toggleStatus = async () => {
   if (!application.value) return
@@ -164,34 +128,29 @@ const openApplication = () => {
   window.open(access.url, '_blank', 'noopener,noreferrer')
 }
 
-const updateSettings = async (
-  patch: Partial<ProjectApplication>,
-  field: 'icon' | 'name' | 'description' | 'domain' | 'language',
-) => {
-  const updated = await store.updateApplication(applicationId.value, patch)
-  if (!updated) return
-
-  onlyMessage($t(settingsMessageKeys[field], { name: updated.name }))
+const deleteApplication = async () => {
+  if (!application.value || deleting.value) return
+  const applicationName = application.value.name
+  deleting.value = true
+  try {
+    await store.removeApplication(applicationId.value)
+    onlyMessage($t('ProjectApplication.detail.deleteSuccess', { name: applicationName }))
+    backToList()
+  } finally {
+    deleting.value = false
+  }
 }
 
-const bindDevices = async (ids: string[]) => {
-  await store.bindDevices(applicationId.value, ids)
-  onlyMessage($t('ProjectApplication.resource.bindSuccess', { count: ids.length }))
-}
-
-const unbindDevice = async (resource: ApplicationResource) => {
-  await store.unbindDevice(applicationId.value, resource.id)
-  onlyMessage($t('ProjectApplication.resource.unbindSuccess', { name: resource.name }))
-}
-
-const bindCameras = async (ids: string[]) => {
-  await store.bindCameras(applicationId.value, ids)
-  onlyMessage($t('ProjectApplication.camera.bindSuccess', { count: ids.length }))
-}
-
-const unbindCamera = async (camera: ApplicationCameraResource) => {
-  await store.unbindCamera(applicationId.value, camera)
-  onlyMessage($t('ProjectApplication.camera.unbindSuccess', { name: camera.gateway || camera.deviceId }))
+const updateSettings = async (patch: Partial<ProjectApplication>) => {
+  settingsSaving.value = true
+  try {
+    const updated = await store.updateApplication(applicationId.value, patch)
+    if (!updated) return
+    settingsEditing.value = false
+    onlyMessage($t('ProjectApplication.settings.updated', { name: updated.name }))
+  } finally {
+    settingsSaving.value = false
+  }
 }
 
 const addUser = async (draft: ApplicationUserDraft) => {
@@ -199,19 +158,9 @@ const addUser = async (draft: ApplicationUserDraft) => {
   onlyMessage($t('ProjectApplication.user.addSuccess', { name: draft.name }))
 }
 
-const bindUsers = async (ids: string[]) => {
-  await store.bindUsers(applicationId.value, ids)
-  onlyMessage($t('ProjectApplication.user.bindSuccess', { count: ids.length }))
-}
-
 const updateUser = async (user: ApplicationUser, patch: Partial<ApplicationUser>) => {
   await store.updateUser(applicationId.value, user.id, patch)
   onlyMessage($t('ProjectApplication.user.updateSuccess', { name: user.name }))
-}
-
-const removeUser = async (user: ApplicationUser) => {
-  await store.removeUser(applicationId.value, user.id)
-  onlyMessage($t('ProjectApplication.user.removeSuccess', { name: user.name }))
 }
 
 const saveRole = async (draft: ApplicationRoleDraft, roleId?: string) => {

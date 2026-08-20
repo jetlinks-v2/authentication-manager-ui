@@ -22,6 +22,7 @@ export interface EnumValue {
 export interface BusinessApplicationConfiguration {
   defaultLanguage?: string
   customDomain?: string
+  timezone?: string
   [key: string]: unknown
 }
 
@@ -63,6 +64,11 @@ export interface RoleInfo {
   name?: string
 }
 
+export interface RelationInfo {
+  id: string
+  name?: string
+}
+
 export interface UserDetailEntity {
   id: string
   name: string
@@ -72,8 +78,8 @@ export interface UserDetailEntity {
   email?: string
   status?: number | string | EnumValue
   roleList?: RoleInfo[]
-  orgList?: Array<{ id: string }>
-  positions?: Array<{ id: string }>
+  orgList?: RelationInfo[]
+  positions?: RelationInfo[]
   [key: string]: unknown
 }
 
@@ -166,6 +172,9 @@ export const createBusinessApplication = (data: Partial<BusinessApplicationEntit
 export const updateBusinessApplication = (id: string, data: Partial<BusinessApplicationEntity>) =>
   apiRequest.put<unknown>(`/business-application/${id}`, data)
 
+export const deleteBusinessApplication = (id: string) =>
+  apiRequest.remove<void>(`/business-application/${id}`)
+
 export const queryBusinessApplicationTemplates = (data: QueryPayload = { paging: false }) =>
   apiRequest.post<BusinessApplicationTemplateEntity[]>(
     '/business-application-template/_query/no-paging?paging=false',
@@ -219,9 +228,6 @@ export const updateBusinessApplicationUser = (
   userId: string,
   data: SaveBusinessApplicationUserRequest,
 ) => apiRequest.put<string>(`/user/detail/${userId}/_update`, data)
-
-export const deleteBusinessApplicationUser = (userId: string) =>
-  apiRequest.remove<void>(`/user/${userId}`)
 
 export const queryDevices = (data: QueryPayload) =>
   apiRequest.post<DeviceEntity[]>('/device/instance/_query/no-paging?paging=false', data)

@@ -21,44 +21,40 @@
 
     <div class="summary-main">
       <div class="identity-row">
-        <InputEditable
-          :value="data.application.name"
-          :max-length="30"
-          :text-style="titleStyle"
-          @change="updateName"
-        />
+        <h1>{{ data.application.name }}</h1>
         <MetaChip :tone="data.application.status === 'enabled' ? 'ok' : 'default'">
           {{ data.application.statusText }}
         </MetaChip>
         <AppTag>{{ data.template.name }}</AppTag>
       </div>
-      <InputEditable
-        :value="data.application.description"
-        :max-length="100"
-        :text-style="descriptionStyle"
-        @change="updateDescription"
-      />
+      <p class="summary-description">{{ data.application.description || '--' }}</p>
       <div class="meta-row">
         <span><AIcon type="ClockCircleOutlined" />{{ $t('ProjectApplication.list.createdAt', { time: data.application.createdAt }) }}</span>
       </div>
     </div>
 
     <div class="summary-actions">
-      <a-button @click="emits('open')">
-        <template #icon><AIcon type="ExportOutlined" /></template>
-        {{ $t('ProjectApplication.detail.open') }}
-      </a-button>
+      <a-popconfirm :title="deleteConfirmText" @confirm="emits('delete')">
+        <a-button danger :loading="deleting">
+          <template #icon><AIcon type="DeleteOutlined" /></template>
+          {{ $t('ProjectApplication.common.delete') }}
+        </a-button>
+      </a-popconfirm>
       <a-popconfirm :title="statusConfirmText" @confirm="emits('toggle-status')">
-        <a-button :danger="data.application.status === 'enabled'">
+        <a-button :danger="data.application.status === 'enabled'" :disabled="deleting">
           {{ statusActionText }}
         </a-button>
       </a-popconfirm>
+      <a-button type="primary" :disabled="deleting" @click="emits('open')">
+        <template #icon><AIcon type="ExportOutlined" /></template>
+        {{ $t('ProjectApplication.detail.open') }}
+      </a-button>
     </div>
   </section>
 </template>
 
 <script setup lang="ts" name="ProjectApplicationSummary">
-import type { CSSProperties, PropType } from 'vue'
+import type { PropType } from 'vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ApplicationTemplate, ProjectApplication } from '../../types'
@@ -73,17 +69,19 @@ const props = defineProps({
     type: Object as PropType<SummaryData>,
     required: true,
   },
+  deleting: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emits = defineEmits<{
   back: []
-  update: [patch: Partial<ProjectApplication>, field: 'name' | 'description']
+  delete: []
   'toggle-status': []
   open: []
 }>()
 const { t: $t } = useI18n()
-const titleStyle: CSSProperties = { fontSize: 'var(--fs-20)', fontWeight: 600, color: 'var(--ink-1)' }
-const descriptionStyle: CSSProperties = { color: 'var(--ink-2)', lineHeight: 1.6 }
 
 const statusActionText = computed(() => $t(props.data.application.status === 'enabled'
   ? 'ProjectApplication.common.disable'
@@ -93,12 +91,10 @@ const statusConfirmText = computed(() => $t('ProjectApplication.detail.statusCon
   action: statusActionText.value,
   name: props.data.application.name,
 }))
+const deleteConfirmText = computed(() => $t('ProjectApplication.detail.deleteConfirm', {
+  name: props.data.application.name,
+}))
 
-const updateName = (name: string) => {
-  if (name.trim()) emits('update', { name: name.trim() }, 'name')
-}
-
-const updateDescription = (description: string) => emits('update', { description: description.trim() }, 'description')
 const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(icon) || icon.includes('.'))
 </script>
 
@@ -137,16 +133,16 @@ const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(ico
 .summary-icon img { width: 100%; height: 100%; object-fit: cover; }
 .summary-main { display: flex; min-width: 0; flex-direction: column; gap: var(--space-1); }
 .identity-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
-.identity-row > :first-child {
-  min-width: 8rem;
-  max-width: 100%;
-}
+.identity-row h1 { min-width: 0; margin: 0; color: var(--ink-1); font-size: var(--fs-20); font-weight: 600; }
+.summary-description { max-width: 44rem; margin: 0; overflow: hidden; color: var(--ink-2); line-height: 1.6; text-overflow: ellipsis; white-space: nowrap; }
 
 .meta-row { display: flex; flex-wrap: wrap; gap: var(--space-3); color: var(--ink-4); font-size: var(--fs-12); }
 .meta-row span { display: inline-flex; align-items: center; gap: var(--space-1); }
 .summary-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: var(--space-2);
   padding-left: var(--space-3);
   border-left: 1px solid var(--line);
