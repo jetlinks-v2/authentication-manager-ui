@@ -74,6 +74,54 @@ Verification: the `authentication-manager-ui` production build through the `jetl
 
 ## Application Center
 
+### API Application Implementation Plan
+
+Status: implemented; verification complete with backend build blocked by the workspace's unavailable parent artifact.
+
+Goal: add a complete API application workspace matching the approved prototype: credential list and search, create, enable/disable, copy and delete, API permission grants, credential-signed API debugging, and application-scoped access logs with detail and export. Search uses the shared `ConditionFilter` component.
+
+Owning module and scope: the primary owner is `ui/modules/authentication-manager-ui`, under `views/application-center/ApiApplication/`, its typed `api/application-center/apiApplication.ts` boundary, `baseMenu.json`, and the existing Chinese/English locale resources. If the selected `授权应用` values cannot be represented and enforced through the current application/grant contracts, only a narrow supporting contract and tests in `modules/authentication-manager` may be added after that gap is verified. `runtime-ui/` is outside this change.
+
+Interaction profile: use the standard management-table page because operators need to find credentials, compare key operational fields, copy secrets, and run repeated row actions. Keep create in the table toolbar, expose the most common row actions directly, and place permission, debugging, logs, and destructive actions in the row action area or `更多`. Use `JlDrawerShell` for the three focused workspaces and `EditDialog` for creation.
+
+```text
++ ConditionFilter ----------------------------------- [新增API应用] +
+| 密钥名称 | AppKey | AppSecret | 创建时间 | 状态 | 操作/更多          |
++-------------------------------------------------------------------+
+                         | 权限设置 | 接口调试 | 接口日志
+                         v
+              + JlDrawerShell focused workspace +
+```
+
+Implementation steps:
+
+1. Add the menu/route entry, typed models, response normalization, and request wrappers. The list queries the active `ApplicationEntity` contract with fixed API application provider/integration-mode terms plus terms emitted by `ConditionFilter`; it does not use the deprecated `/api-client` model.
+2. Implement the paged list with prototype columns for name, description, AppKey, masked AppSecret, creation time, status, and actions. Add deliberate copy feedback, enable/disable confirmation where appropriate, deletion confirmation, loading/empty/error states, and post-mutation refresh.
+3. Implement the create dialog with name, description, and multi-select `授权应用`. Generate the AppKey/AppSecret through the supported application contract, persist an `internal-standalone` API-server application, and create full API-group grants by default as described by the prototype.
+4. Implement permission settings from `/open/api/group/**` and `/open/api/spec/**`: grouped APIs, group-level and operation-level selection, selected counts, existing-grant echo, save progress, and refresh after success. Only granted specifications are exposed to the debug workspace.
+5. Implement API debugging by adapting the existing API explorer/test capability instead of copying it. The request must be signed with the selected API application's AppKey/AppSecret and support method, path/query/header/body input plus request/response status, headers, body, timing, loading, and failure states.
+6. Implement API logs from `/logger/access/_query`, constrained by `context.openApiClientId = AppKey`. Provide keyword, status, and date filters; method/path/IP/status/duration/time columns; request/response detail; paging; and export using the existing project export mechanism.
+7. Keep request orchestration outside presentation components, put all operator-visible copy in `locales/lang/zh.json` and `locales/lang/en.json`, reuse shared JetLinks/Ant Design components, and split new or substantially edited Vue files so each remains at or below 300 lines.
+
+Explicit exclusions: do not modify `runtime-ui/`, revive `ApiClientController` or other deprecated `/api-client` code, invent quota/traffic metrics, add an admin dashboard shell, duplicate the existing API explorer, or refactor unrelated Application Center pages.
+
+Risks and confirmation gates:
+
+- `授权应用` must affect real runtime access, not just form metadata. Before implementation, verify whether existing API group asset access and application dimensions can enforce the selected business applications. If not, add the smallest transactional backend binding contract in `modules/authentication-manager` and cover it with tests.
+- AppSecret stays masked by default and is only revealed/copied through an explicit action; the implementation must avoid placing it in URLs, logs, or persistent browser state.
+- The existing API test page uses the signed-in operator session. The new debugger must prove that requests are made with the selected API application signature and that ungranted APIs cannot be selected.
+- Confirm that access logs retain and can query `context.openApiClientId`; if the environment lacks the field or query support, record the backend gap before widening scope.
+
+Implementation result and key locations:
+
+- `api/application-center/apiApplication.ts` and `views/application-center/ApiApplication/useApiApplication.ts` define the typed CRUD, business-application, API-group grant, OpenAPI, and access-log boundaries. The list uses `ConditionFilter` terms plus the `internal-standalone`/`apiServer` contract; no deprecated `/api-client` controller is used.
+- `views/application-center/ApiApplication/index.vue` provides the paged credential ledger, masked AppSecret, copy/reveal action, status action, delete guard, and post-mutation reload. `CreateDialog.vue` uses `EditDialog` and persists generated credentials with selected business-application IDs.
+- `PermissionDrawer.vue`, `DebugDrawer.vue`, and `LogDrawer.vue` use `JlDrawerShell`. Permission selection echoes and saves group/operation grants; debug requests are limited to granted specs and sign same-origin requests with `X-Client-Id`, `X-Timestamp`, and `X-Sign`; logs filter on `context.openApiClientId`, show detail, and generate a CSV from the existing query endpoint.
+- `baseMenu.json` and both locale files register the route, resource actions, and synchronized Chinese/English copy. New Vue SFCs are all below 300 lines and `runtime-ui/` remains untouched.
+- `modules/authentication-manager` extends `ApplicationSaveRequset` with optional `businessApplicationIds`, checks `business_application:save`, binds the API application's system user to that dimension transactionally, clears authorization cache after commit, and removes bindings when the API application is deleted. `ApplicationSaveRequsetTest` covers generated/preserved AppKey behavior and grant target binding.
+
+Verification: `baseMenu.json` and locale JSON parse successfully; all new SFCs compile in the `authentication-manager-ui` production build (`9954 modules transformed`, build passed); focused `vue-tsc` output has no diagnostics for `ApiApplication`; new Vue files remain at or below 300 lines; and `git diff --check` passes. Full workspace `vue-tsc` remains non-zero on pre-existing `jetlinks-web-core` diagnostics. The focused backend test was added, but Maven cannot reach its compile/test phase because the workspace does not contain `jetlinks-parent` and the configured Nexus returns HTTP 401; the Java diff was reviewed against existing `DimensionUserBindUtils`, `AssetsHolder`, and `TransactionUtils` call patterns. Authenticated browser smoke testing remains pending because the local dev page redirects to login.
+
 ### Video Gateway Binding Interaction Plan
 
 Status: multi-gateway selection implemented and statically verified. Build and `tsc` were skipped by request.

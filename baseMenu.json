@@ -2229,6 +2229,93 @@
           "value": "unsupported"
         },
         "supportDataAccess": false
+      },
+      {
+        "code": "application-center/ApiApplication",
+        "name": "API 应用",
+        "owner": "cloud",
+        "i18nMessages": {
+          "name": {
+            "zh_CN": "API 应用",
+            "en_US": "API Applications",
+            "en": "API Applications"
+          }
+        },
+        "id": "f7cde9e54efc4b23b8b4c84d2e0f6d72",
+        "url": "/application-center/api-application",
+        "icon": "ApiOutlined",
+        "sortIndex": 3,
+        "showPage": ["api-application"],
+        "permissions": [
+          {
+            "permission": "application",
+            "actions": ["query", "save", "delete"]
+          },
+          {
+            "permission": "api_group",
+            "actions": ["query", "grant", "grant_query"]
+          },
+          {
+            "permission": "api_spec",
+            "actions": ["query"]
+          },
+          {
+            "permission": "business-application",
+            "actions": ["query", "save"]
+          },
+          {
+            "permission": "access-logger",
+            "actions": ["query"]
+          }
+        ],
+        "buttons": [
+          {
+            "id": "add",
+            "name": "新增 API 应用",
+            "i18nMessages": {
+              "zh_CN": "新增 API 应用",
+              "en_US": "Add API application",
+              "en": "Add API application"
+            },
+            "permissions": [{ "permission": "application", "actions": ["save"] }]
+          },
+          {
+            "id": "permission",
+            "name": "权限设置",
+            "i18nMessages": {
+              "zh_CN": "权限设置",
+              "en_US": "Permissions",
+              "en": "Permissions"
+            },
+            "permissions": [{ "permission": "api_group", "actions": ["grant", "grant_query"] }]
+          },
+          {
+            "id": "debug",
+            "name": "接口调试",
+            "i18nMessages": {
+              "zh_CN": "接口调试",
+              "en_US": "API debugging",
+              "en": "API debugging"
+            },
+            "permissions": [{ "permission": "api_spec", "actions": ["query"] }]
+          },
+          {
+            "id": "logs",
+            "name": "接口日志",
+            "i18nMessages": {
+              "zh_CN": "接口日志",
+              "en_US": "API logs",
+              "en": "API logs"
+            },
+            "permissions": [{ "permission": "access-logger", "actions": ["query"] }]
+          }
+        ],
+        "accessSupport": {
+          "text": "支持",
+          "value": "support"
+        },
+        "supportDataAccess": true,
+        "assetTypes": ["business_application"]
       }
     ]
   }
