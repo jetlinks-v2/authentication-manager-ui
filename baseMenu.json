@@ -2741,16 +2741,16 @@
     },
     {
         "code": "oam",
-        "name": "运维管理",
+        "name": "运维中心",
         "owner": "cloud",
         "i18nMessages": {
             "name": {
-                "zh_CN": "运维管理",
+                "zh_CN": "运维中心",
                 "en_US": "Application Center",
                 "en": "Application Center"
             }
         },
-        "id": "oam",
+        "id": "application-center",
         "url": "/oam",
         "icon": "ToolOutlined",
         "sortIndex": 50,
@@ -2795,17 +2795,17 @@
     },
   {
     "code": "application-center",
-    "name": "应用中心",
+    "name": "开放与集成",
     "owner": "cloud",
     "i18nMessages": {
       "name": {
-        "zh_CN": "应用中心",
-        "en_US": "Application Center",
-        "en": "Application Center"
+        "zh_CN": "开放与集成",
+        "en_US": "Open & Integrate",
+        "en": "Open & Integrate"
       }
     },
     "id": "4984e88a42a44b22896c058742d0782d",
-    "url": "/application-center",
+    "url": "/open",
     "icon": "AppstoreOutlined",
     "sortIndex": 5,
     "permissions": [],
@@ -2823,7 +2823,7 @@
           }
         },
         "id": "4fbd197474134f7fb947f96d85a5a23d",
-        "url": "/application-center/project-application",
+        "url": "/open/project-application",
         "icon": "AppstoreAddOutlined",
         "sortIndex": 1,
         "showPage": ["business-application"],
@@ -2981,7 +2981,7 @@
           }
         },
         "id": "9b8016a4e7d24af08fa34ab939ef4f5d",
-        "url": "/application-center/template",
+        "url": "/open/template",
         "icon": "ProfileOutlined",
         "sortIndex": 2,
         "showPage": ["business-application-template"],
@@ -3086,7 +3086,7 @@
           }
         },
         "id": "f7cde9e54efc4b23b8b4c84d2e0f6d72",
-        "url": "/application-center/api-application",
+        "url": "/open/api-application",
         "icon": "ApiOutlined",
         "sortIndex": 3,
         "showPage": ["api-application"],
