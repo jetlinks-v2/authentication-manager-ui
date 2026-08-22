@@ -93,9 +93,6 @@
         "sortIndex": 3,
         "url": "/system/user",
         "icon": "icon-yonghuguanli",
-        "options": {
-          "routeTarget": "midhub/settings"
-        },
         "showPage": [
           "user"
         ],
@@ -313,9 +310,6 @@
         "sortIndex": 4,
         "url": "/system/Department",
         "icon": "icon-bumenguanli",
-        "options": {
-          "routeTarget": "midhub/settings"
-        },
         "showPage": [
           "organization"
         ],
@@ -693,9 +687,6 @@
         "sortIndex": 5,
         "url": "/system/Role",
         "icon": "icon-jiaoseguanli",
-        "options": {
-          "routeTarget": "midhub/settings"
-        },
         "showPage": [
           "role"
         ],

@@ -30,7 +30,7 @@
           v-if="cardItems.length"
           class="application-grid"
           :cols="3"
-          gap="var(--space-4)"
+          gap="var(--space-3)"
         >
           <ApplicationCard
             v-for="item in cardItems"
@@ -208,7 +208,7 @@ const handleCreated = () => {
 <style scoped>
 .project-application-page {
   min-height: 100%;
-  padding: var(--space-4);
+  padding: var(--space-6);
   background: var(--bg);
 }
 
@@ -219,21 +219,22 @@ const handleCreated = () => {
 
 .create-card {
   display: grid;
-  height: 13.75rem;
+  height: 12.75rem;
   place-items: center;
   align-content: center;
-  gap: var(--space-2);
-  border: 1px dashed var(--line-strong);
+  gap: var(--space-3);
+  border: var(--jet-theme-stroke-width) solid var(--card-shell-border);
   border-radius: var(--card-shell-radius);
   background: var(--bg);
-  color: var(--ink-2);
+  color: var(--ink-1);
+  font-size: var(--fs-body);
   cursor: pointer;
   transition: var(--card-shell-transition);
 }
 
 .create-card:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--card-shell-border-hover);
+  box-shadow: var(--card-shell-shadow-hover);
 }
 
 .create-card:focus-visible {
@@ -242,14 +243,23 @@ const handleCreated = () => {
   outline: none;
 }
 
-.create-card :deep(svg) { width: var(--space-8); height: var(--space-8); }
+.create-card :deep(.anticon) {
+  width: var(--space-8);
+  height: var(--space-8);
+  color: var(--accent);
+}
+
+.create-card :deep(svg) {
+  width: var(--space-7);
+  height: var(--space-7);
+}
 
 @media (max-width: 62rem) {
   .application-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
 
 @media (max-width: 48rem) {
-  .project-application-page { padding: var(--space-3); }
+  .project-application-page { padding: var(--space-4); }
   .project-application-header :deep(.cloud-page-header__actions) {
     width: 100%;
     align-items: stretch;
