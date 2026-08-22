@@ -208,7 +208,6 @@ const handleCreated = () => {
 <style scoped>
 .project-application-page {
   min-height: 100%;
-  padding: var(--space-6);
   background: var(--bg);
 }
 
@@ -259,7 +258,6 @@ const handleCreated = () => {
 }
 
 @media (max-width: 48rem) {
-  .project-application-page { padding: var(--space-4); }
   .project-application-header :deep(.cloud-page-header__actions) {
     width: 100%;
     align-items: stretch;
