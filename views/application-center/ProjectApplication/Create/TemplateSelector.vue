@@ -1,13 +1,16 @@
 <template>
   <div class="template-selector">
-    <button
+    <div
       v-for="item in templates"
       :key="item.id"
-      type="button"
       class="template-card"
       :class="{ selected: modelValue === item.id, disabled: item.disabled }"
-      :disabled="item.disabled"
+      role="button"
+      :tabindex="item.disabled ? -1 : 0"
+      :aria-disabled="item.disabled"
       @click="selectTemplate(item)"
+      @keydown.enter="selectTemplate(item)"
+      @keydown.space.prevent="selectTemplate(item)"
     >
       <span class="template-icon">
         <img v-if="isImageIcon(item.icon)" :src="item.icon" :alt="item.name" />
@@ -27,8 +30,17 @@
         {{ $t('ProjectApplication.template.detail') }}
         <AIcon type="RightOutlined" />
       </a-button>
-      <span v-else class="unavailable">{{ $t('ProjectApplication.template.unavailable') }}</span>
-    </button>
+      <a-tooltip v-else :title="$t('ProjectApplication.template.unavailable')">
+        <span class="unavailable" :aria-label="$t('ProjectApplication.template.unavailable')">
+          <AIcon type="LockOutlined" />
+        </span>
+      </a-tooltip>
+      <AIcon
+        v-if="modelValue === item.id"
+        class="selected-indicator"
+        type="CheckCircleFilled"
+      />
+    </div>
 
     <a-modal
       :open="!!previewTemplate"
@@ -103,17 +115,17 @@ const openPreview = async (item: ApplicationTemplate) => {
 <style scoped>
 .template-selector {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
 }
 
 .template-card {
   position: relative;
   display: grid;
-  min-height: 8.75rem;
+  min-height: 7rem;
   grid-template-columns: 2rem minmax(0, 1fr);
-  gap: var(--space-3);
-  padding: var(--space-4);
+  gap: var(--space-2);
+  padding: var(--space-3);
   border: 1px solid var(--line);
   border-radius: var(--r-3);
   background: var(--bg);
@@ -126,11 +138,11 @@ const openPreview = async (item: ApplicationTemplate) => {
 .template-card:hover,
 .template-card.selected {
   border-color: var(--accent);
-  box-shadow: var(--shadow-hover);
 }
 
 .template-card.selected {
   background: var(--accent-soft);
+  box-shadow: var(--ring-focus);
 }
 
 .template-card.disabled {
@@ -157,21 +169,35 @@ const openPreview = async (item: ApplicationTemplate) => {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-1);
 }
 
 .template-copy strong { font-size: var(--fs-14); }
-.template-copy span { color: var(--ink-3); font-size: var(--fs-12); line-height: 1.55; }
+.template-copy span {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--ink-3);
+  font-size: var(--fs-12);
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
 
 .detail-link,
 .unavailable {
   position: absolute;
   right: var(--space-3);
-  bottom: var(--space-2);
+  bottom: var(--space-1);
   font-size: var(--fs-12);
 }
 
 .unavailable { color: var(--ink-4); }
+.selected-indicator {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  color: var(--accent);
+}
 
 .template-preview {
   display: flex;
@@ -185,10 +211,6 @@ const openPreview = async (item: ApplicationTemplate) => {
 .preview-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: var(--space-3); }
 .preview-menus { display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .preview-empty { color: var(--ink-4); font-size: var(--fs-12); }
-
-@media (max-width: 62rem) {
-  .template-selector { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
 
 @media (max-width: 40rem) {
   .template-selector { grid-template-columns: 1fr; }

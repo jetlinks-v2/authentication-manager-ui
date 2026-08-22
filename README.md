@@ -74,6 +74,97 @@ Verification: the `authentication-manager-ui` production build through the `jetl
 
 ## Application Center
 
+### API Application Implementation Plan
+
+Status: implemented; verification complete with backend build blocked by the workspace's unavailable parent artifact.
+
+Goal: add a complete API application workspace matching the approved prototype: credential list and search, create, enable/disable, copy and delete, API permission grants, credential-signed API debugging, and application-scoped access logs with detail and export. Search uses the shared `ConditionFilter` component.
+
+Owning module and scope: the primary owner is `ui/modules/authentication-manager-ui`, under `views/application-center/ApiApplication/`, its typed `api/application-center/apiApplication.ts` boundary, `baseMenu.json`, and the existing Chinese/English locale resources. If the selected `授权应用` values cannot be represented and enforced through the current application/grant contracts, only a narrow supporting contract and tests in `modules/authentication-manager` may be added after that gap is verified. `runtime-ui/` is outside this change.
+
+Interaction profile: use the standard management-table page because operators need to find credentials, compare key operational fields, copy secrets, and run repeated row actions. Keep create in the table toolbar, expose the most common row actions directly, and place permission, debugging, logs, and destructive actions in the row action area or `更多`. Use `JlDrawerShell` for the three focused workspaces and `EditDialog` for creation.
+
+```text
++ ConditionFilter ----------------------------------- [新增API应用] +
+| 密钥名称 | AppKey | AppSecret | 创建时间 | 状态 | 操作/更多          |
++-------------------------------------------------------------------+
+                         | 权限设置 | 接口调试 | 接口日志
+                         v
+              + JlDrawerShell focused workspace +
+```
+
+Implementation steps:
+
+1. Add the menu/route entry, typed models, response normalization, and request wrappers. The list queries the active `ApplicationEntity` contract with `provider = internal-standalone` and the bitmask-membership condition `integrationModes in$any [apiServer]`, then appends terms emitted by `ConditionFilter`; it does not use the deprecated `/api-client` model.
+2. Implement the paged list with prototype columns for name, description, AppKey, masked AppSecret, creation time, status, and actions. Add deliberate copy feedback, enable/disable confirmation where appropriate, deletion confirmation, loading/empty/error states, and post-mutation refresh.
+3. Implement the create dialog with name, description, and multi-select `授权应用`. Generate the AppKey/AppSecret through the supported application contract, persist an `internal-standalone` API-server application, and create full API-group grants by default as described by the prototype.
+4. Implement permission settings from `/open/api/group/**` and `/open/api/spec/**`: grouped APIs, group-level and operation-level selection, selected counts, existing-grant echo, save progress, and refresh after success. Only granted specifications are exposed to the debug workspace.
+5. Implement API debugging by adapting the existing API explorer/test capability instead of copying it. The request must be signed with the selected API application's AppKey/AppSecret and support method, path/query/header/body input plus request/response status, headers, body, timing, loading, and failure states.
+6. Implement API logs from `/logger/access/_query`, constrained by `context.openApiClientId = AppKey`. Provide keyword, status, and date filters; method/path/IP/status/duration/time columns; request/response detail; paging; and export using the existing project export mechanism.
+7. Keep request orchestration outside presentation components, put all operator-visible copy in `locales/lang/zh.json` and `locales/lang/en.json`, reuse shared JetLinks/Ant Design components, and split new or substantially edited Vue files so each remains at or below 300 lines.
+
+Explicit exclusions: do not modify `runtime-ui/`, revive `ApiClientController` or other deprecated `/api-client` code, invent quota/traffic metrics, add an admin dashboard shell, duplicate the existing API explorer, or refactor unrelated Application Center pages.
+
+Risks and confirmation gates:
+
+- `授权应用` must affect real runtime access, not just form metadata. Before implementation, verify whether existing API group asset access and application dimensions can enforce the selected business applications. If not, add the smallest transactional backend binding contract in `modules/authentication-manager` and cover it with tests.
+- AppSecret stays masked by default and is only revealed/copied through an explicit action; the implementation must avoid placing it in URLs, logs, or persistent browser state.
+- The existing API test page uses the signed-in operator session. The new debugger must prove that requests are made with the selected API application signature and that ungranted APIs cannot be selected.
+- Confirm that access logs retain and can query `context.openApiClientId`; if the environment lacks the field or query support, record the backend gap before widening scope.
+
+Implementation result and key locations:
+
+- `api/application-center/apiApplication.ts` and `views/application-center/ApiApplication/useApiApplication.ts` define the typed CRUD, business-application, API-group grant, OpenAPI, and access-log boundaries. The list uses `ConditionFilter` terms plus `provider = internal-standalone` and `integrationModes in$any [apiServer]`; no deprecated `/api-client` controller is used.
+- `views/application-center/ApiApplication/index.vue` provides the paged credential ledger, masked AppSecret, copy/reveal action, status action, delete guard, and post-mutation reload. `CreateDialog.vue` uses `EditDialog`, normalizes its multi-select value to a valid string array so an empty selection cannot render or submit as a blank item, and persists generated credentials with selected business-application IDs.
+- `PermissionDrawer.vue`, `DebugDrawer.vue`, and `LogDrawer.vue` use `JlDrawerShell`. Permission selection echoes and saves group/operation grants; debug requests are limited to granted specs and sign same-origin requests with `X-Client-Id`, `X-Timestamp`, and `X-Sign`; logs filter on `context.openApiClientId`, show detail, and generate a CSV from the existing query endpoint.
+- `baseMenu.json` and both locale files register the route, resource actions, and synchronized Chinese/English copy. New Vue SFCs are all below 300 lines and `runtime-ui/` remains untouched.
+- `modules/authentication-manager` extends `ApplicationSaveRequset` with optional `businessApplicationIds`, checks `business_application:save`, binds the API application's system user to that dimension transactionally, clears authorization cache after commit, and removes bindings when the API application is deleted. `ApplicationSaveRequsetTest` covers generated/preserved AppKey behavior and grant target binding.
+
+Verification: `baseMenu.json` and locale JSON parse successfully; all new SFCs compile in the `authentication-manager-ui` production build (`9954 modules transformed`, build passed); focused `vue-tsc` output has no diagnostics for `ApiApplication`; new Vue files remain at or below 300 lines; and `git diff --check` passes. The API-application query regression now shares one fixed-term builder across both request paths and uses `integrationModes in$any [apiServer]`; the create dialog also normalizes the authorization multi-select before rendering and submission. `pnpm -F jetlinks-web-core build -- -- --module-name authentication-manager-ui` passed again with `9954 modules transformed`. Full workspace `vue-tsc` remains non-zero on pre-existing `jetlinks-web-core` diagnostics. The focused backend test was added, but Maven cannot reach its compile/test phase because the workspace does not contain `jetlinks-parent` and the configured Nexus returns HTTP 401; the Java diff was reviewed against existing `DimensionUserBindUtils`, `AssetsHolder`, and `TransactionUtils` call patterns. Authenticated browser smoke testing remains pending because the local dev page redirects to login.
+
+### Project Application Members And Roles Layout Plan
+
+Status: implemented and verified after confirmation.
+
+Goal: align the ProjectApplication member and role tabs with the approved prototypes. The member tab uses a compact title/action row, one local keyword search, and a full-width member table without title commentary. The role tab uses a narrow role list beside the existing menu/data-permission editor.
+
+Owning module and scope: `ui/modules/authentication-manager-ui`. The planned code changes are limited to `views/application-center/ProjectApplication/Detail/components/UserManagement.vue` and `RoleManagement.vue`, plus this document. Existing ProjectApplication APIs, stores, routes, locale resources, permission-editor contracts, backend modules, and `runtime-ui/` remain unchanged.
+
+Interaction profile:
+
+1. Member tab: keep the existing application-detail carrier and the existing client-side keyword filter, because the prototype calls for one fixed search over already-loaded users with no route echo, remote options, or saved-search workflow. Render the title and add action on one row, then the search and full-width table; keep role selection, status actions, empty state, and user creation behavior intact.
+2. Role tab: use the master-detail workspace profile. Put `角色列表` and `新增` in the left panel header, render compact role rows with member counts, and keep role edit/delete actions local to each row. Put the selected role name/count and save action above the existing `MenuAssetPermissionEditor` on the right.
+3. Remove the extra member subtitle and role-page title/subtitle from the rendered layout. Do not add banners, KPI blocks, nested cards, new copy, or another permission implementation.
+
+Risks: active-role selection, permission request race protection, and permission save behavior remain unchanged. Authenticated browser verification is still pending, so final visual spacing should be smoke-tested with representative member and role data after deployment.
+
+Verification result: both Vue SFC script/template/scoped-style compilations pass; the programmatic Vite production build for `authentication-manager-ui` passes with 9954 transformed modules. Full workspace `vue-tsc` remains nonzero on 665 lines of existing shared diagnostics, while the focused ProjectApplication and business-application API scan reports no diagnostic. The touched Vue files remain below the 300-line gate (`UserManagement.vue` 134 lines and `RoleManagement.vue` 289 lines), locale JSON parsing and `git diff --check` pass, and static assertions confirm the redundant member subtitle and role-page heading are no longer rendered.
+
+### Project Application Detail Action Plan
+
+Status: implemented and statically verified.
+
+Goal: complete the ProjectApplication detail actions, restore the application icon uploader's neutral idle appearance, and hide application timezone configuration from operators.
+
+Owning module and scope: `ui/modules/authentication-manager-ui`. The change is limited to `views/application-center/ProjectApplication/`, its business-application API wrapper, and existing Chinese/English locale resources. It does not change `runtime-ui/`, backend contracts, application routes, template selection, or the stored/default timezone value.
+
+Implementation:
+
+1. Add the standard business-application delete API/store flow and expose a confirmed destructive action in the detail summary header; return to the application ledger after successful deletion.
+2. Keep using the shared `ImageUpload` component, but override its public `borderStyle` contract so the ProjectApplication icon field uses a neutral idle border instead of the component's default primary-colored border.
+3. Remove timezone display/editing and timezone submission from `ApplicationSettings.vue`; preserve the existing normalized timezone value when other application settings are updated.
+4. Verify locale JSON, Vue/TypeScript syntax, delete route wiring, absence of the timezone control/save field, touched Vue line counts, and the focused module build when the workspace permits it.
+
+Risks: deletion relies on the standard `DELETE /business-application/{id}` CRUD contract exposed by `BusinessApplicationController` through `AssetsHolderCrudController` and remains protected by a confirmation prompt. Authenticated browser/API smoke testing is still pending because this session has no confirmed logged-in project/backend context.
+
+Verification result:
+
+- Chinese and English locale JSON parse successfully; focused TypeScript syntax transpilation passes for the business-application API and ProjectApplication store.
+- The four touched Vue SFCs pass script, template, and scoped-style compilation. Their line counts are `Create/index.vue` 208, detail `index.vue` 204, `ApplicationSummary.vue` 161, and `ApplicationSettings.vue` 261.
+- Static contract checks confirm the detail header wires the confirmed delete action to the standard delete route and that `ApplicationSettings.vue` contains no timezone display, draft, option, or save field.
+- The programmatic Vite production build for `authentication-manager-ui` passes with 9938 transformed modules. The legacy CLI wrapper still fails before compilation because Vite 7 rejects the forwarded `--module-name` option; the documented programmatic entry avoids that existing tooling incompatibility.
+- Full workspace `vue-tsc` remains nonzero on existing shared-core diagnostics, while a focused diagnostic scan reports no error in the touched ProjectApplication or business-application API paths. `git diff --check` passes for the touched files.
+
 ### Video Gateway Binding Interaction Plan
 
 Status: multi-gateway selection implemented and statically verified. Build and `tsc` were skipped by request.
@@ -107,37 +198,6 @@ Verification result:
 - Build and `tsc` were not run, as requested. Browser interaction and authenticated API smoke testing remain pending.
 - Commit and PR: pending.
 
-### User Bind Dialog Optimization Plan
-
-Status: implemented. Verification is limited to static frontend checks; build and `tsc` were skipped by request.
-
-Goal: extract the bind-user dialog from `views/application-center/ProjectApplication/Detail/components/UserManagement.vue`, replace its local candidate list with the shared `ConditionFilter` + `j-pro-table` interaction, and load unbound candidates through `POST /user/detail/_query` with the current application exclusion dimension term.
-
-Owning module and scope: `ui/modules/authentication-manager-ui`. The change is limited to the ProjectApplication detail user tab, its existing application-user service/store boundary, and this module document. Backend Java code, `runtime-ui/`, shared `jetlinks-web-core` behavior, unrelated application-detail tabs, and broad user-management refactors are out of scope.
-
-Implementation steps:
-
-1. Add a focused bind-user modal component that owns filtering, table selection, selected-count confirmation, and reset-on-open behavior; keep `UserManagement.vue` responsible only for its main user section and event forwarding.
-2. Reuse the existing `queryUserDetails` API wrapper from `api/application-center/businessApplication.ts`. Assemble the request contract in `applicationUserService.ts`: forward `pageIndex` and `pageSize` from `j-pro-table`, prepend `terms: [{ column: 'id$in-dimension$business_application$not', value: [applicationId] }]`, and append effective `ConditionFilter` terms without changing the unbound-user scope.
-3. Expose the lazy paged candidate loader through `useProjectApplication.ts`, remove the eager project-member candidate dependency from the detail state, and pass the loader/application id into the extracted modal through the existing detail component boundary.
-4. Reuse current ProjectApplication i18n keys and the installed `ConditionFilter`/`j-pro-table` contracts. Do not introduce another search model, direct API path in a Vue component, or new backend capability.
-
-Risks and confirmation points:
-
-- `j-pro-table` contributes runtime paging/search parameters. The service boundary must not fix candidate paging; it only guarantees that the required application exclusion-dimension term is prepended to the table query.
-- The bind dialog queries users not yet bound to the current business application. Already visible users in the application user table should not appear as candidates.
-- Existing binding mutation behavior remains unchanged; this task changes candidate discovery and modal presentation only.
-
-Verification result:
-
-- `UserBindModal.vue`, `UserManagement.vue`, and detail `index.vue` pass Vue SFC parse and template compilation.
-- Touched TypeScript files pass syntax transpilation without type-checking.
-- Locale files `locales/lang/zh.json` and `locales/lang/en.json` parse as valid JSON.
-- Static scan finds no project-member candidate source (`/console/project`, `queryConsoleProjectMembers`, `bindableUsers`, `ProjectMemberInfo`, or `normalizeProjectMember`) in the ProjectApplication user flow.
-- Candidate loading uses `/user/detail/_query`, prepends `id$in-dimension$business_application$not = [applicationId]`, and forwards `pageIndex` / `pageSize` from `j-pro-table`; existing fixed `pageSize: 500` defaults remain only on unrelated role/bound-user wrappers.
-- `git diff --check` passes. Touched Vue line counts are `UserBindModal.vue` 191, `UserManagement.vue` 150, and detail `index.vue` 255.
-- Commit and PR: pending.
-
 ### Detail Optimization Plan
 
 Status: implemented after confirmation. Verification for this pass is limited to JSON parsing, static API-path scans, and Vue SFC line counts; build and `tsc` were skipped by request.
@@ -150,7 +210,7 @@ Prototype and interface findings:
 
 - Prototype `https://jetlinks-ai-new.ez7268-453.workers.dev/midhub/app/user-app/app-2` shows a `视频配置` tab between `物联设备配置` and `用量信息`. The tab renders a camera card grid with preview image, online/offline status, camera name, per-card `设置`, and a `绑定摄像头` action. Binding opens a right drawer with gateway grouping, name/serial search, candidate camera list, selected count, and confirm. Settings opens a small dialog showing preview image, status, name, PTZ support, and `解除绑定`.
 - Role backend facts: system role management uses `POST /role/_query/`, `POST /role`, `PATCH /role`, and `DELETE /role/{id}`. `RoleEntity.applicationId` is create-only (`updatable = false`), so application role queries should add an `applicationId` exact term and application role creation should submit `applicationId`; updates must not modify it.
-- User backend facts: the bind-user candidate dialog pages users through `POST /user/detail/_query` with the `id$in-dimension$business_application$not` application-scope term, so it lists users not yet bound to the current application and no longer depends on the project-member candidate endpoint. There is no dedicated incremental "bind existing user to business application" endpoint. The direct `/user/detail/{userId}/business_application/_bind` route is full-bind and can drop other application bindings if used with only the current application. The safer existing route is `/user/detail/{userId}/_update` with a hydrated user payload and `businessApplicationIdList: [applicationId]`; backend `UserDetailService` merges the user's existing application IDs before full-binding during update.
+- User backend facts: there is no dedicated incremental bind or targeted unbind endpoint for business-application members. Both `/user/detail/{userId}/business_application/_bind` and `/user/detail/{userId}/_update` use full replacement when application IDs are supplied, while user detail responses do not expose the complete application-ID set. The detail page therefore does not expose existing-user binding or member removal controls; it keeps safe creation, display, role update, and status update flows.
 - Application create backend facts: `BusinessApplicationService.handleCreated` already binds the persisted `creatorId` to the new business application dimension, so the UI should not add a duplicate frontend-side creator binding unless authenticated smoke testing proves the event path is not reflected in the detail page.
 - Video backend facts: the bind drawer queries gateways through `POST /media/device/_query`, then queries channels only after a gateway click through `POST /media/device/{gatewayId}/channel/_query`. `MediaChannelController` correlates channel permission to `DeviceAssetType.device` via `deviceId`, and no separate media-channel asset type is present. Therefore ProjectApplication must bind, query, exclude, and unbind the selected gateway `deviceId`; submitting `MediaChannelEntity.id` to `/assets/bind/device` is not a valid device-asset binding and returns 403.
 
@@ -159,7 +219,7 @@ Implementation steps:
 1. Add typed API wrappers for application user candidates, role CRUD with `applicationId`, paged device details, media gateways and per-gateway channels, and reusable asset binding/unbinding where needed.
 2. Extend ProjectApplication state with camera resources and lazy paged user candidate loading. Keep request orchestration in `useProjectApplication.ts` or small services, not inside Vue components.
 3. Add a video configuration tab and component matching the prototype at a restrained Ant Design/detail-workspace density: camera card grid, bind drawer reusing the existing resource-picker style where possible, settings dialog, empty/loading states, bind and unbind feedback. Camera binding selects the left-side gateway `deviceId`; the right-side channel table is preview-only.
-4. Refactor user management so `新增用户` creates a global user with one application-scoped role and immediately submits `businessApplicationIdList: [applicationId]`; `绑定用户` remains a separate dialog listing users not yet bound to the current application through `/user/detail/_query`, supports search and selection, then binds selected users through the hydrated update route. Existing role/status editing for bound users remains local to the application table.
+4. Refactor user management so `新增用户` creates a global user with one application-scoped role and immediately submits `businessApplicationIdList: [applicationId]`. Existing role/status editing remains available for bound users; existing-user binding and member removal stay hidden until the backend provides incremental application-member endpoints.
 5. Refactor role management data operations to use the system role CRUD endpoints. Query and creation carry `applicationId`; update uses `PATCH /role`; delete uses `DELETE /role/{id}`; the existing permission editor endpoints remain unchanged.
 6. Verify application creation by relying on backend creator binding and refreshing the application detail after creation/load; update this document if an authenticated smoke test shows a timing or missing-membership gap.
 7. Keep all user-visible copy in `locales/lang/zh.json` and `locales/lang/en.json`, and keep touched/new Vue files at or below 300 lines by splitting dialog/card services as needed.
@@ -167,14 +227,14 @@ Implementation steps:
 Risks and confirmation points:
 
 - Runtime video permission remains device-correlated because no channel-level asset type was found. Binding one gateway exposes all of its channels; strict channel-level authorization would require a backend channel asset or binding endpoint.
-- Binding existing users through `/user/detail/{id}/_update` requires hydrating user roles, organizations, and positions to preserve unrelated relations. This is more cautious than calling the full-bind endpoint directly.
+- Binding or removing existing users cannot be implemented safely with the current full-replacement contracts because the client cannot retrieve every application membership. These controls remain unavailable rather than risking cross-application data loss.
 - Deleting a role through the system role delete endpoint is global role deletion, matching the requested interface but broader than simply removing it from this application.
 
 Verification result:
 
 - `locales/lang/zh.json` and `locales/lang/en.json` parse as valid JSON.
 - Static scans find no legacy role wrappers (`/role/business_application`, `/role/_create`, `/role/{id}/_update`) in the application-center implementation.
-- Static scans find no project-member candidate source in the ProjectApplication user flow; user candidates use `/user/detail/_query` with the `id$in-dimension$business_application$not` term.
+- Static scans confirm that the ProjectApplication member flow does not call the unsafe full-bind route or submit application IDs while updating existing users.
 - Static scans confirm new application users are created through `/user/detail/_create` with an application role and `businessApplicationIdList: [applicationId]`.
 - Static scans confirm the device drawer uses `/device/instance/detail/_query` with the fixed provider exclusion, descending creation-time sort and required detail context, while the camera drawer cannot call the channel endpoint before a gateway is selected.
 - Video binding contract scans are covered by the focused Video Gateway Binding Interaction Plan above; its final static verification result is recorded there.
@@ -193,13 +253,15 @@ Owning module: `ui/modules/authentication-manager-ui`. The application menu Scop
 - Templates: list and menu preview use `/business-application-template` and `GET /business-application-template/{id}/menus`. Disabled templates remain visible but cannot be selected for creation.
 - Application template management: `application-center/Template` manages `/business-application-template` directly in the project-side UI. Its Save page loads candidate menus from `POST /menu/user-own/tree`, asset type names from `GET /asset/types`, grantable asset permissions from `POST /menu/asset-accesses/grantable`, and scope strategy options from `GET /dictionary/asset-scope-strategy/items`; it does not use SaaS runtime or region selection. Application menu grants currently filter out interface permissions such as `open-api` before template editing, role permission echo, and permission saving.
 - Enums: backend `{value,text}` values are normalized centrally; comparisons and submissions use `value`, while the page displays `text`.
-- Application creation: backend `BusinessApplicationService.handleCreated` binds the persisted creator to the new application dimension, so the UI does not perform a duplicate creator-binding request.
-- Users: bound users are still queried through `/user/detail/business_application/{applicationId}/_query` and batch-hydrated through `/user/detail/_query`. New users are created through `/user/detail/_create` with `roleIdList: [roleId]` from the application-scoped role list and `businessApplicationIdList: [applicationId]`, so the user is available in the current application immediately after creation. The bind dialog lazily pages unbound candidates through `/user/detail/_query`, prepending `id$in-dimension$business_application$not = [applicationId]` and forwarding `j-pro-table` paging plus `ConditionFilter` terms. Confirming selection still binds selected users by calling `/user/detail/{id}/_update` with `businessApplicationIdList: [applicationId]`; backend merge behavior preserves the user's other application bindings.
+- Application creation: the application ledger opens a centered create dialog with icon upload, 30-character name validation, 100-character description validation, and a two-column template selector. Disabled templates remain visible but locked. Backend `BusinessApplicationService.handleCreated` binds the persisted creator to the new application dimension, so the UI does not perform a duplicate creator-binding request.
+- Users: bound users are queried through `/user/detail/business_application/{applicationId}/_query` and batch-hydrated through `/user/detail/_query`. New users are created through `/user/detail/_create` with one application-scoped role and `businessApplicationIdList: [applicationId]`. Existing-user updates omit `businessApplicationIdList`, so they preserve all memberships; existing-user binding and member removal are intentionally not exposed until incremental backend endpoints exist.
 - Roles: application roles now use the same system role APIs as `views/system/Role`: `POST /role/_query/` with an `applicationId` exact term, `POST /role` with `applicationId` on creation, `PATCH /role` on update, and `DELETE /role/{id}` on deletion. Updates do not resend `applicationId` because it is create-only.
 - Role permissions: the role editor uses `GET /business-application-template/{templateId}/menus` as the menu candidate source, filters that tree by the current project menu runtime cache using menu `code`, and rebuilds the remaining nodes by `parentId`. The editable menu set still comes from the template/project-menu intersection, but asset permission scope fields (`assetType`, `assetTypes`, `assetAccesses`, `dataAccesses`, `selectAccesses`, and `selectAccessesByAssetType`) are copied from the current project menu node, not the template node. Saved role grants from `/menu/role/{roleId}/_grant/detail` are also pruned to that current-project asset scope before checked-state echo and save through `/menu/role/{roleId}/_grant`. The `manage-role` menu button grants `business-application-template:query,grant` for that template-menu read path.
 - Devices: bound assets use the `dim-assets` term with target type `business_application`. The bind drawer has no device group/product/gateway classification sidebar and pages candidates through `/device/instance/detail/_query`. Every candidate request prepends `productId$product-info = "accessProvider nin (agent-device-gateway,agent-media-device-gateway,official-edge-gateway,fixed-media,gb28181-2016,media-plugin,onvif)"`, sorts by `createTime desc`, and sends the required tags/relations/parent detail context. Opening the drawer does not call `/assets/bindings/device`; confirming calls `/assets/bind/device` once with a single binding object, selected device IDs in `assetIdList`, and `read`, `save`, `delete`, and `share` permissions. Unbinding continues through `/assets/unbind/device`.
 - Video: opening the camera drawer queries gateways through `/media/device/_query` only. Checkboxes in the left list select multiple gateway `deviceId` values for binding, while the most recently clicked or checked gateway independently drives the right-side preview. No channel query is issued until a preview gateway is active; the right-side table then pages `/media/device/{gatewayId}/channel/_query` without row checkboxes. Bound-camera lookup filters `/media/channel/_query/no-paging` by `dim-assets` on `deviceId`; already-bound gateway IDs are excluded from the left list. Confirm submits all checked gateway IDs through `/assets/bind/device`, and unbind submits the containing gateway `deviceId` through `/assets/unbind/device`.
-- Deletion: users and roles use the global generic delete endpoints. Confirmation text explicitly warns that the operation is not limited to the current application.
+- Membership mutation boundary: the page does not expose existing-user binding or member removal because the available full-replacement APIs cannot preserve memberships the client cannot read. Role deletion still uses the global generic role endpoint and remains explicitly confirmed.
+- Application detail tabs: the single-application workspace exposes only `应用设置`, `应用成员`, and `应用角色`. Device and video asset binding remain available in their service boundaries but are no longer eagerly queried or rendered as detail tabs.
+- Application settings: `应用基本信息` is read-only by default and switches the whole section into edit mode. Icon, name, description, default language, and timezone are saved in one update; the application link remains read-only and copyable. The timezone is stored as `configuration.timezone`, defaulting to `Asia/Shanghai` for existing records.
 - Menu data access: `application-center/ProjectApplication` exposes `business_application`, `user`, `role`, and `device` as assignable asset types. Application templates and `assets-bind` remain functional permissions rather than asset types.
 
 ### Application Menu Scope
@@ -229,17 +291,17 @@ The related shared code is limited to:
 - `api/application-center/applicationTemplate.ts`: project-side application template CRUD, menu grant, scope strategy, menu candidate, asset type, grantable asset permission, and tag request boundary.
 - `views/application-center/ProjectApplication/applicationModel.ts`: response envelope, enum, list, menu, and view-model normalization.
 - `views/application-center/ProjectApplication/applicationDeviceService.ts`: bound-device loading and fixed-contract candidate device pagination.
-- `views/application-center/ProjectApplication/applicationUserService.ts`: application member lookup, bindable project-member lookup, and batched full-detail hydration for relation-safe updates.
+- `views/application-center/ProjectApplication/applicationUserService.ts`: application member lookup, batched detail hydration, safe creation, and existing-member updates that omit the full-replacement application list.
 - `views/application-center/ProjectApplication/applicationRoleService.ts`: system role CRUD orchestration for application-scoped roles.
 - `views/application-center/ProjectApplication/applicationCameraService.ts`: bound-channel loading, media gateway discovery, per-gateway channel pagination, and device-asset permission filtering for video configuration.
 - `views/application-center/ProjectApplication/useProjectApplication.ts`: remote state and mutation orchestration.
 - Ledger/create/detail components: loading, empty, validation, confirmation, submit, and post-mutation refresh behavior.
-- The ledger follows the project-application card design: a title/description header, primary create action, responsive three-column card wall, and an inline create card. Application cards reuse `jetlinks-web-core/src/components/CardBox/CardSummary.vue`; unsupported gateway/camera metrics and the unrelated filter row are not rendered.
+- The ledger follows the project-application card design: the shared `PageHeader` carries a `ConditionFilter` whose name and status fields submit the component's standard `terms` model alongside the primary create action, followed by a responsive three-column card wall and an inline create card. Each card shows icon, name, status, template, description, creation time, edit/status actions, and the primary open action. Application cards reuse `jetlinks-web-core/src/components/CardBox/CardSummary.vue`; unsupported gateway/camera metrics and the template filter are not rendered.
 - `views/application-center/Template/`: template ledger, create dialog, tag sidebar, and Save workspace. The Save workspace keeps the top summary as a detail display, then separates document and configuration tabs. Configuration reuses `MenuAssetPermissionEditor` with asset permission batch selection and writes scope strategy to `assetAccesses[].options.scopeStrategy`.
 - `baseMenu.json`: visible name “应用管理” and backend resource actions required by the page.
 - `locales/lang/zh.json` and `locales/lang/en.json`: synchronized user-visible copy.
 
-Unsupported prototype surfaces were removed: fake quotas and metrics, channel-level camera asset binding, and the direct-device switch. No `/project-application*`, `project_application`, or `X-Project-Application-Id` compatibility contract is used; the internal route and source folder name remain unchanged to avoid breaking existing bookmarks and menu codes.
+Unsupported prototype surfaces were removed: fake quotas and metrics, channel-level camera asset binding, direct-device switching, and the device/video tabs from the application detail workspace. No `/project-application*`, `project_application`, or `X-Project-Application-Id` compatibility contract is used; the internal route and source folder name remain unchanged to avoid breaking existing bookmarks and menu codes.
 
 Every created or substantially edited Vue file remains at or below 300 lines.
 
@@ -250,14 +312,14 @@ Every created or substantially edited Vue file remains at or below 300 lines.
 - Targeted Vue diagnostics report no new errors in the application-center API/page and application-Scope files. The full module check still exits non-zero because of pre-existing shared-core and legacy-module diagnostics.
 - Application-Scope checks cover a plain tab, query bootstrap, reload restore, explicit clear, absolute domain, host with port, and relative URL behavior.
 - `baseMenu.json`, `locales/lang/zh.json`, and `locales/lang/en.json` parse as valid JSON.
-- The application-ledger Vue files pass focused SFC script/template/style compilation and remain below 300 lines. Per task scope, build and `tsc` were not run for the visual refresh.
+- The application-ledger, create-dialog, and settings Vue files compile in the module production build and remain below 300 lines. The list/create/settings prototype comparison was performed in the browser; local authenticated interaction remains pending because the development page redirects to login.
 - The application-template management files pass focused JSON parsing, route/menu boundary review, i18n key coverage, SFC tag scanning, TypeScript syntax transpilation, and line-count checks. Per task scope, build and `tsc` were not run; authenticated backend calls for `/business-application-template/{id}/menus`, `/menu/user-own/tree`, `/menu/asset-accesses/grantable`, `/asset/types`, and `/dictionary/asset-scope-strategy/items` still need environment smoke testing.
 - The application-management menu asset types match the application, user, role, and device interfaces consumed by the page. This menu-only update was checked by JSON parsing and boundary review; build and `tsc` were intentionally not run.
 - The role-permission template-source update was checked by API-path scans, whitespace diff check, and SFC line counts only; build and `tsc` were intentionally not run by request.
 - The target implementation contains no legacy application API path, dimension type, header, or direct-device setting.
-- Production build and authenticated backend E2E results are recorded in the backend integration plan referenced below.
+- The current three-tab detail plus ledger/create/settings optimization passes locale JSON parsing, `git diff --check`, focused unsafe-member-mutation scans, Vue line-count checks, and a production build with 9954 transformed modules. The ledger search now reuses `ConditionFilter` and sends its normalized `terms` directly to the application query. Module `vue-tsc` still exits non-zero on the pre-existing implicit `any` in `jetlinks-web-core/src/store/businessApplication.ts`; no `ProjectApplication` file reports a diagnostic.
 
-The production build command for this module is:
+Run the production build command for this module from `ui/jetlinks-web-core`:
 
 ```bash
 node --max_old_space_size=8192 --max-semi-space-size=64 -e "process.argv.push('--module-name','authentication-manager-ui'); import('vite').then(({ build }) => build())"

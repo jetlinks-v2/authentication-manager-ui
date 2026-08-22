@@ -1,3 +1,5 @@
+import type { ConditionFilterChangePayload } from '@jetlinks-web-core/components/ConditionFilter'
+
 export type ApplicationStatus = 'enabled' | 'disabled'
 export type ResourceStatus = string
 
@@ -24,6 +26,7 @@ export interface ProjectApplication {
   createdAt: string
   icon?: string
   defaultLanguage: string
+  timezone: string
   domain: string
 }
 
@@ -69,6 +72,8 @@ export interface ApplicationUser {
   username: string
   phone: string
   email: string
+  position: string
+  organization: string
   roleId: string
   roleIds: string[]
   orgIds: string[]
@@ -86,18 +91,6 @@ export interface ApplicationUserDraft {
   confirmPassword: string
 }
 
-export interface ApplicationUserCandidate {
-  id: string
-  name: string
-  username: string
-  phone: string
-  status: string
-  statusText: string
-  enabled: boolean
-  type?: string
-  typeText?: string
-}
-
 export interface ApplicationRole {
   id: string
   name: string
@@ -112,35 +105,16 @@ export interface ApplicationRoleDraft {
 }
 
 export interface ApplicationDetailState {
-  devices: ApplicationResource[]
-  cameras: ApplicationCameraResource[]
   users: ApplicationUser[]
   roles: ApplicationRole[]
 }
 
-export interface ApplicationFilters {
-  keyword: string
-  status?: ApplicationStatus
-  templateId?: string
-}
+export type ApplicationFilters = ConditionFilterChangePayload['filter']
 
 export interface ResourcePickerQuery {
   pageIndex?: number
   pageSize?: number
   terms?: Array<Record<string, unknown>>
-}
-
-export interface UserPickerQuery {
-  pageIndex?: number
-  pageSize?: number
-  terms?: Array<Record<string, unknown>>
-}
-
-export interface UserPickerPage {
-  data: ApplicationUserCandidate[]
-  total: number
-  pageIndex: number
-  pageSize: number
 }
 
 export interface ResourcePickerPage<T extends ApplicationResource = ApplicationResource> {

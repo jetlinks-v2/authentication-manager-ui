@@ -1,30 +1,47 @@
 <template>
   <j-page-container>
     <div class="project-application-page">
-      <header class="page-heading">
-        <div class="page-heading__copy">
-          <h1>{{ $t('ProjectApplication.list.title') }}</h1>
-          <p>{{ $t('ProjectApplication.list.description') }}</p>
-        </div>
-        <a-button type="primary" :disabled="!projectId" @click="openCreate">
-          <template #icon><AIcon type="PlusOutlined" /></template>
-          {{ $t('ProjectApplication.list.create') }}
-        </a-button>
-      </header>
+      <PageHeader
+        class="project-application-header"
+        :title="$t('ProjectApplication.list.title')"
+        :description="$t('ProjectApplication.list.description')"
+      >
+        <template #actions>
+          <ConditionFilter
+            class="page-filters"
+            :fields="filterFields"
+            @change="handleSearch"
+          />
+
+          <a-button
+            class="create-application-button"
+            type="primary"
+            :disabled="!projectId"
+            @click="createOpen = true"
+          >
+            <template #icon><AIcon type="PlusOutlined" /></template>
+            {{ $t('ProjectApplication.list.create') }}
+          </a-button>
+        </template>
+      </PageHeader>
 
       <a-spin :spinning="loading">
         <ResponsiveGrid
           v-if="cardItems.length"
-          min="min(28rem, 100%)"
-          gap="var(--space-5)"
+          class="application-grid"
+          :cols="3"
+          gap="var(--space-4)"
         >
           <ApplicationCard
             v-for="item in cardItems"
             :key="item.application.id"
             :item="item"
-            @open="openDetail(item.application.id)"
+            :loading="updatingApplicationIds.includes(item.application.id)"
+            @edit="openDetail(item.application.id)"
+            @toggle-status="toggleApplicationStatus(item.application)"
+            @open="openApplication(item.application)"
           />
-          <button v-if="projectId" class="create-card" type="button" @click="openCreate">
+          <button v-if="projectId" class="create-card" type="button" @click="createOpen = true">
             <AIcon type="PlusOutlined" />
             <span>{{ $t('ProjectApplication.list.createCard') }}</span>
           </button>
@@ -32,13 +49,23 @@
         <CloudEmpty
           v-else
           type="page"
-          :description="$t(projectId ? 'ProjectApplication.list.noApplications' : 'ProjectApplication.list.missingProject')"
+          :description="$t(!projectId
+            ? 'ProjectApplication.list.missingProject'
+            : hasFilters
+              ? 'ProjectApplication.list.empty'
+              : 'ProjectApplication.list.noApplications')"
         >
-          <a-button v-if="projectId" type="primary" @click="openCreate">
+          <a-button v-if="projectId" type="primary" @click="createOpen = true">
             {{ $t('ProjectApplication.list.create') }}
           </a-button>
         </CloudEmpty>
       </a-spin>
+
+      <ApplicationCreateDialog
+        v-model:open="createOpen"
+        embedded
+        @created="handleCreated"
+      />
     </div>
   </j-page-container>
 </template>
@@ -46,16 +73,60 @@
 <script setup lang="ts" name="ProjectApplication">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { onlyMessage } from '@jetlinks-web/utils'
+import ConditionFilter, {
+  type ConditionFilterChangePayload,
+  type ConditionFilterField,
+} from '@jetlinks-web-core/components/ConditionFilter'
+import PageHeader from '@jetlinks-web-core/components/PageHeader'
 import { useProjectRouter } from '@jetlinks-web-core/hooks/useProjectRouter'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
+import { prepareApplicationAccess } from '@jetlinks-web-core/utils/application-access'
+import ApplicationCreateDialog from './Create/index.vue'
 import ApplicationCard from './components/ApplicationCard.vue'
 import { useProjectApplication } from './useProjectApplication'
+import type { ProjectApplication } from './types'
 
 const { t: $t } = useI18n()
 const menuStore = useMenuStore()
 const { projectId } = useProjectRouter()
 const store = useProjectApplication()
 const loading = ref(false)
+const createOpen = ref(false)
+const filters = ref<ConditionFilterChangePayload['filter']>({ terms: [] })
+const updatingApplicationIds = ref<string[]>([])
+let refreshSequence = 0
+
+const statusOptions = computed(() => [
+  { label: $t('ProjectApplication.common.enabled'), value: 'enabled' },
+  { label: $t('ProjectApplication.common.disabled'), value: 'disabled' },
+])
+const filterFields = computed<ConditionFilterField[]>(() => [
+  {
+    title: $t('ProjectApplication.create.name'),
+    dataIndex: 'name',
+    search: {
+      type: 'string',
+      defaultTermType: 'like',
+      componentProps: {
+        placeholder: $t('ProjectApplication.list.searchPlaceholder'),
+      },
+    },
+  },
+  {
+    title: $t('ProjectApplication.detail.status'),
+    dataIndex: 'state',
+    search: {
+      type: 'select',
+      defaultTermType: 'eq',
+      options: statusOptions,
+      componentProps: {
+        placeholder: $t('ProjectApplication.list.allStatus'),
+      },
+    },
+  },
+])
+const hasFilters = computed(() => filters.value.terms.length > 0)
 
 const cardItems = computed(() => store.applications.map(application => ({
   application,
@@ -71,80 +142,98 @@ const cardItems = computed(() => store.applications.map(application => ({
   },
 })))
 
+// Project switches and filter changes can overlap; only the latest request controls page loading.
 const refresh = async () => {
+  const sequence = ++refreshSequence
   loading.value = true
   try {
-    await store.loadApplications(projectId.value || '', { keyword: '' })
+    await store.loadApplications(projectId.value || '', filters.value)
   } catch {
     // The shared request layer reports the backend error.
   } finally {
-    loading.value = false
+    if (sequence === refreshSequence) loading.value = false
   }
 }
 
-watch(projectId, () => void refresh(), { immediate: true })
+watch(projectId, () => {
+  void refresh()
+}, { immediate: true })
+
+const handleSearch = ({ filter }: ConditionFilterChangePayload) => {
+  filters.value = filter
+  if (projectId.value) void refresh()
+}
 
 onMounted(() => store.loadTemplates().catch(() => undefined))
 
-const openCreate = () => menuStore.jumpPage('application-center/ProjectApplication/Create', {})
 const openDetail = (id: string) => menuStore.jumpPage('application-center/ProjectApplication/Detail', { params: { id } })
+
+const toggleApplicationStatus = async (application: ProjectApplication) => {
+  if (updatingApplicationIds.value.includes(application.id)) return
+  const actionKey = application.status === 'enabled' ? 'disable' : 'enable'
+  const nextStatus = application.status === 'enabled' ? 'disabled' : 'enabled'
+  updatingApplicationIds.value = [...updatingApplicationIds.value, application.id]
+  try {
+    const updated = await store.updateApplication(application.id, { status: nextStatus })
+    if (updated) {
+      onlyMessage($t('ProjectApplication.detail.statusSuccess', {
+        action: $t(`ProjectApplication.common.${actionKey}`),
+        name: updated.name,
+      }))
+    }
+  } finally {
+    updatingApplicationIds.value = updatingApplicationIds.value.filter(id => id !== application.id)
+  }
+}
+
+const openApplication = (application: ProjectApplication) => {
+  const access = prepareApplicationAccess({
+    applicationId: application.id,
+    applicationName: application.name,
+    domain: application.domain,
+  })
+  if (!access.success) {
+    onlyMessage($t('ProjectApplication.detail.accessFailed'), 'warning')
+    return
+  }
+  window.open(access.url, '_blank', 'noopener,noreferrer')
+}
+
+const handleCreated = () => {
+  createOpen.value = false
+  void refresh()
+}
 </script>
 
 <style scoped>
 .project-application-page {
   min-height: 100%;
-  padding: var(--space-6);
+  padding: var(--space-4);
   background: var(--bg);
 }
 
-.page-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  margin-bottom: var(--space-6);
-}
-
-.page-heading__copy {
-  display: flex;
+.page-filters {
+  width: min(34rem, 46vw);
   min-width: 0;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.page-heading h1 {
-  margin: 0;
-  color: var(--ink-1);
-  font-size: var(--fs-h1);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.page-heading p {
-  margin: 0;
-  padding-left: var(--space-4);
-  border-left: var(--jet-theme-stroke-width) solid var(--line);
-  color: var(--ink-3);
 }
 
 .create-card {
   display: grid;
-  min-height: 18rem;
+  height: 13.75rem;
   place-items: center;
   align-content: center;
-  gap: var(--space-3);
-  border: var(--jet-theme-stroke-width) solid var(--card-shell-border);
+  gap: var(--space-2);
+  border: 1px dashed var(--line-strong);
   border-radius: var(--card-shell-radius);
   background: var(--bg);
-  color: var(--ink-1);
+  color: var(--ink-2);
   cursor: pointer;
-  box-shadow: var(--card-shell-shadow);
   transition: var(--card-shell-transition);
 }
 
 .create-card:hover {
-  border-color: var(--card-shell-border-hover);
-  box-shadow: var(--card-shell-shadow-hover);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .create-card:focus-visible {
@@ -153,19 +242,24 @@ const openDetail = (id: string) => menuStore.jumpPage('application-center/Projec
   outline: none;
 }
 
-.create-card :deep(.anticon) {
-  color: var(--accent);
-}
+.create-card :deep(svg) { width: var(--space-8); height: var(--space-8); }
 
-.create-card :deep(svg) {
-  width: var(--space-10);
-  height: var(--space-10);
+@media (max-width: 62rem) {
+  .application-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
 
 @media (max-width: 48rem) {
   .project-application-page { padding: var(--space-3); }
-  .page-heading { align-items: flex-start; gap: var(--space-3); }
-  .page-heading__copy { align-items: flex-start; flex-direction: column; gap: var(--space-1); }
-  .page-heading p { padding-left: 0; border-left: 0; }
+  .project-application-header :deep(.cloud-page-header__actions) {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .page-filters,
+  .create-application-button { width: 100%; }
+}
+
+@media (max-width: 40rem) {
+  .application-grid { grid-template-columns: 1fr !important; }
 }
 </style>

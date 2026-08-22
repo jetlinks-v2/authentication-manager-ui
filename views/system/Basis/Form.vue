@@ -92,7 +92,8 @@ import {reactive, ref} from 'vue'
 import type {formDataType} from './typing'
 import {useRequest} from '@jetlinks-web/hooks';
 import {save_api} from '../../../api/system/basis';
-import {normalizeLayoutMode, useSystemStore} from '@jetlinks-web-core/store/system';
+import {normalizeLayoutMode, useSystemStore, type LayoutMode} from '@jetlinks-web-core/store/system';
+import type { BasicLayoutVariant } from '@jetlinks-web-core/layout/runtime/layoutVariant'
 import Upload from '@jetlinks-web-core/views/init-home/Basic/components/upload/upload.vue'
 import LayoutModeSelector from './components/LayoutModeSelector.vue'
 import MapSettings from './components/MapSettings.vue'
@@ -102,6 +103,11 @@ import { useI18n } from 'vue-i18n';
 import { useHeaderTheme } from '@jetlinks-web-core/hooks';
 
 const { t: $t } = useI18n();
+const layoutVariantMap: Record<LayoutMode, BasicLayoutVariant> = {
+  top: 'tenant',
+  side: 'application',
+  mix: 'project',
+}
 const props = defineProps({
   hideSubmitBtn: {
     type: Boolean,
@@ -121,6 +127,7 @@ const formData = reactive<formDataType>({
   title: "",  // 系统名称
   headerTheme: "light",  // 主题色
   layout: "side", // 导航模式
+  layoutVariant: "application", // 隐藏布局壳层
   apiKey: "",  // 高德API Key
   webKey: "", // 高德web key
   secretKey: "", // 高德web key
@@ -176,11 +183,13 @@ const changeHeaderTheme = createHeaderThemeChange(formData)
 const getDetails = async () => {
   await system.queryInfo()
   const configInfo = system.systemInfo;
+  const layout = normalizeLayoutMode(configInfo.front?.layout)
 
   Object.assign(formData, {
     title: configInfo.front?.title,
     headerTheme: normalizeHeaderTheme(configInfo.front?.headerTheme),
-    layout: normalizeLayoutMode(configInfo.front?.layout),
+    layout,
+    layoutVariant: layoutVariantMap[layout],
     logo: configInfo.front?.logo || 'logo.png',
     ico: configInfo.front?.ico || 'favicon.ico',
     showRecordNumber: configInfo.front?.showRecordNumber || false,
@@ -213,6 +222,8 @@ const {run} = useRequest(save_api, {
 const submit = () => {
   return new Promise((resolve, reject) => {
     formRef.value.validate().then(() => {
+      // layoutVariant 不单独展示，提交时始终与用户选择的导航模式保持一致。
+      formData.layoutVariant = layoutVariantMap[formData.layout]
       const params = [
         {
           scope: 'front',
