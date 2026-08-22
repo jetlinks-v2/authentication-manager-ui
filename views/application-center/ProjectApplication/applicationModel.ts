@@ -98,6 +98,7 @@ export const normalizeTemplate = (
     statusText: enumText(entity.state, status),
     sortIndex: Number(entity.sortIndex || 0),
     layoutVariant: normalizeTemplateLayoutVariant(entity.layoutVariant),
+      layout: entity.layout,
     disabled: status !== 'enabled',
   }
 }

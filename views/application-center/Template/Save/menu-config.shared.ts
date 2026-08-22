@@ -280,8 +280,6 @@ const flattenMenus = (menus: MenuPermissionNode[] = []) => {
   return result
 }
 
-const menuCodeOf = (menu: MenuPermissionNode) => String(menu.code || '').trim()
-
 const assetScopeFields = [
   'assetType',
   'assetTypes',
@@ -394,18 +392,19 @@ const buildMenuTreeByParentId = (menus: MenuPermissionNode[] = []) => {
   return roots
 }
 
-export const filterMenuTreeByRuntimeCodes = (
-  menus: MenuPermissionNode[] = [],
+export const filterApplicationMenuTreeByRuntimeIds = (
+  templateMenus: MenuPermissionNode[] = [],
   runtimeMenus: MenuPermissionNode[] = [],
 ) => {
   const runtimeMenuMap = new Map<string, MenuPermissionNode>()
   flattenMenusForRuntimeFilter(runtimeMenus).forEach(menu => {
-    const code = menuCodeOf(menu)
-    if (code) runtimeMenuMap.set(code, menu)
+    const id = String(menu.id || '').trim()
+    // 临时忽略 owner，待运行时菜单归属与模板数据统一后再恢复应用端范围过滤。
+    if (id) runtimeMenuMap.set(id, menu)
   })
-  const filteredMenus = flattenMenusForRuntimeFilter(menus)
+  const filteredMenus = flattenMenusForRuntimeFilter(templateMenus)
     .map(menu => {
-      const runtimeMenu = runtimeMenuMap.get(menuCodeOf(menu))
+      const runtimeMenu = runtimeMenuMap.get(String(menu.id || '').trim())
       if (!runtimeMenu) return undefined
       // 菜单集合来自模板，资产范围必须降到当前项目菜单，避免应用角色授出模板侧高权限范围。
       return withProjectMenuAssetScope(menu, runtimeMenu)

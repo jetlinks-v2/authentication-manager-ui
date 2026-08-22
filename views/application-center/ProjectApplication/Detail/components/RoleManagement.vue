@@ -103,9 +103,9 @@ import { getAssetsType as queryAssetTypes } from '@authentication-manager-ui/api
 import { getApplicationTemplateMenus } from '@authentication-manager-ui/api/application-center/applicationTemplate'
 import {
   filterAssetAccessPoliciesByMenuScope,
+  filterApplicationMenuTreeByRuntimeIds,
   filterApplicationMenuInterfacePermissions,
   filterGrantedMenuAssetAccessesByMenuScope,
-  filterMenuTreeByRuntimeCodes,
   normalizeAssetTypeNames,
   normalizeCandidateMenus,
   normalizeGrantedMenus,
@@ -184,7 +184,7 @@ const loadPermissions = async () => {
     const candidateTemplateMenus = filterApplicationMenuInterfacePermissions(
       Array.isArray(templateDetail.menus) ? templateDetail.menus : [],
     )
-    const filteredTemplateMenus = filterMenuTreeByRuntimeCodes(
+    const filteredTemplateMenus = filterApplicationMenuTreeByRuntimeIds(
       candidateTemplateMenus,
       Array.isArray(menuStore.menuResultCache) ? menuStore.menuResultCache : [],
     )
