@@ -118,12 +118,15 @@ export const useProjectApplication = () => {
   }
 
   const createApplication = async (projectId: string, draft: ProjectApplicationDraft) => {
+    const template = templates.find(item => item.id === draft.templateId)
     const response = await createBusinessApplication({
       templateId: draft.templateId,
       name: draft.name,
       icon: draft.icon,
       description: draft.description,
       configuration: {
+        // 布局配置在创建应用时形成模板快照，模板后续变更不反向影响已有应用。
+        layoutVariant: template?.layoutVariant || 'application',
         defaultLanguage: 'zh-CN',
         timezone: 'Asia/Shanghai',
         customDomain: '',

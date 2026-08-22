@@ -1,5 +1,6 @@
 import { request } from '@jetlinks-web/core'
 import type { AxiosResponseRewrite } from '@jetlinks-web/types'
+import type { BasicLayoutVariant } from '@jetlinks-web-core/layout/runtime/layoutVariant'
 
 type RequestConfig = Record<string, unknown>
 
@@ -23,6 +24,7 @@ export interface BusinessApplicationConfiguration {
   defaultLanguage?: string
   customDomain?: string
   timezone?: string
+  layoutVariant?: BasicLayoutVariant
   [key: string]: unknown
 }
 
@@ -45,6 +47,7 @@ export interface BusinessApplicationTemplateEntity {
   code: string
   icon?: string
   description?: string
+  layoutVariant?: BasicLayoutVariant
   state?: string | EnumValue
   sortIndex?: number
 }

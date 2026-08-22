@@ -87,6 +87,7 @@ const handleOk = async () => {
     const response = await createApplicationTemplate({
       name: formData.name,
       code: formData.code,
+      layoutVariant: 'application',
       state: 'enabled',
     })
     const saved = response?.result ?? response
