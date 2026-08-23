@@ -364,7 +364,7 @@ export const filterGrantedMenuAssetAccessesByMenuScope = (
   return visit(menus)
 }
 
-const flattenMenusForRuntimeFilter = (menus: MenuPermissionNode[] = []) => {
+const flattenMenusForSourceFilter = (menus: MenuPermissionNode[] = []) => {
   const result: MenuPermissionNode[] = []
   const visit = (items: MenuPermissionNode[], parentId?: string) => items.forEach(item => {
     result.push({
@@ -392,22 +392,22 @@ const buildMenuTreeByParentId = (menus: MenuPermissionNode[] = []) => {
   return roots
 }
 
-export const filterApplicationMenuTreeByRuntimeIds = (
+export const filterApplicationMenuTreeBySourceIds = (
   templateMenus: MenuPermissionNode[] = [],
-  runtimeMenus: MenuPermissionNode[] = [],
+  sourceMenus: MenuPermissionNode[] = [],
 ) => {
-  const runtimeMenuMap = new Map<string, MenuPermissionNode>()
-  flattenMenusForRuntimeFilter(runtimeMenus).forEach(menu => {
+  const sourceMenuMap = new Map<string, MenuPermissionNode>()
+  flattenMenusForSourceFilter(sourceMenus).forEach(menu => {
     const id = String(menu.id || '').trim()
-    // 临时忽略 owner，待运行时菜单归属与模板数据统一后再恢复应用端范围过滤。
-    if (id) runtimeMenuMap.set(id, menu)
+    // 临时忽略 owner，待用户菜单归属与模板数据统一后再恢复应用端范围过滤。
+    if (id) sourceMenuMap.set(id, menu)
   })
-  const filteredMenus = flattenMenusForRuntimeFilter(templateMenus)
+  const filteredMenus = flattenMenusForSourceFilter(templateMenus)
     .map(menu => {
-      const runtimeMenu = runtimeMenuMap.get(String(menu.id || '').trim())
-      if (!runtimeMenu) return undefined
+      const sourceMenu = sourceMenuMap.get(String(menu.id || '').trim())
+      if (!sourceMenu) return undefined
       // 菜单集合来自模板，资产范围必须降到当前项目菜单，避免应用角色授出模板侧高权限范围。
-      return withProjectMenuAssetScope(menu, runtimeMenu)
+      return withProjectMenuAssetScope(menu, sourceMenu)
     })
     .filter((menu): menu is MenuPermissionNode => !!menu)
   return buildMenuTreeByParentId(filteredMenus)

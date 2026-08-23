@@ -93,17 +93,19 @@ import { onlyMessage } from '@jetlinks-web/utils'
 import { MenuAssetPermissionEditor } from '@jetlinks-web-core/components'
 import { useMenuAssetPermissionEditor } from '@jetlinks-web-core/hooks'
 import type { AssetAccessPolicy, AssetTypeName, MenuPermissionNode } from '@jetlinks-web-core/hooks'
-import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
 import {
   getPermissionDetail_api as getRolePermissionDetail,
   updatePermissionTree_api as saveRolePermission,
 } from '@authentication-manager-ui/api/system/role'
 import { getAssetsType as queryAssetTypes } from '@authentication-manager-ui/api/system/menu'
-import { getApplicationTemplateMenus } from '@authentication-manager-ui/api/application-center/applicationTemplate'
+import {
+  getApplicationTemplateMenus,
+  getCurrentUserMenuTree,
+} from '@authentication-manager-ui/api/application-center/applicationTemplate'
 import {
   filterAssetAccessPoliciesByMenuScope,
-  filterApplicationMenuTreeByRuntimeIds,
+  filterApplicationMenuTreeBySourceIds,
   filterApplicationMenuInterfacePermissions,
   filterGrantedMenuAssetAccessesByMenuScope,
   normalizeAssetTypeNames,
@@ -125,7 +127,6 @@ const props = defineProps({
 })
 const emits = defineEmits(['save-role', 'delete-role'])
 const { t: $t } = useI18n()
-const menuStore = useMenuStore()
 const activeRoleId = ref('')
 const roleModalOpen = ref(false)
 const editingRoleId = ref<string>()
@@ -165,15 +166,16 @@ const loadAssetTypes = async (): Promise<AssetTypeName[]> => {
 
 const loadPermissions = async () => {
   const sequence = ++loadSequence
-  if (!activeRoleId.value || !props.templateId || !menuStore.initialized) {
+  if (!activeRoleId.value || !props.templateId) {
     clearPermissions()
     return
   }
   initialized.value = false
   permissionLoading.value = true
   try {
-    const [templateResponse, detailResponse, assetTypes] = await Promise.all([
+    const [templateResponse, menuResponse, detailResponse, assetTypes] = await Promise.all([
       getApplicationTemplateMenus(props.templateId),
+      getCurrentUserMenuTree({ paging: false }),
       getRolePermissionDetail(activeRoleId.value),
       loadAssetTypes(),
     ])
@@ -184,9 +186,12 @@ const loadPermissions = async () => {
     const candidateTemplateMenus = filterApplicationMenuInterfacePermissions(
       Array.isArray(templateDetail.menus) ? templateDetail.menus : [],
     )
-    const filteredTemplateMenus = filterApplicationMenuTreeByRuntimeIds(
+    const currentUserMenus = filterApplicationMenuInterfacePermissions(
+      assertSuccess<MenuPermissionNode[]>(menuResponse, []),
+    )
+    const filteredTemplateMenus = filterApplicationMenuTreeBySourceIds(
       candidateTemplateMenus,
-      Array.isArray(menuStore.menuResultCache) ? menuStore.menuResultCache : [],
+      currentUserMenus,
     )
     const templateMenus = normalizeCandidateMenus(filteredTemplateMenus)
     const candidateRoleMenus = filterApplicationMenuInterfacePermissions(
@@ -223,8 +228,6 @@ watch(() => props.roles, roles => {
 watch([
   activeRoleId,
   () => props.templateId,
-  () => menuStore.initialized,
-  () => menuStore.menuResultCache,
 ], loadPermissions, { immediate: true, deep: true })
 
 const savePermissions = async () => {
