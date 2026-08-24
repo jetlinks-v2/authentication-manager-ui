@@ -34,6 +34,26 @@
     </div>
 
     <div class="summary-actions">
+      <div v-if="showSettingsActions" class="summary-settings-actions">
+        <a-space v-if="settingsEditing">
+          <a-button :disabled="settingsSaving || deleting" @click="emits('cancel-settings')">
+            {{ $t('ProjectApplication.common.cancel') }}
+          </a-button>
+          <a-button
+            type="primary"
+            :disabled="deleting"
+            :loading="settingsSaving"
+            @click="emits('save-settings')"
+          >
+            <template #icon><AIcon type="CheckOutlined" /></template>
+            {{ $t('ProjectApplication.common.save') }}
+          </a-button>
+        </a-space>
+        <a-button v-else :disabled="deleting" @click="emits('edit-settings')">
+          <template #icon><AIcon type="EditOutlined" /></template>
+          {{ $t('ProjectApplication.common.edit') }}
+        </a-button>
+      </div>
       <a-popconfirm :title="deleteConfirmText" @confirm="emits('delete')">
         <a-button danger :loading="deleting">
           <template #icon><AIcon type="DeleteOutlined" /></template>
@@ -73,12 +93,27 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  settingsEditing: {
+    type: Boolean,
+    default: false,
+  },
+  settingsSaving: {
+    type: Boolean,
+    default: false,
+  },
+  showSettingsActions: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emits = defineEmits<{
   back: []
+  'cancel-settings': []
   delete: []
+  'edit-settings': []
   'toggle-status': []
+  'save-settings': []
   open: []
 }>()
 const { t: $t } = useI18n()
@@ -146,6 +181,11 @@ const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(ico
   gap: var(--space-2);
   padding-left: var(--space-3);
   border-left: 1px solid var(--line);
+}
+
+.summary-settings-actions {
+  display: flex;
+  align-items: center;
 }
 
 @media (max-width: 48rem) {

@@ -1,99 +1,84 @@
 <template>
-    <template>
-        <a-space v-if="editingModel">
-            <a-button :disabled="saving" @click="cancelEdit">
-                {{ $t('ProjectApplication.common.cancel') }}
-            </a-button>
-            <a-button type="primary" :loading="saving" @click="saveSettings">
-                <template #icon><AIcon type="CheckOutlined" /></template>
-                {{ $t('ProjectApplication.common.save') }}
-            </a-button>
-        </a-space>
-        <a-button v-else @click="startEdit">
-            <template #icon><AIcon type="EditOutlined" /></template>
-            {{ $t('ProjectApplication.common.edit') }}
-        </a-button>
-    </template>
-
     <a-form ref="formRef" :model="draft" :rules="rules">
-        <div class="settings-list">
-            <div class="setting-row setting-row--icon">
-                <div class="setting-label">{{ $t('ProjectApplication.settings.icon') }}</div>
-                <div v-if="editingModel" class="icon-edit">
-                    <div class="application-icon-upload">
-                        <ImageUpload
-                            v-model:value="draft.icon"
-                            accept="image/png,image/jpeg"
-                            :types="iconTypes"
-                            :border-style="iconUploadBorderStyle"
-                            :cropper-props="iconCropperProps"
-                        />
-                    </div>
-                    <span>{{ $t('ProjectApplication.settings.iconEditHint') }}</span>
-                </div>
-                <div v-else class="application-icon">
-                    <img v-if="isImageIcon(visibleIcon)" :src="visibleIcon" :alt="application.name" />
-                    <AIcon v-else :type="visibleIcon || 'AppstoreOutlined'" />
-                </div>
+      <div class="settings-list">
+        <div class="setting-row setting-row--icon">
+          <div class="setting-label">{{ $t('ProjectApplication.settings.icon') }}</div>
+          <div v-if="editingModel" class="icon-edit">
+            <div class="application-icon-upload">
+              <ImageUpload
+                v-model:value="draft.icon"
+                accept="image/png,image/jpeg"
+                :types="iconTypes"
+                :border-style="iconUploadBorderStyle"
+                :style="iconUploadContentStyle"
+                :cropper-props="iconCropperProps"
+              />
             </div>
-
-            <div class="setting-row">
-                <div class="setting-label" :class="{ required: editingModel }">
-                    {{ $t('ProjectApplication.create.name') }}
-                </div>
-                <a-form-item v-if="editingModel" class="setting-form-item" name="name">
-                    <a-input
-                        v-model:value="draft.name"
-                        class="setting-control"
-                        :maxlength="30"
-                        show-count
-                        :placeholder="$t('ProjectApplication.create.namePlaceholder')"
-                    />
-                </a-form-item>
-                <div v-else class="setting-value">{{ application.name }}</div>
-            </div>
-
-            <div class="setting-row align-start">
-                <div class="setting-label">{{ $t('ProjectApplication.create.descriptionLabel') }}</div>
-                <a-form-item v-if="editingModel" class="setting-form-item" name="description">
-                    <a-textarea
-                        v-model:value="draft.description"
-                        class="setting-control"
-                        :maxlength="100"
-                        show-count
-                        :rows="3"
-                        :placeholder="$t('ProjectApplication.create.descriptionPlaceholder')"
-                    />
-                </a-form-item>
-                <div v-else class="setting-value setting-description">
-                    {{ application.description || '--' }}
-                </div>
-            </div>
-
-            <div class="setting-row">
-                <div class="setting-label">{{ $t('ProjectApplication.settings.language') }}</div>
-                <a-select
-                    v-if="editingModel"
-                    v-model:value="draft.defaultLanguage"
-                    class="setting-select"
-                    :options="languageOptions"
-                />
-                <div v-else class="setting-value">{{ languageDisplayValue }}</div>
-            </div>
-
-            <div class="setting-row">
-                <div class="setting-label">{{ $t('ProjectApplication.settings.link') }}</div>
-                <div class="setting-link">
-                    <code>{{ domainDisplayValue }}</code>
-                    <a-tooltip :title="$t('ProjectApplication.settings.copy')">
-                        <a-button size="small" @click="copyApplicationUrl">
-                            <template #icon><AIcon type="CopyOutlined" /></template>
-                            {{ $t('ProjectApplication.settings.copy') }}
-                        </a-button>
-                    </a-tooltip>
-                </div>
-            </div>
+            <span>{{ $t('ProjectApplication.settings.iconEditHint') }}</span>
+          </div>
+          <div v-else class="application-icon">
+            <img v-if="isImageIcon(visibleIcon)" :src="visibleIcon" :alt="application.name" />
+            <AIcon v-else :type="visibleIcon || 'AppstoreOutlined'" />
+          </div>
         </div>
+
+        <div class="setting-row">
+          <div class="setting-label" :class="{ required: editingModel }">
+            {{ $t('ProjectApplication.create.name') }}
+          </div>
+          <a-form-item v-if="editingModel" class="setting-form-item" name="name">
+            <a-input
+              v-model:value="draft.name"
+              class="setting-control"
+              :maxlength="30"
+              show-count
+              :placeholder="$t('ProjectApplication.create.namePlaceholder')"
+            />
+          </a-form-item>
+          <div v-else class="setting-value">{{ application.name }}</div>
+        </div>
+
+        <div class="setting-row align-start">
+          <div class="setting-label">{{ $t('ProjectApplication.create.descriptionLabel') }}</div>
+          <a-form-item v-if="editingModel" class="setting-form-item" name="description">
+            <a-textarea
+              v-model:value="draft.description"
+              class="setting-control"
+              :maxlength="100"
+              show-count
+              :rows="3"
+              :placeholder="$t('ProjectApplication.create.descriptionPlaceholder')"
+            />
+          </a-form-item>
+          <div v-else class="setting-value setting-description">
+            {{ application.description || '--' }}
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">{{ $t('ProjectApplication.settings.language') }}</div>
+          <a-select
+            v-if="editingModel"
+            v-model:value="draft.defaultLanguage"
+            class="setting-select"
+            :options="languageOptions"
+          />
+          <div v-else class="setting-value">{{ languageDisplayValue }}</div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">{{ $t('ProjectApplication.settings.link') }}</div>
+          <div class="setting-link">
+            <code>{{ domainDisplayValue }}</code>
+            <a-tooltip :title="$t('ProjectApplication.settings.copy')">
+              <a-button size="small" @click="copyApplicationUrl">
+                <template #icon><AIcon type="CopyOutlined" /></template>
+                {{ $t('ProjectApplication.settings.copy') }}
+              </a-button>
+            </a-tooltip>
+          </div>
+        </div>
+      </div>
     </a-form>
 </template>
 
@@ -140,6 +125,10 @@ const iconTypes = ['image/jpeg', 'image/png']
 const iconUploadBorderStyle = {
   border: '1px dashed var(--line-strong)',
   borderRadius: 'var(--r-2)',
+}
+const iconUploadContentStyle = {
+  padding: 0,
+  backgroundColor: 'var(--bg-sunken)',
 }
 const iconCropperProps = { fixedNumber: [1, 1], autoCropWidth: 256, autoCropHeight: 256 }
 
@@ -212,13 +201,16 @@ const copyApplicationUrl = async () => {
 }
 
 const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(icon) || icon.includes('.'))
+
+defineExpose({
+  startEdit,
+  cancelEdit,
+  saveSettings,
+})
 </script>
 
 <style scoped>
-.application-settings :deep(.section-head) { align-items: center; }
-.application-settings :deep(.section-title) { margin-bottom: 0; }
-.application-settings :deep(.section-title .ic),
-.application-settings :deep(.section-sub) { display: none; }
+.application-settings :deep(.section-head) { display: none; }
 .settings-list { display: flex; flex-direction: column; }
 
 .setting-row { display: grid; min-height: 4rem; grid-template-columns: 6.5rem minmax(0, 1fr); align-items: center; gap: var(--space-4); padding: var(--space-3) 0; border-bottom: 1px solid var(--line); }
@@ -237,6 +229,18 @@ const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(ico
 .application-icon-upload { display: grid; width: 3.5rem; height: 3.5rem; place-items: center; overflow: hidden; border-radius: var(--r-2); background: var(--bg-sunken); color: var(--accent); font-size: var(--fs-20); }
 
 .application-icon img { width: 100%; height: 100%; object-fit: cover; }
+.application-icon-upload :deep(.ant-upload-wrapper),
+.application-icon-upload :deep(.ant-upload.ant-upload-select) {
+  display: block;
+  margin: 0;
+  border: 0;
+  background: transparent;
+}
+.application-icon-upload :deep(.upload-image-content),
+.application-icon-upload :deep(.upload-image) {
+  border-radius: var(--r-2);
+}
+.application-icon-upload :deep(.upload-image) { object-fit: cover; }
 .icon-edit { display: flex; align-items: center; gap: var(--space-3); }
 .icon-edit > span { color: var(--ink-4); font-size: var(--fs-12); }
 

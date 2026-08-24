@@ -3150,7 +3150,43 @@
           "value": "support"
         },
         "supportDataAccess": true,
-        "assetTypes": ["business_application"]
+        "assetTypes": ["business_application"],
+          "options": {
+              "meta": {
+                  "disabled": true,
+                  "menuBadge": {
+                      "type": "comingSoon",
+                      "i18nKey": "layout.menuBadge.comingSoon"
+                  }
+              }
+          }
+      },
+      {
+        "code": "application-center/MobileApplication",
+        "name": "移动端应用",
+        "owner": "cloud",
+        "i18nMessages": {
+          "name": {
+            "zh_CN": "移动端应用",
+            "en_US": "Mobile Applications",
+            "en": "Mobile Applications"
+          }
+        },
+        "id": "a21b71d0b8c34c359064e75f571da6e1",
+        "url": "/open/mobile-application",
+        "icon": "MobileOutlined",
+        "sortIndex": 4,
+        "options": {
+          "meta": {
+            "disabled": true,
+            "menuBadge": {
+              "type": "comingSoon",
+              "i18nKey": "layout.menuBadge.comingSoon"
+            }
+          }
+        },
+        "permissions": [],
+        "buttons": []
       }
     ]
   }

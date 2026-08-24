@@ -6,8 +6,14 @@
         <ApplicationSummary
           :data="{ application, template }"
           :deleting="deleting"
+          :settings-editing="settingsEditing"
+          :settings-saving="settingsSaving"
+          :show-settings-actions="activeTab === 'settings'"
           @back="backToList"
+          @cancel-settings="cancelSettings"
           @delete="deleteApplication"
+          @edit-settings="editSettings"
+          @save-settings="saveSettings"
           @toggle-status="toggleStatus"
           @open="openApplication"
         />
@@ -15,6 +21,7 @@
         <a-tabs v-model:active-key="activeTab" class="detail-tabs">
           <a-tab-pane key="settings" :tab="$t('ProjectApplication.detail.tab.settings')">
             <ApplicationSettings
+              ref="settingsRef"
               v-model:editing="settingsEditing"
               :data="{ application, template }"
               :saving="settingsSaving"
@@ -76,6 +83,7 @@ const activeTab = ref('settings')
 const loading = ref(false)
 const settingsEditing = ref(false)
 const settingsSaving = ref(false)
+const settingsRef = ref<InstanceType<typeof ApplicationSettings>>()
 const deleting = ref(false)
 
 const applicationId = computed(() => String(route.params.id || ''))
@@ -138,6 +146,18 @@ const deleteApplication = async () => {
   } finally {
     deleting.value = false
   }
+}
+
+const editSettings = () => {
+  settingsRef.value?.startEdit()
+}
+
+const cancelSettings = () => {
+  settingsRef.value?.cancelEdit()
+}
+
+const saveSettings = () => {
+  settingsRef.value?.saveSettings()
 }
 
 const updateSettings = async (patch: Partial<ProjectApplication>) => {
