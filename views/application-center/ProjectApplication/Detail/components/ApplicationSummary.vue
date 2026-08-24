@@ -27,7 +27,7 @@
         </MetaChip>
         <AppTag>{{ data.template.name }}</AppTag>
       </div>
-      <p class="summary-description">{{ data.application.description || '--' }}</p>
+      <p class="summary-description">{{ data.application.description || data.template.description || "--" }}</p>
       <div class="meta-row">
         <span><AIcon type="ClockCircleOutlined" />{{ $t('ProjectApplication.list.createdAt', { time: data.application.createdAt }) }}</span>
       </div>

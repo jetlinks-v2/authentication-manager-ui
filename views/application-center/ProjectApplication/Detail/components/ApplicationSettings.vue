@@ -51,7 +51,7 @@
             />
           </a-form-item>
           <div v-else class="setting-value setting-description">
-            {{ application.description || '--' }}
+            {{ application.description || template.description || '--' }}
           </div>
         </div>
 
@@ -158,7 +158,7 @@ const rules = computed(() => ({
 const resetDraft = () => {
   draft.icon = application.value.icon
   draft.name = application.value.name
-  draft.description = application.value.description
+  draft.description = application.value.description || template.value.description
   draft.defaultLanguage = application.value.defaultLanguage
   formRef.value?.clearValidate()
 }
