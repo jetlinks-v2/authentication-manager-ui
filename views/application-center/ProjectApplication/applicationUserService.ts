@@ -1,12 +1,13 @@
 import {
-  createBusinessApplicationUser,
+  bindBusinessApplicationUsers,
   queryBusinessApplicationUsers,
   queryUserDetails,
   updateBusinessApplicationUser,
+  type PagerResult,
   type UserDetailEntity,
 } from '@authentication-manager-ui/api/application-center/businessApplication'
-import { listOf } from './applicationModel'
-import type { ApplicationUser, ApplicationUserDraft } from './types'
+import { listOf, resultOf } from './applicationModel'
+import type { ApplicationUser } from './types'
 
 /**
  * The dimension query only returns membership rows plus basic user fields. Hydrate them
@@ -28,23 +29,54 @@ export const loadBusinessApplicationUsers = async (applicationId: string) => {
   return members.map(member => ({ ...member, ...detailById.get(member.id) }))
 }
 
-export const createUserForBusinessApplication = async (
-  applicationId: string,
-  draft: ApplicationUserDraft,
+export interface ProjectApplicationUserQuery {
+  pageIndex?: number
+  pageSize?: number
+  terms?: Array<Record<string, unknown>>
+  sorts?: Array<Record<string, unknown>>
+}
+
+export const loadProjectApplicationUserCandidates = async (
+  excludedUserIds: string[],
+  query: ProjectApplicationUserQuery,
 ) => {
-  // New users created from the application workspace must be bound to that application in the same create request.
-  await createBusinessApplicationUser({
-    user: {
-      name: draft.name,
-      username: draft.username,
-      password: draft.password,
-      telephone: draft.phone,
-      email: draft.email,
-      status: 1,
-    },
-    roleIdList: [draft.roleId],
-    businessApplicationIdList: [applicationId],
+  const pageIndex = Number(query.pageIndex ?? 0)
+  const pageSize = Number(query.pageSize ?? 10)
+  const response = await queryUserDetails({
+    ...query,
+    pageIndex,
+    pageSize,
+    sorts: query.sorts || [{ name: 'createTime', order: 'desc' }],
+    terms: [
+      ...(query.terms || []),
+      // Filter bound members before pagination so the picker never offers an existing application member.
+      ...(excludedUserIds.length
+        ? [{ column: 'id', termType: 'nin', value: [...excludedUserIds] }]
+        : []),
+    ],
   })
+  const result = resultOf<PagerResult<UserDetailEntity>>(response)
+  const users = result?.data || []
+  return {
+    success: true,
+    result: {
+      data: users.map(user => ({
+        ...user,
+        name: user.name || user.username || user.id,
+        username: user.username || user.id,
+      })),
+      total: Number(result?.total ?? 0),
+      pageIndex: Number(result?.pageIndex ?? pageIndex),
+      pageSize: Number(result?.pageSize ?? pageSize),
+    },
+  }
+}
+
+export const bindProjectUsersToBusinessApplication = async (
+  applicationId: string,
+  userIds: string[],
+) => {
+  await bindBusinessApplicationUsers(applicationId, userIds)
 }
 
 export const updateBoundBusinessApplicationUser = async (

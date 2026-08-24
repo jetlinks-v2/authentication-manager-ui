@@ -94,6 +94,7 @@ export const normalizeTemplate = (
     code: entity.code,
     icon: entity.icon,
     description: entity.description || '',
+    templateUrl: textOf(entity.templateUrl).trim(),
     status,
     statusText: enumText(entity.state, status),
     sortIndex: Number(entity.sortIndex || 0),

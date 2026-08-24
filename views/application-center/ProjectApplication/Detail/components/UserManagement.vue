@@ -1,16 +1,14 @@
 <template>
   <section class="user-management">
     <header class="user-heading">
-      <h2>{{ $t('ProjectApplication.user.title') }}</h2>
+        <a-input v-model:value="keyword" allow-clear class="user-search" :placeholder="$t('ProjectApplication.user.searchPlaceholder')">
+            <template #prefix><AIcon type="SearchOutlined" /></template>
+        </a-input>
       <a-button type="primary" @click="createOpen = true">
         <template #icon><AIcon type="UserAddOutlined" /></template>
         {{ $t('ProjectApplication.user.add') }}
       </a-button>
     </header>
-
-    <a-input v-model:value="keyword" allow-clear class="user-search" :placeholder="$t('ProjectApplication.user.searchPlaceholder')">
-      <template #prefix><AIcon type="SearchOutlined" /></template>
-    </a-input>
 
     <a-table
       v-if="filteredUsers.length"
@@ -60,7 +58,7 @@
 
     <UserCreateModal
       v-model:open="createOpen"
-      :roles="data.roles"
+      :bound-user-ids="boundUserIds"
       @confirm="emits('add', $event)"
     />
 
@@ -72,7 +70,7 @@ import type { PropType } from 'vue'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UserCreateModal from './UserCreateModal.vue'
-import type { ApplicationRole, ApplicationUser, ApplicationUserDraft } from '../../types'
+import type { ApplicationRole, ApplicationUser } from '../../types'
 
 interface UserManagementData {
   users: ApplicationUser[]
@@ -87,12 +85,13 @@ const props = defineProps({
 })
 
 const emits = defineEmits<{
-  (e: 'add', draft: ApplicationUserDraft): void
+  (e: 'add', userIds: string[]): void
   (e: 'update', user: ApplicationUser, patch: Partial<ApplicationUser>): void
 }>()
 const { t: $t } = useI18n()
 const keyword = ref('')
 const createOpen = ref(false)
+const boundUserIds = computed(() => props.data.users.map(user => user.id))
 
 const columns = computed(() => [
   { title: $t('ProjectApplication.user.user'), key: 'user', width: '11rem', fixed: 'left' as const },

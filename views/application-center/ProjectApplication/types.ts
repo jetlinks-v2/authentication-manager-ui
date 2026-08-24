@@ -9,6 +9,7 @@ export interface ApplicationTemplate {
   name: string
   code: string
   description: string
+  templateUrl?: string
   icon?: string
   status: ApplicationStatus
   statusText: string
@@ -81,16 +82,6 @@ export interface ApplicationUser {
   orgIds: string[]
   positionIds: string[]
   enabled: boolean
-}
-
-export interface ApplicationUserDraft {
-  name: string
-  username: string
-  phone: string
-  email: string
-  roleId: string
-  password: string
-  confirmPassword: string
 }
 
 export interface ApplicationRole {

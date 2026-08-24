@@ -24,7 +24,7 @@ import {
   resultOf,
 } from './applicationModel'
 import {
-  createUserForBusinessApplication,
+  bindProjectUsersToBusinessApplication,
   loadBusinessApplicationUsers,
   updateBoundBusinessApplicationUser,
 } from './applicationUserService'
@@ -39,7 +39,6 @@ import type {
   ApplicationRoleDraft,
   ApplicationTemplate,
   ApplicationUser,
-  ApplicationUserDraft,
   ProjectApplication,
   ProjectApplicationDraft,
 } from './types'
@@ -211,8 +210,8 @@ export const useProjectApplication = () => {
     return details[applicationId]
   }
 
-  const addUser = async (applicationId: string, draft: ApplicationUserDraft) => {
-    await createUserForBusinessApplication(applicationId, draft)
+  const addUsers = async (applicationId: string, userIds: string[]) => {
+    await bindProjectUsersToBusinessApplication(applicationId, userIds)
     await loadUsers(applicationId)
   }
 
@@ -254,7 +253,7 @@ export const useProjectApplication = () => {
     updateApplication,
     removeApplication,
     loadDetail,
-    addUser,
+    addUsers,
     updateUser,
     saveRole,
     removeRole,

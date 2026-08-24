@@ -47,6 +47,7 @@ export interface BusinessApplicationTemplateEntity {
   code: string
   icon?: string
   description?: string
+  templateUrl?: string
   layoutVariant?: BasicLayoutVariant
   state?: string | EnumValue
   sortIndex?: number
@@ -220,6 +221,9 @@ export const queryBusinessApplicationUsers = (
   `/user/detail/business_application/${applicationId}/_query`,
   data,
 )
+
+export const bindBusinessApplicationUsers = (applicationId: string, userIds: string[]) =>
+  apiRequest.post<void>(`/business-application/${applicationId}/users/_bind`, userIds)
 
 export const queryUserDetails = (data: QueryPayload) =>
   apiRequest.post<PagerResult<UserDetailEntity>>('/user/detail/_query', data)

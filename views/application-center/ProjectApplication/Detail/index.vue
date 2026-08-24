@@ -24,7 +24,7 @@
           <a-tab-pane key="users" :tab="$t('ProjectApplication.detail.tab.users')">
             <UserManagement
               :data="{ users: detail.users, roles: detail.roles }"
-              @add="addUser"
+              @add="addUsers"
               @update="updateUser"
             />
           </a-tab-pane>
@@ -65,7 +65,6 @@ import { useProjectApplication } from '../useProjectApplication'
 import type {
   ApplicationRoleDraft,
   ApplicationUser,
-  ApplicationUserDraft,
   ProjectApplication,
 } from '../types'
 
@@ -153,9 +152,9 @@ const updateSettings = async (patch: Partial<ProjectApplication>) => {
   }
 }
 
-const addUser = async (draft: ApplicationUserDraft) => {
-  await store.addUser(applicationId.value, draft)
-  onlyMessage($t('ProjectApplication.user.addSuccess', { name: draft.name }))
+const addUsers = async (userIds: string[]) => {
+  await store.addUsers(applicationId.value, userIds)
+  onlyMessage($t('ProjectApplication.user.bindSuccess', { count: userIds.length }))
 }
 
 const updateUser = async (user: ApplicationUser, patch: Partial<ApplicationUser>) => {

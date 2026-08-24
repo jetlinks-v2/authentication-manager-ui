@@ -8,6 +8,7 @@
         :saving="detailState.saving.value"
         @update-name="detailState.updateName"
         @update-description="detailState.updateDescription"
+        @update-template-url="detailState.updateTemplateUrl"
         @update-icon="detailState.updateIcon"
         @toggle-state="detailState.toggleState"
       />
@@ -74,6 +75,7 @@ const detailState = useApplicationTemplateDetail(
     nameRequired: $t('ApplicationTemplate.message.nameRequired'),
     nameMaxLength: $t('ApplicationTemplate.message.nameMaxLength'),
     descriptionMaxLength: $t('ApplicationTemplate.message.descriptionMaxLength'),
+    templateUrlMaxLength: $t('ApplicationTemplate.message.templateUrlMaxLength'),
     documentMaxLength: $t('ApplicationTemplate.message.documentMaxLength'),
     iconMaxLength: $t('ApplicationTemplate.message.iconMaxLength'),
     updated: name => $t('ApplicationTemplate.message.templateUpdated', { name }),

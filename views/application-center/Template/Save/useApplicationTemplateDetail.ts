@@ -12,6 +12,7 @@ interface DetailMessages {
   nameRequired: string
   nameMaxLength: string
   descriptionMaxLength: string
+  templateUrlMaxLength: string
   documentMaxLength: string
   iconMaxLength: string
   updated: (name: string) => string
@@ -72,6 +73,12 @@ export const useApplicationTemplateDetail = (
     if (description !== String(detail.value.description || '')) await patch({ description })
   }
 
+  const updateTemplateUrl = async (value: string) => {
+    const templateUrl = String(value || '').trim()
+    if (templateUrl.length > 64) return onlyMessage(messages.templateUrlMaxLength, 'error')
+    if (templateUrl !== String(detail.value.templateUrl || '')) await patch({ templateUrl })
+  }
+
   const updateIcon = async (icon: string) => {
     if (icon.length > 256) return onlyMessage(messages.iconMaxLength, 'error')
     if (icon !== String(detail.value.icon || '')) await patch({ icon })
@@ -98,6 +105,7 @@ export const useApplicationTemplateDetail = (
     load,
     updateName,
     updateDescription,
+    updateTemplateUrl,
     updateIcon,
     toggleState,
     saveDocument,

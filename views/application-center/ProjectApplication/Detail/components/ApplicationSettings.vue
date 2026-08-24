@@ -1,106 +1,100 @@
 <template>
-  <SectionCard
-    class="application-settings"
-    icon="SettingOutlined"
-    :title="$t('ProjectApplication.settings.title')"
-  >
-    <template #actions>
-      <a-space v-if="editingModel">
-        <a-button :disabled="saving" @click="cancelEdit">
-          {{ $t('ProjectApplication.common.cancel') }}
+    <template>
+        <a-space v-if="editingModel">
+            <a-button :disabled="saving" @click="cancelEdit">
+                {{ $t('ProjectApplication.common.cancel') }}
+            </a-button>
+            <a-button type="primary" :loading="saving" @click="saveSettings">
+                <template #icon><AIcon type="CheckOutlined" /></template>
+                {{ $t('ProjectApplication.common.save') }}
+            </a-button>
+        </a-space>
+        <a-button v-else @click="startEdit">
+            <template #icon><AIcon type="EditOutlined" /></template>
+            {{ $t('ProjectApplication.common.edit') }}
         </a-button>
-        <a-button type="primary" :loading="saving" @click="saveSettings">
-          <template #icon><AIcon type="CheckOutlined" /></template>
-          {{ $t('ProjectApplication.common.save') }}
-        </a-button>
-      </a-space>
-      <a-button v-else @click="startEdit">
-        <template #icon><AIcon type="EditOutlined" /></template>
-        {{ $t('ProjectApplication.common.edit') }}
-      </a-button>
     </template>
 
     <a-form ref="formRef" :model="draft" :rules="rules">
-      <div class="settings-list">
-        <div class="setting-row setting-row--icon">
-          <div class="setting-label">{{ $t('ProjectApplication.settings.icon') }}</div>
-          <div v-if="editingModel" class="icon-edit">
-            <div class="application-icon-upload">
-              <ImageUpload
-                v-model:value="draft.icon"
-                accept="image/png,image/jpeg"
-                :types="iconTypes"
-                :border-style="iconUploadBorderStyle"
-                :cropper-props="iconCropperProps"
-              />
+        <div class="settings-list">
+            <div class="setting-row setting-row--icon">
+                <div class="setting-label">{{ $t('ProjectApplication.settings.icon') }}</div>
+                <div v-if="editingModel" class="icon-edit">
+                    <div class="application-icon-upload">
+                        <ImageUpload
+                            v-model:value="draft.icon"
+                            accept="image/png,image/jpeg"
+                            :types="iconTypes"
+                            :border-style="iconUploadBorderStyle"
+                            :cropper-props="iconCropperProps"
+                        />
+                    </div>
+                    <span>{{ $t('ProjectApplication.settings.iconEditHint') }}</span>
+                </div>
+                <div v-else class="application-icon">
+                    <img v-if="isImageIcon(visibleIcon)" :src="visibleIcon" :alt="application.name" />
+                    <AIcon v-else :type="visibleIcon || 'AppstoreOutlined'" />
+                </div>
             </div>
-            <span>{{ $t('ProjectApplication.settings.iconEditHint') }}</span>
-          </div>
-          <div v-else class="application-icon">
-            <img v-if="isImageIcon(visibleIcon)" :src="visibleIcon" :alt="application.name" />
-            <AIcon v-else :type="visibleIcon || 'AppstoreOutlined'" />
-          </div>
-        </div>
 
-        <div class="setting-row">
-          <div class="setting-label" :class="{ required: editingModel }">
-            {{ $t('ProjectApplication.create.name') }}
-          </div>
-          <a-form-item v-if="editingModel" class="setting-form-item" name="name">
-            <a-input
-              v-model:value="draft.name"
-              class="setting-control"
-              :maxlength="30"
-              show-count
-              :placeholder="$t('ProjectApplication.create.namePlaceholder')"
-            />
-          </a-form-item>
-          <div v-else class="setting-value">{{ application.name }}</div>
-        </div>
+            <div class="setting-row">
+                <div class="setting-label" :class="{ required: editingModel }">
+                    {{ $t('ProjectApplication.create.name') }}
+                </div>
+                <a-form-item v-if="editingModel" class="setting-form-item" name="name">
+                    <a-input
+                        v-model:value="draft.name"
+                        class="setting-control"
+                        :maxlength="30"
+                        show-count
+                        :placeholder="$t('ProjectApplication.create.namePlaceholder')"
+                    />
+                </a-form-item>
+                <div v-else class="setting-value">{{ application.name }}</div>
+            </div>
 
-        <div class="setting-row align-start">
-          <div class="setting-label">{{ $t('ProjectApplication.create.descriptionLabel') }}</div>
-          <a-form-item v-if="editingModel" class="setting-form-item" name="description">
-            <a-textarea
-              v-model:value="draft.description"
-              class="setting-control"
-              :maxlength="100"
-              show-count
-              :rows="3"
-              :placeholder="$t('ProjectApplication.create.descriptionPlaceholder')"
-            />
-          </a-form-item>
-          <div v-else class="setting-value setting-description">
-            {{ application.description || '--' }}
-          </div>
-        </div>
+            <div class="setting-row align-start">
+                <div class="setting-label">{{ $t('ProjectApplication.create.descriptionLabel') }}</div>
+                <a-form-item v-if="editingModel" class="setting-form-item" name="description">
+                    <a-textarea
+                        v-model:value="draft.description"
+                        class="setting-control"
+                        :maxlength="100"
+                        show-count
+                        :rows="3"
+                        :placeholder="$t('ProjectApplication.create.descriptionPlaceholder')"
+                    />
+                </a-form-item>
+                <div v-else class="setting-value setting-description">
+                    {{ application.description || '--' }}
+                </div>
+            </div>
 
-        <div class="setting-row">
-          <div class="setting-label">{{ $t('ProjectApplication.settings.language') }}</div>
-          <a-select
-            v-if="editingModel"
-            v-model:value="draft.defaultLanguage"
-            class="setting-select"
-            :options="languageOptions"
-          />
-          <div v-else class="setting-value">{{ languageDisplayValue }}</div>
-        </div>
+            <div class="setting-row">
+                <div class="setting-label">{{ $t('ProjectApplication.settings.language') }}</div>
+                <a-select
+                    v-if="editingModel"
+                    v-model:value="draft.defaultLanguage"
+                    class="setting-select"
+                    :options="languageOptions"
+                />
+                <div v-else class="setting-value">{{ languageDisplayValue }}</div>
+            </div>
 
-        <div class="setting-row">
-          <div class="setting-label">{{ $t('ProjectApplication.settings.link') }}</div>
-          <div class="setting-link">
-            <code>{{ domainDisplayValue }}</code>
-            <a-tooltip :title="$t('ProjectApplication.settings.copy')">
-              <a-button size="small" @click="copyApplicationUrl">
-                <template #icon><AIcon type="CopyOutlined" /></template>
-                {{ $t('ProjectApplication.settings.copy') }}
-              </a-button>
-            </a-tooltip>
-          </div>
+            <div class="setting-row">
+                <div class="setting-label">{{ $t('ProjectApplication.settings.link') }}</div>
+                <div class="setting-link">
+                    <code>{{ domainDisplayValue }}</code>
+                    <a-tooltip :title="$t('ProjectApplication.settings.copy')">
+                        <a-button size="small" @click="copyApplicationUrl">
+                            <template #icon><AIcon type="CopyOutlined" /></template>
+                            {{ $t('ProjectApplication.settings.copy') }}
+                        </a-button>
+                    </a-tooltip>
+                </div>
+            </div>
         </div>
-      </div>
     </a-form>
-  </SectionCard>
 </template>
 
 <script setup lang="ts" name="ProjectApplicationSettings">

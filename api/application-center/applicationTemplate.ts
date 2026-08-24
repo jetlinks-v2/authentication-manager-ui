@@ -18,6 +18,7 @@ export interface BusinessApplicationTemplate {
   code: string
   icon?: string
   description?: string
+  templateUrl?: string
   document?: string
   layoutVariant?: BasicLayoutVariant
   state?: string | EnumItem
