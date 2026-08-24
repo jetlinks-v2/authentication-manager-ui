@@ -41,11 +41,11 @@
         <template v-else-if="column.key === 'actions'">
           <a-space>
             <a-popconfirm
-              :title="$t('ProjectApplication.user.statusConfirm', { action: $t(record.enabled ? 'ProjectApplication.common.disable' : 'ProjectApplication.common.enable'), name: record.name })"
-              @confirm="toggleUserStatus(record)"
+              :title="$t('ProjectApplication.user.unbindConfirm', { name: record.name })"
+              @confirm="unbindUser(record)"
             >
-              <a-button type="link" size="small">
-                {{ $t(record.enabled ? 'ProjectApplication.common.disable' : 'ProjectApplication.common.enable') }}
+              <a-button type="link" danger size="small">
+                {{ $t('ProjectApplication.user.unbind') }}
               </a-button>
             </a-popconfirm>
           </a-space>
@@ -86,6 +86,7 @@ const props = defineProps({
 
 const emits = defineEmits<{
   (e: 'add', userIds: string[]): void
+  (e: 'unbind', user: ApplicationUser): void
   (e: 'update', user: ApplicationUser, patch: Partial<ApplicationUser>): void
 }>()
 const { t: $t } = useI18n()
@@ -97,7 +98,6 @@ const columns = computed(() => [
   { title: $t('ProjectApplication.user.user'), key: 'user', width: '11rem', fixed: 'left' as const },
   { title: $t('ProjectApplication.user.account'), dataIndex: 'username', key: 'username', width: '10rem' },
   { title: $t('ProjectApplication.user.role'), key: 'role', width: '11rem' },
-  { title: $t('ProjectApplication.user.position'), dataIndex: 'position', key: 'position', width: '10rem', ellipsis: true },
   { title: $t('ProjectApplication.user.organization'), dataIndex: 'organization', key: 'organization', width: '11rem', ellipsis: true },
   { title: $t('ProjectApplication.user.status'), key: 'status', width: '7rem' },
   { title: $t('ProjectApplication.user.phone'), dataIndex: 'phone', key: 'phone', width: '9rem' },
@@ -112,13 +112,13 @@ const updateRole = (record: Record<string, unknown>, roleId: unknown) => {
   const user = resolveUser(record)
   if (user) emits('update', user, { roleId: typeof roleId === 'string' ? roleId : '' })
 }
-const toggleUserStatus = (record: Record<string, unknown>) => {
+const unbindUser = (record: Record<string, unknown>) => {
   const user = resolveUser(record)
-  if (user) emits('update', user, { enabled: !user.enabled })
+  if (user) emits('unbind', user)
 }
 const filteredUsers = computed(() => {
   const searchText = keyword.value.trim().toLocaleLowerCase()
-  return props.data.users.filter(user => !searchText || `${user.name} ${user.username} ${user.phone} ${user.email} ${user.position} ${user.organization}`.toLocaleLowerCase().includes(searchText))
+  return props.data.users.filter(user => !searchText || `${user.name} ${user.username} ${user.phone} ${user.email} ${user.organization}`.toLocaleLowerCase().includes(searchText))
 })
 </script>
 

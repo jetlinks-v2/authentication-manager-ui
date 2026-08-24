@@ -2,6 +2,7 @@ import {
   bindBusinessApplicationUsers,
   queryBusinessApplicationUsers,
   queryUserDetails,
+  unbindBusinessApplicationUsers,
   updateBusinessApplicationUser,
   type PagerResult,
   type UserDetailEntity,
@@ -77,6 +78,13 @@ export const bindProjectUsersToBusinessApplication = async (
   userIds: string[],
 ) => {
   await bindBusinessApplicationUsers(applicationId, userIds)
+}
+
+export const unbindProjectUsersFromBusinessApplication = async (
+  applicationId: string,
+  userIds: string[],
+) => {
+  await unbindBusinessApplicationUsers(applicationId, userIds)
 }
 
 export const updateBoundBusinessApplicationUser = async (

@@ -32,6 +32,7 @@
             <UserManagement
               :data="{ users: detail.users, roles: detail.roles }"
               @add="addUsers"
+              @unbind="unbindUser"
               @update="updateUser"
             />
           </a-tab-pane>
@@ -175,6 +176,11 @@ const updateSettings = async (patch: Partial<ProjectApplication>) => {
 const addUsers = async (userIds: string[]) => {
   await store.addUsers(applicationId.value, userIds)
   onlyMessage($t('ProjectApplication.user.bindSuccess', { count: userIds.length }))
+}
+
+const unbindUser = async (user: ApplicationUser) => {
+  await store.unbindUser(applicationId.value, user.id)
+  onlyMessage($t('ProjectApplication.user.unbindSuccess', { name: user.name }))
 }
 
 const updateUser = async (user: ApplicationUser, patch: Partial<ApplicationUser>) => {

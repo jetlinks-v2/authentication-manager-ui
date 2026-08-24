@@ -225,6 +225,9 @@ export const queryBusinessApplicationUsers = (
 export const bindBusinessApplicationUsers = (applicationId: string, userIds: string[]) =>
   apiRequest.post<void>(`/business-application/${applicationId}/users/_bind`, userIds)
 
+export const unbindBusinessApplicationUsers = (applicationId: string, userIds: string[]) =>
+  apiRequest.post<number>(`/business-application/${applicationId}/users/_unbind`, userIds)
+
 export const queryUserDetails = (data: QueryPayload) =>
   apiRequest.post<PagerResult<UserDetailEntity>>('/user/detail/_query', data)
 

@@ -26,6 +26,7 @@ import {
 import {
   bindProjectUsersToBusinessApplication,
   loadBusinessApplicationUsers,
+  unbindProjectUsersFromBusinessApplication,
   updateBoundBusinessApplicationUser,
 } from './applicationUserService'
 import {
@@ -215,6 +216,12 @@ export const useProjectApplication = () => {
     await loadUsers(applicationId)
   }
 
+  const unbindUser = async (applicationId: string, userId: string) => {
+    await unbindProjectUsersFromBusinessApplication(applicationId, [userId])
+    userEntities.delete(`${applicationId}:${userId}`)
+    await loadUsers(applicationId)
+  }
+
   const updateUser = async (applicationId: string, userId: string, patch: Partial<ApplicationUser>) => {
     const current = ensureDetail(applicationId).users.find(item => item.id === userId)
     if (!current) return
@@ -254,6 +261,7 @@ export const useProjectApplication = () => {
     removeApplication,
     loadDetail,
     addUsers,
+    unbindUser,
     updateUser,
     saveRole,
     removeRole,

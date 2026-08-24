@@ -2821,7 +2821,7 @@
         "permissions": [
           {
             "permission": "business-application",
-            "actions": ["query"]
+            "actions": ["query", "delete"]
           },
           {
             "permission": "business-application-template",
@@ -2841,6 +2841,21 @@
               {
                 "permission": "business-application",
                 "actions": ["save"]
+              }
+            ]
+          },
+          {
+            "id": "remove",
+            "name": "删除应用",
+            "i18nMessages": {
+              "zh_CN": "删除应用",
+              "en_US": "Remove Application",
+              "en": "Remove Application"
+            },
+            "permissions": [
+              {
+                "permission": "business-application",
+                "actions": ["delete"]
               }
             ]
           },
