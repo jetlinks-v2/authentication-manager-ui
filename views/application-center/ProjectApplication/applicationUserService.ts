@@ -30,6 +30,32 @@ export const loadBusinessApplicationUsers = async (applicationId: string) => {
   return members.map(member => ({ ...member, ...detailById.get(member.id) }))
 }
 
+export const loadProjectUserDetail = async (userId: string) => {
+  const detailResponse = await queryUserDetails({
+    pageIndex: 0,
+    pageSize: 1,
+    terms: [{ column: 'id', termType: 'eq', value: userId }],
+  })
+  return listOf<UserDetailEntity>(detailResponse).find(entity => entity.id === userId)
+}
+
+export const loadBusinessApplicationUser = async (applicationId: string, userId: string) => {
+  const memberResponse = await queryBusinessApplicationUsers(applicationId, {
+    pageIndex: 0,
+    pageSize: 1,
+    terms: [{ column: 'id', termType: 'eq', value: userId }],
+  })
+  const member = listOf<UserDetailEntity>(memberResponse).find(entity => entity.id === userId)
+  if (!member) return undefined
+
+  // The membership endpoint is the binding truth; generic detail keeps role/org/position updates lossless.
+  const detail = await loadProjectUserDetail(userId)
+  return {
+    ...member,
+    ...(detail || {}),
+  }
+}
+
 export interface ProjectApplicationUserQuery {
   pageIndex?: number
   pageSize?: number

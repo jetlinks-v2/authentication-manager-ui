@@ -55,7 +55,7 @@
             class="permission-editor"
             :context="editor"
             :columns="columns"
-            :show-asset-permissions="isNoCommunity"
+            :show-asset-permissions="false"
             height="32rem"
           />
         </a-spin>
@@ -202,10 +202,16 @@ const loadPermissions = async () => {
       templateMenus,
     )
     const roleMenus = normalizeGrantedMenus(scopedRoleMenus, templateMenus)
-    const assetAccesses = filterAssetAccessPoliciesByMenuScope(
+    const templateAssetAccesses = filterAssetAccessPoliciesByMenuScope(
+      Array.isArray(templateDetail.assetAccesses) ? templateDetail.assetAccesses : [],
+      templateMenus,
+    )
+    const roleAssetAccesses = filterAssetAccessPoliciesByMenuScope(
       Array.isArray(roleDetail.assetAccesses) ? roleDetail.assetAccesses : [],
       templateMenus,
     )
+    // 角色右侧资产权限不再单独开放编辑，优先沿用模板菜单返回的默认 assetAccesses；老数据若缺省则回退到角色已保存值。
+    const assetAccesses = templateAssetAccesses.length ? templateAssetAccesses : roleAssetAccesses
 
     // 角色详情可能保存过模板侧高资产范围；回显前按当前项目菜单裁剪，避免保存时再次提交越权 supportId。
     editor.reset({

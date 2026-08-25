@@ -65,7 +65,7 @@
           {{ statusActionText }}
         </a-button>
       </a-popconfirm>
-      <a-button type="primary" :disabled="deleting" @click="emits('open')">
+      <a-button type="primary" :disabled="deleting || opening" :loading="opening" @click="emits('open')">
         <template #icon><AIcon type="ExportOutlined" /></template>
         {{ $t('ProjectApplication.detail.open') }}
       </a-button>
@@ -102,6 +102,10 @@ const props = defineProps({
     default: false,
   },
   showSettingsActions: {
+    type: Boolean,
+    default: false,
+  },
+  opening: {
     type: Boolean,
     default: false,
   },

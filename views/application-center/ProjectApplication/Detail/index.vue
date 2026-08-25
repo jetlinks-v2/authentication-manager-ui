@@ -9,6 +9,7 @@
           :settings-editing="settingsEditing"
           :settings-saving="settingsSaving"
           :show-settings-actions="activeTab === 'settings'"
+          :opening="openingApplicationIds.includes(application.id)"
           @back="backToList"
           @cancel-settings="cancelSettings"
           @delete="deleteApplication"
@@ -54,6 +55,15 @@
         </a-button>
       </CloudEmpty>
       </a-spin>
+
+      <ApplicationRoleSelectModal
+        v-model:open="roleSelectOpen"
+        :roles="roleSelectRoles"
+        :application-name="pendingApplication?.name || ''"
+        :confirm-loading="roleBinding"
+        @confirm="confirmSelectedRole"
+        @cancel="resetRoleSelection"
+      />
     </div>
   </j-page-container>
 </template>
@@ -64,11 +74,12 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
-import { prepareApplicationAccess } from '@jetlinks-web-core/utils/application-access'
 import ApplicationSummary from './components/ApplicationSummary.vue'
 import ApplicationSettings from './components/ApplicationSettings.vue'
+import ApplicationRoleSelectModal from '../components/ApplicationRoleSelectModal.vue'
 import RoleManagement from './components/RoleManagement.vue'
 import UserManagement from './components/UserManagement.vue'
+import { useApplicationOpenGuard } from '../useApplicationOpenGuard'
 import { useProjectApplication } from '../useProjectApplication'
 import type {
   ApplicationRoleDraft,
@@ -91,6 +102,21 @@ const applicationId = computed(() => String(route.params.id || ''))
 const application = computed(() => store.applications.find((item) => item.id === applicationId.value))
 const detail = computed(() => store.details[applicationId.value])
 const template = computed(() => store.templates.find((item) => item.id === application.value?.templateId))
+const {
+  roleSelectOpen,
+  roleSelectRoles,
+  pendingApplication,
+  openingApplicationIds,
+  roleBinding,
+  openApplication: openGuardedApplication,
+  confirmSelectedRole,
+  resetRoleSelection,
+  ensureCurrentUserBound,
+} = useApplicationOpenGuard({
+  syncDetail: async id => {
+    if (applicationId.value === id) await store.loadDetail(id)
+  },
+})
 watch(applicationId, async id => {
   if (!id) return
   activeTab.value = 'settings'
@@ -99,6 +125,9 @@ watch(applicationId, async id => {
   try {
     await Promise.all([store.loadTemplates(), store.loadApplication(id)])
     await store.loadDetail(id)
+    if (applicationId.value === id) {
+      await ensureCurrentUserBound(id, store.details[id]?.roles || [])
+    }
   } catch {
     // The shared request layer reports the backend error.
   } finally {
@@ -123,17 +152,7 @@ const toggleStatus = async () => {
 
 const openApplication = () => {
   if (!application.value) return
-
-  const access = prepareApplicationAccess({
-    applicationId: application.value.id,
-    applicationName: application.value.name,
-    domain: application.value.domain,
-  })
-  if (!access.success) {
-    onlyMessage($t('ProjectApplication.detail.accessFailed'), 'warning')
-    return
-  }
-  window.open(access.url, '_blank', 'noopener,noreferrer')
+  void openGuardedApplication(application.value)
 }
 
 const deleteApplication = async () => {

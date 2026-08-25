@@ -37,6 +37,7 @@
             :key="item.application.id"
             :item="item"
             :loading="updatingApplicationIds.includes(item.application.id)"
+            :opening="openingApplicationIds.includes(item.application.id)"
             @edit="openDetail(item.application.id)"
             @toggle-status="toggleApplicationStatus(item.application)"
             @open="openApplication(item.application)"
@@ -66,6 +67,14 @@
         embedded
         @created="handleCreated"
       />
+      <ApplicationRoleSelectModal
+        v-model:open="roleSelectOpen"
+        :roles="roleSelectRoles"
+        :application-name="pendingApplication?.name || ''"
+        :confirm-loading="roleBinding"
+        @confirm="confirmSelectedRole"
+        @cancel="resetRoleSelection"
+      />
     </div>
   </j-page-container>
 </template>
@@ -81,9 +90,10 @@ import ConditionFilter, {
 import PageHeader from '@jetlinks-web-core/components/PageHeader'
 import { useProjectRouter } from '@jetlinks-web-core/hooks/useProjectRouter'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
-import { prepareApplicationAccess } from '@jetlinks-web-core/utils/application-access'
 import ApplicationCreateDialog from './Create/index.vue'
 import ApplicationCard from './components/ApplicationCard.vue'
+import ApplicationRoleSelectModal from './components/ApplicationRoleSelectModal.vue'
+import { useApplicationOpenGuard } from './useApplicationOpenGuard'
 import { useProjectApplication } from './useProjectApplication'
 import type { ProjectApplication } from './types'
 
@@ -96,6 +106,16 @@ const createOpen = ref(false)
 const filters = ref<ConditionFilterChangePayload['filter']>({ terms: [] })
 const updatingApplicationIds = ref<string[]>([])
 let refreshSequence = 0
+const {
+  roleSelectOpen,
+  roleSelectRoles,
+  pendingApplication,
+  openingApplicationIds,
+  roleBinding,
+  openApplication,
+  confirmSelectedRole,
+  resetRoleSelection,
+} = useApplicationOpenGuard()
 
 const statusOptions = computed(() => [
   { label: $t('ProjectApplication.common.enabled'), value: 'enabled' },
@@ -184,19 +204,6 @@ const toggleApplicationStatus = async (application: ProjectApplication) => {
   } finally {
     updatingApplicationIds.value = updatingApplicationIds.value.filter(id => id !== application.id)
   }
-}
-
-const openApplication = (application: ProjectApplication) => {
-  const access = prepareApplicationAccess({
-    applicationId: application.id,
-    applicationName: application.name,
-    domain: application.domain,
-  })
-  if (!access.success) {
-    onlyMessage($t('ProjectApplication.detail.accessFailed'), 'warning')
-    return
-  }
-  window.open(access.url, '_blank', 'noopener,noreferrer')
 }
 
 const handleCreated = () => {
