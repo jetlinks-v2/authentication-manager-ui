@@ -41,7 +41,7 @@ const handleMenu = (menus: any[]): any[] => menus.map(item => ({
   ...item,
   children: item.children ? handleMenu(item.children) : undefined,
   options: { appName: p.id || p.name, ...item.options },
-  runtime: item.owner === 'cloud'
+  runtime: ['cloud', 'app'].includes(item.owner)
 }))
 
 export default () => {

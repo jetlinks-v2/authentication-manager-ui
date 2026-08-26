@@ -1,4 +1,5 @@
 import type { ConditionFilterChangePayload } from '@jetlinks-web-core/components/ConditionFilter'
+import type { BasicLayoutVariant } from '@jetlinks-web-core/layout/runtime/layoutVariant'
 
 export type ApplicationStatus = 'enabled' | 'disabled'
 export type ResourceStatus = string
@@ -8,10 +9,12 @@ export interface ApplicationTemplate {
   name: string
   code: string
   description: string
+  templateUrl?: string
   icon?: string
   status: ApplicationStatus
   statusText: string
   sortIndex: number
+  layoutVariant: BasicLayoutVariant
   disabled: boolean
 }
 
@@ -79,16 +82,6 @@ export interface ApplicationUser {
   orgIds: string[]
   positionIds: string[]
   enabled: boolean
-}
-
-export interface ApplicationUserDraft {
-  name: string
-  username: string
-  phone: string
-  email: string
-  roleId: string
-  password: string
-  confirmPassword: string
 }
 
 export interface ApplicationRole {

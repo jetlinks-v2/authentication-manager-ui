@@ -24,8 +24,9 @@ import {
   resultOf,
 } from './applicationModel'
 import {
-  createUserForBusinessApplication,
+  bindProjectUsersToBusinessApplication,
   loadBusinessApplicationUsers,
+  unbindProjectUsersFromBusinessApplication,
   updateBoundBusinessApplicationUser,
 } from './applicationUserService'
 import {
@@ -39,7 +40,6 @@ import type {
   ApplicationRoleDraft,
   ApplicationTemplate,
   ApplicationUser,
-  ApplicationUserDraft,
   ProjectApplication,
   ProjectApplicationDraft,
 } from './types'
@@ -118,12 +118,16 @@ export const useProjectApplication = () => {
   }
 
   const createApplication = async (projectId: string, draft: ProjectApplicationDraft) => {
+    const template = templates.find(item => item.id === draft.templateId)
     const response = await createBusinessApplication({
       templateId: draft.templateId,
       name: draft.name,
       icon: draft.icon,
       description: draft.description,
       configuration: {
+        // 布局配置在创建应用时形成模板快照，模板后续变更不反向影响已有应用。
+        layoutVariant: template?.layoutVariant || 'application',
+        layout: template?.layout || 'side',
         defaultLanguage: 'zh-CN',
         timezone: 'Asia/Shanghai',
         customDomain: '',
@@ -207,8 +211,14 @@ export const useProjectApplication = () => {
     return details[applicationId]
   }
 
-  const addUser = async (applicationId: string, draft: ApplicationUserDraft) => {
-    await createUserForBusinessApplication(applicationId, draft)
+  const addUsers = async (applicationId: string, userIds: string[]) => {
+    await bindProjectUsersToBusinessApplication(applicationId, userIds)
+    await loadUsers(applicationId)
+  }
+
+  const unbindUser = async (applicationId: string, userId: string) => {
+    await unbindProjectUsersFromBusinessApplication(applicationId, [userId])
+    userEntities.delete(`${applicationId}:${userId}`)
     await loadUsers(applicationId)
   }
 
@@ -250,7 +260,8 @@ export const useProjectApplication = () => {
     updateApplication,
     removeApplication,
     loadDetail,
-    addUser,
+    addUsers,
+    unbindUser,
     updateUser,
     saveRole,
     removeRole,

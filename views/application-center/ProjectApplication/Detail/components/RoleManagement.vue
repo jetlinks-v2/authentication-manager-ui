@@ -55,7 +55,7 @@
             class="permission-editor"
             :context="editor"
             :columns="columns"
-            :show-asset-permissions="isNoCommunity"
+            :show-asset-permissions="false"
             height="32rem"
           />
         </a-spin>
@@ -93,19 +93,21 @@ import { onlyMessage } from '@jetlinks-web/utils'
 import { MenuAssetPermissionEditor } from '@jetlinks-web-core/components'
 import { useMenuAssetPermissionEditor } from '@jetlinks-web-core/hooks'
 import type { AssetAccessPolicy, AssetTypeName, MenuPermissionNode } from '@jetlinks-web-core/hooks'
-import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
 import {
   getPermissionDetail_api as getRolePermissionDetail,
   updatePermissionTree_api as saveRolePermission,
 } from '@authentication-manager-ui/api/system/role'
 import { getAssetsType as queryAssetTypes } from '@authentication-manager-ui/api/system/menu'
-import { getApplicationTemplateMenus } from '@authentication-manager-ui/api/application-center/applicationTemplate'
+import {
+  getApplicationTemplateMenus,
+  getCurrentUserMenuTree,
+} from '@authentication-manager-ui/api/application-center/applicationTemplate'
 import {
   filterAssetAccessPoliciesByMenuScope,
+  filterApplicationMenuTreeBySourceIds,
   filterApplicationMenuInterfacePermissions,
   filterGrantedMenuAssetAccessesByMenuScope,
-  filterMenuTreeByRuntimeCodes,
   normalizeAssetTypeNames,
   normalizeCandidateMenus,
   normalizeGrantedMenus,
@@ -125,7 +127,6 @@ const props = defineProps({
 })
 const emits = defineEmits(['save-role', 'delete-role'])
 const { t: $t } = useI18n()
-const menuStore = useMenuStore()
 const activeRoleId = ref('')
 const roleModalOpen = ref(false)
 const editingRoleId = ref<string>()
@@ -165,15 +166,16 @@ const loadAssetTypes = async (): Promise<AssetTypeName[]> => {
 
 const loadPermissions = async () => {
   const sequence = ++loadSequence
-  if (!activeRoleId.value || !props.templateId || !menuStore.initialized) {
+  if (!activeRoleId.value || !props.templateId) {
     clearPermissions()
     return
   }
   initialized.value = false
   permissionLoading.value = true
   try {
-    const [templateResponse, detailResponse, assetTypes] = await Promise.all([
+    const [templateResponse, menuResponse, detailResponse, assetTypes] = await Promise.all([
       getApplicationTemplateMenus(props.templateId),
+      getCurrentUserMenuTree({ paging: false }),
       getRolePermissionDetail(activeRoleId.value),
       loadAssetTypes(),
     ])
@@ -184,9 +186,12 @@ const loadPermissions = async () => {
     const candidateTemplateMenus = filterApplicationMenuInterfacePermissions(
       Array.isArray(templateDetail.menus) ? templateDetail.menus : [],
     )
-    const filteredTemplateMenus = filterMenuTreeByRuntimeCodes(
+    const currentUserMenus = filterApplicationMenuInterfacePermissions(
+      assertSuccess<MenuPermissionNode[]>(menuResponse, []),
+    )
+    const filteredTemplateMenus = filterApplicationMenuTreeBySourceIds(
       candidateTemplateMenus,
-      Array.isArray(menuStore.menuResultCache) ? menuStore.menuResultCache : [],
+      currentUserMenus,
     )
     const templateMenus = normalizeCandidateMenus(filteredTemplateMenus)
     const candidateRoleMenus = filterApplicationMenuInterfacePermissions(
@@ -197,10 +202,16 @@ const loadPermissions = async () => {
       templateMenus,
     )
     const roleMenus = normalizeGrantedMenus(scopedRoleMenus, templateMenus)
-    const assetAccesses = filterAssetAccessPoliciesByMenuScope(
+    const templateAssetAccesses = filterAssetAccessPoliciesByMenuScope(
+      Array.isArray(templateDetail.assetAccesses) ? templateDetail.assetAccesses : [],
+      templateMenus,
+    )
+    const roleAssetAccesses = filterAssetAccessPoliciesByMenuScope(
       Array.isArray(roleDetail.assetAccesses) ? roleDetail.assetAccesses : [],
       templateMenus,
     )
+    // 角色右侧资产权限不再单独开放编辑，优先沿用模板菜单返回的默认 assetAccesses；老数据若缺省则回退到角色已保存值。
+    const assetAccesses = templateAssetAccesses.length ? templateAssetAccesses : roleAssetAccesses
 
     // 角色详情可能保存过模板侧高资产范围；回显前按当前项目菜单裁剪，避免保存时再次提交越权 supportId。
     editor.reset({
@@ -223,8 +234,6 @@ watch(() => props.roles, roles => {
 watch([
   activeRoleId,
   () => props.templateId,
-  () => menuStore.initialized,
-  () => menuStore.menuResultCache,
 ], loadPermissions, { immediate: true, deep: true })
 
 const savePermissions = async () => {

@@ -1,5 +1,6 @@
 import { request } from '@jetlinks-web/core'
 import type { AxiosResponseRewrite } from '@jetlinks-web/types'
+import type { BasicLayoutVariant } from '@jetlinks-web-core/layout/runtime/layoutVariant'
 
 type RequestConfig = Record<string, unknown>
 
@@ -23,6 +24,7 @@ export interface BusinessApplicationConfiguration {
   defaultLanguage?: string
   customDomain?: string
   timezone?: string
+  layoutVariant?: BasicLayoutVariant
   [key: string]: unknown
 }
 
@@ -45,6 +47,8 @@ export interface BusinessApplicationTemplateEntity {
   code: string
   icon?: string
   description?: string
+  templateUrl?: string
+  layoutVariant?: BasicLayoutVariant
   state?: string | EnumValue
   sortIndex?: number
 }
@@ -217,6 +221,12 @@ export const queryBusinessApplicationUsers = (
   `/user/detail/business_application/${applicationId}/_query`,
   data,
 )
+
+export const bindBusinessApplicationUsers = (applicationId: string, userIds: string[]) =>
+  apiRequest.post<void>(`/business-application/${applicationId}/users/_bind`, userIds)
+
+export const unbindBusinessApplicationUsers = (applicationId: string, userIds: string[]) =>
+  apiRequest.post<number>(`/business-application/${applicationId}/users/_unbind`, userIds)
 
 export const queryUserDetails = (data: QueryPayload) =>
   apiRequest.post<PagerResult<UserDetailEntity>>('/user/detail/_query', data)

@@ -30,13 +30,14 @@
           v-if="cardItems.length"
           class="application-grid"
           :cols="3"
-          gap="var(--space-4)"
+          gap="var(--space-3)"
         >
           <ApplicationCard
             v-for="item in cardItems"
             :key="item.application.id"
             :item="item"
             :loading="updatingApplicationIds.includes(item.application.id)"
+            :opening="openingApplicationIds.includes(item.application.id)"
             @edit="openDetail(item.application.id)"
             @toggle-status="toggleApplicationStatus(item.application)"
             @open="openApplication(item.application)"
@@ -66,6 +67,14 @@
         embedded
         @created="handleCreated"
       />
+      <ApplicationRoleSelectModal
+        v-model:open="roleSelectOpen"
+        :roles="roleSelectRoles"
+        :application-name="pendingApplication?.name || ''"
+        :confirm-loading="roleBinding"
+        @confirm="confirmSelectedRole"
+        @cancel="resetRoleSelection"
+      />
     </div>
   </j-page-container>
 </template>
@@ -81,9 +90,10 @@ import ConditionFilter, {
 import PageHeader from '@jetlinks-web-core/components/PageHeader'
 import { useProjectRouter } from '@jetlinks-web-core/hooks/useProjectRouter'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
-import { prepareApplicationAccess } from '@jetlinks-web-core/utils/application-access'
 import ApplicationCreateDialog from './Create/index.vue'
 import ApplicationCard from './components/ApplicationCard.vue'
+import ApplicationRoleSelectModal from './components/ApplicationRoleSelectModal.vue'
+import { useApplicationOpenGuard } from './useApplicationOpenGuard'
 import { useProjectApplication } from './useProjectApplication'
 import type { ProjectApplication } from './types'
 
@@ -96,6 +106,16 @@ const createOpen = ref(false)
 const filters = ref<ConditionFilterChangePayload['filter']>({ terms: [] })
 const updatingApplicationIds = ref<string[]>([])
 let refreshSequence = 0
+const {
+  roleSelectOpen,
+  roleSelectRoles,
+  pendingApplication,
+  openingApplicationIds,
+  roleBinding,
+  openApplication,
+  confirmSelectedRole,
+  resetRoleSelection,
+} = useApplicationOpenGuard()
 
 const statusOptions = computed(() => [
   { label: $t('ProjectApplication.common.enabled'), value: 'enabled' },
@@ -186,19 +206,6 @@ const toggleApplicationStatus = async (application: ProjectApplication) => {
   }
 }
 
-const openApplication = (application: ProjectApplication) => {
-  const access = prepareApplicationAccess({
-    applicationId: application.id,
-    applicationName: application.name,
-    domain: application.domain,
-  })
-  if (!access.success) {
-    onlyMessage($t('ProjectApplication.detail.accessFailed'), 'warning')
-    return
-  }
-  window.open(access.url, '_blank', 'noopener,noreferrer')
-}
-
 const handleCreated = () => {
   createOpen.value = false
   void refresh()
@@ -208,7 +215,6 @@ const handleCreated = () => {
 <style scoped>
 .project-application-page {
   min-height: 100%;
-  padding: var(--space-4);
   background: var(--bg);
 }
 
@@ -219,21 +225,22 @@ const handleCreated = () => {
 
 .create-card {
   display: grid;
-  height: 13.75rem;
+  height: 12.75rem;
   place-items: center;
   align-content: center;
-  gap: var(--space-2);
-  border: 1px dashed var(--line-strong);
+  gap: var(--space-3);
+  border: var(--jet-theme-stroke-width) solid var(--card-shell-border);
   border-radius: var(--card-shell-radius);
   background: var(--bg);
-  color: var(--ink-2);
+  color: var(--ink-1);
+  font-size: var(--fs-body);
   cursor: pointer;
   transition: var(--card-shell-transition);
 }
 
 .create-card:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--card-shell-border-hover);
+  box-shadow: var(--card-shell-shadow-hover);
 }
 
 .create-card:focus-visible {
@@ -242,14 +249,22 @@ const handleCreated = () => {
   outline: none;
 }
 
-.create-card :deep(svg) { width: var(--space-8); height: var(--space-8); }
+.create-card :deep(.anticon) {
+  width: var(--space-8);
+  height: var(--space-8);
+  color: var(--accent);
+}
+
+.create-card :deep(svg) {
+  width: var(--space-7);
+  height: var(--space-7);
+}
 
 @media (max-width: 62rem) {
   .application-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
 
 @media (max-width: 48rem) {
-  .project-application-page { padding: var(--space-3); }
   .project-application-header :deep(.cloud-page-header__actions) {
     width: 100%;
     align-items: stretch;

@@ -5,6 +5,7 @@ import type {
   GrantableAssetType,
   MenuPermissionNode,
 } from '@jetlinks-web-core/hooks'
+import type { BasicLayoutVariant } from '@jetlinks-web-core/layout/runtime/layoutVariant'
 
 interface EnumItem {
   value: string
@@ -17,7 +18,9 @@ export interface BusinessApplicationTemplate {
   code: string
   icon?: string
   description?: string
+  templateUrl?: string
   document?: string
+  layoutVariant?: BasicLayoutVariant
   state?: string | EnumItem
   sortIndex?: number
   createTime?: number

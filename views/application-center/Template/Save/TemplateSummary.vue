@@ -60,6 +60,21 @@
               {{ detail.description || '--' }}
             </span>
           </span>
+          <span class="template-summary__meta-item template-summary__url-item">
+            <strong>{{ $t('ApplicationTemplate.field.templateUrl') }}</strong>
+            <span v-if="canUpdate" class="template-summary__editable-value">
+              <InputEditable
+                :value="detail.templateUrl || ''"
+                :max-length="64"
+                :disabled="!canUpdate || saving"
+                :text-style="descriptionStyle"
+                @change="$emit('update-template-url', $event)"
+              />
+            </span>
+            <span v-else class="template-summary__value" :title="detail.templateUrl || '--'">
+              {{ detail.templateUrl || '--' }}
+            </span>
+          </span>
           <span class="template-summary__meta-item">
             <strong>ID</strong>
             <span class="template-summary__value" :title="detail.id || '--'">{{ detail.id || '--' }}</span>
@@ -116,6 +131,7 @@ const props = defineProps({
 const emit = defineEmits<{
   (event: 'update-name', value: string): void
   (event: 'update-description', value: string): void
+  (event: 'update-template-url', value: string): void
   (event: 'update-icon', value: string): void
   (event: 'toggle-state'): void
 }>()
@@ -160,6 +176,7 @@ const saveIcon = () => {
 .template-summary__meta { display: flex; flex: 1 1 0; align-items: center; gap: var(--space-4); min-width: 0; }
 .template-summary__meta-item { display: inline-flex; flex: 0 1 14rem; align-items: center; gap: var(--space-2); min-width: 0; }
 .template-summary__description-item { flex: 1 1 22rem; }
+.template-summary__url-item { flex: 1 1 18rem; }
 .template-summary__value,
 .template-summary__editable-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .template-summary__editable-value { flex: 1 1 0; }
@@ -168,6 +185,7 @@ const saveIcon = () => {
 .template-summary__editable-value :deep(.ant-input) { width: min(28rem, 100%); }
 @media (max-width: 64rem) {
   .template-summary__meta { flex-wrap: wrap; }
-  .template-summary__description-item { flex-basis: 100%; }
+  .template-summary__description-item,
+  .template-summary__url-item { flex-basis: 100%; }
 }
 </style>

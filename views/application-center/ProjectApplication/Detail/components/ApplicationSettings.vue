@@ -1,25 +1,4 @@
 <template>
-  <SectionCard
-    class="application-settings"
-    icon="SettingOutlined"
-    :title="$t('ProjectApplication.settings.title')"
-  >
-    <template #actions>
-      <a-space v-if="editingModel">
-        <a-button :disabled="saving" @click="cancelEdit">
-          {{ $t('ProjectApplication.common.cancel') }}
-        </a-button>
-        <a-button type="primary" :loading="saving" @click="saveSettings">
-          <template #icon><AIcon type="CheckOutlined" /></template>
-          {{ $t('ProjectApplication.common.save') }}
-        </a-button>
-      </a-space>
-      <a-button v-else @click="startEdit">
-        <template #icon><AIcon type="EditOutlined" /></template>
-        {{ $t('ProjectApplication.common.edit') }}
-      </a-button>
-    </template>
-
     <a-form ref="formRef" :model="draft" :rules="rules">
       <div class="settings-list">
         <div class="setting-row setting-row--icon">
@@ -31,6 +10,7 @@
                 accept="image/png,image/jpeg"
                 :types="iconTypes"
                 :border-style="iconUploadBorderStyle"
+                :style="iconUploadContentStyle"
                 :cropper-props="iconCropperProps"
               />
             </div>
@@ -71,7 +51,7 @@
             />
           </a-form-item>
           <div v-else class="setting-value setting-description">
-            {{ application.description || '--' }}
+            {{ application.description || template.description || '--' }}
           </div>
         </div>
 
@@ -100,7 +80,6 @@
         </div>
       </div>
     </a-form>
-  </SectionCard>
 </template>
 
 <script setup lang="ts" name="ProjectApplicationSettings">
@@ -147,6 +126,10 @@ const iconUploadBorderStyle = {
   border: '1px dashed var(--line-strong)',
   borderRadius: 'var(--r-2)',
 }
+const iconUploadContentStyle = {
+  padding: 0,
+  backgroundColor: 'var(--bg-sunken)',
+}
 const iconCropperProps = { fixedNumber: [1, 1], autoCropWidth: 256, autoCropHeight: 256 }
 
 const application = computed(() => props.data.application)
@@ -175,7 +158,7 @@ const rules = computed(() => ({
 const resetDraft = () => {
   draft.icon = application.value.icon
   draft.name = application.value.name
-  draft.description = application.value.description
+  draft.description = application.value.description || template.value.description
   draft.defaultLanguage = application.value.defaultLanguage
   formRef.value?.clearValidate()
 }
@@ -218,13 +201,16 @@ const copyApplicationUrl = async () => {
 }
 
 const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(icon) || icon.includes('.'))
+
+defineExpose({
+  startEdit,
+  cancelEdit,
+  saveSettings,
+})
 </script>
 
 <style scoped>
-.application-settings :deep(.section-head) { align-items: center; }
-.application-settings :deep(.section-title) { margin-bottom: 0; }
-.application-settings :deep(.section-title .ic),
-.application-settings :deep(.section-sub) { display: none; }
+.application-settings :deep(.section-head) { display: none; }
 .settings-list { display: flex; flex-direction: column; }
 
 .setting-row { display: grid; min-height: 4rem; grid-template-columns: 6.5rem minmax(0, 1fr); align-items: center; gap: var(--space-4); padding: var(--space-3) 0; border-bottom: 1px solid var(--line); }
@@ -243,6 +229,18 @@ const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(ico
 .application-icon-upload { display: grid; width: 3.5rem; height: 3.5rem; place-items: center; overflow: hidden; border-radius: var(--r-2); background: var(--bg-sunken); color: var(--accent); font-size: var(--fs-20); }
 
 .application-icon img { width: 100%; height: 100%; object-fit: cover; }
+.application-icon-upload :deep(.ant-upload-wrapper),
+.application-icon-upload :deep(.ant-upload.ant-upload-select) {
+  display: block;
+  margin: 0;
+  border: 0;
+  background: transparent;
+}
+.application-icon-upload :deep(.upload-image-content),
+.application-icon-upload :deep(.upload-image) {
+  border-radius: var(--r-2);
+}
+.application-icon-upload :deep(.upload-image) { object-fit: cover; }
 .icon-edit { display: flex; align-items: center; gap: var(--space-3); }
 .icon-edit > span { color: var(--ink-4); font-size: var(--fs-12); }
 

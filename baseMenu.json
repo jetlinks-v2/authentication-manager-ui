@@ -93,9 +93,6 @@
         "sortIndex": 3,
         "url": "/system/user",
         "icon": "icon-yonghuguanli",
-        "options": {
-          "routeTarget": "midhub/settings"
-        },
         "showPage": [
           "user"
         ],
@@ -313,9 +310,6 @@
         "sortIndex": 4,
         "url": "/system/Department",
         "icon": "icon-bumenguanli",
-        "options": {
-          "routeTarget": "midhub/settings"
-        },
         "showPage": [
           "organization"
         ],
@@ -693,9 +687,6 @@
         "sortIndex": 5,
         "url": "/system/Role",
         "icon": "icon-jiaoseguanli",
-        "options": {
-          "routeTarget": "midhub/settings"
-        },
         "showPage": [
           "role"
         ],
@@ -1955,111 +1946,6 @@
             "assetAccesses": []
           }
         ]
-      },
-      {
-        "code": "application-center/Template",
-        "name": "应用模版",
-        "owner": "iot",
-        "i18nMessages": {
-          "name": {
-            "zh_CN": "应用模版",
-            "en_US": "Application Templates",
-            "en": "Application Templates"
-          }
-        },
-        "id": "9b8016a4e7d24af08fa34ab939ef4f5d",
-        "url": "/open/template",
-        "icon": "ProfileOutlined",
-        "sortIndex": 18,
-        "showPage": ["business-application-template"],
-        "permissions": [
-          {
-            "permission": "business-application-template",
-            "actions": ["query"]
-          }
-        ],
-        "buttons": [
-          {
-            "id": "view",
-            "name": "查看",
-            "i18nMessages": {
-              "zh_CN": "查看",
-              "en_US": "View",
-              "en": "View"
-            },
-            "permissions": [
-              {
-                "permission": "business-application-template",
-                "actions": ["query"]
-              }
-            ]
-          },
-          {
-            "id": "add",
-            "name": "新增",
-            "i18nMessages": {
-              "zh_CN": "新增",
-              "en_US": "Add",
-              "en": "Add"
-            },
-            "permissions": [
-              {
-                "permission": "business-application-template",
-                "actions": ["query", "save"]
-              }
-            ]
-          },
-          {
-            "id": "update",
-            "name": "编辑",
-            "i18nMessages": {
-              "zh_CN": "编辑",
-              "en_US": "Edit",
-              "en": "Edit"
-            },
-            "permissions": [
-              {
-                "permission": "business-application-template",
-                "actions": ["query", "save", "grant"]
-              }
-            ]
-          },
-          {
-            "id": "delete",
-            "name": "删除",
-            "i18nMessages": {
-              "zh_CN": "删除",
-              "en_US": "Delete",
-              "en": "Delete"
-            },
-            "permissions": [
-              {
-                "permission": "business-application-template",
-                "actions": ["query", "delete"]
-              }
-            ]
-          },
-          {
-            "id": "action",
-            "name": "启用/停用",
-            "i18nMessages": {
-              "zh_CN": "启用/停用",
-              "en_US": "Enable/Disable",
-              "en": "Enable/Disable"
-            },
-            "permissions": [
-              {
-                "permission": "business-application-template",
-                "actions": ["query", "save"]
-              }
-            ]
-          }
-        ],
-        "accessSupport": {
-          "text": "不支持",
-          "value": "unsupported"
-        },
-        "supportDataAccess": false
       }
     ]
   },
@@ -2912,7 +2798,7 @@
     "id": "4984e88a42a44b22896c058742d0782d",
     "url": "/open",
     "icon": "AppstoreOutlined",
-    "sortIndex": 5,
+    "sortIndex": 90,
     "permissions": [],
     "buttons": [],
     "children": [
@@ -2935,7 +2821,7 @@
         "permissions": [
           {
             "permission": "business-application",
-            "actions": ["query"]
+            "actions": ["query", "delete"]
           },
           {
             "permission": "business-application-template",
@@ -2955,6 +2841,21 @@
               {
                 "permission": "business-application",
                 "actions": ["save"]
+              }
+            ]
+          },
+          {
+            "id": "remove",
+            "name": "删除应用",
+            "i18nMessages": {
+              "zh_CN": "删除应用",
+              "en_US": "Remove Application",
+              "en": "Remove Application"
+            },
+            "permissions": [
+              {
+                "permission": "business-application",
+                "actions": ["delete"]
               }
             ]
           },
@@ -3075,6 +2976,111 @@
         ]
       },
       {
+        "code": "application-center/Template",
+        "name": "应用模版",
+        "owner": "iot",
+        "i18nMessages": {
+          "name": {
+            "zh_CN": "应用模版",
+            "en_US": "Application Templates",
+            "en": "Application Templates"
+          }
+        },
+        "id": "9b8016a4e7d24af08fa34ab939ef4f5d",
+        "url": "/open/template",
+        "icon": "ProfileOutlined",
+        "sortIndex": 2,
+        "showPage": ["business-application-template"],
+        "permissions": [
+          {
+            "permission": "business-application-template",
+            "actions": ["query"]
+          }
+        ],
+        "buttons": [
+          {
+            "id": "view",
+            "name": "查看",
+            "i18nMessages": {
+              "zh_CN": "查看",
+              "en_US": "View",
+              "en": "View"
+            },
+            "permissions": [
+              {
+                "permission": "business-application-template",
+                "actions": ["query"]
+              }
+            ]
+          },
+          {
+            "id": "add",
+            "name": "新增",
+            "i18nMessages": {
+              "zh_CN": "新增",
+              "en_US": "Add",
+              "en": "Add"
+            },
+            "permissions": [
+              {
+                "permission": "business-application-template",
+                "actions": ["query", "save"]
+              }
+            ]
+          },
+          {
+            "id": "update",
+            "name": "编辑",
+            "i18nMessages": {
+              "zh_CN": "编辑",
+              "en_US": "Edit",
+              "en": "Edit"
+            },
+            "permissions": [
+              {
+                "permission": "business-application-template",
+                "actions": ["query", "save", "grant"]
+              }
+            ]
+          },
+          {
+            "id": "delete",
+            "name": "删除",
+            "i18nMessages": {
+              "zh_CN": "删除",
+              "en_US": "Delete",
+              "en": "Delete"
+            },
+            "permissions": [
+              {
+                "permission": "business-application-template",
+                "actions": ["query", "delete"]
+              }
+            ]
+          },
+          {
+            "id": "action",
+            "name": "启用/停用",
+            "i18nMessages": {
+              "zh_CN": "启用/停用",
+              "en_US": "Enable/Disable",
+              "en": "Enable/Disable"
+            },
+            "permissions": [
+              {
+                "permission": "business-application-template",
+                "actions": ["query", "save"]
+              }
+            ]
+          }
+        ],
+        "accessSupport": {
+          "text": "不支持",
+          "value": "unsupported"
+        },
+        "supportDataAccess": false
+      },
+      {
         "code": "application-center/ApiApplication",
         "name": "API 应用",
         "owner": "cloud",
@@ -3159,7 +3165,43 @@
           "value": "support"
         },
         "supportDataAccess": true,
-        "assetTypes": ["business_application"]
+        "assetTypes": ["business_application"],
+          "options": {
+              "meta": {
+                  "disabled": true,
+                  "menuBadge": {
+                      "type": "comingSoon",
+                      "i18nKey": "layout.menuBadge.comingSoon"
+                  }
+              }
+          }
+      },
+      {
+        "code": "application-center/MobileApplication",
+        "name": "移动端应用",
+        "owner": "cloud",
+        "i18nMessages": {
+          "name": {
+            "zh_CN": "移动端应用",
+            "en_US": "Mobile Applications",
+            "en": "Mobile Applications"
+          }
+        },
+        "id": "a21b71d0b8c34c359064e75f571da6e1",
+        "url": "/open/mobile-application",
+        "icon": "MobileOutlined",
+        "sortIndex": 4,
+        "options": {
+          "meta": {
+            "disabled": true,
+            "menuBadge": {
+              "type": "comingSoon",
+              "i18nKey": "layout.menuBadge.comingSoon"
+            }
+          }
+        },
+        "permissions": [],
+        "buttons": []
       }
     ]
   }

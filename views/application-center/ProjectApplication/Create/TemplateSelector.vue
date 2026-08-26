@@ -25,7 +25,7 @@
         type="link"
         size="small"
         class="detail-link"
-        @click.prevent.stop="openPreview(item)"
+        @click.prevent.stop="openDetail(item)"
       >
         {{ $t('ProjectApplication.template.detail') }}
         <AIcon type="RightOutlined" />
@@ -97,6 +97,17 @@ const selectTemplate = (item: ApplicationTemplate) => {
 }
 
 const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(icon) || icon.includes('.'))
+
+const openDetail = (item: ApplicationTemplate) => {
+  const templateUrl = String(item.templateUrl || '').trim()
+  if (templateUrl) {
+    window.open(templateUrl, '_blank', 'noopener,noreferrer')
+    return
+  }
+
+  // 历史模版未配置外部地址时继续展示本地菜单预览。
+  void openPreview(item)
+}
 
 const openPreview = async (item: ApplicationTemplate) => {
   previewTemplate.value = item

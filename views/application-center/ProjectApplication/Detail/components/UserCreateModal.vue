@@ -2,160 +2,151 @@
   <a-modal
     :open="open"
     :title="$t('ProjectApplication.user.addTitle')"
+    :width="900"
     :ok-text="$t('ProjectApplication.user.add')"
     :cancel-text="$t('ProjectApplication.common.cancel')"
+    :body-style="{ padding: 'var(--space-3) var(--space-4)' }"
     destroy-on-close
     @ok="confirm"
     @cancel="close"
   >
-    <a-form ref="formRef" :model="form" :rules="rules" layout="vertical">
-      <a-form-item :label="$t('ProjectApplication.user.name')" name="name">
-        <a-input v-model:value="form.name" :maxlength="64" :placeholder="$t('ProjectApplication.user.namePlaceholder')" />
-      </a-form-item>
-      <a-form-item :label="$t('ProjectApplication.user.username')" name="username" validate-first>
-        <a-input v-model:value="form.username" :maxlength="64" :placeholder="$t('ProjectApplication.user.usernamePlaceholder')" />
-      </a-form-item>
-      <a-row :gutter="16">
-        <a-col :span="12">
-          <a-form-item :label="$t('ProjectApplication.user.phone')" name="phone">
-            <a-input v-model:value="form.phone" :maxlength="20" :placeholder="$t('ProjectApplication.user.phonePlaceholder')" />
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item :label="$t('ProjectApplication.user.email')" name="email">
-            <a-input v-model:value="form.email" :maxlength="64" :placeholder="$t('ProjectApplication.user.emailPlaceholder')" />
-          </a-form-item>
-        </a-col>
-      </a-row>
-      <a-form-item :label="$t('ProjectApplication.user.role')" name="roleId">
-        <a-select
-          v-model:value="form.roleId"
-          :options="roleOptions"
-          :placeholder="$t('ProjectApplication.user.rolePlaceholder')"
-        />
-      </a-form-item>
-      <a-form-item :label="$t('ProjectApplication.user.password')" name="password">
-        <a-input-password v-model:value="form.password" :maxlength="64" :placeholder="$t('ProjectApplication.user.passwordPlaceholder')" />
-      </a-form-item>
-      <a-form-item :label="$t('ProjectApplication.user.confirmPassword')" name="confirmPassword">
-        <a-input-password
-          v-model:value="form.confirmPassword"
-          :maxlength="64"
-          :placeholder="$t('ProjectApplication.user.confirmPasswordPlaceholder')"
-        />
-      </a-form-item>
-    </a-form>
+    <ConditionFilter
+      class="user-picker-filter"
+      :fields="filterFields"
+      :placeholder="$t('ProjectApplication.user.selectFilterPlaceholder')"
+      @change="handleFilterChange"
+    />
+
+    <div class="user-picker-table">
+      <j-pro-table
+        v-if="open"
+        row-key="id"
+        mode="TABLE"
+        type="PAGE"
+        :columns="columns"
+        :request="loadCandidates"
+        :params="queryParams"
+        :row-selection="rowSelection"
+        :alert-show="false"
+        :body-style="{ padding: 0 }"
+        :default-params="{ sorts: [{ name: 'createTime', order: 'desc' }] }"
+      />
+    </div>
   </a-modal>
 </template>
 
 <script setup lang="ts" name="ProjectApplicationUserCreateModal">
 import type { PropType } from 'vue'
-import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { FormInstance } from 'ant-design-vue'
-import type { Rule } from 'ant-design-vue/es/form'
-import { passwordRegEx } from '@jetlinks-web-core/utils/validate'
-import { validateField_api as validateUserField } from '@authentication-manager-ui/api/system/user'
-import { resultOf } from '../../applicationModel'
-import type { ApplicationRole, ApplicationUserDraft } from '../../types'
-
-interface FieldValidationResult {
-  passed?: boolean
-  reason?: string
-}
+import ConditionFilter, {
+  type ConditionFilterChangePayload,
+  type ConditionFilterField,
+} from '@jetlinks-web-core/components/ConditionFilter'
+import { onlyMessage } from '@jetlinks-web/utils'
+import type { UserDetailEntity } from '@authentication-manager-ui/api/application-center/businessApplication'
+import {
+  loadProjectApplicationUserCandidates,
+  type ProjectApplicationUserQuery,
+} from '../../applicationUserService'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
-  roles: { type: Array as PropType<ApplicationRole[]>, default: () => [] },
+  boundUserIds: { type: Array as PropType<string[]>, default: () => [] },
 })
 const emits = defineEmits<{
   (e: 'update:open', value: boolean): void
-  (e: 'confirm', draft: ApplicationUserDraft): void
+  (e: 'confirm', userIds: string[]): void
 }>()
 const { t: $t } = useI18n()
-const formRef = ref<FormInstance>()
-const form = reactive<ApplicationUserDraft>({
-  name: '',
-  username: '',
-  phone: '',
-  email: '',
-  roleId: '',
-  password: '',
-  confirmPassword: '',
-})
+const selectedRowKeys = ref<string[]>([])
+const queryParams = ref<ProjectApplicationUserQuery>({ terms: [] })
 
-const roleOptions = computed(() => props.roles.map(role => ({ label: role.name, value: role.id })))
+const filterFields = computed<ConditionFilterField[]>(() => [
+  {
+    title: $t('ProjectApplication.user.selectName'),
+    dataIndex: 'name',
+    search: { type: 'string', defaultTermType: 'like' },
+  },
+  {
+    title: $t('ProjectApplication.user.selectUsername'),
+    dataIndex: 'username',
+    search: { type: 'string', defaultTermType: 'like' },
+  },
+])
 
-const validateRemoteField = async (
-  type: 'username' | 'password',
-  value: string,
-  fallback: string,
-) => {
-  const result = resultOf<FieldValidationResult>(await validateUserField(type, value))
-  return result?.passed ? Promise.resolve() : Promise.reject(result?.reason || fallback)
-}
+const columns = computed(() => [
+  {
+    title: $t('ProjectApplication.user.selectName'),
+    dataIndex: 'name',
+    key: 'name',
+    ellipsis: true,
+  },
+  {
+    title: $t('ProjectApplication.user.selectUsername'),
+    dataIndex: 'username',
+    key: 'username',
+    ellipsis: true,
+  },
+])
 
-const validateUsername = async (_rule: Rule, value: string) => {
-  const username = String(value || '')
-  if (!username) return Promise.reject($t('ProjectApplication.user.usernamePlaceholder'))
-  if (/[\u4e00-\u9fa5]/.test(username)) return Promise.reject($t('ProjectApplication.user.usernamePattern'))
-  return validateRemoteField('username', username, $t('ProjectApplication.user.usernameInvalid'))
-}
-
-const validatePassword = async (_rule: Rule, value: string) => {
-  const password = String(value || '')
-  if (!password) return Promise.reject($t('ProjectApplication.user.passwordPlaceholder'))
-  if (password.length < 8) return Promise.reject($t('ProjectApplication.user.passwordLength'))
-  if (!passwordRegEx(password)) return Promise.reject($t('ProjectApplication.user.passwordFormat'))
-  return validateRemoteField('password', password, $t('ProjectApplication.user.passwordFormat'))
-}
-
-const validateConfirmPassword = (_rule: Rule, value: string) => {
-  if (!value) return Promise.reject($t('ProjectApplication.user.confirmPasswordPlaceholder'))
-  return value === form.password
-    ? Promise.resolve()
-    : Promise.reject($t('ProjectApplication.user.passwordMismatch'))
-}
-
-const rules = computed<Record<string, Rule[]>>(() => ({
-  name: [{ required: true, message: $t('ProjectApplication.user.namePlaceholder') }],
-  username: [{ required: true, validator: validateUsername, trigger: 'blur' }],
-  phone: [{ pattern: /^1[3456789]\d{9}$/, message: $t('ProjectApplication.user.phoneInvalid'), trigger: 'blur' }],
-  email: [{ type: 'email' as const, message: $t('ProjectApplication.user.emailInvalid'), trigger: 'blur' }],
-  roleId: [{ required: true, message: $t('ProjectApplication.user.roleRequired') }],
-  password: [{ required: true, validator: validatePassword, trigger: 'blur' }],
-  confirmPassword: [{ required: true, validator: validateConfirmPassword, trigger: 'blur' }],
+const rowSelection = computed(() => ({
+  type: 'checkbox' as const,
+  selectedRowKeys: selectedRowKeys.value,
+  onSelect: (record: UserDetailEntity, selected: boolean) => {
+    toggleSelection([record.id], selected)
+  },
+  onSelectAll: (selected: boolean, _rows: UserDetailEntity[], changeRows: UserDetailEntity[]) => {
+    toggleSelection(changeRows.map(item => item.id), selected)
+  },
+  onSelectNone: () => {
+    selectedRowKeys.value = []
+  },
 }))
 
-const resetForm = () => {
-  Object.assign(form, {
-    name: '',
-    username: '',
-    phone: '',
-    email: '',
-    roleId: props.roles[0]?.id || '',
-    password: '',
-    confirmPassword: '',
-  })
-  nextTick(() => formRef.value?.clearValidate())
+const loadCandidates = (query: ProjectApplicationUserQuery) => {
+  return loadProjectApplicationUserCandidates(props.boundUserIds, query)
+}
+
+const handleFilterChange = ({ filter }: ConditionFilterChangePayload) => {
+  queryParams.value = {
+    terms: filter.terms.map(term => ({ ...term })),
+  }
+}
+
+const toggleSelection = (ids: string[], selected: boolean) => {
+  const next = new Set(selectedRowKeys.value)
+  ids.filter(Boolean).forEach(id => selected ? next.add(id) : next.delete(id))
+  selectedRowKeys.value = [...next]
 }
 
 watch(() => props.open, open => {
-  if (open) resetForm()
+  if (open) {
+    selectedRowKeys.value = []
+    queryParams.value = { terms: [] }
+  }
 })
-watch(() => props.roles, roles => {
-  if (!roles.some(role => role.id === form.roleId)) form.roleId = roles[0]?.id || ''
-}, { deep: true })
 
 const close = () => emits('update:open', false)
 
-const confirm = async () => {
-  try {
-    await formRef.value?.validate()
-  } catch {
+const confirm = () => {
+  if (!selectedRowKeys.value.length) {
+    onlyMessage($t('ProjectApplication.user.selectRequired'), 'warning')
     return
   }
-  emits('confirm', { ...form })
+  emits('confirm', [...selectedRowKeys.value])
   close()
 }
 </script>
+
+<style scoped>
+.user-picker-filter { margin-bottom: var(--space-3); }
+.user-picker-table { height: 31rem; min-height: 0; }
+.user-picker-table :deep(.jtable-body-header) { display: none; }
+.user-picker-table :deep(.jtable-body) { min-height: 0; gap: 0; }
+.user-picker-table :deep(.jtable-pagination) {
+  flex: 0 0 auto;
+  margin-top: var(--space-2);
+  padding-bottom: var(--space-2);
+}
+</style>

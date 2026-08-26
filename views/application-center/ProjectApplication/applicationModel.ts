@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { normalizeBasicLayoutVariant } from '@jetlinks-web-core/layout/runtime/layoutVariant'
 import type {
   BusinessApplicationEntity,
   BusinessApplicationRoleEntity,
@@ -61,6 +62,10 @@ export const buildApplicationTerms = (projectId: string, filters: ApplicationFil
 const normalizeStatus = (value: string | EnumValue | undefined): ApplicationStatus =>
   enumValue(value, 'enabled') === 'disabled' ? 'disabled' : 'enabled'
 
+// 历史模板可能没有布局配置，新增应用时继续使用应用端默认壳层。
+const normalizeTemplateLayoutVariant = (value: unknown) =>
+  normalizeBasicLayoutVariant(value) || 'application'
+
 export const normalizeApplication = (entity: BusinessApplicationEntity): ProjectApplication => {
   const status = normalizeStatus(entity.state)
   return {
@@ -89,9 +94,12 @@ export const normalizeTemplate = (
     code: entity.code,
     icon: entity.icon,
     description: entity.description || '',
+    templateUrl: textOf(entity.templateUrl).trim(),
     status,
     statusText: enumText(entity.state, status),
     sortIndex: Number(entity.sortIndex || 0),
+    layoutVariant: normalizeTemplateLayoutVariant(entity.layoutVariant),
+      layout: entity.layout,
     disabled: status !== 'enabled',
   }
 }

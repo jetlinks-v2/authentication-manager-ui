@@ -1,5 +1,15 @@
 <template>
   <CardSummary class="application-card" :data="cardData" @click="emits('edit')">
+    <template #status>
+      <span
+        class="application-status"
+        :class="`application-status--${item.application.status}`"
+        :aria-label="item.application.statusText"
+      >
+        <AIcon :type="item.application.status === 'enabled' ? 'CheckCircleOutlined' : 'MinusCircleOutlined'" />
+      </span>
+    </template>
+
     <template #meta>
       <span class="created-at">
         <AIcon type="ClockCircleOutlined" />
@@ -9,20 +19,17 @@
 
     <template #footer>
       <div class="application-card__footer" @click.stop>
-        <a-space :size="8">
-          <a-button size="small" @click="emits('edit')">
-            <template #icon><AIcon type="EditOutlined" /></template>
-            {{ $t('ProjectApplication.common.edit') }}
-          </a-button>
-          <a-button size="small" :loading="loading" @click="emits('toggle-status')">
-            <template #icon>
-              <AIcon :type="item.application.status === 'enabled' ? 'PauseCircleOutlined' : 'PlayCircleOutlined'" />
-            </template>
-            {{ statusActionText }}
-          </a-button>
-        </a-space>
-
-        <a-button type="primary" size="small" @click="emits('open')">
+        <a-button type="text" size="small" @click="emits('edit')">
+          <template #icon><AIcon type="EditOutlined" /></template>
+          {{ $t('ProjectApplication.common.edit') }}
+        </a-button>
+        <a-button type="text" size="small" :loading="loading" @click="emits('toggle-status')">
+          <template #icon>
+            <AIcon :type="item.application.status === 'enabled' ? 'StopOutlined' : 'PlayCircleOutlined'" />
+          </template>
+          {{ statusActionText }}
+        </a-button>
+        <a-button type="text" size="small" :loading="opening" @click="emits('open')">
           <template #icon><AIcon type="ExportOutlined" /></template>
           {{ $t('ProjectApplication.detail.open') }}
         </a-button>
@@ -49,6 +56,10 @@ const props = defineProps({
     required: true,
   },
   loading: {
+    type: Boolean,
+    default: false,
+  },
+  opening: {
     type: Boolean,
     default: false,
   },
@@ -90,21 +101,64 @@ const cardData = computed<CardSummaryData>(() => {
 
 <style scoped>
 .application-card {
+  --card-shell-avatar-size: var(--space-10);
+
   display: block;
-  height: 13.75rem;
+  height: 12.75rem;
 }
 
 .application-card :deep(.card-summary) {
   padding: var(--space-4) var(--space-4) 0;
 }
 
-.application-card :deep(.card-summary__header) { gap: var(--space-3); }
-.application-card :deep(.card-summary__title-row) { justify-content: flex-start; gap: var(--space-2); }
-.application-card :deep(.card-summary__description) { min-height: 2.75rem; margin-top: var(--space-4); }
+.application-card :deep(.card-avatar) {
+  border: 0;
+  border-radius: var(--r-2);
+}
+
+.application-card :deep(.card-summary__header) { gap: var(--space-2); }
+.application-card :deep(.card-summary__title-row) {
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.application-card :deep(.card-summary__title) {
+  font-size: var(--fs-h4);
+}
+.application-card :deep(.card-summary__subtitle) {
+  display: inline-flex;
+  max-width: 100%;
+  margin-top: var(--space-1);
+  padding: 0 var(--space-2);
+  overflow: hidden;
+  border-radius: var(--r-1);
+  background: var(--bg-sunken);
+  color: var(--ink-3);
+  font-size: var(--fs-meta);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.application-card :deep(.card-summary__description) {
+  min-height: 2.75rem;
+  margin-top: var(--space-3);
+}
 .application-card :deep(.card-summary__meta) { margin-top: auto; }
 .application-card :deep(.card-summary__footer) {
-  margin: var(--space-3) calc(var(--space-4) * -1) 0;
-  padding: var(--space-3) var(--space-4);
+  margin: var(--space-2) calc(var(--space-4) * -1) 0;
+  padding: var(--space-2) 0;
+  gap: 0;
+}
+
+.application-status {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  color: var(--ink-3);
+  font-size: var(--fs-16);
+}
+
+.application-status--enabled {
+  color: var(--success);
 }
 
 .created-at {
@@ -112,7 +166,7 @@ const cardData = computed<CardSummaryData>(() => {
   min-width: 0;
   align-items: center;
   gap: var(--space-1);
-  color: var(--ink-4);
+  color: var(--ink-3);
   font-size: var(--fs-meta);
 }
 
@@ -120,13 +174,26 @@ const cardData = computed<CardSummaryData>(() => {
   display: flex;
   width: 100%;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
+  justify-content: stretch;
+}
+
+.application-card__footer :deep(.ant-btn) {
+  min-width: 0;
+  flex: 1;
+  border-radius: 0;
+  color: var(--ink-2);
+}
+
+.application-card__footer :deep(.ant-btn + .ant-btn) {
+  border-left: var(--jet-theme-stroke-width) solid var(--line);
+}
+
+.application-card__footer :deep(.ant-btn:hover) {
+  background-color: transparent;
+  color: var(--jet-theme-primary-hover);
 }
 
 @media (max-width: 30rem) {
-  .application-card { height: auto; min-height: 14.5rem; }
-  .application-card__footer { align-items: stretch; flex-direction: column; }
-  .application-card__footer > :deep(.ant-btn) { width: 100%; }
+  .application-card { height: auto; min-height: 12.75rem; }
 }
 </style>
