@@ -92,8 +92,9 @@ import {reactive, ref} from 'vue'
 import type {formDataType} from './typing'
 import {useRequest} from '@jetlinks-web/hooks';
 import {save_api} from '../../../api/system/basis';
-import {normalizeLayoutMode, useSystemStore, type LayoutMode} from '@jetlinks-web-core/store/system';
+import {useSystemStore, type LayoutMode} from '@jetlinks-web-core/store/system';
 import type { BasicLayoutVariant } from '@jetlinks-web-core/layout/runtime/layoutVariant'
+import { normalizeLayoutMode } from './layoutMode'
 import Upload from '@jetlinks-web-core/views/init-home/Basic/components/upload/upload.vue'
 import LayoutModeSelector from './components/LayoutModeSelector.vue'
 import MapSettings from './components/MapSettings.vue'
