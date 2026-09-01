@@ -54,7 +54,7 @@
                 @click="(e) => e.stopPropagation()">
                 <!--                                    <a-checkbox-group v-model:value="slotProps.selectPermissions-->
                 <!--                                        " :options="slotProps.permissionList" />-->
-                <ButtonCheckBox :options="slotProps.permissionList"
+                <CheckboxGroup :options="slotProps.permissionList"
                   :value="selectedRows.find(i => i.id === slotProps.id)?.selectPermissions || []"
                   @change="(val) => onChange(val, slotProps)" />
               </div>
@@ -67,7 +67,7 @@
     <template #permission="slotProps">
       <div style="cursor: pointer" class="card-item-content-value" @click="(e) => e.stopPropagation()">
         <!--                    <a-checkbox-group v-model:value="slotProps.selectPermissions" :options="slotProps.permissionList" />-->
-        <ButtonCheckBox :options="slotProps.permissionList"
+        <CheckboxGroup :options="slotProps.permissionList"
           :value="selectedRows.find(i => i.id === slotProps.id)?.selectPermissions || []"
           @change="(val) => onChange(val, slotProps)" />
       </div>
@@ -97,7 +97,7 @@ import {
 } from '@authentication-manager-ui/api/system/department';
 import { dictType } from '../typings';
 import { useI18n } from 'vue-i18n';
-import ButtonCheckBox from './ButtonCheckBox.vue'
+import CheckboxGroup from '@jetlinks-web-core/components/CheckboxGroup/index.vue'
 import { systemImg } from '@authentication-manager-ui/assets/index'
 import dayjs from 'dayjs';
 import { onlyMessage } from '@jetlinks-web/utils';

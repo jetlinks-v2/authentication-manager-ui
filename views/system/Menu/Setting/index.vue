@@ -72,7 +72,7 @@ import {
   getSystemPermission as getSystemPermission_api,
   updateMenus,
   queryModule
-} from "@authentication-manager-ui/api/initHome";
+} from "@jetlinks-web-core/api/initHome";
 import {
   filterMenu,
   inItSelected,
