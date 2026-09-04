@@ -2832,6 +2832,144 @@
                 },
                 "supportDataAccess": true,
                 "assetType": "role"
+            },
+            {
+                "code": "system/Announcement",
+                "name": "公告管理",
+                "i18nMessages": {
+                    "name": {
+                        "zh_CN": "公告管理",
+                        "en_US": "Announcement Management",
+                        "en": "Announcement Management"
+                    }
+                },
+                "owner": "cloud",
+                "id": "system-announcement-cloud",
+                "sortIndex": 6,
+                "url": "/system/Announcement",
+                "icon": "NotificationOutlined",
+                "showPage": [
+                    "bulletin"
+                ],
+                "permissions": [
+                    {
+                        "permission": "bulletin",
+                        "actions": [
+                            "query",
+                            "save",
+                            "delete"
+                        ]
+                    }
+                ],
+                "buttons": [
+                    {
+                        "id": "add",
+                        "name": "新增",
+                        "i18nMessages": {
+                            "zh_CN": "新增",
+                            "en_US": "Add",
+                            "en": "Add"
+                        },
+                        "permissions": [
+                            {
+                                "permission": "bulletin",
+                                "actions": [
+                                    "save"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "view",
+                        "name": "查看",
+                        "i18nMessages": {
+                            "zh_CN": "查看",
+                            "en_US": "View",
+                            "en": "View"
+                        },
+                        "permissions": [
+                            {
+                                "permission": "bulletin",
+                                "actions": [
+                                    "query"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "edit",
+                        "name": "编辑",
+                        "i18nMessages": {
+                            "zh_CN": "编辑",
+                            "en_US": "Edit",
+                            "en": "Edit"
+                        },
+                        "permissions": [
+                            {
+                                "permission": "bulletin",
+                                "actions": [
+                                    "save"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "publish",
+                        "name": "发布",
+                        "i18nMessages": {
+                            "zh_CN": "发布",
+                            "en_US": "Publish",
+                            "en": "Publish"
+                        },
+                        "permissions": [
+                            {
+                                "permission": "bulletin",
+                                "actions": [
+                                    "save"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "withdraw",
+                        "name": "撤回",
+                        "i18nMessages": {
+                            "zh_CN": "撤回",
+                            "en_US": "Withdraw",
+                            "en": "Withdraw"
+                        },
+                        "permissions": [
+                            {
+                                "permission": "bulletin",
+                                "actions": [
+                                    "save"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "delete",
+                        "name": "删除",
+                        "i18nMessages": {
+                            "zh_CN": "删除",
+                            "en_US": "Delete",
+                            "en": "Delete"
+                        },
+                        "permissions": [
+                            {
+                                "permission": "bulletin",
+                                "actions": [
+                                    "delete"
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "accessSupport": {
+                    "text": "支持",
+                    "value": "support"
+                },
+                "supportDataAccess": false
             }
         ]
     },
