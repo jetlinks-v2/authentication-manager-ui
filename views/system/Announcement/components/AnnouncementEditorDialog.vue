@@ -78,20 +78,12 @@
       <j-permission-button
         v-if="!publishMode"
         :has-permission="record ? 'system/Announcement:edit' : 'system/Announcement:add'"
+        type="primary"
         :loading="loading"
         :disabled="!canSubmit"
         @click="submit(false)"
       >
-        {{ $t('Announcement.action.saveDraft') }}
-      </j-permission-button>
-      <j-permission-button
-        has-permission="system/Announcement:publish"
-        type="primary"
-        :loading="loading"
-        :disabled="!canSubmit"
-        @click="submit(true)"
-      >
-        {{ $t(publishMode ? 'Announcement.action.confirmPublish' : 'Announcement.action.savePublish') }}
+        {{ $t('Announcement.action.save') }}
       </j-permission-button>
     </template>
   </a-modal>

@@ -1523,6 +1523,7 @@
   "Announcement.action.delete": "Delete",
   "Announcement.action.cancel": "Cancel",
   "Announcement.action.saveDraft": "Save draft",
+  "Announcement.action.save": "Save",
   "Announcement.action.savePublish": "Save and publish",
   "Announcement.action.confirmPublish": "Publish",
   "Announcement.detail.title": "Title",

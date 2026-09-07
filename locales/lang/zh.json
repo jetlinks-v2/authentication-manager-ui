@@ -1523,6 +1523,7 @@
   "Announcement.action.delete": "删除",
   "Announcement.action.cancel": "取消",
   "Announcement.action.saveDraft": "保存草稿",
+  "Announcement.action.save": "保存",
   "Announcement.action.savePublish": "保存并发布",
   "Announcement.action.confirmPublish": "确认发布",
   "Announcement.detail.title": "公告标题",
