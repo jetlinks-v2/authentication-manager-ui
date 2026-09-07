@@ -6,6 +6,7 @@ import { moduleRegistry } from '@jetlinks-web-core/utils/module-registry'
 import registerSetting from './register'
 import { name } from './package.json'
 import './views/system/list-page.less'
+import { getRegisterComponents } from './views/system/Announcement/register'
 
 /**
  * 额外子路由是独立于菜单管理之外的页面，比如详情，新增表单页；它们需要挂载在指定路由下。
@@ -105,6 +106,7 @@ export default {
   getAsyncRoutesMap: () => getModuleRoutesMap(routerModules),
   getExtraRoutesMap,
   getComponents,
+  getRegisterComponents,
   register,
   priority: -100
 }
