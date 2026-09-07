@@ -98,7 +98,7 @@
         },
         "id": "fe2e589bcf09a5353cbb5bebeb0b7f1c",
         "sortIndex": 20,
-        "url": "/system/user",
+        "url": "/system/ou",
         "icon": "icon-yonghuguanli",
         "children": [
           {
@@ -114,7 +114,7 @@
             "owner": "iot",
             "id": "9d1e96f17649ef5e7b8e7c6bb8e7b775",
             "sortIndex": 10,
-            "url": "/system/Role",
+            "url": "/system/ou/role",
             "icon": "icon-jiaoseguanli",
             "showPage": [
               "role"
@@ -279,7 +279,7 @@
             "owner": "iot",
             "id": "3962ec0835f3b4a68c1f63b955625046",
             "sortIndex": 20,
-            "url": "/system/Department",
+            "url": "/system/ou/department",
             "icon": "icon-bumenguanli",
             "showPage": [
               "organization"
@@ -649,7 +649,7 @@
             "owner": "iot",
             "id": "fe2e557bcf09a5503cbb5bebeb0b7f1c",
             "sortIndex": 30,
-            "url": "/system/user",
+            "url": "/system/ou/user",
             "icon": "icon-yonghuguanli",
             "showPage": [
               "user"
