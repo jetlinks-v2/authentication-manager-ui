@@ -1555,5 +1555,16 @@
   "Announcement.message.updated": "公告已更新",
   "Announcement.message.published": "公告已发布",
   "Announcement.message.withdrawn": "公告已撤回",
-  "Announcement.message.deleted": "草稿已删除"
+  "Announcement.message.deleted": "草稿已删除",
+  "Announcement.inbox.title": "公告",
+  "Announcement.inbox.message": "公告标题",
+  "Announcement.inbox.publishTime": "发布时间",
+  "Announcement.inbox.state": "状态",
+  "Announcement.inbox.action": "操作",
+  "Announcement.inbox.readPage": "当前页已读",
+  "Announcement.inbox.readAll": "全部公告已读",
+  "Announcement.inbox.markRead": "标记已读",
+  "Announcement.inbox.markUnread": "标记未读",
+  "Announcement.inbox.view": "查看",
+  "Announcement.inbox.detailTitle": "公告详情"
 }

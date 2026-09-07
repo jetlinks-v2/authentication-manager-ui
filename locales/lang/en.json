@@ -1555,5 +1555,16 @@
   "Announcement.message.updated": "Announcement updated",
   "Announcement.message.published": "Announcement published",
   "Announcement.message.withdrawn": "Announcement withdrawn",
-  "Announcement.message.deleted": "Draft deleted"
+  "Announcement.message.deleted": "Draft deleted",
+  "Announcement.inbox.title": "Announcements",
+  "Announcement.inbox.message": "Title",
+  "Announcement.inbox.publishTime": "Published",
+  "Announcement.inbox.state": "Status",
+  "Announcement.inbox.action": "Actions",
+  "Announcement.inbox.readPage": "Mark page read",
+  "Announcement.inbox.readAll": "Mark all announcements read",
+  "Announcement.inbox.markRead": "Mark as read",
+  "Announcement.inbox.markUnread": "Mark as unread",
+  "Announcement.inbox.view": "View",
+  "Announcement.inbox.detailTitle": "Announcement details"
 }

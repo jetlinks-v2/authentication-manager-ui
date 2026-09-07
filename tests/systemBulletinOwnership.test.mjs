@@ -18,12 +18,18 @@ const readSourceTree = async (directory) => {
   return sources.join('\n')
 }
 
-const [apiSource, registerSource, moduleSource, moduleMenuSource, saasMenuSource, coreSource, coreCenterSource, coreRecordSource, coreSubscriptionSource, coreDialogSource, coreNoticeSource] = await Promise.all([
+const [apiSource, registerSource, inboxSource, moduleSource, moduleMenuSource, saasMenuSource, managementSource, pageSource, saasCenterSource, projectCenterSource, projectMessageSource, coreSource, coreCenterSource, coreRecordSource, coreSubscriptionSource, coreDialogSource, coreNoticeSource] = await Promise.all([
   readFile(resolve(moduleRoot, 'views/system/Announcement/api.ts'), 'utf8'),
   readFile(resolve(moduleRoot, 'views/system/Announcement/register.ts'), 'utf8'),
+  readFile(resolve(moduleRoot, 'views/system/Announcement/components/AnnouncementInbox.vue'), 'utf8'),
   readFile(resolve(moduleRoot, 'index.ts'), 'utf8'),
   readFile(resolve(moduleRoot, 'baseMenu.json'), 'utf8'),
   readFile(resolve(workspaceRoot, 'ui/modules/saas-manager-ui/baseMenu.json'), 'utf8'),
+  readFile(resolve(moduleRoot, 'views/system/Announcement/components/ManagementView.vue'), 'utf8'),
+  readFile(resolve(moduleRoot, 'views/system/Announcement/index.vue'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'ui/modules/saas-manager-ui/views/personalCenter/index.vue'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'ui/modules/project-side-ui/views/PersonCenter/index.vue'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'ui/modules/project-side-ui/views/PersonCenter/components/StationMessage.vue'), 'utf8'),
   readSourceTree(coreRoot),
   readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/api/account/center.ts'), 'utf8'),
   readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/api/account/notificationRecord.ts'), 'utf8'),
@@ -47,6 +53,22 @@ test('keeps bulletin API and notification renderer registration in authenticatio
   assert.match(moduleSource, /views\/system\/Announcement\/register/)
 })
 
+test('registers one bulletin inbox for both personal-center hosts', () => {
+  assert.match(registerSource, /inboxRegistration\('account\/center'\)/)
+  assert.match(registerSource, /inboxRegistration\('systemConfig\/personCenter'\)/)
+  assert.match(registerSource, /AnnouncementInbox\.vue/)
+  assert.match(inboxSource, /queryAnnouncementInbox/)
+  assert.match(inboxSource, /NotificationDetail/)
+  assert.match(saasCenterSource, /useRegistryOptions/)
+  assert.match(saasCenterSource, /RegistryComponent/)
+  assert.match(projectCenterSource, /useRegistryOptions/)
+  assert.match(projectCenterSource, /RegistryComponent/)
+  assert.match(projectMessageSource, /excludeProviders/)
+  assert.doesNotMatch(saasCenterSource, /SystemBulletin|system\/bulletin/)
+  assert.doesNotMatch(projectCenterSource, /SystemBulletin|system\/bulletin/)
+  assert.doesNotMatch(projectMessageSource, /SystemBulletin|system\/bulletin/)
+})
+
 test('keeps only project menu metadata in the owner module and operations binding in saas', () => {
   const ownerMenus = findMenus(JSON.parse(moduleMenuSource), 'system/Announcement')
   const saasMenus = findMenus(JSON.parse(saasMenuSource), 'system/Announcement')
@@ -55,6 +77,13 @@ test('keeps only project menu metadata in the owner module and operations bindin
   assert.equal(saasMenus.length, 1)
   assert.equal(saasMenus[0].owner, 'iot')
   assert.equal(saasMenus[0].options?.appName, 'authentication-manager')
+})
+
+test('publishes from the management row through deploy endpoint after confirmation', () => {
+  assert.match(managementSource, /Announcement\.confirm\.publish/)
+  assert.match(managementSource, /onConfirm: \(\) => \$emit\('publish', record\)/)
+  assert.match(pageSource, /publishAnnouncementApi\(record\.id\)/)
+  assert.doesNotMatch(pageSource, /editingRecord\.value = await getAnnouncement\(record\.id\)/)
 })
 
 test('keeps web-core notification handling business-neutral', () => {

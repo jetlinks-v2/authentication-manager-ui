@@ -1,5 +1,10 @@
 import dayjs from 'dayjs'
 import { request } from '@jetlinks-web/core'
+import {
+  changeAllStatus,
+  changeStatus_api,
+  getList_api,
+} from '@jetlinks-web-core/api/account/notificationRecord'
 
 export type AnnouncementState = 'unpublished' | 'published'
 export const SYSTEM_BULLETIN_PROVIDER = 'SystemBulletin'
@@ -189,6 +194,29 @@ export const getSystemBulletinNotificationDetail = async (
     deployTime: detail.deployTime,
   }
 }
+
+/** 查询当前用户收到的公告通知，不与公告管理查询混用。 */
+export const queryAnnouncementInbox = (query: AnnouncementQuery = {}) => getList_api({
+  ...query,
+  terms: [
+    ...(query.terms || []),
+    {
+      column: 'topicProvider',
+      termType: 'eq',
+      value: SYSTEM_BULLETIN_PROVIDER,
+    },
+  ],
+})
+
+export const changeAnnouncementReadState = (
+  type: '_read' | '_unread',
+  ids: string[],
+) => changeStatus_api(type, ids)
+
+export const markAllAnnouncementsRead = () => changeAllStatus(
+  '_read',
+  [SYSTEM_BULLETIN_PROVIDER],
+)
 
 /** 保存未发布公告，或通过 deployType=now 保存并立即发布。 */
 export const saveAnnouncement = (draft: AnnouncementDraft) => {

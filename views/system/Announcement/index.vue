@@ -49,6 +49,7 @@ import {
   deleteAnnouncement,
   getAnnouncement,
   getAnnouncementTypes,
+  publishAnnouncement as publishAnnouncementApi,
   saveAnnouncement as saveAnnouncementApi,
   withdrawAnnouncement as withdrawAnnouncementApi,
 } from './api'
@@ -245,13 +246,11 @@ async function saveAnnouncement(draft: AnnouncementDraft) {
   }
 }
 
-/** 发布前读取完整公告并进入范围配置，避免列表摘要覆盖原正文。 */
+/** 通过行内二次确认直接发布草稿，发布后重新查询服务端状态。 */
 async function publishAnnouncement(record: AnnouncementRecord) {
-  await ensureTypeOptions()
-  editingRecord.value = await getAnnouncement(record.id)
-  publishMode.value = true
-  initializeUserOptions(editingRecord.value.userIds)
-  editorOpen.value = true
+  await publishAnnouncementApi(record.id)
+  managementViewRef.value?.reload()
+  onlyMessage($t('Announcement.message.published'))
 }
 
 /** 撤回后刷新列表以同步未发布状态。 */

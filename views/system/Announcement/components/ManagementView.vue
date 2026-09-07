@@ -76,7 +76,10 @@
             type="link"
             style="padding: 0"
             :tooltip="{ title: $t('Announcement.action.publish') }"
-            @click="$emit('publish', record)"
+            :pop-confirm="{
+              title: $t('Announcement.confirm.publish'),
+              onConfirm: () => $emit('publish', record),
+            }"
           >
             <AIcon type="PlayCircleOutlined" />
           </j-permission-button>
