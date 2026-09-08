@@ -1,6 +1,8 @@
 import { defineAsyncComponent } from 'vue'
 import i18n from '@jetlinks-web-core/locales'
 import { SYSTEM_BULLETIN_PROVIDER } from './api'
+import { loadSystemBulletinNoticeList } from './noticeListLoader'
+import { openRealtimeAnnouncement } from './realtimeNotification'
 
 const inboxRegistration = (targetPage: string) => ({
   targetPage,
@@ -27,6 +29,13 @@ export const getRegisterComponents = () => [
   {
     targetPage: 'notification-provider',
     code: SYSTEM_BULLETIN_PROVIDER,
+    props: { listHandler: loadSystemBulletinNoticeList },
+  },
+  {
+    targetPage: 'notification-realtime',
+    targetModule: 'handlers',
+    code: SYSTEM_BULLETIN_PROVIDER,
+    props: { handler: openRealtimeAnnouncement },
   },
   inboxRegistration('account/center'),
   inboxRegistration('systemConfig/personCenter'),

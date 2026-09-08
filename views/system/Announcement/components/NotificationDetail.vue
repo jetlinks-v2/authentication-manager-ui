@@ -1,29 +1,23 @@
 <template>
   <a-spin :spinning="loading">
-    <a-empty
-      v-if="unavailable"
-      :description="$t('Announcement.notification.unavailable')"
-    />
-    <template v-else-if="detail">
-      <a-descriptions bordered :column="2" size="small">
-        <a-descriptions-item :label="$t('Announcement.detail.title')" :span="2">
-          {{ detail.title }}
-        </a-descriptions-item>
-        <a-descriptions-item v-if="detail.type?.text" :label="$t('Announcement.detail.type')">
-          {{ detail.type.text }}
-        </a-descriptions-item>
-        <a-descriptions-item v-if="detail.deployTime" :label="$t('Announcement.detail.publishTime')">
-          {{ dayjs(detail.deployTime).format('YYYY-MM-DD HH:mm:ss') }}
-        </a-descriptions-item>
-      </a-descriptions>
-      <a-divider orientation="left">{{ $t('Announcement.detail.content') }}</a-divider>
-      <MarkdownEditor
-        :model-value="detail.content"
-        :rows="14"
-        readonly
-        :show-upload-file-toolbar="false"
+    <div class="announcement-notification-scroll">
+      <a-empty
+        v-if="unavailable"
+        :description="$t('Announcement.notification.unavailable')"
       />
-    </template>
+      <article v-else-if="detail" class="announcement-notification-detail">
+        <div v-if="detail.deployTime" class="announcement-notification-detail__meta">
+          <AIcon type="ClockCircleOutlined" />
+          {{ dayjs(detail.deployTime).format('YYYY-MM-DD HH:mm:ss') }}
+        </div>
+        <MarkdownEditor
+          :model-value="detail.content"
+          :rows="14"
+          readonly
+          :show-upload-file-toolbar="false"
+        />
+      </article>
+    </div>
   </a-spin>
 </template>
 
@@ -67,3 +61,30 @@ async function loadDetail() {
 
 watch(() => props.data, loadDetail, { immediate: true })
 </script>
+
+<style scoped lang="less">
+.announcement-notification-scroll {
+  max-height: min(70vh, 48rem);
+  max-height: min(70dvh, 48rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+:global(.announcement-notification-modal .ant-modal-confirm-content) {
+  max-width: 100% !important;
+}
+
+.announcement-notification-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--jet-theme-text-disabled);
+    font-size: var(--fs-12);
+  }
+}
+</style>

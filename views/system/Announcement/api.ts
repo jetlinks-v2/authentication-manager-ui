@@ -8,6 +8,7 @@ import {
 
 export type AnnouncementState = 'unpublished' | 'published'
 export const SYSTEM_BULLETIN_PROVIDER = 'SystemBulletin'
+export const SYSTEM_BULLETIN_CHANNEL = 'inside-mail'
 
 export interface AnnouncementType {
   value: string
@@ -17,6 +18,7 @@ export interface AnnouncementType {
 export interface AnnouncementRecord {
   id: string
   title: string
+  summary?: string
   content: string
   state: AnnouncementState
   stateText: string
@@ -32,6 +34,7 @@ export interface AnnouncementRecord {
 export interface AnnouncementDraft {
   id?: string
   title: string
+  summary?: string
   content: string
   type: AnnouncementType
   userIds: string[]
@@ -54,6 +57,7 @@ export interface SystemBulletinReference {
 export interface SystemBulletinNotificationDetail {
   id: string
   title: string
+  summary?: string
   content: string
   type?: AnnouncementType
   deployTime?: number | null
@@ -67,6 +71,7 @@ interface EnumValue<T extends string> {
 interface SystemBulletin {
   id: string
   title: string
+  summary?: string
   content: string
   type?: string | EnumValue<string>
   state?: AnnouncementState | EnumValue<AnnouncementState>
@@ -111,6 +116,7 @@ const normalizeBulletin = (record: SystemBulletin): AnnouncementRecord => {
   return {
     id: record.id,
     title: record.title,
+    summary: record.summary || '',
     content: record.content,
     type,
     state,
@@ -151,11 +157,18 @@ export const getAnnouncement = async (id: string): Promise<AnnouncementRecord> =
   return normalizeBulletin(response.result)
 }
 
-/** 解析公告通知中的发布批次引用，不读取通知内嵌正文。 */
+/** 兼容对象或 JSON 字符串通知详情，解析公告发布批次引用。 */
 export const resolveSystemBulletinReference = (
   notification: Record<string, any>,
 ): SystemBulletinReference | undefined => {
   let detail = notification.detail
+  if (typeof detail === 'string') {
+    try {
+      detail = JSON.parse(detail)
+    } catch {
+      detail = undefined
+    }
+  }
   if (!detail && typeof notification.detailJson === 'string') {
     try {
       detail = JSON.parse(notification.detailJson)
@@ -189,6 +202,7 @@ export const getSystemBulletinNotificationDetail = async (
   return {
     id: detail.id,
     title: detail.title,
+    summary: detail.summary || '',
     content: detail.content,
     type,
     deployTime: detail.deployTime,
@@ -228,6 +242,7 @@ export const saveAnnouncement = (draft: AnnouncementDraft) => {
   return request.post('/system/bulletin/_save', {
     id: draft.id,
     title: draft.title,
+    summary: draft.summary?.trim() || undefined,
     content: draft.content,
     type: draft.type,
     allVisible: dimension.length === 0,
