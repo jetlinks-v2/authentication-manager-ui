@@ -25,42 +25,44 @@
         </template>
       </PageHeader>
 
-      <a-spin :spinning="loading">
-        <ResponsiveGrid
-          v-if="cardItems.length"
-          class="application-grid"
-          :cols="3"
-          gap="var(--space-3)"
-        >
-          <ApplicationCard
-            v-for="item in cardItems"
-            :key="item.application.id"
-            :item="item"
-            :loading="updatingApplicationIds.includes(item.application.id)"
-            :opening="openingApplicationIds.includes(item.application.id)"
-            @edit="openDetail(item.application.id)"
-            @toggle-status="toggleApplicationStatus(item.application)"
-            @open="openApplication(item.application)"
-          />
-          <button v-if="projectId" class="create-card" type="button" @click="createOpen = true">
-            <AIcon type="PlusOutlined" />
-            <span>{{ $t('ProjectApplication.list.createCard') }}</span>
-          </button>
-        </ResponsiveGrid>
-        <CloudEmpty
-          v-else
-          type="page"
-          :description="$t(!projectId
+      <full-page hasPadding>
+        <a-spin :spinning="loading">
+          <ResponsiveGrid
+            v-if="cardItems.length"
+            class="application-grid"
+            :cols="3"
+            gap="var(--space-3)"
+          >
+            <ApplicationCard
+              v-for="item in cardItems"
+              :key="item.application.id"
+              :item="item"
+              :loading="updatingApplicationIds.includes(item.application.id)"
+              :opening="openingApplicationIds.includes(item.application.id)"
+              @edit="openDetail(item.application.id)"
+              @toggle-status="toggleApplicationStatus(item.application)"
+              @open="openApplication(item.application)"
+            />
+            <button v-if="projectId" class="create-card" type="button" @click="createOpen = true">
+              <AIcon type="PlusOutlined" />
+              <span>{{ $t('ProjectApplication.list.createCard') }}</span>
+            </button>
+          </ResponsiveGrid>
+          <CloudEmpty
+            v-else
+            type="page"
+            :description="$t(!projectId
             ? 'ProjectApplication.list.missingProject'
             : hasFilters
               ? 'ProjectApplication.list.empty'
               : 'ProjectApplication.list.noApplications')"
-        >
-          <a-button v-if="projectId" type="primary" @click="createOpen = true">
-            {{ $t('ProjectApplication.list.create') }}
-          </a-button>
-        </CloudEmpty>
-      </a-spin>
+          >
+            <a-button v-if="projectId" type="primary" @click="createOpen = true">
+              {{ $t('ProjectApplication.list.create') }}
+            </a-button>
+          </CloudEmpty>
+        </a-spin>
+      </full-page>
 
       <ApplicationCreateDialog
         v-model:open="createOpen"
@@ -215,7 +217,6 @@ const handleCreated = () => {
 <style scoped>
 .project-application-page {
   min-height: 100%;
-  background: var(--bg);
 }
 
 .page-filters {
