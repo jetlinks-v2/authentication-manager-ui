@@ -171,6 +171,36 @@ test('keeps only project menu metadata in the owner module and operations bindin
   assert.equal(saasMenus[0].options?.appName, 'authentication-manager')
 })
 
+test('exposes subscription management as a project runtime menu candidate', () => {
+  const moduleMenus = JSON.parse(moduleMenuSource)
+  const projectSystemMenu = moduleMenus.find(menu => menu.code === 'system' && menu.owner === 'cloud')
+  const operationSystemMenu = moduleMenus.find(menu => menu.code === 'system' && menu.owner === 'iot')
+  const projectMenu = projectSystemMenu?.children?.find(menu => menu.code === 'system/NoticeRule')
+  const operationMenu = operationSystemMenu?.children?.find(menu => menu.code === 'system/NoticeRule')
+
+  assert.ok(projectMenu)
+  assert.ok(operationMenu)
+  assert.notEqual(projectMenu.id, operationMenu.id)
+  assert.equal(projectMenu.url, '/system/NoticeRule')
+  assert.equal(projectMenu.options?.routeTarget, 'midhub/settings')
+  assert.deepEqual(projectMenu.showPage, ['notify-channel'])
+  assert.equal(projectMenu.assetType, 'notifySubscriberProvider')
+  assert.equal(projectMenu.accessSupport?.value, 'support')
+  assert.equal(projectMenu.supportDataAccess, true)
+  assert.deepEqual(projectMenu.buttons.map(button => button.id).sort(), [
+    'action',
+    'add',
+    'delete',
+    'update',
+  ])
+  assert.ok(projectMenu.buttons
+    .find(button => button.id === 'action')
+    ?.permissions.some(permission => (
+      permission.permission === 'notify-channel'
+      && permission.actions.includes('save')
+    )))
+})
+
 test('publishes from the management row through deploy endpoint after confirmation', () => {
   assert.match(managementSource, /Announcement\.confirm\.publish/)
   assert.match(managementSource, /onConfirm: \(\) => \$emit\('publish', record\)/)
@@ -196,6 +226,8 @@ test('keeps web-core notification handling business-neutral', () => {
   assert.match(coreNoticeItemSource, /format\('YYYY-MM-DD HH:mm:ss'\)/)
   assert.match(coreNoticeItemSource, /color: var\(--jet-theme-text-disabled\)/)
   assert.doesNotMatch(coreNoticeItemSource, /_unread/)
+  assert.doesNotMatch(coreSource, /icon-a-PIZHU1/)
+  assert.match(coreSource, /slotProps\.state\.value === 'read'\s*\? 'MailOutlined'\s*: 'CheckCircleOutlined'/)
   assert.match(coreRealtimeSource, /appContext/)
 })
 

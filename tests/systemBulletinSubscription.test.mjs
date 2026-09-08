@@ -48,10 +48,16 @@ test('uses one message-center and subscription vocabulary in both locales', () =
 
 test('restores disabled subscriptions through the generic subscription page', () => {
   assert.match(subscribeItem, /typeof state === 'string' \? state : state\?\.value/)
-  assert.match(subscribeItem, /subscriptionState\.value === 'disabled'[\s\S]*\? \[\]/)
-  assert.match(subscribeItem, /const channels = new Set\(props\.subscribe\?\.notifyChannels \|\| \[\]\)/)
+  assert.match(subscribeItem, /subscriptionState\.value === 'disabled'[\s\S]*return \[\]/)
+  assert.match(subscribeItem, /const channels = new Set\([\s\S]*props\.subscribe \? props\.subscribe\.notifyChannels \|\| \[\] : notifyChannels\.value/)
   assert.match(subscribeItem, /channels\.add\(obj\?\.id\)/)
   assert.match(subscribeItem, /\.\.\.props\.subscribe,[\s\S]*state: 'enabled',[\s\S]*notifyChannels: \[\.\.\.channels\]/)
+})
+
+test('shows provider defaults until the user saves an explicit preference', () => {
+  assert.match(subscribeItem, /if \(props\.subscribe\) \{[\s\S]*return props\.subscribe\.notifyChannels \|\| \[\]/)
+  assert.match(subscribeItem, /props\.data\?\.defaultSubscribed[\s\S]*props\.data\?\.defaultNotifyChannels \|\| \[\]/)
+  assert.match(subscribeItem, /const _set = new Set\([\s\S]*props\.subscribe \? props\.subscribe\.notifyChannels \|\| \[\] : notifyChannels\.value/)
 })
 
 test('removes announcement-specific personal-center subscription UI', () => {

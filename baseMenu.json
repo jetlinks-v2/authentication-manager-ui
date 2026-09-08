@@ -2970,6 +2970,179 @@
                     "value": "support"
                 },
                 "supportDataAccess": false
+            },
+            {
+                "code": "system/NoticeRule",
+                "name": "订阅管理",
+                "i18nMessages": {
+                    "name": {
+                        "zh_CN": "订阅管理",
+                        "en_US": "Subscription Management",
+                        "en": "Subscription Management"
+                    }
+                },
+                "owner": "cloud",
+                "id": "system-notice-rule-cloud",
+                "sortIndex": 7,
+                "url": "/system/NoticeRule",
+                "icon": "CopyOutlined",
+                "options": {
+                    "routeTarget": "midhub/settings"
+                },
+                "showPage": [
+                    "notify-channel"
+                ],
+                "permissions": [],
+                "assetType": "notifySubscriberProvider",
+                "buttons": [
+                    {
+                        "id": "delete",
+                        "name": "删除",
+                        "i18nMessages": {
+                            "zh_CN": "删除",
+                            "en_US": "Delete",
+                            "en": "Delete"
+                        },
+                        "permissions": [
+                            {
+                                "permission": "role",
+                                "actions": [
+                                    "query"
+                                ]
+                            },
+                            {
+                                "permission": "notify-channel",
+                                "actions": [
+                                    "save",
+                                    "delete"
+                                ]
+                            },
+                            {
+                                "permission": "notifier",
+                                "actions": [
+                                    "query"
+                                ]
+                            },
+                            {
+                                "permission": "template",
+                                "actions": [
+                                    "query"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "add",
+                        "name": "新增",
+                        "i18nMessages": {
+                            "zh_CN": "新增",
+                            "en_US": "Add",
+                            "en": "Add"
+                        },
+                        "permissions": [
+                            {
+                                "permission": "role",
+                                "actions": [
+                                    "query"
+                                ]
+                            },
+                            {
+                                "permission": "notify-channel",
+                                "actions": [
+                                    "save"
+                                ]
+                            },
+                            {
+                                "permission": "notifier",
+                                "actions": [
+                                    "query"
+                                ]
+                            },
+                            {
+                                "permission": "template",
+                                "actions": [
+                                    "query"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "update",
+                        "name": "编辑",
+                        "i18nMessages": {
+                            "zh_CN": "编辑",
+                            "en_US": "Edit",
+                            "en": "Edit"
+                        },
+                        "permissions": [
+                            {
+                                "permission": "role",
+                                "actions": [
+                                    "query"
+                                ]
+                            },
+                            {
+                                "permission": "notify-channel",
+                                "actions": [
+                                    "save",
+                                    "query"
+                                ]
+                            },
+                            {
+                                "permission": "notifier",
+                                "actions": [
+                                    "query"
+                                ]
+                            },
+                            {
+                                "permission": "template",
+                                "actions": [
+                                    "query"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "action",
+                        "name": "启/禁用",
+                        "i18nMessages": {
+                            "zh_CN": "启/禁用",
+                            "en_US": "Enable/Disable",
+                            "en": "Enable/Disable"
+                        },
+                        "permissions": [
+                            {
+                                "permission": "role",
+                                "actions": [
+                                    "query"
+                                ]
+                            },
+                            {
+                                "permission": "notify-channel",
+                                "actions": [
+                                    "save"
+                                ]
+                            },
+                            {
+                                "permission": "notifier",
+                                "actions": [
+                                    "query"
+                                ]
+                            },
+                            {
+                                "permission": "template",
+                                "actions": [
+                                    "query"
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "accessSupport": {
+                    "text": "支持",
+                    "value": "support"
+                },
+                "supportDataAccess": true
             }
         ]
     },
