@@ -1485,7 +1485,7 @@
                 "en": "Announcement"
               }
             },
-            "owner": "cloud",
+            "owner": "iot",
             "id": "system-announcement-cloud",
             "sortIndex": 90,
             "url": "/system/platform-settings/Announcement",
