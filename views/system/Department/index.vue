@@ -1,6 +1,6 @@
 <template>
   <j-page-container>
-    <FullPage>
+    <FullPage transparentBackground>
       <EqualHeightColumns
         class="department-container"
         left-width="18.75rem"
@@ -10,33 +10,35 @@
           <LeftTree @change="onChange" />
         </template>
         <template #right>
-          <a-tabs
-            v-if="isNoCommunity"
-            v-model:activeKey="activeKey"
-            destroyInactiveTabPane
-          >
-            <a-tab-pane
-              v-for="tab in departmentTabs"
-              :key="tab.key"
-              :tab="$t(tab.label)"
+          <ContentPanel>
+            <a-tabs
+              v-if="isNoCommunity"
+              v-model:activeKey="activeKey"
+              destroyInactiveTabPane
             >
-              <Position
-                v-if="tab.key === 'position'"
-                :parentId="departmentId"
-                @changeTabs="onChangeTabs"
-              />
-              <User
-                v-else-if="tab.key === 'user'"
-                :parentId="departmentId"
-                :positionId="positionId"
-              />
-              <Property
-                v-else-if="tab.key === 'property'"
-                :department-id="departmentId"
-              />
-            </a-tab-pane>
-          </a-tabs>
-          <User v-else :parentId="departmentId" />
+              <a-tab-pane
+                v-for="tab in departmentTabs"
+                :key="tab.key"
+                :tab="$t(tab.label)"
+              >
+                <Position
+                  v-if="tab.key === 'position'"
+                  :parentId="departmentId"
+                  @changeTabs="onChangeTabs"
+                />
+                <User
+                  v-else-if="tab.key === 'user'"
+                  :parentId="departmentId"
+                  :positionId="positionId"
+                />
+                <Property
+                  v-else-if="tab.key === 'property'"
+                  :department-id="departmentId"
+                />
+              </a-tab-pane>
+            </a-tabs>
+            <User v-else :parentId="departmentId" />
+          </ContentPanel>
         </template>
       </EqualHeightColumns>
     </FullPage>
@@ -104,6 +106,5 @@ watch(departmentTabs, (tabs) => {
 
 <style lang="less" scoped>
 .department-container {
-  background-color: #fff;
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <j-page-container>
     <div class="user-container">
-      <FullPage>
+      <FullPage hasPadding>
         <j-pro-table
             ref="tableRef"
             class="pro-table__no-padding"

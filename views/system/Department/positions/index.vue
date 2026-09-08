@@ -268,84 +268,82 @@ watch(
 
 <template>
   <div class="authentication-system-list-page" style="overflow-y: auto;" :key="parentId">
-    <FullPage>
-      <j-pro-table
-          ref="tableRef"
-          class="pro-table__no-padding"
-          :columns="columns"
-          :request="handleQuery"
-          :params="queryParams"
-          :defaultParams="{
+    <j-pro-table
+      ref="tableRef"
+      class="pro-table__no-padding"
+      :columns="columns"
+      :request="handleQuery"
+      :params="queryParams"
+      :defaultParams="{
           sorts: [{ name: 'createTime', order: 'desc' }],
         }"
-          mode="TABLE"
-          :scroll="{y: 'calc(100vh - 28.125rem)'}"
-      >
-          <template #headerLeftRender>
-              <a-flex gap="small">
-                  <ConditionFilter
-                      class="authentication-system-list-page__filter"
-                      :columns="columns"
-                      noMargin
-                      target="category-position"
-                      @change="({filter}) => handleParams(filter)"
-                      ref="searchRef"
-                  />
-                  <j-permission-button
-                      v-if="parentId"
-                      class="authentication-system-list-page__primary-action"
-                      hasPermission="system/Department:bind-position"
-                      type="primary"
-                      @click="handleAdd"
-                  >
-                      <AIcon type="PlusOutlined"/>
-                      {{ $t('position.index.252066-2') }}
-                  </j-permission-button>
-              </a-flex>
-          </template>
-        <template #roles="slotProps">
-          {{ slotProps.roles?.map(item => item.name).join(',') }}
-        </template>
-        <template #parentId="slotProps">
-          {{ slotProps.parentName || "--" }}
-        </template>
-        <template #memberCount="slotProps">
-          <a @click="onJumpPage(slotProps)">{{ slotProps.memberCount }}</a>
-        </template>
-        <template #action="slotProps">
-          <!-- <j-permission-button
-            type="link"
-            :hasPermission="`${permission}:bind-user`"
-            :tooltip="{ title: $t('user.index.252066-0') }"
-            @click="showBindUser(slotProps)"
-          >
-            <AIcon type="UserAddOutlined" />
-          </j-permission-button> -->
+      mode="TABLE"
+      :scroll="{y: 'calc(100vh - 28.125rem)'}"
+    >
+      <template #headerLeftRender>
+        <a-flex gap="small">
+          <ConditionFilter
+            class="authentication-system-list-page__filter"
+            :columns="columns"
+            noMargin
+            target="category-position"
+            @change="({filter}) => handleParams(filter)"
+            ref="searchRef"
+          />
           <j-permission-button
-              type="link"
-              :hasPermission="`${permission}:update-position`"
-              :tooltip="{ title: $t('Tags.index.675027-1') }"
-              @click="toPositionDetail(slotProps)"
+            v-if="parentId"
+            class="authentication-system-list-page__primary-action"
+            hasPermission="system/Department:bind-position"
+            type="primary"
+            @click="handleAdd"
           >
-            <AIcon type="EditOutlined"/>
+            <AIcon type="PlusOutlined"/>
+            {{ $t('position.index.252066-2') }}
           </j-permission-button>
-          <j-permission-button
-              type="link"
-              danger
-              :hasPermission="`${permission}:delete-position`"
-              :tooltip="{ title: $t('Tags.index.675027-2') }"
-              :popConfirm="{
+        </a-flex>
+      </template>
+      <template #roles="slotProps">
+        {{ slotProps.roles?.map(item => item.name).join(',') }}
+      </template>
+      <template #parentId="slotProps">
+        {{ slotProps.parentName || "--" }}
+      </template>
+      <template #memberCount="slotProps">
+        <a @click="onJumpPage(slotProps)">{{ slotProps.memberCount }}</a>
+      </template>
+      <template #action="slotProps">
+        <!-- <j-permission-button
+          type="link"
+          :hasPermission="`${permission}:bind-user`"
+          :tooltip="{ title: $t('user.index.252066-0') }"
+          @click="showBindUser(slotProps)"
+        >
+          <AIcon type="UserAddOutlined" />
+        </j-permission-button> -->
+        <j-permission-button
+          type="link"
+          :hasPermission="`${permission}:update-position`"
+          :tooltip="{ title: $t('Tags.index.675027-1') }"
+          @click="toPositionDetail(slotProps)"
+        >
+          <AIcon type="EditOutlined"/>
+        </j-permission-button>
+        <j-permission-button
+          type="link"
+          danger
+          :hasPermission="`${permission}:delete-position`"
+          :tooltip="{ title: $t('Tags.index.675027-2') }"
+          :popConfirm="{
               title: $t('Tags.index.675027-3'),
               onConfirm: () => {
                 deletePosition(slotProps.id)
               }
             }"
-          >
-            <AIcon type="DeleteOutlined"/>
-          </j-permission-button>
-        </template>
-      </j-pro-table>
-    </FullPage>
+        >
+          <AIcon type="DeleteOutlined"/>
+        </j-permission-button>
+      </template>
+    </j-pro-table>
   </div>
   <BindModal v-if="dialogVisible" :orgId="parentId" :positionId="positionId" @save="onSave"
              @close="dialogVisible = false"/>

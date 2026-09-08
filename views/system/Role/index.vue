@@ -1,13 +1,15 @@
 <template>
     <j-page-container>
-         <FullPage>
+         <FullPage transparentBackground>
              <EqualHeightColumns
                  class="role-layout"
                  left-width="18.75rem"
                  right-width="1fr"
              >
                  <template #left>
-                   <Left @select-data="selectData"/>
+                  <ContentPanel>
+                    <Left @select-data="selectData"/>
+                  </ContentPanel>
                  </template>
                  <template #right>
                    <Right :groupId="groupId"/>
@@ -27,6 +29,5 @@
  </script>
  <style lang="less" scoped>
  .role-layout {
-     background-color: #fff;
   }
  </style>

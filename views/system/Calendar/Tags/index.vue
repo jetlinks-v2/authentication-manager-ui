@@ -1,5 +1,5 @@
 <template>
-    <div class="tagsContainer" ref="tags">
+    <ContentPanel class="tagsContainer" ref="tags">
         <j-permission-button
             type="primary"
             :hasPermission="`${permissionKey}:add`"
@@ -62,7 +62,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </ContentPanel>
     <EditTag
         v-if="editVisible"
         :edit-type="editType"
@@ -180,7 +180,6 @@ onMounted(() => {
 <style lang="less" scoped>
 .tagsContainer {
     height: 100%;
-    background-color: #fff;
     .content {
         overflow: auto;
         height: 43.75rem;

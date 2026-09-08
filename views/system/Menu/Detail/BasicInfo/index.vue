@@ -113,7 +113,6 @@ const onSave = async () => {
 .basic-info-container {
   .card {
     padding-top: 1.5rem;
-    background-color: #fff;
   }
 }
 </style>

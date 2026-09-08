@@ -1,11 +1,11 @@
 <template>
     <div class="des">
-        <div class="des_head">
+        <ContentPanel class="des_head">
             <div>{{ $t('Right.index.572408-0') }}<span>{{ data.id }}</span></div>
             <div style="display: flex;">{{ $t('Right.index.572408-1') }}<j-ellipsis style="width: calc(100% - 12.5rem);"><span>{{ data.describe }}</span></j-ellipsis></div>
             <div>{{ $t('Right.index.572408-2') }}{{data?.createTime ? dayjs(data.createTime).format('YYYY-MM-DD HH:mm:ss') : ''}}</div>
-        </div>
-        <div class="contain">
+        </ContentPanel>
+        <ContentPanel class="contain">
 
             <JProTable style="padding: 1rem 0 0" :scroll="{ y: 'calc(100vh - 23rem)' }" :columns="columns"
                        mode="TABLE"
@@ -34,7 +34,7 @@
                     </a-space>
                 </template>
             </JProTable>
-        </div>
+        </ContentPanel>
     </div>
     <Save v-if="saveVisible" :dicId='data.id' :type="modalType" :data="current" :sort=sort @closeModal="closeModal"
         @refresh="refresh" />
@@ -229,8 +229,7 @@ watch(() => props?.data?.id, () => {
   overflow-y: auto;
 }
 .des_head {
-    padding: 0.625rem 1.25rem;
-    background-color: rgb(242, 242, 242);
+    margin-bottom: var(--space-4);
 
     span {
         color: rgb(127, 127, 127)

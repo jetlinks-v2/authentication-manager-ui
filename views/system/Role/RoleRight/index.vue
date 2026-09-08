@@ -1,5 +1,5 @@
 <template>
-  <div class="role-container">
+  <ContentPanel class="role-container">
     <div class="role-table">
       <j-pro-table
         ref="tableRef"
@@ -74,7 +74,7 @@
         @close="copy.visible = false"
         @save="onCopySave"
     />
-  </div>
+  </ContentPanel>
 </template>
 
 <script setup lang="ts" name="RoleRight">
@@ -275,7 +275,6 @@ watch(
   .role-table {
     flex: 1 1 0;
     min-height: 0;
-    background-color: var(--jet-theme-bg-container);
   }
   :deep(.ant-table-cell) {
     .ant-btn-link {
