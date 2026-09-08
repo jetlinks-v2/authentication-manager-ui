@@ -1,12 +1,12 @@
 <template>
   <j-page-container>
     <div class="apply-container">
-      <ConditionFilter
+      <FullPage hasPadding>
+        <ConditionFilter
           :columns="columns"
           target="system-apply"
           @change="({filter})=>queryParams = {...filter}"
-      />
-      <FullPage>
+        />
         <j-pro-table
             ref="tableRef"
             style="padding: 1rem 0 0"

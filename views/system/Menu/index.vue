@@ -1,88 +1,90 @@
  <template>
   <j-page-container>
     <div class="menu-container">
-      <FullPage :fixed="false">
-        <j-pro-table
-          ref="tableRef"
-          class="pro-table__no-padding"
-          :columns="columns"
-          :request="getList"
-          :params="queryParams"
-          :defaultParams="defaultParams"
-          type="TREE"
-          mode="TABLE"
-          noPagination
-          v-model:expandedRowKeys="expandedRowKeys"
-        >
-          <template #headerLeftRender>
+      <FullPage :fixed="false" transparentBackground>
+        <ContentPanel>
+          <j-pro-table
+            ref="tableRef"
+            class="pro-table__no-padding"
+            :columns="columns"
+            :request="getList"
+            :params="queryParams"
+            :defaultParams="defaultParams"
+            type="TREE"
+            mode="TABLE"
+            noPagination
+            v-model:expandedRowKeys="expandedRowKeys"
+          >
+            <template #headerLeftRender>
               <a-flex gap="small">
-                  <ConditionFilter
-                      class="authentication-system-list-page__filter"
-                      :labelWidth="56"
-                      :columns="columns"
-                      target="category"
-                      @change="handleSearch"
-                  />
-                  <j-permission-button
-                      class="authentication-system-list-page__primary-action"
-                      type="primary"
-                      :hasPermission="`${permission}:add`"
-                      @click="toDetails({})"
-                  >
-                      <AIcon type="PlusOutlined" />{{ $t('Menu.index.599742-0') }}
-                  </j-permission-button>
+                <ConditionFilter
+                  class="authentication-system-list-page__filter"
+                  :labelWidth="56"
+                  :columns="columns"
+                  target="category"
+                  @change="handleSearch"
+                />
+                <j-permission-button
+                  class="authentication-system-list-page__primary-action"
+                  type="primary"
+                  :hasPermission="`${permission}:add`"
+                  @click="toDetails({})"
+                >
+                  <AIcon type="PlusOutlined" />{{ $t('Menu.index.599742-0') }}
+                </j-permission-button>
                 <a-button
                   v-if="admin"
                   @click="router.push('/system/Menu/Setting')"
                 >{{ $t('Menu.index.599742-17') }}</a-button>
               </a-flex>
-          </template>
-          <template #createTime="slotProps">
+            </template>
+            <template #createTime="slotProps">
             <span v-time-format="'YYYY-MM-DD HH:mm:ss'">
               {{ slotProps.createTime }}
             </span>
-          </template>
-          <template #name="slotProps">
-            {{ slotProps?.i18nName || slotProps?.name }}
-          </template>
-          <template #action="slotProps">
-            <a-space :size="16">
-              <j-permission-button
-                type="link"
-                :hasPermission="`${permission}:add`"
-                @click="toDetails(slotProps)"
-                style="padding: 0"
-                :tooltip="{ title: $t('Menu.index.599742-1') }"
-              >
-                <AIcon type="EditOutlined" />
-              </j-permission-button>
+            </template>
+            <template #name="slotProps">
+              {{ slotProps?.i18nName || slotProps?.name }}
+            </template>
+            <template #action="slotProps">
+              <a-space :size="16">
+                <j-permission-button
+                  type="link"
+                  :hasPermission="`${permission}:add`"
+                  @click="toDetails(slotProps)"
+                  style="padding: 0"
+                  :tooltip="{ title: $t('Menu.index.599742-1') }"
+                >
+                  <AIcon type="EditOutlined" />
+                </j-permission-button>
 
-              <j-permission-button
-                type="link"
-                :hasPermission="`${permission}:add`"
-                :tooltip="{ title: slotProps.level >= 3 ? $t('Setting.index.113436-9') : $t('Menu.index.599742-2') }"
-                style="padding: 0"
-                @click="addChildren(slotProps)"
-                :disabled="slotProps.level >= 3"
-              >
-                <AIcon type="PlusCircleOutlined" />
-              </j-permission-button>
-              <j-permission-button
-                type="link"
-                :hasPermission="`${permission}:delete`"
-                :tooltip="{ title: $t('Menu.index.599742-3') }"
-                danger
-                style="padding: 0"
-                :popConfirm="{
+                <j-permission-button
+                  type="link"
+                  :hasPermission="`${permission}:add`"
+                  :tooltip="{ title: slotProps.level >= 3 ? $t('Setting.index.113436-9') : $t('Menu.index.599742-2') }"
+                  style="padding: 0"
+                  @click="addChildren(slotProps)"
+                  :disabled="slotProps.level >= 3"
+                >
+                  <AIcon type="PlusCircleOutlined" />
+                </j-permission-button>
+                <j-permission-button
+                  type="link"
+                  :hasPermission="`${permission}:delete`"
+                  :tooltip="{ title: $t('Menu.index.599742-3') }"
+                  danger
+                  style="padding: 0"
+                  :popConfirm="{
                   title: $t('Menu.index.599742-4'),
                   onConfirm: () => clickDel(slotProps),
                 }"
-              >
-                <AIcon type="DeleteOutlined" />
-              </j-permission-button>
-            </a-space>
-          </template>
-        </j-pro-table>
+                >
+                  <AIcon type="DeleteOutlined" />
+                </j-permission-button>
+              </a-space>
+            </template>
+          </j-pro-table>
+        </ContentPanel>
       </FullPage>
     </div>
   </j-page-container>
