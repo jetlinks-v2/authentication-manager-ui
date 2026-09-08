@@ -19,7 +19,19 @@
         />
       </a-form-item>
 
-      <a-form-item :label="$t('Announcement.editor.type')" required>
+      <a-form-item :label="$t('Announcement.editor.summary')">
+        <a-textarea
+          v-model:value="form.summary"
+          class="announcement-summary-input"
+          :maxlength="120"
+          :auto-size="{ minRows: 2, maxRows: 4 }"
+          show-count
+          :placeholder="$t('Announcement.editor.summaryPlaceholder')"
+        />
+      </a-form-item>
+
+      <!-- 公告类型暂不对用户展示，类型默认值与提交契约继续保留。 -->
+      <!-- <a-form-item :label="$t('Announcement.editor.type')" required>
         <a-select
           v-model:value="form.type"
           :loading="typeLoading"
@@ -27,7 +39,7 @@
           :field-names="{ label: 'text', value: 'value' }"
           :placeholder="$t('Announcement.editor.typePlaceholder')"
         />
-      </a-form-item>
+      </a-form-item> -->
 
       <a-row :gutter="16">
         <a-col :span="12">
@@ -122,6 +134,7 @@ const emit = defineEmits<{
 const { t: $t } = useI18n()
 const form = reactive({
   title: '',
+  summary: '',
   content: '',
   type: '',
   userIds: [] as string[],
@@ -147,6 +160,7 @@ watch(() => props.open, (open) => {
 function resetForm() {
   const record = props.record
   form.title = record?.title || ''
+  form.summary = record?.summary || ''
   form.content = record?.content || $t('Announcement.editor.defaultContent')
   form.type = record?.type.value || props.typeOptions[0]?.value || ''
   form.userIds = [...(record?.userIds || [])]
@@ -169,6 +183,7 @@ function submit(publish: boolean) {
   emit('save', {
     id: props.record?.id,
     title: form.title.trim(),
+    summary: form.summary.trim() || undefined,
     content: form.content.trim(),
     type,
     userIds: [...form.userIds],
@@ -177,3 +192,21 @@ function submit(publish: boolean) {
   })
 }
 </script>
+
+<style scoped lang="less">
+.announcement-summary-input.ant-input-textarea-show-count {
+  position: relative;
+
+  &::after {
+    position: absolute;
+    inset-inline-end: var(--space-3);
+    inset-block-end: var(--space-2);
+    float: none;
+    line-height: 1;
+  }
+
+  :deep(textarea.ant-input) {
+    padding-bottom: 2rem;
+  }
+}
+</style>
