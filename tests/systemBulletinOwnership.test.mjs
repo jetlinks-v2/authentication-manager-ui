@@ -18,7 +18,7 @@ const readSourceTree = async (directory) => {
   return sources.join('\n')
 }
 
-const [apiSource, registerSource, inboxSource, realtimeSource, notificationDetailSource, announcementDetailSource, noticeListLoaderSource, moduleSource, moduleMenuSource, saasMenuSource, managementSource, pageSource, saasCenterSource, projectCenterSource, projectMessageSource, coreSource, coreCenterSource, coreRecordSource, coreSubscriptionSource, coreDialogSource, coreNoticeSource, coreNoticeItemSource, coreRealtimeSource, coreNoticeInfoSource, coreNoticeListHandlerSource] = await Promise.all([
+const [apiSource, registerSource, inboxSource, realtimeSource, notificationDetailSource, announcementDetailSource, noticeListLoaderSource, moduleSource, moduleMenuSource, saasMenuSource, managementSource, pageSource, saasCenterSource, projectCenterSource, coreSource, coreCenterSource, coreRecordSource, coreSubscriptionSource, coreDialogSource, coreNoticeSource, coreNoticeItemSource, coreRealtimeSource, coreNoticeInfoSource, coreNoticeListHandlerSource] = await Promise.all([
   readFile(resolve(moduleRoot, 'views/system/Announcement/api.ts'), 'utf8'),
   readFile(resolve(moduleRoot, 'views/system/Announcement/register.ts'), 'utf8'),
   readFile(resolve(moduleRoot, 'views/system/Announcement/components/AnnouncementInbox.vue'), 'utf8'),
@@ -33,7 +33,6 @@ const [apiSource, registerSource, inboxSource, realtimeSource, notificationDetai
   readFile(resolve(moduleRoot, 'views/system/Announcement/index.vue'), 'utf8'),
   readFile(resolve(workspaceRoot, 'ui/modules/saas-manager-ui/views/personalCenter/index.vue'), 'utf8'),
   readFile(resolve(workspaceRoot, 'ui/modules/project-side-ui/views/PersonCenter/index.vue'), 'utf8'),
-  readFile(resolve(workspaceRoot, 'ui/modules/project-side-ui/views/PersonCenter/components/StationMessage.vue'), 'utf8'),
   readSourceTree(coreRoot),
   readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/api/account/center.ts'), 'utf8'),
   readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/api/account/notificationRecord.ts'), 'utf8'),
@@ -108,20 +107,30 @@ test('loads all unread bulletins before the five latest read bulletins in the be
   assert.match(coreNoticeInfoSource, /const currentRequestId = \+\+listRequestId/)
 })
 
-test('registers one bulletin inbox for both personal-center hosts', () => {
-  assert.match(registerSource, /inboxRegistration\('account\/center'\)/)
-  assert.match(registerSource, /inboxRegistration\('systemConfig\/personCenter'\)/)
-  assert.match(registerSource, /AnnouncementInbox\.vue/)
-  assert.match(inboxSource, /queryAnnouncementInbox/)
-  assert.match(inboxSource, /NotificationDetail/)
-  assert.match(saasCenterSource, /useRegistryOptions/)
-  assert.match(saasCenterSource, /RegistryComponent/)
-  assert.match(projectCenterSource, /useRegistryOptions/)
-  assert.match(projectCenterSource, /RegistryComponent/)
-  assert.match(projectMessageSource, /excludeProviders/)
+test('reuses one core message center in both personal-center hosts', () => {
+  const messageImport = /import StationMessage from '@jetlinks-web-core\/views\/account\/center\/components\/StationMessage\/index\.vue'/
+  assert.match(saasCenterSource, messageImport)
+  assert.match(projectCenterSource, messageImport)
+  assert.match(saasCenterSource, /label: t\('SaasRoute\.messageCenter'\),\s*value: 'stationMessage'/)
+  assert.match(projectCenterSource, /label: i18n\.global\.t\('SaasRoute\.messageCenter'\), value: 'stationMessage'/)
+  assert.match(saasCenterSource, /<StationMessage v-else \/>/)
+  assert.match(projectCenterSource, /<StationMessage v-if="activeKey === 'stationMessage'" \/>/)
+  assert.doesNotMatch(projectCenterSource, /\.\/components\/StationMessage\.vue/)
+  assert.doesNotMatch(registerSource, /inboxRegistration|AnnouncementInbox\.vue|targetModule: 'segments'/)
   assert.doesNotMatch(saasCenterSource, /SystemBulletin|system\/bulletin/)
   assert.doesNotMatch(projectCenterSource, /SystemBulletin|system\/bulletin/)
-  assert.doesNotMatch(projectMessageSource, /SystemBulletin|system\/bulletin/)
+})
+
+test('renders registered bulletin details inside the generic message-center dialog', () => {
+  assert.match(registerSource, /targetPage: 'notification-detail'/)
+  assert.match(registerSource, /code: SYSTEM_BULLETIN_PROVIDER/)
+  assert.match(registerSource, /NotificationDetail\.vue/)
+  assert.match(coreDialogSource, /page-code="notification-detail"/)
+  assert.match(coreDialogSource, /code="default"/)
+  assert.match(coreDialogSource, /:active-key="`\$\{data\.topicProvider\}:append`"/)
+  assert.match(coreDialogSource, /:data="data"/)
+  assert.match(coreDialogSource, /v-if="hasRegisteredDetail"/)
+  assert.match(coreDialogSource, /v-else-if=/)
 })
 
 test('shows bulletin title and summary as separate columns with visible inbox actions', () => {
@@ -188,4 +197,11 @@ test('keeps web-core notification handling business-neutral', () => {
   assert.match(coreNoticeItemSource, /color: var\(--jet-theme-text-disabled\)/)
   assert.doesNotMatch(coreNoticeItemSource, /_unread/)
   assert.match(coreRealtimeSource, /appContext/)
+})
+
+test('keeps the bell badge synchronized with the backend unread count', () => {
+  assert.match(coreNoticeSource, /getUnreadCount_api\(params\)[\s\S]*total\.value = toBadgeCount\(resp\.result\)/)
+  assert.match(coreNoticeSource, /async onMessage\(data\)[\s\S]*handleRegisteredRealtimeNotice[\s\S]*getList\(\)/)
+  assert.match(coreNoticeSource, /watch\(visible, \(opened\) => \{[\s\S]*if \(opened\) \{[\s\S]*getList\(\)/)
+  assert.doesNotMatch(coreNoticeSource, /total\.value\s*=\s*Math\.min\(total\.value\s*\+\s*1/)
 })

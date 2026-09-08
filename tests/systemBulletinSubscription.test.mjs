@@ -6,46 +6,61 @@ import { test } from 'node:test'
 const workspaceRoot = resolve(import.meta.dirname, '../../../..')
 const read = path => readFile(resolve(workspaceRoot, path), 'utf8')
 
-const [providerApi, subscriptionApi, saasAccount, projectAccount, ownerComponent] = await Promise.all([
+const [providerApi, subscriptionApi, saasCenter, projectCenter, saasAccount, subscribeItem, inbox, registration, coreZh, coreEn, saasZh, saasEn] = await Promise.all([
   read('ui/modules/authentication-manager-ui/views/system/Announcement/api.ts'),
   read('ui/jetlinks-web-core/src/api/account/notificationSubscription.ts'),
+  read('ui/modules/saas-manager-ui/views/personalCenter/index.vue'),
+  read('ui/modules/project-side-ui/views/PersonCenter/index.vue'),
   read('ui/modules/saas-manager-ui/views/personalCenter/components/AccountContent.vue'),
-  read('ui/modules/project-side-ui/views/PersonCenter/components/AccountInfo.vue'),
-  read('ui/modules/authentication-manager-ui/views/system/Announcement/components/SystemBulletinSubscription.vue'),
+  read('ui/jetlinks-web-core/src/views/account/center/components/Subscribe/components/Item.vue'),
+  read('ui/modules/authentication-manager-ui/views/system/Announcement/components/AnnouncementInbox.vue'),
+  read('ui/modules/authentication-manager-ui/views/system/Announcement/register.ts'),
+  read('ui/jetlinks-web-core/src/locales/lang/zh.json'),
+  read('ui/jetlinks-web-core/src/locales/lang/en.json'),
+  read('ui/modules/saas-manager-ui/locales/lang/zh.json'),
+  read('ui/modules/saas-manager-ui/locales/lang/en.json'),
 ])
 
 test('uses the existing provider constant and generic subscription endpoints', () => {
-  assert.match(ownerComponent, /SYSTEM_BULLETIN_PROVIDER/)
   assert.match(providerApi, /SYSTEM_BULLETIN_PROVIDER = 'SystemBulletin'/)
   assert.match(providerApi, /SYSTEM_BULLETIN_CHANNEL = 'inside-mail'/)
-  assert.match(ownerComponent, /item\.provider === SYSTEM_BULLETIN_PROVIDER/)
-  assert.doesNotMatch(ownerComponent, /item\.type\?\.id === SYSTEM_BULLETIN_PROVIDER/)
   assert.match(subscriptionApi, /notifications\/subscriptions\/_query/)
   assert.match(subscriptionApi, /notifications\/subscribe/)
   assert.match(subscriptionApi, /notifications\/subscription\//)
 })
 
-test('limits queries and create payloads to the bulletin provider', () => {
-  assert.match(ownerComponent, /column: 'topicProvider'.*termType: 'eq'.*SYSTEM_BULLETIN_PROVIDER/s)
-  assert.match(ownerComponent, /item\.topicProvider === SYSTEM_BULLETIN_PROVIDER/)
-  assert.match(ownerComponent, /topicProvider: SYSTEM_BULLETIN_PROVIDER/)
-  assert.match(ownerComponent, /channel\.channelProvider === SYSTEM_BULLETIN_CHANNEL/)
+test('reuses the same core subscription page in both personal-center hosts', () => {
+  const subscribeImport = /import Subscribe from '@jetlinks-web-core\/views\/account\/center\/components\/Subscribe\/index\.vue'/
+  assert.match(saasCenter, subscribeImport)
+  assert.match(projectCenter, subscribeImport)
+  assert.match(saasCenter, /label: t\('center\.data\.756829-0'\),\s*value: 'subscribe'/)
+  assert.match(projectCenter, /label: i18n\.global\.t\('center\.data\.756829-0'\), value: 'subscribe'/)
+  assert.match(saasCenter, /<Subscribe v-else-if="activeKey === 'subscribe'" \/>/)
+  assert.match(projectCenter, /<Subscribe v-else-if="activeKey === 'subscribe'" \/>/)
 })
 
-test('exposes one system-bulletin entry from both personal-center account areas', () => {
-  assert.equal((saasAccount.match(/<SystemBulletinSubscription/g) || []).length, 1)
-  assert.equal((projectAccount.match(/<SystemBulletinSubscription/g) || []).length, 1)
+test('uses one message-center and subscription vocabulary in both locales', () => {
+  assert.equal(JSON.parse(coreZh)['center.data.756829-0'], '消息订阅')
+  assert.equal(JSON.parse(coreEn)['center.data.756829-0'], 'Message Subscriptions')
+  assert.equal(JSON.parse(saasZh)['SaasRoute.messageCenter'], '消息中心')
+  assert.equal(JSON.parse(saasEn)['SaasRoute.messageCenter'], 'Message center')
 })
 
-test('creates or restores on enable and preserves the entity on disable', () => {
-  assert.match(ownerComponent, /subscription\.value\?\.id/)
-  assert.match(ownerComponent, /const nextEnabled = checked === true/)
-  assert.match(ownerComponent, /changeSubscriptionState_api\(subscription\.value\.id, nextEnabled \? 'enabled' : 'disabled'\)/)
-  assert.match(ownerComponent, /else if \(nextEnabled && provider\.value\)/)
-  assert.match(ownerComponent, /await save_api\(/)
-  assert.doesNotMatch(ownerComponent, /deleteSubscription|request\.remove/)
+test('restores disabled subscriptions through the generic subscription page', () => {
+  assert.match(subscribeItem, /typeof state === 'string' \? state : state\?\.value/)
+  assert.match(subscribeItem, /subscriptionState\.value === 'disabled'[\s\S]*\? \[\]/)
+  assert.match(subscribeItem, /const channels = new Set\(props\.subscribe\?\.notifyChannels \|\| \[\]\)/)
+  assert.match(subscribeItem, /channels\.add\(obj\?\.id\)/)
+  assert.match(subscribeItem, /\.\.\.props\.subscribe,[\s\S]*state: 'enabled',[\s\S]*notifyChannels: \[\.\.\.channels\]/)
 })
 
-test('keeps the shared core free of announcement constants', () => {
+test('removes announcement-specific personal-center subscription UI', () => {
+  assert.doesNotMatch(saasAccount, /SystemBulletinSubscription|login-item--bulletin/)
+  assert.doesNotMatch(inbox, /SystemBulletinSubscription|showSubscription|has-subscription|is-compact/)
+  assert.doesNotMatch(registration, /inboxRegistration|AnnouncementInbox\.vue|targetModule: 'segments'/)
+})
+
+test('keeps the shared subscription API and component free of announcement constants', () => {
   assert.doesNotMatch(subscriptionApi, /SystemBulletin|inside-mail/)
+  assert.doesNotMatch(subscribeItem, /SystemBulletin/)
 })
