@@ -27,7 +27,7 @@ const activeKey = ref('1');
 
 <style lang="less" scoped>
 .details-container {
-  padding: 1.5rem;
+  padding: var(--space-4);
   height: 100%;
   display: flex;
   flex-direction: column;

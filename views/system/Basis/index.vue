@@ -1,6 +1,6 @@
 <template>
   <j-page-container>
-    <FullPage :fixed="false">
+    <FullPage :fixed="false" hasPadding>
         <BasicForm />
     </FullPage>
   </j-page-container>

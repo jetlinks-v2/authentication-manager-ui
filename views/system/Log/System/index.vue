@@ -1,7 +1,7 @@
 <template>
     <j-page-container>
 
-        <full-page>
+        <full-page hasPadding>
             <div style="height: 100%; display: flex;flex-direction: column">
                 <div style="min-height: 0; flex: 1">
                     <ConditionFilter

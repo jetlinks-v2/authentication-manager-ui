@@ -1,6 +1,6 @@
 <template>
     <j-page-container>
-      <full-page :fixed="false">
+      <full-page :fixed="false" transparentBackground>
         <EqualHeightColumns
           class="calendar-layout"
           left-width="18.75rem"

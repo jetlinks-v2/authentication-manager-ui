@@ -1,6 +1,6 @@
 <template>
     <j-page-container>
-        <FullPage>
+        <FullPage transparentBackground>
             <EqualHeightColumns
                 class="dictionary-layout"
                 left-width="18.75rem"
@@ -27,6 +27,5 @@ const selectData = (i: any) => {
 </script>
 <style lang="less" scoped>
 .dictionary-layout {
-    background-color: #fff;
 }
 </style>
