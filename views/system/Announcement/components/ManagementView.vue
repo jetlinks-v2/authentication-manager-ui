@@ -1,5 +1,5 @@
 <template>
-  <FullPage>
+  <FullPage hasPadding>
     <j-pro-table
       ref="tableRef"
       class="pro-table__no-padding"
@@ -30,8 +30,17 @@
         </a-flex>
       </template>
 
-      <template #title="record">
+      <template #announcementTitle="record">
         <j-ellipsis>{{ record.title }}</j-ellipsis>
+      </template>
+      <template #announcementSummary="record">
+        <j-ellipsis
+          :line-clamp="1"
+          :tooltip="{ placement: 'topLeft' }"
+          class="announcement-summary-cell"
+        >
+          {{ record.summary || '--' }}
+        </j-ellipsis>
       </template>
       <template #state="record">
         <j-badge-status
@@ -40,9 +49,10 @@
           :status-names="statusNames"
         />
       </template>
-      <template #type="record">
+      <!-- 公告类型暂不展示，列表字段配置与接口数据继续保留。 -->
+      <!-- <template #type="record">
         {{ record.type.text }}
-      </template>
+      </template> -->
       <template #scope="record">
         {{ audienceText(record) }}
       </template>
@@ -146,19 +156,27 @@ const columns = computed(() => [
   {
     title: $t('Announcement.column.title'),
     dataIndex: 'title',
-    key: 'title',
-    width: 240,
+    key: 'announcementTitle',
+    width: 200,
     ellipsis: true,
     scopedSlots: true,
     search: { type: 'string' },
   },
   {
+    title: $t('Announcement.column.summary'),
+    dataIndex: 'summary',
+    key: 'announcementSummary',
+    width: 280,
+    scopedSlots: true,
+  },
+  /* 公告类型暂不展示，恢复时同时启用上方 type 插槽。 */
+  /* {
     title: $t('Announcement.column.type'),
     dataIndex: 'type',
     key: 'type',
     width: 110,
     scopedSlots: true,
-  },
+  }, */
   {
     title: $t('Announcement.column.state'),
     dataIndex: 'state',
@@ -205,3 +223,12 @@ function handleFilterChange(payload: ConditionFilterChangePayload) {
 /** 供页面容器在写操作完成后刷新公告列表。 */
 defineExpose({ reload: () => tableRef.value?.reload() })
 </script>
+
+<style scoped lang="less">
+.announcement-summary-cell {
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+  color: var(--jet-theme-text-secondary);
+}
+</style>

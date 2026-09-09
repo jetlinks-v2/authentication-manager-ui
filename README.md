@@ -6,6 +6,16 @@
 
 System bulletin pages, API contracts, types, notification detail rendering, and provider constants are owned by `views/system/Announcement/`; user-facing copy follows this module's locale convention. The shared web core only exposes generic notification-provider and detail-component registration points; it does not identify `SystemBulletin` or call bulletin APIs. SaaS modules may contribute menu binding metadata, but they do not implement bulletin pages or APIs.
 
+### Base Menu Merge Compatibility
+
+Goal: preserve the remote `system > platform/settings` menu restructuring while restoring the project-runtime announcement and subscription-management menus lost when `baseMenu.json` was resolved from the remote side during merge `8be1eb9`.
+
+Scope: update only `baseMenu.json`, the focused menu ownership regression in `tests/systemBulletinOwnership.test.mjs`, and this section. Keep the remote menu hierarchy, URLs, ordering, permissions, and unrelated menu entries unchanged. Do not restore the pre-merge file wholesale or revive the remote-deleted iot `system/NoticeRule` entry.
+
+Implementation: the original `system/NoticeRule` contract from `61fba7e` is restored under the remote `system > platform/settings` hierarchy as an `owner: cloud` project-settings contribution, including `routeTarget: midhub/settings`, its permission buttons, and asset-access metadata. `system/Announcement` is also `owner: cloud` in this module so `baseMenu.ts` marks it as a runtime menu candidate; `saas-manager-ui` retains the separate `owner: iot` operations binding. The focused test asserts both ownership boundaries and the restored cloud-only subscription candidate.
+
+Validation: `baseMenu.json` parses successfully; aside from the restored NoticeRule and the runtime-required Announcement owner, the file canonically matches remote parent `44bcfd9`, while both cloud menu contracts match the pre-merge project-runtime semantics. The focused Node menu/announcement suite passes all 19 tests, the production build passes with 10,222 transformed modules, the built `dist/baseMenu.json` matches the source, and `git diff --check` passes. Authenticated project-runtime menu synchronization remains pending because no usable logged-in runtime context was verified in this task.
+
 ## Project Owner Role Editing Guard
 
 The system user edit dialog keeps profile fields editable for project owners while disabling the role selector when the stable runtime user type is `projectOwner`. The guard accepts the user-list `typeId` and the detail response enum object so list and detail response shapes behave consistently. It reuses the existing `FormItemRole` disabled contract, which also hides the add-role action and prevents tag removal. Scope is limited to `views/system/User/components/EditUserDialog.vue`; user APIs, backend authorization, other user types, organizations, positions, and password operations remain unchanged. The module production build (`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`) and `git diff --check` pass. The touched Vue file remains over the preferred 300-line limit because this is a narrow fix in an existing 491-line component; no structural refactor is included.
@@ -57,6 +67,8 @@ Verification: the edited Department SFC passes a local script/template syntax co
 ## System Management List Layout
 
 The `views/system/` list pages that combine `ConditionFilter` with `j-pro-table` use the shared `PageHeader` list shell: the page title stays on the left, filtering and the primary create action stay on the right, existing batch actions remain in the table toolbar, and dropdown-based batch actions stay grouped.
+
+These list pages also use `FullPage hasPadding` so their table content keeps the same page inset; `views/system/Announcement/components/ManagementView.vue` follows the same container contract as Permission and the other system management lists.
 
 The Role page uses the shared `EqualHeightColumns` shell for its role-group selector and role list, with the system-wide `18.75rem` / `1fr` tracks and no outer padding or divider.
 

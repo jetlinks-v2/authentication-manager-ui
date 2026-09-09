@@ -28,7 +28,7 @@
   <a-modal
     v-model:open="detailOpen"
     :width="1000"
-    :title="$t('Announcement.action.view')"
+    :title="detailRecord?.title || $t('Announcement.action.view')"
     :footer="null"
   >
     <a-spin :spinning="detailLoading">

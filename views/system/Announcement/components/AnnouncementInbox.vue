@@ -16,9 +16,17 @@ import NotificationDetail from './NotificationDetail.vue'
 const columns = [
   {
     title: globalI18n.global.t('Announcement.inbox.message'),
-    dataIndex: 'message',
-    key: 'message',
+    dataIndex: 'title',
+    key: 'announcementTitle',
     ellipsis: true,
+    scopedSlots: true,
+    width: '22%',
+  },
+  {
+    title: globalI18n.global.t('Announcement.inbox.summary'),
+    dataIndex: 'summary',
+    key: 'announcementSummary',
+    scopedSlots: true,
   },
   {
     title: globalI18n.global.t('Announcement.inbox.publishTime'),
@@ -39,7 +47,7 @@ const columns = [
     dataIndex: 'action',
     key: 'action',
     scopedSlots: true,
-    width: '8rem',
+    width: '7rem',
   },
 ]
 
@@ -48,6 +56,32 @@ const detailVisible = ref(false)
 const detailRecord = ref<Record<string, any>>({})
 const user = useUserStore()
 const routerParams = useRouterParams()
+
+/** 兼容通知列表返回对象或 JSON 字符串两种详情结构。 */
+const parseDetail = (record: Record<string, any>) => {
+  if (record.detail && typeof record.detail === 'object') return record.detail
+  if (typeof record.detailJson !== 'string') return undefined
+  try {
+    const detail = JSON.parse(record.detailJson)
+    return detail && typeof detail === 'object' ? detail : undefined
+  } catch {
+    return undefined
+  }
+}
+
+/** 公告标题优先使用发布快照，旧通知缺少快照时再回退通用通知字段。 */
+const getNotificationTitle = (record: Record<string, any>) => {
+  const detail = parseDetail(record)
+  return String(detail?.title || record.title || record.topicName || record.message || '').trim()
+}
+
+/** 公告摘要只显示独立内容，避免旧数据把标题重复渲染为摘要。 */
+const getNotificationSummary = (record: Record<string, any>) => {
+  const detail = parseDetail(record)
+  const title = getNotificationTitle(record)
+  const summary = String(detail?.summary || record.summary || record.message || '').trim()
+  return summary && summary !== title ? summary : ''
+}
 
 const incomingNotification = computed(() => {
   const message = user.messageInfo?.topicProvider === SYSTEM_BULLETIN_PROVIDER
@@ -58,9 +92,8 @@ const incomingNotification = computed(() => {
 
 const reload = () => tableRef.value?.reload?.()
 
-const changeState = async (record: Record<string, any>) => {
-  const type = record.state?.value === 'read' ? '_unread' : '_read'
-  const response = await changeAnnouncementReadState(type, [record.id])
+const markRead = async (record: Record<string, any>) => {
+  const response = await changeAnnouncementReadState('_read', [record.id])
   if (response.status === 200) {
     onlyMessage(globalI18n.global.t('Service.index.success'))
     reload()
@@ -135,6 +168,18 @@ onUnmounted(() => {
       mode="TABLE"
       style="flex: 1; min-height: 0"
     >
+      <template #announcementTitle="record">
+        <j-ellipsis>{{ getNotificationTitle(record) || '--' }}</j-ellipsis>
+      </template>
+      <template #announcementSummary="record">
+        <j-ellipsis
+          :line-clamp="1"
+          :tooltip="{ placement: 'topLeft' }"
+          class="announcement-summary-cell"
+        >
+          {{ getNotificationSummary(record) || '--' }}
+        </j-ellipsis>
+      </template>
       <template #notifyTime="record">
         {{ record.notifyTime ? dayjs(record.notifyTime).format('YYYY-MM-DD HH:mm:ss') : '--' }}
       </template>
@@ -148,22 +193,21 @@ onUnmounted(() => {
       <template #action="record">
         <a-space :size="16">
           <j-permission-button
+            v-if="record.state?.value === 'unread'"
             type="link"
-            :tooltip="{
-              title: record.state?.value === 'read'
-                ? $t('Announcement.inbox.markUnread')
-                : $t('Announcement.inbox.markRead'),
-            }"
-            @click="changeState(record)"
+            style="padding: 0"
+            :tooltip="{ title: $t('Announcement.inbox.markRead') }"
+            @click="markRead(record)"
           >
-            <AIcon type="icon-a-PIZHU1" />
+            <AIcon type="CheckCircleOutlined" />
           </j-permission-button>
           <j-permission-button
             type="link"
+            style="padding: 0"
             :tooltip="{ title: $t('Announcement.inbox.view') }"
             @click="view(record)"
           >
-            <AIcon type="SearchOutlined" />
+            <AIcon type="EyeOutlined" />
           </j-permission-button>
         </a-space>
       </template>
@@ -171,7 +215,7 @@ onUnmounted(() => {
 
     <a-modal
       v-model:open="detailVisible"
-      :title="$t('Announcement.inbox.detailTitle')"
+      :title="getNotificationTitle(detailRecord) || $t('Announcement.inbox.detailTitle')"
       :width="820"
       :footer="null"
       destroy-on-close
@@ -194,5 +238,12 @@ onUnmounted(() => {
     justify-content: flex-end;
     gap: var(--space-2);
   }
+}
+
+.announcement-summary-cell {
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+  color: var(--jet-theme-text-secondary);
 }
 </style>
