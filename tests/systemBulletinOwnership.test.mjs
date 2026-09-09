@@ -161,7 +161,7 @@ test('shows bulletin title and summary as separate columns with visible inbox ac
   assert.doesNotMatch(inboxSource, /\{\{\s*\$t\('Announcement\.inbox\.(?:markRead|view)'\)\s*\}\}/)
 })
 
-test('keeps only project menu metadata in the owner module and operations binding in saas', () => {
+test('keeps project announcement metadata in the owner module and operations binding in saas', () => {
   const ownerMenus = findMenus(JSON.parse(moduleMenuSource), 'system/Announcement')
   const saasMenus = findMenus(JSON.parse(saasMenuSource), 'system/Announcement')
   assert.equal(ownerMenus.length, 1)
@@ -173,14 +173,14 @@ test('keeps only project menu metadata in the owner module and operations bindin
 
 test('exposes subscription management as a project runtime menu candidate', () => {
   const moduleMenus = JSON.parse(moduleMenuSource)
-  const projectSystemMenu = moduleMenus.find(menu => menu.code === 'system' && menu.owner === 'cloud')
   const operationSystemMenu = moduleMenus.find(menu => menu.code === 'system' && menu.owner === 'iot')
-  const projectMenu = projectSystemMenu?.children?.find(menu => menu.code === 'system/NoticeRule')
-  const operationMenu = operationSystemMenu?.children?.find(menu => menu.code === 'system/NoticeRule')
+  const platformSettingsMenu = operationSystemMenu?.children?.find(menu => menu.code === 'platform/settings')
+  const projectMenus = findMenus(moduleMenus, 'system/NoticeRule')
+  const projectMenu = platformSettingsMenu?.children?.find(menu => menu.code === 'system/NoticeRule')
 
+  assert.equal(projectMenus.length, 1)
   assert.ok(projectMenu)
-  assert.ok(operationMenu)
-  assert.notEqual(projectMenu.id, operationMenu.id)
+  assert.equal(projectMenu.owner, 'cloud')
   assert.equal(projectMenu.url, '/system/NoticeRule')
   assert.equal(projectMenu.options?.routeTarget, 'midhub/settings')
   assert.deepEqual(projectMenu.showPage, ['notify-channel'])
