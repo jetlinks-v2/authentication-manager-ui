@@ -164,14 +164,12 @@ test('shows bulletin title and summary as separate columns with visible inbox ac
   assert.doesNotMatch(inboxSource, /\{\{\s*\$t\('Announcement\.inbox\.(?:markRead|view)'\)\s*\}\}/)
 })
 
-test('keeps project announcement metadata in the owner module and operations binding in saas', () => {
+test('keeps project announcement metadata in the owner module without a duplicate saas binding', () => {
   const ownerMenus = findMenus(JSON.parse(moduleMenuSource), 'system/Announcement')
   const saasMenus = findMenus(JSON.parse(saasMenuSource), 'system/Announcement')
   assert.equal(ownerMenus.length, 1)
-  assert.equal(ownerMenus[0].owner, 'cloud')
-  assert.equal(saasMenus.length, 1)
-  assert.equal(saasMenus[0].owner, 'iot')
-  assert.equal(saasMenus[0].options?.appName, 'authentication-manager')
+  assert.equal(ownerMenus[0].owner, 'iot')
+  assert.equal(saasMenus.length, 0)
 })
 
 test('exposes subscription management as a project runtime menu candidate', () => {
@@ -183,7 +181,7 @@ test('exposes subscription management as a project runtime menu candidate', () =
 
   assert.equal(projectMenus.length, 1)
   assert.ok(projectMenu)
-  assert.equal(projectMenu.owner, 'cloud')
+  assert.equal(projectMenu.owner, 'iot')
   assert.equal(projectMenu.url, '/system/NoticeRule')
   assert.equal(projectMenu.options?.routeTarget, 'midhub/settings')
   assert.deepEqual(projectMenu.showPage, ['notify-channel'])
@@ -214,6 +212,8 @@ test('publishes from the management row through deploy endpoint after confirmati
 test('allows every unpublished bulletin to be deleted and hides unavailable details', () => {
   assert.match(managementSource, /v-if="record\.state === 'unpublished'"\s+has-permission="system\/Announcement:delete"/)
   assert.match(apiSource, /request\.remove\(\s*'\/system\/bulletin\/_batch'/)
+  assert.match(apiSource, /\{ data: \[id\] \}/)
+  assert.match(pageSource, /deleteAnnouncement\(record\.id\)/)
   assert.match(notificationDetailSource, /v-if="unavailable"[\s\S]*?Announcement\.notification\.unavailable/)
   assert.match(notificationDetailSource, /catch \{\s*if \(sequence === requestSequence\) unavailable\.value = true/)
 
