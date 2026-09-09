@@ -30,7 +30,6 @@ export interface BusinessApplicationConfiguration {
 
 export interface BusinessApplicationEntity {
   id: string
-  projectId: string
   templateId: string
   name: string
   icon?: string

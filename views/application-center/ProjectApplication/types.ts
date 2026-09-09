@@ -20,7 +20,6 @@ export interface ApplicationTemplate {
 
 export interface ProjectApplication {
   id: string
-  projectId: string
   name: string
   description: string
   templateId: string

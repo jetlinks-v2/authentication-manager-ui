@@ -16,7 +16,6 @@
           <a-button
             class="create-application-button"
             type="primary"
-            :disabled="!projectId"
             @click="createOpen = true"
           >
             <template #icon><AIcon type="PlusOutlined" /></template>
@@ -27,8 +26,11 @@
 
       <full-page hasPadding>
         <a-spin :spinning="loading">
+          <CloudEmpty v-if="loadFailed" type="page" :description="$t('ProjectApplication.list.loadFailed')">
+            <a-button :loading="loading" @click="refresh">{{ $t('ProjectApplication.list.retry') }}</a-button>
+          </CloudEmpty>
           <ResponsiveGrid
-            v-if="cardItems.length"
+            v-else-if="cardItems.length"
             class="application-grid"
             :cols="3"
             gap="var(--space-3)"
@@ -43,7 +45,7 @@
               @toggle-status="toggleApplicationStatus(item.application)"
               @open="openApplication(item.application)"
             />
-            <button v-if="projectId" class="create-card" type="button" @click="createOpen = true">
+            <button class="create-card" type="button" @click="createOpen = true">
               <AIcon type="PlusOutlined" />
               <span>{{ $t('ProjectApplication.list.createCard') }}</span>
             </button>
@@ -51,13 +53,11 @@
           <CloudEmpty
             v-else
             type="page"
-            :description="$t(!projectId
-            ? 'ProjectApplication.list.missingProject'
-            : hasFilters
+            :description="$t(hasFilters
               ? 'ProjectApplication.list.empty'
               : 'ProjectApplication.list.noApplications')"
           >
-            <a-button v-if="projectId" type="primary" @click="createOpen = true">
+            <a-button type="primary" @click="createOpen = true">
               {{ $t('ProjectApplication.list.create') }}
             </a-button>
           </CloudEmpty>
@@ -82,33 +82,21 @@
 </template>
 
 <script setup lang="ts" name="ProjectApplication">
-import { computed, onMounted, ref, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { onlyMessage } from '@jetlinks-web/utils'
-import ConditionFilter, {
-  type ConditionFilterChangePayload,
-  type ConditionFilterField,
-} from '@jetlinks-web-core/components/ConditionFilter'
+import ConditionFilter from '@jetlinks-web-core/components/ConditionFilter'
 import PageHeader from '@jetlinks-web-core/components/PageHeader'
-import { useProjectRouter } from '@jetlinks-web-core/hooks/useProjectRouter'
-import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import ApplicationCreateDialog from './Create/index.vue'
 import ApplicationCard from './components/ApplicationCard.vue'
 import ApplicationRoleSelectModal from './components/ApplicationRoleSelectModal.vue'
-import { useApplicationOpenGuard } from './useApplicationOpenGuard'
-import { useProjectApplication } from './useProjectApplication'
-import type { ProjectApplication } from './types'
+import { useApplicationList } from './useApplicationList'
 
-const { t: $t } = useI18n()
-const menuStore = useMenuStore()
-const { projectId } = useProjectRouter()
-const store = useProjectApplication()
-const loading = ref(false)
-const createOpen = ref(false)
-const filters = ref<ConditionFilterChangePayload['filter']>({ terms: [] })
-const updatingApplicationIds = ref<string[]>([])
-let refreshSequence = 0
 const {
+  loading,
+  loadFailed,
+  createOpen,
+  filterFields,
+  hasFilters,
+  cardItems,
+  updatingApplicationIds,
   roleSelectOpen,
   roleSelectRoles,
   pendingApplication,
@@ -117,101 +105,12 @@ const {
   openApplication,
   confirmSelectedRole,
   resetRoleSelection,
-} = useApplicationOpenGuard()
-
-const statusOptions = computed(() => [
-  { label: $t('ProjectApplication.common.enabled'), value: 'enabled' },
-  { label: $t('ProjectApplication.common.disabled'), value: 'disabled' },
-])
-const filterFields = computed<ConditionFilterField[]>(() => [
-  {
-    title: $t('ProjectApplication.create.name'),
-    dataIndex: 'name',
-    search: {
-      type: 'string',
-      defaultTermType: 'like',
-      componentProps: {
-        placeholder: $t('ProjectApplication.list.searchPlaceholder'),
-      },
-    },
-  },
-  {
-    title: $t('ProjectApplication.detail.status'),
-    dataIndex: 'state',
-    search: {
-      type: 'select',
-      defaultTermType: 'eq',
-      options: statusOptions,
-      componentProps: {
-        placeholder: $t('ProjectApplication.list.allStatus'),
-      },
-    },
-  },
-])
-const hasFilters = computed(() => filters.value.terms.length > 0)
-
-const cardItems = computed(() => store.applications.map(application => ({
-  application,
-  template: store.templates.find(item => item.id === application.templateId) || {
-    id: application.templateId,
-    name: application.templateId,
-    code: application.templateId,
-    description: '',
-    status: 'disabled' as const,
-    statusText: '',
-    sortIndex: 0,
-    disabled: true,
-  },
-})))
-
-// Project switches and filter changes can overlap; only the latest request controls page loading.
-const refresh = async () => {
-  const sequence = ++refreshSequence
-  loading.value = true
-  try {
-    await store.loadApplications(projectId.value || '', filters.value)
-  } catch {
-    // The shared request layer reports the backend error.
-  } finally {
-    if (sequence === refreshSequence) loading.value = false
-  }
-}
-
-watch(projectId, () => {
-  void refresh()
-}, { immediate: true })
-
-const handleSearch = ({ filter }: ConditionFilterChangePayload) => {
-  filters.value = filter
-  if (projectId.value) void refresh()
-}
-
-onMounted(() => store.loadTemplates().catch(() => undefined))
-
-const openDetail = (id: string) => menuStore.jumpPage('application-center/ProjectApplication/Detail', { params: { id } })
-
-const toggleApplicationStatus = async (application: ProjectApplication) => {
-  if (updatingApplicationIds.value.includes(application.id)) return
-  const actionKey = application.status === 'enabled' ? 'disable' : 'enable'
-  const nextStatus = application.status === 'enabled' ? 'disabled' : 'enabled'
-  updatingApplicationIds.value = [...updatingApplicationIds.value, application.id]
-  try {
-    const updated = await store.updateApplication(application.id, { status: nextStatus })
-    if (updated) {
-      onlyMessage($t('ProjectApplication.detail.statusSuccess', {
-        action: $t(`ProjectApplication.common.${actionKey}`),
-        name: updated.name,
-      }))
-    }
-  } finally {
-    updatingApplicationIds.value = updatingApplicationIds.value.filter(id => id !== application.id)
-  }
-}
-
-const handleCreated = () => {
-  createOpen.value = false
-  void refresh()
-}
+  refresh,
+  handleSearch,
+  openDetail,
+  toggleApplicationStatus,
+  handleCreated,
+} = useApplicationList()
 </script>
 
 <style scoped>

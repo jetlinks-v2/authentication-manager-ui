@@ -75,16 +75,13 @@ const upsertApplication = (entity: BusinessApplicationEntity) => {
 }
 
 export const useProjectApplication = () => {
-  const loadApplications = async (projectId: string, filters: ApplicationFilters) => {
+  /** 加载当前用户有权管理的应用，无需项目上下文。 */
+  const loadApplications = async (filters: ApplicationFilters) => {
     // Only the latest filter request may replace the shared ledger state.
     const sequence = ++applicationQuerySequence
-    if (!projectId) {
-      replace(applications, [])
-      return applications
-    }
     const response = await queryBusinessApplications({
       paging: false,
-      terms: buildApplicationTerms(projectId, filters),
+      terms: buildApplicationTerms(filters),
       sorts: [{ name: 'createTime', order: 'desc' }],
     })
     const nextApplications = rememberApplications(listOf<BusinessApplicationEntity>(response))
@@ -117,7 +114,8 @@ export const useProjectApplication = () => {
     return entity?.id ? upsertApplication(entity) : undefined
   }
 
-  const createApplication = async (projectId: string, draft: ProjectApplicationDraft) => {
+  /** 根据模板创建应用，并兼容后端仅返回 ID 或需重新查询的响应。 */
+  const createApplication = async (draft: ProjectApplicationDraft) => {
     const template = templates.find(item => item.id === draft.templateId)
     const response = await createBusinessApplication({
       templateId: draft.templateId,
@@ -143,7 +141,7 @@ export const useProjectApplication = () => {
       return upsertApplication(result as BusinessApplicationEntity)
     }
 
-    await loadApplications(projectId, { terms: [] })
+    await loadApplications({ terms: [] })
     const created = applications.find(item => item.name === draft.name && item.templateId === draft.templateId)
     if (!created) throw new Error('Created business application could not be loaded')
     return created
@@ -155,7 +153,7 @@ export const useProjectApplication = () => {
     const raw = applicationEntities.get(id)
     const next = { ...current, ...patch }
 
-    // projectId and templateId are immutable backend fields and must never re-enter update payloads.
+    // templateId is immutable and must never re-enter update payloads.
     await updateBusinessApplication(id, {
       id,
       name: next.name,

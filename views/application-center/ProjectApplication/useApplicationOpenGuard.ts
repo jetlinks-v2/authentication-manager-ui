@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useUserStore } from '@jetlinks-web-core/store/user'
 import { prepareApplicationAccess } from '@jetlinks-web-core/utils/application-access'
+import { getApplicationAccessContext } from '@jetlinks-web-core/utils/request-context'
 import {
   bindSelectedBusinessApplicationRole,
   ensureBusinessApplicationMembership,
@@ -58,6 +59,7 @@ export const useApplicationOpenGuard = (options: ApplicationOpenGuardOptions = {
       applicationId: application.id,
       applicationName: application.name,
       domain: application.domain,
+      accessContext: getApplicationAccessContext(),
     })
 
     if (!access.success) {

@@ -58,123 +58,39 @@
 </template>
 
 <script setup lang="ts" name="ProjectApplicationCreate">
-import { computed, nextTick, reactive, ref, watch } from 'vue'
-import type { FormInstance } from 'ant-design-vue'
-import { useI18n } from 'vue-i18n'
-import { onlyMessage } from '@jetlinks-web/utils'
-import { useProjectRouter } from '@jetlinks-web-core/hooks/useProjectRouter'
-import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import TemplateSelector from './TemplateSelector.vue'
-import { useProjectApplication } from '../useProjectApplication'
-import type { ProjectApplication, ProjectApplicationDraft } from '../types'
+import { useApplicationCreate } from './useApplicationCreate'
+import type { ProjectApplication } from '../types'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
   embedded: { type: Boolean, default: false },
 })
-
 const emits = defineEmits<{
   (event: 'update:open', value: boolean): void
   (event: 'created', application: ProjectApplication): void
 }>()
 
-const { t: $t } = useI18n()
-const menuStore = useMenuStore()
-const { projectId } = useProjectRouter()
-const store = useProjectApplication()
-const formRef = ref<FormInstance>()
-const submitting = ref(false)
-const templatesLoading = ref(false)
-const form = reactive<ProjectApplicationDraft>({ name: '', description: '', templateId: '' })
-const iconTypes = ['image/jpeg', 'image/png']
-const iconUploadBorderStyle = {
-  border: '1px dashed var(--line-strong)',
-  borderRadius: 'var(--r-2)',
-}
-const iconCropperProps = {
-  fixedNumber: [1, 1],
-  autoCropWidth: 256,
-  autoCropHeight: 256,
-}
-
-// Keep the legacy Create route usable while the ledger owns the normal dialog state.
-const dialogOpen = computed({
-  get: () => props.embedded ? props.open : true,
-  set: value => {
-    if (props.embedded) emits('update:open', value)
-    else if (!value) menuStore.jumpPage('application-center/ProjectApplication', {})
-  },
+const {
+  store,
+  formRef,
+  submitting,
+  templatesLoading,
+  form,
+  iconTypes,
+  iconUploadBorderStyle,
+  iconCropperProps,
+  dialogOpen,
+  canSubmit,
+  rules,
+  closeDialog,
+  submit,
+} = useApplicationCreate({
+  open: () => props.open,
+  embedded: () => props.embedded,
+  onOpenChange: value => emits('update:open', value),
+  onCreated: application => emits('created', application),
 })
-
-const canSubmit = computed(() => {
-  const template = store.templates.find(item => item.id === form.templateId)
-  return !!projectId.value && !!form.name.trim() && !!template && !template.disabled
-})
-
-const rules = computed(() => ({
-  name: [
-    { required: true, message: $t('ProjectApplication.create.nameRequired') },
-    { max: 30, message: $t('ProjectApplication.create.nameLength') },
-  ],
-  templateId: [{ required: true, message: $t('ProjectApplication.create.templateRequired') }],
-}))
-
-const resetForm = async () => {
-  form.name = ''
-  form.description = ''
-  form.templateId = ''
-  form.icon = undefined
-  await nextTick()
-  formRef.value?.clearValidate()
-}
-
-const loadTemplates = async () => {
-  templatesLoading.value = true
-  try {
-    await store.loadTemplates()
-  } catch {
-    // The shared request layer reports the backend error.
-  } finally {
-    templatesLoading.value = false
-  }
-}
-
-watch(dialogOpen, open => {
-  if (!open) return
-  void resetForm()
-  void loadTemplates()
-}, { immediate: true })
-
-const closeDialog = () => {
-  dialogOpen.value = false
-}
-
-const submit = async () => {
-  if (!projectId.value) {
-    onlyMessage($t('ProjectApplication.list.missingProject'), 'warning')
-    return
-  }
-  try {
-    await formRef.value?.validate()
-  } catch {
-    return
-  }
-
-  submitting.value = true
-  try {
-    const application = await store.createApplication(projectId.value, {
-      ...form,
-      name: form.name.trim(),
-      description: form.description.trim(),
-    })
-    onlyMessage($t('ProjectApplication.create.success', { name: application.name }))
-    emits('created', application)
-    if (props.embedded) dialogOpen.value = false
-    else menuStore.jumpPage('application-center/ProjectApplication/Detail', { params: { id: application.id } })
-  } finally {
-    submitting.value = false
-  }
-}
 </script>
 
 <style scoped>

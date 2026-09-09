@@ -51,9 +51,9 @@ const recordOf = (value: unknown): Record<string, unknown> =>
 
 const textOf = (value: unknown) => value === undefined || value === null ? '' : String(value)
 
-export const buildApplicationTerms = (projectId: string, filters: ApplicationFilters) => {
+/** 仅提交用户筛选条件，应用可见范围由后端资产权限控制。 */
+export const buildApplicationTerms = (filters: ApplicationFilters) => {
   const terms: Array<Record<string, unknown>> = [
-    { column: 'projectId', termType: 'eq', value: projectId },
     ...filters.terms.map(term => ({ ...term })),
   ]
   return terms
@@ -70,7 +70,6 @@ export const normalizeApplication = (entity: BusinessApplicationEntity): Project
   const status = normalizeStatus(entity.state)
   return {
     id: entity.id,
-    projectId: entity.projectId,
     templateId: entity.templateId,
     name: entity.name,
     icon: entity.icon,
