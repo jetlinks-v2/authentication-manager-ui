@@ -59,6 +59,7 @@ export const useApplicationOpenGuard = (options: ApplicationOpenGuardOptions = {
       applicationName: application.name,
       domain: application.domain,
     })
+
     if (!access.success) {
       onlyMessage($t('ProjectApplication.detail.accessFailed'), 'warning')
       return false
