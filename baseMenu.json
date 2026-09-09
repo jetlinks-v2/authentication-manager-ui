@@ -86,7 +86,7 @@
         "supportDataAccess": false
       },
       {
-        "code": "Org & Users",
+        "code": "Org-And-Users",
         "name": "组织与用户",
         "owner": "iot",
         "i18nMessages": {
@@ -868,7 +868,7 @@
         },
         "id": "fe2e589bcf09a5353cbb5adrgb0b715l",
         "sortIndex": 30,
-        "url": "/system/platform-settings",
+        "url": "/system/ps",
         "icon": "icon-yonghuguanli",
         "children": [
           {
@@ -884,7 +884,7 @@
             "owner": "iot",
             "id": "da14fad88888dc13024e8261ff8fc2b5",
             "sortIndex": 20,
-            "url": "/system/platform-settings/permission",
+            "url": "/system/ps/permission",
             "icon": "icon-quanxianguanli",
             "showPage": [
               "permission"
@@ -1043,7 +1043,7 @@
             "owner": "iot",
             "id": "dcb6fa15da2eae8a4fdb71755edbc2bb",
             "sortIndex": 30,
-            "url": "/system/platform-settings/menu",
+            "url": "/system/ps/menu",
             "icon": "icon-caidanguanli",
             "showPage": [
               "menu"
@@ -1324,7 +1324,7 @@
               "calendar-manager"
             ],
             "sortIndex": 70,
-            "url": "/system/platform-settings/calendar",
+            "url": "/system/ps/calendar",
             "icon": "icon-rili",
             "permissions": [
               {
@@ -1399,7 +1399,7 @@
             "owner": "iot",
             "id": "8750142230773cde42a4e28efa7f84d5",
             "sortIndex": 80,
-            "url": "/system/platform-settings/api",
+            "url": "/system/ps/api",
             "icon": "icon-chakanAPI",
             "showPage": [
               "open-api"
@@ -1488,7 +1488,7 @@
             "owner": "iot",
             "id": "system-announcement-iot",
             "sortIndex": 60,
-            "url": "/system/platform-settings/Announcement",
+            "url": "/system/ps/Announcement",
             "icon": "NotificationOutlined",
             "showPage": [
               "bulletin"
@@ -1626,10 +1626,9 @@
             "owner": "iot",
             "id": "system-notice-rule-cloud",
             "sortIndex": 60,
-            "url": "/system/NoticeRule",
+            "url": "/system/ps/NoticeRule",
             "icon": "CopyOutlined",
             "options": {
-              "routeTarget": "midhub/settings"
             },
             "showPage": [
               "notify-channel"
@@ -1790,130 +1789,6 @@
       }
     ]
   },
-  {
-    "code": "link",
-    "name": "运维中心",
-    "i18nMessages": {
-      "name": {
-        "zh_CN": "运维中心",
-        "en_US": "Infrastructure",
-        "en": "Infrastructure"
-      }
-    },
-    "owner": "iot",
-    "id": "bd55cdc9d0c1700afe628f572f91c22e",
-    "url": "/infrastructure",
-    "icon": "icon-yunweiguanli-1",
-    "permissions": [],
-    "sortIndex": 4,
-    "children": [
-      {
-        "code": "application-center/Template",
-        "name": "应用模版",
-        "owner": "iot",
-        "i18nMessages": {
-          "name": {
-            "zh_CN": "应用模版",
-            "en_US": "App Templates",
-            "en": "App Templates"
-          }
-        },
-        "id": "9b8016a4e7d24af08fa34ab939ef4f5d",
-        "url": "/infrastructure/app-template",
-        "icon": "ProfileOutlined",
-        "sortIndex": 80,
-        "showPage": ["business-application-template"],
-        "permissions": [
-          {
-            "permission": "business-application-template",
-            "actions": ["query"]
-          }
-        ],
-        "buttons": [
-          {
-            "id": "view",
-            "name": "查看",
-            "i18nMessages": {
-              "zh_CN": "查看",
-              "en_US": "View",
-              "en": "View"
-            },
-            "permissions": [
-              {
-                "permission": "business-application-template",
-                "actions": ["query"]
-              }
-            ]
-          },
-          {
-            "id": "add",
-            "name": "新增",
-            "i18nMessages": {
-              "zh_CN": "新增",
-              "en_US": "Add",
-              "en": "Add"
-            },
-            "permissions": [
-              {
-                "permission": "business-application-template",
-                "actions": ["query", "save"]
-              }
-            ]
-          },
-          {
-            "id": "update",
-            "name": "编辑",
-            "i18nMessages": {
-              "zh_CN": "编辑",
-              "en_US": "Edit",
-              "en": "Edit"
-            },
-            "permissions": [
-              {
-                "permission": "business-application-template",
-                "actions": ["query", "save", "grant"]
-              }
-            ]
-          },
-          {
-            "id": "delete",
-            "name": "删除",
-            "i18nMessages": {
-              "zh_CN": "删除",
-              "en_US": "Delete",
-              "en": "Delete"
-            },
-            "permissions": [
-              {
-                "permission": "business-application-template",
-                "actions": ["query", "delete"]
-              }
-            ]
-          },
-          {
-            "id": "action",
-            "name": "启用/停用",
-            "i18nMessages": {
-              "zh_CN": "启用/停用",
-              "en_US": "Enable/Disable",
-              "en": "Enable/Disable"
-            },
-            "permissions": [
-              {
-                "permission": "business-application-template",
-                "actions": ["query", "save"]
-              }
-            ]
-          }
-        ],
-        "accessSupport": {
-          "text": "不支持",
-          "value": "unsupported"
-        },
-        "supportDataAccess": false
-      }
-    ]
-  },
     {
         "code": "link",
         "name": "运维中心",
@@ -2021,6 +1896,111 @@
                 "assetAccesses": []
               }
             ]
+          },
+          {
+            "code": "application-center/Template",
+            "name": "应用模版",
+            "owner": "iot",
+            "i18nMessages": {
+              "name": {
+                "zh_CN": "应用模版",
+                "en_US": "App Templates",
+                "en": "App Templates"
+              }
+            },
+            "id": "9b8016a4e7d24af08fa34ab939ef4f5d",
+            "url": "/infrastructure/app-template",
+            "icon": "ProfileOutlined",
+            "sortIndex": 80,
+            "showPage": ["business-application-template"],
+            "permissions": [
+              {
+                "permission": "business-application-template",
+                "actions": ["query"]
+              }
+            ],
+            "buttons": [
+              {
+                "id": "view",
+                "name": "查看",
+                "i18nMessages": {
+                  "zh_CN": "查看",
+                  "en_US": "View",
+                  "en": "View"
+                },
+                "permissions": [
+                  {
+                    "permission": "business-application-template",
+                    "actions": ["query"]
+                  }
+                ]
+              },
+              {
+                "id": "add",
+                "name": "新增",
+                "i18nMessages": {
+                  "zh_CN": "新增",
+                  "en_US": "Add",
+                  "en": "Add"
+                },
+                "permissions": [
+                  {
+                    "permission": "business-application-template",
+                    "actions": ["query", "save"]
+                  }
+                ]
+              },
+              {
+                "id": "update",
+                "name": "编辑",
+                "i18nMessages": {
+                  "zh_CN": "编辑",
+                  "en_US": "Edit",
+                  "en": "Edit"
+                },
+                "permissions": [
+                  {
+                    "permission": "business-application-template",
+                    "actions": ["query", "save", "grant"]
+                  }
+                ]
+              },
+              {
+                "id": "delete",
+                "name": "删除",
+                "i18nMessages": {
+                  "zh_CN": "删除",
+                  "en_US": "Delete",
+                  "en": "Delete"
+                },
+                "permissions": [
+                  {
+                    "permission": "business-application-template",
+                    "actions": ["query", "delete"]
+                  }
+                ]
+              },
+              {
+                "id": "action",
+                "name": "启用/停用",
+                "i18nMessages": {
+                  "zh_CN": "启用/停用",
+                  "en_US": "Enable/Disable",
+                  "en": "Enable/Disable"
+                },
+                "permissions": [
+                  {
+                    "permission": "business-application-template",
+                    "actions": ["query", "save"]
+                  }
+                ]
+              }
+            ],
+            "accessSupport": {
+              "text": "不支持",
+              "value": "unsupported"
+            },
+            "supportDataAccess": false
           }
         ]
     },
@@ -2054,7 +2034,7 @@
           }
         },
         "id": "4fbd197474134f7fb947f96d85a5a23d",
-        "url": "/open/project-application",
+        "url": "/open/application",
         "icon": "AppstoreAddOutlined",
         "sortIndex": 1,
         "showPage": ["business-application"],

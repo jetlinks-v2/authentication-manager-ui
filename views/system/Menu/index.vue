@@ -247,8 +247,7 @@ const getList = async (_params: any) => {
   }
   const params = {
     ..._params,
-    terms:
-      _params.terms && _params.length !== 0 ? [..._params.terms, item] : [item],
+    terms: [],
     sorts: [{ name: 'sortIndex', order: 'asc' }],
     paging: false,
   }
