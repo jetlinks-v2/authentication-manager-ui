@@ -18,7 +18,7 @@ const readSourceTree = async (directory) => {
   return sources.join('\n')
 }
 
-const [apiSource, registerSource, inboxSource, realtimeSource, notificationDetailSource, announcementDetailSource, noticeListLoaderSource, moduleSource, moduleMenuSource, saasMenuSource, managementSource, pageSource, saasCenterSource, projectCenterSource, coreSource, coreCenterSource, coreRecordSource, coreSubscriptionSource, coreDialogSource, coreNoticeSource, coreNoticeItemSource, coreRealtimeSource, coreNoticeInfoSource, coreNoticeListHandlerSource] = await Promise.all([
+const [apiSource, registerSource, inboxSource, realtimeSource, notificationDetailSource, announcementDetailSource, noticeListLoaderSource, moduleSource, moduleMenuSource, saasMenuSource, managementSource, pageSource, saasCenterSource, projectCenterSource, coreSource, coreCenterSource, coreRecordSource, coreSubscriptionSource, coreDialogSource, coreNoticeSource, coreNoticeItemSource, coreRealtimeSource, coreNoticeInfoSource, coreNoticeListHandlerSource, zhLocaleSource, enLocaleSource] = await Promise.all([
   readFile(resolve(moduleRoot, 'views/system/Announcement/api.ts'), 'utf8'),
   readFile(resolve(moduleRoot, 'views/system/Announcement/register.ts'), 'utf8'),
   readFile(resolve(moduleRoot, 'views/system/Announcement/components/AnnouncementInbox.vue'), 'utf8'),
@@ -43,6 +43,8 @@ const [apiSource, registerSource, inboxSource, realtimeSource, notificationDetai
   readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/layout/components/noticeRealtimeHandler.ts'), 'utf8'),
   readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/layout/components/NoticeInfo.vue'), 'utf8'),
   readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/layout/components/noticeListHandler.ts'), 'utf8'),
+  readFile(resolve(moduleRoot, 'locales/lang/zh.json'), 'utf8'),
+  readFile(resolve(moduleRoot, 'locales/lang/en.json'), 'utf8'),
 ])
 
 const findMenus = (menus, code) => menus.flatMap(menu => [
@@ -207,6 +209,20 @@ test('publishes from the management row through deploy endpoint after confirmati
   assert.match(managementSource, /onConfirm: \(\) => \$emit\('publish', record\)/)
   assert.match(pageSource, /publishAnnouncementApi\(record\.id\)/)
   assert.doesNotMatch(pageSource, /editingRecord\.value = await getAnnouncement\(record\.id\)/)
+})
+
+test('allows every unpublished bulletin to be deleted and hides unavailable details', () => {
+  assert.match(managementSource, /v-if="record\.state === 'unpublished'"\s+has-permission="system\/Announcement:delete"/)
+  assert.match(apiSource, /request\.remove\(\s*'\/system\/bulletin\/_batch'/)
+  assert.match(notificationDetailSource, /v-if="unavailable"[\s\S]*?Announcement\.notification\.unavailable/)
+  assert.match(notificationDetailSource, /catch \{\s*if \(sequence === requestSequence\) unavailable\.value = true/)
+
+  const zhLocale = JSON.parse(zhLocaleSource)
+  const enLocale = JSON.parse(enLocaleSource)
+  assert.equal(zhLocale['Announcement.confirm.delete'], '确认删除这条公告？')
+  assert.equal(zhLocale['Announcement.message.deleted'], '公告已删除')
+  assert.equal(enLocale['Announcement.confirm.delete'], 'Delete this announcement?')
+  assert.equal(enLocale['Announcement.message.deleted'], 'Announcement deleted')
 })
 
 test('keeps web-core notification handling business-neutral', () => {

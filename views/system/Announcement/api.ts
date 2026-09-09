@@ -267,7 +267,7 @@ export const withdrawAnnouncement = (id: string) => request.put(
   { params: { id } },
 )
 
-/** 删除未发布公告，DELETE 请求体按后端批量接口提交 ID 数组。 */
+/** 删除未发布公告。 */
 export const deleteAnnouncement = (id: string) => request.remove(
   '/system/bulletin/_batch',
   {},

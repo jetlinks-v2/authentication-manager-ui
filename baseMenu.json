@@ -1485,8 +1485,8 @@
                 "en": "Announcement"
               }
             },
-            "owner": "cloud",
-            "id": "system-announcement-cloud",
+            "owner": "iot",
+            "id": "system-announcement-iot",
             "sortIndex": 60,
             "url": "/system/platform-settings/Announcement",
             "icon": "NotificationOutlined",
@@ -1623,7 +1623,7 @@
                 "en": "Subscription Management"
               }
             },
-            "owner": "cloud",
+            "owner": "iot",
             "id": "system-notice-rule-cloud",
             "sortIndex": 60,
             "url": "/system/NoticeRule",
