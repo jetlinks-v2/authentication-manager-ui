@@ -68,6 +68,8 @@ Verification: the edited Department SFC passes a local script/template syntax co
 
 The `views/system/` list pages that combine `ConditionFilter` with `j-pro-table` use the shared `PageHeader` list shell: the page title stays on the left, filtering and the primary create action stay on the right, existing batch actions remain in the table toolbar, and dropdown-based batch actions stay grouped.
 
+These list pages also use `FullPage hasPadding` so their table content keeps the same page inset; `views/system/Announcement/components/ManagementView.vue` follows the same container contract as Permission and the other system management lists.
+
 The Role page uses the shared `EqualHeightColumns` shell for its role-group selector and role list, with the system-wide `18.75rem` / `1fr` tracks and no outer padding or divider.
 
 Scope is limited to the matching `index.vue` files outside `Apply`, `Basis`, and `NoticeRule`. The change does not alter request parameters, permissions, route registration, API contracts, or batch-action behavior. Implementation verification covers filter-to-table query flow, primary and batch action placement, module build diagnostics, and touched Vue file line counts.

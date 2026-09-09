@@ -1,5 +1,5 @@
 <template>
-  <FullPage>
+  <FullPage hasPadding>
     <j-pro-table
       ref="tableRef"
       class="pro-table__no-padding"

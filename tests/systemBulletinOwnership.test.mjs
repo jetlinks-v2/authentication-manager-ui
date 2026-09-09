@@ -134,6 +134,7 @@ test('renders registered bulletin details inside the generic message-center dial
 })
 
 test('shows bulletin title and summary as separate columns with visible inbox actions', () => {
+  assert.match(managementSource, /<FullPage\s+hasPadding>/)
   assert.match(managementSource, /key: 'announcementTitle'/)
   assert.match(managementSource, /#announcementTitle="record"/)
   assert.match(managementSource, /dataIndex: 'summary'/)
