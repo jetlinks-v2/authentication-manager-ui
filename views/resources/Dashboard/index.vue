@@ -20,7 +20,7 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { DashBoardCanvas } from '@jetlinks-web-core/components/DashBoardCanvas'
-import { useResourceDashboard } from '../../../visDashboard/ResourceCenter/useResourceDashboard'
+import { useResourceDashboard } from './useResourceDashboard'
 
 const { t } = useI18n()
 // 正式页面只查询真实数据，布局与组件配置固定，交互边界与项目概览一致。

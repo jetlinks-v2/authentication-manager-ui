@@ -3,9 +3,9 @@ import { isSaaS } from '@jetlinks-web-core/utils/consts'
 import { dashboardSources } from '@jetlinks-web-core/components/DashBoardCanvas/dashboard-sources'
 import { useDashboardCatalog } from '@jetlinks-web-core/components/DashBoardCanvas/discovery'
 import type { DashboardValue } from '@jetlinks-web-core/components/DashBoardCanvas'
-import { kinds,typeOf,type ResourceKind } from './shared'
+import { kinds,typeOf,type ResourceKind } from '../../../visDashboard/ResourceCenter/shared'
 
-const thumbnails = import.meta.glob('./*/thumbnail.svg', { eager: true,query: '?url',import: 'default' }) as Record<string,string>
+const thumbnails = import.meta.glob('../../../visDashboard/ResourceCenter/*/thumbnail.svg', { eager: true,query: '?url',import: 'default' }) as Record<string,string>
 const base = [
   ['EdgeNodes',0,0,3,4],['IotDevices',3,0,3,4],['VideoDevices',6,0,3,4],['Visualization',9,0,3,4],
 ] as const
@@ -18,7 +18,7 @@ const privateLayout = [
 // SaaS 分布卡置于快捷操作下方，趋势图使用右侧完整高度。
 const saasLayout = [...base,['QuickStart',0,4,6,6],['DeviceDistribution',0,10,6,14],['MessageTrend',6,4,6,20]] as const
 
-/** 新仪表盘的组装入口；组件目录与配置为公开契约，调用方决定是否允许编辑和保存。 */
+/** 资源中心页面的组件发现范围与默认布局。 */
 export function useResourceDashboard(preview: Ref<boolean>) {
   const allowed = computed(() => kinds.filter(kind => preview.value || !isSaaS || !['Collection','NetworkCards'].includes(kind)))
   const discovery = useDashboardCatalog(dashboardSources,computed(() => ({
@@ -29,7 +29,7 @@ export function useResourceDashboard(preview: Ref<boolean>) {
   const catalog = computed(() => ({ ...discovery.catalog.value,components: Object.fromEntries(Object.entries(discovery.catalog.value.components)
     .map(([type,definition]) => {
       const kind = type.replace('resourceCenter','') as ResourceKind
-      return [type,{ ...definition,thumbnail: thumbnails[`./${kind}/thumbnail.svg`] }]
+      return [type,{ ...definition,thumbnail: thumbnails[`../../../visDashboard/ResourceCenter/${kind}/thumbnail.svg`] }]
     })) }))
   const dashboard = computed<DashboardValue>(() => ({
     canvas: { backgroundColor: 'transparent', gridLayout: { colNum: preview.value || !isSaaS ? 24 : 12, rowHeight: 16, marginHorizontal: 18, marginVertical: 18 } },

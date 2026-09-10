@@ -25,13 +25,13 @@ SaaS 布局将设备分布置于快速开始下方（x=0、y=13、w=6、h=16）�
 
 ## 接入方式
 
-`visDashboard/ResourceCenter/useResourceDashboard.ts` 提供范围受限的 catalog 与默认布局。九个稳定类型均为 `resourceCenter<组件目录名>`，每个目录保持 `config.ts`、`index.ts`、运行 SFC、`Config.vue`。分布是一个组件，通过 `deviceType` 选择 edge/iot/video。组件颜色和结构只有一种，不提供风格选择。
+`views/resources/Dashboard/useResourceDashboard.ts` 负责页面的组件发现范围与默认布局，与同目录页面入口共同维护；`visDashboard/ResourceCenter` 保留可复用组件及其数据逻辑。九个稳定类型均为 `resourceCenter<组件目录名>`，每个目录保持 `config.ts`、`index.ts`、运行 SFC、`Config.vue`。分布是一个组件，通过 `deviceType` 选择 edge/iot/video。组件颜色和结构只有一种，不提供风格选择。
 
 运行时以 `isEdit=false` 查询真实数据，`isEdit=true` 使用独立预览样例且停止请求。业务配置保存在对应 type 命名空间：标题、刷新间隔、默认设备类型、默认时间范围和展示数量。关键配置项/更多配置项通过画布草稿应用或取消；使用组件的页面可通过 `editable=false` 隐藏编辑入口。计数卡、流量排行、图表仅展示信息，快速开始解析当前用户的菜单后跳转。
 
 ```ts
 import { ref } from 'vue'
-import { useResourceDashboard } from '@authentication-manager-ui/visDashboard/ResourceCenter/useResourceDashboard'
+import { useResourceDashboard } from './useResourceDashboard'
 const preview = ref(false)
 const { catalog, dashboard, loading, errors } = useResourceDashboard(preview)
 // catalog 与 dashboard 传给 DashBoardCanvas；如允许用户修改，复制 dashboard 至可写 ref 再绑定 v-model。
