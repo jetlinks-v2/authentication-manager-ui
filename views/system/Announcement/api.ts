@@ -51,7 +51,7 @@ export interface AnnouncementQuery {
 
 export interface SystemBulletinReference {
   bulletinId: string
-  publishVersion: number
+  publishVersion?: number
 }
 
 export interface SystemBulletinNotificationDetail {
@@ -177,8 +177,11 @@ export const resolveSystemBulletinReference = (
     }
   }
   const bulletinId = String(detail?.bulletinId || detail?.id || notification.dataId || '').trim()
-  const publishVersion = Number(detail?.publishVersion)
-  if (!bulletinId || !Number.isInteger(publishVersion) || publishVersion <= 0) {
+  if (!bulletinId) return undefined
+  // 旧通知不携带版本号，仍由当前用户正文接口校验可见性；显式非法版本不降级。
+  if (detail?.publishVersion === undefined || detail?.publishVersion === null) return { bulletinId }
+  const publishVersion = Number(detail.publishVersion)
+  if (!Number.isInteger(publishVersion) || publishVersion <= 0) {
     return undefined
   }
   return { bulletinId, publishVersion }
@@ -190,7 +193,7 @@ export const getSystemBulletinNotificationDetail = async (
 ): Promise<SystemBulletinNotificationDetail> => {
   const response = await request.get(
     `/system/bulletin/${encodeURIComponent(reference.bulletinId)}`,
-    { publishVersion: reference.publishVersion },
+    reference.publishVersion === undefined ? {} : { publishVersion: reference.publishVersion },
     { hiddenError: true },
   ) as ApiResponse<SystemBulletin>
   const detail = response.result

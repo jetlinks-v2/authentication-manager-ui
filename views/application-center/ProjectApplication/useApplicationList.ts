@@ -1,4 +1,5 @@
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import type { ConditionFilterChangePayload, ConditionFilterField } from '@jetlinks-web-core/components/ConditionFilter'
@@ -10,6 +11,8 @@ import type { ProjectApplication } from './types'
 /** 编排应用列表、筛选和创建后的刷新，复用现有应用服务及访问检查。 */
 export const useApplicationList = () => {
   const { t: $t } = useI18n()
+  const route = useRoute()
+  const router = useRouter()
   const menuStore = useMenuStore()
   const store = useProjectApplication()
   const loading = ref(false)
@@ -59,6 +62,14 @@ export const useApplicationList = () => {
     },
   ])
   const hasFilters = computed(() => filters.value.terms.length > 0)
+
+  // 快捷入口先挂载列表，再把一次性路由动作转换为本页创建弹窗状态。
+  watch(() => route.query.action, (action) => {
+    if (action !== 'create') return
+    createOpen.value = true
+    const { action: _action, ...query } = route.query
+    void router.replace({ query })
+  }, { immediate: true })
 
   const cardItems = computed(() => store.applications.map(application => ({
     application,

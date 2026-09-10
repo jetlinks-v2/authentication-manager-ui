@@ -366,3 +366,13 @@ Run the production build command for this module from `ui/jetlinks-web-core`:
 ```bash
 node --max_old_space_size=8192 --max-semi-space-size=64 -e "process.argv.push('--module-name','authentication-manager-ui'); import('vite').then(({ build }) => build())"
 ```
+
+## 项目概览归属迁移
+
+概览迁入本模块，保留最新菜单契约 project/Overview、/overview、owner=cloud。页面落点 views/project/Overview，六组件落点 visDashboard/Base，独立查询 api/overview.ts；同步迁移概览菜单、文案及验收脚本。project-side-ui 的其他页面保持不变。迁移后验证菜单单一归属、组件发现范围、相对引用、编译及公告/告警测试。
+
+浏览器核验最新服务端菜单为 `project/Overview`、`/overview`，页面最终落在 `views/project/Overview`；`index.ts` 保留不保留旧菜单别名。BaseMenu 仅迁移概览条目，其余最新系统/开放与集成层级保持不变。旧 overview.theme/types 实际仅被运维任务详情使用，已归位 project-side-ui 的任务详情 theme 目录，避免它反向依赖概览模块。
+
+## 资源中心仪表盘组件
+
+`visDashboard/ResourceCenter` 提供九个单风格组件，通过新的 `DashBoardCanvas` 自动发现与组装；目录、默认业务配置、真实接口口径及临时浏览器注入方式见 [资源中心仪表盘说明](docs/resource-center-dashboard.md)。正式入口为 `/resources/dashboard`，页面落在 `views/resources/Dashboard/index.vue`，绑定现有菜单 `resources/Dashboard`；交互与概览一致，不允许拖拽、编辑或配置，保留筛选和快捷跳转。本组不修改项目概览六组件，不接入旧 dashboard，不新增菜单。数据采集和物联网卡仅私有化运行时展示。
