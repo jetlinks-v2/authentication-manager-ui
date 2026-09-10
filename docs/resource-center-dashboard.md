@@ -1,0 +1,109 @@
+# 资源中心仪表盘组件
+
+## 目标与范围
+
+在 `authentication-manager-ui/visDashboard/ResourceCenter` 开发九个组件：边缘节点、物联设备、视频设备、可视化、快速开始、设备上报消息趋势、数据采集、物联网卡、设备分布。复用新 `DashBoardCanvas` 的 manifest、懒加载入口和三组导出协议，不接入旧 dashboard，不改概览六组件及菜单。
+
+交互方案：面向项目资源管理员的资源监控仪表盘，单一浅色卡片风格；统计卡展示数量和状态，快捷操作依据当前菜单跳转，趋势提供五个时间范围，分布提供三种设备类型。沿用默认配置展示，不增加风格选择。数据采集和物联网卡仅私有化展示，设计预览允许独立查看。无搜索表单、详情编辑或新权限协议。
+
+## 正式页面入口
+
+画布卡片横向、纵向间距均通过 `canvas.gridLayout.marginHorizontal/marginVertical` 设置为 18px，与概览页一致；复用底座公开配置，不修改公共默认值。浏览器实测资源中心与概览页的横向、纵向卡片边界间距均为 18px，diff 空白检查通过；本次仅调整布局配置，未运行构建或完整类型检查。
+
+接入现有菜单 `resources/Dashboard`、路径 `/resources/dashboard`。页面位于 `views/resources/Dashboard/index.vue`，由模块已有 `getModuleRoutesMap` 自动发现，不增加兼容路由或修改已下发菜单。页面交互沿用概览：`editable=false`、`previewMode=false`，使用默认布局和真实数据，不显示画布设置、组件编辑、拖拽或配置入口。保留组件自身的时间/类型筛选、重试和快捷跳转，继续遵守 SaaS/私有化可见规则。外层页面负责滚动，画布不增加内层滚动条。
+
+SaaS 布局将设备分布置于快速开始下方（x=0、y=13、w=6、h=16），设备上报消息趋势置于右侧（x=6、y=5、w=6、h=24），互换原位置和尺寸。仅调整 `useResourceDashboard.ts` 的 SaaS 默认布局，私有化布局保持原样。正式页面实测分布卡位于左下、尺寸 804×520，趋势卡位于右侧、尺寸 804×784，底边齐平；TypeScript 语法检查和 diff 空白检查通过，本次未重复运行完整类型检查或构建。
+
+接入验证：浏览器直接访问并刷新 `/resources/dashboard`、从概览点击顶部资源中心菜单均正常进入，无临时注入容器。当前 SaaS 环境正式渲染 7 个组件，私有化专属的采集与物联网卡不实例化；配置/添加/看板设置入口和拖动手柄数量均为 0，类型与时间切换正常。画布两层容器 overflowY 均为 visible，由页面外层滚动。新增页面 53 行，SFC 脚本/模板/样式编译通过；以模块 tsconfig 为基础、仅 include 此页面与 core env/auto-imports 的定向 `vue-tsc --noEmit` 通过（0 条诊断）。本次页面装配不执行全项目 build/lint。
+
+## 实施与验证
+
+1. 核验概览统计 API、采集统计、物联网卡流量和空间绑定契约。
+2. 分组级 `services` 负责请求和归一化，`hooks` 负责加载状态、参数变化、过期响应及清理；`components` 复用统计视图、卡片状态和 Echarts。独立组件目录提供默认配置与懒加载导出。
+3. 分布按空间直属绑定计数，同空间同设备去重；空数据、查询失败与真实零值分开呈现。设计态仅用独立样例，运行态不回退样例。
+4. 定向检查 SFC、TypeScript、JSON、导出契约及数据映射；在已有开发服务通过临时脚本注入新画布验证展示、拖拽和筛选，不写入服务端配置。
+
+## 接入方式
+
+`visDashboard/ResourceCenter/useResourceDashboard.ts` 提供范围受限的 catalog 与默认布局。九个稳定类型均为 `resourceCenter<组件目录名>`，每个目录保持 `config.ts`、`index.ts`、运行 SFC、`Config.vue`。分布是一个组件，通过 `deviceType` 选择 edge/iot/video。组件颜色和结构只有一种，不提供风格选择。
+
+运行时以 `isEdit=false` 查询真实数据，`isEdit=true` 使用独立预览样例且停止请求。业务配置保存在对应 type 命名空间：标题、刷新间隔、默认设备类型、默认时间范围和展示数量。关键配置项/更多配置项通过画布草稿应用或取消；使用组件的页面可通过 `editable=false` 隐藏编辑入口。计数卡、流量排行、图表仅展示信息，快速开始解析当前用户的菜单后跳转。
+
+```ts
+import { ref } from 'vue'
+import { useResourceDashboard } from '@authentication-manager-ui/visDashboard/ResourceCenter/useResourceDashboard'
+const preview = ref(false)
+const { catalog, dashboard, loading, errors } = useResourceDashboard(preview)
+// catalog 与 dashboard 传给 DashBoardCanvas；如允许用户修改，复制 dashboard 至可写 ref 再绑定 v-model。
+```
+
+复用范围已检查同功能、authentication-manager-ui、device-manager-ui、data-collector-ui、network-card-manager-ui、project-side-ui 及 core。复用本模块 `api/overview.ts` 和响应校验函数、core `DashBoardCanvas` / Echarts / menu store、全局 AIcon，以及 Ant Design Vue 的按钮、分段选择器、表单、折叠面板、加载和空态。分组展示子组件只负责本组统计、流量、分布、趋势和快捷操作；图表按需加载。文案沿用本模块中英文语言包。
+
+新底座的 catalog.thumbnail 支持 SVG，本组缩略图通过组装入口显式提供；不依赖旧设计器按 type 查找 PNG 的扫描方式。生产发现仍复用 core 共享来源，不加入特殊分支。新目录加入已有开发服务后，如 Vite 保留旧 glob 清单，需要使 `dashboard-sources.ts` 失效或重启开发服务；刷新浏览器本身不会让服务端旧转换缓存失效。
+
+## 临时浏览器验收
+
+在当前已登录的本地项目页面控制台执行（按实际工作区绝对路径调整）：
+
+```js
+const { mountResourceDashboard } = await import('/@fs/Users/yahaha/jetlinks/cloud.jetlinks/runtime-ui/modules/authentication-manager-ui/scripts/inject-resource-dashboard.ts')
+const disposeResourceDashboard = mountResourceDashboard()
+// 验收结束：disposeResourceDashboard()；也可刷新页面恢复。
+```
+
+脚本临时隐藏现有应用 DOM 并挂载独立测试画布，复用当前应用上下文。预览模式展示全部九个组件；切换实时模式后按 `isSaaS` 隐藏采集和物联网卡。所有拖拽、配置更改仅在内存中，脚本不保存服务端数据。不新增菜单和路由。
+
+## 接口口径与实测
+
+| 组件 | 数据来源/规则 | localhost:9200 实测 |
+| --- | --- | --- |
+| 边缘节点、物联设备 | 复用概览产品范围，`/device/instance/_count` 分别查总数和在线数 | 200，真实零值回显 |
+| 视频设备 | 沿用概览视频通道口径，设备查询后按设备查询通道，网关离线时通道离线 | `/media/device/_query` 200；当前无设备，非空通道链路未实测 |
+| 可视化 | 项目、资源 latest、模板查询 | 200，大屏 2 / 图片 1 / 组件 0 / 模型 0 / 模板 3 |
+| 消息趋势 | `/dashboard/_multi`，device/message/quantity/agg；今天、昨天、近3/7/30天 | 200，图表渲染及时间切换通过 |
+| 数据采集 | channel/collector `_count`；异常为 runningState != running | 当前 SaaS 代理四个请求均 404，运行态已隐藏；需私有化环境继续实测 |
+| 物联网卡 | `/dashboard/_multi`，flow/networkCardFlow/trend 与 rank；MB 展示时转换；排行为本月 | 两个请求 200，暂无流量记录；非空映射和排序通过隔离数据测试 |
+| 设备分布 | `/space/_query/tree`、`/space/data-bind/_query/no-paging`；设备 ID 范围复用概览 | 全部 200，回显园区/E栋/4F 三个空间，各类型当前均为 0 |
+| 快速开始 | 通过当前 menu store 的叶子菜单编码导航 | 边缘网关、物联设备、视频设备、大屏页面均实测跳转；私有化入口待对应环境验收 |
+
+分布按直属空间统计，同空间目标去重，不汇总子空间到父空间。边缘节点统计绑定引用的有效 edgeDeviceId 或直接绑定的网关 deviceId；物联设备排除视频通道与非物联产品；视频使用边缘节点+设备+通道组合去重。展示超限合并为其他，总数和圆环口径保持一致。同一目标绑定多个空间时会分别计入对应空间。
+
+## 验证结果
+
+- 九种组件通过脚本派发 dragstart/dragover/drop/dragend，从组件库逐一拖入画布，实例数 9 → 18；这是浏览器 DOM 拖拽事件验证，未验证操作系统原生拖放手势。
+- 九个组件分别修改标题并应用，仍正常渲染；分布展示数量改为 3 后其余空间汇总到其他，中心总数保持不变；设备类型和时间范围切换通过。
+- 取消标题修改后原组件名称不变；1280px 视口下九个组件默认布局均无内容横向或纵向溢出，已修正快捷操作三行布局遮挡问题，并恢复浏览器默认尺寸。组件日志未发现 ResourceCenter 报错。
+- `node modules/authentication-manager-ui/scripts/verify-resource-dashboard.cjs` 通过，覆盖分布去重/设备范围、自然日窗口、缺失指标、配置边界、局部失败、趋势正序、流量单位原值/聚合/排行、迟到响应、卸载清理和预览请求隔离。
+- `node modules/authentication-manager-ui/scripts/verify-overview-components.cjs` 通过：43 个 Vue SFC（含原概览），无脚本/模板编译错误或缺失相对引用。新增 SFC 均低于 300 行。
+- 定向 `vue-tsc` 已运行；新 ResourceCenter、验收入口无诊断，依赖链仍有 160 条既有 core/第三方诊断，不能视为全项目类型检查通过。复跑时以模块 tsconfig 为基础，临时 include 本组、验收入口及 core env/auto-imports，再执行 `pnpm exec vue-tsc --noEmit -p <临时配置>`。
+- 不运行全项目构建或 lint；未在当前环境覆盖非空视频通道数据、非空真实流量、私有化采集模块。上述缺口不会用预览值伪装真实统计。
+
+当前未创建 commit 或 PR。
+
+### 卡片尺寸试调
+
+两个正式页面的画布宽度调整为可用区域的 90%，居中显示，无侧栏时最大宽度调整为 1440px；网格行高调整为 16px（上一轮为 21px），卡片高度再降低约 13%，保留横纵 18px 间距。通过实际网格尺寸缩小卡片，不缩放字体或交互控件。浏览器复核两页横纵间距仍为 18px；资源中心七个当前可见组件无内容溢出，概览文字与操作正常展示。仅调整尺寸和布局，未运行完整类型检查或构建。
+
+### 原型样式细节
+
+按原型实际 DOM 样式调整本组组件：18px 常规字重标题、24px 主数字、26px 标题图标底板、34px 快捷图标底板；分段切换统一浅灰轨道、白色圆角选中块和阴影，继续复用 Ant Design Segmented。同步对齐快捷操作边框、采集异常标签、分布列表及流量排行进度条。保留当前网格尺寸和18px卡片间距，仅调整 ResourceCenter 展示层；浏览器实测标题18px、主数字24px、分段控件高度26px/轨道圆角8px/选中块圆角6px，时间和设备类型切换正常。正式页面在1280px宽度下七个可见组件均无横纵内容溢出；九组件设计预览已核对采集标签、流量用量块和排行条，并收紧分布行内边距以适配已降低的卡片高度。临时预览已卸载，浏览器恢复正式只读页面。定向vue-tsc、43个SFC编译与数据契约检查通过；不执行全量构建。
+
+### 有侧栏布局与内容高度
+
+资源中心有侧栏时使用100%可用宽度，移除90%宽度产生的额外左右留白，保留标准页面内边距；无侧栏仍居中限宽。按内容压缩各类组件网格高度：统计卡4行，SaaS快捷操作6行、分布12行、趋势18行；私有化快捷操作7行、采集5行、分布11行、流量16行、趋势17行。同步组件默认值与最小高度，避免网格最小尺寸抵消页面高度设置。保留18px卡片间距及外层滚动，统计卡和快捷操作已验证无内容溢出；图表在紧凑版本基础上各增加2行（68px），SaaS下保持底部对齐。
+
+图表高度再次增加两行（当前网格步长34px，实际增加68px），SaaS分布14行、趋势20行；私有化分布13行、趋势19行。私有化效果通过浏览器只读临时预览展示，使用设计样例，不修改真实部署环境或后端配置；刷新页面恢复。
+
+统计卡标题与数字间距增至16px，图表标题与内容间距缩为6px；统计卡底部内边距10px，保证118px紧凑高度下状态行完整展示。临时页内私有化预览通过 `mountResourceDashboard({readOnly:true,withinPage:true})` 挂载，保留原侧栏，不开放配置编辑。
+
+### 私有化原型布局修正
+
+私有化三张下部卡片进一步压缩高度：物联网卡22行（730px），消息趋势和设备分布各15行（492px），三卡均减少136px并保持底部对齐。仅调整privateLayout，不改变SaaS布局、卡片宽度及18px间距；浏览器私有化预览实测730/492/492px，三卡底边均为950px，无内容溢出；diff检查通过，本次布局常量调整未运行构建。
+
+物联网卡细节以原型实际尺寸为准：三块用量值统一16px/18.4px行高，块内边距10px 14px、间距8px，背景统一浅灰，仅当月数值标蓝；排行标题12px浅灰，排行列表占满剩余高度并以space-around分布，最小间隔6px，第三名为蓝色。此前当月值24px、突出背景与固定10px排行间距均移除。使用整块FlowPanel的flex布局传递剩余高度，避免底部空白。
+
+私有化采用24列：顶部四卡各6列；快速开始占左12列，数据采集占中间6列，物联网卡占右6列并贯穿下方；下方消息趋势和设备分布各9列、同高并排。采集卡在窄列内纵排通道和采集器。SaaS仍为12列且布局不变。保留只读、18px间距和有侧栏时铺满可用宽度。
+
+浏览器私有化预览实测：快速开始与采集卡同顶同底；两图表宽595px、高628px并排，底部与右侧物联网卡齐平；九卡均无内容溢出，编辑拖动入口为0。统计卡标题间距16px、图表6px的新样式已加载。SFC编译及diff检查通过，未重复执行全量构建。
+
+物联网卡复核：三块用量块均为38.398px，与原型38.398px一致，值字号统一16px；排行使用space-around，当前大卡片实测相邻行步进一致，第三名蓝色，无内容溢出。已重新挂载私有化只读示例预览。SFC编译和diff检查通过，本次仅展示样式调整，未运行全量构建。

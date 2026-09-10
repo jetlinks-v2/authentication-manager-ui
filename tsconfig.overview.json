@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["./visDashboard/**/*.ts", "./visDashboard/**/*.vue", "./views/project/Overview/index.vue", "./views/project/Overview/useOverviewDashboard.ts", "../../jetlinks-web-core/src/env.d.ts", "../../jetlinks-web-core/src/auto-imports.d.ts"]
+}
