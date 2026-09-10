@@ -2,7 +2,7 @@
   <div class="home-content home-apps" :class="{ 'home-apps--cards': chart.displayStyle === 'cards' }">
     <button v-for="row in rows" :key="row.id" class="home-app" :disabled="!canOpen(row.target)" :title="actionHint(row)" @click="$emit('navigate', row.target)">
       <span class="home-app-icon"><HomeIcon name="applications"/></span>
-      <span class="home-app-content"><strong>{{ label(row) }}</strong><span v-if="chart.showDescription && row.description" class="home-muted home-description">{{ row.description }}</span></span>
+      <span class="home-app-content"><strong>{{ label(row) }}</strong><span v-if="chart.showDescription" class="home-muted home-description">{{ row.description || '--' }}</span></span>
     </button>
   </div>
 </template>
