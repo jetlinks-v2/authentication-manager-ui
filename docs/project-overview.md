@@ -57,7 +57,7 @@
 
 配额优先使用项目会话 ID；直接进入运行端且缺少 ID 时，按后端正式控制端项目列表契约匹配当前 code。当前运行端代理不提供该控制端接口，需部署侧提供控制端访问和完整项目上下文才能继续验证配额回显。算法中心虽能打开，但其场景树接口也返回 404；设备列表可打开，但部分明细请求权限不足。这些不属于组件渲染故障。
 
-快捷操作已移除文搜图、消息通知、成员管理，保留添加设备、添加视频、接入边缘节点、创建应用、算法配置、空间配置、告警规则管理 7 项。空间配置通过菜单 `space/AreaManagement` 进入 `/resources/space/management`；未配置的应用管理、视频添加、采集器和卡管理入口保持禁用。既有运维专题页沿用源模块的演示契约，没有将其演示数据用于本次概览。
+快捷操作已移除文搜图、消息通知、成员管理和算法配置，保留添加设备、添加视频、接入边缘节点、创建应用、空间配置、视联告警、物联告警 7 项。空间配置通过菜单 `space/AreaManagement` 进入 `/resources/space/management`；视联告警和物联告警分别通过 `machine-vision/VisualAlarm`、`iot-user/device/alarm` 进入项目告警页面。创建应用先进入应用列表并以一次性 `action=create` 打开创建弹窗，列表与弹窗同时渲染；添加设备和接入边缘节点使用同一动作契约，由统一设备列表分别打开设备新增抽屉和网关接入弹窗。未配置的视频添加、采集器和卡管理入口保持禁用。既有运维专题页沿用源模块的演示契约，没有将其演示数据用于本次概览。
 
 ## 文件入口
 
@@ -85,7 +85,7 @@
 
 ## 资源中心展示边界
 
-应用中心在启用描述展示时始终保留描述行；接口未返回应用描述或描述为空时显示 `--`，避免名称下方留空导致信息层级不一致。
+应用中心与项目应用列表统一查询 `/business-application/_query/no-paging`，按创建时间倒序展示当前可管理应用；应用自身描述为空时回退到关联模板描述，与项目应用卡片口径一致。启用描述展示时始终保留描述行，两者均为空时显示 `--`，避免名称下方留空导致信息层级不一致。
 
 资源中心按原型仅展示资源名称与数量，不提供点击跳转。默认分组和指标两种展示均使用静态元素，移除导航事件、按钮语义、悬停描边和入口不可用提示；数据查询与数量刷新保持现有契约。实现仅涉及 `visDashboard/Base/Resources`。
 
@@ -99,7 +99,7 @@
 
 ## 概览图标来源
 
-六组件图标统一从 `shared/HomeIcon.vue` 映射到已安装的 Ant Design outlined 图标，替换原手绘 SVG：设备 Database、视频 VideoCamera、添加视频 VideoCameraAdd、网关 Api、创建应用 AppstoreAdd、算法 Eye、空间/模板 Block、告警规则 Alert、采集器 Fund、物联网卡 Wifi、大屏 Dashboard、图片 Picture、组件 Appstore、模型 Gateway、智能体 Robot、覆盖通道 DeploymentUnit、场景 Thunderbolt。资源分组标题同步补齐图标，快捷操作采用中性色，其余按原型区分业务颜色。仅改概览展示，不改导航和查询。core 的 `assets/icons/iconfont.json` 已确认为私有项目 4035907，App.vue 已加载公共 icons/iconfont.js；本次 Ant Design 已覆盖，无需新增私有图标或脚本。
+六组件图标统一从 `shared/HomeIcon.vue` 映射到已安装的 Ant Design outlined 图标，替换原手绘 SVG：设备 Database、视频 VideoCamera、添加视频 VideoCameraAdd、网关 Api、创建应用 AppstoreAdd、算法 Eye、空间/模板 Block、视联告警 VideoCamera、物联告警 Alert、采集器 Fund、物联网卡 Wifi、大屏 Dashboard、图片 Picture、组件 Appstore、模型 Gateway、智能体 Robot、覆盖通道 DeploymentUnit、场景 Thunderbolt。资源分组标题同步补齐图标，快捷操作采用中性色，其余按原型区分业务颜色。仅改概览展示，不改查询。core 的 `assets/icons/iconfont.json` 已确认为私有项目 4035907，App.vue 已加载公共 icons/iconfont.js；本次 Ant Design 已覆盖，无需新增私有图标或脚本。
 
 图标验证：已核验所选 18 个 Ant Design 导出均存在；84 个 Vue SFC 编译和相对导入检查通过；9200 概览截图确认快捷操作、14 项资源、3 个资源分组标题和健康状态图标正确渲染。应用中心当前为空，应用图标仅完成源码映射检查；配额与公告按原型无需新增业务图标。纯图标替换未执行全量 build/typecheck，项目既有类型检查限制见前文。
 
