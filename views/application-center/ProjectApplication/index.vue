@@ -1,7 +1,7 @@
 <template>
   <j-page-container>
     <div class="project-application-page">
-      <full-page hasPadding>
+      <full-page transparentBackground hasPadding>
         <a-spin :spinning="loading">
           <div style="margin-bottom: var(--space-4);">
             <a-flex :gap="16">
