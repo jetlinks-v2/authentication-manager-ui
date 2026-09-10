@@ -12,7 +12,7 @@
     },
     "id": "project-overview",
     "url": "/overview",
-    "icon": "AppstoreOutlined",
+    "icon": "icon-gailan",
     "sortIndex": 1,
     "meta": {
       "componentCode": "project/Overview"
@@ -45,7 +45,7 @@
     },
     "id": "jetlinks-resource",
     "url": "/resources",
-    "icon": "ApiOutlined",
+    "icon": "icon-ziyuanzhongxin",
     "sortIndex": 10,
     "permissions": [],
     "buttons": [],
@@ -63,7 +63,7 @@
         },
         "id": "resources-dashboard",
         "url": "/resources/dashboard",
-        "icon": "DashboardOutlined",
+        "icon": "icon-yibiaopan",
         "sortIndex": 0,
         "meta": {
           "componentCode": "resources/Dashboard"
@@ -93,7 +93,7 @@
     },
     "id": "fd1670b860ae58cc58bcd01d027ccd35",
     "url": "/system",
-    "icon": "icon-xitongguanli1",
+    "icon": "icon-xitongshezhi",
     "sortIndex": 100,
     "permissions": [],
     "buttons": [],
@@ -112,7 +112,7 @@
         "id": "96e4bd287adbe0486e2168c59450841f",
         "sortIndex": 10,
         "url": "/system/Basis",
-        "icon": "icon-shezhi",
+        "icon": "icon-jibenxinxi",
         "showPage": [
           "system_config"
         ],
@@ -180,7 +180,7 @@
         "id": "fe2e589bcf09a5353cbb5bebeb0b7f1c",
         "sortIndex": 20,
         "url": "/system/ou",
-        "icon": "icon-yonghuguanli",
+        "icon": "icon-zuzhi",
         "children": [
           {
             "code": "system/Role",
@@ -196,7 +196,7 @@
             "id": "9d1e96f17649ef5e7b8e7c6bb8e7b775",
             "sortIndex": 10,
             "url": "/system/ou/role",
-            "icon": "icon-jiaoseguanli",
+            "icon": "icon-yuandian",
             "showPage": [
               "role"
             ],
@@ -361,7 +361,7 @@
             "id": "3962ec0835f3b4a68c1f63b955625046",
             "sortIndex": 20,
             "url": "/system/ou/department",
-            "icon": "icon-bumenguanli",
+            "icon": "icon-yuandian",
             "showPage": [
               "organization"
             ],
@@ -731,7 +731,7 @@
             "id": "fe2e557bcf09a5503cbb5bebeb0b7f1c",
             "sortIndex": 30,
             "url": "/system/ou/user",
-            "icon": "icon-yonghuguanli",
+            "icon": "icon-yuandian",
             "showPage": [
               "user"
             ],
@@ -950,7 +950,7 @@
         "id": "fe2e589bcf09a5353cbb5adrgb0b715l",
         "sortIndex": 30,
         "url": "/system/ps",
-        "icon": "icon-yonghuguanli",
+        "icon": "icon-pingtaishezhi",
         "children": [
           {
             "code": "system/Permission",
@@ -966,7 +966,7 @@
             "id": "da14fad88888dc13024e8261ff8fc2b5",
             "sortIndex": 20,
             "url": "/system/ps/permission",
-            "icon": "icon-quanxianguanli",
+            "icon": "icon-yuandian",
             "showPage": [
               "permission"
             ],
@@ -1125,7 +1125,7 @@
             "id": "dcb6fa15da2eae8a4fdb71755edbc2bb",
             "sortIndex": 30,
             "url": "/system/ps/menu",
-            "icon": "icon-caidanguanli",
+            "icon": "icon-yuandian",
             "showPage": [
               "menu"
             ],
@@ -1274,7 +1274,7 @@
             "id": "b69782873cc24be8165c6ad292359092",
             "sortIndex": 60,
             "url": "/system/Dictionary",
-            "icon": "FormOutlined",
+            "icon": "icon-yuandian",
             "showPage": [
               "dictionary"
             ],
@@ -1406,7 +1406,7 @@
             ],
             "sortIndex": 70,
             "url": "/system/ps/calendar",
-            "icon": "icon-rili",
+            "icon": "icon-yuandian",
             "permissions": [
               {
                 "permission": "calendar-manager",
@@ -1481,7 +1481,7 @@
             "id": "8750142230773cde42a4e28efa7f84d5",
             "sortIndex": 80,
             "url": "/system/ps/api",
-            "icon": "icon-chakanAPI",
+            "icon": "icon-yuandian",
             "showPage": [
               "open-api"
             ],
@@ -1570,7 +1570,7 @@
             "id": "system-announcement-iot",
             "sortIndex": 60,
             "url": "/system/ps/Announcement",
-            "icon": "NotificationOutlined",
+            "icon": "icon-yuandian",
             "showPage": [
               "bulletin"
             ],
@@ -1708,7 +1708,7 @@
             "id": "system-notice-rule-cloud",
             "sortIndex": 60,
             "url": "/system/ps/NoticeRule",
-            "icon": "CopyOutlined",
+            "icon": "icon-yuandian",
             "options": {
             },
             "showPage": [
@@ -1883,7 +1883,7 @@
         "owner": "iot",
         "id": "bd55cdc9d0c1700afe628f572f91c22e",
         "url": "/infrastructure",
-        "icon": "icon-yunweiguanli-1",
+        "icon": "icon-yunweizhongxin",
         "permissions": [],
         "sortIndex": 4,
         "children": [
@@ -1901,7 +1901,7 @@
             "id": "7bfca91e0accad83c96ad8b3a79153c0",
             "sortIndex": 70,
             "url": "/infrastructure/logs",
-            "icon": "icon-rizhifuwu",
+            "icon": "icon-rizhiguanli",
             "showPage": [
               "system-logger",
               "access-logger"
@@ -1937,7 +1937,7 @@
                   }
                 },
                 "code": "system/Log/Access",
-                "icon": "icon-rizhifuwu",
+                "icon": "icon-yuandian",
                 "url": "/infrastructure/logs/access",
                 "describe": "",
                 "showPage": [
@@ -1967,7 +1967,7 @@
                   "system-logger"
                 ],
                 "code": "system/Log/System",
-                "icon": "icon-rizhifuwu",
+                "icon": "icon-yuandian",
                 "url": "/infrastructure/logs/system",
                 "describe": "",
                 "accessSupport": {
@@ -1991,7 +1991,7 @@
             },
             "id": "9b8016a4e7d24af08fa34ab939ef4f5d",
             "url": "/infrastructure/app-template",
-            "icon": "ProfileOutlined",
+            "icon": "icon-yingyongmobanku",
             "sortIndex": 80,
             "showPage": ["business-application-template"],
             "permissions": [
@@ -2098,7 +2098,7 @@
     },
     "id": "4984e88a42a44b22896c058742d0782d",
     "url": "/open",
-    "icon": "AppstoreOutlined",
+    "icon": "icon-kaifangjicheng",
     "sortIndex": 90,
     "permissions": [],
     "buttons": [],
@@ -2116,7 +2116,7 @@
         },
         "id": "4fbd197474134f7fb947f96d85a5a23d",
         "url": "/open/application",
-        "icon": "AppstoreAddOutlined",
+        "icon": "icon-yingyongguanli1",
         "sortIndex": 1,
         "showPage": ["business-application"],
         "permissions": [
@@ -2289,7 +2289,7 @@
         },
         "id": "f7cde9e54efc4b23b8b4c84d2e0f6d72",
         "url": "/open/api-application",
-        "icon": "ApiOutlined",
+        "icon": "icon-APIyingyong",
         "sortIndex": 3,
         "showPage": ["api-application"],
         "permissions": [
@@ -2385,7 +2385,7 @@
         },
         "id": "a21b71d0b8c34c359064e75f571da6e1",
         "url": "/open/mobile-application",
-        "icon": "MobileOutlined",
+        "icon": "icon-yidongduan",
         "sortIndex": 4,
         "options": {
           "meta": {
