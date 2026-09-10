@@ -19,34 +19,36 @@
           @open="openApplication"
         />
 
-        <a-tabs v-model:active-key="activeTab" class="detail-tabs">
-          <a-tab-pane key="settings" :tab="$t('ProjectApplication.detail.tab.settings')">
-            <ApplicationSettings
-              ref="settingsRef"
-              v-model:editing="settingsEditing"
-              :data="{ application, template }"
-              :saving="settingsSaving"
-              @save="updateSettings"
-            />
-          </a-tab-pane>
-          <a-tab-pane key="users" :tab="$t('ProjectApplication.detail.tab.users')">
-            <UserManagement
-              :data="{ users: detail.users, roles: detail.roles }"
-              @add="addUsers"
-              @unbind="unbindUser"
-              @update="updateUser"
-            />
-          </a-tab-pane>
-          <a-tab-pane key="roles" :tab="$t('ProjectApplication.detail.tab.roles')">
-            <RoleManagement
-              :roles="detail.roles"
-              :users="detail.users"
-              :template-id="application.templateId"
-              @save-role="saveRole"
-              @delete-role="removeRole"
-            />
-          </a-tab-pane>
-        </a-tabs>
+        <FullPage hasPadding>
+	        <a-tabs v-model:active-key="activeTab" class="detail-tabs">
+		        <a-tab-pane key="settings" :tab="$t('ProjectApplication.detail.tab.settings')">
+			        <ApplicationSettings
+				        ref="settingsRef"
+				        v-model:editing="settingsEditing"
+				        :data="{ application, template }"
+				        :saving="settingsSaving"
+				        @save="updateSettings"
+			        />
+		        </a-tab-pane>
+		        <a-tab-pane key="users" :tab="$t('ProjectApplication.detail.tab.users')">
+			        <UserManagement
+				        :data="{ users: detail.users, roles: detail.roles }"
+				        @add="addUsers"
+				        @unbind="unbindUser"
+				        @update="updateUser"
+			        />
+		        </a-tab-pane>
+		        <a-tab-pane key="roles" :tab="$t('ProjectApplication.detail.tab.roles')">
+			        <RoleManagement
+				        :roles="detail.roles"
+				        :users="detail.users"
+				        :template-id="application.templateId"
+				        @save-role="saveRole"
+				        @delete-role="removeRole"
+			        />
+		        </a-tab-pane>
+	        </a-tabs>
+        </FullPage>
       </template>
 
       <CloudEmpty v-else-if="!loading" type="page" :description="$t('ProjectApplication.detail.notFound')">
