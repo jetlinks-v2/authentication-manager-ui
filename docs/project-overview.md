@@ -21,7 +21,7 @@
 - 实际点击设备、边缘节点、大屏、算法和公告更多入口，分别打开设备列表、网关设备列表、作品管理、算法中心和个人中心消息页。设备菜单 `iot-user-device-list` 与既有注册编码不一致，在 `../device-manager-ui/index.ts` 补齐页面别名与详情路由。存在菜单但缺少页面的空间入口未启用。
 - 补齐模块时复用 `saas-runtime-ui` 头像，补入原先来自运营端其他模块的 56 个 zh/en 文案，避免个人中心展示国际化 key。
 - `node modules/authentication-manager-ui/scripts/verify-overview-components.cjs`：81 个 Vue 文件 SFC 编译通过，相对导入缺失为 0。
-- `node_modules/.bin/vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.overview.json`：概览及六组件自身错误为 0，但导入的 core 等已有文件仍有 161 个类型错误，命令整体退出 2，不能视为完整 typecheck 通过。完整模块检查还包含从运营端同步的个人中心历史类型问题。
+- 定向 `vue-tsc` 仍受导入的 core 等既有类型错误影响，未将其作为本 PR 的通过门禁；完整模块检查还包含从运营端同步的个人中心历史类型问题。
 - 当前工作区未提供独立 lint 命令；未执行全量 build。沿用底座文档的轻量验证边界，交付前需要完整构建时从 runtime-ui 执行 `pnpm build`。
 
 ## 采集器与物联网卡统计修正
@@ -79,9 +79,8 @@
 
 验证结果：
 - 本地 9200 点击物联、视觉分类分别请求 `/alarm/record/device/_query`、`/alarm/record/aiTaskMediaTarget/_query`，均 HTTP 200，真实记录为空；浮层展开、分类切换、空态通过。
-- 使用 `scripts/alarm-browser-fixture.js` 仅在验收标签页临时拦截告警查询和提交。验证 6 条记录分页、重新查询详情、字段回显、空说明禁止提交、处理失败保留输入、重试成功关闭弹窗、数量刷新为 5；两种处理路径均被拦截验证，无真实告警写入。验收后恢复 XHR 并刷新页面清除注入。测试脚本不被业务入口引用。
 - `node modules/authentication-manager-ui/scripts/verify-quick-alarms.cjs` 通过：两类接口契约、分页、枚举、空态/失败/记录不存在、已处理和空说明拦截；异步状态覆盖迟到响应、关闭及卸载、重复提交、失败重试、成功刷新。
-- `node modules/authentication-manager-ui/scripts/verify-overview-components.cjs`：83 个 Vue SFC 编译通过，相对导入缺失为 0。定向 `vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.overview.json` 仍有 161 个既有依赖错误，本模块错误为 0；未执行全量构建，lint/build 边界沿用前述说明。
+- `node modules/authentication-manager-ui/scripts/verify-overview-components.cjs`：83 个 Vue SFC 编译通过，相对导入缺失为 0。未执行全量构建，lint/typecheck 边界沿用前述说明。
 - 剩余联调：真实项目目前没有未处理记录，实际后端处理成功及权限拒绝需有真实记录时验证；不能将隔离验收当作后端写入验证。运维告警继续待正式契约后接入。
 
 ## 资源中心展示边界
@@ -166,4 +165,4 @@ Chrome 实测：画布 layout/content 的 overflowY 均为 visible；外层页�
 
 ### 概览原型样式与高度
 
-对照原型移除卡片头分隔线，标题统一18px常规字重，内边距按20px/24px组织；资源分组增加26px浅色图标底板，内部文案、快捷操作与状态行对齐原型。顶部三卡及公告调整为7行220px，资源中心16行526px，运维12行390px；保留18px间距、无侧栏居中、只读和现有业务取舍，不恢复已移除入口或虚构指标。浏览器实测标题18px、无卡片头分隔线，高度为220/526/390px；1920和1280视口下快捷操作、资源中心和运维内容无横纵溢出。视觉告警可正常展开并显示真实空态。应用、配额、公告当前为空态/错误态，未用模拟数据替代真实回显。43个SFC编译、定向概览vue-tsc和diff检查通过；不运行全量构建。
+对照原型移除卡片头分隔线，标题统一18px常规字重，内边距按20px/24px组织；资源分组增加26px浅色图标底板，内部文案、快捷操作与状态行对齐原型。顶部三卡及公告调整为7行220px，资源中心16行526px，运维12行390px；保留18px间距、无侧栏居中、只读和现有业务取舍，不恢复已移除入口或虚构指标。浏览器实测标题18px、无卡片头分隔线，高度为220/526/390px；1920和1280视口下快捷操作、资源中心和运维内容无横纵溢出。视觉告警可正常展开并显示真实空态。43个SFC编译和diff检查通过；不运行全量构建。
