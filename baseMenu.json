@@ -1,5 +1,86 @@
 [
   {
+    "code": "project/Overview",
+    "name": "概览",
+    "owner": "iot",
+    "i18nMessages": {
+      "name": {
+        "zh_CN": "概览",
+        "en_US": "Overview",
+        "en": "Overview"
+      }
+    },
+    "id": "project-overview",
+    "url": "/overview",
+    "icon": "AppstoreOutlined",
+    "sortIndex": 1,
+    "meta": {
+      "componentCode": "project/Overview"
+    },
+    "options": {
+      "componentCode": "project/Overview",
+      "meta": {
+        "componentCode": "project/Overview"
+      }
+    },
+    "permissions": [{
+      "permission": "rule-scene",
+      "actions": [
+        "query"
+      ]
+    }],
+    "buttons": [],
+    "showPage": ["menu"]
+  },
+  {
+    "code": "resources",
+    "name": "资源中心",
+    "owner": "iot",
+    "i18nMessages": {
+      "name": {
+        "zh_CN": "资源中心",
+        "en_US": "Resources",
+        "en": "Resources"
+      }
+    },
+    "id": "jetlinks-resource",
+    "url": "/resources",
+    "icon": "ApiOutlined",
+    "sortIndex": 10,
+    "permissions": [],
+    "buttons": [],
+    "children": [
+      {
+        "code": "resources/Dashboard",
+        "name": "仪表盘",
+        "owner": "iot",
+        "i18nMessages": {
+          "name": {
+            "zh_CN": "仪表盘",
+            "en_US": "Dashboard",
+            "en": "Dashboard"
+          }
+        },
+        "id": "resources-dashboard",
+        "url": "/resources/dashboard",
+        "icon": "DashboardOutlined",
+        "sortIndex": 0,
+        "meta": {
+          "componentCode": "resources/Dashboard"
+        },
+        "options": {
+          "componentCode": "resources/Dashboard",
+          "meta": {
+            "componentCode": "resources/Dashboard"
+          }
+        },
+        "permissions": [],
+        "buttons": [],
+        "showPage": ["menu"]
+      }
+    ]
+  },
+  {
     "code": "system",
     "name": "系统设置",
     "owner": "iot",
