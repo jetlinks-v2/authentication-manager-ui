@@ -10,7 +10,7 @@ export const HOME_TARGETS: Record<string, HomeTarget> = {
   algorithm: { menus: ['algorithm-center'] },
   coverage: { menus: ['algorithm-center'] },
   members: { menus: [] },
-  space: { menus: ['space/AreaManagementFloorplan'] },
+  space: { menus: ['space/AreaManagement'] },
   alarmRules: { menus: ['alarm-rules'] },
   search: { menus: [] },
   notifications: { menus: ['notice/channel'] },

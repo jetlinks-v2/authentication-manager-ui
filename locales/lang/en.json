@@ -1654,7 +1654,7 @@
   "packages.ProjectHome.action_createApplication": "Create application",
   "packages.ProjectHome.action_algorithm": "Configure algorithms",
   "packages.ProjectHome.action_members": "Members",
-  "packages.ProjectHome.action_space": "Spaces",
+  "packages.ProjectHome.action_space": "Space configuration",
   "packages.ProjectHome.action_alarmRules": "Alarm rules",
   "packages.ProjectHome.action_search": "Visual search",
   "packages.ProjectHome.action_notifications": "Notifications",
