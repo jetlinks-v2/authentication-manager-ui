@@ -1,103 +1,105 @@
 <template>
-  <DetailHeader
-    class="template-summary"
-    title=""
-    :show-back="true"
-    :back-title="$t('ApplicationTemplate.detail.back')"
-  >
-    <template #title>
-      <InputEditable
-        v-if="canUpdate"
-        :value="detail.name || detail.code || detail.id"
-        :max-length="64"
-        :disabled="!canUpdate || saving"
-        :text-style="titleStyle"
-        @change="$emit('update-name', $event)"
-      />
-      <span v-else class="template-summary__title">{{ detail.name || detail.code || detail.id }}</span>
-    </template>
-    <template #titleExtra>
-      <a-tag :color="state === 'enabled' ? 'green' : 'default'">
-        {{ state === 'enabled' ? $t('ApplicationTemplate.common.enabled') : $t('ApplicationTemplate.common.disabled') }}
-      </a-tag>
-    </template>
-    <template #info>
-      <div class="template-summary__info">
-        <button
-          v-if="canUpdate"
-          type="button"
-          class="template-summary__icon-button"
-          :title="$t('ApplicationTemplate.field.editIcon')"
-          @click="iconEditorOpen = true"
-        >
-          <AIconValueView
-            :value="detail.icon"
-            :size="44"
-            :border-radius="10"
-            :fallback-text="detail.name || detail.code || detail.id"
-          />
-        </button>
-        <AIconValueView
-          v-else
-          :value="detail.icon"
-          :size="44"
-          :border-radius="10"
-          :fallback-text="detail.name || detail.code || detail.id"
-        />
-        <div class="template-summary__meta">
+  <ContentPanel class="template-summary-content">
+	  <DetailHeader
+		  class="template-summary"
+		  title=""
+		  :show-back="true"
+		  :back-title="$t('ApplicationTemplate.detail.back')"
+	  >
+		  <template #title>
+			  <InputEditable
+				  v-if="canUpdate"
+				  :value="detail.name || detail.code || detail.id"
+				  :max-length="64"
+				  :disabled="!canUpdate || saving"
+				  :text-style="titleStyle"
+				  @change="$emit('update-name', $event)"
+			  />
+			  <span v-else class="template-summary__title">{{ detail.name || detail.code || detail.id }}</span>
+		  </template>
+		  <template #titleExtra>
+			  <a-tag :color="state === 'enabled' ? 'green' : 'default'">
+				  {{ state === 'enabled' ? $t('ApplicationTemplate.common.enabled') : $t('ApplicationTemplate.common.disabled') }}
+			  </a-tag>
+		  </template>
+		  <template #info>
+			  <div class="template-summary__info">
+				  <button
+					  v-if="canUpdate"
+					  type="button"
+					  class="template-summary__icon-button"
+					  :title="$t('ApplicationTemplate.field.editIcon')"
+					  @click="iconEditorOpen = true"
+				  >
+					  <AIconValueView
+						  :value="detail.icon"
+						  :size="44"
+						  :border-radius="10"
+						  :fallback-text="detail.name || detail.code || detail.id"
+					  />
+				  </button>
+				  <AIconValueView
+					  v-else
+					  :value="detail.icon"
+					  :size="44"
+					  :border-radius="10"
+					  :fallback-text="detail.name || detail.code || detail.id"
+				  />
+				  <div class="template-summary__meta">
           <span class="template-summary__meta-item template-summary__description-item">
             <strong>{{ $t('ApplicationTemplate.field.description') }}</strong>
             <span v-if="canUpdate" class="template-summary__editable-value">
               <InputEditable
-                :value="detail.description || ''"
-                :max-length="512"
-                :disabled="!canUpdate || saving"
-                :text-style="descriptionStyle"
-                @change="$emit('update-description', $event)"
+	              :value="detail.description || ''"
+	              :max-length="512"
+	              :disabled="!canUpdate || saving"
+	              :text-style="descriptionStyle"
+	              @change="$emit('update-description', $event)"
               />
             </span>
             <span v-else class="template-summary__value" :title="detail.description || '--'">
               {{ detail.description || '--' }}
             </span>
           </span>
-          <span class="template-summary__meta-item template-summary__url-item">
+					  <span class="template-summary__meta-item template-summary__url-item">
             <strong>{{ $t('ApplicationTemplate.field.templateUrl') }}</strong>
             <span v-if="canUpdate" class="template-summary__editable-value">
               <InputEditable
-                :value="detail.templateUrl || ''"
-                :max-length="64"
-                :disabled="!canUpdate || saving"
-                :text-style="descriptionStyle"
-                @change="$emit('update-template-url', $event)"
+	              :value="detail.templateUrl || ''"
+	              :max-length="64"
+	              :disabled="!canUpdate || saving"
+	              :text-style="descriptionStyle"
+	              @change="$emit('update-template-url', $event)"
               />
             </span>
             <span v-else class="template-summary__value" :title="detail.templateUrl || '--'">
               {{ detail.templateUrl || '--' }}
             </span>
           </span>
-          <span class="template-summary__meta-item">
+					  <span class="template-summary__meta-item">
             <strong>ID</strong>
             <span class="template-summary__value" :title="detail.id || '--'">{{ detail.id || '--' }}</span>
           </span>
-          <span class="template-summary__meta-item">
+					  <span class="template-summary__meta-item">
             <strong>{{ $t('ApplicationTemplate.field.code') }}</strong>
             <span class="template-summary__value" :title="detail.code || '--'">{{ detail.code || '--' }}</span>
           </span>
-        </div>
-      </div>
-    </template>
-    <template #actions>
-      <a-popconfirm
-        v-if="canUpdate"
-        :title="$t('ApplicationTemplate.message.confirmChangeStatus', [stateActionText])"
-        @confirm="$emit('toggle-state')"
-      >
-        <a-button :danger="state === 'enabled'" :loading="saving">
-          {{ stateActionText }}
-        </a-button>
-      </a-popconfirm>
-    </template>
-  </DetailHeader>
+				  </div>
+			  </div>
+		  </template>
+		  <template #actions>
+			  <a-popconfirm
+				  v-if="canUpdate"
+				  :title="$t('ApplicationTemplate.message.confirmChangeStatus', [stateActionText])"
+				  @confirm="$emit('toggle-state')"
+			  >
+				  <a-button :danger="state === 'enabled'" :loading="saving">
+					  {{ stateActionText }}
+				  </a-button>
+			  </a-popconfirm>
+		  </template>
+	  </DetailHeader>
+  </ContentPanel>
 
   <a-modal
     v-model:open="iconEditorOpen"
@@ -161,6 +163,9 @@ const saveIcon = () => {
 </script>
 
 <style scoped>
+.template-summary-content {
+	margin-bottom: var(--space-4);
+}
 .template-summary.cloud-detail-header {
   width: 100%;
   margin-bottom: 0;

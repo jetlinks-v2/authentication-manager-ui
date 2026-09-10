@@ -1,5 +1,5 @@
 <template>
-  <section class="application-summary">
+  <ContentPanel class="application-summary">
     <div class="summary-back">
       <a-tooltip :title="$t('ProjectApplication.list.title')">
         <a-button
@@ -70,7 +70,7 @@
         {{ $t('ProjectApplication.detail.open') }}
       </a-button>
     </div>
-  </section>
+  </ContentPanel>
 </template>
 
 <script setup lang="ts" name="ProjectApplicationSummary">
@@ -143,9 +143,7 @@ const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(ico
   grid-template-columns: auto auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--line);
-  border-radius: var(--r-3);
+	margin-bottom: var(--space-4);
 }
 
 .summary-back {

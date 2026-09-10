@@ -24,7 +24,7 @@
         </template>
       </PageHeader>
 
-      <full-page hasPadding>
+      <full-page transparentBackground hasPadding>
         <a-spin :spinning="loading">
           <CloudEmpty v-if="loadFailed" type="page" :description="$t('ProjectApplication.list.loadFailed')">
             <a-button :loading="loading" @click="refresh">{{ $t('ProjectApplication.list.retry') }}</a-button>

@@ -7,9 +7,7 @@
                  right-width="1fr"
              >
                  <template #left>
-                  <ContentPanel>
                     <Left @select-data="selectData"/>
-                  </ContentPanel>
                  </template>
                  <template #right>
                    <Right :groupId="groupId"/>

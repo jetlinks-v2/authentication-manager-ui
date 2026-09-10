@@ -1,5 +1,5 @@
 <template>
-	<div class="left-contain">
+	<ContentPanel class="left-contain">
 		<a-input v-model:value="searchValue" :placeholder="$t('RoleLeft.index.507330-0')" @change="searchChange" @pressEnter="search">
 			<template #suffix>
 				<AIcon type="SearchOutlined" @click="search"/>
@@ -59,7 +59,7 @@
 			</a-tree>
 			<CloudEmpty v-else style="margin-top: 6.25rem;"/>
 		</div>
-	</div>
+	</ContentPanel>
 </template>
 
 <script lang="ts" name="RoleLeft" setup>
