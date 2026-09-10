@@ -12,6 +12,10 @@
 
 接入现有菜单 `resources/Dashboard`、路径 `/resources/dashboard`。页面位于 `views/resources/Dashboard/index.vue`，由模块已有 `getModuleRoutesMap` 自动发现，不增加兼容路由或修改已下发菜单。页面交互沿用概览：`editable=false`、`previewMode=false`，使用默认布局和真实数据，不显示画布设置、组件编辑、拖拽或配置入口。保留组件自身的时间/类型筛选、重试和快捷跳转，继续遵守 SaaS/私有化可见规则。外层页面负责滚动，画布不增加内层滚动条。
 
+快速开始仅复用目标页已有新增弹层，没有弹层时只跳转，不为快捷入口新增按钮或弹窗。边缘节点、物联设备进入统一设备列表对应分类，并以一次性 `action=create` 打开已有新增弹层；大屏进入可视化作品列表并打开已有创建弹窗，默认选择“大屏”。目标页消费动作后移除参数，避免刷新时重复打开。视频设备仅携带 `type=video` 进入视频分类，不携带创建动作；私有化采集器/物联网卡入口保持原有跳转。
+
+入口配置位于 `visDashboard/ResourceCenter/hooks/useQuickStart.ts`；目标页动作分别由 `device-manager-ui/views/device/list/unified/useUnifiedDeviceActions.ts` 和 `visualization-manager-ui/views/project/hooks/useVizScreenBoard.ts` 承接，展示组件只传递菜单编码。整理后 Chrome 复验四个入口通过：三项已有弹层正常打开、关闭并清理动作参数，视频仅跳转且无新增按钮或弹窗，控制台 error 为 0。未执行编译或代码自动化测试；未提交真实创建数据，保存流程及私有化环境未覆盖。
+
 SaaS 布局将设备分布置于快速开始下方（x=0、y=13、w=6、h=16），设备上报消息趋势置于右侧（x=6、y=5、w=6、h=24），互换原位置和尺寸。仅调整 `useResourceDashboard.ts` 的 SaaS 默认布局，私有化布局保持原样。正式页面实测分布卡位于左下、尺寸 804×520，趋势卡位于右侧、尺寸 804×784，底边齐平；TypeScript 语法检查和 diff 空白检查通过，本次未重复运行完整类型检查或构建。
 
 接入验证：浏览器直接访问并刷新 `/resources/dashboard`、从概览点击顶部资源中心菜单均正常进入，无临时注入容器。当前 SaaS 环境正式渲染 7 个组件，私有化专属的采集与物联网卡不实例化；配置/添加/看板设置入口和拖动手柄数量均为 0，类型与时间切换正常。画布两层容器 overflowY 均为 visible，由页面外层滚动。新增页面 53 行，SFC 脚本/模板/样式编译通过；以模块 tsconfig 为基础、仅 include 此页面与 core env/auto-imports 的定向 `vue-tsc --noEmit` 通过（0 条诊断）。本次页面装配不执行全项目 build/lint。
