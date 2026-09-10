@@ -46,7 +46,7 @@
     "id": "jetlinks-resource",
     "url": "/resources",
     "icon": "icon-ziyuanzhongxin",
-    "sortIndex": 10,
+    "sortIndex": 2,
     "permissions": [],
     "buttons": [],
     "children": [
@@ -94,7 +94,7 @@
     "id": "fd1670b860ae58cc58bcd01d027ccd35",
     "url": "/system",
     "icon": "icon-xitongshezhi",
-    "sortIndex": 100,
+    "sortIndex": 8,
     "permissions": [],
     "buttons": [],
     "children": [
@@ -1885,7 +1885,7 @@
         "url": "/infrastructure",
         "icon": "icon-yunweizhongxin",
         "permissions": [],
-        "sortIndex": 4,
+        "sortIndex": 6,
         "children": [
           {
             "code": "system/Log",
@@ -2099,7 +2099,7 @@
     "id": "4984e88a42a44b22896c058742d0782d",
     "url": "/open",
     "icon": "icon-kaifangjicheng",
-    "sortIndex": 90,
+    "sortIndex": 7,
     "permissions": [],
     "buttons": [],
     "children": [
