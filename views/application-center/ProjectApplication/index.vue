@@ -1,31 +1,25 @@
 <template>
   <j-page-container>
     <div class="project-application-page">
-      <PageHeader
-        class="project-application-header"
-        :title="$t('ProjectApplication.list.title')"
-        :description="$t('ProjectApplication.list.description')"
-      >
-        <template #actions>
-          <ConditionFilter
-            class="page-filters"
-            :fields="filterFields"
-            @change="handleSearch"
-          />
-
-          <a-button
-            class="create-application-button"
-            type="primary"
-            @click="createOpen = true"
-          >
-            <template #icon><AIcon type="PlusOutlined" /></template>
-            {{ $t('ProjectApplication.list.create') }}
-          </a-button>
-        </template>
-      </PageHeader>
-
       <full-page hasPadding>
         <a-spin :spinning="loading">
+          <div style="margin-bottom: var(--space-4);">
+            <a-flex :gap="16">
+              <ConditionFilter
+                  :fields="filterFields"
+                  @change="handleSearch"
+              />
+
+              <a-button
+                  class="create-application-button"
+                  type="primary"
+                  @click="createOpen = true"
+              >
+                <template #icon><AIcon type="PlusOutlined" /></template>
+                {{ $t('ProjectApplication.list.create') }}
+              </a-button>
+            </a-flex>
+          </div>
           <CloudEmpty v-if="loadFailed" type="page" :description="$t('ProjectApplication.list.loadFailed')">
             <a-button :loading="loading" @click="refresh">{{ $t('ProjectApplication.list.retry') }}</a-button>
           </CloudEmpty>
