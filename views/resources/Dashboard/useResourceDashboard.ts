@@ -1,4 +1,4 @@
-import { computed, type Ref } from 'vue'
+import { computed, ref, type Ref } from 'vue'
 import { isSaaS } from '@jetlinks-web-core/utils/consts'
 import { dashboardSources } from '@jetlinks-web-core/components/DashBoardCanvas/dashboard-sources'
 import { useDashboardCatalog } from '@jetlinks-web-core/components/DashBoardCanvas/discovery'
@@ -9,17 +9,23 @@ const thumbnails = import.meta.glob('../../../visDashboard/ResourceCenter/*/thum
 const base = [
   ['EdgeNodes',0,0,3,4],['IotDevices',3,0,3,4],['VideoDevices',6,0,3,4],['Visualization',9,0,3,4],
 ] as const
-// 私有化使用24列，精确表达下方两张图表各占3/8、右侧物联卡占1/4的原型比例。
+// 私有化使用24列布局：顶部四卡各6列；快速开始(左12列)两排操作，数据采集(中6列)垂直堆叠，物联网卡(右6列)贯穿右侧；下方算法覆盖与视频播放各9列，设备分布与消息趋势各9列。
 const privateLayout = [
-  ['EdgeNodes',0,0,6,4],['IotDevices',6,0,6,4],['VideoDevices',12,0,6,4],['Visualization',18,0,6,4],
-  ['QuickStart',0,4,12,7],['Collection',12,4,6,7],['NetworkCards',18,4,6,22],
-  ['MessageTrend',0,11,9,15],['DeviceDistribution',9,11,9,15],
+  ['EdgeNodes', 0, 0, 6, 4], ['IotDevices', 6, 0, 6, 4], ['VideoDevices', 12, 0, 6, 4], ['Visualization', 18, 0, 6, 4],
+  ['QuickStart', 0, 4, 12, 7], ['Collection', 12, 4, 6, 7], ['NetworkCards', 18, 4, 6, 25],
+  ['AlgorithmCoverage', 0, 11, 9, 9], ['VideoPlaybackTrend', 9, 11, 9, 9],
+  ['DeviceDistribution', 0, 20, 9, 9], ['MessageTrend', 9, 20, 9, 9],
 ] as const
-// SaaS 分布卡置于快捷操作下方，趋势图使用右侧完整高度。
-const saasLayout = [...base,['QuickStart',0,4,6,6],['DeviceDistribution',0,10,6,14],['MessageTrend',6,4,6,20]] as const
+// SaaS 使用12列双栏布局：左栏(6列)快速开始/算法覆盖/设备分布，右栏(6列)消息趋势/视频播放趋势。
+const saasLayout = [
+  ...base,
+  ['QuickStart', 0, 4, 6, 7], ['MessageTrend', 6, 4, 6, 7],
+  ['AlgorithmCoverage', 0, 11, 6, 9], ['VideoPlaybackTrend', 6, 11, 6, 18],
+  ['DeviceDistribution', 0, 20, 6, 9],
+] as const
 
 /** 资源中心页面的组件发现范围与默认布局。 */
-export function useResourceDashboard(preview: Ref<boolean>) {
+export function useResourceDashboard(preview: Ref<boolean> = ref(false)) {
   const allowed = computed(() => kinds.filter(kind => preview.value || !isSaaS || !['Collection','NetworkCards'].includes(kind)))
   const discovery = useDashboardCatalog(dashboardSources,computed(() => ({
     modules: ['authentication-manager-ui'],directories: ['visDashboard'],

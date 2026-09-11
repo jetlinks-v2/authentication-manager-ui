@@ -18,4 +18,15 @@ export const countOf = (response: unknown): number => {
   if (!Number.isFinite(count) || count < 0) throw new Error('Invalid count')
   return count
 }
+export const channelCountOf = (response: unknown): number => {
+  const result = resultOf(response)
+  const source = recordOf(result)
+  const value = 'channelCount' in source
+    ? source.channelCount
+    : ('total' in source ? source.total : result)
+  if (value === null || value === undefined || value === '') throw new Error('Missing channel count')
+  const count = Number(value)
+  if (!Number.isFinite(count) || count < 0) throw new Error('Invalid channel count')
+  return count
+}
 export const textOf = (value: unknown): string => typeof value === 'string' || typeof value === 'number' ? String(value) : ''

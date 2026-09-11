@@ -4,7 +4,7 @@
       <a-form layout="vertical">
         <a-form-item :label="t('resourceDashboard.title')"><a-input :value="config.title" :maxlength="60" :placeholder="t(`resourceDashboard.${kind}`)" @update:value="update('title',$event)" /></a-form-item>
         <a-form-item v-if="kind === 'DeviceDistribution'" :label="t('resourceDashboard.defaultDevice')"><a-select :value="config.deviceType" :options="deviceOptions" @update:value="update('deviceType',$event)" /></a-form-item>
-        <a-form-item v-if="kind === 'MessageTrend'" :label="t('resourceDashboard.defaultRange')"><a-select :value="config.timeRange" :options="timeOptions" @update:value="update('timeRange',$event)" /></a-form-item>
+        <a-form-item v-if="['MessageTrend', 'VideoPlaybackTrend'].includes(kind)" :label="t('resourceDashboard.defaultRange')"><a-select :value="config.timeRange" :options="timeOptions" @update:value="update('timeRange',$event)" /></a-form-item>
       </a-form>
     </a-collapse-panel>
     <a-collapse-panel v-if="kind !== 'QuickStart'" key="more" :header="t('resourceDashboard.moreConfig')">

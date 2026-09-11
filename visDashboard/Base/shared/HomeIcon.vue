@@ -36,6 +36,6 @@ const icons: Record<string, { component: Component; color: string }> = {
 const icon = computed(() => icons[props.name] || icons.applications)
 </script>
 <style scoped>
-.home-icon { width: 18px; height: 18px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; }
+.home-icon { width: 18px; height: 18px; flex: 0 0 18px; max-width: 18px; display: inline-flex; align-items: center; justify-content: center; }
 .home-icon :deep(svg) { width: 100%; height: 100%; }
 </style>

@@ -18,5 +18,5 @@ export const RESOURCE_ROWS: HomeRow[] = [
   { id: 'scene', group: 'intelligence', subgroup: 'rules', value: 14 },
 ]
 // 私有化能力在资源入口统一筛选，SaaS 不展示该分组，也不触发对应统计。
-.filter(row => !isSaaS || row.subgroup !== 'collection')
+.filter(row => !isSaaS || (row.subgroup !== 'collection' && row.id !== 'agent'))
 .map(row => ({ ...row, labelKey: row.id, target: HOME_TARGETS[row.id], icon: row.id }))

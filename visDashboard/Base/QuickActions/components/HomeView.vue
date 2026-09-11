@@ -1,7 +1,15 @@
 <template>
   <div class="home-content home-actions" :class="{ 'home-actions--grid': chart.displayStyle === 'grid' }">
-    <button v-for="row in rows" :key="row.id" class="home-action" :disabled="!canOpen(row.target)" :title="actionHint(row)" @click="$emit('navigate', row.target)">
-      <HomeIcon v-if="chart.showIcon" :name="row.id === 'video' ? 'addVideo' : row.icon" neutral/><span>{{ label(row) }}</span>
+    <button
+      v-for="row in rows"
+      :key="row.id"
+      class="home-action"
+      :disabled="!canOpen(row.target)"
+      :title="actionHint(row)"
+      @click="$emit('navigate', row.target)"
+    >
+      <HomeIcon v-if="chart.showIcon" :name="row.id === 'video' ? 'addVideo' : row.icon" neutral />
+      <span class="home-action-label">{{ label(row) }}</span>
     </button>
   </div>
 </template>

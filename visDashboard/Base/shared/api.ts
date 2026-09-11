@@ -1,7 +1,9 @@
 import {
   queryBusinessApplications,
   queryBusinessApplicationTemplates,
+  type BusinessApplicationEntity,
 } from '@authentication-manager-ui/api/application-center/businessApplication'
+import { normalizeApplication } from '../../../views/application-center/ProjectApplication/applicationModel'
 import { rowsOf, textOf } from './apiResult'
 import { loadAnnouncements } from './apiAnnouncements'
 import { loadResourceRows, loadOperationRows } from './apiResources'
@@ -16,12 +18,17 @@ const loadApplications = async (): Promise<HomeRow[]> => {
     textOf(template.id),
     textOf(template.description),
   ]))
-  return rowsOf(applicationResponse).map(row => ({
-    id: textOf(row.id), label: textOf(row.name),
-    description: textOf(row.description) || templateDescriptions.get(textOf(row.templateId)) || '',
-    icon: 'applications',
-    target: { menus: ['application-center/ProjectApplication/Detail'], params: { id: textOf(row.id) } },
-  }))
+  return rowsOf(applicationResponse).map(row => {
+    const application = normalizeApplication(row as BusinessApplicationEntity)
+    return {
+      id: textOf(row.id),
+      label: textOf(row.name),
+      description: textOf(row.description) || templateDescriptions.get(textOf(row.templateId)) || '',
+      icon: 'applications',
+      application,
+      target: { menus: ['application-center/ProjectApplication'] },
+    }
+  })
 }
 export const loadHomeRows = (feature: HomeFeature): Promise<HomeRow[]> => {
   switch (feature) {
