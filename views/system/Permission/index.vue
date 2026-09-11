@@ -1,131 +1,133 @@
 <template>
   <j-page-container>
-    <FullPage hasPadding>
-      <j-pro-table
-          ref="tableRef"
-          class="pro-table__no-padding"
-          :columns="columns"
-          :request="getPermission_api"
-          mode="TABLE"
-          :params="params"
-          :scroll="{ y: 'calc(100% - 3.75rem)' }"
-          :defaultParams="{
-          sorts: [{ name: 'id', order: 'asc' }],
-        }"
-      >
-        <template #headerLeftRender>
-            <a-flex gap="small">
-                <ConditionFilter
-                    class="authentication-system-list-page__filter"
-                    :columns="columns"
-                    target="system-permission"
-                    @change="({filter}) => handleSearch(filter)"
-                />
-                <j-permission-button
-                    class="authentication-system-list-page__primary-action"
-                    type="primary"
-                    :hasPermission="`${permission}:add`"
-                    @click="openDialog()"
-                >
-                    <AIcon type="PlusOutlined"/>
-                    {{ $t('Permission.index.473829-0') }}
-                </j-permission-button>
-              <a-dropdown trigger="hover">
-                <a-button>{{ $t('Permission.index.473829-1') }}</a-button>
-                <template #overlay>
-                  <a-menu>
-                    <a-menu-item>
-                      <a-upload
-                          v-show="false"
-                          name="file"
-                          action="#"
-                          accept=".json"
-                          :showUploadList="false"
-                          :before-upload="clickImport"
-                          :disabled="!hasPerm"
-                      >
-                        <button ref="uploadRef"></button>
-                      </a-upload>
-                      <j-permission-button style="width: 100%" :hasPermission="`${permission}:import`" @click="triggerUpload">
-                        {{ $t('Permission.index.473829-2') }}
-                      </j-permission-button>
-                    </a-menu-item>
-                    <a-menu-item>
-                      <j-permission-button
-                          style="width: 100%"
-                          :hasPermission="`${permission}:export`"
-                          :popConfirm="{
-                            title: $t('Permission.index.473829-3'),
-                            onConfirm: () => clickExport(),
-                          }"
-                      >
-                        {{ $t('Permission.index.473829-4') }}
-                      </j-permission-button>
-                    </a-menu-item>
-                  </a-menu>
-                </template>
-              </a-dropdown>
-            </a-flex>
-        </template>
-        <template #status="slotProps">
-          <j-badge-status
-              :status="slotProps.status"
-              :text="slotProps.status ? $t('Permission.index.473829-5') : $t('Permission.index.473829-6')"
-              :statusNames="{
-              1: 'success',
-              0: 'error',
-            }"
-          ></j-badge-status>
-        </template>
-        <template #action="slotProps">
-          <a-space :size="16">
-            <j-permission-button
-                :hasPermission="`${permission}:update`"
-                type="link"
-                :tooltip="{
-                title: $t('Permission.index.473829-7'),
+    <FullPage hasPadding transparentBackground>
+      <ContentPanel>
+        <j-pro-table
+            ref="tableRef"
+            class="pro-table__no-padding"
+            :columns="columns"
+            :request="getPermission_api"
+            mode="TABLE"
+            :params="params"
+            :scroll="{ y: 'calc(100% - 3.75rem)' }"
+            :defaultParams="{
+            sorts: [{ name: 'id', order: 'asc' }],
+          }"
+        >
+          <template #headerLeftRender>
+              <a-flex gap="small">
+                  <ConditionFilter
+                      class="authentication-system-list-page__filter"
+                      :columns="columns"
+                      target="system-permission"
+                      @change="({filter}) => handleSearch(filter)"
+                  />
+                  <j-permission-button
+                      class="authentication-system-list-page__primary-action"
+                      type="primary"
+                      :hasPermission="`${permission}:add`"
+                      @click="openDialog()"
+                  >
+                      <AIcon type="PlusOutlined"/>
+                      {{ $t('Permission.index.473829-0') }}
+                  </j-permission-button>
+                <a-dropdown trigger="hover">
+                  <a-button>{{ $t('Permission.index.473829-1') }}</a-button>
+                  <template #overlay>
+                    <a-menu>
+                      <a-menu-item>
+                        <a-upload
+                            v-show="false"
+                            name="file"
+                            action="#"
+                            accept=".json"
+                            :showUploadList="false"
+                            :before-upload="clickImport"
+                            :disabled="!hasPerm"
+                        >
+                          <button ref="uploadRef"></button>
+                        </a-upload>
+                        <j-permission-button style="width: 100%" :hasPermission="`${permission}:import`" @click="triggerUpload">
+                          {{ $t('Permission.index.473829-2') }}
+                        </j-permission-button>
+                      </a-menu-item>
+                      <a-menu-item>
+                        <j-permission-button
+                            style="width: 100%"
+                            :hasPermission="`${permission}:export`"
+                            :popConfirm="{
+                              title: $t('Permission.index.473829-3'),
+                              onConfirm: () => clickExport(),
+                            }"
+                        >
+                          {{ $t('Permission.index.473829-4') }}
+                        </j-permission-button>
+                      </a-menu-item>
+                    </a-menu>
+                  </template>
+                </a-dropdown>
+              </a-flex>
+          </template>
+          <template #status="slotProps">
+            <j-badge-status
+                :status="slotProps.status"
+                :text="slotProps.status ? $t('Permission.index.473829-5') : $t('Permission.index.473829-6')"
+                :statusNames="{
+                1: 'success',
+                0: 'error',
               }"
-                style="padding: 0"
-                @click="openDialog(slotProps)"
-            >
-              <AIcon type="EditOutlined"/>
-            </j-permission-button>
+            ></j-badge-status>
+          </template>
+          <template #action="slotProps">
+            <a-space :size="16">
+              <j-permission-button
+                  :hasPermission="`${permission}:update`"
+                  type="link"
+                  :tooltip="{
+                  title: $t('Permission.index.473829-7'),
+                }"
+                  style="padding: 0"
+                  @click="openDialog(slotProps)"
+              >
+                <AIcon type="EditOutlined"/>
+              </j-permission-button>
 
-            <j-permission-button
-                :hasPermission="`${permission}:action`"
-                type="link"
-                :popConfirm="{
-                title: $t('User.index.673867-5', [slotProps.status ? $t('User.index.673867-2') : $t('User.index.673867-4')]),
-                onConfirm: () => changeStatus(slotProps),
-              }"
-                style="padding: 0"
-                :tooltip="{
-                title: slotProps.status ? $t('Permission.index.473829-6') : $t('Permission.index.473829-5'),
-              }"
-            >
-              <AIcon
-                  :type="slotProps.status ? 'StopOutlined' : 'PlayCircleOutlined'"
-              />
-            </j-permission-button>
-            <j-permission-button
-                :hasPermission="`${permission}:delete`"
-                type="link"
-                :tooltip="{
-                title: !!slotProps.status ? $t('Permission.index.473829-9') : $t('Permission.index.473829-10'),
-              }"
-                danger
-                :popConfirm="{
-                title: $t('Permission.index.473829-11'),
-                onConfirm: () => clickDel(slotProps),
-              }"
-                style="padding: 0"
-                :disabled="!!slotProps.status"
-            >
-              <AIcon type="DeleteOutlined"/>
-            </j-permission-button>
-          </a-space>
-        </template>
-      </j-pro-table>
+              <j-permission-button
+                  :hasPermission="`${permission}:action`"
+                  type="link"
+                  :popConfirm="{
+                  title: $t('User.index.673867-5', [slotProps.status ? $t('User.index.673867-2') : $t('User.index.673867-4')]),
+                  onConfirm: () => changeStatus(slotProps),
+                }"
+                  style="padding: 0"
+                  :tooltip="{
+                  title: slotProps.status ? $t('Permission.index.473829-6') : $t('Permission.index.473829-5'),
+                }"
+              >
+                <AIcon
+                    :type="slotProps.status ? 'StopOutlined' : 'PlayCircleOutlined'"
+                />
+              </j-permission-button>
+              <j-permission-button
+                  :hasPermission="`${permission}:delete`"
+                  type="link"
+                  :tooltip="{
+                  title: !!slotProps.status ? $t('Permission.index.473829-9') : $t('Permission.index.473829-10'),
+                }"
+                  danger
+                  :popConfirm="{
+                  title: $t('Permission.index.473829-11'),
+                  onConfirm: () => clickDel(slotProps),
+                }"
+                  style="padding: 0"
+                  :disabled="!!slotProps.status"
+              >
+                <AIcon type="DeleteOutlined"/>
+              </j-permission-button>
+            </a-space>
+          </template>
+        </j-pro-table>
+      </ContentPanel>
     </FullPage>
     <!-- 编辑和新增 -->
     <EditDialog v-if="visible" :data="current" @close="visible = false" @save="onSave"/>

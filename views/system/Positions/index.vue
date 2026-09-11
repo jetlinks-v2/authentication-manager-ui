@@ -70,81 +70,85 @@ const onSearch = ({filter}) => {
 
 <template>
   <j-page-container>
-    <PageHeader class="authentication-system-list-page__header" :title="$t('SystemList.positions')">
-      <template #actions>
-        <ConditionFilter
-          class="authentication-system-list-page__filter"
-          :columns="columns"
-          target="system-position"
-          @change="onSearch"
-        />
-        <j-permission-button
-          class="authentication-system-list-page__primary-action"
-          :hasPermission="`${permission}:add`"
-          type="primary"
-          @click="onAdd"
-        >
-          <AIcon type="PlusOutlined" />{{ $t('User.index.673867-0') }}
-        </j-permission-button>
-      </template>
-    </PageHeader>
-    <full-page>
-      <j-pro-table
-        ref="tableRef"
-        mode="TABLE"
-        :request="queryPage"
-        :params="params"
-        :columns="columns"
-        :defaultParams="{
-            sorts: [
-                { name: 'createTime', order: 'desc' },
-            ],
-        }"
-        :scroll="{ y: 'calc(100% - 3.75rem)' }"
-      >
-        <template #roles="record">
-          <j-ellipsis>
-            {{ record.roles?.map(item => item.name).join(',') || '' }}
-          </j-ellipsis>
-        </template>
-        <template #parentId="record">
-          <j-ellipsis>
-            {{ record.parentName || '--' }}
-          </j-ellipsis>
-        </template>
-        <template #orgId="record">
-          <j-ellipsis>{{ record.orgName || record.orgId }}</j-ellipsis>
-        </template>
-        <template #action="slotProps">
-          <a-space>
+    <FullPage transparentBackground>
+      <ContentPanel>
+        <PageHeader class="authentication-system-list-page__header" :title="$t('SystemList.positions')">
+          <template #actions>
+            <ConditionFilter
+              class="authentication-system-list-page__filter"
+              :columns="columns"
+              target="system-position"
+              @change="onSearch"
+            />
             <j-permission-button
-              type="link"
-              :hasPermission="`${permission}:update`"
-              :tooltip="{ title: $t('User.index.673867-3') }"
-              @click="onEdit(slotProps)"
+              class="authentication-system-list-page__primary-action"
+              :hasPermission="`${permission}:add`"
+              type="primary"
+              @click="onAdd"
             >
-              <template #icon>
-                <AIcon type="EditOutlined" />
-              </template>
+              <AIcon type="PlusOutlined" />{{ $t('User.index.673867-0') }}
             </j-permission-button>
-            <j-permission-button
-              type="link"
-              danger
-              :hasPermission="`${permission}:delete`"
-              :tooltip="{ title: $t('User.index.673867-8') }"
-              :popConfirm="{
-                title: $t('User.index.673867-9'),
-                onConfirm: () => onDelete(slotProps.id),
-              }"
-            >
-              <template #icon>
-                <AIcon type="DeleteOutlined" />
-              </template>
-            </j-permission-button>
-          </a-space>
-        </template>
-      </j-pro-table>
-    </full-page>
+          </template>
+        </PageHeader>
+        <full-page>
+          <j-pro-table
+            ref="tableRef"
+            mode="TABLE"
+            :request="queryPage"
+            :params="params"
+            :columns="columns"
+            :defaultParams="{
+                sorts: [
+                    { name: 'createTime', order: 'desc' },
+                ],
+            }"
+            :scroll="{ y: 'calc(100% - 3.75rem)' }"
+          >
+            <template #roles="record">
+              <j-ellipsis>
+                {{ record.roles?.map(item => item.name).join(',') || '' }}
+              </j-ellipsis>
+            </template>
+            <template #parentId="record">
+              <j-ellipsis>
+                {{ record.parentName || '--' }}
+              </j-ellipsis>
+            </template>
+            <template #orgId="record">
+              <j-ellipsis>{{ record.orgName || record.orgId }}</j-ellipsis>
+            </template>
+            <template #action="slotProps">
+              <a-space>
+                <j-permission-button
+                  type="link"
+                  :hasPermission="`${permission}:update`"
+                  :tooltip="{ title: $t('User.index.673867-3') }"
+                  @click="onEdit(slotProps)"
+                >
+                  <template #icon>
+                    <AIcon type="EditOutlined" />
+                  </template>
+                </j-permission-button>
+                <j-permission-button
+                  type="link"
+                  danger
+                  :hasPermission="`${permission}:delete`"
+                  :tooltip="{ title: $t('User.index.673867-8') }"
+                  :popConfirm="{
+                    title: $t('User.index.673867-9'),
+                    onConfirm: () => onDelete(slotProps.id),
+                  }"
+                >
+                  <template #icon>
+                    <AIcon type="DeleteOutlined" />
+                  </template>
+                </j-permission-button>
+              </a-space>
+            </template>
+          </j-pro-table>
+        </full-page>
+      </ContentPanel>
+    </FullPage>
   </j-page-container>
 </template>
 

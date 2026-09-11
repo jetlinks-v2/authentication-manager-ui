@@ -1,46 +1,46 @@
 <template>
   <j-page-container>
     <FullPage transparentBackground>
-      <EqualHeightColumns
-        class="department-container"
-        left-width="18.75rem"
-        right-width="1fr"
-      >
-        <template #left>
-          <LeftTree @change="onChange" />
-        </template>
-        <template #right>
-          <ContentPanel>
-            <a-tabs
-              v-if="isNoCommunity"
-              v-model:activeKey="activeKey"
-              destroyInactiveTabPane
-            >
-              <a-tab-pane
-                v-for="tab in departmentTabs"
-                :key="tab.key"
-                :tab="$t(tab.label)"
-              >
-                <Position
-                  v-if="tab.key === 'position'"
-                  :parentId="departmentId"
-                  @changeTabs="onChangeTabs"
-                />
-                <User
-                  v-else-if="tab.key === 'user'"
-                  :parentId="departmentId"
-                  :positionId="positionId"
-                />
-                <Property
-                  v-else-if="tab.key === 'property'"
-                  :department-id="departmentId"
-                />
-              </a-tab-pane>
-            </a-tabs>
-            <User v-else :parentId="departmentId" />
-          </ContentPanel>
-        </template>
-      </EqualHeightColumns>
+      <ContentPanel>
+	      <EqualHeightColumns
+		      class="department-container"
+		      left-width="18.75rem"
+		      right-width="1fr"
+	      >
+		      <template #left>
+			      <LeftTree @change="onChange" />
+		      </template>
+		      <template #right>
+			      <a-tabs
+				      v-if="isNoCommunity"
+				      v-model:activeKey="activeKey"
+				      destroyInactiveTabPane
+			      >
+				      <a-tab-pane
+					      v-for="tab in departmentTabs"
+					      :key="tab.key"
+					      :tab="$t(tab.label)"
+				      >
+					      <Position
+						      v-if="tab.key === 'position'"
+						      :parentId="departmentId"
+						      @changeTabs="onChangeTabs"
+					      />
+					      <User
+						      v-else-if="tab.key === 'user'"
+						      :parentId="departmentId"
+						      :positionId="positionId"
+					      />
+					      <Property
+						      v-else-if="tab.key === 'property'"
+						      :department-id="departmentId"
+					      />
+				      </a-tab-pane>
+			      </a-tabs>
+			      <User v-else :parentId="departmentId" />
+		      </template>
+	      </EqualHeightColumns>
+      </ContentPanel>
     </FullPage>
   </j-page-container>
 </template>

@@ -1,7 +1,8 @@
 <template>
   <j-page-container>
-    <div class="apply-container">
-      <FullPage hasPadding>
+    <FullPage hasPadding transparentBackground>
+      <ContentPanel>
+        <div class="apply-container">
         <ConditionFilter
           :columns="columns"
           target="system-apply"
@@ -198,8 +199,10 @@
             </a-space>
           </template>
         </j-pro-table>
-      </FullPage>
-    </div>
+	       
+        </div>
+      </ContentPanel>
+    </FullPage>
     <div class="dialogs">
       <OfficialAccountMenuDrawer
           v-model:visible="officialAccountMenuDrawerVisible"

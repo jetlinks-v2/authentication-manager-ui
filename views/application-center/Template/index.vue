@@ -1,75 +1,79 @@
 <template>
   <j-page-container>
-    <div class="application-template-page">
-      <div class="application-template-page__body">
-        <FullPage class="application-template-page__content">
-          <ApplicationTemplateSearch
-            class="application-template-page__search"
-            :model-value="searchModel"
-            :state-options="stateOptions"
-            @search="table.search"
-            @reset="table.resetSearch"
-          />
-
-          <a-spin :spinning="tableLoading" class="application-template-page__table-spin">
-            <j-pro-table
-              ref="tableRef"
-              :columns="columns"
-              :request="requestTable"
-              mode="TABLE"
-              :params="tableParams"
-              :defaultParams="defaultParams"
-              :scroll="{ y: 'calc(100% - 3.75rem)' }"
-            >
-              <template #headerLeftRender>
-                <j-permission-button
-                  :hasPermission="`${permission}:add`"
-                  type="primary"
-                  @click="table.openCreateDialog()"
-                >
-                  <AIcon type="PlusOutlined" />
-                  {{ $t('ApplicationTemplate.list.add') }}
-                </j-permission-button>
-              </template>
-
-              <template #name="slotProps">
-                <a class="application-template-page__link" @click="table.viewDetail(slotProps)">
-                  {{ slotProps.name || '--' }}
-                </a>
-              </template>
-
-              <template #state="slotProps">
-                <a-switch
-                  :checked="slotProps._switchChecked ?? normalizeState(slotProps.state) === 'enabled'"
-                  :loading="slotProps._statusLoading"
-                  @change="checked => table.changeStatus(slotProps, checked === true)"
-                />
-              </template>
-
-              <template #action="slotProps">
-                <a-space>
-                  <j-permission-button
-                    :hasPermission="`${permission}:update`"
-                    type="link"
-                    @click="table.viewDetail(slotProps)"
-                  >
-                    {{ $t('ApplicationTemplate.common.edit') }}
-                  </j-permission-button>
-                  <j-permission-button
-                    :hasPermission="`${permission}:delete`"
-                    type="link"
-                    danger
-                    @click="table.clickDel(slotProps.id)"
-                  >
-                    {{ $t('ApplicationTemplate.common.delete') }}
-                  </j-permission-button>
-                </a-space>
-              </template>
-            </j-pro-table>
-          </a-spin>
-        </FullPage>
-      </div>
-    </div>
+    <FullPage class="application-template-page__content" transparentBackground>
+      <ContentPanel>
+        <div class="application-template-page">
+          <div class="application-template-page__body">
+		        <ApplicationTemplateSearch
+		          class="application-template-page__search"
+		          :model-value="searchModel"
+		          :state-options="stateOptions"
+		          @search="table.search"
+		          @reset="table.resetSearch"
+		        />
+		
+		        <a-spin :spinning="tableLoading" class="application-template-page__table-spin">
+		          <j-pro-table
+		            ref="tableRef"
+		            :columns="columns"
+		            :request="requestTable"
+		            mode="TABLE"
+		            :params="tableParams"
+		            :defaultParams="defaultParams"
+		            class="pro-table__no-padding"
+		            :scroll="{ y: 'calc(100% - 3.75rem)' }"
+		          >
+		            <template #headerLeftRender>
+		              <j-permission-button
+		                :hasPermission="`${permission}:add`"
+		                type="primary"
+		                @click="table.openCreateDialog()"
+		              >
+		                <AIcon type="PlusOutlined" />
+		                {{ $t('ApplicationTemplate.list.add') }}
+		              </j-permission-button>
+		            </template>
+		
+		            <template #name="slotProps">
+		              <a class="application-template-page__link" @click="table.viewDetail(slotProps)">
+		                {{ slotProps.name || '--' }}
+		              </a>
+		            </template>
+		
+		            <template #state="slotProps">
+		              <a-switch
+		                :checked="slotProps._switchChecked ?? normalizeState(slotProps.state) === 'enabled'"
+		                :loading="slotProps._statusLoading"
+		                @change="checked => table.changeStatus(slotProps, checked === true)"
+		              />
+		            </template>
+		
+		            <template #action="slotProps">
+		              <a-space>
+		                <j-permission-button
+		                  :hasPermission="`${permission}:update`"
+		                  type="link"
+		                  @click="table.viewDetail(slotProps)"
+		                >
+		                  {{ $t('ApplicationTemplate.common.edit') }}
+		                </j-permission-button>
+		                <j-permission-button
+		                  :hasPermission="`${permission}:delete`"
+		                  type="link"
+		                  danger
+		                  @click="table.clickDel(slotProps.id)"
+		                >
+		                  {{ $t('ApplicationTemplate.common.delete') }}
+		                </j-permission-button>
+		              </a-space>
+		            </template>
+		          </j-pro-table>
+		        </a-spin>
+		        
+          </div>
+        </div>
+      </ContentPanel>
+    </FullPage>
 
     <ApplicationTemplateCreateDialog
       v-model:open="createDialogOpen"

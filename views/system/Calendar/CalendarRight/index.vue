@@ -1,5 +1,5 @@
 <template>
-    <ContentPanel class="calendarRight">
+    <div class="calendarRight">
         <div class="tips">
             <span
                 >{{ $t('CalendarRight.index.810845-0') }}</span
@@ -69,7 +69,7 @@
                 </div>
             </div>
         </div>
-    </ContentPanel>
+    </div>
 </template>
 
 <script setup name="Calendar">

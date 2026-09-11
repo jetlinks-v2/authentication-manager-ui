@@ -1,7 +1,8 @@
 <template>
   <j-page-container>
-    <div class="user-container">
-      <FullPage hasPadding>
+    <FullPage hasPadding transparentBackground>
+      <ContentPanel>
+        <div class="user-container">
         <j-pro-table
             ref="tableRef"
             class="pro-table__no-padding"
@@ -167,8 +168,9 @@
             </a-space>
           </template>
         </j-pro-table>
-      </FullPage>
-    </div>
+        </div>
+      </ContentPanel>
+    </FullPage>
   </j-page-container>
   <EditUserDialog
       v-if="dialog.visible"

@@ -1,5 +1,5 @@
 <template>
-  <ContentPanel class="role-container">
+  <div class="role-container">
     <div class="role-table">
       <j-pro-table
         ref="tableRef"
@@ -74,7 +74,7 @@
         @close="copy.visible = false"
         @save="onCopySave"
     />
-  </ContentPanel>
+  </div>
 </template>
 
 <script setup lang="ts" name="RoleRight">
