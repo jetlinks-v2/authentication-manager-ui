@@ -154,6 +154,9 @@ export const bindSelectedBusinessApplicationRole = async (
   roleId: string,
   selection: ApplicationRoleSelection,
 ) => {
+  // 即使持有旧的选择快照，也不能为 admin 绑定成员或角色。
+  if (selection.user.username === 'admin' || selection.raw.username === 'admin') return
+
   const applicationRoleIds = applicationRoleIdsOf(selection.roles)
   if (!selection.bound) {
     await bindProjectUsersToBusinessApplication(applicationId, [userId])

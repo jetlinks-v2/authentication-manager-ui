@@ -28,6 +28,7 @@
           <a-select
             allow-clear
             :value="record.roleId"
+            :disabled="record.username === 'admin'"
             class="role-select"
             :options="roleOptions"
             @change="updateRole(record, $event)"
@@ -110,7 +111,8 @@ const resolveUser = (record: Record<string, unknown>) =>
   props.data.users.find(user => user.id === String(record.id || ''))
 const updateRole = (record: Record<string, unknown>, roleId: unknown) => {
   const user = resolveUser(record)
-  if (user) emits('update', user, { roleId: typeof roleId === 'string' ? roleId : '' })
+  // 按被操作账号判断，admin 本身不允许分配或清空角色。
+  if (user && user.username !== 'admin') emits('update', user, { roleId: typeof roleId === 'string' ? roleId : '' })
 }
 const unbindUser = (record: Record<string, unknown>) => {
   const user = resolveUser(record)

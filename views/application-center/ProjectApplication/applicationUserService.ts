@@ -120,6 +120,10 @@ export const updateBoundBusinessApplicationUser = async (
   raw: UserDetailEntity | undefined,
   applicationRoleIds: ReadonlySet<string>,
 ) => {
+  // admin 角色不可修改；在请求边界拦截，覆盖列表及自动绑定入口。
+  if ((current.username === 'admin' || raw?.username === 'admin')
+    && (patch.roleId !== undefined || patch.roleIds !== undefined)) return
+
   const next = { ...current, ...patch }
   const roleIds = patch.roleId === undefined
     ? next.roleIds

@@ -80,6 +80,9 @@ export const useApplicationOpenGuard = (options: ApplicationOpenGuardOptions = {
       return false
     }
 
+    // admin 无需应用成员或角色准入，直接复用登录上下文打开应用。
+    if (userStore.isAdmin) return openPreparedApplication(application)
+
     const result = await ensureBusinessApplicationOpenAccess(application.id, userId, selectedRoleId)
 
     if (result.type === 'select-role') {
@@ -123,6 +126,11 @@ export const useApplicationOpenGuard = (options: ApplicationOpenGuardOptions = {
     roleBinding.value = true
     setOpening(application.id, true)
     try {
+      // 防止角色弹窗打开后登录身份变为 admin，继续提交角色绑定。
+      if (userStore.isAdmin) {
+        resetRoleSelection()
+        return openPreparedApplication(application)
+      }
       await bindSelectedBusinessApplicationRole(
         application.id,
         roleBindingContext.userId,
