@@ -88,12 +88,6 @@ const handleClick = (row: HomeRow) => {
   color: #b7bec8;
   cursor: not-allowed;
 }
-.home-app:disabled strong,
-.home-app:disabled .home-description,
-.home-app-trigger > .home-app:disabled strong,
-.home-app-trigger > .home-app:disabled .home-description {
-  color: #b7bec8;
-}
 .home-app:focus-visible {
   outline: 2px solid var(--business-component-primary);
   outline-offset: -2px;
@@ -102,12 +96,26 @@ const handleClick = (row: HomeRow) => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--business-component-text, #1f2937);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
 }
 .home-app-content .home-description {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  color: #8c8c8c;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+}
+.home-app:disabled .home-app-content strong,
+.home-app:disabled .home-app-content .home-description,
+.home-app-trigger > .home-app:disabled .home-app-content strong,
+.home-app-trigger > .home-app:disabled .home-app-content .home-description {
+  color: #b7bec8;
 }
 @container business-component-shell (min-width: 580px) {
   .home-apps:not(.home-apps--cards) {
