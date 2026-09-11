@@ -189,3 +189,41 @@ const { catalog, dashboard, loading, errors } = useResourceDashboard(preview)
      - `ResourceWidget.vue` 统一计算各组件的 `isEmpty` 状态；当处于空状态时，自动隐藏头部设备类型与时间范围的 `a-segmented` 切换器，严格还原设计原型。
 2. **验证结果**：
    - `node modules/authentication-manager-ui/scripts/verify-resource-dashboard.cjs`：全项断言 PASS（覆盖生命周期过期响应废弃、卸载清理、预览隔离、分布去重、自然日范围、配置边界、部分错误容灾、趋势排序、物联卡汇总/排行及独立容错、算法覆盖与视频播放趋势空态逻辑）。
+
+## Figma 设计稿对齐（Node 7140:62696）
+
+依据 Figma 资源中心设计稿及视觉效果，完成各组件样式、配色、图标及三行布局重构：
+
+1. **抠图与静态图标资源**：
+   - 从 Figma 节点中抠出并导出专属矢量与 2x PNG 图标存入 `visDashboard/ResourceCenter/assets/`：
+     - 快捷操作：`quick-start-edge.png`、`quick-start-iot.png`、`quick-start-video.png`、`quick-start-screen.png`，以及同步对齐蓝白渐变徽章风格的 `quick-start-collector.svg` 与 `quick-start-card.svg`；
+     - 指标徽章：`metric-edge.png`、`metric-iot.png`、`metric-video.png`、`metric-visualization.png`。
+2. **快速开始面板（QuickStartPanel）**：
+   - 网格排列（4 项为 2×2，6 项为 2×3），浅蓝渐变背景 `linear-gradient(90deg, #F0F6FF 0%, #FCFEFF 100%)`、边框 `#E5EFFD`、圆角 4px；
+   - 全部 6 个操作项均采用尺寸严格一致的 32px 蓝/青渐变圆角徽章与白色居中矢量符号，彻底消除此前数据采集与物联网卡图标样式/底色/尺寸不一致的问题；
+   - 中间为标题（14px 500 #1D2129）与副标题说明（12px #86909C），右侧箭头 `#C9CDD4`；
+   - Hover 态高亮背景 `#EEF5FF`、边框 `#BFD8FF`、标题变蓝 `#1E72F0`、阴影微浮起。
+3. **顶部四项指标卡（MetricPanel & ResourceWidget）**：
+   - 移除外层多余头部，标题下沉至卡片内；
+   - 顶部左侧标题（14px #86909C）+ 大数字（24px 500 #1D2129）及单位“个”（14px #86909C），右侧为 48px 图标徽章；
+   - 中部浅灰分割线 `#ECEFF3`；
+   - 底部状态圆点与指标数值（绿点在线、灰点离线，或可视化四大类型圆点）。
+4. **设备分布图表（DistributionPanel）**：
+   - 环形图配色对齐 Figma 调色盘 `['#1E72F0', '#FF7D00', '#30C7D8', '#7980D4', '#86909C']`；
+   - 环心展示总数及居中文案“设备总数”；
+   - 右侧图例展示单色圆点、设备名称及右对齐数字。
+5. **设备上报消息趋势（TrendPanel）**：
+   - 平滑曲线（#1E72F0，smooth 0.35），区域渐变填充（#1E72F0 从 0.22 渐变至 0.01）；
+   - Y 轴顶部间距调整为 `grid.top: 46`，彻底解决“消息(次)”单位文本顶部被画布边缘遮挡裁切的问题；
+   - 修复切换至“昨天”等时段无消息上报时触发 `isAllZero` 误切至全屏“未接入物联设备”空状态的问题：保持头部时间切换器常驻可用，时段无数据时平滑绘制 0 轴趋势折线，支持自由在各个时间维度间切换。
+6. **组件位置与默认高度优化**：
+   - 保持原有组件相对排布不变（左栏快速开始，右栏消息趋势）；
+   - 快速开始（QuickStart）与设备上报消息趋势（MessageTrend）默认高度同步由 `h: 7` 增加至 `h: 9`，后续卡片 Y 轴偏移同步下移，保证左右两栏严格齐平于 `y=31`；
+   - 修复快速开始在 6 项操作（3 行）时的网格行分配（`actions-more` 采用 `repeat(3, minmax(0, 1fr))` 与 `padding: 8px 14px`），解决第二行卡片被挤压及与第三行重叠问题；
+   - 画布 storageKey 升版至 `resource-center-dashboard-v3`，确保新高度即刻生效。
+7. **视频播放趋势（VideoPlaybackTrend）无接口零值展示**：
+   - 因后端暂无视频播放统计真实接口，移除原先用于原型演示的模拟数据，统一直接展示 0；
+   - 保持图表与时间切换器正常交互并渲染 0 刻度柱形，防止假数据引起业务歧义。
+8. **算法覆盖统计（AlgorithmCoverage）路由跳转与条目间距优化**：
+   - 卡片头部“算法配置”快捷入口跳转路由精准对齐至 `#/resources/devices/list/batch?type=gateway&gatewayScope=query`，在 `ResourceWidget.vue` 中调用 `menuStore.jumpPage('iot-user-device-list/Batch', { query: { type: 'gateway', gatewayScope: 'query' } })`；
+   - 优化 `AlgorithmCoveragePanel.vue` 条目垂直布局：将原有的 `justify-content: space-around` 改为 `justify-content: flex-start` 并设置统一间距 `gap: 16px`，彻底解决条目数量较少（如仅有 1 种已配置算法 + 未配置算法共 2 项）时条目被过度拉伸分置顶部与底部、中间留下大面积空白的问题。

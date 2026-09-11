@@ -23,7 +23,7 @@ async function main() {
   const rows = await loadAnnouncements()
   assert.equal(calls.length, 1)
   assert.equal(calls[0][0], '/notifications/_query')
-  assert.deepEqual(calls[0][1], { paging: true, pageSize: 4, pageIndex: 0, sorts: [{ name: 'notifyTime', order: 'desc' }], terms: [{ column: 'topicProvider', termType: 'eq', value: 'SystemBulletin' }] })
+  assert.deepEqual(calls[0][1], { paging: true, pageSize: 5, pageIndex: 0, sorts: [{ name: 'notifyTime', order: 'desc' }], terms: [{ column: 'topicProvider', termType: 'eq', value: 'SystemBulletin' }] })
   assert.equal(rows[0].label, '公告标题')
   assert.equal(rows[0].description, '公告摘要')
   assert.equal(rows[0].notification.detailJson, response.result.data[0].detailJson)

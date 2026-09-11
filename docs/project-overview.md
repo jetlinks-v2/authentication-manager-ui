@@ -259,3 +259,143 @@ Chrome 实测：画布 layout/content 的 overflowY 均为 visible；外层页�
 2. **验证结果**：
    - `node modules/authentication-manager-ui/scripts/verify-overview-components.cjs`：53 个 Vue SFC 编译全部通过，0 SFC 错误，0 相对导入缺失。
    - 浏览器与 Vite 编译正常，HMR 响应正常，控制台 0 报错。
+
+## 资源中心多组件拆分与 UI 样式改造（对齐 Figma 设计稿）
+
+1. **背景与目标**：
+   - 参考 Figma 设计稿（node-id: 7172-69729），将原本单一的“资源中心”卡片拆分为 4 个独立的业务子卡片组件，重构视觉规范（配色、条目胶囊、图标底板与字阶）、行列布局与响应式网格。
+   - 严格遵循约束：仅修改样式配色与组件拆分布局，不改动当前展示字段、接口请求口径（`loadResourceRows`）以及菜单跳转/不可用提示逻辑。
+
+2. **组件拆分与落点**：
+   - `visDashboard/Base/Resources/components/DeviceAccessCard.vue`：**设备与接入**独立卡片（标题 18px 600 #1D2129），单列展示物联设备、视频通道、边缘节点（私有化场景保留采集器与物联网卡）。
+   - `visDashboard/Base/Resources/components/VisualizationCard.vue`：**大屏可视化**独立卡片，内部采用双列网格（左列为素材库：图片、组件、模型；右列为大屏：数据大屏、大屏模板）。
+   - `visDashboard/Base/Resources/components/AiCenterCard.vue`：**AI中心**独立卡片，展示智能体、启用算法、覆盖通道。
+   - `visDashboard/Base/Resources/components/RuleEngineCard.vue`：**规则引擎**独立卡片，展示场景联动。
+   - `visDashboard/Base/Resources/components/ResourceItem.vue`：抽离为通用条目胶囊组件，采用 `#F8FAFC` 浅灰底板、`40px × 40px` 圆形柔和浅色背景图标、`14px / #1D2129` 名称、`16px 500 / #1D2129` 数值与 `14px / #4E5969` 单位（`个`），支持 `:hover` 浅蓝（`#EEF5FF`）高亮与禁用态 Tooltip 提示。
+   - `visDashboard/Base/Resources/components/HomeView.vue`：2×2 响应式网格编排（第一排 317:681，第二排 681:317，窄屏自适应单列）。
+   - `visDashboard/Base/Resources/ProjectHomeResources.vue`：使最外层 Card 透明去壳，消除多余嵌套与顶层卡头，使 4 张白底独立卡片直接融入项目概览网格。
+
+3. **逐项对齐 Figma 设计稿（node-id: 7172-69729）检查与精细化调整**：
+   - **标题与文案**：多语言 `zh.json` 中的 `group_ai` 修正为 `AI中心`（去除多余空格），与设计稿完全一致。
+   - **配色与图标底色**：
+     - `视频通道`（视联设备）：图标主色调整为 `#1E72F0`（蓝），圆圈底板 `#E8F3FF`，与设计稿完全一致。
+     - `覆盖通道`：图标主色调整为 `#009CD5`（天蓝），圆圈底板 `#E2F5FC`，与设计稿完全一致。
+     - `物联设备` / `边缘节点`：图标 `#1E72F0`，底板 `#E8F3FF`。
+     - `图片`：图标 `#5B9B6D`，底板 `#EBF8F2`。
+     - `组件`：图标 `#BD6A9F`，底板 `#F8EEFE`。
+     - `模型`：图标 `#59A7A5`，底板 `#EBF5FA`。
+     - `数据大屏`：图标 `#7980D4`，底板 `#EEF2FF`。
+     - `大屏模板`：图标 `#D79C42`，底板 `#FEF3E6`。
+     - `智能体`：图标 `#966DC2`，底板 `#F3EEFF`。
+     - `启用算法`：图标 `#59A7A5`，底板 `#EBF7F7`。
+     - `场景联动`：图标 `#D79C42`，底板 `#FFF3E8`。
+   - **卡片内边距与条目间距**：
+     - 4 张卡片内边距统一由 `16px 20px 20px` 调整为 `16px`，匹配 Figma 的 `(317 - 285) / 2 = 16px`。
+     - 条目垂直间距统一由 `12px` 调整为 `16px`，严格对应 Figma `layout_C665CR` / `layout_OAX278` / `layout_X4AMMD` 的 `gap: 16px`。
+     - 卡片内容区配置 `justify-content: flex-start`，确保大屏可视化右列（2个条目）与规则引擎（1个条目）自然置顶靠齐。
+   - **看板高度与裁切问题彻底解决**：
+     - 排查发现用户截图中第二行卡片底部被截断的原因：`useOverviewDashboard.ts` 中原本分配给 Resources 的网格高度为 `h: 17`（560px），而两排 312px 卡片加上 16px 间隙需约 640px。
+     - 将 `Resources` 与右侧并排的 `Announcements` 高度统一提升为 `h: 20`（662px），私有化布局下的 `Operations` 顺延调整为 `h: 32`；同时在 `HomeView.vue` 中配置 `height: 100%` 与 `resources-row` 的 `flex: 1` 均分机制，彻底消除遮挡截断与滚动条，两行卡片高度饱满齐平。
+
+4. **验证结果**：
+   - `node modules/authentication-manager-ui/scripts/verify-overview-components.cjs`：57 个 Vue SFC 编译通过，0 SFC 错误，0 相对导入缺失。
+
+## 运维与监控卡片重构与渐变视觉样式完整对齐（对齐 Figma 设计稿）
+
+1. **运维与监控卡片（Operations）重构**：
+   - **资源健康状态（Health）**：
+     - 将原本的单行文本列表改造为 3 列横向卡片网格（边缘节点、物联设备、视频通道），匹配设计稿 `Frame 2147259391 / 2147259395 / 2147259396`；
+     - 每张卡片包含：`32px × 32px` 圆形微蓝白渐变图标底板（`linear-gradient(180deg, #FFFFFF 0%, #D6E9FF 60%, #D6E9FF 99%)`）与 `#1E72F0` 图标、`14px 500 #1D2129` 标题、`6px` 蓝灰健康进度条、底部 `在线 <num>` 与 `离线 <num>` 状态。
+     - 卡片底板为 `#F8FAFC`，带 `1px solid #E5EFFD` 浅蓝细边框，`:hover` 平滑过渡为 `#EEF5FF` 浅蓝底板与 `#BFD8FF` 边框。
+   - **监控告警（Alarms / AlarmQuickEntry）**：
+     - 将原本的单行文字改造为 2 列横向告警大卡片网格（物联告警、视觉告警），匹配设计稿 `Frame 2147259401 / 2147259400`；
+     - **物联告警**：`32px × 32px` 圆形粉白渐变图标底板（`linear-gradient(180deg, #FFFFFF 0%, #FFD6D6 100%)`）搭配红告警铃铛图标（`AlertOutlined`，`#F84343`），右侧展现 `20px 600` 大字重待处理数值。
+     - **视觉告警**：`32px × 32px` 圆形橙白渐变图标底板（`linear-gradient(180deg, #FFFFFF 0%, #FFEAD6 100%)`）搭配橙黄色告警三角图标（`WarningOutlined`，`#FFB24E`），右侧展现 `20px 600` 大字重待处理数值。
+     - 保留点击打开快捷告警抽屉与处理弹窗的所有现有业务逻辑。
+
+2. **快捷操作与应用中心渐变底色补齐**：
+   - **快捷操作（QuickActions）**：
+     - 按钮应用 `linear-gradient(90deg, #EFF6FF 0%, #FBFDFF 100%)` 与 `1px solid #E5EFFD` 浅蓝渐变边框；
+     - 图标容器升级为 `32px × 32px` 彩色 135deg 线性渐变圆角底板（蓝/青/紫三类色相），图标呈现为统一纯白反白；悬停时支持 `scale(1.05)` 微动效。
+   - **应用中心（Applications）**：
+     - 卡片应用 `linear-gradient(90deg, #F0F6FF 0%, #FCFEFF 100%)` 与 `1px solid #E5EFFD` 浅蓝边框；
+     - 图标容器升级为 `40px × 40px` 135deg 蓝紫线性渐变底板（`#94BFFE` -> `#1E72F0`），图标纯白反白；
+     - 右侧增加灰色向右箭头（`RightOutlined`），`:hover` 时平滑微移。
+
+3. **存储键版本升级**：
+   - 将 `views/project/Overview/index.vue` 中的 `storage-key` 升级为 `project-overview-v6`，确保用户刷新页面直接加载最新布局与卡片样式，不受旧版缓存干扰。
+
+4. **验证结果**：
+   - 执行 `node runtime-ui/modules/authentication-manager-ui/scripts/verify-overview-components.cjs`：57 个 Vue SFC 编译全部通过，0 错误，0 相对导入缺失。
+
+## 运维与监控高度对齐与卡片 Hover 黑边框修复
+
+1. **网格高度精准对齐**：
+   - **左侧资源中心高度**：`Resources` 位于 `y: 7, h: 20`，内部按 2 行资源大卡片均分（每行高度为 `(662px - 16px) / 2 = 323px`）。
+   - **右侧高度微调**：
+     - `Operations`（运维与监控）：由 `h: 12`（390px）收紧调整为 `h: 10`（322px），底边与左侧第 1 行资源大卡片底边精准齐平（`y=7` 至 `y=17`，高度差仅 1px）。
+     - `Announcements`（系统公告）：起始位置由 `y: 19` 同步调整为 `y: 17, h: 10`（322px），与左侧第 2 行资源大卡片精准齐平（`y=17` 至 `y=27`）。
+     - SaaS 与私有化双布局同步生效，两列底边与两排卡片形成完全对齐的双行栅格。
+   - **存储键升级**：升级为 `project-overview-v7`，确保浏览器自动加载全新对齐布局，无需用户手动清除 LocalStorage。
+
+2. **Hover 粗黑外边框问题彻底根除**：
+   - **问题根因**：
+     - `views.less` 中全局定义了 `.home-content button:not(:disabled):hover { outline: 1px solid var(--business-component-primary); }`，在鼠标悬停或获得焦点时，浏览器原生 button 的 focus ring 与该 outline 叠加产生明显的深色黑边框。
+   - **修复方案**：
+     - 在 `views.less` 中将 `.home-content button:not(:disabled):hover` 及 `:focus`, `:focus-visible` 的 `outline` 统一改为 `none;`。
+     - 在 `HomeView.vue`（健康状态卡片 `.home-health-card`）与 `AlarmQuickEntry.vue`（告警卡片 `.alarm-entry-card`）上显式声明 `outline: none !important;`。
+     - 替换为 Figma 设计稿规范的温和悬浮态：悬浮时背景变浅蓝 `#eef5ff`、边框亮蓝 `#bfd8ff`、并施加软阴影 `box-shadow: 0 2px 8px rgba(30, 114, 240, 0.08);`，彻底消除生硬的黑框/深色描边。
+
+3. **运维与监控内容紧凑化**：
+   - 为了在 `h: 10`（322px 高度）内舒适展示而不产生内部纵向滚动条，对内部各元素尺寸做紧凑化微调：
+     - 外层容器：`gap: 12px; overflow: hidden;`；
+     - 分组标题：下边距设为 `8px`；
+     - 健康卡片：高度紧凑为 `min-height: 80px; padding: 8px 10px;`，图标盒子缩紧为 `28px × 28px`（图标 14px），进度条外边距微调为 `6px 0 6px`；
+     - 告警卡片：高度收紧为 `52px; padding: 8px 14px;`，图标缩紧为 `28px × 28px`，大字重数量调整为 `18px`；
+     - 整体内容高度收敛至约 196px，留白充裕、呼吸感良好且与左侧完全对齐。
+
+4. **验证结果**：
+   - 执行 `node runtime-ui/modules/authentication-manager-ui/scripts/verify-overview-components.cjs`：57 个 Vue SFC 编译通过，0 SFC 错误，0 相对导入缺失。
+
+## AI中心与规则引擎宽度均分及快捷操作一排4个优化
+
+1. **AI中心与规则引擎组件宽度均分（50% / 50%）**：
+   - **调整背景**：
+     - 在第二行资源大卡片中，原本配置为 `.resource-card-ai { flex: 681; }`、`.resource-card-rules { flex: 317; }`，导致 AI中心宽度被拉伸为规则引擎的 2 倍以上，而两者内部均为单列胶囊排列，视觉比例严重不协调。
+   - **改造方案**：
+     - 在 `visDashboard/Base/Resources/components/HomeView.vue` 中，将 `.resource-card-ai` 与 `.resource-card-rules` 的宽度比例统一调整为 `flex: 1; min-width: 0;`。
+     - 第二行资源中心组件按 1:1 均分整行宽度（`(100% - 16px) / 2`），左右各占 50%，两张卡片横向居中对称齐平，视觉更加平衡协调。
+
+2. **快捷操作一排4个固定布局**：
+   - **调整背景**：
+     - 在宽屏设备下，`views.less` 中原本的 `@container business-component-shell (min-width: 680px)` 规则激活了 `.home-actions:not(.home-actions--grid) { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }`，导致所有快捷操作按钮被自动铺满排成 5~7 列挤在一排，破坏了原型设计的 4 列网格。
+   - **改造方案**：
+     - 从 `views.less` 中移除针对 680px 以上容器的 `auto-fill` 挤压规则。
+     - 在 `visDashboard/Base/QuickActions/components/HomeView.vue` 中显式指定 `.home-actions` 为 `grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 16px;`。
+     - 快捷操作严格保持一排 4 个（共两排，第一排 4 个、第二排 3 个），无论屏幕宽度如何拉伸均稳定呈现 4 列均分网格。
+
+3. **验证结果**：
+   - 执行 `node runtime-ui/modules/authentication-manager-ui/scripts/verify-overview-components.cjs`：57 个 Vue SFC 编译全部通过，0 错误，0 相对导入缺失。
+
+## 系统公告卡片样式严格对齐 Figma 设计稿
+
+1. **对齐设计稿布局与元素结构（Frame 7137:62525）**：
+   - **左右布局对调与右对齐日期**：
+     - 原实现中日期直接紧贴在最左侧（`09-10`），右侧紧随标题，且日期格式为 `MM-DD`。
+     - 严格对照 Figma 设计稿（`layout_XAXW6W`）改造：整行采用 `justify-content: space-between;`，左侧为标题主区域，右侧为日期时间；
+     - 日期格式升级为设计稿的 `YYYY.MM.DD`（例如 `2026.08.27`），字号 `13px`，颜色 `#86909C`（`fill_LWLUWR`），右对齐且不换行（`flex-shrink: 0;`）。
+   - **橙色渐变 "New" 标签实现（Figma Node 7137:62535）**：
+     - 严格贴合设计稿视觉：仅列表第一条（最新发布公告，`index === 0`）展示专属 "New" 药丸标签；
+     - 标签底色严格按照设计稿 `fill_MSFD82` 应用 135deg 线性渐变：`linear-gradient(135deg, #FF7D00 0%, #F7BA1E 100%)`；
+     - 圆角特征严格还原设计稿的 `11px 11px 11px 0px`（左下角直角/少圆角，其余三边平滑大圆角）；
+     - 字体应用 Roboto 500 12px 纯白反白，内边距 `0 6px`，高度 18px，与标题保持 8px 间隙。
+   - **列表行间距与分割线消除**：
+     - 消除 `views.less` 中遗留的 `border-bottom: 1px solid #f2f3f5` 底边线条，按设计稿采用纯净的 `gap: 16px` 垂直留白，行高 `22px`；
+     - 标题采用 `14px 400 #1D2129`，悬停时平滑过渡为主色调蓝 `#1E72F0`，移除原生按钮点击黑边框（`outline: none !important;`）。
+   - **卡头右上角“更多”链接颜色修正**：
+     - 在 `HomeWidget.vue` 中将右上角 `更多 ›` 按钮字体设为 `13px`，颜色修正为设计稿的灰字 `#83899F`（`fill_GWVUSZ`），悬停时过渡为 `#1E72F0`。
+   - **数据量与未读状态适配**：
+     - `apiAnnouncements.ts` 查询条数调整为与设计稿一致的 5 条（`pageSize: 5`）；仅第 1 条（`index === 0`）标记 `isNew: true`，其余项不显示标签。
+
+2. **验证结果**：
+   - 执行 `node runtime-ui/modules/authentication-manager-ui/scripts/verify-overview-components.cjs`：57 个 Vue SFC 编译全部通过，0 错误，0 相对导入缺失。

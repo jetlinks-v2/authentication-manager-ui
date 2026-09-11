@@ -10,17 +10,15 @@ import {
 } from '../../../visDashboard/Base/QuickGuide/index'
 
 const saasLayout = [
-  ['QuickActions', 0, 0, 5, 7], ['Applications', 5, 0, 3, 7],
-  ['QuickGuide', 0, 7, 8, 5],
-  ['Resources', 0, 12, 8, 17],
-  ['Operations', 8, 0, 4, 12], ['Announcements', 8, 12, 4, 17],
+  ['QuickActions', 0, 0, 8, 7], ['Applications', 8, 0, 4, 7],
+  ['Operations', 8, 7, 4, 10], ['Resources', 0, 7, 8, 20],
+  ['Announcements', 8, 17, 4, 10],
 ] as const
 
 const privateLayout = [
-  ['QuickActions', 0, 0, 5, 7], ['Applications', 5, 0, 3, 7],
-  ['QuickGuide', 0, 7, 8, 5],
-  ['Resources', 0, 12, 8, 17],
-  ['Operations', 8, 0, 4, 29],
+  ['QuickActions', 0, 0, 8, 7], ['Applications', 8, 0, 4, 7],
+  ['Operations', 8, 7, 4, 10], ['Resources', 0, 7, 8, 20],
+  ['Announcements', 8, 17, 4, 10],
 ] as const
 
 const layout = isSaaS ? saasLayout : privateLayout
@@ -58,5 +56,4 @@ export function useOverviewDashboard() {
 
   return { catalog: fullCatalog, loading, errors, reload, dashboard }
 }
-
 

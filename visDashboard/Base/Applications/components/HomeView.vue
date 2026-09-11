@@ -15,12 +15,13 @@
         >
           <span class="home-app-icon">
             <a-spin v-if="isOpening(row)" size="small" />
-            <HomeIcon v-else name="applications" :neutral="!canOpenApp(row)" />
+            <HomeIcon v-else name="applications" neutral />
           </span>
           <span class="home-app-content">
-            <strong>{{ label(row) }}</strong>
+            <strong class="home-app-title">{{ label(row) }}</strong>
             <span v-if="chart.showDescription" class="home-muted home-description">{{ row.description || row.date || '--' }}</span>
           </span>
+          <RightOutlined class="home-app-arrow" />
         </button>
       </span>
     </a-tooltip>
@@ -29,8 +30,10 @@
 <script setup lang="ts" name="ProjectHomeApplicationsView">
 import { type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { RightOutlined } from '@ant-design/icons-vue'
 import HomeIcon from '../../shared/HomeIcon.vue'
 import type { HomeRow, HomeChart, HomeTarget } from '../../shared/types'
+
 const props = defineProps({
   rows: { type: Array as PropType<HomeRow[]>, default: () => [] },
   chart: { type: Object as PropType<HomeChart>, required: true },
@@ -63,41 +66,83 @@ const handleClick = (row: HomeRow) => {
 .home-apps--cards .home-app-trigger { display: flex; }
 .home-app {
   width: 100%;
-  border: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(90deg, #f0f6ff 0%, #fcfeff 100%);
+  border: 1px solid #e5effd;
+  border-radius: 4px;
+  padding: 12px;
   color: inherit;
   cursor: pointer;
   text-align: left;
   box-sizing: border-box;
-  transition: background-color .18s ease;
+  transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .home-app-icon {
-  transition: background-color .18s ease;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #94bffe 0%, #1e72f0 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: transform .2s ease;
+
+  :deep(.home-icon) {
+    width: 20px;
+    height: 20px;
+    color: #ffffff !important;
+  }
 }
 .home-app:not(:disabled):hover,
 .home-app-trigger:hover > .home-app:not(:disabled) {
   outline: 0;
-  background: #eef5ff;
-  border-radius: 8px;
+  background: linear-gradient(90deg, #e4efff 0%, #f3f8ff 100%);
+  border-color: #bfd9fe;
 }
 .home-app:not(:disabled):hover .home-app-icon,
 .home-app-trigger:hover > .home-app:not(:disabled) .home-app-icon {
-  background: #fff;
+  transform: scale(1.05);
+}
+.home-app-arrow {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: #86909c;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+.home-app:not(:disabled):hover .home-app-arrow,
+.home-app-trigger:hover > .home-app:not(:disabled) .home-app-arrow {
+  color: #1e72f0;
+  transform: translateX(2px);
 }
 .home-app:disabled,
 .home-app-trigger > .home-app:disabled {
   color: #b7bec8;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 .home-app:focus-visible {
   outline: 2px solid var(--business-component-primary);
   outline-offset: -2px;
 }
+.home-app-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
 .home-app-content strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--business-component-text, #1f2937);
-  font-size: 13px;
+  color: #1d2129;
+  font-size: 14px;
   font-weight: 500;
   line-height: 20px;
 }
@@ -106,7 +151,7 @@ const handleClick = (row: HomeRow) => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  color: #8c8c8c;
+  color: #86909c;
   font-size: 12px;
   font-weight: 400;
   line-height: 18px;

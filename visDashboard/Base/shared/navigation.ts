@@ -9,8 +9,14 @@ export const HOME_TARGETS: Record<string, HomeTarget> = {
   addGateway: { menus: ['iot-user/edge-gateway'], query: { action: 'create' } },
   createApplication: { menus: ['application-center/ProjectApplication'], query: { action: 'create' } },
   applications: { menus: ['application-center/ProjectApplication'] },
-  algorithm: { menus: ['algorithm-center'] },
-  coverage: { menus: ['algorithm-center'] },
+  algorithm: {
+    menus: ['algorithm-center', 'project/algorithm-center', 'iot-user-device-list/Batch', 'iot-user/device/list/Batch', 'iot-user-device-list', 'iot-user/device/list'],
+    query: { type: 'gateway', gatewayScope: 'query' },
+  },
+  coverage: {
+    menus: ['algorithm-center', 'project/algorithm-center', 'iot-user-device-list/Batch', 'iot-user/device/list/Batch', 'iot-user-device-list', 'iot-user/device/list'],
+    query: { type: 'gateway', gatewayScope: 'query' },
+  },
   members: { menus: [] },
   space: { menus: ['space/AreaManagement'] },
   search: { menus: [] },
@@ -25,7 +31,7 @@ export const HOME_TARGETS: Record<string, HomeTarget> = {
   component: { menus: ['visualization/resource/component'] },
   model: { menus: ['visualization/resource/model'] },
   agent: { menus: ['agentDevelopment/applicationList'] },
-  scene: { menus: ['iot-user/scene-linkage'] },
+  scene: { menus: ['iot-user/scene-linkage', 'rule-engine/Scene', 'rule-engine/scene'] },
   visionAlarm: { menus: ['machine-vision/VisualAlarm'] },
   deviceAlarm: { menus: ['iot-user/device/alarm'] },
 }

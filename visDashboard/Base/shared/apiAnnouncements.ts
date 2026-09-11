@@ -13,14 +13,21 @@ const announcementTitle = (row: Record<string, unknown>) => {
 }
 export const loadAnnouncements = async (): Promise<HomeRow[]> => {
   const result = await request.post('/notifications/_query', {
-    paging: true, pageSize: 4, pageIndex: 0,
+    paging: true, pageSize: 5, pageIndex: 0,
     sorts: [{ name: 'notifyTime', order: 'desc' }],
     terms: [{ column: 'topicProvider', termType: 'eq', value: 'SystemBulletin' }],
   }, { hiddenError: true })
-  return rowsOf(result).map(row => ({
-    id: textOf(row.id), label: announcementTitle(row),
-    description: textOf(row.message), notification: row,
-    date: row.notifyTime != null && dayjs(row.notifyTime as string | number).isValid() ? dayjs(row.notifyTime as string | number).format('MM-DD') : '',
-    target: HOME_TARGETS.messages,
-  }))
+  return rowsOf(result).map((row, index) => {
+    const isNew = index === 0
+    const timeVal = Number(row.notifyTime) || (row.notifyTime as string)
+    return {
+      id: textOf(row.id),
+      label: announcementTitle(row),
+      description: textOf(row.message),
+      notification: row,
+      isNew,
+      date: timeVal != null && dayjs(timeVal).isValid() ? dayjs(timeVal).format('YYYY.MM.DD') : '',
+      target: HOME_TARGETS.messages,
+    }
+  })
 }

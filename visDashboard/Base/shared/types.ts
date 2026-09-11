@@ -34,4 +34,5 @@ export interface HomeRow {
   notification?: Record<string, unknown>
   failed?: boolean
   application?: ProjectApplication
+  isNew?: boolean
 }
