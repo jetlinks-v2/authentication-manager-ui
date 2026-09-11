@@ -19,7 +19,7 @@
           </span>
           <span class="home-app-content">
             <strong>{{ label(row) }}</strong>
-            <span v-if="chart.showDescription" class="home-muted home-description">{{ row.description || '--' }}</span>
+            <span v-if="chart.showDescription" class="home-muted home-description">{{ row.description || row.date || '--' }}</span>
           </span>
         </button>
       </span>
