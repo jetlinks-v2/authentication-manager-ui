@@ -464,7 +464,9 @@ Chrome 实测：画布 layout/content 的 overflowY 均为 visible；外层页�
      - 将 `projectHomeRuleEngine` 的 `minW` 从 3 调整为 2，避免网格引擎强制扩张引发公告列下挤换行。
      - 将 `views/project/Overview/index.vue` 中的 `storage-key` 升级为 `project-overview-v11`，确保浏览器自动加载全新 9 卡排列，不受旧版缓存干扰。
 
-4. **验证结果**：
+4. **验证结果与交付记录**：
    - `node scripts/verify-overview-components.cjs`：63 个 Vue SFC 解析与编译通过，0 错误，0 相对导入缺失。
    - `node scripts/verify-announcements.cjs`：通过。
    - `node scripts/verify-quick-alarms.cjs && node scripts/verify-resource-dashboard.cjs`：全部通过。
+   - **Git Commit**：`0b2087c`
+   - **Pull Request**：`https://github.com/jetlinks-v2/authentication-manager-ui/pull/66`
