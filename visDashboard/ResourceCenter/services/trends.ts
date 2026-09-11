@@ -19,16 +19,31 @@ export function numberOf(value: unknown): number {
   return Number(value)
 }
 
-/** 设备消息聚合沿用 device/message/quantity，按时间正序绘制。 */
+/** 设备消息聚合沿用 device/message/quantity，按时间正序绘制。若时段无数据则补充零值时间点，保障图表平滑展示。 */
 export async function loadMessageTrend(range: TimeRange) {
   const rows = rowsOf(await request.post('/dashboard/_multi', [{ dashboard: 'device', object: 'message',
     measurement: 'quantity', dimension: 'agg', group: 'resourceMessage', params: rangeOf(range) }], { hiddenError: true }))
-  return rows.map(row => {
+  const series = rows.map(row => {
     const data = recordOf(row.data)
     const time = textOf(data.timeString)
     if (!time) throw new Error('Missing aggregate time')
     return { time, value: numberOf(data.value) }
   }).sort((a, b) => a.time.localeCompare(b.time))
+  if (series.length > 0) return series
+
+  const now = dayjs()
+  const days = range === '3d' ? 3 : range === '7d' ? 7 : range === '30d' ? 30 : 1
+  if (days === 1) {
+    const baseDate = range === 'yesterday' ? now.subtract(1, 'day') : now
+    return Array.from({ length: 24 }, (_, i) => ({
+      time: baseDate.hour(i).minute(0).second(0).format('YYYY-MM-DD HH:mm:ss'),
+      value: 0,
+    }))
+  }
+  return Array.from({ length: days }, (_, i) => ({
+    time: now.subtract(days - 1 - i, 'day').format('YYYY-MM-DD'),
+    value: 0,
+  }))
 }
 
 /** 后端流量单位为 MB，与物联网卡仪表盘相同；统计和排行榜独立失败。 */

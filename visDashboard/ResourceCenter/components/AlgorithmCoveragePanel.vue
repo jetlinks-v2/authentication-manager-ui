@@ -49,19 +49,20 @@ const maximum = computed(() => Math.max(1, ...props.items.map(item => item.value
 .algo-coverage-panel {
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 16px;
   height: 100%;
   min-height: 0;
-  padding: 4px 0;
+  padding: 8px 0;
   overflow-y: auto;
 }
 .algo-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 12px;
-  line-height: 14px;
+  font-size: 13px;
+  line-height: 16px;
+  flex-shrink: 0;
 }
 .algo-name {
   width: 76px;

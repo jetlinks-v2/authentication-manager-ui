@@ -33,20 +33,18 @@ export function previewData(kind: ResourceKind, deviceType: DeviceKind, timeRang
     ]
   }
   if (kind === 'VideoPlaybackTrend') {
-    if (timeRange === 'yesterday') {
-      data.series = [0, 0, 0, 0, 2, 3, 5, 9, 14, 16, 20, 19, 16, 15, 17, 19, 14, 12, 7, 5, 3, 2, 1, 0]
-        .map((value, index) => ({ time: `${String(index).padStart(2, '0')}:00`, value }))
-    } else if (timeRange === 'today') {
-      data.series = [1, 0, 0, 0, 1, 2, 4, 8, 13, 17, 19, 18, 17, 16, 17, 18, 15, 11, 8, 6, 4, 3, 2, 1]
-        .map((value, index) => ({ time: `${String(index).padStart(2, '0')}:00`, value }))
+    if (timeRange === 'yesterday' || timeRange === 'today') {
+      data.series = Array.from({ length: 24 }, (_, index) => ({
+        time: `${String(index).padStart(2, '0')}:00`,
+        value: 0,
+      }))
     } else {
       const days = timeRange === '3d' ? 3 : timeRange === '7d' ? 7 : 30
-      const baseValues = [120, 145, 168, 135, 182, 195, 154, 140, 160, 175, 190, 148, 130, 155, 170, 185, 200, 165, 150, 142, 168, 180, 192, 158, 145, 162, 178, 190, 172, 166]
       const now = dayjs()
-      data.series = Array.from({ length: days }, (_, i) => {
-        const d = now.subtract(days - 1 - i, 'day')
-        return { time: d.format('YYYY-MM-DD'), value: baseValues[i % baseValues.length] }
-      })
+      data.series = Array.from({ length: days }, (_, i) => ({
+        time: now.subtract(days - 1 - i, 'day').format('YYYY-MM-DD'),
+        value: 0,
+      }))
     }
   }
   return data

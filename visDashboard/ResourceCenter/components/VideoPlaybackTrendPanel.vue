@@ -1,6 +1,6 @@
 <template>
   <ResourceEmpty
-    v-if="!series.length || isAllZero"
+    v-if="!series.length"
     icon="PlayCircleOutlined"
     :title="t('resourceDashboard.noVideoDevices')"
     :description="t('resourceDashboard.noVideoDevicesPlaybackDesc')"

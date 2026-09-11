@@ -1,18 +1,24 @@
 <template>
-  <a-tooltip :title="disabled ? unavailableHint : undefined">
-    <span class="resource-item-trigger" :class="{ 'resource-item-trigger--metric': metric }">
+  <a-tooltip :title="disabled ? unavailableHintText : undefined">
+    <div class="resource-item-wrapper">
       <button
         type="button"
-        :class="metric ? 'home-resource-metric home-surface' : 'home-resource-row'"
+        class="resource-item-btn"
+        :class="{ 'is-disabled': disabled, 'is-metric': metric }"
         :disabled="disabled"
-        :aria-label="disabled ? unavailableHint : label(row)"
+        :aria-label="disabled ? unavailableHintText : label(row)"
         @click="$emit('navigate', row.target)"
       >
-        <HomeIcon v-if="showIcon" :name="row.icon" :neutral="disabled" />
+        <div v-if="showIcon" class="resource-item-icon-box" :style="{ background: disabled ? '#F2F3F5' : iconBgTone }">
+          <HomeIcon :name="row.icon" :neutral="disabled" />
+        </div>
         <span class="resource-item-label">{{ label(row) }}</span>
-        <strong>{{ number(row.value) }}</strong>
+        <div class="resource-item-value-box">
+          <strong class="resource-item-value">{{ number(row.value) }}</strong>
+          <span v-if="row.value !== undefined" class="resource-item-unit">{{ unitText }}</span>
+        </div>
       </button>
-    </span>
+    </div>
   </a-tooltip>
 </template>
 
@@ -27,85 +33,140 @@ const props = defineProps({
   metric: { type: Boolean, default: false },
   showIcon: { type: Boolean, default: true },
   canOpen: { type: Function as PropType<(target?: HomeTarget) => boolean>, required: true },
-  unavailableHint: { type: String, required: true },
+  unavailableHint: { type: String, default: '' },
 })
+
 defineEmits<{ navigate: [target?: HomeTarget] }>()
+
 const { t } = useI18n()
+
+const iconBgTones: Record<string, string> = {
+  devices: '#E8F3FF',
+  video: '#E8F3FF',
+  gateway: '#E8F3FF',
+  collector: '#FFF3E8',
+  card: '#E8F3FF',
+  screen: '#EEF2FF',
+  template: '#FEF3E6',
+  image: '#EBF8F2',
+  component: '#F8EEFE',
+  model: '#EBF5FA',
+  agent: '#F3EEFF',
+  algorithm: '#EBF7F7',
+  coverage: '#E2F5FC',
+  scene: '#FFF3E8',
+}
+
+const iconBgTone = computed(() => (props.row.icon && iconBgTones[props.row.icon]) || '#E8F3FF')
+
 const disabled = computed(() => !props.canOpen(props.row.target))
 const label = (row: HomeRow) => row.label || t(`packages.ProjectHome.${row.labelKey}`)
-const number = (value?: number) => value === undefined ? '—' : value.toLocaleString()
+const number = (value?: number) => (value === undefined ? '—' : value.toLocaleString())
+const unitText = computed(() => props.row.unit || t('packages.ProjectHome.unitPiece') || '个')
+
+const unavailableHintText = computed(() => {
+  if (props.unavailableHint) return props.unavailableHint
+  return props.row.id === 'video'
+    ? t('packages.ProjectHome.resourceUnavailableVideo')
+    : t('packages.ProjectHome.resourceUnavailable', { resource: label(props.row) })
+})
 </script>
 
-<style scoped lang="less" src="../../shared/views.less" />
 <style scoped lang="less">
-.home-resource-row,
-.home-resource-metric {
+.resource-item-wrapper {
   width: 100%;
-  border: 0;
-  color: inherit;
-  cursor: pointer;
-  text-align: left;
 }
-.resource-item-trigger { display: block; width: 100%; }
-.resource-item-trigger--metric { width: 100%; }
-.home-resource-row {
+
+.resource-item-btn {
+  width: 100%;
   display: flex;
   align-items: center;
-  min-height: 38px;
-  gap: var(--space-2);
-  padding: 0 8px;
-  background: transparent;
-  border-radius: 8px;
+  gap: 12px;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #1d2129;
+  cursor: pointer;
   box-sizing: border-box;
-  transition: background-color .18s ease;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
-  .home-icon,
+  &:hover:not(:disabled) {
+    background: #eef5ff;
+    border-color: #d0e2ff;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--business-component-primary, #1677ff);
+    outline-offset: -2px;
+  }
+
+  &:disabled,
+  &.is-disabled {
+    cursor: not-allowed;
+    background: #f7f8fa;
+    color: #86909c;
+
+    .resource-item-label,
+    .resource-item-value,
+    .resource-item-unit {
+      color: #86909c;
+    }
+  }
+}
+
+.resource-item-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+
   :deep(.home-icon) {
-    flex: 0 0 18px;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    font-size: 20px;
   }
+}
 
-  .resource-item-label {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    text-align: left;
-  }
+.resource-item-label {
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 400;
+  color: #1d2129;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-  strong {
-    margin-left: auto;
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
+.resource-item-value-box {
+  margin-left: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
-.home-resource-metric {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--space-2);
-  transition: background-color .18s ease;
+
+.resource-item-value {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 500;
+  color: #1d2129;
+  font-variant-numeric: tabular-nums;
 }
-.home-resource-metric strong { grid-column: 1 / -1; }
-.resource-item-trigger:hover > .home-resource-row:not(:disabled),
-.resource-item-trigger:hover > .home-resource-metric:not(:disabled),
-.home-resource-row:not(:disabled):hover,
-.home-resource-metric:not(:disabled):hover {
-  outline: 0;
-  background: #eef5ff;
-  border-radius: 8px;
-}
-.resource-item-trigger > .home-resource-row:disabled,
-.resource-item-trigger > .home-resource-metric:disabled {
-  color: #b7bec8;
-  cursor: not-allowed;
-}
-.resource-item-trigger > .home-resource-row:disabled strong,
-.resource-item-trigger > .home-resource-metric:disabled strong { color: #b7bec8; }
-.home-resource-row:focus-visible,
-.home-resource-metric:focus-visible {
-  outline: 2px solid var(--business-component-primary);
-  outline-offset: -2px;
+
+.resource-item-unit {
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 400;
+  color: #4e5969;
 }
 </style>
