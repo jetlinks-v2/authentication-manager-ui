@@ -36,6 +36,11 @@ export const loadHomeRows = (feature: HomeFeature): Promise<HomeRow[]> => {
   switch (feature) {
     case 'Applications': return loadApplications()
     case 'Resources': return loadResourceRows()
+    case 'DeviceAccess': return loadResourceRows().then(rows => rows.filter(r => r.group === 'access' && r.subgroup !== 'collection'))
+    case 'Collection': return loadResourceRows().then(rows => rows.filter(r => r.subgroup === 'collection'))
+    case 'Visualization': return loadResourceRows().then(rows => rows.filter(r => r.group === 'visualization'))
+    case 'AiCenter': return loadResourceRows().then(rows => rows.filter(r => r.group === 'intelligence' && r.subgroup === 'ai'))
+    case 'RuleEngine': return loadResourceRows().then(rows => rows.filter(r => r.group === 'intelligence' && r.subgroup === 'rules'))
     case 'Quotas': return loadQuotaRows()
     case 'Operations': return loadOperationRows()
     case 'Announcements': return loadAnnouncements()

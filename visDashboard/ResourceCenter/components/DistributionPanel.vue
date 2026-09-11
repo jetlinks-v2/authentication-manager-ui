@@ -2,8 +2,8 @@
   <ResourceEmpty
     v-if="!items.length || isAllZero"
     icon="EnvironmentOutlined"
-    :title="t('resourceDashboard.noSpacesTitle')"
-    :description="t('resourceDashboard.noSpacesDesc')"
+    :title="emptyTitle"
+    :description="emptyDescription"
     :action-text="t('resourceDashboard.actionAddSpace')"
     @action="handleAddSpace"
   />
@@ -43,6 +43,13 @@ const menuStore = useMenuStore()
 const colors = ['#1E72F0', '#FF7D00', '#30C7D8', '#7980D4', '#86909C', '#52C41A', '#EB2F96', '#FA8C16']
 const total = computed(() => props.items.reduce((sum, item) => sum + item.value, 0))
 const isAllZero = computed(() => !props.items.length || total.value === 0)
+
+const emptyTitle = computed(() => t(
+  props.items.length ? 'resourceDashboard.noBoundDevicesTitle' : 'resourceDashboard.noSpacesTitle',
+))
+const emptyDescription = computed(() => t(
+  props.items.length ? 'resourceDashboard.noBoundDevicesDesc' : 'resourceDashboard.noSpacesDesc',
+))
 
 function handleAddSpace() {
   if (menuStore.getMenu('space/AreaManagement')) {

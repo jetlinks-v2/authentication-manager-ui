@@ -1,5 +1,5 @@
 import type { ProjectApplication } from '../../../views/application-center/ProjectApplication/types'
-export type HomeFeature = 'QuickActions' | 'Applications' | 'Resources' | 'Quotas' | 'Operations' | 'Announcements' | 'QuickGuide'
+export type HomeFeature = 'QuickActions' | 'Applications' | 'Resources' | 'Quotas' | 'Operations' | 'Announcements' | 'QuickGuide' | 'DeviceAccess' | 'Visualization' | 'AiCenter' | 'RuleEngine' | 'Collection'
 export interface HomeChart {
   displayStyle: string
   fontSize: number

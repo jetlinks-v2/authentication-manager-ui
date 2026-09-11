@@ -12,7 +12,7 @@
       :catalog="catalog"
       :editable="false"
       :layout-editable="true"
-      storage-key="resource-center-dashboard-v3"
+      storage-key="resource-center-dashboard-v4"
       :preview-mode="false"
     />
   </main>

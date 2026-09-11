@@ -71,7 +71,7 @@ const { t } = useI18n()
   min-width: 0;
   background: #fff;
   border: 1px solid #edf0f5;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 8px 12px;
   display: flex;
   flex-direction: column;

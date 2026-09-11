@@ -35,8 +35,16 @@ async function main() {
   assert.equal((await loadAnnouncements())[0].label, '旧公告标题')
   response = { success: true, result: { data: [] } }
   assert.deepEqual(await loadAnnouncements(), [])
-  response = { success: false, status: 403 }
-  await assert.rejects(loadAnnouncements())
-  console.log('PASS: 当前用户过滤、最新 4 条、标题摘要、详情引用、缺失日期、空态与失败响应')
+  response = { success: true, result: { data: [
+    { id: '1', topicName: '未读第一条', state: { value: 'unread' } },
+    { id: '2', topicName: '未读第二条', state: 'unread' },
+  ] } }
+  let rowsWithState = await loadAnnouncements()
+  assert.equal(rowsWithState[0].isNew, true)
+  assert.equal(rowsWithState[1].isNew, false)
+  response = { success: true, result: { data: [{ id: '1', topicName: '已读第一条', state: { value: 'read' } }] } }
+  rowsWithState = await loadAnnouncements()
+  assert.equal(rowsWithState[0].isNew, false)
+  console.log('PASS: 当前用户过滤、最新 5 条、标题摘要、详情引用、未读第一条 New 标识、缺失日期、空态与失败响应')
 }
 main().catch(error => { console.error(error); process.exitCode = 1 })

@@ -3,6 +3,15 @@ import dayjs from 'dayjs'
 import { recordOf, rowsOf, textOf } from './apiResult'
 import { HOME_TARGETS } from './navigation'
 import type { HomeRow } from './types'
+/** 检查通知是否未读，兼容对象与字符串枚举。 */
+const isUnread = (row: Record<string, unknown>) => {
+  const state = row.state
+  const stateVal = typeof state === 'object' && state !== null
+    ? (state as Record<string, unknown>).value
+    : state
+  return stateVal === 'unread'
+}
+
 /** 新旧通知都优先显示公告自身标题，损坏的内嵌 JSON 不影响列表。 */
 const announcementTitle = (row: Record<string, unknown>) => {
   let detail = recordOf(row.detail)
@@ -18,7 +27,7 @@ export const loadAnnouncements = async (): Promise<HomeRow[]> => {
     terms: [{ column: 'topicProvider', termType: 'eq', value: 'SystemBulletin' }],
   }, { hiddenError: true })
   return rowsOf(result).map((row, index) => {
-    const isNew = index === 0
+    const isNew = index === 0 && isUnread(row)
     const timeVal = Number(row.notifyTime) || (row.notifyTime as string)
     return {
       id: textOf(row.id),
