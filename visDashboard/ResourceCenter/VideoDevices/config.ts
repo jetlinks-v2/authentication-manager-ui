@@ -4,7 +4,7 @@ export const config = {
   name: i18n.global.t('resourceDashboard.VideoDevices'), type: 'resourceCenterVideoDevices',
   componentProps: {
     style: { width: '100%', height: '100%' },
-    gridItem: { x: 0, y: 0, w: 3, h: 4, minW: 3, minH: 4 },
+    gridItem: { x: 0, y: 0, w: 3, h: 4, minW: 2, minH: 3 },
     resourceCenterVideoDevices: { ...defaultSettings },
   },
 }

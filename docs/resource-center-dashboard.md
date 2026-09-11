@@ -12,7 +12,7 @@
 
 接入现有菜单 `resources/Dashboard`、路径 `/resources/dashboard`。页面位于 `views/resources/Dashboard/index.vue`，由模块已有 `getModuleRoutesMap` 自动发现，不增加兼容路由或修改已下发菜单。页面交互使用 `editable=false`、`layoutEditable=true`、`storageKey=resource-center-dashboard`：允许调整已有组件的位置和大小，布局保存在当前浏览器 localStorage，不显示画布设置、组件编辑、添加或删除入口。保留组件自身的时间/类型筛选、重试和快捷跳转，继续遵守 SaaS/私有化可见规则。外层页面负责滚动，画布不增加内层滚动条。
 
-快速开始仅复用目标页已有新增弹层，没有弹层时只跳转，不为快捷入口新增按钮或弹窗。边缘节点、物联设备进入统一设备列表对应分类，并以一次性 `action=create` 打开已有新增弹层；大屏进入可视化作品列表并打开已有创建弹窗，默认选择“大屏”。目标页消费动作后移除参数，避免刷新时重复打开。视频设备仅携带 `type=video` 进入视频分类，不携带创建动作；私有化采集器/物联网卡入口保持原有跳转。
+快速开始仅复用目标页已有新增能力，没有弹层时只跳转，不为快捷入口新增按钮或弹窗。边缘节点、物联设备进入统一设备列表对应分类，并以一次性 `action=create` 打开已有新增弹层；大屏进入可视化作品列表并打开已有创建弹窗，默认选择“大屏”。目标页消费动作后移除参数，避免刷新时重复打开。视频设备携带 `type=video&action=create` 进入视频分类，由统一设备列表自动触发路由型视频接入 `media/Device/Save` 并清理参数；私有化采集器/物联网卡入口保持原有跳转。
 
 入口配置位于 `visDashboard/ResourceCenter/hooks/useQuickStart.ts`；目标页动作分别由 `device-manager-ui/views/device/list/unified/useUnifiedDeviceActions.ts` 和 `visualization-manager-ui/views/project/hooks/useVizScreenBoard.ts` 承接，展示组件只传递菜单编码。整理后 Chrome 复验四个入口通过：三项已有弹层正常打开、关闭并清理动作参数，视频仅跳转且无新增按钮或弹窗，控制台 error 为 0。未执行编译或代码自动化测试；未提交真实创建数据，保存流程及私有化环境未覆盖。
 
@@ -56,6 +56,7 @@ const { catalog, dashboard, loading, errors } = useResourceDashboard(preview)
 | 数据采集 | channel/collector `_count`；异常为 runningState != running | 当前 SaaS 代理四个请求均 404，运行态已隐藏；需私有化环境继续实测 |
 | 物联网卡 | `/dashboard/_multi`，flow/networkCardFlow/trend 与 rank；MB 展示时转换；排行为本月 | 两个请求 200，暂无流量记录；非空映射和排序通过隔离数据测试 |
 | 设备分布 | `/space/_query/tree`、`/space/data-bind/_query/no-paging`；设备 ID 范围复用概览 | 全部 200，回显园区/E栋/4F 三个空间，各类型当前均为 0 |
+| 算法覆盖统计 | `GET /ai/edge/task/coverage/scene/_counts` 与 `_count`；展示各算法通道数，并计算未配置通道 | 后端待部署，已完成前端契约对接与容错 |
 | 快速开始 | 通过当前 menu store 的叶子菜单编码导航 | 边缘网关、物联设备、视频设备、大屏页面均实测跳转；私有化入口待对应环境验收 |
 
 分布按直属空间统计，同空间目标去重，不汇总子空间到父空间。边缘节点统计绑定引用的有效 edgeDeviceId 或直接绑定的网关 deviceId；物联设备排除视频通道与非物联产品；视频使用边缘节点+设备+通道组合去重。展示超限合并为其他，总数和圆环口径保持一致。同一目标绑定多个空间时会分别计入对应空间。
@@ -99,3 +100,92 @@ const { catalog, dashboard, loading, errors } = useResourceDashboard(preview)
 浏览器私有化预览实测：快速开始与采集卡同顶同底；两图表宽595px、高628px并排，底部与右侧物联网卡齐平；九卡均无内容溢出，编辑拖动入口为0。统计卡标题间距16px、图表6px的新样式已加载。SFC编译及diff检查通过，未重复执行全量构建。
 
 物联网卡复核：三块用量块均为38.398px，与原型38.398px一致，值字号统一16px；排行使用space-around，当前大卡片实测相邻行步进一致，第三名蓝色，无内容溢出。已重新挂载私有化只读示例预览。SFC编译和diff检查通过，本次仅展示样式调整，未运行全量构建。
+
+### 新增组件与页面布局更新（算法覆盖统计与视频播放趋势）
+
+根据最新设计原型（私有化 24 列原型图与 SaaS 12 列原型图），新增两个资源中心组件，并重塑页面布局网格：
+
+1. **新增组件**：
+   - `AlgorithmCoverage`（算法覆盖统计）：展示各算法绑定的设备台数水平进度条，已配置算法为品牌蓝，未配置为告警红；卡片右上角提供“算法配置 >”操作，联动 `algorithm-center` 菜单。
+   - `VideoPlaybackTrend`（视频播放趋势）：基于 Echarts 柱状图展示分时播放频次（00:00–23:00），右上角支持今天、昨天、近3天、近7天、近30天分段切换。
+2. **布局调整**：
+   - **私有化 24 列三栏布局**：
+     - 顶层 4 个统计卡保持不变（各 6 列，高 4 行，y=0..3）。
+     - 左栏（宽 9 列，x=0）：快速开始（y=4, h=7）、算法覆盖统计（y=11, h=8）、设备分布（y=19, h=8）。
+     - 中栏（宽 9 列，x=9）：数据采集（y=4, h=7）、视频播放趋势（y=11, h=8）、设备上报消息趋势（y=19, h=8）。
+     - 右栏（宽 6 列，x=18）：物联网卡（y=4, h=23，贯穿右侧）。
+     - 三栏底边完美对齐于 y=27。
+   - **SaaS 12 列双栏布局**：
+     - 顶层 4 个统计卡保持不变（各 3 列，高 4 行，y=0..3）。
+     - 左栏（宽 6 列，x=0）：快速开始（y=4, h=6）、算法覆盖统计（y=10, h=8）、设备分布（y=18, h=8）。
+     - 右栏（宽 6 列，x=6）：设备上报消息趋势（y=4, h=6，与快速开始同高）、视频播放趋势（y=10, h=16，贯穿右侧下半部）。
+     - 双栏底边完美对齐于 y=26。
+3. **接口口径与待解决问题**：
+   - 算法覆盖统计按最新后端契约对接 `GET /ai/edge/task/coverage/scene/_counts` 与 `_count`：提取场景与算法名称、通道数，结合视频设备总数动态展示未配置通道；视频播放趋势目前仍等待对应接口。
+4. **验证结果**：
+   - `node modules/authentication-manager-ui/scripts/verify-overview-components.cjs` 通过（50 个 Vue SFC，0 错误）。
+   - `node modules/authentication-manager-ui/scripts/verify-resource-dashboard.cjs` 通过（全项断言与新增组件验证通过）。
+
+### 私有化三栏高度对齐与数据采集布局优化
+
+1. **卡片高度与底边对齐**：
+   - 调整 `DeviceDistribution`、`MessageTrend`、`VideoPlaybackTrend` 等组件配置的 `minH` 约束至 6，避免网格引擎在加载时触发 clamp 导致行高与设定值冲突。
+   - 统一私有化 24 列三栏网格坐标系：
+     - 第一行：快速开始（y=4, h=7）、数据采集（y=4, h=7）
+     - 第二行：算法覆盖统计（y=11, h=9）、视频播放趋势（y=11, h=9）
+     - 第三行：设备分布（y=20, h=9）、设备上报消息趋势（y=20, h=9）
+     - 右侧贯穿栏：物联网卡（y=4, h=25，7 + 9 + 9 = 25）
+     - 左、中、右三栏底边严格对齐于 y=29，中间各行高度完全匹配，彻底消除错位断层。
+   - `TrendPanel.vue` 中图表容器 `min-height` 统一调整为 180px，与 `VideoPlaybackTrendPanel.vue` 一致。
+2. **数据采集卡片纵向布局与预览数据（图二）**：
+   - `MetricPanel.vue` 中 `.collection` 容器改为垂直流式布局（`flex-direction: column; gap: 8px; height: 100%`），子项通道与采集器卡片上下等高排列（`flex: 1`），内部上行展示图标、名称与右浮动异常标签，下行展示大号数值。
+   - 彻底移除 `ResourceWidget.vue` 内部的“部分数据加载失败”提示条。
+   - `useResourceWidget.ts` 与 `MetricPanel.vue` 双重保障兜底机制：当后端未就绪或接口 404 时，无缝回退原型样例数据（通道 32 / 异常 2；采集器 8 / 异常 1），彻底杜绝异常破折号 `—` 与错误重试条。
+   - `useQuickStart.ts` 支持私有化预览模式透传，完整渲染 6 项快捷操作入口。
+3. **数据采集内容完整展示与快速开始增高对齐（h: 7）**：
+   - 解决数据采集卡片第二项“采集器 8”数字受高度限制被截断的问题，将私有化布局与 SaaS 布局的第一行（`快速开始`、`数据采集`、`设备上报消息趋势`）高度调整为 **`h: 7`**（可用内容高度 158px）。
+   - 数据采集内部通道与采集器（两张子卡各 75px）上下均匀舒展，数字及标签完整可见，彻底解除遮挡。
+   - `快速开始` 卡片高度同步增加至 `h: 7` 对齐，两排按钮自适应等比增高（每排 74px），按钮图标、主副标题垂直居中充盈整卡，无留白无断层。
+   - 网格全局对齐：
+     - **私有化**：Row 1（y: 4, h: 7）、Row 2（y: 11, h: 9）、Row 3（y: 20, h: 9）、右侧物联网卡（y: 4, h: 25），三栏底边严格齐平于 `y=29`。
+     - **SaaS**：Row 1（y: 4, h: 7）、Row 2（y: 11, h: 9）、Row 3（y: 20, h: 9）、右侧视频播放趋势（y: 11, h: 18），左右两栏底边严格齐平于 `y=29`。
+4. **移除临时切换逻辑**：
+   - 清理正式页面 `views/resources/Dashboard/index.vue` 中的悬浮切换按钮与本地临时状态，恢复由底层 `isSaaS` 判定实际部署形态：私有化下渲染 24 列三栏布局，SaaS 下渲染 12 列双栏布局。
+
+## 组件缩放支持与响应式优化
+
+- **缩放手柄与层级**：`GridCanvas.vue` 提供高层级（`z-index: 10`）且悬浮高亮品牌色的拖拽角标，避免卡片内图表与操作按钮遮盖缩放手柄。
+- **放宽尺寸约束**：
+  - 顶部指标卡（EdgeNodes / IotDevices / VideoDevices / Visualization）约束调整为 `minW: 2, minH: 3`，支持向小缩小或拉伸放大；
+  - 快速开始（QuickStart）约束调整为 `minW: 4, minH: 5`，保持 3 列双行（或 4 项时双列双行）卡片网格布局，移除导致按钮被压缩为单字省略的单行 6 列容器查询；窄容器自适应 2 列或单列。
+- **图表与面板自适应**：
+  - `DistributionPanel.vue`、`TrendPanel.vue` 与 `VideoPlaybackTrendPanel.vue` 将固定 `min-height` 优化为 `min-height: 0`，配合 ECharts 内置 ResizeObserver，卡片高度缩小（如 h=6~8）时不产生内部竖向滚动条；
+  - `DistributionPanel.vue` 在宽容器（`>= 580px`）下图例自动扩展为双列，提高空间利用率；
+  - `MetricPanel.vue` 增加垂直居中，在卡片高度放大时指标内容自然居中，宽容器支持指标与明细横向排布；
+  - `AlgorithmCoveragePanel.vue` 增加 `overflow-y: auto` 兜底保护。
+
+## 2K/4K 动态边距与资源中心对齐修复
+
+- **大屏自适应与对齐顶部菜单**：
+  - 移除固定 `max-width: 1440px`，将 `.resource-dashboard` 调整为 `width: 100%`，并在无侧栏时对齐顶部导航菜单起始点；
+  - 1080p（>= 1600px）下边距设为 `var(--sidebar-w, 224px)`，2K（>= 2560px）下设为 `256px`，4K（>= 3200px）下设为 `336px`，较小屏幕使用 `clamp(24px, 12vw, 224px)` 自适应收缩；
+  - 既保障了与顶部导航菜单的严丝合缝垂直对齐，又避免了 2K/4K 下数百至上千像素的巨额空白，卡片自动按 24 列/12 列网格平滑铺满可视宽度。
+- **资源中心条目左侧留白对齐**：
+  - `ResourceItem.vue` 将文字专属包裹为 `.resource-item-label` 并仅对其设置 `flex: 1`，`.home-icon` 与 `HomeIcon.vue` 锁定 `flex: 0 0 18px; width: 18px`，修复此前由于 Ant Design 图标渲染为 `span` 导致被赋予 `flex: 1` 撑开留白的对齐问题。
+
+## 组件空状态（空页面展示）实施
+
+1. **功能实现**：
+   - **统一空状态组件（ResourceEmpty）**：
+     - `visDashboard/ResourceCenter/components/ResourceEmpty.vue`，支持自定义图标/插槽、标题、说明文案、主按钮文本及点击事件回调。
+   - **各监控面板专属空状态接入**：
+     - **设备上报消息趋势（TrendPanel）**：无数据或全 0 时展示“还没有接入物联设备 / 接入后可查看设备上报消息趋势 / 去接入物联设备”，图标为 `LineChartOutlined`，点击跳转物联设备列表新增。
+     - **算法覆盖统计（AlgorithmCoveragePanel）**：无视频设备或未配置算法时展示“还没有接入视频设备 / 接入摄像头后可统计算法覆盖情况 / 去接入视频设备”，图标为 `EyeOutlined`，点击跳转视频设备列表新增。
+     - **视频播放趋势（VideoPlaybackTrendPanel）**：无视频设备或播放量为 0 时展示“还没有接入视频设备 / 接入后可查看视频播放趋势 / 去接入视频设备”，图标为 `PlayCircleOutlined`，点击跳转视频设备列表新增。
+     - **设备分布（DistributionPanel）**：无空间或空间内无设备时展示“还没有配置空间 / 配置空间并绑定设备后可查看区域分布 / 去配置空间”，图标为 `EnvironmentOutlined`，点击跳转空间管理。
+     - **数据采集（MetricPanel）**：私有化下采集器与通道未配置时展示“还没有配置数据采集 / 配置通道与采集器后可采集设备数据 / 去配置数据采集”，图标为 `LineChartOutlined`，点击跳转数据采集。
+     - **物联网卡（FlowPanel）**：私有化下无物联卡或流量时展示“还没有开通物联网卡 / 开通物联网卡流量服务后可查看流量消耗 / 去新增物联网卡”，图标为 `WifiOutlined`，点击跳转物联卡管理。
+   - **顶部 Segmented 切换器隐藏**：
+     - `ResourceWidget.vue` 统一计算各组件的 `isEmpty` 状态；当处于空状态时，自动隐藏头部设备类型与时间范围的 `a-segmented` 切换器，严格还原设计原型。
+2. **验证结果**：
+   - `node modules/authentication-manager-ui/scripts/verify-resource-dashboard.cjs`：全项断言 PASS（覆盖生命周期过期响应废弃、卸载清理、预览隔离、分布去重、自然日范围、配置边界、部分错误容灾、趋势排序、物联卡汇总/排行及独立容错、算法覆盖与视频播放趋势空态逻辑）。

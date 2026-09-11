@@ -50,14 +50,14 @@
 | --- | --- | --- |
 | 设备/视频统计、可视化资源、应用列表、智能体统计、两类告警统计 | HTTP 200 | 展示真实数量或空态 |
 | 当前用户系统公告 `/notifications/_query` | 已按文档修正，当前会话初始化失败，尚未完成在线查询 | 保留载入/空/失败状态；不再以提供者列表为空作为无公告依据 |
-| 算法执行 `/ai/edge/task/operation/execution/detail/_query/no-paging` | HTTP 404 | 启用算法、覆盖通道显示 — |
+| 覆盖通道统计 `GET /ai/edge/task/coverage/scene/_count` | 后端待部署 | 提取 channelCount，独立失败容错显示 — |
 | 采集器 `/data-collect/collector/_count`、物联网卡 `/network/card/detail/_query` | 线上 HTTP 200；本地 9200 HTTP 404 | 本地对应数量显示 — |
 | 场景 `/scene/_query` | HTTP 403，缺少 `rule-scene:query` | 场景数量显示 — |
 | 配额上下文 `/console/project` | HTTP 404；本项目会话只有 token，缺少项目 ID | 配额卡显示加载失败；不会猜测 ID 或使用样例用量 |
 
 配额优先使用项目会话 ID；直接进入运行端且缺少 ID 时，按后端正式控制端项目列表契约匹配当前 code。当前运行端代理不提供该控制端接口，需部署侧提供控制端访问和完整项目上下文才能继续验证配额回显。算法中心虽能打开，但其场景树接口也返回 404；设备列表可打开，但部分明细请求权限不足。这些不属于组件渲染故障。
 
-快捷操作已移除文搜图、消息通知、成员管理和算法配置，保留添加设备、添加视频、接入边缘节点、创建应用、空间配置、视联告警、物联告警 7 项。空间配置通过菜单 `space/AreaManagement` 进入 `/resources/space/management`；视联告警和物联告警分别通过 `machine-vision/VisualAlarm`、`iot-user/device/alarm` 进入项目告警页面。创建应用先进入应用列表并以一次性 `action=create` 打开创建弹窗，列表与弹窗同时渲染；添加设备和接入边缘节点使用同一动作契约，由统一设备列表分别打开设备新增抽屉和网关接入弹窗。未配置的视频添加、采集器和卡管理入口保持禁用。既有运维专题页沿用源模块的演示契约，没有将其演示数据用于本次概览。
+快捷操作已移除文搜图、消息通知、成员管理和算法配置，保留添加设备、添加视频、接入边缘节点、创建应用、空间配置、视联告警、物联告警 7 项。空间配置通过菜单 `space/AreaManagement` 进入 `/resources/space/management`；视联告警和物联告警分别通过 `machine-vision/VisualAlarm`、`iot-user/device/alarm` 进入项目告警页面。创建应用先进入应用列表并以一次性 `action=create` 打开创建弹窗，列表与弹窗同时渲染；添加设备、接入边缘节点与添加视频使用统一动作契约，由统一设备列表分别打开设备新增抽屉、网关接入弹窗或跳转触发视频接入。未配置的采集器和卡管理入口保持禁用。既有运维专题页沿用源模块的演示契约，没有将其演示数据用于本次概览。
 
 ## 文件入口
 
@@ -127,6 +127,12 @@ UAT 项目编码为 ht_device，项目缓存 `project_ht_device.id` 为 20641686
 
 验证：实际 TS 转译执行通过 children 求和、父节点/深层节点不计数、空树为 0、覆盖接口 404 时算法仍正常回显及双接口失败分支；84 个 Vue SFC 编译与相对导入检查通过。此次未完成真实项目场景树数量的浏览器回显验证，未执行全量类型检查/构建。
 
+### 覆盖通道数量接口调整
+
+概览“资源中心”中的“覆盖通道”数量统计从原先遗留的 `/ai/edge/task/operation/execution/detail/_query/no-paging` 切换为后端新定义的 `GET /ai/edge/task/coverage/scene/_count`，响应结构为 `{ channelCount: number }`。
+- 在 `visDashboard/Base/shared/apiResult.ts` 增加 `channelCountOf` 解析器，支持直接对象与 `result` 包装两种格式。
+- 在 `visDashboard/Base/shared/apiAlgorithms.ts` 实现 `loadCoverageChannelCount`，并通过 `Promise.allSettled` 与算法树查询保持独立，单项失败不影响算法总数回显。
+
 ### 192.168.33.59 公告查询实测
 
 在该环境现有登录会话中，以概览完全相同的 `POST /api/notifications/_query` 参数（paging=true/pageIndex=0/pageSize=4、notifyTime desc、topicProvider eq SystemBulletin）实测 HTTP 200，total=1。记录为“运营平台公告测试”，notifyTime=1788948899403（2026-09-09 18:14:59），state=unread。未发布新公告、未修改已读状态。
@@ -145,9 +151,9 @@ UAT 项目编码为 ht_device，项目缓存 `project_ht_device.id` 为 20641686
 
 ### 隐藏资源分组后的布局
 
-资源子卡片仅剩一项时使用 `:only-child` 横跨整行，消除 SaaS 隐藏采集器与物联网卡后的空位；两项时仍均分两列，窄屏沿用单列规则。仅调整 Resources 展示样式，不变更数据与平台判断。
+SaaS 隐藏采集器与物联网卡后，“设备与接入”仅保留“设备”单卡；当设备组为 1 卡、可视化组为 2 卡时，顶层两列网格自适应为 `1fr 2fr`（`.home-resources--asymmetric`），使“设备”（约 338px）、“大屏”（约 333px）、“素材库”（约 333px）三卡视觉宽度完全等宽，彻底解决数值靠右拉伸过长导致与右侧分组视觉粘连的亲密性失衡问题；私有化两组各 2 卡时自动保持 1:1 均分。窄屏（<=620px）沿用单列规则。
 
-验证：9200 浏览器实测单设备卡宽 508px，与分组宽度一致；可视化两卡各 248px，保持均分。84 个 Vue SFC 与相对导入检查通过。纯 CSS 修改未重复全量类型检查/构建。
+验证：9200 浏览器实测单设备卡与可视化两卡宽度均约为 333~338px，第一行三卡等宽，数值居于合理位置；44 个 Vue SFC 与相对导入检查通过。纯 CSS/布局计算修改，未重复全量类型检查/构建。
 
 ### 概览滚动归属
 
@@ -167,4 +173,89 @@ Chrome 实测：画布 layout/content 的 overflowY 均为 visible；外层页�
 
 ### 概览原型样式与高度
 
-对照原型移除卡片头分隔线，标题统一18px常规字重，内边距按20px/24px组织；资源分组增加26px浅色图标底板，内部文案、快捷操作与状态行对齐原型。顶部三卡及公告调整为7行220px，资源中心16行526px，运维12行390px；保留18px间距、无侧栏居中、只读和现有业务取舍，不恢复已移除入口或虚构指标。浏览器实测标题18px、无卡片头分隔线，高度为220/526/390px；1920和1280视口下快捷操作、资源中心和运维内容无横纵溢出。视觉告警可正常展开并显示真实空态。43个SFC编译和diff检查通过；不运行全量构建。
+资源中心的每个资源项均为可访问菜单的按钮：菜单存在时可点击跳转，菜单或模块不存在时置灰并通过 Tooltip 说明不可用原因；视频资源使用“当前未开通视联模块相关功能”提示。禁用项由包裹触发节点承载 Tooltip，确保 disabled button 仍可悬浮提示；可用项 hover 为带 8px 左右留白的浅蓝背景和圆角过渡，外层保持 100% 宽度且在按钮内预留 0 8px 留白，子分组标题同步增加 8px 内边距保持对齐，不在 hover 时改变尺寸，避免文字抖动与贴边；不再使用整行蓝色 outline，键盘 focus 仍保留可见边框。SaaS 平台隐藏采集器、物联网卡和智能体，算法分组标题为“算法与规则引擎”；私有化保留采集器、物联网卡和智能体。资源项导航复用 menu store 的实际菜单编码，不新增路由。
+
+对照原型移除卡片头分隔线，标题统一18px常规字重，内边距按20px/24px组织；资源分组增加26px浅色图标底板，内部文案、快捷操作与状态行对齐原型。顶部三卡及公告调整为7行220px，资源中心16行526px，运维12行390px；保留18px间距、无侧栏居中、只读和现有业务取舍，不恢复已移除入口或虚构指标。浏览器实测标题18px、无卡片头分隔线，高度为220/526/390px；1920和1280视口下快捷操作、资源中心和运维内容无横纵溢出。视觉告警可正常展开并显示真实空态。资源项与应用中心项 hover 已统一改为浅蓝背景（#eef5ff）与圆角过渡，修复左右贴边并移除原生重复 title 提示，禁用项图标同步置灰并通过 Tooltip 承载原因；44个 SFC/相对导入检查和 diff 检查通过；不运行全量构建。
+
+### 应用中心点击直接打开应用
+
+概览中的“应用中心”卡片（`visDashboard/Base/Applications`）点击逻辑调整：
+- 原逻辑：点击应用条目通过 `view.open` 跳转到应用管理详情配置页（`application-center/ProjectApplication/Detail`）。
+- 现逻辑：点击应用条目不再进入详情页，而是直接跳转打开该业务应用。
+- 实现细节：
+  - 复用 `useApplicationOpenGuard` 进行权限、用户绑定及角色准入检查；若存在待选角色弹出 `ApplicationRoleSelectModal` 角色绑定弹窗；准入通过后通过 `prepareApplicationAccess` 构建应用上下文及 URL 并直接打开应用。
+  - `ProjectHomeApplications.vue` 挂载 `ApplicationRoleSelectModal` 与状态控制，卡片点击触发 `@open="handleOpenApp"`；
+  - `HomeView.vue` 增加 `openingIds` 状态，打开过程中图标显示 `<a-spin size="small" />` 且按钮防重，停用应用或设计预览态保持禁用；
+  - `api.ts` 的 `loadApplications` 调用 `normalizeApplication` 将完整的 `ProjectApplication` 实体附加至 `HomeRow.application`。
+
+### 组件缩放支持与响应式优化
+
+- **缩放手柄可见性与层级**：`GridCanvas.vue` 中增强 `.vue-resizable-handle`，设置 `z-index: 10` 与明确的直角拖拽微交互手柄（悬停高亮为主色），防止被内部按钮（自带 `position: relative`）或图表覆盖。
+- **持久化保护**：`useDashboardState.ts` 在外部 `options.value` 响应式更新时优先合并回填 `localStorage` 中的用户自定义尺寸与位置，防止组件更新重置布局。
+- **尺寸约束合并**：`useOverviewDashboard.ts` 映射组件时合并 `defaultGridItem` 与 `defaultConfig.componentProps.gridItem`，正确保留 `minW: 3, minH: 6` 约束。
+- **响应式排版**：
+  - `views.less` 修复 `@container business-component-shell` 规则特异度顺序，确保窄屏（`< 360px`）切实生效双列；宽屏（`>= 680px`）快捷操作与用量配额自适应多列；
+  - 资源分组子卡在 `< 480px` 时平滑切为单列，配合 `ResourceItem.vue` 的文字省略与数值 `nowrap` 保护，彻底消除折行与错位；
+  - 运维状态与用量配额在 `< 440px` 时平滑降级为单列；应用中心标题与描述增加截断保护与宽容器双列自适应。
+
+### 2K/4K 动态边距与资源中心对齐修复
+
+- **无侧栏时对齐顶部菜单起始位置与大屏自适应**：
+  - 需求背景：由于概览页面无左侧二级菜单，若贴边放置会导致卡片在左侧 logo 标题下方展开，缺乏呼吸留白；因此让卡片左边界与顶部导航菜单（“概览”）的起始位置保持垂直对齐，右侧保持对称留白。
+  - 实现方案：
+    - 移除硬编码的 `max-width: 1440px`。
+    - 针对无侧栏布局，设置 `--overview-side-margin`：
+      - 1080p（>= 1600px）：对齐 `var(--sidebar-w, 224px)`，卡片与顶部菜单“概览”起点严格垂直对齐；
+      - 2K（>= 2560px）：边距设为 `256px`（对应 2K 顶栏品牌区 240px 宽度 + 16px 菜单间距），对齐 2K 顶部菜单且内容宽达 2048px，消除原 560px 过大留白；
+      - 4K（>= 3200px）：边距设为 `336px`（对应 4K 顶栏品牌区 320px 宽度 + 16px 菜单间距），对齐 4K 顶部菜单且内容宽达 3168px，消除原 1200px 过大留白；
+      - 较小屏幕（< 1600px）：使用 `clamp(24px, 12vw, 224px)` 动态缩小边距，保障卡片内容不被压缩。
+    - 结合外层容器已有的 16px 内边距，内边距设置为 `padding: 0 calc(var(--overview-side-margin) - var(--space-4, 16px)) var(--space-4)`。
+- **资源中心条目左侧留白对齐修复**：
+  - 问题原因：`ResourceItem.vue` 内部使用了 Ant Design Vue 的 `<HomeIcon>`，其底层渲染为 `<span class="anticon ... home-icon">`，此前样式的 `.home-resource-row span { flex: 1 }` 误将 `<HomeIcon>` 也设置为 `flex: 1`，导致图标宽度被撑大至容器一半并将图标居中，在条目左侧产生大面积空白并推挤文字。
+  - 优化方案：为文字包裹 `<span class="resource-item-label">` 并专属设置 `flex: 1` 与文本省略，同时为 `.home-icon` 与 `HomeIcon.vue` 显式设置 `flex: 0 0 18px; width: 18px; max-width: 18px`，确保图标固定靠左紧邻 8px 内边距与分组标题垂直对齐。
+
+### 用量与配额隐藏与运维监控置顶布局优化
+
+- **组件隐藏与布局优化**：
+  - 需求调整：隐藏用量与配额（`Quotas`）组件，不把快捷操作撑开，将“运维与监控”组件往上顶至第一行。
+  - 栅格布局调整（`views/project/Overview/useOverviewDashboard.ts`）：
+    - **左侧顶行（x: 0~7，总宽 8 列）**：
+      - `QuickActions`（快捷操作）：保持紧凑的 `w: 5, h: 7`（`x: 0, y: 0`），不横向撑开；
+      - `Applications`（应用中心）：保持 `w: 3, h: 7`（`x: 5, y: 0`），并排于快捷操作右侧；
+    - **左侧底行（x: 0~7，总宽 8 列）**：
+      - `Resources`（资源中心）：`x: 0, y: 7, w: 8, h: 16`，紧贴快捷操作与应用中心下方；
+      - 左侧列底边界为 `y = 7 + 16 = 23`。
+    - **右侧列（x: 8~11，总宽 4 列）**：
+      - `Operations`（运维与监控）：往上顶至第一行 `x: 8, y: 0, w: 4, h: 12`，紧凑清晰展示告警与健康状态；
+      - `Announcements`（系统公告）：紧随其下 `x: 8, y: 12, w: 4, h: 11`；
+      - 右侧列底边界为 `y = 12 + 11 = 23`，与左侧资源中心底部完全平齐对齐。
+  - 缓存与持久化隔离（`views/project/Overview/index.vue`）：
+    - 升级 `storage-key` 为 `project-overview-v4`，确保用户与浏览器直接加载最新清爽排版，不受历史旧版缓存拉伸或空洞影响。
+    - `useDashboardState.ts` 保持清洗废弃 ID 的能力，并移除强制扩大组件宽度的临时逻辑。
+
+### 快捷操作按钮简约重构与高度空隙优化
+
+- **设计调优（简约克制风格）**：
+  - 遵循用户“简约些”的要求，移除过于显眼的彩色圆角背景徽章和微投影白卡，回归克制内敛的 B2B 工业物联视觉风格：
+    1. **底板与边框**：静止状态沿用全局通用的浅灰面（`var(--home-card-surface)`，即 `#f7f8fa`），透明边框 `1px solid transparent`，与周围组件保持统一底色。
+    2. **图标与文字**：图标使用标准中性色线框图标（`18px`），与 `13px` 文本紧凑并排；取消每个按钮不同的花哨彩底。
+    3. **交互反馈**：悬停（hover）时平滑渐变为浅蓝底（`#eef5ff`）与浅蓝描边（`#d4e2ff`），文字与图标同步高亮为主色调（`var(--business-component-primary)`），与应用中心/资源项的 hover 规范统一。
+    4. **高度均分填充**：保持网格 `h: 6`（186px），内部 `.home-actions` 采用 `grid-template-rows: repeat(2, minmax(0, 1fr)); height: 100%;`，2 行按钮均匀分配卡片可用高度，每个按钮高度约 48px~52px，既解决原本底部留白空隙过大的问题，又保持视觉清爽简约。
+  - 升级存储键为 `project-overview-v5`，保证用户刷新后直接呈现最新的简约样式。
+
+## 快速上手组件与应用中心空状态实施
+
+1. **功能实现**：
+   - **快速上手组件（QuickGuide）**：
+     - 落地于 `visDashboard/Base/QuickGuide`（包括 `config.ts`、`index.ts`、`ProjectHomeQuickGuide.vue` 及 `components/HomeView.vue`）。
+     - SaaS 与私有化概览布局均默认搭载，占位 `x: 0, y: 6, w: 8, h: 5`，下方资源中心平滑顺延至 `y: 11, h: 17`；用量与配额隐藏不显示，右侧运维与监控置顶于 `x: 8, y: 0, w: 4, h: 12`，系统公告紧随其下于 `x: 8, y: 12, w: 4, h: 16`，左右两栏总高度齐平于 `y = 28`。
+     - **收起态**：紧凑单行流式排版，每步呈现为精致胶囊药丸（浅灰边框、淡色底板，带蓝色圆圈编号 ①~④ 与步骤标题），步间以淡灰 `>` 分隔，右侧设展开按钮（`DownOutlined`）。
+     - **展开态**：4 张横向均分卡片，包含序号圆圈、步骤标题、两行功能描述与底部带箭头的跳转链接按钮（`去接入 >` / `去配置 >`），右侧设收起按钮（`UpOutlined`）。
+     - 展开/收起状态通过 `localStorage('project-home-quick-guide-collapsed')` 进行用户级持久化，刷新后自动保持。
+     - 接入项目路由跳转（`useMenuStore.jumpPage`），分别直达边缘网关、设备新增、空间管理与算法中心。
+   - **应用中心空状态（Applications）**：
+     - `HomeWidget.vue` 支持 `#empty` 插槽与动态右上角更多文本；当 `feature === 'Applications'` 时右上角操作文案自适应展示为“查看所有应用 ›”。
+     - `ProjectHomeApplications.vue` 接入 `#empty` 专属空状态：居中大图标（`AppstoreOutlined`）、标题“暂无应用”、说明“可基于场景包快速创建应用，统一管理项目内的业务系统”，以及蓝色主按钮“去创建应用”。
+2. **验证结果**：
+   - `node modules/authentication-manager-ui/scripts/verify-overview-components.cjs`：53 个 Vue SFC 编译全部通过，0 SFC 错误，0 相对导入缺失。
+   - 浏览器与 Vite 编译正常，HMR 响应正常，控制台 0 报错。

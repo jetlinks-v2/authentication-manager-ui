@@ -1,5 +1,5 @@
 import { request } from '@jetlinks-web/core'
-import { rowsOf, recordOf, textOf } from './apiResult'
+import { rowsOf, recordOf, textOf, channelCountOf } from './apiResult'
 const enumValue = (value: unknown) => textOf(recordOf(value).value || value)
 /** 与算法中心一致：只将边端状态已确认的 enabled 绑定计入；执行中/未知结果不冒充精确统计。 */
 export const summarizeAlgorithms = (records: Record<string, unknown>[]) => {
@@ -17,11 +17,12 @@ export const summarizeAlgorithms = (records: Record<string, unknown>[]) => {
   }
   return { algorithm: algorithms.size, coverage: channels.size }
 }
-const loadBindingMetrics = async () => summarizeAlgorithms(rowsOf(await request.post(
-  '/ai/edge/task/operation/execution/detail/_query/no-paging',
-  { paging: false, terms: [], sorts: [{ name: 'lastSubmitTime', order: 'desc' }] },
-  { hiddenError: true },
-)))
+
+/** 覆盖通道数量查询接口：GET /ai/edge/task/coverage/scene/_count */
+export const loadCoverageChannelCount = async (): Promise<number> => {
+  const response = await request.get('/ai/edge/task/coverage/scene/_count', {}, { hiddenError: true })
+  return channelCountOf(response)
+}
 
 /** 算法对应场景的直属子项，父场景及更深层配置节点不计入数量。 */
 export const countSceneAlgorithms = (scenes: Record<string, unknown>[]): number => scenes.reduce(
@@ -33,7 +34,7 @@ export const loadAlgorithmMetrics = async (): Promise<{ algorithm?: number; cove
   const [algorithm, coverage] = await Promise.allSettled([
     request.post('/ai/scene/tree/_query/no-paging', { paging: false }, { hiddenError: true })
       .then(response => countSceneAlgorithms(rowsOf(response))),
-    loadBindingMetrics().then(result => result.coverage),
+    loadCoverageChannelCount(),
   ])
   return {
     algorithm: algorithm.status === 'fulfilled' ? algorithm.value : undefined,

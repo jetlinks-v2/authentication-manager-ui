@@ -1,4 +1,5 @@
-export type HomeFeature = 'QuickActions' | 'Applications' | 'Resources' | 'Quotas' | 'Operations' | 'Announcements'
+import type { ProjectApplication } from '../../../views/application-center/ProjectApplication/types'
+export type HomeFeature = 'QuickActions' | 'Applications' | 'Resources' | 'Quotas' | 'Operations' | 'Announcements' | 'QuickGuide'
 export interface HomeChart {
   displayStyle: string
   fontSize: number
@@ -32,4 +33,5 @@ export interface HomeRow {
   target?: HomeTarget
   notification?: Record<string, unknown>
   failed?: boolean
+  application?: ProjectApplication
 }

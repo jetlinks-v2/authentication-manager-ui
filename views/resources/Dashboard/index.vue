@@ -35,14 +35,34 @@ const { catalog, dashboard, loading, errors, reload } = useResourceDashboard(ref
   margin-inline: auto;
   height: auto;
   min-height: 0;
-  padding: var(--space-4);
   box-sizing: border-box;
 }
 .resource-dashboard-state { min-height: 30rem; display: grid; place-items: center; }
-/* 无左侧菜单时与概览保持相同的居中留白。 */
+
+/* 无侧栏时对齐顶部菜单起始位置，并在 2K/4K 大屏保持自适应留白 */
 .basic-layout-page:not(:has(.ant-layout-sider)):not(:has(.project-secondary-menu .ant-tabs-left)) .resource-dashboard {
-  width: 90%;
-  max-width: 1440px;
+  --overview-side-margin: clamp(24px, 12vw, 224px);
+  width: 100%;
+  max-width: none;
+  padding: 0 calc(var(--overview-side-margin) - var(--space-4, 16px)) var(--space-4);
+}
+
+@media (min-width: 1600px) {
+  .basic-layout-page:not(:has(.ant-layout-sider)):not(:has(.project-secondary-menu .ant-tabs-left)) .resource-dashboard {
+    --overview-side-margin: var(--sidebar-w, 224px);
+  }
+}
+
+@media (min-width: 2560px) {
+  .basic-layout-page:not(:has(.ant-layout-sider)):not(:has(.project-secondary-menu .ant-tabs-left)) .resource-dashboard {
+    --overview-side-margin: 256px;
+  }
+}
+
+@media (min-width: 3200px) {
+  .basic-layout-page:not(:has(.ant-layout-sider)):not(:has(.project-secondary-menu .ant-tabs-left)) .resource-dashboard {
+    --overview-side-margin: 336px;
+  }
 }
 /* 由外层页面滚动，避免固定画布高度产生第二条滚动条。 */
 .resource-dashboard :deep(.dashboard-card-layout),

@@ -1,6 +1,6 @@
 <template>
   <HomeWidget feature="Resources" :info="info" :is-edit="isEdit">
-    <template #default="view"><HomeView :rows="view.rows" :chart="view.chart" /></template>
+    <template #default="view"><HomeView v-bind="view" /></template>
   </HomeWidget>
 </template>
 <script setup lang="ts">

@@ -1,4 +1,8 @@
-export const kinds = ['EdgeNodes', 'IotDevices', 'VideoDevices', 'Visualization', 'QuickStart', 'MessageTrend', 'Collection', 'NetworkCards', 'DeviceDistribution'] as const
+export const kinds = [
+  'EdgeNodes', 'IotDevices', 'VideoDevices', 'Visualization', 'QuickStart',
+  'AlgorithmCoverage', 'VideoPlaybackTrend', 'MessageTrend', 'Collection',
+  'NetworkCards', 'DeviceDistribution'
+] as const
 export type ResourceKind = typeof kinds[number]
 export type DeviceKind = 'edge' | 'iot' | 'video'
 export type TimeRange = 'today' | 'yesterday' | '3d' | '7d' | '30d'
@@ -14,16 +18,28 @@ export interface ResourceInfo {
   componentProps?: Record<string, unknown>
 }
 export interface Metric { key: string; value?: number; failed?: boolean }
-export interface Datum { id: string; name: string; value: number }
+export interface AlgorithmCoverageItem {
+  id: string
+  name: string
+  title?: string
+  value: number
+  unconfigured?: boolean
+  sceneId?: string
+  sceneName?: string
+  taskTarget?: { value?: string; text?: string } | string
+  gatewayCount?: number
+  channelCount?: number
+}
 export interface ResourceData {
   metrics: Metric[]
   distribution: Datum[]
   series: { time: string; value: number }[]
   ranking: Datum[]
   rankingFailed?: boolean
+  algorithms?: AlgorithmCoverageItem[]
 }
 export const typeOf = (kind: ResourceKind) => `resourceCenter${kind}`
-export const emptyData = (): ResourceData => ({ metrics: [], distribution: [], series: [], ranking: [] })
+export const emptyData = (): ResourceData => ({ metrics: [], distribution: [], series: [], ranking: [], algorithms: [] })
 export const defaultSettings: ResourceConfig = { title: '', refreshSeconds: 60, deviceType: 'iot', timeRange: 'today', limit: 8 }
 
 /** 归一化画布配置；刷新下限避免误配置产生高频请求，0 表示不自动刷新。 */

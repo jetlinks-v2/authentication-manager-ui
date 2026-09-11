@@ -2,12 +2,17 @@
   <a-card class="project-home-shell" :data-home-feature="feature" :bordered="false" :title="t(`packages.ProjectHome.${feature}`)"
     :style="tokens" :body-style="{ flex: 1, minHeight: 0, padding: '16px 24px 20px' }">
     <template #extra>
-      <a-button v-if="moreTarget && config.chart.navigation" type="link" size="small" :disabled="!canOpen(moreTarget)" @click="open(moreTarget)">
-        {{ t('packages.ProjectHome.more') }} ›
-      </a-button>
+      <slot name="extra" :more-target="moreTarget" :can-open="canOpen" :open="open">
+        <a-button v-if="moreTarget && config.chart.navigation" type="link" size="small" :disabled="!canOpen(moreTarget)" @click="open(moreTarget)">
+          {{ moreText }} ›
+        </a-button>
+      </slot>
     </template>
     <div v-if="loading && !rows.length" class="home-state"><a-spin /></div>
-    <div v-else-if="error || !rows.length" class="home-state"><a-empty :description="t(error ? 'packages.ProjectHome.loadError' : 'packages.ProjectHome.empty')" /></div>
+    <div v-else-if="error" class="home-state"><a-empty :description="t('packages.ProjectHome.loadError')" /></div>
+    <slot v-else-if="!rows.length" name="empty" :can-open="canOpen" :open="open">
+      <div class="home-state"><a-empty :description="t('packages.ProjectHome.empty')" /></div>
+    </slot>
     <slot v-else :rows="rows" :chart="config.chart" :can-open="canOpen" :open="open" />
   </a-card>
 </template>
@@ -27,6 +32,10 @@ const config = computed(() => getHomeConfig(props.feature, props.info))
 const { rows, loading, error } = useHomeRuntime(props.feature, computed(() => props.isEdit), computed(() => config.value.refreshTime), computed(() => props.refreshKey || 0))
 const { canOpen, open } = useHomeNavigation(computed(() => config.value.chart.navigation), computed(() => props.isEdit))
 const moreTarget = HOME_MORE_TARGETS[props.feature]
+const moreText = computed(() => {
+  if (props.feature === 'Applications') return t('packages.ProjectHome.ApplicationsMore')
+  return t('packages.ProjectHome.more')
+})
 const tokens = computed(() => ({
   '--home-font-size': `${config.value.chart.fontSize}px`,
   '--home-card-surface': '#f7f8fa',

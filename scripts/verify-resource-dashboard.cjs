@@ -5,7 +5,10 @@ const root = path.resolve(__dirname, '../../..');
 const esbuild = require(path.join(root,'node_modules/esbuild'));
 const group = path.join(root,'modules/authentication-manager-ui/visDashboard/ResourceCenter');
 let calls=[];
-global.__resourceRequest={post:async(...args)=>{calls.push(args);throw new Error('Unexpected request '+args[0])}};
+global.__resourceRequest={
+  post:async(...args)=>{calls.push(args);throw new Error('Unexpected request '+args[0])},
+  get:async(...args)=>{calls.push(args);throw new Error('Unexpected get '+args[0])}
+};
 (async()=>{
  const result=await esbuild.build({stdin:{contents:`export * from '${group}/services/distribution.ts';export * from '${group}/services/trends.ts';export * from '${group}/services/metrics.ts';export * from '${group}/shared.ts';export * from '${group}/hooks/useResourceWidget.ts';`,resolveDir:root},bundle:true,write:false,format:'cjs',platform:'node',packages:'external',plugins:[{name:'test-boundaries',setup(build){
  build.onResolve({filter:/^@jetlinks-web\/core$/},()=>({path:'request',namespace:'test'}));
@@ -41,11 +44,32 @@ global.__resourceRequest={post:async(...args)=>{calls.push(args);throw new Error
  const scope=effectScope();const edit=ref(false);let widget;
  scope.run(()=>{widget=api.useResourceWidget('MessageTrend',ref({componentProps:{resourceCenterMessageTrend:{refreshSeconds:0}}}),edit)});
  assert.equal(pending.length,1);widget.timeRange.value='7d';await nextTick();assert.equal(pending.length,2);
- pending[1]({status:200,result:[{data:{timeString:'2026-09-10',value:7}}]});await new Promise(setImmediate);
- pending[0]({status:200,result:[{data:{timeString:'2026-09-09',value:1}}]});await new Promise(setImmediate);
+ pending[1]({status:200,result:[{data:{timeString:'2026-09-10',value:7}}]});await new Promise(resolve => setTimeout(resolve, 20));
+ pending[0]({status:200,result:[{data:{timeString:'2026-09-09',value:1}}]});await new Promise(resolve => setTimeout(resolve, 20));
  assert.equal(widget.data.value.series[0].value,7);assert.equal(widget.loading.value,false);
  edit.value=true;await nextTick();assert.equal(pending.length,2);assert.equal(widget.data.value.series.length,24);
  edit.value=false;await nextTick();assert.equal(pending.length,3);scope.stop();
- pending[2]({status:200,result:[{data:{timeString:'2026-09-10',value:99}}]});await new Promise(setImmediate);assert.notEqual(widget.data.value.series[0]?.value,99);
- console.log('PASS: lifecycle stale responses, unmount cleanup, preview request isolation;  distribution deduplication, device scopes, tree flattening, invalid metrics, five natural-day ranges, config bounds, partial errors, trend ordering, flow sums/ranking and independent failure');
+ pending[2]({status:200,result:[{data:{timeString:'2026-09-10',value:99}}]});await new Promise(resolve => setTimeout(resolve, 20));assert.notEqual(widget.data.value.series[0]?.value,99);
+ global.__resourceRequest.get=async(path)=>{
+   calls.push([path]);
+   if(path==='/ai/edge/task/coverage/scene/_counts')return {status:200,result:[
+     {sceneId:'demoData',sceneName:'消防通道检测',taskTarget:{value:'SmokingBehaviorDetection',text:'抽烟行为检测'},gatewayCount:1,channelCount:1}
+   ]};
+   if(path==='/ai/edge/task/coverage/scene/_count')return {status:200,result:{channelCount:1}};
+   throw Error(path);
+ };
+ const algoScope=effectScope();let algoWidget;
+ algoScope.run(()=>{algoWidget=api.useResourceWidget('AlgorithmCoverage',ref({}),ref(false))});
+ await new Promise(resolve => setTimeout(resolve, 20));
+ assert.equal(algoWidget.data.value.algorithms.length,2);
+ assert.equal(algoWidget.data.value.algorithms[0].name,'抽烟行为检测');
+ assert.equal(algoWidget.data.value.algorithms[0].value,1);
+ assert.equal(algoWidget.data.value.algorithms.find(x=>x.id==='unconfigured').value,4);
+ algoScope.stop();
+ const videoScope=effectScope();let videoWidget;
+ videoScope.run(()=>{videoWidget=api.useResourceWidget('VideoPlaybackTrend',ref({}),ref(false))});
+ await new Promise(resolve => setTimeout(resolve, 20));
+ assert.equal(videoWidget.data.value.series.length,24);
+ videoScope.stop();
+ console.log('PASS: lifecycle stale responses, unmount cleanup, preview request isolation;  distribution deduplication, device scopes, tree flattening, invalid metrics, five natural-day ranges, config bounds, partial errors, trend ordering, flow sums/ranking and independent failure; algorithm coverage and video playback trend widgets');
 })().catch(error=>{console.error(error);process.exitCode=1});

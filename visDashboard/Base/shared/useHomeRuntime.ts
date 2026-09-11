@@ -3,7 +3,12 @@ import { loadHomeRows } from './api'
 import { QUICK_ACTIONS } from './navigation'
 import type { HomeFeature, HomeRow } from './types'
 /** 每轮完成后再安排刷新；配置变更、离页时丢弃旧响应并清理定时器。 */
-export function useHomeRuntime(feature: HomeFeature, isEdit: Ref<boolean>, refreshTime: Ref<number>, refreshKey: Ref<number> = ref(0)) {
+export function useHomeRuntime(
+  feature: HomeFeature,
+  isEdit: Ref<boolean>,
+  refreshTime: Ref<number>,
+  refreshKey: Ref<number> = ref(0)
+) {
   const rows = ref<HomeRow[]>([]), loading = ref(false), error = ref(false)
   let generation = 0
   let timer: ReturnType<typeof setTimeout> | undefined
