@@ -182,13 +182,13 @@ const { catalog, dashboard, loading, errors } = useResourceDashboard(preview)
      - **设备上报消息趋势（TrendPanel）**：无数据或全 0 时展示“还没有接入物联设备 / 接入后可查看设备上报消息趋势 / 去接入物联设备”，图标为 `LineChartOutlined`，点击跳转物联设备列表新增。
      - **算法覆盖统计（AlgorithmCoveragePanel）**：无视频设备或未配置算法时展示“还没有接入视频设备 / 接入摄像头后可统计算法覆盖情况 / 去接入视频设备”，图标为 `EyeOutlined`，点击跳转视频设备列表新增。
      - **视频播放趋势（VideoPlaybackTrendPanel）**：无视频设备或播放量为 0 时展示“还没有接入视频设备 / 接入后可查看视频播放趋势 / 去接入视频设备”，图标为 `PlayCircleOutlined`，点击跳转视频设备列表新增。
-     - **设备分布（DistributionPanel）**：无空间或空间内无设备时展示“还没有配置空间 / 配置空间并绑定设备后可查看区域分布 / 去配置空间”，图标为 `EnvironmentOutlined`，点击跳转空间管理。
+     - **设备分布（DistributionPanel）**：无空间时展示“还没有配置空间 / 配置空间并绑定设备后可查看区域分布 / 去配置空间”；空间存在但当前设备维度无绑定时展示“当前维度暂无绑定设备 / 请在空间管理中为当前设备类型绑定设备 / 去配置空间”，图标为 `EnvironmentOutlined`，点击跳转空间管理。三种设备维度切换器始终保留，避免某一维度为空时阻断其他维度查看。
      - **数据采集（MetricPanel）**：私有化下采集器与通道未配置时展示“还没有配置数据采集 / 配置通道与采集器后可采集设备数据 / 去配置数据采集”，图标为 `LineChartOutlined`，点击跳转数据采集。
      - **物联网卡（FlowPanel）**：私有化下无物联卡或流量时展示“还没有开通物联网卡 / 开通物联网卡流量服务后可查看流量消耗 / 去新增物联网卡”，图标为 `WifiOutlined`，点击跳转物联卡管理。
-   - **顶部 Segmented 切换器隐藏**：
-     - `ResourceWidget.vue` 统一计算各组件的 `isEmpty` 状态；当处于空状态时，自动隐藏头部设备类型与时间范围的 `a-segmented` 切换器，严格还原设计原型。
+   - **设备分布维度切换**：
+     - `ResourceWidget.vue` 保留设备分布头部的 `a-segmented` 切换器，即使当前维度无数据也允许切换到其他维度；时间趋势组件继续按现有配置展示时间范围切换器。
 2. **验证结果**：
-   - `node modules/authentication-manager-ui/scripts/verify-resource-dashboard.cjs`：全项断言 PASS（覆盖生命周期过期响应废弃、卸载清理、预览隔离、分布去重、自然日范围、配置边界、部分错误容灾、趋势排序、物联卡汇总/排行及独立容错、算法覆盖与视频播放趋势空态逻辑）。
+   - `node modules/authentication-manager-ui/scripts/verify-resource-dashboard.cjs`：全项断言 PASS（覆盖生命周期过期响应废弃、卸载清理、预览隔离、分布去重、自然日范围、配置边界、部分错误容灾、趋势排序、物联卡汇总/排行及独立容错、算法覆盖与视频播放趋势空态逻辑）。浏览器实测设备分布空态下仍可切换三种维度：边缘节点显示 2，视频设备显示 16，物联设备显示“当前维度暂无绑定设备”。
 
 ## Figma 设计稿对齐（Node 7140:62696）
 

@@ -49,7 +49,7 @@ const screenRows = computed(() => props.rows.filter(r => r.group === 'visualizat
 <style scoped lang="less">
 .resource-card {
   background: #ffffff;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 16px;
   display: flex;
   flex-direction: column;

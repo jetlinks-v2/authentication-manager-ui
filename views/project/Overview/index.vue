@@ -10,7 +10,7 @@
       :catalog="catalog"
       :editable="false"
       :layout-editable="true"
-      storage-key="project-overview-v7"
+      storage-key="project-overview-v12"
       :preview-mode="false"
     />
   </main>

@@ -139,7 +139,7 @@ function handleAction(step: GuideStep) {
   container-name: business-component-shell project-home;
   container-type: size;
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: 6px;
   background: #fff;
   box-shadow: 0 1px 3px #1118270a;
   box-sizing: border-box;

@@ -2,7 +2,7 @@
   <section class="resource-widget" :class="{ 'is-metric-card': isMetricCard }" :data-resource-kind="kind" :aria-label="title">
     <header v-if="!isMetricCard">
       <h3>{{ title }}</h3>
-      <a-segmented v-if="kind === 'DeviceDistribution' && !isEmpty" v-model:value="deviceType" class="resource-switch" size="small" :options="deviceOptions" />
+      <a-segmented v-if="kind === 'DeviceDistribution'" v-model:value="deviceType" class="resource-switch" size="small" :options="deviceOptions" />
       <a-segmented v-if="['MessageTrend', 'VideoPlaybackTrend'].includes(kind)" v-model:value="timeRange" class="resource-switch" size="small" :options="timeOptions" />
       <a-button v-if="kind === 'AlgorithmCoverage'" type="link" size="small" class="action-link" @click="openAlgorithmConfig">
         {{ t('resourceDashboard.algorithmConfig') }} <RightOutlined class="action-arrow" />
@@ -49,28 +49,6 @@ const isMetricCard = computed(() => ['EdgeNodes', 'IotDevices', 'VideoDevices', 
 
 const deviceOptions = computed(() => ['edge', 'iot', 'video'].map(value => ({ value, label: t(`resourceDashboard.${value}`) })))
 const timeOptions = computed(() => ['today', 'yesterday', '3d', '7d', '30d'].map(value => ({ value, label: t(`resourceDashboard.range.${value}`) })))
-
-const isEmpty = computed(() => {
-  if (props.kind === 'MessageTrend') {
-    return !data.value.series?.length
-  }
-  if (props.kind === 'VideoPlaybackTrend') {
-    return !data.value.series?.length
-  }
-  if (props.kind === 'AlgorithmCoverage') {
-    return !data.value.algorithms?.length || data.value.algorithms.every(item => item.value === 0)
-  }
-  if (props.kind === 'DeviceDistribution') {
-    return !data.value.distribution?.length || data.value.distribution.every(item => item.value === 0)
-  }
-  if (props.kind === 'Collection') {
-    return !data.value.metrics?.length || data.value.metrics.every(item => !item.value || item.failed)
-  }
-  if (props.kind === 'NetworkCards') {
-    return !data.value.ranking?.length && (!data.value.metrics?.length || data.value.metrics.every(item => !item.value || item.failed))
-  }
-  return false
-})
 
 function openAlgorithmConfig() {
   if (props.isEdit) return

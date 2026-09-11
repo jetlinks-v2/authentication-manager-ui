@@ -36,9 +36,9 @@
 
 首页使用当前用户通知接口 `POST /notifications/_query`，传 `topicProvider eq SystemBulletin`、`paging=true`、`pageIndex=0`、`pageSize=4`，按 `notifyTime desc` 查询最新公告，不再依赖提供者名称匹配。标题取 topicName，摘要取 message，不查询公告管理列表、不传用户过滤条件。此处采用文档的“最新公告列表”模式，不采用铃铛的未读优先组合。
 
-点击公告复用 authentication-manager-ui 注册的 SystemBulletinNotificationDetail，按 detailJson 中的 bulletinId/publishVersion 请求正文；更多进入个人中心消息页。本期不自动标记已读。详情通过模块公开注册项复用现有 NotificationDetail，不另写正文请求或渲染器。
+点击公告复用 authentication-manager-ui 注册的 SystemBulletinNotificationDetail，按 detailJson 中的 bulletinId/publishVersion 请求正文；更多进入个人中心消息页。本期不自动标记已读。详情通过模块公开注册项复用现有 NotificationDetail，不另写正文请求或渲染器。首行橙色 `New` 标签严格按“最新第 1 条且通知状态未读（`state === 'unread'`）”展示，已读后自动隐去。
 
-验证：`node modules/authentication-manager-ui/scripts/verify-announcements.cjs` 通过，覆盖最新 4 条查询参数、标题/摘要映射、详情引用、缺失日期、空列表和失败响应；81 个 Vue 文件的 SFC/相对导入检查通过。针对概览的 vue-tsc 仍为已有依赖 161 项错误，概览自身无报错。
+验证：`node modules/authentication-manager-ui/scripts/verify-announcements.cjs` 通过，覆盖最新 5 条查询参数、标题/摘要映射、详情引用、未读第一条 New 标识、缺失日期、空列表和失败响应；81 个 Vue 文件的 SFC/相对导入检查通过。针对概览的 vue-tsc 仍为已有依赖 161 项错误，概览自身无报错。
 
 本次在线验收受环境阻塞：9200 刷新后会话初始化 AxiosError，页面进入 403，公告请求未发出。因此新列表的真实回显、点击正文与撤回公告空态尚未完成浏览器验证，不能沿用此前基于提供者列表的空态作为新接口通过证据。恢复项目会话后从 `/overview` 验证 `SystemBulletin` 通知及正文即可。
 
@@ -399,3 +399,72 @@ Chrome 实测：画布 layout/content 的 overflowY 均为 visible；外层页�
 
 2. **验证结果**：
    - 执行 `node runtime-ui/modules/authentication-manager-ui/scripts/verify-overview-components.cjs`：57 个 Vue SFC 编译全部通过，0 错误，0 相对导入缺失。
+
+## 概览组件卡片圆角严格对齐资源中心（6px）
+
+1. **统一卡片容器圆角**：
+   - 资源中心外壳卡片 `ResourceWidget.vue` 采用 `border-radius: 6px;`。
+   - 概览通用卡片壳 `HomeWidget.vue`（承载快捷操作、应用中心、运维监控、系统公告、配额等）的 `.project-home-shell` 圆角由原 `10px` 统一对齐为 `6px`。
+   - 概览资源中心 4 个子卡片（`DeviceAccessCard.vue`、`VisualizationCard.vue`、`AiCenterCard.vue`、`RuleEngineCard.vue`）的 `.resource-card` 圆角由原 `8px` 统一对齐为 `6px`。
+   - 概览快速上手组件（`ProjectHomeQuickGuide.vue`、`QuickGuide/components/HomeView.vue`）的卡片圆角由原 `12px` / `8px` 统一对齐为 `6px`。
+
+2. **验证结果**：
+   - 执行 `node runtime-ui/modules/authentication-manager-ui/scripts/verify-overview-components.cjs`：57 个 Vue SFC 编译全部通过，0 错误，0 相对导入缺失。
+
+## 资源中心彻底拆分为 4 个独立看板组件
+
+1. **改造背景**：
+   - 此前概览页将“设备与接入”、“大屏可视化”、“AI中心”、“规则引擎”4 张卡片硬编码在 `ProjectHomeResources` 复合组件内，在画布中仅表现为单一的 `w: 8, h: 20` 网格项，右下角只有一个拖拽/缩放手柄，无法单独移动或自由排布。
+
+2. **独立组件落地**：
+   - 彻底拆分为 4 个标准 DashBoardCanvas 看板组件（均置于 `visDashboard/Base/` 下）：
+     - `DeviceAccess`（设备与接入，`w: 3, h: 10`）：展示物联设备、视频通道、边缘节点（私有化包含采集器与物联网卡）。
+     - `Visualization`（大屏可视化，`w: 5, h: 10`）：左列展示素材库（图片、组件、模型），右列展示大屏（数据大屏、大屏模板）。
+     - `AiCenter`（AI中心，`w: 4, h: 10`）：展示智能体、启用算法、覆盖通道。
+     - `RuleEngine`（规则引擎，`w: 4, h: 10`）：展示场景联动。
+   - 各组件外壳均使用通用的 `HomeWidget.vue`（统一 6px 圆角、标题、加载/错误/轮询态），内部使用共享的 `ResourceItem.vue` 统一呈现各指标项。
+   - `shared/api.ts` 支持各 feature 独立提取对应的资源行；`useOverviewDashboard.ts` 显式注册 4 个组件至 `fullCatalog`，解决动态 discovery 在 Vite dev server 未重启时无法识别新增目录的问题；布局重构为第二排（DeviceAccess 3列 + Visualization 5列）、第三排（AiCenter 4列 + RuleEngine 4列），画布 storageKey 升版至 `project-overview-v9`。
+
+3. **验证结果**：
+   - 执行 `node runtime-ui/modules/authentication-manager-ui/scripts/verify-overview-components.cjs`：63 个 Vue SFC 检查通过，0 错误，0 缺失。
+   - 4 项自动化验证脚本全部 PASS。
+
+## 私有化环境补充「采集器与物联网卡」独立看板组件并优化网格排列
+
+1. **背景与诉求**：
+   - 用户切换私有化环境预览概览页时，发现缺少原设计中的「采集器与物联网卡」卡片，并要求加回并合理排布。
+   - 私有化环境资源能力比 SaaS 多出「数据采集器」、「物联网卡」（同时 AI 中心展示「智能体」）。
+
+2. **独立组件建设（`visDashboard/Base/Collection/`）**：
+   - 新建 `ProjectHomeCollection` 独立 DashBoardCanvas 看板组件：
+     - `config.ts`：组件类型定义 `projectHomeCollection`，默认网格尺寸 `w: 3, h: 10, minW: 2, minH: 6`。
+     - `ProjectHomeCollection.vue`：使用通用 `HomeWidget`（6px 圆角外壳）及 `ResourceItem.vue` 渲染「数据采集器」与「物联网卡」。
+     - `index.ts`：异步组件暴露与配置导出。
+   - 数据链路解耦：
+     - `visDashboard/Base/shared/types.ts`：扩充 `HomeFeature` 类型支持 `'Collection'`。
+     - `visDashboard/Base/shared/api.ts`：`DeviceAccess` 仅筛选 `subgroup !== 'collection'`（物联设备、视频通道、边缘节点），`Collection` 筛选 `subgroup === 'collection'`（数据采集器、物联网卡）。
+     - `locales/`：补充中英文多语言键 `packages.ProjectHome.Collection`（"采集器与物联网卡" / "Collector & IoT Cards"）。
+
+3. **私有化 9 卡网格合理排布**：
+   - 排版结构（12 列栅格自适应对齐）：
+     - **第一排（h: 7）**：
+       - `QuickActions`（快捷操作，`x: 0, y: 0, w: 8`）
+       - `Applications`（应用中心，`x: 8, y: 0, w: 4`）
+     - **第二排（h: 10）**：
+       - `DeviceAccess`（设备与接入，`x: 0, y: 7, w: 3`）
+       - `Visualization`（大屏可视化双列，`x: 3, y: 7, w: 5`）
+       - `Operations`（运维监控，`x: 8, y: 7, w: 4`）
+     - **第三排（h: 10）**：
+       - `Collection`（采集器与物联网卡，`x: 0, y: 17, w: 3`，与上方的设备接入严格左对齐并同宽）
+       - `AiCenter`（AI中心，`x: 3, y: 17, w: 3`）
+       - `RuleEngine`（规则引擎，`x: 6, y: 17, w: 2`，AiCenter + RuleEngine 合计 5 列，与上方的大屏可视化严格对齐）
+       - `Announcements`（系统公告，`x: 8, y: 17, w: 4`，与上方的运维监控严格左对齐并同宽）
+   - **动态 Discovery 兜底与存储键升版**：
+     - 在 `useOverviewDashboard.ts` 的 `fullCatalog` 中显式注册 `projectHomeCollection`。
+     - 将 `projectHomeRuleEngine` 的 `minW` 从 3 调整为 2，避免网格引擎强制扩张引发公告列下挤换行。
+     - 将 `views/project/Overview/index.vue` 中的 `storage-key` 升级为 `project-overview-v11`，确保浏览器自动加载全新 9 卡排列，不受旧版缓存干扰。
+
+4. **验证结果**：
+   - `node scripts/verify-overview-components.cjs`：63 个 Vue SFC 解析与编译通过，0 错误，0 相对导入缺失。
+   - `node scripts/verify-announcements.cjs`：通过。
+   - `node scripts/verify-quick-alarms.cjs && node scripts/verify-resource-dashboard.cjs`：全部通过。
