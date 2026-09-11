@@ -24,7 +24,7 @@ export function useOverviewDashboard() {
     components: layout.flatMap(([feature, x, y, w, h]) => {
       const type = `projectHome${feature}`, definition = catalog.value.components[type]
       if (!definition) return []
-      return [{ ...definition.defaultConfig, id: type, type, isLocked: true,
+      return [{ ...definition.defaultConfig, id: type, type,
         componentProps: { ...definition.defaultConfig.componentProps, gridItem: { x, y, w, h } } }]
     }),
   }))

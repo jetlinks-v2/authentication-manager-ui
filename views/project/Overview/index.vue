@@ -4,7 +4,8 @@
     <a-result v-else-if="errors.length" status="error" :title="t('projectOverview.loadError')">
       <template #extra><a-button @click="reload">{{ t('projectOverview.retry') }}</a-button></template>
     </a-result>
-    <DashBoardCanvas v-else :model-value="dashboard" :catalog="catalog" :editable="false" :preview-mode="false" />
+    <DashBoardCanvas v-else :model-value="dashboard" :catalog="catalog" :editable="false"
+      :layout-editable="true" storage-key="project-overview" :preview-mode="false" />
   </main>
 </template>
 <script setup lang="ts" name="ProjectSideOverview">

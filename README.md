@@ -375,4 +375,4 @@ node --max_old_space_size=8192 --max-semi-space-size=64 -e "process.argv.push('-
 
 ## 资源中心仪表盘组件
 
-`visDashboard/ResourceCenter` 提供九个单风格组件，通过新的 `DashBoardCanvas` 自动发现与组装；目录、默认业务配置、真实接口口径及临时浏览器注入方式见 [资源中心仪表盘说明](docs/resource-center-dashboard.md)。正式入口为 `/resources/dashboard`，页面落在 `views/resources/Dashboard/index.vue`，绑定现有菜单 `resources/Dashboard`；交互与概览一致，不允许拖拽、编辑或配置，保留筛选和快捷跳转。本组不修改项目概览六组件，不接入旧 dashboard，不新增菜单。数据采集和物联网卡仅私有化运行时展示。
+`visDashboard/ResourceCenter` 提供九个单风格组件，通过新的 `DashBoardCanvas` 自动发现与组装；目录、默认业务配置、真实接口口径及临时浏览器注入方式见 [资源中心仪表盘说明](docs/resource-center-dashboard.md)。正式入口为 `/resources/dashboard`，页面落在 `views/resources/Dashboard/index.vue`，绑定现有菜单 `resources/Dashboard`；允许拖拽和缩放已有组件，仍不允许编辑、添加或删除组件，布局以 `resource-center-dashboard` 为 key 保存在浏览器 localStorage，保留筛选和快捷跳转。本组不修改项目概览六组件，不接入旧 dashboard，不新增菜单。数据采集和物联网卡仅私有化运行时展示。

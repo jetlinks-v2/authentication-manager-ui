@@ -11,6 +11,8 @@
       :model-value="dashboard"
       :catalog="catalog"
       :editable="false"
+      :layout-editable="true"
+      storage-key="resource-center-dashboard"
       :preview-mode="false"
     />
   </main>

@@ -10,7 +10,7 @@
 
 画布卡片横向、纵向间距均通过 `canvas.gridLayout.marginHorizontal/marginVertical` 设置为 18px，与概览页一致；复用底座公开配置，不修改公共默认值。浏览器实测资源中心与概览页的横向、纵向卡片边界间距均为 18px，diff 空白检查通过；本次仅调整布局配置，未运行构建或完整类型检查。
 
-接入现有菜单 `resources/Dashboard`、路径 `/resources/dashboard`。页面位于 `views/resources/Dashboard/index.vue`，由模块已有 `getModuleRoutesMap` 自动发现，不增加兼容路由或修改已下发菜单。页面交互沿用概览：`editable=false`、`previewMode=false`，使用默认布局和真实数据，不显示画布设置、组件编辑、拖拽或配置入口。保留组件自身的时间/类型筛选、重试和快捷跳转，继续遵守 SaaS/私有化可见规则。外层页面负责滚动，画布不增加内层滚动条。
+接入现有菜单 `resources/Dashboard`、路径 `/resources/dashboard`。页面位于 `views/resources/Dashboard/index.vue`，由模块已有 `getModuleRoutesMap` 自动发现，不增加兼容路由或修改已下发菜单。页面交互使用 `editable=false`、`layoutEditable=true`、`storageKey=resource-center-dashboard`：允许调整已有组件的位置和大小，布局保存在当前浏览器 localStorage，不显示画布设置、组件编辑、添加或删除入口。保留组件自身的时间/类型筛选、重试和快捷跳转，继续遵守 SaaS/私有化可见规则。外层页面负责滚动，画布不增加内层滚动条。
 
 快速开始仅复用目标页已有新增弹层，没有弹层时只跳转，不为快捷入口新增按钮或弹窗。边缘节点、物联设备进入统一设备列表对应分类，并以一次性 `action=create` 打开已有新增弹层；大屏进入可视化作品列表并打开已有创建弹窗，默认选择“大屏”。目标页消费动作后移除参数，避免刷新时重复打开。视频设备仅携带 `type=video` 进入视频分类，不携带创建动作；私有化采集器/物联网卡入口保持原有跳转。
 
