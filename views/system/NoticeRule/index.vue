@@ -1,56 +1,58 @@
 <template>
   <j-page-container>
     <FullPage hasPadding>
-      <div class="content">
-        <div style="margin-bottom: 0.9375rem">
-          <div class="alert">
-            <AIcon type="InfoCircleOutlined" />
-            {{ $t("NoticeRule.index.804848-0") }}
-          </div>
-        </div>
-        <div class="content-collapse">
-          <a-collapse
-            :bordered="false"
-            v-model:activeKey="activeKey"
-            expand-icon-position="right"
-          >
-            <template #expandIcon="{ isActive }">
-              <AIcon
-                type="CaretRightOutlined"
-                :style="{
+      <ContentPanel>
+	      <div class="content">
+		      <div style="margin-bottom: 0.9375rem">
+			      <div class="alert">
+				      <AIcon type="InfoCircleOutlined" />
+				      {{ $t("NoticeRule.index.804848-0") }}
+			      </div>
+		      </div>
+		      <div class="content-collapse">
+			      <a-collapse
+				      :bordered="false"
+				      v-model:activeKey="activeKey"
+				      expand-icon-position="right"
+			      >
+				      <template #expandIcon="{ isActive }">
+					      <AIcon
+						      type="CaretRightOutlined"
+						      :style="{
                   transform: `rotate(${isActive ? 90 : 0}deg)`,
                 }"
-              />
-            </template>
-            <a-collapse-panel v-for="item in tabs" :key="item.provider">
-              <template #header>
-                <div>
-                  {{ item.name }}
-<!--                  <span-->
-<!--                    style="margin-left: 0.625rem"-->
-<!--                    class="alert"-->
-<!--                    v-if="item.provider === 'alarm'"-->
-<!--                    >{{ $t("NoticeRule.index.804848-1") }}</span-->
-<!--                  >-->
-                </div>
-              </template>
-              <div>
-                <template
-                  v-for="(child, index) in item.children"
-                  :key="child.provider"
-                >
-                  <Item
-                    :data="child"
-                    @refresh="onRefresh"
-                    :isLast="index === item.children?.length"
-                    :provider="item.provider"
-                  />
-                </template>
-              </div>
-            </a-collapse-panel>
-          </a-collapse>
-        </div>
-      </div>
+					      />
+				      </template>
+				      <a-collapse-panel v-for="item in tabs" :key="item.provider">
+					      <template #header>
+						      <div>
+							      {{ item.name }}
+							      <!--                  <span-->
+							      <!--                    style="margin-left: 0.625rem"-->
+							      <!--                    class="alert"-->
+							      <!--                    v-if="item.provider === 'alarm'"-->
+							      <!--                    >{{ $t("NoticeRule.index.804848-1") }}</span-->
+							      <!--                  >-->
+						      </div>
+					      </template>
+					      <div>
+						      <template
+							      v-for="(child, index) in item.children"
+							      :key="child.provider"
+						      >
+							      <Item
+								      :data="child"
+								      @refresh="onRefresh"
+								      :isLast="index === item.children?.length"
+								      :provider="item.provider"
+							      />
+						      </template>
+					      </div>
+				      </a-collapse-panel>
+			      </a-collapse>
+		      </div>
+	      </div>
+      </ContentPanel>
     </FullPage>
   </j-page-container>
 </template>

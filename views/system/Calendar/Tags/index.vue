@@ -1,5 +1,5 @@
 <template>
-    <ContentPanel class="tagsContainer" ref="tags">
+    <div class="tagsContainer" ref="tags">
         <j-permission-button
             type="primary"
             :hasPermission="`${permissionKey}:add`"
@@ -62,7 +62,7 @@
                 </div>
             </div>
         </div>
-    </ContentPanel>
+    </div>
     <EditTag
         v-if="editVisible"
         :edit-type="editType"

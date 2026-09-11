@@ -1,23 +1,25 @@
 <template>
     <j-page-container>
-        <full-page :fixed="false">
-            <EqualHeightColumns
-                class="save-layout"
-                left-width="18.75rem"
-                right-width="1fr"
-            >
-                <template #left>
-                  <div class="save-layout__form">
-                    <j-scrollbar>
-                        <EditForm @change-apply-type="changeType" />
-                    </j-scrollbar>
-                  </div>
-                </template>
-                <template #right>
-                  <Does :type="rightType" />
-                </template>
-            </EqualHeightColumns>
-        </full-page>
+        <FullPage transparentBackground :fixed="false">
+            <ContentPanel>
+                <EqualHeightColumns
+                    class="save-layout"
+                    left-width="18.75rem"
+                    right-width="1fr"
+                >
+                    <template #left>
+                        <div class="save-layout__form">
+                            <j-scrollbar>
+                                <EditForm @change-apply-type="changeType" />
+                            </j-scrollbar>
+                        </div>
+                    </template>
+                    <template #right>
+                        <Does :type="rightType" />
+                    </template>
+                </EqualHeightColumns>
+            </ContentPanel>
+        </FullPage>
     </j-page-container>
 </template>
 

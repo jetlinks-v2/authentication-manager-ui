@@ -1,5 +1,5 @@
 <template>
-  <ContentPanel class="left-tree-contain">
+  <div class="left-tree-contain">
     <a-input
       v-model:value="searchValue"
       @change="onSearch"
@@ -117,7 +117,7 @@
       @close="batchImportVisible = false"
       @save="getTree"
     />
-  </ContentPanel>
+  </div>
 </template>
 
 <script setup lang="ts" name="LeftTree">

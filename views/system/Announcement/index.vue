@@ -1,14 +1,16 @@
 <template>
   <j-page-container>
-    <ManagementView
-      ref="managementViewRef"
-      @create="openCreate"
-      @edit="openEdit"
-      @inspect="openDetail"
-      @publish="publishAnnouncement"
-      @withdraw="withdrawAnnouncement"
-      @remove="removeAnnouncement"
-    />
+    <ContentPanel>
+	    <ManagementView
+		    ref="managementViewRef"
+		    @create="openCreate"
+		    @edit="openEdit"
+		    @inspect="openDetail"
+		    @publish="publishAnnouncement"
+		    @withdraw="withdrawAnnouncement"
+		    @remove="removeAnnouncement"
+	    />
+    </ContentPanel>
   </j-page-container>
 
   <AnnouncementEditorDialog

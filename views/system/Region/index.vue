@@ -1,24 +1,26 @@
 <template>
     <j-page-container>
-        <full-page fixed>
-            <EqualHeightColumns
-                class="region-layout"
-                left-width="18.75rem"
-                right-width="1fr"
-            >
-              <template #left>
-                <div class="region-layout__left">
-                  <div v-if="regionState.treeMask" class="left-mask"></div>
-                  <div class="left-content">
-                    <LeftTree ref="treeRef" @select="onSelect" @close="close"/>
-                  </div>
-                </div>
-              </template>
-              <template #right>
-                <Map ref="mapRef" :selectCode="selectCode" />
-              </template>
-            </EqualHeightColumns>
-        </full-page>
+        <FullPage transparentBackground fixed>
+            <ContentPanel>
+                <EqualHeightColumns
+                    class="region-layout"
+                    left-width="18.75rem"
+                    right-width="1fr"
+                >
+                    <template #left>
+                        <div class="region-layout__left">
+                            <div v-if="regionState.treeMask" class="left-mask"></div>
+                            <div class="left-content">
+                                <LeftTree ref="treeRef" @select="onSelect" @close="close" />
+                            </div>
+                        </div>
+                    </template>
+                    <template #right>
+                        <Map ref="mapRef" :selectCode="selectCode" />
+                    </template>
+                </EqualHeightColumns>
+            </ContentPanel>
+        </FullPage>
     </j-page-container>
 </template>
 

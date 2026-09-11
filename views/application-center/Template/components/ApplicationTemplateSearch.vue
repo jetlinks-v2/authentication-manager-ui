@@ -103,7 +103,6 @@ const handleReset = () => {
 
 <style scoped lang="less">
 .application-template-search {
-  padding: var(--space-4) var(--space-4) 0;
 
   &__form {
     display: flex;

@@ -1,21 +1,23 @@
 <template>
     <j-page-container>
-         <FullPage transparentBackground>
-             <EqualHeightColumns
-                 class="role-layout"
-                 left-width="18.75rem"
-                 right-width="1fr"
-             >
-                 <template #left>
-                    <Left @select-data="selectData"/>
-                 </template>
-                 <template #right>
-                   <Right :groupId="groupId"/>
-                 </template>
-             </EqualHeightColumns>
-         </FullPage>
+        <FullPage transparentBackground>
+            <ContentPanel>
+                <EqualHeightColumns
+                    class="role-layout"
+                    left-width="18.75rem"
+                    right-width="1fr"
+                >
+                    <template #left>
+                        <Left @select-data="selectData" />
+                    </template>
+                    <template #right>
+                        <Right :groupId="groupId" />
+                    </template>
+                </EqualHeightColumns>
+            </ContentPanel>
+        </FullPage>
     </j-page-container>
- </template>
+</template>
 
  <script lang="ts" setup name="Role">
  import Left from './RoleLeft/index.vue'

@@ -1,19 +1,21 @@
 <template>
     <j-page-container>
-      <full-page :fixed="false" transparentBackground>
-        <EqualHeightColumns
-          class="calendar-layout"
-          left-width="18.75rem"
-          right-width="1fr"
-        >
-          <template #left>
-            <CalendarTags />
-          </template>
-          <template #right>
-            <CalendarRight />
-          </template>
-        </EqualHeightColumns>
-      </full-page>
+        <FullPage transparentBackground :fixed="false">
+            <ContentPanel>
+                <EqualHeightColumns
+                    class="calendar-layout"
+                    left-width="18.75rem"
+                    right-width="1fr"
+                >
+                    <template #left>
+                        <CalendarTags />
+                    </template>
+                    <template #right>
+                        <CalendarRight />
+                    </template>
+                </EqualHeightColumns>
+            </ContentPanel>
+        </FullPage>
     </j-page-container>
 </template>
 
