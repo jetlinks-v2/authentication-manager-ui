@@ -1,7 +1,7 @@
 import { defineAsyncComponent } from 'vue'
 import { SYSTEM_BULLETIN_PROVIDER } from './api'
 import { loadSystemBulletinNoticeList } from './noticeListLoader'
-import { openRealtimeAnnouncement } from './realtimeNotification'
+import { handleSystemBulletinNotice } from './realtimeNotification'
 
 export const getRegisterComponents = () => [
   {
@@ -20,6 +20,6 @@ export const getRegisterComponents = () => [
     targetPage: 'notification-realtime',
     targetModule: 'handlers',
     code: SYSTEM_BULLETIN_PROVIDER,
-    props: { handler: openRealtimeAnnouncement },
+    props: { handler: handleSystemBulletinNotice },
   },
 ]

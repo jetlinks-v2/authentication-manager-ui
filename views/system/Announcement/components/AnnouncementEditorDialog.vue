@@ -30,16 +30,16 @@
         />
       </a-form-item>
 
-      <!-- 公告类型暂不对用户展示，类型默认值与提交契约继续保留。 -->
-      <!-- <a-form-item :label="$t('Announcement.editor.type')" required>
+      <a-form-item :label="$t('Announcement.editor.type')" required>
         <a-select
           v-model:value="form.type"
           :loading="typeLoading"
           :options="typeOptions"
           :field-names="{ label: 'text', value: 'value' }"
           :placeholder="$t('Announcement.editor.typePlaceholder')"
+          :get-popup-container="getPopupContainer"
         />
-      </a-form-item> -->
+      </a-form-item>
 
       <a-row :gutter="16">
         <a-col :span="12">
@@ -54,6 +54,7 @@
               :max-tag-count="2"
               :options="userOptions"
               :placeholder="$t('Announcement.editor.usersPlaceholder')"
+              :get-popup-container="getPopupContainer"
               @change="handleUserChange"
               @search="$emit('search-users', $event)"
             />
@@ -69,6 +70,7 @@
                 allowClear: true,
                 maxTagCount: 2,
                 placeholder: $t('Announcement.editor.organizationsPlaceholder'),
+                getPopupContainer,
               }"
             />
           </a-form-item>
@@ -132,6 +134,11 @@ const emit = defineEmits<{
 }>()
 
 const { t: $t } = useI18n()
+
+function getPopupContainer(triggerNode: HTMLElement) {
+  return triggerNode.parentElement || document.body
+}
+
 const form = reactive({
   title: '',
   summary: '',
