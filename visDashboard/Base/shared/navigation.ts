@@ -6,7 +6,6 @@ export const HOME_TARGETS: Record<string, HomeTarget> = {
   video: { menus: ['video/resources', 'media/Device', 'video/live'] },
   addVideo: { menus: ['media/Device/Save', 'media/Device'], params: { id: ':id' }, query: { type: 'video', action: 'create' } },
   gateway: { menus: ['iot-user/edge-gateway', 'edge/Device'] },
-  addGateway: { menus: ['iot-user/edge-gateway'], query: { action: 'create' } },
   createApplication: { menus: ['application-center/ProjectApplication'], query: { action: 'create' } },
   applications: { menus: ['application-center/ProjectApplication'] },
   algorithm: {
@@ -41,6 +40,6 @@ export const HOME_MORE_TARGETS: Partial<Record<HomeFeature, HomeTarget>> = {
 export const QUICK_ACTIONS = [
   { id: 'devices', target: HOME_TARGETS.addDevice },
   { id: 'video', target: HOME_TARGETS.addVideo },
-  { id: 'gateway', target: HOME_TARGETS.addGateway },
+  { id: 'gateway', target: HOME_TARGETS.gateway },
   ...['createApplication', 'space', 'visionAlarm', 'deviceAlarm'].map(id => ({ id, target: HOME_TARGETS[id] })),
 ]

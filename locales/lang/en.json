@@ -1661,7 +1661,7 @@
   "packages.ProjectHome.resourceUnavailableVideo": "Video integration is not enabled in this project",
   "packages.ProjectHome.action_devices": "Add device",
   "packages.ProjectHome.action_video": "Add video",
-  "packages.ProjectHome.action_gateway": "Connect edge node",
+  "packages.ProjectHome.action_gateway": "View edge nodes",
   "packages.ProjectHome.action_createApplication": "Create application",
   "packages.ProjectHome.action_members": "Members",
   "packages.ProjectHome.action_space": "Space configuration",
