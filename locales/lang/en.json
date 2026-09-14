@@ -1539,6 +1539,7 @@
   "Announcement.detail.creator": "Publisher",
   "Announcement.detail.publishTime": "Published",
   "Announcement.detail.content": "Content",
+  "Announcement.detail.language": "Language",
   "Announcement.notification.unavailable": "This announcement has been withdrawn or is unavailable",
   "Announcement.confirm.publish": "Publish this announcement?",
   "Announcement.confirm.withdraw": "Withdraw this announcement? Users will no longer see it.",

@@ -154,7 +154,12 @@ test('stores and renders announcement content with the platform i18nMessages fie
 })
 
 test('uses the bulletin title and internal scrolling for management details', () => {
-  assert.match(pageSource, /:title="detailRecord\?\.title \|\| \$t\('Announcement\.action\.view'\)"/)
+  assert.match(pageSource, /:title="detailTitle"/)
+  assert.match(pageSource, /v-model:locale="detailLocale"/)
+  assert.match(pageSource, /resolveAnnouncementText\(record, 'title', detailLocale\.value\)/)
+  assert.match(announcementDetailSource, /<a-radio-group v-model:value="viewLocale"/)
+  assert.match(announcementDetailSource, /resolveAnnouncementText\(props\.record, 'summary', props\.locale\)/)
+  assert.match(announcementDetailSource, /resolveAnnouncementText\(props\.record, 'content', props\.locale\)/)
   assert.match(announcementDetailSource, /class="announcement-detail-scroll"/)
   assert.match(announcementDetailSource, /max-height: min\(70dvh, 48rem\)/)
   assert.match(announcementDetailSource, /overflow-y: auto/)
