@@ -12,6 +12,7 @@ import {
   SYSTEM_BULLETIN_PROVIDER,
 } from '../api'
 import NotificationDetail from './NotificationDetail.vue'
+import { resolveBulletinTypeIcon } from '../bulletinTypeIcon'
 
 const columns = [
   {
@@ -169,7 +170,10 @@ onUnmounted(() => {
       style="flex: 1; min-height: 0"
     >
       <template #announcementTitle="record">
-        <j-ellipsis>{{ getNotificationTitle(record) || '--' }}</j-ellipsis>
+        <div class="announcement-title-cell">
+          <AIcon :type="resolveBulletinTypeIcon(parseDetail(record)?.type)" />
+          <j-ellipsis>{{ getNotificationTitle(record) || '--' }}</j-ellipsis>
+        </div>
       </template>
       <template #announcementSummary="record">
         <j-ellipsis
@@ -245,5 +249,16 @@ onUnmounted(() => {
   min-width: 0;
   white-space: normal;
   color: var(--jet-theme-text-secondary);
+}
+.announcement-title-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+
+  :deep(.anticon) {
+    flex: none;
+    color: var(--jet-theme-text-secondary);
+    font-size: var(--fs-14);
+  }
 }
 </style>

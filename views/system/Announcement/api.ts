@@ -130,9 +130,9 @@ const normalizeBulletin = (record: SystemBulletin): AnnouncementRecord => {
   }
 }
 
-/** 查询后端公告类型字典，选择器展示 text、提交 value。 */
+/** 查询系统公告支持类型，选择器展示 text、提交 value。 */
 export const getAnnouncementTypes = async (): Promise<AnnouncementType[]> => {
-  const response = await request.get('/dictionary/s_bulletin_type/items') as ApiResponse<Array<EnumValue<string>>>
+  const response = await request.post('/system/bulletin/type') as ApiResponse<Array<EnumValue<string>>>
   return (response.result || []).map(item => ({
     value: item.value,
     text: item.text || item.value,
@@ -157,11 +157,11 @@ export const getAnnouncement = async (id: string): Promise<AnnouncementRecord> =
   return normalizeBulletin(response.result)
 }
 
-/** 兼容对象或 JSON 字符串通知详情，解析公告发布批次引用。 */
-export const resolveSystemBulletinReference = (
+/** 兼容对象或 JSON 字符串通知详情；无法解析时返回 undefined。 */
+export const parseSystemBulletinDetail = (
   notification: Record<string, any>,
-): SystemBulletinReference | undefined => {
-  let detail = notification.detail
+): Record<string, any> | undefined => {
+  let detail = notification?.detail
   if (typeof detail === 'string') {
     try {
       detail = JSON.parse(detail)
@@ -169,13 +169,21 @@ export const resolveSystemBulletinReference = (
       detail = undefined
     }
   }
-  if (!detail && typeof notification.detailJson === 'string') {
+  if (!detail && typeof notification?.detailJson === 'string') {
     try {
       detail = JSON.parse(notification.detailJson)
     } catch {
       return undefined
     }
   }
+  return detail && typeof detail === 'object' ? detail : undefined
+}
+
+/** 解析公告发布批次引用，用于按发布版本查询通知正文。 */
+export const resolveSystemBulletinReference = (
+  notification: Record<string, any>,
+): SystemBulletinReference | undefined => {
+  const detail = parseSystemBulletinDetail(notification)
   const bulletinId = String(detail?.bulletinId || detail?.id || notification.dataId || '').trim()
   if (!bulletinId) return undefined
   // 旧通知不携带版本号，仍由当前用户正文接口校验可见性；显式非法版本不降级。

@@ -6,9 +6,11 @@
         :description="$t('Announcement.notification.unavailable')"
       />
       <article v-else-if="detail" class="announcement-notification-detail">
-        <div v-if="detail.deployTime" class="announcement-notification-detail__meta">
-          <AIcon type="ClockCircleOutlined" />
-          {{ dayjs(detail.deployTime).format('YYYY-MM-DD HH:mm:ss') }}
+        <div class="announcement-notification-detail__meta">
+          <AIcon :type="typeIcon" />
+          <span v-if="detail.deployTime">
+            {{ dayjs(detail.deployTime).format('YYYY-MM-DD HH:mm:ss') }}
+          </span>
         </div>
         <MarkdownEditor
           :model-value="detail.content"
@@ -22,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import MarkdownEditor from '@jetlinks-web-core/components/MarkdownEditor'
 import {
@@ -30,11 +32,13 @@ import {
   resolveSystemBulletinReference,
   type SystemBulletinNotificationDetail,
 } from '../api'
+import { resolveBulletinTypeIcon } from '../bulletinTypeIcon'
 
 const props = defineProps<{ data: Record<string, any> }>()
 const detail = ref<SystemBulletinNotificationDetail>()
 const loading = ref(false)
 const unavailable = ref(false)
+const typeIcon = computed(() => resolveBulletinTypeIcon(detail.value?.type))
 let requestSequence = 0
 
 /** 同一详情壳连续切换通知时，只允许最新请求更新正文。 */

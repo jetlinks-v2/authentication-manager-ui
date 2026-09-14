@@ -31,7 +31,10 @@
       </template>
 
       <template #announcementTitle="record">
-        <j-ellipsis>{{ record.title }}</j-ellipsis>
+        <div class="announcement-title-cell">
+          <AIcon :type="resolveBulletinTypeIcon(record.type)" />
+          <j-ellipsis>{{ record.title }}</j-ellipsis>
+        </div>
       </template>
       <template #announcementSummary="record">
         <j-ellipsis
@@ -137,6 +140,7 @@ import type {
 } from '@jetlinks-web-core/components/ConditionFilter'
 import { queryAnnouncements } from '../api'
 import type { AnnouncementRecord } from '../types'
+import { resolveBulletinTypeIcon } from '../bulletinTypeIcon'
 
 defineEmits<{
   (event: 'create'): void
@@ -230,5 +234,16 @@ defineExpose({ reload: () => tableRef.value?.reload() })
   min-width: 0;
   white-space: normal;
   color: var(--jet-theme-text-secondary);
+}
+.announcement-title-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+
+  :deep(.anticon) {
+    flex: none;
+    color: var(--jet-theme-text-secondary);
+    font-size: var(--fs-14);
+  }
 }
 </style>

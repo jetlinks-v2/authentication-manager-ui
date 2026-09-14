@@ -18,7 +18,7 @@ const readSourceTree = async (directory) => {
   return sources.join('\n')
 }
 
-const [apiSource, registerSource, inboxSource, realtimeSource, notificationDetailSource, announcementDetailSource, noticeListLoaderSource, moduleSource, moduleMenuSource, saasMenuSource, managementSource, pageSource, saasCenterSource, projectCenterSource, coreSource, coreCenterSource, coreRecordSource, coreSubscriptionSource, coreDialogSource, coreNoticeSource, coreNoticeItemSource, coreRealtimeSource, coreNoticeInfoSource, coreNoticeListHandlerSource, zhLocaleSource, enLocaleSource] = await Promise.all([
+const [apiSource, registerSource, inboxSource, realtimeSource, notificationDetailSource, announcementDetailSource, noticeListLoaderSource, bulletinTypeIconSource, moduleSource, moduleMenuSource, saasMenuSource, managementSource, pageSource, saasCenterSource, projectCenterSource, coreSource, coreCenterSource, coreRecordSource, coreSubscriptionSource, coreDialogSource, coreNoticeSource, coreNoticeItemSource, coreRealtimeSource, coreNoticeInfoSource, coreNoticeListHandlerSource, zhLocaleSource, enLocaleSource] = await Promise.all([
   readFile(resolve(moduleRoot, 'views/system/Announcement/api.ts'), 'utf8'),
   readFile(resolve(moduleRoot, 'views/system/Announcement/register.ts'), 'utf8'),
   readFile(resolve(moduleRoot, 'views/system/Announcement/components/AnnouncementInbox.vue'), 'utf8'),
@@ -26,6 +26,7 @@ const [apiSource, registerSource, inboxSource, realtimeSource, notificationDetai
   readFile(resolve(moduleRoot, 'views/system/Announcement/components/NotificationDetail.vue'), 'utf8'),
   readFile(resolve(moduleRoot, 'views/system/Announcement/components/AnnouncementDetail.vue'), 'utf8'),
   readFile(resolve(moduleRoot, 'views/system/Announcement/noticeListLoader.ts'), 'utf8'),
+  readFile(resolve(moduleRoot, 'views/system/Announcement/bulletinTypeIcon.ts'), 'utf8'),
   readFile(resolve(moduleRoot, 'index.ts'), 'utf8'),
   readFile(resolve(moduleRoot, 'baseMenu.json'), 'utf8'),
   readFile(resolve(workspaceRoot, 'ui/modules/saas-manager-ui/baseMenu.json'), 'utf8'),
@@ -54,15 +55,30 @@ const findMenus = (menus, code) => menus.flatMap(menu => [
 
 test('keeps bulletin API and notification renderer registration in authentication-manager-ui', () => {
   assert.match(apiSource, /SYSTEM_BULLETIN_PROVIDER = 'SystemBulletin'/)
+  assert.match(apiSource, /post\('\/system\/bulletin\/type'\)/)
+  assert.doesNotMatch(apiSource, /get\('\/dictionary\/s_bulletin_type\/items'\)/)
   assert.match(apiSource, /post\('\/system\/bulletin\/detail\/_query'/)
   assert.doesNotMatch(apiSource, /post\('\/system\/bulletin\/_query'/)
   assert.match(apiSource, /system\/bulletin\/\$\{encodeURIComponent\(reference\.bulletinId\)\}/)
+  assert.match(apiSource, /parseSystemBulletinDetail/)
   assert.match(registerSource, /NotificationDetail\.vue/)
   assert.match(registerSource, /targetPage: 'notification-provider'/)
   assert.match(moduleSource, /views\/system\/Announcement\/register/)
 })
 
-test('renders realtime bulletin title and content without summary in a synchronous modal component', () => {
+test('renders the announcement type selector in the editor dialog', async () => {
+  const editorSource = await readFile(resolve(moduleRoot, 'views/system/Announcement/components/AnnouncementEditorDialog.vue'), 'utf8')
+  assert.match(editorSource, /<a-form-item :label="\$t\('Announcement\.editor\.type'\)" required>/)
+  assert.match(editorSource, /<a-select\s+v-model:value="form\.type"/)
+  assert.match(editorSource, /:options="typeOptions"/)
+  assert.match(editorSource, /:get-popup-container="getPopupContainer"/)
+  assert.match(editorSource, /getPopupContainer,/)
+  assert.match(editorSource, /function getPopupContainer\(triggerNode: HTMLElement\)/)
+  assert.match(editorSource, /return triggerNode\.parentElement \|\| document\.body/)
+  assert.doesNotMatch(editorSource, /公告类型暂不对用户展示/)
+})
+
+test('shows one typed realtime tip and opens the bulletin detail after clicking it', () => {
   assert.match(realtimeSource, /import NotificationDetail from '.\/components\/NotificationDetail\.vue'/)
   assert.match(realtimeSource, /content: h\(NotificationDetail/)
   assert.match(realtimeSource, /class: 'announcement-notification-modal'/)
@@ -70,7 +86,13 @@ test('renders realtime bulletin title and content without summary in a synchrono
   assert.match(realtimeSource, /onOk: \(\) => markRead\(\)/)
   assert.doesNotMatch(realtimeSource, /void markRead\(\)/)
   assert.doesNotMatch(realtimeSource, /defineAsyncComponent/)
-  assert.match(realtimeSource, /payload\.topicName \|\| payload\.title \|\| payload\.message/)
+  assert.match(registerSource, /props: \{ handler: handleSystemBulletinNotice \}/)
+  assert.match(realtimeSource, /source !== 'realtime' \|\| !showTip/)
+  assert.match(realtimeSource, /onClick: \(\) => openAnnouncementDetail\(context\)/)
+  assert.match(realtimeSource, /createBulletinTypeIconNode\(parseSystemBulletinDetail\(payload\)\?\.type\)/)
+  assert.match(realtimeSource, /title: resolveNoticeTitle\(payload\)/)
+  assert.match(realtimeSource, /description: summary && summary !== title \? summary : undefined/)
+  assert.doesNotMatch(realtimeSource, /Modal\.info\([\s\S]*\{\s*payload\.message\s*\}/)
   assert.match(inboxSource, /:title="getNotificationTitle\(detailRecord\)/)
   assert.match(notificationDetailSource, /detail\.content/)
   assert.match(notificationDetailSource, /class="announcement-notification-scroll"/)
@@ -81,6 +103,23 @@ test('renders realtime bulletin title and content without summary in a synchrono
   assert.doesNotMatch(notificationDetailSource, /<a-divider/)
   assert.doesNotMatch(notificationDetailSource, /detail\.title/)
   assert.doesNotMatch(notificationDetailSource, /detail\.summary/)
+})
+
+test('maps the six built-in bulletin types to one icon vocabulary with a default fallback', () => {
+  assert.match(bulletinTypeIconSource, /default: 'NotificationOutlined'/)
+  assert.match(bulletinTypeIconSource, /maintenance: 'ToolOutlined'/)
+  assert.match(bulletinTypeIconSource, /incident: 'WarningOutlined'/)
+  assert.match(bulletinTypeIconSource, /release: 'RocketOutlined'/)
+  assert.match(bulletinTypeIconSource, /security: 'SafetyCertificateOutlined'/)
+  assert.match(bulletinTypeIconSource, /policy: 'FileTextOutlined'/)
+  assert.match(bulletinTypeIconSource, /DEFAULT_BULLETIN_TYPE_ICON = 'NotificationOutlined'/)
+  assert.match(bulletinTypeIconSource, /BULLETIN_TYPE_ICONS\[String\(value \?\? ''\)\.trim\(\)\] \|\| DEFAULT_BULLETIN_TYPE_ICON/)
+  assert.doesNotMatch(bulletinTypeIconSource, /billing|urgent|severity/)
+  assert.match(realtimeSource, /createBulletinTypeIconNode/)
+  assert.match(noticeListLoaderSource, /topicName: String\(detail\?\.title \|\| record\.topicName \|\| ''\)\.trim\(\)/)
+  assert.match(noticeListLoaderSource, /noticeIcon: resolveBulletinTypeIcon\(detail\?\.type\)/)
+  assert.match(notificationDetailSource, /const typeIcon = computed\(\(\) => resolveBulletinTypeIcon\(detail\.value\?\.type\)\)/)
+  assert.match(notificationDetailSource, /<AIcon :type="typeIcon" \/>/)
 })
 
 test('uses the bulletin title and internal scrolling for management details', () => {
@@ -101,7 +140,7 @@ test('loads all unread bulletins before the five latest read bulletins in the be
   assert.match(noticeListLoaderSource, /filter\(record => stateValue\(record\) === 'unread'\)/)
   assert.match(noticeListLoaderSource, /filter\(record => stateValue\(record\) === 'read'\)/)
   assert.match(noticeListLoaderSource, /sort\(byNotifyTimeDesc\)/)
-  assert.match(noticeListLoaderSource, /return mergeNoticeGroups\(unread, read\)/)
+  assert.match(noticeListLoaderSource, /return mergeNoticeGroups\(unread, read\)\.map\(/)
   assert.match(coreNoticeListHandlerSource, /notification-provider:default/)
   assert.match(coreNoticeListHandlerSource, /handlers\.some\(current => current !== handler\)/)
   assert.match(coreNoticeInfoSource, /loadRegisteredNoticeList\(providers, DROPDOWN_PAGE_SIZE\)/)
@@ -246,6 +285,16 @@ test('keeps web-core notification handling business-neutral', () => {
   assert.doesNotMatch(coreSource, /icon-a-PIZHU1/)
   assert.match(coreSource, /slotProps\.state\.value === 'read'\s*\? 'MailOutlined'\s*: 'CheckCircleOutlined'/)
   assert.match(coreRealtimeSource, /appContext/)
+  assert.match(coreRealtimeSource, /source: 'realtime' \| 'list'/)
+  assert.match(coreRealtimeSource, /showTip\?: \(options: NoticeTipOptions\) => void/)
+  assert.match(coreRealtimeSource, /export interface NoticeTipOptions/)
+  assert.match(coreNoticeSource, /source: 'realtime'/)
+  assert.match(coreNoticeSource, /showTip: \(options: NoticeTipOptions\) => showNoticeTip\(data\.payload, options\)/)
+  assert.match(coreNoticeSource, /notification\.close\(key\)/)
+  assert.match(coreNoticeItemSource, /source: 'list'/)
+  assert.match(coreNoticeItemSource, /const noticeIcon = computed\(\(\) => String\(props\.data\?\.noticeIcon \|\| ''\)\.trim\(\)\)/)
+  assert.match(coreNoticeItemSource, /v-if="noticeIcon"[\s\S]*class="list-item__icon"[\s\S]*:style="\{ color: noticeIconColor \}"/)
+  assert.match(coreNoticeItemSource, /const noticeIconColor = computed\(\(\) => String\(props\.data\?\.noticeIconColor \|\| ''\)\.trim\(\)\)/)
 })
 
 test('keeps the bell badge synchronized with the backend unread count', () => {

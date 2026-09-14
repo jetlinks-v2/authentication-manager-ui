@@ -3,7 +3,8 @@ import {
   getUnreadNoPagingList_api,
 } from '@jetlinks-web-core/api/account/notificationRecord'
 import type { NoticeListHandler } from '@jetlinks-web-core/layout/components/noticeListHandler'
-import { SYSTEM_BULLETIN_PROVIDER } from './api'
+import { parseSystemBulletinDetail, SYSTEM_BULLETIN_PROVIDER } from './api'
+import { resolveBulletinTypeColor, resolveBulletinTypeIcon } from './bulletinTypeIcon'
 
 const READ_NOTICE_LIMIT = 5
 
@@ -74,5 +75,15 @@ export const loadSystemBulletinNoticeList: NoticeListHandler = async ({
     .sort(byNotifyTimeDesc)
     .slice(0, READ_NOTICE_LIMIT)
 
-  return mergeNoticeGroups(unread, read)
+  // 通用铃铛按通知记录上的图标字段渲染类型图标，core 不感知公告类型枚举。
+  return mergeNoticeGroups(unread, read).map(record => {
+    const detail = parseSystemBulletinDetail(record)
+    return {
+      ...record,
+      topicName: String(detail?.title || record.topicName || '').trim(),
+      message: String(detail?.summary || record.message || '').trim(),
+      noticeIcon: resolveBulletinTypeIcon(detail?.type),
+      noticeIconColor: resolveBulletinTypeColor(detail?.type),
+    }
+  })
 }

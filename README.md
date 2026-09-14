@@ -6,6 +6,21 @@
 
 System bulletin pages, API contracts, types, notification detail rendering, and provider constants are owned by `views/system/Announcement/`; user-facing copy follows this module's locale convention. The shared web core only exposes generic notification-provider and detail-component registration points; it does not identify `SystemBulletin` or call bulletin APIs. SaaS modules may contribute menu binding metadata, but they do not implement bulletin pages or APIs.
 
+The announcement editor loads its supported types from `POST /system/bulletin/type` through `getAnnouncementTypes`; it does not call the legacy `/dictionary/s_bulletin_type/items` dictionary endpoint.
+
+### Bulletin Type Icons And Realtime Tip
+
+Goal: give the six built-in bulletin types one icon vocabulary, and stop a realtime bulletin from auto-opening the detail dialog.
+
+- `views/system/Announcement/bulletinTypeIcon.ts` owns the type-to-icon map (`default`, `maintenance`, `incident`, `release`, `security`, `policy`) and falls back to `NotificationOutlined` for unknown, historical or missing values. Icons only mark the content topic; they never carry severity or colour level.
+- `views/system/Announcement/realtimeNotification.ts` keeps two entries: a realtime arrival calls the core-provided `showTip` once with the type icon, title and summary, and only a tip click opens `openAnnouncementDetail`; clicking a bell record still opens the announcement detail directly, and `我知道了` keeps the existing read confirmation and badge refresh.
+- `noticeListLoader.ts` decorates bell records with the business-neutral `noticeIcon` field, and `components/NotificationDetail.vue` shows the same icon in the announcement detail shared by the bell, the realtime dialog and the message center.
+- Shared core only adds generic hooks: `noticeRealtimeHandler.ts` gains `source` and an optional `showTip`, `Notice.vue` renders that tip while keeping the default tip for other providers, and `NoticeItem.vue` renders `noticeIcon` when present. Core still contains no `SystemBulletin` name, bulletin API or bulletin copy.
+
+Scope: this module plus the business-neutral `jetlinks-web-core/src/layout/components/` files. `runtime-ui/` and the backend type enum, dictionary and notification `type` payload stay outside this frontend change.
+
+Verification: the focused Node suite reports 20/21 passing, where the only failure is the pre-existing project-runtime menu URL expectation (`/system/ps/NoticeRule` in `baseMenu.json` versus `/system/NoticeRule` asserted by the test) and is unrelated to this change; the module production build passes (built in 19.03s from the `jetlinks-web-core` Vite entry). The realtime tip cannot be exercised end to end until the backend emits `type` in the notification detail payload; unknown types intentionally fall back to the default icon. The type-provider switch is covered by the focused bulletin ownership assertion and the module production build.
+
 ### Base Menu Merge Compatibility
 
 Goal: preserve the remote `system > platform/settings` menu restructuring while restoring the project-runtime announcement and subscription-management menus lost when `baseMenu.json` was resolved from the remote side during merge `8be1eb9`.
