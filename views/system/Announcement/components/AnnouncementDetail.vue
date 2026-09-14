@@ -57,11 +57,11 @@ import { computed } from 'vue'
 import type { PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import MarkdownEditor from '@jetlinks-web-core/components/MarkdownEditor'
-import globalI18n from '@jetlinks-web-core/locales'
 import type { AnnouncementRecord } from '../types'
 import {
   getAnnouncementI18n,
   resolveAnnouncementText,
+  resolveAnnouncementStateLabel,
   resolveLocalizedText,
 } from '../announcementI18n'
 
@@ -82,14 +82,8 @@ const viewLocale = computed({
 })
 
 /** 每个语言一个标签页；该语言整条未填写时在页内显式提示，避免看起来“切换无效”。 */
-const resolveStateText = (state: string, locale: string) => {
-  const messages = globalI18n.global.getLocaleMessage(locale) as Record<string, unknown>
-  const localized = messages?.[`Announcement.status.${state}`]
-  return typeof localized === 'string' ? localized : ''
-}
-
 const languagePanes = computed(() => {
-  const i18n = getAnnouncementI18n(props.record.i18nMessages)
+  const i18n = getAnnouncementI18n(props.record?.i18nMessages)
   return [
     { value: 'zh', label: $t('Announcement.i18n.chinese') },
     { value: 'en', label: $t('Announcement.i18n.english') },
@@ -98,9 +92,9 @@ const languagePanes = computed(() => {
     summary: resolveAnnouncementText(props.record, 'summary', item.value),
     content: resolveAnnouncementText(props.record, 'content', item.value),
     // 状态文案按所选语言翻译，后端 stateText 仅作兜底，避免切到英文仍显示中文。
-    stateText: resolveStateText(props.record.state, item.value)
-      || props.record.stateText
-      || $t(`Announcement.status.${props.record.state}`),
+    stateText: resolveAnnouncementStateLabel(props.record?.state, item.value)
+      || props.record?.stateText
+      || '',
     missing: !['title', 'summary', 'content'].some(field =>
       resolveLocalizedText(i18n[field as keyof typeof i18n], item.value)),
   }))
