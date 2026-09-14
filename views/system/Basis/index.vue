@@ -1,7 +1,9 @@
 <template>
   <j-page-container>
-    <FullPage :fixed="false" hasPadding>
+    <FullPage transparent-background show-scroll>
+      <main class="basis-page">
         <BasicForm />
+      </main>
     </FullPage>
   </j-page-container>
 </template>
@@ -9,6 +11,5 @@
 <script setup name="Basis" lang="ts">
 import BasicForm from './Form.vue'
 </script>
-<style lang="less" scoped>
 
-</style>
+<style scoped lang="less" src="./index.less"></style>

@@ -1,298 +1,290 @@
 <template>
+  <div v-if="loading" class="basis-form__loading">
+    <a-spin />
+  </div>
+  <div v-else-if="error" class="basis-form__error">
+    <a-result
+      status="error"
+      :title="$t('Basis.Config.loadFailed')"
+      :sub-title="error"
+    >
+      <template #extra>
+        <a-button @click="loadDetails">{{ $t('Basis.Config.retry') }}</a-button>
+      </template>
+    </a-result>
+  </div>
   <a-form
+    v-else
     ref="formRef"
     :model="formData"
     :rules="formRules"
     :scrollToFirstError="true"
     layout="vertical"
   >
-    <div class="form-container">
-      <div class="form-left">
-        <a-form-item :label="$t('Basis.Form.436809-0')" name="title">
+    <BasisSection :title="$t('Basis.Config.basicInfo')">
+      <template v-if="sectionEditMode" #extra>
+        <BasisSectionActions
+          section="basic"
+          :active-section="editingSection"
+          :can-edit="canEdit"
+          :saving="saving"
+          @edit="startEdit"
+          @cancel="cancelEdit"
+          @save="submit"
+        />
+      </template>
+      <RegistryComponent
+        :page-code="BASIS_FORM_PAGE_CODE"
+        :code="BASIS_FORM_MODULE_CODE"
+      >
+        <BasisField
+          :key="'title'"
+          :label="$t('Basis.Form.436809-0')"
+          name="title"
+          :editing="isEditing('basic')"
+          :display="displayValue(formData.title)"
+        >
           <a-input
             v-model:value="formData.title"
             :placeholder="$t('Basis.Form.436809-1')"
           />
-        </a-form-item>
-        <a-form-item :label="$t('Basis.Form.436809-2')" name="headerTheme">
-          <a-select
-            v-model:value="formData.headerTheme"
-            :options="headerThemeAreas"
-            @change="changeHeaderTheme"
-          />
-        </a-form-item>
-        <a-form-item :label="$t('Basis.Form.436809-27')" name="layout">
+        </BasisField>
+<!--        <BasisField-->
+<!--          :key="'headerTheme'"-->
+<!--          :label="$t('Basis.Form.436809-2')"-->
+<!--          name="headerTheme"-->
+<!--          :editing="isEditing('basic')"-->
+<!--          :display="displayTheme"-->
+<!--        >-->
+<!--          <a-select-->
+<!--            v-model:value="formData.headerTheme"-->
+<!--            :options="headerThemeAreas"-->
+<!--            @change="changeHeaderTheme"-->
+<!--          />-->
+<!--        </BasisField>-->
+        <BasisField
+          :key="'layout'"
+          :label="$t('Basis.Form.436809-27')"
+          name="layout"
+          :align="isEditing('basic') ? 'start' : 'center'"
+          :editing="isEditing('basic')"
+          :display="displayLayout"
+        >
           <LayoutModeSelector v-model:value="formData.layout" />
-        </a-form-item>
+        </BasisField>
+        <BasisField
+          :key="'logo'"
+          :label="$t('Basis.Form.436809-15')"
+          :align="isEditing('basic') ? 'start' : 'center'"
+          :editing="isEditing('basic')"
+        >
+          <Upload v-model:img-src="formData.logo" upload-type="logo" />
+          <template #view>
+            <BasisImagePreview
+              :src="logoSrc"
+              :alt="$t('Basis.Form.436809-15')"
+              :placeholder="placeholder"
+            />
+          </template>
+        </BasisField>
+        <BasisField
+          :key="BASIS_FORM_FIELD.ICO"
+          :label="$t('Basis.Form.436809-16')"
+          :align="isEditing('basic') ? 'start' : 'center'"
+          :editing="isEditing('basic')"
+        >
+          <Upload v-model:img-src="formData.ico" upload-type="ico" />
+          <template #view>
+            <BasisImagePreview
+              :src="icoSrc"
+              :alt="$t('Basis.Form.436809-16')"
+              :placeholder="placeholder"
+            />
+          </template>
+        </BasisField>
+        <div :key="BASIS_FORM_FIELD.RECORD_NUMBER" class="basis-field-group">
+          <BasisField
+            :label="$t('Basis.Form.436809-24')"
+            name="showRecordNumber"
+            :required="isEditing('basic')"
+            :editing="isEditing('basic')"
+            :display="displayValue(formData.showRecordNumber)"
+          >
+            <a-switch v-model:checked="formData.showRecordNumber" />
+          </BasisField>
+          <BasisField
+            v-if="formData.showRecordNumber"
+            :label="$t('Basis.Form.436809-25')"
+            name="recordNumber"
+            :rules="isEditing('basic') && formData.showRecordNumber ? recordNumberRules : undefined"
+            :editing="isEditing('basic')"
+            :display="displayValue(formData.recordNumber)"
+          >
+            <a-input
+              v-model:value="formData.recordNumber"
+              :placeholder="$t('Basis.Form.436809-26')"
+            />
+          </BasisField>
+        </div>
+      </RegistryComponent>
+    </BasisSection>
+
+    <BasisSection :title="$t('Basis.Config.mapConfig')">
+      <template v-if="sectionEditMode" #extra>
+        <BasisSectionActions
+          section="map"
+          :active-section="editingSection"
+          :can-edit="canEdit"
+          :saving="saving"
+          @edit="startEdit"
+          @cancel="cancelEdit"
+          @save="submit"
+        />
+      </template>
+      <RegistryComponent
+        :page-code="BASIS_FORM_PAGE_CODE"
+        :code="BASIS_FORM_MODULE_CODE"
+      >
         <MapSettings
+          :key="'map-keys'"
           v-model:web-key="formData.webKey"
           v-model:api-key="formData.apiKey"
           v-model:secret-key="formData.secretKey"
-          v-model:base-path="formData['base-path']"
+          :editing="isEditing('map')"
+          :placeholder="placeholder"
+          :secret-display="maskedSecret"
         />
-        <a-form-item
-            name="showRecordNumber"
-            :label="$t('Basis.Form.436809-24')"
-            :required="true"
+        <BasisField
+          :key="BASIS_FORM_FIELD.BASE_PATH"
+          label="base-path"
+          name="base-path"
+          :rules="isEditing('map') ? basePathRules : undefined"
+          :editing="isEditing('map')"
+          :display="displayValue(formData['base-path'])"
         >
-          <a-switch
-              v-model:checked="formData.showRecordNumber"
-          ></a-switch>
-        </a-form-item>
-        <a-form-item
-            v-if="formData.showRecordNumber"
-            name="recordNumber"
-            :label="$t('Basis.Form.436809-25')"
-            :rules="[
-                        {
-                            required: true,
-                            message: $t('Basis.Form.436809-26'),
-                            trigger: 'blur',
-                        },
-                    ]"
+          <template #tooltip>
+            <div>
+              <div>{{ $t('Basis.Form.436809-12') }}</div>
+              <div>
+                {{ $t('Basis.Form.436809-13') }}{http/https}:
+                //{前端所在服务器IP地址}:{前端暴露的服务端口}/api
+              </div>
+            </div>
+          </template>
+          <a-input
+            v-model:value="formData['base-path']"
+            :placeholder="$t('Basis.Form.436809-14')"
+          />
+        </BasisField>
+      </RegistryComponent>
+    </BasisSection>
+
+    <RegistryComponent
+      :page-code="BASIS_FORM_PAGE_CODE"
+      :code="BASIS_FORM_MODULE_CODE"
+    >
+      <BasisSection :key="BASIS_FORM_FIELD.BACKGROUND" :title="$t('Basis.Form.436809-18')">
+        <template v-if="sectionEditMode" #extra>
+          <BasisSectionActions
+            section="background"
+            :active-section="editingSection"
+            :can-edit="canEdit"
+            :saving="saving"
+            @edit="startEdit"
+            @cancel="cancelEdit"
+            @save="submit"
+          />
+        </template>
+        <BasisField
+          :label="$t('Basis.Form.436809-18')"
+          name="background"
+          :align="isEditing('background') ? 'start' : 'center'"
+          :editing="isEditing('background')"
         >
-          <a-input v-model:value="formData.recordNumber" :placeholder="$t('Basis.Form.436809-26')"></a-input>
-        </a-form-item>
-        <!-- {{ $t('Basis.Form.436809-15') }} 和 浏览器标签 -->
-        <a-row :gutter="24">
-          <!-- {{ $t('Basis.Form.436809-15') }} -->
-          <a-col :span="12">
-            <a-form-item :label="$t('Basis.Form.436809-15')">
-              <Upload v-model:img-src="formData.logo" uploadType="logo"/>
-            </a-form-item>
-          </a-col>
-          <!-- {{ $t('Basis.Form.436809-16') }}icon -->
-          <a-col :span="12">
-            <a-form-item :label="$t('Basis.Form.436809-16')">
-              <Upload v-model:img-src="formData.ico" uploadType="ico"/>
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <!-- 保存按钮 -->
-        <a-form-item v-if="showBtn">
-          <j-permission-button hasPermission="system/Basis:update" html-type="submit" type="primary" @click="submit">
-            {{ $t('Basis.Form.436809-17') }}
-          </j-permission-button>
-        </a-form-item>
-      </div>
-      <!-- 表单右侧部分 -->
-      <div class="form-right">
-        <div class="form-right-background">
-          <a-form-item :label="$t('Basis.Form.436809-18')" name="background">
-            <Upload v-model:img-src="formData.background" height="25rem" uploadType="background" width="34.375rem"/>
-          </a-form-item>
-        </div>
-      </div>
+          <Upload
+            v-model:img-src="formData.background"
+            class="basis-upload--background"
+            height="16rem"
+            upload-type="background"
+            width="100%"
+          />
+          <template #view>
+            <BasisImagePreview
+              :src="backgroundSrc"
+              :alt="$t('Basis.Form.436809-18')"
+              :placeholder="placeholder"
+              size="lg"
+            />
+          </template>
+        </BasisField>
+      </BasisSection>
+    </RegistryComponent>
+
+    <div v-if="showBtn" class="basis-form__actions">
+      <j-permission-button
+        has-permission="system/Basis:update"
+        html-type="submit"
+        type="primary"
+        :loading="saving"
+        @click="submit"
+      >
+        {{ $t('Basis.Form.436809-17') }}
+      </j-permission-button>
     </div>
   </a-form>
 </template>
 
 <script lang="ts" name="BasicForm" setup>
-import {reactive, ref} from 'vue'
-import type {formDataType} from './typing'
-import {useRequest} from '@jetlinks-web/hooks';
-import {save_api} from '../../../api/system/basis';
-import {useSystemStore, type LayoutMode} from '@jetlinks-web-core/store/system';
-import type { BasicLayoutVariant } from '@jetlinks-web-core/layout/runtime/layoutVariant'
-import { normalizeLayoutMode } from './layoutMode'
 import Upload from '@jetlinks-web-core/views/init-home/Basic/components/upload/upload.vue'
 import LayoutModeSelector from './components/LayoutModeSelector.vue'
 import MapSettings from './components/MapSettings.vue'
-import {onlyMessage} from '@jetlinks-web/utils';
-import {omit} from "lodash-es";
-import { useI18n } from 'vue-i18n';
-import { useHeaderTheme } from '@jetlinks-web-core/hooks';
+import BasisSection from './components/BasisSection.vue'
+import BasisSectionActions from './components/BasisSectionActions.vue'
+import BasisField from './components/BasisField.vue'
+import BasisImagePreview from './components/BasisImagePreview.vue'
+import { BASIS_FORM_FIELD, BASIS_FORM_MODULE_CODE, BASIS_FORM_PAGE_CODE } from './fieldRegistry'
+import { useBasisForm } from './useBasisForm'
 
-const { t: $t } = useI18n();
-const layoutVariantMap: Record<LayoutMode, BasicLayoutVariant> = {
-  top: 'tenant',
-  side: 'application',
-  mix: 'project',
-}
 const props = defineProps({
   hideSubmitBtn: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 })
 
-const system = useSystemStore()
 const {
+  formRef,
+  formData,
+  formRules,
+  recordNumberRules,
+  basePathRules,
   headerThemeAreas,
-  normalizeHeaderTheme,
-  applyHeaderTheme,
-  createHeaderThemeChange
-} = useHeaderTheme()
-// 表单数据
-const formData = reactive<formDataType>({
-  title: "",  // 系统名称
-  headerTheme: "light",  // 主题色
-  layout: "side", // 导航模式
-  layoutVariant: "application", // 隐藏布局壳层
-  apiKey: "",  // 高德API Key
-  webKey: "", // 高德web key
-  secretKey: "", // 高德web key
-  'base-path': `${window.location.origin}/api`,  // base-path
-  logo: "images/login/logo.png",  // 系统logo
-  ico: "favicon.ico",  // 浏览器页签
-  background: "images/login/login.png"  // 登录背景图
-})
-
-const formRef = ref()
-
-const showBtn = computed(() => {
-  return props.hideSubmitBtn === false
-})
-// 表单验证规则
-const formRules = {
-  // 系统名称输入框验证规则
-  title: [
-    {
-      required: true,
-      message: $t('Basis.Form.436809-1'),
-      trigger: 'blur'
-    },
-    {
-      max: 64,
-      message: $t('Basis.Form.436809-19')
-    }
-  ],
-  // 主题色验证规则
-  headerTheme: [
-    {
-      required: true,
-    }
-  ],
-  layout: [
-    {
-      required: true,
-    }
-  ],
-  'base-path': [
-    {
-      required: true,
-      message: $t('Basis.Form.436809-20'),
-      trigger: "blur"
-    }
-  ]
-}
-
-const changeHeaderTheme = createHeaderThemeChange(formData)
-
-
-// 修改系统信息
-const getDetails = async () => {
-  await system.queryInfo()
-  const configInfo = system.systemInfo;
-  const layout = normalizeLayoutMode(configInfo.front?.layout)
-
-  Object.assign(formData, {
-    title: configInfo.front?.title,
-    headerTheme: normalizeHeaderTheme(configInfo.front?.headerTheme),
-    layout,
-    layoutVariant: layoutVariantMap[layout],
-    logo: configInfo.front?.logo || 'logo.png',
-    ico: configInfo.front?.ico || 'favicon.ico',
-    showRecordNumber: configInfo.front?.showRecordNumber || false,
-    recordNumber: configInfo.front?.recordNumber,
-    background: configInfo.front?.background || 'images/login/login.png',
-    apiKey: configInfo.amap?.apiKey,
-    webKey: configInfo.amap?.webKey,
-    secretKey: configInfo.amap?.secretKey,
-    'base-path': configInfo.paths?.['base-path'],
-  })
-}
-
-// 回显数据
-onMounted(() => {
-  getDetails()
-})
-
-// 保存请求
-const {run} = useRequest(save_api, {
-  immediate: false,
-  onSuccess(res) {
-    if (res.success) {
-      onlyMessage($t('Basis.Form.436809-23'), 'success')
-      getDetails()
-    }
-  }
-})
-
-// 提交表单
-const submit = () => {
-  return new Promise((resolve, reject) => {
-    formRef.value.validate().then(() => {
-      // layoutVariant 不单独展示，提交时始终与用户选择的导航模式保持一致。
-      formData.layoutVariant = layoutVariantMap[formData.layout]
-      const params = [
-        {
-          scope: 'front',
-          properties: omit(formData, [
-            'apiKey',
-            'webKey',
-            'secretKey',
-            'base-path',
-          ])
-        },
-        {
-          scope: 'amap',
-          properties: {
-            apiKey: formData.apiKey,
-            webKey: formData.webKey,
-            secretKey: formData.secretKey,
-          },
-        },
-        {
-          scope: 'paths',
-          properties: {
-            'base-path': formData['base-path'],
-          },
-        },
-      ]
-      run(params).then(resp => {
-        if (resp.success) {
-          applyHeaderTheme(formData.headerTheme)
-        }
-        resolve(true)
-      }).catch(() => {
-        reject(false)
-      })
-    }).catch((e) => {
-      reject(e)
-      return false
-    })
-  })
-}
+  loading,
+  error,
+  saving,
+  showBtn,
+  canEdit,
+  sectionEditMode,
+  editingSection,
+  placeholder,
+  displayTheme,
+  displayLayout,
+  maskedSecret,
+  logoSrc,
+  icoSrc,
+  backgroundSrc,
+  changeHeaderTheme,
+  displayValue,
+  isEditing,
+  startEdit,
+  cancelEdit,
+  loadDetails,
+  submit,
+} = useBasisForm(props.hideSubmitBtn)
 
 defineExpose({
-  submit
+  submit,
 })
-
 </script>
 
-<style lang="less" scoped>
-.form-container {
-  display: flex;
-  overflow-y: auto;
-
-  .form-left {
-    height: inherit;
-    width: 50%;
-  }
-
-  .form-right {
-    padding-left: var(--space-3);
-    width: 50%;
-
-    .form-right-bgImage {
-      width: 100%;
-
-      .bgImage-div {
-        width: 34.375rem;
-        height: 25rem;
-      }
-    }
-  }
-}
-</style>
+<style scoped lang="less" src="./Form.less"></style>
