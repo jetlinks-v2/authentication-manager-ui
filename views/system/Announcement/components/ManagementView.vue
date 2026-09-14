@@ -47,8 +47,8 @@
       </template>
       <template #state="record">
         <j-badge-status
-          :status="record.state"
-          :text="record.stateText || $t(`Announcement.status.${record.state}`)"
+          :status="record?.state"
+          :text="resolveStateLabel(record)"
           :status-names="statusNames"
         />
       </template>
@@ -141,6 +141,7 @@ import type {
 import { queryAnnouncements } from '../api'
 import type { AnnouncementRecord } from '../types'
 import { resolveBulletinTypeIcon } from '../bulletinTypeIcon'
+import { resolveAnnouncementStateLabel } from '../announcementI18n'
 
 defineEmits<{
   (event: 'create'): void
@@ -155,6 +156,10 @@ const { t: $t } = useI18n()
 const tableRef = ref<{ reload: () => void }>()
 const queryParams = ref<{ terms: ConditionFilterTerm[] }>({ terms: [] })
 const statusNames = { published: 'success', unpublished: 'default' }
+
+/** 优先按界面语言翻译状态，后端单语 stateText 仅兜底；record 可能为空，避免取值报错。 */
+const resolveStateLabel = (record?: AnnouncementRecord) =>
+  resolveAnnouncementStateLabel(record?.state) || record?.stateText || ''
 
 const columns = computed(() => [
   {
@@ -185,7 +190,7 @@ const columns = computed(() => [
     title: $t('Announcement.column.state'),
     dataIndex: 'state',
     key: 'state',
-    width: 100,
+    width: 120,
     scopedSlots: true,
     search: {
       type: 'select',
@@ -229,6 +234,11 @@ defineExpose({ reload: () => tableRef.value?.reload() })
 </script>
 
 <style scoped lang="less">
+/* 英文状态（Unpublished / Published）不能换行，否则状态列会被折成两行。 */
+:deep(.ant-badge-status-text) {
+  white-space: nowrap;
+}
+
 .announcement-summary-cell {
   width: 100%;
   min-width: 0;

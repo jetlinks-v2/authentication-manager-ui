@@ -16,7 +16,15 @@ const loadHelper = async (locale = 'en') => {
     if (id === '@jetlinks-web-core/locales') {
       return {
         __esModule: true,
-        default: { global: { locale: { value: locale } } },
+        default: {
+          global: {
+            locale: { value: locale },
+            getLocaleMessage: (target) => ({
+              'Announcement.status.published': target === 'zh' ? '已发布' : 'Published',
+              'Announcement.status.unpublished': target === 'zh' ? '未发布' : 'Unpublished',
+            }),
+          },
+        },
       }
     }
     return {}
@@ -175,4 +183,14 @@ test('keeps malformed announcement data on the legacy fallback path', async () =
   assert.equal(resolveAnnouncementText({ title: '旧标题', i18nMessages: 'broken' }, 'title'), '旧标题')
   assert.equal(resolveAnnouncementText({ title: '旧标题', i18nMessages: null }, 'title'), '旧标题')
   assert.deepEqual(normalizeAnnouncementI18n(null), {})
+})
+
+test('resolves the announcement state label by target language', async () => {
+  const { resolveAnnouncementStateLabel } = await loadHelper('zh')
+  assert.equal(resolveAnnouncementStateLabel('unpublished', 'zh'), '未发布')
+  assert.equal(resolveAnnouncementStateLabel('unpublished', 'en'), 'Unpublished')
+  assert.equal(resolveAnnouncementStateLabel('published', 'en-US'), 'Published')
+  assert.equal(resolveAnnouncementStateLabel('unknown', 'en'), '')
+  assert.equal(resolveAnnouncementStateLabel('', 'en'), '')
+  assert.equal(resolveAnnouncementStateLabel(undefined, 'en'), '')
 })

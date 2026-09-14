@@ -154,7 +154,23 @@ test('stores and renders announcement content with the platform i18nMessages fie
 })
 
 test('uses the bulletin title and internal scrolling for management details', () => {
-  assert.match(pageSource, /:title="detailRecord\?\.title \|\| \$t\('Announcement\.action\.view'\)"/)
+  assert.match(pageSource, /:title="detailTitle"/)
+  assert.match(pageSource, /v-model:locale="detailLocale"/)
+  assert.match(pageSource, /resolveAnnouncementText\(record, 'title', detailLocale\.value\)/)
+  assert.match(announcementDetailSource, /<a-tabs v-model:activeKey="viewLocale"/)
+  assert.match(announcementDetailSource, /v-for="item in languagePanes"/)
+  assert.match(announcementDetailSource, /resolveAnnouncementText\(props\.record, 'summary', item\.value\)/)
+  assert.match(announcementDetailSource, /resolveAnnouncementText\(props\.record, 'content', item\.value\)/)
+  assert.match(announcementDetailSource, /Announcement\.detail\.languageMissing/)
+  assert.match(announcementDetailSource, /:text="stateText"/)
+  assert.match(announcementDetailSource, /resolveAnnouncementStateLabel\(props\.record\?\.state, viewLocale\.value\)/)
+  // 元信息表格在标签页之外，不能引用 v-for 的 item，否则运行时会读 undefined。
+  assert.doesNotMatch(announcementDetailSource.split('<a-tabs')[0], /\bitem\./)
+  assert.match(managementSource, /:text="resolveStateLabel\(record\)"/)
+  assert.match(managementSource, /resolveAnnouncementStateLabel\(record\?\.state\)/)
+  // 英文状态不能换行，状态列需留出足够宽度。
+  assert.match(managementSource, /white-space: nowrap/)
+  assert.match(managementSource, /key: 'state',\s*width: 120/)
   assert.match(announcementDetailSource, /class="announcement-detail-scroll"/)
   assert.match(announcementDetailSource, /max-height: min\(70dvh, 48rem\)/)
   assert.match(announcementDetailSource, /overflow-y: auto/)

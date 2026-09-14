@@ -66,6 +66,27 @@ export const resolveLocalizedText = (
   return firstText(messages[normalizedLocale], messages[language])
 }
 
+/**
+ * 状态文案（已发布/未发布）按目标语言从本地语言包解析。
+ * 后端 `state.text` 是单语快照（BulletinState 仍是硬编码中文），因此只作兜底。
+ */
+export const resolveAnnouncementStateLabel = (
+  state: unknown,
+  locale?: string,
+): string => {
+  const value = String(state ?? '').trim()
+  if (!value) return ''
+  const language = String(locale || currentLocale()).replace('_', '-').split('-')[0]
+  if (!language) return ''
+  try {
+    const messages = globalI18n.global.getLocaleMessage(language) as Record<string, unknown>
+    const localized = messages?.[`Announcement.status.${value}`]
+    return typeof localized === 'string' ? localized : ''
+  } catch {
+    return ''
+  }
+}
+
 /** 当前 locale 优先，缺失时只回退旧顶层字段，不跨语言取值。 */
 export const resolveAnnouncementText = (
   record: AnnouncementTextRecord | undefined,
