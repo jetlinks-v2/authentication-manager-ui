@@ -11,7 +11,7 @@
       <a-descriptions-item :label="$t('Announcement.detail.state')">
         <j-badge-status
           :status="record.state"
-          :text="item.stateText"
+          :text="stateText"
           :status-names="statusNames"
         />
       </a-descriptions-item>
@@ -81,6 +81,16 @@ const viewLocale = computed({
   set: (value: string) => emit('update:locale', value),
 })
 
+/**
+ * 状态文案跟随当前查看语言。元信息表格在标签页之外，
+ * 不能引用 v-for 的 item 作用域，否则会读 undefined。
+ */
+const stateText = computed(() => {
+  return resolveAnnouncementStateLabel(props.record?.state, viewLocale.value)
+    || props.record?.stateText
+    || ''
+})
+
 /** 每个语言一个标签页；该语言整条未填写时在页内显式提示，避免看起来“切换无效”。 */
 const languagePanes = computed(() => {
   const i18n = getAnnouncementI18n(props.record?.i18nMessages)
@@ -91,10 +101,6 @@ const languagePanes = computed(() => {
     ...item,
     summary: resolveAnnouncementText(props.record, 'summary', item.value),
     content: resolveAnnouncementText(props.record, 'content', item.value),
-    // 状态文案按所选语言翻译，后端 stateText 仅作兜底，避免切到英文仍显示中文。
-    stateText: resolveAnnouncementStateLabel(props.record?.state, item.value)
-      || props.record?.stateText
-      || '',
     missing: !['title', 'summary', 'content'].some(field =>
       resolveLocalizedText(i18n[field as keyof typeof i18n], item.value)),
   }))
