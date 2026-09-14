@@ -79,6 +79,24 @@ Scope is limited to `views/system/Department/index.vue` and the existing shared 
 
 Verification: the edited Department SFC passes a local script/template syntax compilation and remains below 300 lines. Build and TypeScript checks were not run for the layout follow-up by request.
 
+## Department User Position Empty-State Filter
+
+The Organization Management User tab maps the Position condition to the backend `UserDimensionTerm` contract in `views/system/Department/user/index.vue`:
+
+- `为空` (`isnull`) uses `id$in-dimension$position$not$any`, generating `NOT EXISTS` for a Position-dimension binding.
+- `不为空` (`notnull`) uses `id$in-dimension$position$any`, generating `EXISTS` for a Position-dimension binding.
+- Exact and multi-value matching retain `id$in-dimension$position`; `not` and `nin` retain the `$not` relation variant for selected-position exclusion.
+
+`ConditionFilter` supplies the required non-empty placeholder for null-state terms; the `$any` query extension deliberately ignores that value. Scope is limited to the runtime UI adapter and does not change the user API, data model, permissions, routes, or other Department tabs.
+
+## Department Position Role Filter
+
+The Department Position tab keeps selected-role filtering on the existing `id$position-role$position` contract. For `为空` and `不为空`, the runtime UI removes only the role-null condition from the request, loads all position details for the selected organization, filters their returned `roles` arrays, and restores normal pagination. The user API, role model, position API, and other position pages remain unchanged.
+
+## Department Position Parent Filter Label
+
+The Parent Position filter keeps IDs as its query value and uses `loadSelectedOptions` to resolve selected positions from the same organization-position tree used by the selector. The tree request is shared for the active page and is invalidated after a position is created, updated, or deleted, preventing duplicate organization-tree and position-list requests when filter conditions change. The selector and filter token therefore both render the complete hierarchy (for example, `Root Organization / First-level Organization / Position`) instead of an ID; no API contract, data model, or backend behavior changes.
+
 ## System Management List Layout
 
 The `views/system/` list pages that combine `ConditionFilter` with `j-pro-table` use the shared `PageHeader` list shell: the page title stays on the left, filtering and the primary create action stay on the right, existing batch actions remain in the table toolbar, and dropdown-based batch actions stay grouped.

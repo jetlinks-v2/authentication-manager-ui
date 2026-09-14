@@ -4,7 +4,7 @@ import User from './User.vue'
 import {onlyMessage} from "@jetlinks-web/utils";
 import {detail, save, update} from '@authentication-manager-ui/api/system/positions'
 import { useRequest } from '@jetlinks-web/hooks'
-import {usePositionList} from "../data";
+import {clearPositionTreeCache, usePositionList} from "../data";
 import {getDepartmentList_api} from "@jetlinks-web-core/api/system/user";
 import {cloneDeep} from "lodash-es";
 import {filterSelectNode} from "@jetlinks-web-core/utils";
@@ -18,6 +18,7 @@ const router = useRouter()
 const oldData = ref({})
 const { loading, run } = useRequest(save, {
   onSuccess: (resp) => {
+    clearPositionTreeCache()
     onlyMessage($t('Detail.index.707691-33'))
     if (window.onTabSaveSuccess) {
       window.onTabSaveSuccess(resp.result.id);
@@ -31,6 +32,7 @@ const { loading, run } = useRequest(save, {
 
 const { loading: updateLoading, run: updateRun } = useRequest(update, {
   onSuccess: () => {
+    clearPositionTreeCache()
     onlyMessage($t('Detail.index.707691-33'))
   },
   immediate: false

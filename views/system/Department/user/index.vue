@@ -207,11 +207,18 @@ const handleParams = ({filter}: ConditionFilterChangePayload) => {
         return term
       }
 
-      // 关联查询列已包含查询语义，后端不接收额外的 termType。
+      // UserDimensionTerm 用 $any 表示任意职位存在，用 $not$any 表示职位不存在。
       const {termType, ...rest} = term
+      const relationSuffix = {
+        isnull: '$not$any',
+        notnull: '$any',
+        not: '$not',
+        nin: '$not',
+      }[termType || ''] || ''
+
       return {
         ...rest,
-        column: 'id$in-dimension$position',
+        column: `id$in-dimension$position${relationSuffix}`,
       }
     }),
   }
