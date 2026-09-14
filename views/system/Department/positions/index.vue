@@ -5,7 +5,7 @@ import BindModal from './Bind.vue'
 import {useMenuStore} from '@jetlinks-web-core/store';
 import {onlyMessage} from '@jetlinks-web/utils';
 import {queryRole_api} from "@authentication-manager-ui/api/system/user";
-import {getPositionTree} from "./data";
+import {clearPositionTreeCache, getPositionTree, getSelectedPositionOptions} from "./data";
 import PageHeader from '@jetlinks-web-core/components/PageHeader';
 import {filterConditionTerms, transformConditionTerms} from '@authentication-manager-ui/views/system/conditionFilterUtils';
 
@@ -97,7 +97,10 @@ const columns = [
         //   return []
         // })
         return getPositionTree()
-      }
+      },
+      optionPanel: {
+        loadSelectedOptions: getSelectedPositionOptions,
+      },
     },
   },
   {
@@ -280,6 +283,7 @@ const toPositionDetail = (data) => {
 const deletePosition = async (id) => {
   const res = await del(id)
   if (res.success) {
+    clearPositionTreeCache()
     onlyMessage($t('Tags.index.675027-4'))
     tableRef.value?.reload();
   }

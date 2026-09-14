@@ -156,17 +156,63 @@ const handleOrgData = (orgList = [], positionList = []): any[] => {
   })
 }
 
-export const getPositionTree = async () => {
-  const resp = await getDepartmentList_api({
-    paging: false,
-    sorts: [
-      { name: "sortIndex", order: "asc" },
-      { name: "createTime", order: "asc" },
-    ]
-  })
-  const response = await queryPageNoPage({sorts: [{name: 'createTime', order: 'desc'}], paging: false})
-  if(resp.success && response.success){
-    return handleOrgData(resp.result, response.result)
+// 筛选面板和 Token 回显共享同一棵树，避免每次条件变动都重复拉取组织与职位数据。
+let positionTreeRequest: Promise<any[]> | undefined
+
+export const clearPositionTreeCache = () => {
+  positionTreeRequest = undefined
+}
+
+export const getPositionTree = () => {
+  if (!positionTreeRequest) {
+    positionTreeRequest = Promise.all([
+      getDepartmentList_api({
+        paging: false,
+        sorts: [
+          { name: "sortIndex", order: "asc" },
+          { name: "createTime", order: "asc" },
+        ]
+      }),
+      queryPageNoPage({sorts: [{name: 'createTime', order: 'desc'}], paging: false}),
+    ]).then(([orgResponse, positionResponse]) => {
+      if (orgResponse.success && positionResponse.success) {
+        return handleOrgData(orgResponse.result, positionResponse.result)
+      }
+      return []
+    }).catch((error) => {
+      clearPositionTreeCache()
+      throw error
+    })
   }
-  return []
+
+  return positionTreeRequest
+}
+
+/**
+ * ConditionFilter 路由或已保存条件只保留职位 ID，回显时沿用筛选树的完整路径。
+ */
+export const getSelectedPositionOptions = async (values: any[] = []) => {
+  const ids = values.map(value => String(value || '')).filter(Boolean)
+  if (!ids.length) {
+    return []
+  }
+
+  const selectedIds = new Set(ids)
+  const options: Array<{ label: string, value: string }> = []
+  const collectPositionOptions = (items: any[] = [], parents: string[] = []) => {
+    items.forEach((item) => {
+      const path = [...parents, item.label || item.name || item.value]
+      if (Array.isArray(item.children) && item.children.length) {
+        collectPositionOptions(item.children, path)
+      } else if (!item.disabled && selectedIds.has(String(item.value))) {
+        options.push({
+          label: path.join(' / '),
+          value: item.value,
+        })
+      }
+    })
+  }
+
+  collectPositionOptions(await getPositionTree())
+  return options
 }

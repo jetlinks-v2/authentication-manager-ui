@@ -93,6 +93,10 @@ The Organization Management User tab maps the Position condition to the backend 
 
 The Department Position tab keeps selected-role filtering on the existing `id$position-role$position` contract. For `为空` and `不为空`, the runtime UI removes only the role-null condition from the request, loads all position details for the selected organization, filters their returned `roles` arrays, and restores normal pagination. The user API, role model, position API, and other position pages remain unchanged.
 
+## Department Position Parent Filter Label
+
+The Parent Position filter keeps IDs as its query value and uses `loadSelectedOptions` to resolve selected positions from the same organization-position tree used by the selector. The tree request is shared for the active page and is invalidated after a position is created, updated, or deleted, preventing duplicate organization-tree and position-list requests when filter conditions change. The selector and filter token therefore both render the complete hierarchy (for example, `Root Organization / First-level Organization / Position`) instead of an ID; no API contract, data model, or backend behavior changes.
+
 ## System Management List Layout
 
 The `views/system/` list pages that combine `ConditionFilter` with `j-pro-table` use the shared `PageHeader` list shell: the page title stays on the left, filtering and the primary create action stay on the right, existing batch actions remain in the table toolbar, and dropdown-based batch actions stay grouped.

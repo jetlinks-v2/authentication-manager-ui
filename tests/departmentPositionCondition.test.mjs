@@ -6,6 +6,7 @@ import { test } from 'node:test'
 const moduleRoot = resolve(import.meta.dirname, '..')
 const pageSource = await readFile(resolve(moduleRoot, 'views/system/Department/user/index.vue'), 'utf8')
 const positionsSource = await readFile(resolve(moduleRoot, 'views/system/Department/positions/index.vue'), 'utf8')
+const positionDataSource = await readFile(resolve(moduleRoot, 'views/system/Department/positions/data.ts'), 'utf8')
 
 test('maps department-user Position empty states to UserDimensionTerm existence predicates', () => {
   assert.match(pageSource, /isnull: '\$not\$any'/)
@@ -23,4 +24,20 @@ test('filters Department Position-role empty states in runtime UI without changi
   assert.match(positionsSource, /termType === 'notnull' \? hasRoles : !hasRoles/)
   assert.match(positionsSource, /column: `id\$position-role\$position\$\{relationSuffix\}`/)
   assert.match(positionsSource, /value: Array\.isArray\(value\) \? value : value \? \[value\] : \[\]/)
+})
+
+test('loads selected parent-position labels instead of displaying their IDs', () => {
+  assert.match(positionsSource, /getSelectedPositionOptions/)
+  assert.match(positionsSource, /loadSelectedOptions: getSelectedPositionOptions/)
+  assert.match(positionDataSource, /export const getSelectedPositionOptions/)
+  assert.match(positionDataSource, /collectPositionOptions\(await getPositionTree\(\)\)/)
+  assert.match(positionDataSource, /label: path\.join\(' \/ '\)/)
+})
+
+test('shares the organization-position tree request between selector and selected-value lookup', () => {
+  assert.match(positionDataSource, /let positionTreeRequest: Promise<any\[\]> \| undefined/)
+  assert.match(positionDataSource, /if \(!positionTreeRequest\)/)
+  assert.match(positionDataSource, /return positionTreeRequest/)
+  assert.match(positionDataSource, /export const clearPositionTreeCache/)
+  assert.match(positionsSource, /clearPositionTreeCache\(\)/)
 })
