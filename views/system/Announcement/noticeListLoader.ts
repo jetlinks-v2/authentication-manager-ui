@@ -111,7 +111,7 @@ export const resolveSystemBulletinNoticeTexts = async (
   return Promise.all(records.map(async record => {
     if (record.topicProvider !== SYSTEM_BULLETIN_PROVIDER) return record
     const snapshot = parseSystemBulletinDetail(record)
-    const snapshotI18n = getAnnouncementI18n(snapshot?.others)
+    const snapshotI18n = getAnnouncementI18n(snapshot?.i18nMessages)
     const hasCurrentText = (field: 'title' | 'summary') =>
       Boolean(resolveLocalizedText(snapshotI18n[field]))
     const shouldLoadDetail = !hasCurrentText('title') || !hasCurrentText('summary')
@@ -127,7 +127,7 @@ export const resolveSystemBulletinNoticeTexts = async (
       ? {
           ...(snapshot || {}),
           ...loadedDetail,
-          others: loadedDetail.others || snapshot?.others,
+          i18nMessages: loadedDetail.i18nMessages || snapshot?.i18nMessages,
         }
       : snapshot
 

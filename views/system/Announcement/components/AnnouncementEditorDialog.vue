@@ -89,7 +89,7 @@
 
       <a-form-item :label="$t('Announcement.editor.content')" required>
         <AnnouncementI18nMarkdownEditor
-          v-model="form.others.i18n.content"
+          v-model="form.i18nMessages.content"
           :rows="14"
           :placeholder="$t('Announcement.editor.contentPlaceholder')"
         />
@@ -139,7 +139,6 @@ import {
   updateAnnouncementLocaleText,
   type AnnouncementI18n,
   type AnnouncementI18nField,
-  type AnnouncementOthers,
 } from '../announcementI18n'
 import AnnouncementI18nMarkdownEditor from './AnnouncementI18nMarkdownEditor.vue'
 import AnnouncementI18nTextDialog from './AnnouncementI18nTextDialog.vue'
@@ -176,7 +175,7 @@ interface AnnouncementEditorForm {
   type: string
   userIds: string[]
   organizationIds: string[]
-  others: Omit<AnnouncementOthers, 'i18n'> & { i18n: AnnouncementI18n }
+  i18nMessages: AnnouncementI18n
 }
 
 const form = reactive<AnnouncementEditorForm>({
@@ -186,13 +185,13 @@ const form = reactive<AnnouncementEditorForm>({
   type: '',
   userIds: [],
   organizationIds: [],
-  others: { i18n: {} },
+  i18nMessages: {},
 })
 
 const i18nDialogVisible = ref(false)
 const currentI18nField = ref<AnnouncementI18nField>('title')
 const currentI18nMessages = computed<Record<string, string>>(() => {
-  return form.others.i18n?.[currentI18nField.value] ?? {}
+  return form.i18nMessages?.[currentI18nField.value] ?? {}
 })
 const currentLanguage = computed(() => {
   return String(locale.value || 'zh').replace('_', '-').split('-')[0]
@@ -213,7 +212,7 @@ const dialogTitle = computed(() => {
 })
 
 const canSubmit = computed(() => {
-  const i18n = normalizeAnnouncementI18n(form.others.i18n)
+  const i18n = normalizeAnnouncementI18n(form.i18nMessages)
   return Boolean(
     resolveCompatibilityText(i18n.title, form.title.trim())
     && resolveCompatibilityText(i18n.content, form.content.trim())
@@ -228,10 +227,9 @@ watch(() => props.open, (open) => {
 /** 弹窗每次打开都从当前记录重新初始化，关闭后不会残留上一次草稿。 */
 function resetForm() {
   const record = props.record
-  const others = { ...(record?.others ?? {}) } as AnnouncementEditorForm['others']
   const translatedDefaultContent = $t('Announcement.editor.defaultContent')
   const defaultContent = record?.content || translatedDefaultContent
-  const i18n = mergeLegacyAnnouncementI18n(others.i18n, {
+  const i18n = mergeLegacyAnnouncementI18n(record?.i18nMessages, {
     title: record?.legacyTitle,
     summary: record?.legacySummary,
     content: record?.legacyContent === translatedDefaultContent ? undefined : record?.legacyContent,
@@ -246,7 +244,7 @@ function resetForm() {
   form.userIds = [...(record?.userIds || [])]
   form.organizationIds = [...(record?.organizationIds || [])]
 
-  form.others = { ...others, i18n }
+  form.i18nMessages = i18n
 }
 
 function openI18n(field: AnnouncementI18nField) {
@@ -255,8 +253,8 @@ function openI18n(field: AnnouncementI18nField) {
 }
 
 function saveI18nMessages(messages: Record<string, string>) {
-  form.others.i18n = {
-    ...(form.others.i18n ?? {}),
+  form.i18nMessages = {
+    ...(form.i18nMessages ?? {}),
     [currentI18nField.value]: messages,
   }
 }
@@ -274,7 +272,7 @@ function submit(publish: boolean) {
   if (!canSubmit.value) return
   const type = props.typeOptions.find(item => item.value === form.type) || props.record?.type
   if (!type) return
-  let i18n = normalizeAnnouncementI18n(form.others.i18n)
+  let i18n = normalizeAnnouncementI18n(form.i18nMessages)
   if (form.title.trim() !== initialTitle) {
     i18n = updateAnnouncementLocaleText(i18n, 'title', currentLanguage.value, form.title)
   }
@@ -293,10 +291,7 @@ function submit(publish: boolean) {
     userIds: [...form.userIds],
     organizationIds: [...form.organizationIds],
     publish,
-    others: {
-      ...form.others,
-      i18n,
-    },
+    i18nMessages: i18n,
   })
 }
 </script>

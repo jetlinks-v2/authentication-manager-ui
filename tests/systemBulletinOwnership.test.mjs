@@ -125,7 +125,7 @@ test('maps the six built-in bulletin types to one icon vocabulary with a default
   assert.match(notificationDetailSource, /<AIcon :type="typeIcon" \/>/)
 })
 
-test('stores and renders announcement content with the confirmed others.i18n contract', async () => {
+test('stores and renders announcement content with the platform i18nMessages field', async () => {
   const [editorSource, i18nSource, markdownSource, zhLocale, enLocale] = await Promise.all([
     readFile(resolve(moduleRoot, 'views/system/Announcement/components/AnnouncementEditorDialog.vue'), 'utf8'),
     readFile(resolve(moduleRoot, 'views/system/Announcement/announcementI18n.ts'), 'utf8'),
@@ -140,7 +140,7 @@ test('stores and renders announcement content with the confirmed others.i18n con
   assert.match(i18nSource, /getAnnouncementI18n/)
   assert.match(i18nSource, /messages\[normalizedLocale\], messages\[language\]/)
   assert.match(editorSource, /AnnouncementI18nMarkdownEditor/)
-  assert.match(editorSource, /v-model="form\.others\.i18n\.content"/)
+  assert.match(editorSource, /v-model="form\.i18nMessages\.content"/)
   assert.match(editorSource, /AnnouncementI18nTextDialog/)
   assert.match(editorSource, /updateAnnouncementLocaleText\(i18n, 'title', currentLanguage\.value, form\.title\)/)
   assert.match(editorSource, /title: record\?\.legacyTitle/)
@@ -304,7 +304,7 @@ test('keeps web-core notification handling business-neutral', () => {
   assert.doesNotMatch(coreNoticeSource, /SystemBulletin|systemBulletin|system\/bulletin/)
   assert.match(coreNoticeSource, /appContext/)
   assert.match(coreDialogSource, /const notificationTitle = computed/)
-  assert.match(coreDialogSource, /_data\.value\?\.others\?\.i18n\?\.title/)
+  assert.match(coreDialogSource, /_data\.value\?\.i18nMessages\?\.title/)
   assert.match(coreNoticeItemSource, /appContext/)
   assert.match(coreNoticeItemSource, /v-if="state === 'unread'"/)
   assert.match(coreNoticeItemSource, /CheckCircleOutlined/)
