@@ -52,7 +52,7 @@ const getTreeData = () => {
             ...item,
             key: item.url,
         }));
-        const allPromise = tree.map((item) => request.get(item.url));
+        const allPromise = tree.map((item) => request.get(item.url, {}, {timeout: 0}));
         // 若类型不为api，根据不同类型添加得到不同的过滤数组
         if (props.mode === 'appManger') allPromise.push(apiOperations_api());
         else if (props.mode === 'home')

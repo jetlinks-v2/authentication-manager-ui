@@ -1,14 +1,5 @@
 `<template>
   <div class="role-user-container">
-    <ConditionFilter
-      :columns="columns"
-      target="system-position-user"
-      :style="{
-        padding: 0,
-      }"
-      @change="({filter})=>queryParams = {...filter}"
-    />
-
     <div class="table-content">
       <j-pro-table
           ref="tableRef"
@@ -28,24 +19,34 @@
           }"
       >
         <template #headerLeftRender>
-          <a-space>
-            <a-button type="primary" @click="addUserDialogVisible = true">
-              <AIcon type="PlusOutlined"/>
-              {{ $t('position.User.473212-0') }}
-            </a-button>
-            <a-button @click="dialogVisible = true">
-              <AIcon type="LinkOutlined" />
-              {{ $t('position.User.473212-1') }}
-            </a-button>
-            <j-permission-button
-                :popConfirm="{
+	        <a-flex :gap="16">
+		        <ConditionFilter
+			        :columns="columns"
+			        target="system-position-user"
+			        :style="{
+			        padding: 0,
+			      }"
+			        @change="({filter})=>queryParams = {...filter}"
+		        />
+		        <a-space>
+			        <a-button type="primary" @click="addUserDialogVisible = true">
+				        <AIcon type="PlusOutlined"/>
+				        {{ $t('position.User.473212-0') }}
+			        </a-button>
+			        <a-button @click="dialogVisible = true">
+				        <AIcon type="LinkOutlined" />
+				        {{ $t('position.User.473212-1') }}
+			        </a-button>
+			        <j-permission-button
+				        :popConfirm="{
               title: $t('User.index.667995-1'),
               onConfirm: () => table.unbind(),
             }"
-            >
-              <AIcon type="DisconnectOutlined" />{{ $t('User.index.667995-2') }}
-            </j-permission-button>
-          </a-space>
+			        >
+				        <AIcon type="DisconnectOutlined" />{{ $t('User.index.667995-2') }}
+			        </j-permission-button>
+		        </a-space>
+	        </a-flex>
         </template>
 
         <template #status="slotProps">

@@ -24,3 +24,20 @@ export const transformConditionTerms = (
     return transformLeaf({ ...term })
   })
 }
+
+/**
+ * 移除条件树中的叶子条件，空条件组会一并删除，保留其余分组的 AND/OR 关系。
+ */
+export const filterConditionTerms = (
+  terms: ConditionFilterTerm[] = [],
+  keepLeaf: (term: ConditionQueryTerm) => boolean,
+): ConditionQueryTerm[] => {
+  return terms.flatMap((term) => {
+    if (Array.isArray(term.terms)) {
+      const children = filterConditionTerms(term.terms, keepLeaf)
+      return children.length ? [{...term, terms: children}] : []
+    }
+
+    return keepLeaf(term) ? [{...term}] : []
+  })
+}
