@@ -1,0 +1,1 @@
+export type BasisSectionKey = 'basic' | 'map' | 'background'
