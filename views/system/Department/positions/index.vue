@@ -1,12 +1,13 @@
 <script setup name="Positions">
 import {useI18n} from 'vue-i18n';
-import {queryPage, del} from '@authentication-manager-ui/api/system/positions';
+import {queryPage, del, queryPositionDetailNoPage} from '@authentication-manager-ui/api/system/positions';
 import BindModal from './Bind.vue'
 import {useMenuStore} from '@jetlinks-web-core/store';
 import {onlyMessage} from '@jetlinks-web/utils';
 import {queryRole_api} from "@authentication-manager-ui/api/system/user";
-import {getPositionTree} from "./data";
+import {clearPositionTreeCache, getPositionTree, getSelectedPositionOptions} from "./data";
 import PageHeader from '@jetlinks-web-core/components/PageHeader';
+import {filterConditionTerms, transformConditionTerms} from '@authentication-manager-ui/views/system/conditionFilterUtils';
 
 const {t: $t} = useI18n();
 const menuStore = useMenuStore();
@@ -96,7 +97,10 @@ const columns = [
         //   return []
         // })
         return getPositionTree()
-      }
+      },
+      optionPanel: {
+        loadSelectedOptions: getSelectedPositionOptions,
+      },
     },
   },
   {
@@ -177,20 +181,37 @@ const onSave = () => {
 // }
 
 const handleQuery = (params) => {
-  (params.terms || []).map(a => {
-    return (a.terms || []).map(b => {
-      if (b.column === 'roles') {
-        b.column = 'id$position-role$position'
-        b.termType = undefined
-        b.value = b.value ? [b.value] : []
-      }
-      return b
-    })
+  const roleEmptyTermTypes = []
+  const serverTerms = filterConditionTerms(params.terms, (term) => {
+    if (term.column === 'roles' && ['isnull', 'notnull'].includes(term.termType)) {
+      roleEmptyTermTypes.push(term.termType)
+      return false
+    }
+    return true
   })
+  const terms = transformConditionTerms(serverTerms, (term) => {
+    if (term.column !== 'roles') {
+      return term
+    }
+
+    // 已选角色继续使用原有关联查询；空值条件在详情数据加载后按 roles 数组筛选。
+    const {termType, value, ...rest} = term
+    const relationSuffix = {
+      not: '$not',
+      nin: '$not',
+    }[termType || ''] || ''
+
+    return {
+      ...rest,
+      column: `id$position-role$position${relationSuffix}`,
+      value: Array.isArray(value) ? value : value ? [value] : [],
+    }
+  })
+
   const _params = {
     ...params,
     terms: [
-      ...params.terms,
+      ...terms,
       {
         column: 'orgId',
         termType: 'eq',
@@ -199,7 +220,34 @@ const handleQuery = (params) => {
     ]
   }
 
-  return queryPage(_params)
+  if (!roleEmptyTermTypes.length) {
+    return queryPage(_params)
+  }
+
+  // 现有职位接口不支持角色关联的空值谓词，前端在当前组织的完整职位详情中完成筛选并恢复分页结果。
+  return queryPositionDetailNoPage({..._params, paging: false}).then((resp) => {
+    if (!resp.success) {
+      return resp
+    }
+
+    const data = resp.result.filter((item) => roleEmptyTermTypes.every((termType) => {
+      const hasRoles = Array.isArray(item.roles) && item.roles.length > 0
+      return termType === 'notnull' ? hasRoles : !hasRoles
+    }))
+    const pageIndex = Number(params.pageIndex) || 0
+    const pageSize = Number(params.pageSize) || 12
+    const offset = pageIndex * pageSize
+
+    return {
+      ...resp,
+      result: {
+        data: data.slice(offset, offset + pageSize),
+        pageIndex,
+        pageSize,
+        total: data.length,
+      },
+    }
+  })
 }
 
 // 搜索
@@ -235,6 +283,7 @@ const toPositionDetail = (data) => {
 const deletePosition = async (id) => {
   const res = await del(id)
   if (res.success) {
+    clearPositionTreeCache()
     onlyMessage($t('Tags.index.675027-4'))
     tableRef.value?.reload();
   }

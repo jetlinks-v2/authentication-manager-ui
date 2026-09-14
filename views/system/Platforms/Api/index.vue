@@ -10,68 +10,70 @@
       >
         {{ $t('Api.index.558884-0') }}
       </div>
-      <EqualHeightColumns
-        class="api-page-body"
-        height="auto"
-        left-width="18.75rem"
-        right-width="1fr"
-      >
-        <template #left>
-          <div class="tree-content">
-            <LeftTree
-              @select="treeSelect"
-              :mode="props.mode"
-              :has-home="props.hasHome"
-              :code="props.code"
-            />
-          </div>
-        </template>
-        <template #right>
-          <div class="api-page-detail">
-            <HomePage v-show="showHome" />
-            <div class="url-page" v-show="!showHome">
-              <ChooseApi
-                v-show="!selectedApi.url"
-                v-model:click-api="selectedApi"
-                v-model:selectedRowKeys="selectedKeys"
-                v-model:changedApis="changedApis"
-                :table-data="tableData"
-                :source-keys="selectSourceKeys"
-                :mode="props.mode"
-                @refresh="getSelectKeys"
-              />
+      <ContentPanel>
+	      <EqualHeightColumns
+		      class="api-page-body"
+		      height="auto"
+		      left-width="18.75rem"
+		      right-width="1fr"
+	      >
+		      <template #left>
+			      <div class="tree-content">
+				      <LeftTree
+					      @select="treeSelect"
+					      :mode="props.mode"
+					      :has-home="props.hasHome"
+					      :code="props.code"
+				      />
+			      </div>
+		      </template>
+		      <template #right>
+			      <div class="api-page-detail">
+				      <HomePage v-show="showHome" />
+				      <div class="url-page" v-show="!showHome">
+					      <ChooseApi
+						      v-show="!selectedApi.url"
+						      v-model:click-api="selectedApi"
+						      v-model:selectedRowKeys="selectedKeys"
+						      v-model:changedApis="changedApis"
+						      :table-data="tableData"
+						      :source-keys="selectSourceKeys"
+						      :mode="props.mode"
+						      @refresh="getSelectKeys"
+					      />
 
-              <div
-                class="api-details"
-                v-if="selectedApi.url && tableData.length > 0"
-              >
-                <a-button
-                  @click="selectedApi = initSelectedApi"
-                  style="margin-bottom: 1.5rem; width: 5rem"
-                >
-                  {{ $t('Api.index.558884-1') }}
-                </a-button>
-                <div class="api-details-tabs">
-                  <a-tabs v-model:activeKey="activeKey" type="card">
-                    <a-tab-pane key="does" :tab="$t('Api.index.558884-2')">
-                      <ApiDoes
-                        :select-api="selectedApi"
-                        :schemas="schemas"
-                      />
-                    </a-tab-pane>
-                    <a-tab-pane key="test" :tab="$t('Api.index.558884-3')">
-                      <ApiTest
-                        :select-api="selectedApi"
-                        :schemas="schemas"
-                      />
-                    </a-tab-pane>
-                  </a-tabs>
-                </div>
-              </div>
-            </div>
-          </div>
-        </template>
-      </EqualHeightColumns>
+					      <div
+						      class="api-details"
+						      v-if="selectedApi.url && tableData.length > 0"
+					      >
+						      <a-button
+							      @click="selectedApi = initSelectedApi"
+							      style="margin-bottom: 1.5rem; width: 5rem"
+						      >
+							      {{ $t('Api.index.558884-1') }}
+						      </a-button>
+						      <div class="api-details-tabs">
+							      <a-tabs v-model:activeKey="activeKey" type="card">
+								      <a-tab-pane key="does" :tab="$t('Api.index.558884-2')">
+									      <ApiDoes
+										      :select-api="selectedApi"
+										      :schemas="schemas"
+									      />
+								      </a-tab-pane>
+								      <a-tab-pane key="test" :tab="$t('Api.index.558884-3')">
+									      <ApiTest
+										      :select-api="selectedApi"
+										      :schemas="schemas"
+									      />
+								      </a-tab-pane>
+							      </a-tabs>
+						      </div>
+					      </div>
+				      </div>
+			      </div>
+		      </template>
+	      </EqualHeightColumns>
+      </ContentPanel>
     </div>
   </div>
 </template>
@@ -201,7 +203,6 @@ watch(
     min-height: 0;
     display: flex;
     flex-direction: column;
-    background-color: #fff;
     margin: 0 !important;
 
     .api-page-body {
