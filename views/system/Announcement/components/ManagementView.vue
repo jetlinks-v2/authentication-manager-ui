@@ -190,7 +190,7 @@ const columns = computed(() => [
     title: $t('Announcement.column.state'),
     dataIndex: 'state',
     key: 'state',
-    width: 100,
+    width: 120,
     scopedSlots: true,
     search: {
       type: 'select',
@@ -234,6 +234,11 @@ defineExpose({ reload: () => tableRef.value?.reload() })
 </script>
 
 <style scoped lang="less">
+/* 英文状态（Unpublished / Published）不能换行，否则状态列会被折成两行。 */
+:deep(.ant-badge-status-text) {
+  white-space: nowrap;
+}
+
 .announcement-summary-cell {
   width: 100%;
   min-width: 0;
