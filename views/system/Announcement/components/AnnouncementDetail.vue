@@ -1,17 +1,6 @@
 <template>
   <div class="announcement-detail-scroll">
-    <div class="announcement-detail-toolbar">
-      <span class="announcement-detail-toolbar__label">{{ $t('Announcement.detail.language') }}</span>
-      <a-radio-group v-model:value="viewLocale" size="small">
-        <a-radio-button value="zh">{{ $t('Announcement.i18n.chinese') }}</a-radio-button>
-        <a-radio-button value="en">{{ $t('Announcement.i18n.english') }}</a-radio-button>
-      </a-radio-group>
-    </div>
-
     <a-descriptions bordered :column="2" size="small">
-      <a-descriptions-item v-if="summaryText" :label="$t('Announcement.detail.summary')" :span="2">
-        {{ summaryText }}
-      </a-descriptions-item>
       <a-descriptions-item :label="$t('Announcement.detail.scope')">
         {{ audienceText }}
       </a-descriptions-item>
@@ -34,12 +23,32 @@
       </a-descriptions-item>
     </a-descriptions>
 
-    <MarkdownEditor
-      :model-value="contentText"
-      :rows="18"
-      readonly
-      :show-upload-file-toolbar="false"
-    />
+    <a-tabs v-model:activeKey="viewLocale" size="small">
+      <a-tab-pane
+        v-for="item in languagePanes"
+        :key="item.value"
+        :tab="item.label"
+      >
+        <div class="announcement-detail-pane">
+          <a-alert
+            v-if="item.missing"
+            type="info"
+            show-icon
+            :message="$t('Announcement.detail.languageMissing', { language: item.label })"
+          />
+          <div v-if="item.summary" class="announcement-detail-summary">
+            <span class="announcement-detail-summary__label">{{ $t('Announcement.detail.summary') }}</span>
+            <span>{{ item.summary }}</span>
+          </div>
+          <MarkdownEditor
+            :model-value="item.content"
+            :rows="18"
+            readonly
+            :show-upload-file-toolbar="false"
+          />
+        </div>
+      </a-tab-pane>
+    </a-tabs>
   </div>
 </template>
 
@@ -49,7 +58,11 @@ import type { PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import MarkdownEditor from '@jetlinks-web-core/components/MarkdownEditor'
 import type { AnnouncementRecord } from '../types'
-import { resolveAnnouncementText } from '../announcementI18n'
+import {
+  getAnnouncementI18n,
+  resolveAnnouncementText,
+  resolveLocalizedText,
+} from '../announcementI18n'
 
 const props = defineProps({
   record: { type: Object as PropType<AnnouncementRecord>, required: true },
@@ -66,8 +79,21 @@ const viewLocale = computed({
   get: () => props.locale,
   set: (value: string) => emit('update:locale', value),
 })
-const summaryText = computed(() => resolveAnnouncementText(props.record, 'summary', props.locale))
-const contentText = computed(() => resolveAnnouncementText(props.record, 'content', props.locale))
+
+/** 每个语言一个标签页；该语言整条未填写时在页内显式提示，避免看起来“切换无效”。 */
+const languagePanes = computed(() => {
+  const i18n = getAnnouncementI18n(props.record.i18nMessages)
+  return [
+    { value: 'zh', label: $t('Announcement.i18n.chinese') },
+    { value: 'en', label: $t('Announcement.i18n.english') },
+  ].map(item => ({
+    ...item,
+    summary: resolveAnnouncementText(props.record, 'summary', item.value),
+    content: resolveAnnouncementText(props.record, 'content', item.value),
+    missing: !['title', 'summary', 'content'].some(field =>
+      resolveLocalizedText(i18n[field as keyof typeof i18n], item.value)),
+  }))
+})
 
 const audienceText = computed(() => {
   const userCount = props.record.userIds?.length || 0
@@ -88,15 +114,20 @@ const audienceText = computed(() => {
   overscroll-behavior: contain;
 }
 
-.announcement-detail-toolbar {
+.announcement-detail-pane {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-2);
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
-.announcement-detail-toolbar__label {
-  color: var(--jet-theme-text-secondary);
+.announcement-detail-summary {
+  display: flex;
+  gap: var(--space-2);
   font-size: var(--fs-13);
+}
+
+.announcement-detail-summary__label {
+  flex: none;
+  color: var(--jet-theme-text-secondary);
 }
 </style>

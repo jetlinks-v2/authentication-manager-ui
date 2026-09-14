@@ -1540,6 +1540,7 @@
   "Announcement.detail.publishTime": "发布时间",
   "Announcement.detail.content": "公告正文",
   "Announcement.detail.language": "查看语言",
+  "Announcement.detail.languageMissing": "该公告未填写{language}内容，以下为默认语言内容",
   "Announcement.notification.unavailable": "公告已撤回或不可查看",
   "Announcement.confirm.publish": "确认发布这条公告？",
   "Announcement.confirm.withdraw": "确认撤回这条公告？撤回后用户将无法查看。",
