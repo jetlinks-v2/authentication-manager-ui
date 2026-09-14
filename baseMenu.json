@@ -23,12 +23,20 @@
         "componentCode": "project/Overview"
       }
     },
-    "permissions": [{
-      "permission": "rule-scene",
-      "actions": [
-        "query"
-      ]
-    }],
+    "permissions": [
+      {
+        "permission": "rule-scene",
+        "actions": [
+          "query"
+        ]
+      },
+      {
+        "permission": "ai-edge-task-operation-execution",
+        "actions": [
+          "query"
+        ]
+      }
+    ],
     "buttons": [],
     "showPage": ["menu"]
   },
