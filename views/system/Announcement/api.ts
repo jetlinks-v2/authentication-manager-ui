@@ -8,7 +8,7 @@ import {
 import {
   buildAnnouncementI18nFields,
   resolveAnnouncementText,
-  type AnnouncementOthers,
+  type AnnouncementI18n,
 } from './announcementI18n'
 
 export type AnnouncementState = 'unpublished' | 'published'
@@ -34,7 +34,7 @@ export interface AnnouncementRecord {
   creatorName: string
   userIds: string[]
   organizationIds: string[]
-  others?: AnnouncementOthers
+  i18nMessages?: AnnouncementI18n
   legacyTitle?: string
   legacySummary?: string
   legacyContent?: string
@@ -49,7 +49,7 @@ export interface AnnouncementDraft {
   userIds: string[]
   organizationIds: string[]
   publish: boolean
-  others?: AnnouncementOthers
+  i18nMessages?: unknown
 }
 
 export interface AnnouncementQuery {
@@ -71,7 +71,7 @@ export interface SystemBulletinNotificationDetail {
   content: string
   type?: AnnouncementType
   deployTime?: number | null
-  others?: AnnouncementOthers
+  i18nMessages?: AnnouncementI18n
 }
 
 interface EnumValue<T extends string> {
@@ -91,7 +91,7 @@ interface SystemBulletin {
   modifyTime?: number | null
   creatorName?: string
   dimension?: SystemBulletinDimension[]
-  others?: AnnouncementOthers
+  i18nMessages?: AnnouncementI18n
 }
 
 interface SystemBulletinDimension {
@@ -130,7 +130,7 @@ const normalizeBulletin = (record: SystemBulletin): AnnouncementRecord => {
     title: resolveAnnouncementText(record, 'title'),
     summary: resolveAnnouncementText(record, 'summary'),
     content: resolveAnnouncementText(record, 'content'),
-    others: record.others,
+    i18nMessages: record.i18nMessages,
     legacyTitle: record.title || '',
     legacySummary: record.summary || '',
     legacyContent: record.content || '',
@@ -231,7 +231,7 @@ export const getSystemBulletinNotificationDetail = async (
     title: resolveAnnouncementText(detail, 'title'),
     summary: resolveAnnouncementText(detail, 'summary'),
     content: resolveAnnouncementText(detail, 'content'),
-    others: detail.others,
+    i18nMessages: detail.i18nMessages,
     type,
     deployTime: detail.deployTime,
   }
@@ -268,7 +268,7 @@ export const saveAnnouncement = (draft: AnnouncementDraft) => {
   ].filter(item => item.dimensionIds.length > 0)
 
   const {
-    others,
+    i18nMessages,
     title,
     summary,
     content,
@@ -279,7 +279,7 @@ export const saveAnnouncement = (draft: AnnouncementDraft) => {
     title,
     summary: summary || undefined,
     content,
-    others,
+    i18nMessages,
     type: draft.type,
     allVisible: dimension.length === 0,
     dimension,

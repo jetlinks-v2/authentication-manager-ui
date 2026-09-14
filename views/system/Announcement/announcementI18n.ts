@@ -8,13 +8,8 @@ export interface AnnouncementI18n {
   content?: AnnouncementLocalizedText
 }
 
-export interface AnnouncementOthers {
-  i18n?: AnnouncementI18n
-  [key: string]: unknown
-}
-
 export type AnnouncementI18nField = keyof AnnouncementI18n
-type AnnouncementTextRecord = { others?: unknown } & Partial<Record<AnnouncementI18nField, unknown>>
+type AnnouncementTextRecord = { i18nMessages?: unknown } & Partial<Record<AnnouncementI18nField, unknown>>
 
 const isRecord = (value: unknown): value is Record<string, any> => {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
@@ -43,7 +38,7 @@ const normalizeTextMap = (value: unknown) => {
   return entries.length ? Object.fromEntries(entries) : undefined
 }
 
-/** 只保留有内容的中英文，避免把空语言写回 `others.i18n`。 */
+/** 只保留有内容的中英文，避免把空语言写回 `i18nMessages`。 */
 export const normalizeAnnouncementI18n = (value: unknown): AnnouncementI18n => {
   if (!isRecord(value)) return {}
   const normalized: AnnouncementI18n = {}
@@ -55,10 +50,9 @@ export const normalizeAnnouncementI18n = (value: unknown): AnnouncementI18n => {
   return normalized
 }
 
-export const getAnnouncementI18n = (others: unknown): AnnouncementI18n => {
-  return isRecord(others) && isRecord(others.i18n)
-    ? others.i18n as AnnouncementI18n
-    : {}
+/** `i18nMessages` 是平台一等字段：字段 -> 语言 -> 文本，与菜单实体保持一致。 */
+export const getAnnouncementI18n = (i18nMessages: unknown): AnnouncementI18n => {
+  return isRecord(i18nMessages) ? i18nMessages as AnnouncementI18n : {}
 }
 
 export const resolveLocalizedText = (
@@ -79,7 +73,7 @@ export const resolveAnnouncementText = (
   locale?: string,
 ): string => {
   if (!record) return ''
-  const localized = resolveLocalizedText(getAnnouncementI18n(record.others)[field], locale)
+  const localized = resolveLocalizedText(getAnnouncementI18n(record.i18nMessages)[field], locale)
   return localized || firstText(record[field])
 }
 
@@ -96,22 +90,14 @@ export const resolveCompatibilityText = (
 }
 
 export const buildAnnouncementI18nFields = (draft: {
-  others?: unknown
+  i18nMessages?: unknown
   title?: unknown
   summary?: unknown
   content?: unknown
 }) => {
-  const sourceOthers = isRecord(draft.others) ? draft.others as AnnouncementOthers : undefined
-  const i18n = normalizeAnnouncementI18n(sourceOthers?.i18n)
-  const others = { ...(sourceOthers ?? {}) }
-  if (Object.keys(i18n).length > 0) {
-    others.i18n = i18n
-  } else {
-    delete others.i18n
-  }
+  const i18n = normalizeAnnouncementI18n(draft.i18nMessages)
   return {
-    i18n,
-    others: Object.keys(others).length > 0 ? others : undefined,
+    i18nMessages: Object.keys(i18n).length > 0 ? i18n : undefined,
     title: resolveCompatibilityText(i18n.title, firstText(draft.title)),
     summary: resolveCompatibilityText(i18n.summary, firstText(draft.summary)),
     content: resolveCompatibilityText(i18n.content, firstText(draft.content)),

@@ -31,12 +31,10 @@ test('resolves the current locale and falls back to the legacy field without cro
     title: '旧标题',
     summary: '旧摘要',
     content: '旧正文',
-    others: {
-      i18n: {
-        title: { zh: '中文标题', en: 'English title' },
-        summary: { zh: '中文摘要' },
-        content: { zh: '中文正文', en: 'English content' },
-      },
+    i18nMessages: {
+      title: { zh: '中文标题', en: 'English title' },
+      summary: { zh: '中文摘要' },
+      content: { zh: '中文正文', en: 'English content' },
     },
   }
 
@@ -56,7 +54,7 @@ test('supports regional locales and keeps legacy compatibility fields Chinese-fi
   } = await loadHelper('zh-CN')
   const record = {
     title: '旧标题',
-    others: { i18n: { title: { zh: '中文标题', en: 'English title' } } },
+    i18nMessages: { title: { zh: '中文标题', en: 'English title' } },
   }
 
   assert.equal(resolveAnnouncementText(record, 'title'), '中文标题')
@@ -119,25 +117,15 @@ test('supports regional locales and keeps legacy compatibility fields Chinese-fi
     title: '旧标题',
     summary: '旧摘要',
     content: '旧正文',
-    others: {
-      preserve: 'value',
-      i18n: {
-        title: { zh: '中文标题', en: 'English title' },
-        summary: { en: 'English summary' },
-        content: {},
-      },
-    },
-  }), {
-    i18n: {
+    i18nMessages: {
       title: { zh: '中文标题', en: 'English title' },
       summary: { en: 'English summary' },
+      content: {},
     },
-    others: {
-      preserve: 'value',
-      i18n: {
-        title: { zh: '中文标题', en: 'English title' },
-        summary: { en: 'English summary' },
-      },
+  }), {
+    i18nMessages: {
+      title: { zh: '中文标题', en: 'English title' },
+      summary: { en: 'English summary' },
     },
     title: '中文标题',
     summary: 'English summary',
@@ -173,13 +161,9 @@ test('supports regional locales and keeps legacy compatibility fields Chinese-fi
   })
 
   assert.deepEqual(buildAnnouncementI18nFields({
-    others: {
-      preserve: 'value',
-      i18n: { title: { fr: 'Titre' }, summary: { de: 'Zusammenfassung' } },
-    },
+    i18nMessages: { title: { fr: 'Titre' }, summary: { de: 'Zusammenfassung' } },
   }), {
-    i18n: {},
-    others: { preserve: 'value' },
+    i18nMessages: undefined,
     title: '',
     summary: '',
     content: '',
@@ -188,7 +172,7 @@ test('supports regional locales and keeps legacy compatibility fields Chinese-fi
 
 test('keeps malformed announcement data on the legacy fallback path', async () => {
   const { resolveAnnouncementText, normalizeAnnouncementI18n } = await loadHelper('en')
-  assert.equal(resolveAnnouncementText({ title: '旧标题', others: { i18n: 'broken' } }, 'title'), '旧标题')
-  assert.equal(resolveAnnouncementText({ title: '旧标题', others: null }, 'title'), '旧标题')
+  assert.equal(resolveAnnouncementText({ title: '旧标题', i18nMessages: 'broken' }, 'title'), '旧标题')
+  assert.equal(resolveAnnouncementText({ title: '旧标题', i18nMessages: null }, 'title'), '旧标题')
   assert.deepEqual(normalizeAnnouncementI18n(null), {})
 })

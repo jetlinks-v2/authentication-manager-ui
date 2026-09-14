@@ -48,10 +48,10 @@ async function main() {
     detailJson: JSON.stringify({
       bulletinId: 'i18n',
       publishVersion: 1,
-      others: { i18n: {
+      i18nMessages: {
         title: { zh: '中文标题', en: 'English title' },
         summary: { zh: '中文摘要', en: 'English summary' },
-      } },
+      },
     }),
   }] } }
   const i18nRows = await loadAnnouncements()

@@ -29,9 +29,9 @@ const loadLoader = async ({ list, unread, detail }) => {
     }
     if (id === './announcementI18n') {
       return {
-        getAnnouncementI18n: (others) => others?.i18n || {},
+        getAnnouncementI18n: (i18nMessages) => i18nMessages || {},
         resolveLocalizedText: (messages) => String(messages?.en || '').trim(),
-        resolveAnnouncementText: (record, field) => String(record?.others?.i18n?.[field]?.en || record?.[field] || '').trim(),
+        resolveAnnouncementText: (record, field) => String(record?.i18nMessages?.[field]?.en || record?.[field] || '').trim(),
       }
     }
     if (id === './bulletinTypeIcon') {
@@ -82,7 +82,7 @@ test('does not refetch when the notification snapshot already carries both i18n 
       detail: {
         bulletinId: 'bulletin-2',
         publishVersion: 1,
-        others: { i18n: { title: { en: 'English title' }, summary: { en: 'English summary' } } },
+        i18nMessages: { title: { en: 'English title' }, summary: { en: 'English summary' } },
       },
     }],
     list: [],
@@ -112,7 +112,7 @@ test('refetches when an i18n snapshot is missing the active language', async () 
         publishVersion: 1,
         title: '中文标题',
         summary: '中文摘要',
-        others: { i18n: { title: { zh: '中文标题' }, summary: { zh: '中文摘要' } } },
+        i18nMessages: { title: { zh: '中文标题' }, summary: { zh: '中文摘要' } },
       },
     }],
     list: [],
