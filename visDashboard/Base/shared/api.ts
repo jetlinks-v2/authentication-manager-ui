@@ -6,7 +6,7 @@ import {
 import { normalizeApplication } from '../../../views/application-center/ProjectApplication/applicationModel'
 import { rowsOf, textOf } from './apiResult'
 import { loadAnnouncements } from './apiAnnouncements'
-import { loadResourceRows, loadOperationRows } from './apiResources'
+import { loadResourceRows, loadOperationRows, loadHealthRows } from './apiResources'
 import { loadQuotaRows } from './apiQuotas'
 import type { HomeFeature, HomeRow } from './types'
 
@@ -36,11 +36,11 @@ export const loadHomeRows = (feature: HomeFeature): Promise<HomeRow[]> => {
   switch (feature) {
     case 'Applications': return loadApplications()
     case 'Resources': return loadResourceRows()
-    case 'DeviceAccess': return loadResourceRows().then(rows => rows.filter(r => r.group === 'access' && r.subgroup !== 'collection'))
-    case 'Collection': return loadResourceRows().then(rows => rows.filter(r => r.subgroup === 'collection'))
-    case 'Visualization': return loadResourceRows().then(rows => rows.filter(r => r.group === 'visualization'))
-    case 'AiCenter': return loadResourceRows().then(rows => rows.filter(r => r.group === 'intelligence' && r.subgroup === 'ai'))
-    case 'RuleEngine': return loadResourceRows().then(rows => rows.filter(r => r.group === 'intelligence' && r.subgroup === 'rules'))
+    case 'DeviceAccess': return loadHealthRows()
+    case 'Collection': return loadResourceRows(r => r.subgroup === 'collection')
+    case 'Visualization': return loadResourceRows(r => r.group === 'visualization')
+    case 'AiCenter': return loadResourceRows(r => r.group === 'intelligence' && r.subgroup === 'ai')
+    case 'RuleEngine': return loadResourceRows(r => r.group === 'intelligence' && r.subgroup === 'rules')
     case 'Quotas': return loadQuotaRows()
     case 'Operations': return loadOperationRows()
     case 'Announcements': return loadAnnouncements()

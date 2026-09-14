@@ -1,4 +1,6 @@
 {
+  "resourceDashboard.playbackUnavailable": "暂无可用的播放统计",
+  "resourceDashboard.playbackUnavailableDesc": "当前服务暂不支持视频播放次数统计。",
   "Save.index.551010-24": "说明",
   "Basis.Form.436809-0": "系统名称",
   "Basis.Form.436809-1": "请输入系统名称",

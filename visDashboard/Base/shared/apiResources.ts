@@ -28,8 +28,11 @@ export const loadHealthRows = async (): Promise<HomeRow[]> => {
     } catch { return { id, labelKey: id, group: 'health', icon: id, target: HOME_TARGETS[id], failed: true } }
   }))
 }
-export const loadResourceRows = async (): Promise<HomeRow[]> => {
-  const [health, algorithms] = await Promise.all([loadHealthRows(), loadAlgorithmMetrics().catch(() => undefined)])
+export const loadResourceRows = async (select: (row: HomeRow) => boolean = () => true): Promise<HomeRow[]> => {
+  // 先选择指标再发请求，卡片不加载其他业务的数据，也不等待无关接口。
+  const selectedRows = RESOURCE_ROWS.filter(select)
+  const healthRequest = selectedRows.some(row => ['gateway', 'devices', 'video'].includes(row.id)) ? loadHealthRows() : Promise.resolve([])
+  const algorithmRequest = selectedRows.some(row => ['algorithm', 'coverage'].includes(row.id)) ? loadAlgorithmMetrics() : Promise.resolve(undefined)
   const loaders: Record<string, () => Promise<number>> = {
     collector: async () => countOf(await request.post('/data-collect/collector/_count', {}, { hiddenError: true })),
     card: () => pageCount('/network/card/detail/_query'),
@@ -39,9 +42,12 @@ export const loadResourceRows = async (): Promise<HomeRow[]> => {
     agent: () => pageCount('/ai/agent/detail/_query'),
     scene: () => pageCount('/scene/_query'),
   }
-  return Promise.all(RESOURCE_ROWS.map(async ({ value: _sample, ...row }) => {
-    if (row.id === 'algorithm' || row.id === 'coverage') return { ...row, value: algorithms?.[row.id], failed: algorithms?.[row.id] === undefined }
-    const summary = health.find(item => item.id === row.id)
+  return Promise.all(selectedRows.map(async ({ value: _sample, ...row }) => {
+    if (row.id === 'algorithm' || row.id === 'coverage') {
+      const algorithms = await algorithmRequest
+      return { ...row, value: algorithms?.[row.id], failed: algorithms?.[row.id] === undefined }
+    }
+    const summary = ['gateway', 'devices', 'video'].includes(row.id) ? (await healthRequest).find(item => item.id === row.id) : undefined
     if (summary) return { ...row, value: summary.value, failed: summary.failed }
     const load = loaders[row.id]
     if (!load) return { ...row, failed: true }
@@ -49,7 +55,6 @@ export const loadResourceRows = async (): Promise<HomeRow[]> => {
   }))
 }
 export const loadOperationRows = async (): Promise<HomeRow[]> => {
-  const health = await loadHealthRows()
   const alarms = await Promise.all([
     ['visionAlarm', 'aiTaskMediaTarget'], ['deviceAlarm', 'device'],
   ].map(async ([id, target]) => {
@@ -58,5 +63,5 @@ export const loadOperationRows = async (): Promise<HomeRow[]> => {
       return { id, labelKey: id, group: 'alarms', value, target: HOME_TARGETS[id] }
     } catch { return { id, labelKey: id, group: 'alarms', failed: true, target: HOME_TARGETS[id] } }
   }))
-  return [...health, ...alarms]
+  return alarms
 }
