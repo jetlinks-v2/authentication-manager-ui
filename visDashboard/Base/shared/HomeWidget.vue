@@ -9,11 +9,16 @@
       </slot>
     </template>
     <div v-if="loading && !rows.length" class="home-state"><a-spin /></div>
-    <div v-else-if="error" class="home-state"><a-empty :description="t('packages.ProjectHome.loadError')" /></div>
+    <div v-else-if="error" class="home-state"><a-empty :description="t('packages.ProjectHome.loadError')"><a-button @click="retry">{{ t('packages.ProjectHome.alarmRetry') }}</a-button></a-empty></div>
     <slot v-else-if="!rows.length" name="empty" :can-open="canOpen" :open="open">
       <div class="home-state"><a-empty :description="t('packages.ProjectHome.empty')" /></div>
     </slot>
-    <slot v-else :rows="rows" :chart="config.chart" :can-open="canOpen" :open="open" />
+    <template v-else>
+      <a-alert v-if="rows.some(row => row.failed)" type="warning" :message="t('packages.ProjectHome.loadError')" show-icon>
+        <template #action><a-button size="small" @click="retry">{{ t('packages.ProjectHome.alarmRetry') }}</a-button></template>
+      </a-alert>
+      <slot :rows="rows" :chart="config.chart" :can-open="canOpen" :open="open" />
+    </template>
   </a-card>
 </template>
 <script setup lang="ts">
@@ -29,7 +34,7 @@ const props = defineProps<{ feature: HomeFeature; info?: HomeInfo; isEdit: boole
 const { t } = useI18n()
 const { token } = theme.useToken()
 const config = computed(() => getHomeConfig(props.feature, props.info))
-const { rows, loading, error } = useHomeRuntime(props.feature, computed(() => props.isEdit), computed(() => config.value.refreshTime), computed(() => props.refreshKey || 0))
+const { rows, loading, error, retry } = useHomeRuntime(props.feature, computed(() => props.isEdit), computed(() => config.value.refreshTime), computed(() => props.refreshKey || 0))
 const { canOpen, open } = useHomeNavigation(computed(() => config.value.chart.navigation), computed(() => props.isEdit))
 const moreTarget = HOME_MORE_TARGETS[props.feature]
 const moreText = computed(() => {

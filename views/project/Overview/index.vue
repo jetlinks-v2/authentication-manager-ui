@@ -19,7 +19,9 @@
 import { useI18n } from 'vue-i18n'
 import { DashBoardCanvas } from '@jetlinks-web-core/components/DashBoardCanvas'
 import { useOverviewDashboard } from './useOverviewDashboard'
+import { provideHomePolling } from '../../../visDashboard/Base/shared/homePollingContext'
 
+provideHomePolling()
 const { t } = useI18n()
 const { catalog, loading, errors, reload, dashboard } = useOverviewDashboard()
 </script>

@@ -1,4 +1,6 @@
 {
+  "resourceDashboard.playbackUnavailable": "Playback statistics unavailable",
+  "resourceDashboard.playbackUnavailableDesc": "The current service does not support video playback counts.",
   "Save.index.551010-24": "Description",
   "Basis.Form.436809-0": "Name",
   "Basis.Form.436809-1": "Please enter name",

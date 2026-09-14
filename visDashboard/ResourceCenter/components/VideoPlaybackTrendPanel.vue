@@ -2,10 +2,8 @@
   <ResourceEmpty
     v-if="!series.length"
     icon="PlayCircleOutlined"
-    :title="t('resourceDashboard.noVideoDevices')"
-    :description="t('resourceDashboard.noVideoDevicesPlaybackDesc')"
-    :action-text="t('resourceDashboard.actionAddVideoDevice')"
-    @action="handleAddVideoDevice"
+    :title="t('resourceDashboard.playbackUnavailable')"
+    :description="t('resourceDashboard.playbackUnavailableDesc')"
   />
   <div v-else class="video-trend"><Echarts :option="option" :library="[BarChart, GridComponent]" /></div>
 </template>
@@ -14,22 +12,11 @@ import { computed } from 'vue'
 import { BarChart } from 'echarts/charts'
 import { GridComponent } from 'echarts/components'
 import Echarts from '@jetlinks-web-core/components/Echarts'
-import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { useI18n } from 'vue-i18n'
 import ResourceEmpty from './ResourceEmpty.vue'
 
 const props = defineProps<{ series: { time: string; value: number }[] }>()
 const { t } = useI18n()
-const menuStore = useMenuStore()
-
-const isAllZero = computed(() => !props.series.length || props.series.every(item => item.value === 0))
-
-function handleAddVideoDevice() {
-  const target = menuStore.getMenu('media/Device') ? 'media/Device' : 'media/Device/Save'
-  if (menuStore.getMenu(target)) {
-    menuStore.jumpPage(target, { query: { type: 'video', action: 'create' } })
-  }
-}
 
 const option = computed(() => ({
   tooltip: {
