@@ -5,6 +5,7 @@ import type { NoticeRealtimeHandlerContext } from '@jetlinks-web-core/layout/com
 // 程序式弹窗必须同步拿到内容组件，异步组件会让静态 Modal 只渲染空壳。
 import NotificationDetail from './components/NotificationDetail.vue'
 import { parseSystemBulletinDetail } from './api'
+import { resolveAnnouncementText } from './announcementI18n'
 import { createBulletinTypeIconNode } from './bulletinTypeIcon'
 
 interface RealtimeAnnouncementContext {
@@ -17,7 +18,11 @@ const text = (value: unknown) => String(value ?? '').trim()
 
 /** 标题缺省时回退摘要，保证轻提示和公告弹窗都有可读标题。 */
 const resolveNoticeTitle = (payload: Record<string, any>) => {
-  return text(payload.topicName) || text(payload.title) || text(payload.message)
+  const detail = parseSystemBulletinDetail(payload)
+  return text(resolveAnnouncementText(detail, 'title'))
+    || text(payload.topicName)
+    || text(payload.title)
+    || text(payload.message)
 }
 
 /** 打开公告专属详情弹窗，点击“我知道了”代表确认已读并刷新未读数。 */
@@ -45,8 +50,9 @@ export const handleSystemBulletinNotice = (context: NoticeRealtimeHandlerContext
   if (source !== 'realtime' || !showTip) {
     return openAnnouncementDetail(context)
   }
+  const detail = parseSystemBulletinDetail(payload)
   const title = resolveNoticeTitle(payload)
-  const summary = text(payload.message)
+  const summary = text(resolveAnnouncementText(detail, 'summary')) || text(payload.message)
   showTip({
     icon: createBulletinTypeIconNode(parseSystemBulletinDetail(payload)?.type),
     title,

@@ -3,7 +3,18 @@ import {
   getUnreadNoPagingList_api,
 } from '@jetlinks-web-core/api/account/notificationRecord'
 import type { NoticeListHandler } from '@jetlinks-web-core/layout/components/noticeListHandler'
-import { parseSystemBulletinDetail, SYSTEM_BULLETIN_PROVIDER } from './api'
+import {
+  getSystemBulletinNotificationDetail,
+  parseSystemBulletinDetail,
+  resolveSystemBulletinReference,
+  SYSTEM_BULLETIN_PROVIDER,
+  type SystemBulletinNotificationDetail,
+} from './api'
+import {
+  getAnnouncementI18n,
+  resolveAnnouncementText,
+  resolveLocalizedText,
+} from './announcementI18n'
 import { resolveBulletinTypeColor, resolveBulletinTypeIcon } from './bulletinTypeIcon'
 
 const READ_NOTICE_LIMIT = 5
@@ -75,15 +86,58 @@ export const loadSystemBulletinNoticeList: NoticeListHandler = async ({
     .sort(byNotifyTimeDesc)
     .slice(0, READ_NOTICE_LIMIT)
 
-  // 通用铃铛按通知记录上的图标字段渲染类型图标，core 不感知公告类型枚举。
-  return mergeNoticeGroups(unread, read).map(record => {
-    const detail = parseSystemBulletinDetail(record)
+  return resolveSystemBulletinNoticeTexts(mergeNoticeGroups(unread, read))
+}
+
+/** 个人中心和铃铛共用的通用通知文本补齐入口。 */
+export const resolveSystemBulletinNoticeTexts = async (
+  records: Record<string, any>[],
+) => {
+  const detailCache = new Map<string, Promise<SystemBulletinNotificationDetail | undefined>>()
+  const loadDetail = (record: Record<string, any>) => {
+    const reference = resolveSystemBulletinReference(record)
+    if (!reference) return Promise.resolve(undefined)
+    const key = `${reference.bulletinId}:${reference.publishVersion ?? 'legacy'}`
+    if (!detailCache.has(key)) {
+      detailCache.set(
+        key,
+        getSystemBulletinNotificationDetail(reference).catch(() => undefined),
+      )
+    }
+    return detailCache.get(key)!
+  }
+
+  // 旧通知快照可能只有单语字段；缺失当前语言时按公告引用回查正文详情。
+  return Promise.all(records.map(async record => {
+    if (record.topicProvider !== SYSTEM_BULLETIN_PROVIDER) return record
+    const snapshot = parseSystemBulletinDetail(record)
+    const snapshotI18n = getAnnouncementI18n(snapshot?.others)
+    const hasCurrentText = (field: 'title' | 'summary') =>
+      Boolean(resolveLocalizedText(snapshotI18n[field]))
+    const shouldLoadDetail = !hasCurrentText('title') || !hasCurrentText('summary')
+    const loadedDetail = shouldLoadDetail ? await loadDetail(record) : undefined
+    const title = loadedDetail?.title
+      || resolveAnnouncementText(snapshot, 'title')
+      || String(record.topicName || '').trim()
+    const summary = loadedDetail?.summary
+      || resolveAnnouncementText(snapshot, 'summary')
+      || String(record.message || '').trim()
+    const type = loadedDetail?.type || snapshot?.type
+    const localizedDetail = loadedDetail
+      ? {
+          ...(snapshot || {}),
+          ...loadedDetail,
+          others: loadedDetail.others || snapshot?.others,
+        }
+      : snapshot
+
     return {
       ...record,
-      topicName: String(detail?.title || record.topicName || '').trim(),
-      message: String(detail?.summary || record.message || '').trim(),
-      noticeIcon: resolveBulletinTypeIcon(detail?.type),
-      noticeIconColor: resolveBulletinTypeColor(detail?.type),
+      ...(localizedDetail ? { detail: localizedDetail, detailJson: JSON.stringify(localizedDetail) } : {}),
+      topicName: title,
+      message: summary,
+      noticeIcon: resolveBulletinTypeIcon(type),
+      noticeIconColor: resolveBulletinTypeColor(type),
     }
-  })
+  }))
 }
