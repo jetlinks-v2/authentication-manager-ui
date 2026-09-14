@@ -1,0 +1,166 @@
+import globalI18n from '@jetlinks-web-core/locales'
+
+export type AnnouncementLocalizedText = Record<string, string>
+
+export interface AnnouncementI18n {
+  title?: AnnouncementLocalizedText
+  summary?: AnnouncementLocalizedText
+  content?: AnnouncementLocalizedText
+}
+
+export interface AnnouncementOthers {
+  i18n?: AnnouncementI18n
+  [key: string]: unknown
+}
+
+export type AnnouncementI18nField = keyof AnnouncementI18n
+type AnnouncementTextRecord = { others?: unknown } & Partial<Record<AnnouncementI18nField, unknown>>
+
+const isRecord = (value: unknown): value is Record<string, any> => {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+const firstText = (...values: unknown[]) => {
+  for (const value of values) {
+    const text = typeof value === 'string' ? value.trim() : ''
+    if (text) return text
+  }
+  return ''
+}
+
+const currentLocale = () => {
+  return String(globalI18n.global.locale.value || 'zh')
+    .replace('_', '-')
+    .toLowerCase()
+}
+
+const normalizeTextMap = (value: unknown) => {
+  if (!isRecord(value)) return undefined
+  const entries = Object.entries(value)
+    .filter(([locale]) => locale === 'zh' || locale === 'en')
+    .map(([locale, text]) => [locale, typeof text === 'string' ? text.trim() : ''] as const)
+    .filter(([, text]) => Boolean(text))
+  return entries.length ? Object.fromEntries(entries) : undefined
+}
+
+/** 只保留有内容的中英文，避免把空语言写回 `others.i18n`。 */
+export const normalizeAnnouncementI18n = (value: unknown): AnnouncementI18n => {
+  if (!isRecord(value)) return {}
+  const normalized: AnnouncementI18n = {}
+  const fields: AnnouncementI18nField[] = ['title', 'summary', 'content']
+  fields.forEach((field) => {
+    const messages = normalizeTextMap(value[field])
+    if (messages) normalized[field] = messages
+  })
+  return normalized
+}
+
+export const getAnnouncementI18n = (others: unknown): AnnouncementI18n => {
+  return isRecord(others) && isRecord(others.i18n)
+    ? others.i18n as AnnouncementI18n
+    : {}
+}
+
+export const resolveLocalizedText = (
+  messages: unknown,
+  locale = currentLocale(),
+): string => {
+  if (!isRecord(messages)) return ''
+  const normalizedLocale = String(locale || '').replace('_', '-').toLowerCase()
+  if (!normalizedLocale) return ''
+  const language = normalizedLocale.split('-')[0]
+  return firstText(messages[normalizedLocale], messages[language])
+}
+
+/** 当前 locale 优先，缺失时只回退旧顶层字段，不跨语言取值。 */
+export const resolveAnnouncementText = (
+  record: AnnouncementTextRecord | undefined,
+  field: AnnouncementI18nField,
+  locale?: string,
+): string => {
+  if (!record) return ''
+  const localized = resolveLocalizedText(getAnnouncementI18n(record.others)[field], locale)
+  return localized || firstText(record[field])
+}
+
+/** 旧消费方字段使用中文优先、英文兜底。 */
+export const resolveCompatibilityText = (
+  messages: unknown,
+  fallback = '',
+): string => {
+  return firstText(
+    isRecord(messages) ? messages.zh : '',
+    isRecord(messages) ? messages.en : '',
+    fallback,
+  )
+}
+
+export const buildAnnouncementI18nFields = (draft: {
+  others?: unknown
+  title?: unknown
+  summary?: unknown
+  content?: unknown
+}) => {
+  const sourceOthers = isRecord(draft.others) ? draft.others as AnnouncementOthers : undefined
+  const i18n = normalizeAnnouncementI18n(sourceOthers?.i18n)
+  const others = { ...(sourceOthers ?? {}) }
+  if (Object.keys(i18n).length > 0) {
+    others.i18n = i18n
+  } else {
+    delete others.i18n
+  }
+  return {
+    i18n,
+    others: Object.keys(others).length > 0 ? others : undefined,
+    title: resolveCompatibilityText(i18n.title, firstText(draft.title)),
+    summary: resolveCompatibilityText(i18n.summary, firstText(draft.summary)),
+    content: resolveCompatibilityText(i18n.content, firstText(draft.content)),
+  }
+}
+
+export const updateAnnouncementLocaleText = (
+  i18n: unknown,
+  field: AnnouncementI18nField,
+  locale: unknown,
+  value: unknown,
+) => {
+  const normalized = normalizeAnnouncementI18n(i18n)
+  const language = String(locale || '').replace('_', '-').split('-')[0].toLowerCase()
+  if (language !== 'zh' && language !== 'en') return normalized
+  const messages = { ...(normalized[field] ?? {}) }
+  const text = firstText(value)
+  if (text) {
+    messages[language] = text
+  } else {
+    delete messages[language]
+  }
+  if (Object.keys(messages).length) {
+    normalized[field] = messages
+  } else {
+    delete normalized[field]
+  }
+  return normalized
+}
+
+export const mergeLegacyAnnouncementI18n = (
+  i18n: unknown,
+  legacy: { title?: unknown; summary?: unknown; content?: unknown },
+) => {
+  const normalized = normalizeAnnouncementI18n(i18n)
+
+  const resolveLegacyChinese = (messages: AnnouncementLocalizedText | undefined, value: unknown) => {
+    const text = firstText(value)
+    if (!text || messages?.zh) return ''
+    const equalsExistingTranslation = Object.entries(messages ?? {})
+      .some(([locale, localized]) => locale !== 'zh' && localized === text)
+    return equalsExistingTranslation ? '' : text
+  }
+
+  const title = resolveLegacyChinese(normalized.title, legacy.title)
+  if (title) normalized.title = { ...(normalized.title ?? {}), zh: title }
+  const summary = resolveLegacyChinese(normalized.summary, legacy.summary)
+  if (summary) normalized.summary = { ...(normalized.summary ?? {}), zh: summary }
+  const content = resolveLegacyChinese(normalized.content, legacy.content)
+  if (content) normalized.content = { ...(normalized.content ?? {}), zh: content }
+  return normalized
+}
