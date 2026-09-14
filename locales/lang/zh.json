@@ -1671,7 +1671,7 @@
   "packages.ProjectHome.resourceUnavailableVideo": "当前未开通视联模块相关功能",
   "packages.ProjectHome.action_devices": "添加设备",
   "packages.ProjectHome.action_video": "添加视频",
-  "packages.ProjectHome.action_gateway": "接入边缘节点",
+  "packages.ProjectHome.action_gateway": "查看边缘节点",
   "packages.ProjectHome.action_createApplication": "创建应用",
   "packages.ProjectHome.action_members": "成员管理",
   "packages.ProjectHome.action_space": "空间配置",
