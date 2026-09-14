@@ -1,8 +1,9 @@
 import { request } from '@jetlinks-web/core'
 import i18n from '@jetlinks-web-core/locales'
 import { queryOverviewGatewaySummary, queryOverviewIotDeviceSummary, queryOverviewChannelSummary } from '../../../api/overview'
-import { countOf, rowsOf, textOf, channelCountOf } from '../../Base/shared/apiResult'
+import { countOf, rowsOf, textOf } from '../../Base/shared/apiResult'
 import type { Metric, ResourceKind, AlgorithmCoverageItem } from '../shared'
+import { loadCoverageChannelCount } from '../../Base/shared/apiAlgorithms'
 
 /** 多指标分别返回失败状态；一个查询失败不会隐藏同卡已成功的指标。 */
 export async function settleMetrics(loaders: Record<string, () => Promise<number>>): Promise<Metric[]> {
@@ -46,7 +47,7 @@ export function loadCollection() {
 export async function loadAlgorithmCoverage(videoTotal = 0): Promise<AlgorithmCoverageItem[]> {
   const [countsSettled, countSettled] = await Promise.allSettled([
     request.get('/ai/edge/task/coverage/scene/_counts', {}, { hiddenError: true }),
-    request.get('/ai/edge/task/coverage/scene/_count', {}, { hiddenError: true }),
+    loadCoverageChannelCount(),
   ])
 
   if (countsSettled.status === 'rejected') {
@@ -93,16 +94,9 @@ export async function loadAlgorithmCoverage(videoTotal = 0): Promise<AlgorithmCo
   })
 
   if (videoTotal > 0) {
-    let coveredCount = 0
-    if (countSettled.status === 'fulfilled') {
-      try {
-        coveredCount = channelCountOf(countSettled.value)
-      } catch {
-        coveredCount = items.reduce((max, item) => Math.max(max, item.value), 0)
-      }
-    } else {
-      coveredCount = items.reduce((max, item) => Math.max(max, item.value), 0)
-    }
+    // 分算法数量存在通道交集，不能以最大值或求和替代去重覆盖总数。
+    if (countSettled.status === 'rejected') throw countSettled.reason
+    const coveredCount = countSettled.value
     const unconfiguredCount = Math.max(0, videoTotal - coveredCount)
     if (unconfiguredCount > 0) {
       items.push({

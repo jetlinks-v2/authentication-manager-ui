@@ -3,7 +3,7 @@
     <header v-if="!isMetricCard">
       <h3>{{ title }}</h3>
       <a-segmented v-if="kind === 'DeviceDistribution'" v-model:value="deviceType" class="resource-switch" size="small" :options="deviceOptions" />
-      <a-segmented v-if="['MessageTrend', 'VideoPlaybackTrend'].includes(kind)" v-model:value="timeRange" class="resource-switch" size="small" :options="timeOptions" />
+      <a-segmented v-if="kind === 'MessageTrend' || (kind === 'VideoPlaybackTrend' && isPreview)" v-model:value="timeRange" class="resource-switch" size="small" :options="timeOptions" />
       <a-button v-if="kind === 'AlgorithmCoverage'" type="link" size="small" class="action-link" @click="openAlgorithmConfig">
         {{ t('resourceDashboard.algorithmConfig') }} <RightOutlined class="action-arrow" />
       </a-button>
@@ -75,7 +75,9 @@ function openAlgorithmConfig() {
   border: 1px solid #ECEFF3;
 }
 .resource-widget.is-metric-card {
-  padding: 14px 16px;
+  /* 四行默认网格内给标题、数值和底部指标留足空间。 */
+  padding: 10px 16px;
+  box-sizing: border-box;
 }
 header {
   display: flex;

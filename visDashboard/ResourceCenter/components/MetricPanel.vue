@@ -156,7 +156,7 @@ function getDotColor(key: string, index: number) {
 .card-divider {
   height: 1px;
   background: #ECEFF3;
-  margin: 10px 0;
+  margin: 6px 0;
   flex-shrink: 0;
 }
 .card-sub-metrics {

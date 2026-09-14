@@ -24,19 +24,20 @@ const actions: QuickStartAction[] = [
 /** 只使用当前菜单编码；无访问权限显示禁用，设计预览不触发业务跳转。 */
 export function useQuickStart(isEdit: Ref<boolean>, isPreview?: Ref<boolean>) {
   const menu = useMenuStore()
+  const preview = computed(() => isEdit.value || Boolean(isPreview?.value))
   const resolveMenu = (action: QuickStartAction) => {
     if (menu.getMenu(action.menu)) return action.menu
     if (action.fallbackMenu && menu.getMenu(action.fallbackMenu)) return action.fallbackMenu
     return undefined
   }
-  const visibleActions = computed(() => actions.map(action => ({
+  const visibleActions = computed(() => actions.filter(action => !action.privateOnly || !isSaaS).map(action => ({
     ...action,
-    disabled: !isEdit.value && !resolveMenu(action),
+    disabled: !preview.value && !resolveMenu(action),
   })))
   /** 独立路由新增页直接直达，弹层类新增跳转到列表并携带创建动作。 */
   function open(code: string) {
-    const action = actions.find(item => item.menu === code || item.fallbackMenu === code)
-    if (isEdit.value || !action) return
+    const action = visibleActions.value.find(item => item.menu === code || item.fallbackMenu === code)
+    if (preview.value || !action) return
     const targetMenu = resolveMenu(action)
     if (!targetMenu) return
     menu.jumpPage(targetMenu, {
