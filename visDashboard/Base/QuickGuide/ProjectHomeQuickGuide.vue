@@ -87,8 +87,7 @@ const steps = computed<GuideStep[]>(() => [
     title: t('packages.ProjectHome.QuickGuide_step1'),
     description: t('packages.ProjectHome.QuickGuide_step1_desc'),
     actionText: t('packages.ProjectHome.QuickGuide_step1_action'),
-    menu: 'iot-user/edge-gateway',
-    fallbackMenu: 'edge/Device',
+    menu: 'iot-user-device-list',
     query: { type: 'gateway', action: 'create' },
   },
   {
