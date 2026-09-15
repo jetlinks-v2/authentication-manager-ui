@@ -18,7 +18,7 @@ const readSourceTree = async (directory) => {
   return sources.join('\n')
 }
 
-const [apiSource, registerSource, inboxSource, realtimeSource, notificationDetailSource, announcementDetailSource, noticeListLoaderSource, bulletinTypeIconSource, moduleSource, moduleMenuSource, saasMenuSource, managementSource, pageSource, saasCenterSource, projectCenterSource, coreSource, coreCenterSource, coreRecordSource, coreSubscriptionSource, coreDialogSource, coreNoticeSource, coreNoticeItemSource, coreRealtimeSource, coreNoticeInfoSource, coreNoticeListHandlerSource, zhLocaleSource, enLocaleSource] = await Promise.all([
+const [apiSource, registerSource, inboxSource, realtimeSource, notificationDetailSource, announcementDetailSource, noticeListLoaderSource, bulletinTypeIconSource, moduleSource, moduleMenuSource, saasMenuSource, managementSource, pageSource, saasCenterSource, projectCenterSource, coreSource, coreCenterSource, coreRecordSource, coreSubscriptionSource, coreDialogSource, coreNoticeSource, coreNoticeItemSource, coreRealtimeSource, coreNoticeInfoSource, coreNoticeListHandlerSource, zhLocaleSource, enLocaleSource, saasMessageContentSource, projectMessageListSource] = await Promise.all([
   readFile(resolve(moduleRoot, 'views/system/Announcement/api.ts'), 'utf8'),
   readFile(resolve(moduleRoot, 'views/system/Announcement/register.ts'), 'utf8'),
   readFile(resolve(moduleRoot, 'views/system/Announcement/components/AnnouncementInbox.vue'), 'utf8'),
@@ -46,6 +46,8 @@ const [apiSource, registerSource, inboxSource, realtimeSource, notificationDetai
   readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/layout/components/noticeListHandler.ts'), 'utf8'),
   readFile(resolve(moduleRoot, 'locales/lang/zh.json'), 'utf8'),
   readFile(resolve(moduleRoot, 'locales/lang/en.json'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'ui/modules/saas-manager-ui/views/personalCenter/components/MessageContent.vue'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'ui/modules/project-side-ui/views/PersonCenter/components/StationMessage.vue'), 'utf8'),
 ])
 
 const findMenus = (menus, code) => menus.flatMap(menu => [
@@ -63,6 +65,7 @@ test('keeps bulletin API and notification renderer registration in authenticatio
   assert.match(apiSource, /parseSystemBulletinDetail/)
   assert.match(registerSource, /NotificationDetail\.vue/)
   assert.match(registerSource, /targetPage: 'notification-provider'/)
+  assert.match(registerSource, /targetPage: 'notification-text'/)
   assert.match(moduleSource, /views\/system\/Announcement\/register/)
 })
 
@@ -116,14 +119,58 @@ test('maps the six built-in bulletin types to one icon vocabulary with a default
   assert.match(bulletinTypeIconSource, /BULLETIN_TYPE_ICONS\[String\(value \?\? ''\)\.trim\(\)\] \|\| DEFAULT_BULLETIN_TYPE_ICON/)
   assert.doesNotMatch(bulletinTypeIconSource, /billing|urgent|severity/)
   assert.match(realtimeSource, /createBulletinTypeIconNode/)
-  assert.match(noticeListLoaderSource, /topicName: String\(detail\?\.title \|\| record\.topicName \|\| ''\)\.trim\(\)/)
-  assert.match(noticeListLoaderSource, /noticeIcon: resolveBulletinTypeIcon\(detail\?\.type\)/)
+  assert.match(noticeListLoaderSource, /topicName: title/)
+  assert.match(noticeListLoaderSource, /noticeIcon: resolveBulletinTypeIcon\(type\)/)
   assert.match(notificationDetailSource, /const typeIcon = computed\(\(\) => resolveBulletinTypeIcon\(detail\.value\?\.type\)\)/)
   assert.match(notificationDetailSource, /<AIcon :type="typeIcon" \/>/)
 })
 
+test('stores and renders announcement content with the platform i18nMessages field', async () => {
+  const [editorSource, i18nSource, markdownSource, zhLocale, enLocale] = await Promise.all([
+    readFile(resolve(moduleRoot, 'views/system/Announcement/components/AnnouncementEditorDialog.vue'), 'utf8'),
+    readFile(resolve(moduleRoot, 'views/system/Announcement/announcementI18n.ts'), 'utf8'),
+    readFile(resolve(moduleRoot, 'views/system/Announcement/components/AnnouncementI18nMarkdownEditor.vue'), 'utf8'),
+    readFile(resolve(moduleRoot, 'locales/lang/zh.json'), 'utf8'),
+    readFile(resolve(moduleRoot, 'locales/lang/en.json'), 'utf8'),
+  ])
+
+  assert.match(apiSource, /resolveAnnouncementText\(record, 'title'\)/)
+  assert.match(apiSource, /buildAnnouncementI18nFields\(draft\)/)
+  assert.match(apiSource, /legacyTitle: record\.title/)
+  assert.match(i18nSource, /getAnnouncementI18n/)
+  assert.match(i18nSource, /messages\[normalizedLocale\], messages\[language\]/)
+  assert.match(editorSource, /AnnouncementI18nMarkdownEditor/)
+  assert.match(editorSource, /v-model="form\.i18nMessages\.content"/)
+  assert.match(editorSource, /AnnouncementI18nTextDialog/)
+  assert.match(editorSource, /updateAnnouncementLocaleText\(i18n, 'title', currentLanguage\.value, form\.title\)/)
+  assert.match(editorSource, /title: record\?\.legacyTitle/)
+  assert.match(editorSource, /record\?\.legacyContent === translatedDefaultContent \? undefined : record\?\.legacyContent/)
+  assert.match(editorSource, /!props\.record && form\.content\.trim\(\) && !Object\.keys\(i18n\.content \?\? \{\}\)\.length/)
+  assert.doesNotMatch(editorSource, /:display-value=/)
+  assert.match(i18nSource, /locale === 'zh' \|\| locale === 'en'/)
+  assert.match(markdownSource, /activeLanguage = ref\('zh'\)/)
+  assert.equal(JSON.parse(zhLocale)['Announcement.i18n.configure'], '国际化配置')
+  assert.equal(JSON.parse(enLocale)['Announcement.i18n.configure'], 'Internationalization')
+})
+
 test('uses the bulletin title and internal scrolling for management details', () => {
-  assert.match(pageSource, /:title="detailRecord\?\.title \|\| \$t\('Announcement\.action\.view'\)"/)
+  assert.match(pageSource, /:title="detailTitle"/)
+  assert.match(pageSource, /v-model:locale="detailLocale"/)
+  assert.match(pageSource, /resolveAnnouncementText\(record, 'title', detailLocale\.value\)/)
+  assert.match(announcementDetailSource, /<a-tabs v-model:activeKey="viewLocale"/)
+  assert.match(announcementDetailSource, /v-for="item in languagePanes"/)
+  assert.match(announcementDetailSource, /resolveAnnouncementText\(props\.record, 'summary', item\.value\)/)
+  assert.match(announcementDetailSource, /resolveAnnouncementText\(props\.record, 'content', item\.value\)/)
+  assert.match(announcementDetailSource, /Announcement\.detail\.languageMissing/)
+  assert.match(announcementDetailSource, /:text="stateText"/)
+  assert.match(announcementDetailSource, /resolveAnnouncementStateLabel\(props\.record\?\.state, viewLocale\.value\)/)
+  // 元信息表格在标签页之外，不能引用 v-for 的 item，否则运行时会读 undefined。
+  assert.doesNotMatch(announcementDetailSource.split('<a-tabs')[0], /\bitem\./)
+  assert.match(managementSource, /:text="resolveStateLabel\(record\)"/)
+  assert.match(managementSource, /resolveAnnouncementStateLabel\(record\?\.state\)/)
+  // 英文状态不能换行，状态列需留出足够宽度。
+  assert.match(managementSource, /white-space: nowrap/)
+  assert.match(managementSource, /key: 'state',\s*width: 120/)
   assert.match(announcementDetailSource, /class="announcement-detail-scroll"/)
   assert.match(announcementDetailSource, /max-height: min\(70dvh, 48rem\)/)
   assert.match(announcementDetailSource, /overflow-y: auto/)
@@ -140,7 +187,7 @@ test('loads all unread bulletins before the five latest read bulletins in the be
   assert.match(noticeListLoaderSource, /filter\(record => stateValue\(record\) === 'unread'\)/)
   assert.match(noticeListLoaderSource, /filter\(record => stateValue\(record\) === 'read'\)/)
   assert.match(noticeListLoaderSource, /sort\(byNotifyTimeDesc\)/)
-  assert.match(noticeListLoaderSource, /return mergeNoticeGroups\(unread, read\)\.map\(/)
+  assert.match(noticeListLoaderSource, /return resolveSystemBulletinNoticeTexts\(mergeNoticeGroups\(unread, read\)\)/)
   assert.match(coreNoticeListHandlerSource, /notification-provider:default/)
   assert.match(coreNoticeListHandlerSource, /handlers\.some\(current => current !== handler\)/)
   assert.match(coreNoticeInfoSource, /loadRegisteredNoticeList\(providers, DROPDOWN_PAGE_SIZE\)/)
@@ -221,8 +268,8 @@ test('exposes subscription management as a project runtime menu candidate', () =
   assert.equal(projectMenus.length, 1)
   assert.ok(projectMenu)
   assert.equal(projectMenu.owner, 'iot')
-  assert.equal(projectMenu.url, '/system/NoticeRule')
-  assert.equal(projectMenu.options?.routeTarget, 'midhub/settings')
+  assert.equal(projectMenu.url, '/system/ps/NoticeRule')
+  assert.deepEqual(projectMenu.options, {})
   assert.deepEqual(projectMenu.showPage, ['notify-channel'])
   assert.equal(projectMenu.assetType, 'notifySubscriberProvider')
   assert.equal(projectMenu.accessSupport?.value, 'support')
@@ -272,6 +319,8 @@ test('keeps web-core notification handling business-neutral', () => {
   assert.doesNotMatch(coreDialogSource, /SystemBulletin|systemBulletin|system\/bulletin/)
   assert.doesNotMatch(coreNoticeSource, /SystemBulletin|systemBulletin|system\/bulletin/)
   assert.match(coreNoticeSource, /appContext/)
+  assert.match(coreDialogSource, /const notificationTitle = computed/)
+  assert.match(coreDialogSource, /_data\.value\?\.i18nMessages\?\.title/)
   assert.match(coreNoticeItemSource, /appContext/)
   assert.match(coreNoticeItemSource, /v-if="state === 'unread'"/)
   assert.match(coreNoticeItemSource, /CheckCircleOutlined/)
@@ -295,6 +344,30 @@ test('keeps web-core notification handling business-neutral', () => {
   assert.match(coreNoticeItemSource, /const noticeIcon = computed\(\(\) => String\(props\.data\?\.noticeIcon \|\| ''\)\.trim\(\)\)/)
   assert.match(coreNoticeItemSource, /v-if="noticeIcon"[\s\S]*class="list-item__icon"[\s\S]*:style="\{ color: noticeIconColor \}"/)
   assert.match(coreNoticeItemSource, /const noticeIconColor = computed\(\(\) => String\(props\.data\?\.noticeIconColor \|\| ''\)\.trim\(\)\)/)
+})
+
+test('localizes generic notification list text without bulletin coupling', async () => {
+  const source = await readFile(resolve(coreRoot, 'views/account/center/components/StationMessage/components/NotificationRecord/index.vue'), 'utf8')
+  assert.match(source, /resolveNoticeTexts\(records\)/)
+  assert.match(source, /:request="requestNotifications"/)
+  assert.match(source, /resolveDetailI18nText\(detail, 'title'\)/)
+  assert.match(source, /resolveDetailI18nText\(detail, 'summary'\)/)
+  assert.match(source, /getNotificationSummary\(slotProps\)/)
+  assert.doesNotMatch(source, /SystemBulletin|system\/bulletin/)
+})
+
+test('re-resolves notification text when the active locale changes', async () => {
+  assert.match(coreNoticeInfoSource, /const \{ t: \$t, locale \} = useI18n\(\)/)
+  assert.match(coreNoticeInfoSource, /watch\(locale, \(\) => \{\s*getData\(/)
+  assert.match(saasMessageContentSource, /resolveNoticeTexts\(records\)/)
+  assert.match(saasMessageContentSource, /:request='requestNoticeList'/)
+  assert.match(saasMessageContentSource, /watch\(locale, \(\) => tableRef\.value\?\.reload\?\.\(\)\)/)
+  assert.match(projectMessageListSource, /resolveNoticeTexts\(records\)/)
+  assert.match(projectMessageListSource, /:request="requestNotifications"/)
+  assert.match(projectMessageListSource, /watch\(globalI18n\.global\.locale, refresh\)/)
+  const recordSource = await readFile(resolve(coreRoot, 'views/account/center/components/StationMessage/components/NotificationRecord/index.vue'), 'utf8')
+  assert.match(recordSource, /const \{ t: \$t, locale \} = useI18n\(\)/)
+  assert.match(recordSource, /watch\(locale, refresh\)/)
 })
 
 test('keeps the bell badge synchronized with the backend unread count', () => {

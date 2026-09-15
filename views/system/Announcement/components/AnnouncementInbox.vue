@@ -13,6 +13,7 @@ import {
 } from '../api'
 import NotificationDetail from './NotificationDetail.vue'
 import { resolveBulletinTypeIcon } from '../bulletinTypeIcon'
+import { resolveAnnouncementText } from '../announcementI18n'
 
 const columns = [
   {
@@ -73,14 +74,16 @@ const parseDetail = (record: Record<string, any>) => {
 /** 公告标题优先使用发布快照，旧通知缺少快照时再回退通用通知字段。 */
 const getNotificationTitle = (record: Record<string, any>) => {
   const detail = parseDetail(record)
-  return String(detail?.title || record.title || record.topicName || record.message || '').trim()
+  return resolveAnnouncementText(detail, 'title')
+    || String(record.title || record.topicName || record.message || '').trim()
 }
 
 /** 公告摘要只显示独立内容，避免旧数据把标题重复渲染为摘要。 */
 const getNotificationSummary = (record: Record<string, any>) => {
   const detail = parseDetail(record)
   const title = getNotificationTitle(record)
-  const summary = String(detail?.summary || record.summary || record.message || '').trim()
+  const summary = resolveAnnouncementText(detail, 'summary')
+    || String(record.summary || record.message || '').trim()
   return summary && summary !== title ? summary : ''
 }
 

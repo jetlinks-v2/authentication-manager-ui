@@ -5,6 +5,11 @@ import {
   changeStatus_api,
   getList_api,
 } from '@jetlinks-web-core/api/account/notificationRecord'
+import {
+  buildAnnouncementI18nFields,
+  resolveAnnouncementText,
+  type AnnouncementI18n,
+} from './announcementI18n'
 
 export type AnnouncementState = 'unpublished' | 'published'
 export const SYSTEM_BULLETIN_PROVIDER = 'SystemBulletin'
@@ -29,6 +34,10 @@ export interface AnnouncementRecord {
   creatorName: string
   userIds: string[]
   organizationIds: string[]
+  i18nMessages?: AnnouncementI18n
+  legacyTitle?: string
+  legacySummary?: string
+  legacyContent?: string
 }
 
 export interface AnnouncementDraft {
@@ -40,6 +49,7 @@ export interface AnnouncementDraft {
   userIds: string[]
   organizationIds: string[]
   publish: boolean
+  i18nMessages?: unknown
 }
 
 export interface AnnouncementQuery {
@@ -61,6 +71,7 @@ export interface SystemBulletinNotificationDetail {
   content: string
   type?: AnnouncementType
   deployTime?: number | null
+  i18nMessages?: AnnouncementI18n
 }
 
 interface EnumValue<T extends string> {
@@ -80,6 +91,7 @@ interface SystemBulletin {
   modifyTime?: number | null
   creatorName?: string
   dimension?: SystemBulletinDimension[]
+  i18nMessages?: AnnouncementI18n
 }
 
 interface SystemBulletinDimension {
@@ -115,9 +127,13 @@ const normalizeBulletin = (record: SystemBulletin): AnnouncementRecord => {
   )
   return {
     id: record.id,
-    title: record.title,
-    summary: record.summary || '',
-    content: record.content,
+    title: resolveAnnouncementText(record, 'title'),
+    summary: resolveAnnouncementText(record, 'summary'),
+    content: resolveAnnouncementText(record, 'content'),
+    i18nMessages: record.i18nMessages,
+    legacyTitle: record.title || '',
+    legacySummary: record.summary || '',
+    legacyContent: record.content || '',
     type,
     state,
     stateText,
@@ -212,9 +228,10 @@ export const getSystemBulletinNotificationDetail = async (
       : undefined
   return {
     id: detail.id,
-    title: detail.title,
-    summary: detail.summary || '',
-    content: detail.content,
+    title: resolveAnnouncementText(detail, 'title'),
+    summary: resolveAnnouncementText(detail, 'summary'),
+    content: resolveAnnouncementText(detail, 'content'),
+    i18nMessages: detail.i18nMessages,
     type,
     deployTime: detail.deployTime,
   }
@@ -250,11 +267,19 @@ export const saveAnnouncement = (draft: AnnouncementDraft) => {
     { dimensionType: 'org', dimensionIds: draft.organizationIds },
   ].filter(item => item.dimensionIds.length > 0)
 
+  const {
+    i18nMessages,
+    title,
+    summary,
+    content,
+  } = buildAnnouncementI18nFields(draft)
+
   return request.post('/system/bulletin/_save', {
     id: draft.id,
-    title: draft.title,
-    summary: draft.summary?.trim() || undefined,
-    content: draft.content,
+    title,
+    summary: summary || undefined,
+    content,
+    i18nMessages,
     type: draft.type,
     allVisible: dimension.length === 0,
     dimension,
