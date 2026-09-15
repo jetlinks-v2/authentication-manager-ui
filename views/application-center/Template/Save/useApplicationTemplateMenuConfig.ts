@@ -107,7 +107,7 @@ export const useApplicationTemplateMenuConfig = (
     try {
       const [grantResponse, menuResponse, assetTypesResponse] = await Promise.all([
         getApplicationTemplateMenus(templateId),
-        getCurrentUserMenuTree({ paging: false }),
+        getCurrentUserMenuTree({ paging: false, terms: [{ column: 'owner', value: 'app' }] }),
         getAssetTypes(),
       ])
       if (sequence !== loadSequence) return
