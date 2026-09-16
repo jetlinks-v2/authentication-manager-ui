@@ -105,11 +105,8 @@ const buildDetailQuery = (terms: DeviceDetailTerm[], pageSize = 12) => ({
   context: DETAIL_CONTEXT,
 })
 
+// 与统一设备列表保持同一边缘节点口径：只按边端接入方式筛选，不追加产品物模型类型条件。
 const buildGatewayTerms = (): DeviceDetailTerm[] => [
-  {
-    column: 'productId$product-info',
-    value: [{ column: 'deviceType', termType: 'eq', value: 'gateway' }],
-  },
   {
     column: 'productId$product-info',
     value: `accessProvider in (${GATEWAY_ACCESS_PROVIDERS.join(',')})`,
