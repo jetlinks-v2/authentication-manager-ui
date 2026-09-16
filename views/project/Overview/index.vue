@@ -10,7 +10,7 @@
       :catalog="catalog"
       :editable="false"
       :layout-editable="true"
-      storage-key="project-overview-v12"
+      storage-key="project-overview-v14"
       :preview-mode="false"
     />
   </main>
@@ -60,7 +60,6 @@ const { catalog, loading, errors, reload, dashboard } = useOverviewDashboard()
   }
 }
 .project-overview-state { min-height: 30rem; display: grid; place-items: center; }
-
 /* 概览跟随网格内容自然撑高，由外层页面滚动，不在画布内创建第二个滚动容器。 */
 .project-overview :deep(.dashboard-card-layout),
 .project-overview :deep(.dashboard-card-content) {

@@ -1,11 +1,12 @@
 <template>
   <HomeWidget feature="DeviceAccess" :info="info" :is-edit="isEdit">
-    <template #default="{ rows, canOpen, open }">
+    <template #default="{ rows, chart, canOpen, open }">
       <div class="device-access-list">
         <ResourceItem
           v-for="row in rows"
           :key="row.id"
           :row="row"
+          :show-icon="chart.showIcon"
           :can-open="canOpen"
           @navigate="open"
         />
@@ -24,8 +25,9 @@ withDefaults(defineProps<{ info?: HomeInfo; isEdit?: boolean }>(), { isEdit: fal
 .device-access-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  height: 100%;
+  gap: 12px;
+  min-height: 0;
+  overflow: auto;
   box-sizing: border-box;
 }
 </style>

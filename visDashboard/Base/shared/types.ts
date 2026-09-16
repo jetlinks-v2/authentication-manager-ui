@@ -21,6 +21,7 @@ export interface HomeRow {
   label?: string
   labelKey?: string
   description?: string
+  descriptionKey?: string
   group?: string
   subgroup?: string
   icon?: string

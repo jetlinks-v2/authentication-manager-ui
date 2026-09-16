@@ -19,7 +19,11 @@
           </span>
           <span class="home-app-content">
             <strong class="home-app-title">{{ label(row) }}</strong>
-            <span v-if="chart.showDescription" class="home-muted home-description">{{ row.description || row.date || '--' }}</span>
+            <span v-if="chart.showDescription" class="home-muted home-description">{{ row.description || t('packages.ProjectHome.appNoDescription') }}</span>
+            <span class="home-app-meta">
+              <span v-if="row.application">{{ row.application.statusText || t(row.application.status === 'disabled' ? 'packages.ProjectHome.appDisabled' : 'packages.ProjectHome.appEnabled') }}</span>
+              <time v-if="chart.showDate && row.date && row.date !== '--'">{{ t('packages.ProjectHome.appCreated', { date: row.date.slice(0, 10) }) }}</time>
+            </span>
           </span>
           <RightOutlined class="home-app-arrow" />
         </button>
@@ -137,6 +141,7 @@ const handleClick = (row: HomeRow) => {
   min-width: 0;
   flex: 1;
 }
+.home-app-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--business-component-muted); }
 .home-app-content strong {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -148,7 +153,7 @@ const handleClick = (row: HomeRow) => {
 }
 .home-app-content .home-description {
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
   color: #86909c;

@@ -31,7 +31,7 @@
           <AlertOutlined v-if="category === 'deviceAlarm'" />
           <WarningOutlined v-else />
         </span>
-        <span class="alarm-entry-title">{{ title }}</span>
+        <span class="alarm-entry-copy"><span class="alarm-entry-title">{{ title }}</span><small>{{ t(count === undefined ? 'packages.ProjectHome.metricUnknown' : count === 0 ? 'packages.ProjectHome.alarmEmpty' : 'packages.ProjectHome.alarmReview') }}</small></span>
       </div>
       <strong class="alarm-entry-count">{{ count === undefined ? '—' : count.toLocaleString() }}</strong>
     </button>
@@ -59,8 +59,7 @@ const { open, loading, error, rows, total, page, selected, detailLoading, detail
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  height: 52px;
-  min-height: 52px;
+  min-height: 72px;
   padding: 8px 14px;
   border: 1px solid #e5effd;
   border-radius: 4px;
@@ -141,6 +140,8 @@ const { open, loading, error, rows, total, page, selected, detailLoading, detail
   flex-shrink: 0;
   margin-left: 10px;
 }
+.alarm-entry-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.alarm-entry-copy small { color: var(--business-component-muted); font-size: 12px; line-height: 18px; }
 
 .alarm-list { width: min(460px, calc(100vw - 64px)); }
 .alarm-list-heading { color: var(--ant-color-text-secondary, #666); margin-bottom: 8px; }

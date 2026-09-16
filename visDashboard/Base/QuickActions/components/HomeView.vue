@@ -11,7 +11,10 @@
       <span v-if="chart.showIcon" class="home-action-icon-box" :class="getToneClass(row.id)">
         <HomeIcon :name="row.id === 'video' ? 'addVideo' : row.icon" neutral />
       </span>
-      <span class="home-action-label">{{ label(row) }}</span>
+      <span class="home-action-copy">
+        <span class="home-action-label">{{ label(row) }}</span>
+        <span v-if="chart.showDescription" class="home-action-description">{{ row.description || (row.descriptionKey ? t(`packages.ProjectHome.${row.descriptionKey}`) : '') }}</span>
+      </span>
     </button>
   </div>
 </template>
@@ -54,13 +57,24 @@ const getToneClass = (id: string) => {
   border: 1px solid #e5effd;
   border-radius: 4px;
   gap: 10px;
-  padding: 0 12px;
+  padding: 8px 12px;
+  text-align: left;
 
   &:hover:not(:disabled) {
     background: linear-gradient(90deg, #e4efff 0%, #f3f8ff 100%);
     border-color: #bfd9fe;
     color: #1e72f0;
   }
+}
+.home-action-copy { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.home-action .home-action-description { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--business-component-muted); font-size: 12px; line-height: 18px; white-space: normal; }
+.home-actions { grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: none; grid-auto-rows: minmax(76px, 1fr); gap: 10px; align-content: start; }
+.home-action { grid-column: span 3; }
+.home-action:nth-child(5):nth-last-child(3),
+.home-action:nth-child(5):nth-last-child(3) ~ .home-action { grid-column: span 4; }
+@container project-home (max-width: 640px) {
+  .home-actions:not(.home-actions--grid) { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; }
+  .home-actions:not(.home-actions--grid) .home-action { grid-column: auto; }
 }
 
 .home-action-icon-box {

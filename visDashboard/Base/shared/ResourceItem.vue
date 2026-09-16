@@ -4,7 +4,7 @@
       <button
         type="button"
         class="resource-item-btn"
-        :class="{ 'is-disabled': disabled, 'is-metric': metric }"
+        :class="{ 'is-disabled': disabled, 'is-metric': metric, 'has-icon': showIcon }"
         :disabled="disabled"
         :aria-label="disabled ? unavailableHintText : label(row)"
         @click="$emit('navigate', row.target)"
@@ -12,11 +12,24 @@
         <div v-if="showIcon" class="resource-item-icon-box" :style="{ background: disabled ? '#F2F3F5' : iconBgTone }">
           <HomeIcon :name="row.icon" :neutral="disabled" />
         </div>
-        <span class="resource-item-label">{{ label(row) }}</span>
+        <span class="resource-item-copy">
+          <span class="resource-item-label">{{ label(row) }}</span>
+          <span v-if="row.description || row.descriptionKey" class="resource-item-description">{{ row.description || description(row) }}</span>
+        </span>
         <div class="resource-item-value-box">
           <strong class="resource-item-value">{{ number(row.value) }}</strong>
           <span v-if="row.value !== undefined" class="resource-item-unit">{{ unitText }}</span>
         </div>
+        <span class="resource-item-detail">
+          <template v-if="row.failed || row.value === undefined">{{ t('packages.ProjectHome.metricUnknown') }}</template>
+          <template v-else-if="row.online !== undefined && row.offline !== undefined">
+            <span>{{ t('packages.ProjectHome.online') }} <b>{{ number(row.online) }}</b></span>
+            <span>{{ t('packages.ProjectHome.offline') }} <b>{{ number(row.offline) }}</b></span>
+            <span v-if="row.value > 0">{{ t('packages.ProjectHome.onlineRate', { value: Math.round(row.online / row.value * 100) }) }}</span>
+          </template>
+          <template v-else-if="row.value === 0">{{ t('packages.ProjectHome.resourceZero') }}</template>
+          <template v-else>{{ disabled ? unavailableHintText : t('packages.ProjectHome.resourceManage') + ' ›' }}</template>
+        </span>
       </button>
     </div>
   </a-tooltip>
@@ -61,6 +74,7 @@ const iconBgTone = computed(() => (props.row.icon && iconBgTones[props.row.icon]
 
 const disabled = computed(() => !props.canOpen(props.row.target))
 const label = (row: HomeRow) => row.label || t(`packages.ProjectHome.${row.labelKey}`)
+const description = (row: HomeRow) => row.descriptionKey ? t(`packages.ProjectHome.${row.descriptionKey}`) : ''
 const number = (value?: number) => (value === undefined ? '—' : value.toLocaleString())
 const unitText = computed(() => props.row.unit || t('packages.ProjectHome.unitPiece') || '个')
 
@@ -145,6 +159,15 @@ const unavailableHintText = computed(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.resource-item-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; }
+.resource-item-description { color: var(--business-component-muted); font-size: 12px; line-height: 18px; overflow-wrap: anywhere; }
+.resource-item-btn { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 10px; }
+.resource-item-btn.has-icon { grid-template-columns: auto minmax(0, 1fr) auto; }
+.resource-item-copy { grid-column: 1; }
+.resource-item-btn.has-icon .resource-item-copy { grid-column: 2; }
+.resource-item-detail { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 12px; padding-top: 8px; border-top: 1px solid var(--line, #edf0f5); color: var(--business-component-muted); font-size: 12px; line-height: 18px; }
+.resource-item-detail b { color: var(--business-component-text); font-weight: 500; }
+.resource-item-btn:disabled .resource-item-description { color: inherit; }
 
 .resource-item-value-box {
   margin-left: auto;

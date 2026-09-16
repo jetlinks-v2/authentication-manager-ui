@@ -2,6 +2,7 @@
   <div class="home-content home-operations" :class="{ 'home-operations--cards': chart.displayStyle === 'cards' }">
     <section v-for="group in groups" :key="group" class="home-operation-group" :class="`home-operation-group--${group}`">
       <h4 class="home-operation-group-title">{{ t(`packages.ProjectHome.group_${group}`) }}</h4>
+      <p class="operation-explanation">{{ t(group === 'health' ? 'packages.ProjectHome.healthScope' : 'packages.ProjectHome.alarmScope') }}</p>
       <div class="home-operation-items" :class="`items--${group}`">
         <template v-for="row in getGroupRows(group)" :key="row.id">
           <slot v-if="group === 'alarms'" name="alarm" :row="row" />
@@ -19,7 +20,8 @@
               </span>
               <span class="health-card-title">{{ label(row) }}</span>
             </div>
-            <div class="health-card-progress">
+            <span class="health-rate">{{ row.value && row.online !== undefined ? t('packages.ProjectHome.onlineRate', { value: Math.round(healthPercent(row)) }) : row.value === 0 ? t('packages.ProjectHome.empty') : t('packages.ProjectHome.metricUnknown') }}</span>
+            <div v-if="row.value && row.online !== undefined" class="health-card-progress">
               <div class="health-progress-bar" :style="{ width: `${healthPercent(row)}%` }" />
             </div>
             <div class="health-card-footer">
@@ -93,7 +95,7 @@ const getGroupRows = (group: string) => {
   gap: 12px;
   height: 100%;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .home-operation-group-title {
@@ -240,4 +242,8 @@ const getGroupRows = (group: string) => {
     grid-template-columns: 1fr;
   }
 }
+</style>
+<style scoped>
+.operation-explanation { margin: 0 0 8px; font-size: 12px; line-height: 18px; color: var(--business-component-muted); }
+.health-rate { display: block; margin-top: 6px; color: var(--business-component-muted); font-size: 12px; }
 </style>

@@ -12,7 +12,7 @@
         <div v-if="showIcon" class="resource-item-icon-box" :style="{ background: disabled ? '#F2F3F5' : iconBgTone }">
           <HomeIcon :name="row.icon" :neutral="disabled" />
         </div>
-        <span class="resource-item-label">{{ label(row) }}</span>
+        <span class="resource-item-copy"><span class="resource-item-label">{{ label(row) }}</span><span v-if="row.description || row.descriptionKey" class="resource-item-description">{{ row.description || description(row) }}</span></span>
         <div class="resource-item-value-box">
           <strong class="resource-item-value">{{ number(row.value) }}</strong>
           <span v-if="row.value !== undefined" class="resource-item-unit">{{ unitText }}</span>
@@ -61,6 +61,7 @@ const iconBgTone = computed(() => (props.row.icon && iconBgTones[props.row.icon]
 
 const disabled = computed(() => !props.canOpen(props.row.target))
 const label = (row: HomeRow) => row.label || t(`packages.ProjectHome.${row.labelKey}`)
+const description = (row: HomeRow) => row.descriptionKey ? t(`packages.ProjectHome.${row.descriptionKey}`) : ''
 const number = (value?: number) => (value === undefined ? '—' : value.toLocaleString())
 const unitText = computed(() => props.row.unit || t('packages.ProjectHome.unitPiece') || '个')
 
@@ -145,6 +146,8 @@ const unavailableHintText = computed(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.resource-item-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; }
+.resource-item-description { overflow: hidden; color: #86909c; font-size: 11px; line-height: 16px; text-overflow: ellipsis; white-space: nowrap; }
 
 .resource-item-value-box {
   margin-left: auto;

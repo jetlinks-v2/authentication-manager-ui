@@ -24,7 +24,7 @@ const loadApplications = async (): Promise<HomeRow[]> => {
     return {
       id: textOf(row.id),
       label: textOf(row.name),
-      description: createTime,
+      description: application.description,
       date: createTime,
       icon: 'applications',
       application,

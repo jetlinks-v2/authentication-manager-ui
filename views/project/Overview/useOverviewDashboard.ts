@@ -33,17 +33,24 @@ import {
   ProjectHomeCollectionConfig,
   ProjectHomeCollectionConfigProps,
 } from '../../../visDashboard/Base/Collection/index'
+import {
+  ProjectHomeQuotas,
+  ProjectHomeQuotasConfig,
+  ProjectHomeQuotasConfigProps,
+} from '../../../visDashboard/Base/Quotas/index'
 
 const saasLayout = [
-  ['QuickActions', 0, 0, 8, 7], ['Applications', 8, 0, 4, 7],
-  ['DeviceAccess', 0, 7, 3, 10], ['Visualization', 3, 7, 5, 10], ['Operations', 8, 7, 4, 10],
-  ['AiCenter', 0, 17, 4, 10], ['RuleEngine', 4, 17, 4, 10], ['Announcements', 8, 17, 4, 10],
+  ['QuickActions', 0, 0, 8, 9], ['Quotas', 8, 0, 4, 9],
+  ['DeviceAccess', 0, 9, 3, 13], ['Visualization', 3, 9, 5, 13], ['Operations', 8, 9, 4, 13],
+  ['AiCenter', 0, 22, 4, 11], ['RuleEngine', 4, 22, 4, 11], ['Applications', 8, 22, 4, 11],
+  ['Announcements', 0, 33, 12, 8],
 ] as const
 
 const privateLayout = [
-  ['QuickActions', 0, 0, 8, 7], ['Applications', 8, 0, 4, 7],
-  ['DeviceAccess', 0, 7, 3, 10], ['Visualization', 3, 7, 5, 10], ['Operations', 8, 7, 4, 10],
-  ['Collection', 0, 17, 3, 10], ['AiCenter', 3, 17, 3, 10], ['RuleEngine', 6, 17, 2, 10], ['Announcements', 8, 17, 4, 10],
+  ['QuickActions', 0, 0, 12, 9],
+  ['DeviceAccess', 0, 9, 3, 13], ['Visualization', 3, 9, 5, 13], ['Operations', 8, 9, 4, 13],
+  ['AiCenter', 0, 22, 4, 11], ['RuleEngine', 4, 22, 4, 11], ['Applications', 8, 22, 4, 11],
+  ['Collection', 0, 33, 4, 10], ['Announcements', 4, 33, 8, 10],
 ] as const
 
 const layout = isSaaS ? saasLayout : privateLayout
@@ -56,6 +63,8 @@ export function useOverviewDashboard() {
 
   const fullCatalog = computed(() => {
     const components = { ...catalog.value.components }
+    // 租户用量接口只属于 SaaS 项目，私有化环境不暴露卡片及其添加入口。
+    if (!isSaaS) delete components.projectHomeQuotas
     const registerFallback = (
       type: string,
       comp: { component: any },
@@ -116,6 +125,15 @@ export function useOverviewDashboard() {
       ProjectHomeCollectionConfigProps,
       { w: 3, h: 10, x: 0, y: 17, minW: 2, minH: 6 },
     )
+    if (isSaaS) {
+      registerFallback(
+        'projectHomeQuotas',
+        ProjectHomeQuotas,
+        ProjectHomeQuotasConfig,
+        ProjectHomeQuotasConfigProps,
+        { w: 4, h: 7, x: 8, y: 0, minW: 3, minH: 6 },
+      )
+    }
     return { ...catalog.value, components }
   })
 
@@ -132,4 +150,3 @@ export function useOverviewDashboard() {
 
   return { catalog: fullCatalog, loading, errors, reload, dashboard }
 }
-

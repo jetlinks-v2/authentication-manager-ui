@@ -23,7 +23,7 @@ export function useHomeRuntime(feature: HomeFeature, isEdit: Ref<boolean>, refre
     rows.value = []; error.value = false; loading.value = false
     if (!active.value) return
     if (feature === 'QuickActions') {
-      rows.value = QUICK_ACTIONS.map(({ id, target }) => ({ id, labelKey: `action_${id}`, icon: id, target }))
+      rows.value = QUICK_ACTIONS.map(({ id, target }) => ({ id, labelKey: `action_${id}`, descriptionKey: `action_${id}Desc`, icon: id, target }))
       return
     }
     if (isEdit.value) return
