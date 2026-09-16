@@ -7,14 +7,6 @@
       </div>
     </header>
 
-    <a-alert
-      v-if="missingMenuIds.length"
-      type="warning"
-      show-icon
-      :message="$t('ApplicationTemplate.config.missingMenus', { count: missingMenuIds.length })"
-      :description="missingMenuIds.join(', ')"
-    />
-
     <a-spin :spinning="loadingEditor" class="template-menu-config__spin">
       <MenuAssetPermissionEditor
         :context="editor"
@@ -43,7 +35,7 @@
       <a-button
         type="primary"
         :loading="saving"
-        :disabled="!initialized || !!missingMenuIds.length"
+        :disabled="!initialized"
         @click="$emit('save')"
       >
         {{ $t('ApplicationTemplate.config.save') }}

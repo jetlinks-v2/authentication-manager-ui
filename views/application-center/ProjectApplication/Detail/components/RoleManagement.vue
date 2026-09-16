@@ -175,7 +175,7 @@ const loadPermissions = async () => {
   try {
     const [templateResponse, menuResponse, detailResponse, assetTypes] = await Promise.all([
       getApplicationTemplateMenus(props.templateId),
-      getCurrentUserMenuTree({ paging: false }),
+      getCurrentUserMenuTree({ paging: false, terms: [{ column: 'owner', value: 'app'}] }),
       getRolePermissionDetail(activeRoleId.value),
       loadAssetTypes(),
     ])

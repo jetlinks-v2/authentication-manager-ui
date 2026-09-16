@@ -13,7 +13,7 @@ type QuickStartAction = {
 }
 
 const actions: QuickStartAction[] = [
-  { key: 'edge', icon: 'ApiOutlined', menu: 'iot-user/edge-gateway', query: { type: 'gateway', action: 'create' } },
+  { key: 'edge', icon: 'ApiOutlined', menu: 'iot-user-device-list', query: { type: 'gateway', action: 'create' } },
   { key: 'iot', icon: 'DatabaseOutlined', menu: 'iot-user/device/list', query: { type: 'device', action: 'create' } },
   { key: 'video', icon: 'VideoCameraAddOutlined', menu: 'media/Device/Save', fallbackMenu: 'media/Device', params: { id: ':id' }, query: { type: 'video', action: 'create' } },
   { key: 'screen', icon: 'DashboardOutlined', menu: 'visualization/project', query: { action: 'create', kind: 'screen' } },
