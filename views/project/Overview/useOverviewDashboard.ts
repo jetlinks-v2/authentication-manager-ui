@@ -41,9 +41,9 @@ import {
 
 const saasLayout = [
   ['QuickActions', 0, 0, 8, 9], ['Quotas', 8, 0, 4, 9],
-  ['DeviceAccess', 0, 9, 3, 13], ['Visualization', 3, 9, 5, 13], ['Operations', 8, 9, 4, 13],
-  ['AiCenter', 0, 22, 4, 11], ['RuleEngine', 4, 22, 4, 11], ['Applications', 8, 22, 4, 11],
-  ['Announcements', 0, 33, 12, 8],
+  ['DeviceAccess', 0, 9, 3, 14], ['Visualization', 3, 9, 5, 14], ['Operations', 8, 9, 4, 10],
+  ['AiCenter', 0, 23, 4, 11], ['RuleEngine', 4, 23, 4, 11], ['Applications', 8, 19, 4, 11],
+  ['Announcements', 8, 30, 4, 12],
 ] as const
 
 const privateLayout = [

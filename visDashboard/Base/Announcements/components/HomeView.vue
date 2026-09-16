@@ -112,7 +112,6 @@ const label = (row: HomeRow) => row.label || t(`packages.ProjectHome.${row.label
 .announcement-description { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--business-component-muted); font-size: 12px; line-height: 18px; white-space: normal; }
 .home-announcements { overflow: auto; gap: 0; }
 .home-content .home-announcement { align-items: flex-start; flex-direction: column; gap: 6px; padding: 12px 0; border-bottom: 1px solid var(--line, #edf0f5); }
-.announcement-date { margin-left: 0; font-size: 12px; }
 .announcement-main { width: 100%; align-items: flex-start; }
 .announcement-title { white-space: normal; line-height: 20px; font-weight: 500; }
 .home-announcement:focus-visible { outline: 2px solid var(--business-component-primary) !important; outline-offset: -2px; }
@@ -121,7 +120,7 @@ const label = (row: HomeRow) => row.label || t(`packages.ProjectHome.${row.label
   font-size: 13px;
   color: #86909c;
   flex-shrink: 0;
-  margin-left: 16px;
+  margin-left: 0;
   white-space: nowrap;
 }
 </style>

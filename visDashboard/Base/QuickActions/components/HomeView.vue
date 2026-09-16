@@ -13,7 +13,7 @@
       </span>
       <span class="home-action-copy">
         <span class="home-action-label">{{ label(row) }}</span>
-        <span v-if="chart.showDescription" class="home-action-description">{{ row.description || (row.descriptionKey ? t(`packages.ProjectHome.${row.descriptionKey}`) : '') }}</span>
+        <j-ellipsis v-if="chart.showDescription" class="home-action-description">{{ row.description || (row.descriptionKey ? t(`packages.ProjectHome.${row.descriptionKey}`) : '') }}</j-ellipsis>
       </span>
     </button>
   </div>
@@ -66,8 +66,9 @@ const getToneClass = (id: string) => {
     color: #1e72f0;
   }
 }
-.home-action-copy { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
-.home-action .home-action-description { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--business-component-muted); font-size: 12px; line-height: 18px; white-space: normal; }
+.home-action-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; overflow: hidden; }
+/* Ellipsis 的 Tooltip 根节点不透传 scoped 标记，需穿透到实际文本节点。 */
+.home-action-copy :deep(.home-action-description) { width: 100%; min-width: 0; max-width: 100%; display: -webkit-box; -webkit-box-orient: vertical; white-space: normal; overflow: hidden; color: var(--business-component-muted); font-size: 12px; line-height: 18px; }
 .home-actions { grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: none; grid-auto-rows: minmax(76px, 1fr); gap: 10px; align-content: start; }
 .home-action { grid-column: span 3; }
 .home-action:nth-child(5):nth-last-child(3),

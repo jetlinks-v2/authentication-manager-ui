@@ -2,7 +2,6 @@
   <div class="home-content home-operations" :class="{ 'home-operations--cards': chart.displayStyle === 'cards' }">
     <section v-for="group in groups" :key="group" class="home-operation-group" :class="`home-operation-group--${group}`">
       <h4 class="home-operation-group-title">{{ t(`packages.ProjectHome.group_${group}`) }}</h4>
-      <p class="operation-explanation">{{ t(group === 'health' ? 'packages.ProjectHome.healthScope' : 'packages.ProjectHome.alarmScope') }}</p>
       <div class="home-operation-items" :class="`items--${group}`">
         <template v-for="row in getGroupRows(group)" :key="row.id">
           <slot v-if="group === 'alarms'" name="alarm" :row="row" />
@@ -244,6 +243,5 @@ const getGroupRows = (group: string) => {
 }
 </style>
 <style scoped>
-.operation-explanation { margin: 0 0 8px; font-size: 12px; line-height: 18px; color: var(--business-component-muted); }
 .health-rate { display: block; margin-top: 6px; color: var(--business-component-muted); font-size: 12px; }
 </style>

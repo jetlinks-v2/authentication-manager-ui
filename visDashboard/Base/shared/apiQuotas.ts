@@ -4,7 +4,8 @@ import { HOME_TARGETS } from './navigation'
 import type { HomeRow } from './types'
 const arrayOf = (value: unknown): unknown[] => Array.isArray(value) ? value : []
 export const loadQuotaRows = async (): Promise<HomeRow[]> => {
-  const response = await request.get('/tenant/me/limits', {}, { projectContext: false, hiddenError: true })
+  // 租户额度沿用项目会话，禁用上下文会改用全局凭证并移除租户域名。
+  const response = await request.get('/tenant/me/limits', {}, { hiddenError: true })
   const source = resultOf(response)
   const resources = Array.isArray(source) ? source : arrayOf(recordOf(source).data || recordOf(source).limits)
   return resources.flatMap((item, resourceIndex) => {

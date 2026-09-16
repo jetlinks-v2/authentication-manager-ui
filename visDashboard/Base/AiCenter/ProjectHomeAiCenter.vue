@@ -10,19 +10,16 @@
           :can-open="canOpen"
           @navigate="open"
         />
-        <p class="capability-hint">{{ t('packages.ProjectHome.aiHint') }}</p>
       </div>
     </template>
   </HomeWidget>
 </template>
 <script setup lang="ts">
 import HomeWidget from "../shared/HomeWidget.vue"
-import { useI18n } from 'vue-i18n'
 import ResourceItem from "../shared/ResourceItem.vue"
 import type { HomeInfo } from "../shared/types"
 
 withDefaults(defineProps<{ info?: HomeInfo; isEdit?: boolean }>(), { isEdit: false })
-const { t } = useI18n()
 </script>
 <style scoped lang="less">
 .ai-center-list {
@@ -33,7 +30,4 @@ const { t } = useI18n()
   overflow: auto;
   box-sizing: border-box;
 }
-</style>
-<style scoped>
-.capability-hint { margin: 0; font-size: 12px; line-height: 18px; color: var(--business-component-muted); }
 </style>

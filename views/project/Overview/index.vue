@@ -10,7 +10,8 @@
       :catalog="catalog"
       :editable="false"
       :layout-editable="true"
-      storage-key="project-overview-v14"
+      storage-key="project-overview"
+      :legacy-storage-keys="legacyLayoutKeys"
       :preview-mode="false"
     />
   </main>
@@ -21,6 +22,7 @@ import { DashBoardCanvas } from '@jetlinks-web-core/components/DashBoardCanvas'
 import { useOverviewDashboard } from './useOverviewDashboard'
 import { provideHomePolling } from '../../../visDashboard/Base/shared/homePollingContext'
 
+const legacyLayoutKeys = Array.from({ length: 14 }, (_, index) => `project-overview-v${14 - index}`)
 provideHomePolling()
 const { t } = useI18n()
 const { catalog, loading, errors, reload, dashboard } = useOverviewDashboard()

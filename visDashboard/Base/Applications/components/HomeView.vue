@@ -19,7 +19,7 @@
           </span>
           <span class="home-app-content">
             <strong class="home-app-title">{{ label(row) }}</strong>
-            <span v-if="chart.showDescription" class="home-muted home-description">{{ row.description || t('packages.ProjectHome.appNoDescription') }}</span>
+            <j-ellipsis v-if="chart.showDescription" class="home-muted home-description">{{ row.description || t('packages.ProjectHome.appNoDescription') }}</j-ellipsis>
             <span class="home-app-meta">
               <span v-if="row.application">{{ row.application.statusText || t(row.application.status === 'disabled' ? 'packages.ProjectHome.appDisabled' : 'packages.ProjectHome.appEnabled') }}</span>
               <time v-if="chart.showDate && row.date && row.date !== '--'">{{ t('packages.ProjectHome.appCreated', { date: row.date.slice(0, 10) }) }}</time>
@@ -70,6 +70,8 @@ const handleClick = (row: HomeRow) => {
 .home-apps--cards .home-app-trigger { display: flex; }
 .home-app {
   width: 100%;
+  height: 96px;
+  min-height: 96px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -140,6 +142,7 @@ const handleClick = (row: HomeRow) => {
   gap: 4px;
   min-width: 0;
   flex: 1;
+  overflow: hidden;
 }
 .home-app-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--business-component-muted); }
 .home-app-content strong {
@@ -151,10 +154,13 @@ const handleClick = (row: HomeRow) => {
   font-weight: 500;
   line-height: 20px;
 }
-.home-app-content .home-description {
+/* 保留 j-ellipsis 的行裁切布局，供省略号和溢出提示共同使用。 */
+.home-app-content :deep(.home-description) {
+  width: 100%;
+  min-width: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
+  white-space: normal;
   overflow: hidden;
   color: #86909c;
   font-size: 12px;
@@ -162,9 +168,9 @@ const handleClick = (row: HomeRow) => {
   line-height: 18px;
 }
 .home-app:disabled .home-app-content strong,
-.home-app:disabled .home-app-content .home-description,
+.home-app:disabled .home-app-content :deep(.home-description),
 .home-app-trigger > .home-app:disabled .home-app-content strong,
-.home-app-trigger > .home-app:disabled .home-app-content .home-description {
+.home-app-trigger > .home-app:disabled .home-app-content :deep(.home-description) {
   color: #b7bec8;
 }
 @container business-component-shell (min-width: 580px) {

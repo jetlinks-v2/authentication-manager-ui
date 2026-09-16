@@ -14,7 +14,7 @@
         </div>
         <span class="resource-item-copy">
           <span class="resource-item-label">{{ label(row) }}</span>
-          <span v-if="row.description || row.descriptionKey" class="resource-item-description">{{ row.description || description(row) }}</span>
+          <j-ellipsis v-if="row.description || row.descriptionKey" class="resource-item-description">{{ row.description || description(row) }}</j-ellipsis>
         </span>
         <div class="resource-item-value-box">
           <strong class="resource-item-value">{{ number(row.value) }}</strong>
@@ -159,15 +159,15 @@ const unavailableHintText = computed(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.resource-item-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; }
-.resource-item-description { color: var(--business-component-muted); font-size: 12px; line-height: 18px; overflow-wrap: anywhere; }
+.resource-item-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; overflow: hidden; }
+.resource-item-copy :deep(.resource-item-description) { width: 100%; min-width: 0; display: -webkit-box; -webkit-box-orient: vertical; white-space: normal; overflow: hidden; color: var(--business-component-muted); font-size: 12px; line-height: 18px; }
 .resource-item-btn { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 10px; }
 .resource-item-btn.has-icon { grid-template-columns: auto minmax(0, 1fr) auto; }
 .resource-item-copy { grid-column: 1; }
 .resource-item-btn.has-icon .resource-item-copy { grid-column: 2; }
 .resource-item-detail { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 12px; padding-top: 8px; border-top: 1px solid var(--line, #edf0f5); color: var(--business-component-muted); font-size: 12px; line-height: 18px; }
 .resource-item-detail b { color: var(--business-component-text); font-weight: 500; }
-.resource-item-btn:disabled .resource-item-description { color: inherit; }
+.resource-item-btn:disabled .resource-item-copy :deep(.resource-item-description) { color: inherit; }
 
 .resource-item-value-box {
   margin-left: auto;
