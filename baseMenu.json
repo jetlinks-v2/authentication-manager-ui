@@ -102,7 +102,7 @@
     "id": "fd1670b860ae58cc58bcd01d027ccd35",
     "url": "/system",
     "icon": "icon-xitongshezhi",
-    "sortIndex": 8,
+    "sortIndex": 100,
     "permissions": [],
     "buttons": [],
     "children": [
@@ -124,7 +124,12 @@
         "showPage": [
           "system_config"
         ],
-        "permissions": [],
+        "permissions": [
+          {
+            "permission": "tenant-self-manager",
+            "actions": ["query", "save"]
+          }
+        ],
         "buttons": [
           {
             "id": "view",
