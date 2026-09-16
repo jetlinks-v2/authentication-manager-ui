@@ -1887,7 +1887,7 @@
       "30d": "30 days"
     },
     "action": {
-      "edge": "Connect edge node",
+      "edge": "View edge nodes",
       "iot": "Connect IoT device",
       "video": "Connect video device",
       "screen": "Create data screen",
@@ -1895,7 +1895,7 @@
       "card": "Add IoT card"
     },
     "actionDescription": {
-      "edge": "Deploy an edge computing node",
+      "edge": "View and manage edge computing nodes",
       "iot": "Add an IoT device to the platform",
       "video": "Connect a camera",
       "screen": "Build a visualization screen",
