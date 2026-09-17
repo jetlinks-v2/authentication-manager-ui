@@ -1,19 +1,14 @@
-import { computed, reactive, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Modal } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { onlyMessage } from '@jetlinks-web/utils'
+import type { ConditionFilterChangePayload } from '@jetlinks-web-core/components/ConditionFilter'
 import {
   deleteApplicationTemplate,
   queryApplicationTemplates,
   updateApplicationTemplateStatus,
 } from '@authentication-manager-ui/api/application-center/applicationTemplate'
-
-export interface ApplicationTemplateSearchModel {
-  name: string
-  code: string
-  state?: string
-}
 
 const stateValue = (value: unknown) => {
   if (typeof value === 'string') return value
@@ -31,18 +26,9 @@ export const useApplicationTemplateList = () => {
   const tableRef = ref<Record<string, any>>({})
   const tableLoading = ref(false)
   const createDialogOpen = ref(false)
-  const searchModel = reactive<ApplicationTemplateSearchModel>({
-    name: '',
-    code: '',
-    state: undefined,
-  })
+  const queryParams = ref<ConditionFilterChangePayload['filter']>({ terms: [] })
 
   const refresh = () => tableRef.value?.reload?.()
-  const setSearchModel = (model: ApplicationTemplateSearchModel) => {
-    searchModel.name = String(model.name || '').trim()
-    searchModel.code = String(model.code || '').trim()
-    searchModel.state = model.state || undefined
-  }
   const stateOptions = computed(() => [
     { label: $t('ApplicationTemplate.common.enabled'), value: 'enabled' },
     { label: $t('ApplicationTemplate.common.disabled'), value: 'disabled' },
@@ -52,10 +38,20 @@ export const useApplicationTemplateList = () => {
     {
       title: $t('ApplicationTemplate.field.name'),
       dataIndex: 'name', key: 'name', ellipsis: true, scopedSlots: true,
+      search: {
+        type: 'string',
+        defaultTermType: 'like',
+        componentProps: { placeholder: $t('ApplicationTemplate.field.namePlaceholder') },
+      },
     },
     {
       title: $t('ApplicationTemplate.field.code'),
       dataIndex: 'code', key: 'code', ellipsis: true,
+      search: {
+        type: 'string',
+        defaultTermType: 'like',
+        componentProps: { placeholder: $t('ApplicationTemplate.field.codePlaceholder') },
+      },
     },
     {
       title: $t('ApplicationTemplate.field.description'),
@@ -64,6 +60,10 @@ export const useApplicationTemplateList = () => {
     {
       title: $t('ApplicationTemplate.field.state'),
       dataIndex: 'state', key: 'state', width: 100, scopedSlots: true,
+      search: {
+        type: 'select',
+        options: stateOptions.value,
+      },
     },
     {
       title: $t('ApplicationTemplate.common.action'),
@@ -76,15 +76,6 @@ export const useApplicationTemplateList = () => {
       { name: 'createTime', order: 'desc' },
     ],
   }
-  const tableParams = computed(() => {
-    const terms: Array<Record<string, unknown>> = []
-    ;(['name', 'code'] as const).forEach(key => {
-      const value = searchModel[key].trim()
-      if (value) terms.push({ column: key, termType: 'like', value })
-    })
-    if (searchModel.state) terms.push({ column: 'state', termType: 'eq', value: searchModel.state })
-    return { terms }
-  })
 
   const requestTable = async (params: Record<string, unknown>) => {
     tableLoading.value = true
@@ -130,13 +121,8 @@ export const useApplicationTemplateList = () => {
       refresh()
       viewDetail({ id })
     },
-    search: (model: ApplicationTemplateSearchModel) => {
-      setSearchModel(model)
-      refresh()
-    },
-    resetSearch: () => {
-      setSearchModel({ name: '', code: '', state: undefined })
-      refresh()
+    handleSearch: ({ filter }: ConditionFilterChangePayload) => {
+      queryParams.value = { terms: filter.terms }
     },
     changeStatus,
     clickDel: (id: string) => Modal.confirm({
@@ -155,11 +141,9 @@ export const useApplicationTemplateList = () => {
     tableRef,
     tableLoading,
     createDialogOpen,
-    searchModel,
-    stateOptions,
+    queryParams,
     columns,
     defaultParams,
-    tableParams,
     requestTable,
     normalizeState: stateValue,
     table,

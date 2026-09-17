@@ -1,7 +1,7 @@
 <template>
     <j-page-container>
         <FullPage transparentBackground fixed>
-            <ContentPanel>
+            
                 <EqualHeightColumns
                     class="region-layout"
                     left-width="18.75rem"
@@ -19,7 +19,7 @@
                         <Map ref="mapRef" :selectCode="selectCode" />
                     </template>
                 </EqualHeightColumns>
-            </ContentPanel>
+            
         </FullPage>
     </j-page-container>
 </template>

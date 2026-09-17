@@ -1,7 +1,7 @@
 <template>
   <j-page-container>
     <FullPage hasPadding transparentBackground>
-      <ContentPanel>
+      
         <div class="user-container">
         <j-pro-table
             ref="tableRef"
@@ -169,7 +169,7 @@
           </template>
         </j-pro-table>
         </div>
-      </ContentPanel>
+      
     </FullPage>
   </j-page-container>
   <EditUserDialog

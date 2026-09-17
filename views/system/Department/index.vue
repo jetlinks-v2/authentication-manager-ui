@@ -1,7 +1,7 @@
 <template>
   <j-page-container>
     <FullPage transparentBackground>
-      <ContentPanel>
+      
 	      <EqualHeightColumns
 		      class="department-container"
 		      left-width="18.75rem"
@@ -40,7 +40,7 @@
 			      <User v-else :parentId="departmentId" />
 		      </template>
 	      </EqualHeightColumns>
-      </ContentPanel>
+      
     </FullPage>
   </j-page-container>
 </template>

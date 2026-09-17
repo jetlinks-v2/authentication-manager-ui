@@ -1,6 +1,6 @@
 <template>
   <j-page-container>
-    <ContentPanel class="menu-detail-container">
+    <div class="menu-detail-container">
       <a-tabs v-model:activeKey="activeKey">
         <a-tab-pane key="basic" :tab="$t('Detail.index.765389-0')">
           <BasicInfo :value="initData" @refresh="onRefresh"/>
@@ -9,7 +9,7 @@
           <ButtonMange :value="initData" @refresh="onRefresh" />
         </a-tab-pane>
       </a-tabs>
-    </ContentPanel>
+    </div>
   </j-page-container>
 </template>
 

@@ -1,7 +1,7 @@
 <template>
     <j-page-container>
         <FullPage transparentBackground :fixed="false">
-            <ContentPanel>
+            
                 <EqualHeightColumns
                     class="save-layout"
                     left-width="18.75rem"
@@ -18,7 +18,7 @@
                         <Does :type="rightType" />
                     </template>
                 </EqualHeightColumns>
-            </ContentPanel>
+            
         </FullPage>
     </j-page-container>
 </template>

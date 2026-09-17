@@ -15,12 +15,14 @@
     "icon": "icon-gailan",
     "sortIndex": 1,
     "meta": {
-      "componentCode": "project/Overview"
+      "componentCode": "project/Overview",
+      "contentPanel": false
     },
     "options": {
       "componentCode": "project/Overview",
       "meta": {
-        "componentCode": "project/Overview"
+        "componentCode": "project/Overview",
+        "contentPanel": false
       }
     },
     "permissions": [
@@ -74,12 +76,14 @@
         "icon": "icon-yibiaopan",
         "sortIndex": 0,
         "meta": {
-          "componentCode": "resources/Dashboard"
+          "componentCode": "resources/Dashboard",
+          "contentPanel": false
         },
         "options": {
           "componentCode": "resources/Dashboard",
           "meta": {
-            "componentCode": "resources/Dashboard"
+            "componentCode": "resources/Dashboard",
+            "contentPanel": false
           }
         },
         "permissions": [],

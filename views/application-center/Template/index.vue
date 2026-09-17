@@ -1,37 +1,36 @@
 <template>
   <j-page-container>
     <FullPage class="application-template-page__content" transparentBackground>
-      <ContentPanel>
+      
         <div class="application-template-page">
           <div class="application-template-page__body">
-		        <ApplicationTemplateSearch
-		          class="application-template-page__search"
-		          :model-value="searchModel"
-		          :state-options="stateOptions"
-		          @search="table.search"
-		          @reset="table.resetSearch"
-		        />
-		
 		        <a-spin :spinning="tableLoading" class="application-template-page__table-spin">
 		          <j-pro-table
 		            ref="tableRef"
 		            :columns="columns"
 		            :request="requestTable"
 		            mode="TABLE"
-		            :params="tableParams"
+		            :params="queryParams"
 		            :defaultParams="defaultParams"
 		            class="pro-table__no-padding"
 		            :scroll="{ y: 'calc(100% - 3.75rem)' }"
 		          >
 		            <template #headerLeftRender>
-		              <j-permission-button
-		                :hasPermission="`${permission}:add`"
-		                type="primary"
-		                @click="table.openCreateDialog()"
-		              >
-		                <AIcon type="PlusOutlined" />
-		                {{ $t('ApplicationTemplate.list.add') }}
-		              </j-permission-button>
+			            <a-flex :gap="16">
+				            <ConditionFilter
+					            class="application-template-page__search"
+					            :columns="columns"
+					            @change="table.handleSearch"
+				            />
+				            <j-permission-button
+					            :hasPermission="`${permission}:add`"
+					            type="primary"
+					            @click="table.openCreateDialog()"
+				            >
+					            <AIcon type="PlusOutlined" />
+					            {{ $t('ApplicationTemplate.list.add') }}
+				            </j-permission-button>
+			            </a-flex>
 		            </template>
 		
 		            <template #name="slotProps">
@@ -72,7 +71,7 @@
 		        
           </div>
         </div>
-      </ContentPanel>
+      
     </FullPage>
 
     <ApplicationTemplateCreateDialog
@@ -83,7 +82,7 @@
 </template>
 
 <script setup lang="ts" name="ApplicationTemplateManage">
-import ApplicationTemplateSearch from './components/ApplicationTemplateSearch.vue'
+import ConditionFilter from '@jetlinks-web-core/components/ConditionFilter'
 import ApplicationTemplateCreateDialog from './components/ApplicationTemplateCreateDialog.vue'
 import { useApplicationTemplateList } from './useApplicationTemplateList'
 
@@ -92,11 +91,9 @@ const {
   tableRef,
   tableLoading,
   createDialogOpen,
-  searchModel,
-  stateOptions,
+  queryParams,
   columns,
   defaultParams,
-  tableParams,
   requestTable,
   normalizeState,
   table,
@@ -119,10 +116,6 @@ const {
     display: flex;
     flex-direction: column;
     min-height: 0;
-  }
-
-  &__search {
-    flex-shrink: 0;
   }
 
   &__link {

@@ -1,7 +1,7 @@
 <template>
   <j-page-container>
     <FullPage hasPadding transparentBackground>
-      <ContentPanel>
+      
         <div class="apply-container">
         <ConditionFilter
           :columns="columns"
@@ -201,7 +201,7 @@
         </j-pro-table>
 	       
         </div>
-      </ContentPanel>
+      
     </FullPage>
     <div class="dialogs">
       <OfficialAccountMenuDrawer
