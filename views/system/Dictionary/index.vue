@@ -1,7 +1,7 @@
 <template>
     <j-page-container>
         <FullPage transparentBackground>
-            <ContentPanel>
+            
             <EqualHeightColumns
                 class="dictionary-layout"
                 left-width="18.75rem"
@@ -15,7 +15,7 @@
                 </template>
             </EqualHeightColumns>
         
-            </ContentPanel>
+            
         </FullPage>
     </j-page-container>
 </template>

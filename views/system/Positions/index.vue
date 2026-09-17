@@ -71,7 +71,7 @@ const onSearch = ({filter}) => {
 <template>
   <j-page-container>
     <FullPage transparentBackground>
-      <ContentPanel>
+      
         <PageHeader class="authentication-system-list-page__header" :title="$t('SystemList.positions')">
           <template #actions>
             <ConditionFilter
@@ -147,7 +147,7 @@ const onSearch = ({filter}) => {
             </template>
           </j-pro-table>
         </full-page>
-      </ContentPanel>
+      
     </FullPage>
   </j-page-container>
 </template>

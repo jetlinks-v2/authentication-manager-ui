@@ -1,5 +1,5 @@
 <template>
-  <ContentPanel class="template-summary-content">
+  <div class="template-summary-content">
 	  <DetailHeader
 		  class="template-summary"
 		  title=""
@@ -99,7 +99,7 @@
 			  </a-popconfirm>
 		  </template>
 	  </DetailHeader>
-  </ContentPanel>
+  </div>
 
   <a-modal
     v-model:open="iconEditorOpen"

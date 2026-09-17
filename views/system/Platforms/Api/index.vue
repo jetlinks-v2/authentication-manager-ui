@@ -10,7 +10,7 @@
       >
         {{ $t('Api.index.558884-0') }}
       </div>
-      <ContentPanel>
+      
 	      <EqualHeightColumns
 		      class="api-page-body"
 		      height="auto"
@@ -73,7 +73,7 @@
 			      </div>
 		      </template>
 	      </EqualHeightColumns>
-      </ContentPanel>
+      
     </div>
   </div>
 </template>

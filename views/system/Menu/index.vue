@@ -2,7 +2,7 @@
   <j-page-container>
     <div class="menu-container">
       <FullPage :fixed="false" transparentBackground>
-        <ContentPanel>
+        
           <j-pro-table
             ref="tableRef"
             class="pro-table__no-padding"
@@ -84,7 +84,7 @@
               </a-space>
             </template>
           </j-pro-table>
-        </ContentPanel>
+        
       </FullPage>
     </div>
   </j-page-container>

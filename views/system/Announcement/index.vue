@@ -1,6 +1,6 @@
 <template>
   <j-page-container>
-    <ContentPanel>
+    
 	    <ManagementView
 		    ref="managementViewRef"
 		    @create="openCreate"
@@ -10,7 +10,7 @@
 		    @withdraw="withdrawAnnouncement"
 		    @remove="removeAnnouncement"
 	    />
-    </ContentPanel>
+    
   </j-page-container>
 
   <AnnouncementEditorDialog

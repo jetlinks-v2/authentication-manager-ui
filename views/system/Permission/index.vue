@@ -1,7 +1,7 @@
 <template>
   <j-page-container>
     <FullPage hasPadding transparentBackground>
-      <ContentPanel>
+      
         <j-pro-table
             ref="tableRef"
             class="pro-table__no-padding"
@@ -127,7 +127,7 @@
             </a-space>
           </template>
         </j-pro-table>
-      </ContentPanel>
+      
     </FullPage>
     <!-- 编辑和新增 -->
     <EditDialog v-if="visible" :data="current" @close="visible = false" @save="onSave"/>

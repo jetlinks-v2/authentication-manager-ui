@@ -1,7 +1,7 @@
 <template>
     <j-page-container>
         <FullPage transparentBackground :fixed="false">
-            <ContentPanel>
+            
                 <EqualHeightColumns
                     class="calendar-layout"
                     left-width="18.75rem"
@@ -14,7 +14,7 @@
                         <CalendarRight />
                     </template>
                 </EqualHeightColumns>
-            </ContentPanel>
+            
         </FullPage>
     </j-page-container>
 </template>

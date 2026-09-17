@@ -1,7 +1,7 @@
 <template>
   <j-page-container>
     <FullPage hasPadding>
-      <ContentPanel>
+      
 	      <div class="content">
 		      <div style="margin-bottom: 0.9375rem">
 			      <div class="alert">
@@ -52,7 +52,7 @@
 			      </a-collapse>
 		      </div>
 	      </div>
-      </ContentPanel>
+      
     </FullPage>
   </j-page-container>
 </template>
