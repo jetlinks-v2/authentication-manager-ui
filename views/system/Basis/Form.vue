@@ -62,16 +62,16 @@
 <!--            @change="changeHeaderTheme"-->
 <!--          />-->
 <!--        </BasisField>-->
-        <BasisField
-          :key="'layout'"
-          :label="$t('Basis.Form.436809-27')"
-          name="layout"
-          :align="isEditing('basic') ? 'start' : 'center'"
-          :editing="isEditing('basic')"
-          :display="displayLayout"
-        >
-          <LayoutModeSelector v-model:value="formData.layout" />
-        </BasisField>
+<!--        <BasisField-->
+<!--          :key="'layout'"-->
+<!--          :label="$t('Basis.Form.436809-27')"-->
+<!--          name="layout"-->
+<!--          :align="isEditing('basic') ? 'start' : 'center'"-->
+<!--          :editing="isEditing('basic')"-->
+<!--          :display="displayLayout"-->
+<!--        >-->
+<!--          <LayoutModeSelector v-model:value="formData.layout" />-->
+<!--        </BasisField>-->
         <BasisField
           :key="'logo'"
           :label="$t('Basis.Form.436809-15')"
