@@ -177,3 +177,16 @@
     box-sizing: border-box;
   }
 }
+
+// 自定义域名的告警条按参考图着色（橙色底 + 橙色感叹号）。
+.project-domain-section {
+  :deep(.ant-alert-warning) {
+    border: 0;
+    border-radius: var(--r-2);
+    background: #fff3e3;
+  }
+
+  :deep(.ant-alert-warning .ant-alert-icon) {
+    color: #f18a06;
+  }
+}

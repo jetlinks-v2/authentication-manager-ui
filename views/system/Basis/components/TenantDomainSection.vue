@@ -1,11 +1,11 @@
 <template>
-  <section class="project-section project-domain-section">
-    <header class="project-section__header">
-      <div>
-        <h2>{{ t('ProjectConfig.domain.title') }}</h2>
-        <p class="project-domain-section__description">{{ t('ProjectConfig.domain.description') }}</p>
-      </div>
-    </header>
+  <BasisSection
+    class="project-domain-section"
+    :title="t('ProjectConfig.domain.title')"
+    :icon="BASIS_SECTION_ICON.domain"
+    plain
+  >
+    <p class="project-domain-section__description">{{ t('ProjectConfig.domain.description') }}</p>
 
     <a-alert
       v-if="!loading && !capability?.enabled"
@@ -150,7 +150,7 @@
         </a-popconfirm>
       </div>
     </template>
-  </section>
+  </BasisSection>
 </template>
 
 <script setup lang="ts">
@@ -158,6 +158,8 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import { UploadOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
+import BasisSection from './BasisSection.vue'
+import { BASIS_SECTION_ICON } from '../sectionIcons'
 import {
   deleteProjectTenantDomain,
   getProjectTenantDomain,
