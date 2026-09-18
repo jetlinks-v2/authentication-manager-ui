@@ -1,5 +1,5 @@
 import { request } from '@jetlinks-web/core'
-import { rowsOf, recordOf, textOf, countOf, resultOf } from './apiResult'
+import { rowsOf, recordOf, textOf, channelCountOf } from './apiResult'
 const enumValue = (value: unknown) => textOf(recordOf(value).value || value)
 /** 与算法中心一致：只将边端状态已确认的 enabled 绑定计入；执行中/未知结果不冒充精确统计。 */
 export const summarizeAlgorithms = (records: Record<string, unknown>[]) => {
@@ -18,11 +18,10 @@ export const summarizeAlgorithms = (records: Record<string, unknown>[]) => {
   return { algorithm: algorithms.size, coverage: channels.size }
 }
 
-/** 与算法中心的聚合任务统计保持相同的覆盖通道口径。 */
+/** 与算法配置矩阵一致：统计边端当前处于 enabled 状态的去重视频通道。 */
 export const loadCoverageChannelCount = async (): Promise<number> => {
-  const response = await request.get('/ai/aggregate/task/coverage/_count', {}, { hiddenError: true })
-  // 聚合任务接口以 videoCount 表示覆盖视频通道，spaceCount 是空间数量。
-  return countOf(recordOf(resultOf(response)).videoCount)
+  const response = await request.get('/ai/edge/task/coverage/scene/_count', {}, { hiddenError: true })
+  return channelCountOf(response)
 }
 
 /** 算法对应场景的直属子项，父场景及更深层配置节点不计入数量。 */
