@@ -109,6 +109,9 @@ const {
 
 <style scoped>
 .project-application-page {
+  /* 应用卡片与内联「创建应用」卡片共用同一高度，避免两者落在不同栅格行时高度不一致。 */
+  --application-card-block-size: 14rem;
+
   min-height: 100%;
 }
 
@@ -119,7 +122,7 @@ const {
 
 .create-card {
   display: grid;
-  height: 12.75rem;
+  height: var(--application-card-block-size);
   place-items: center;
   align-content: center;
   gap: var(--space-3);

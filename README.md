@@ -370,7 +370,7 @@ The related shared code is limited to:
 - `views/application-center/ProjectApplication/applicationCameraService.ts`: bound-channel loading, media gateway discovery, per-gateway channel pagination, and device-asset permission filtering for video configuration.
 - `views/application-center/ProjectApplication/useProjectApplication.ts`: remote state and mutation orchestration.
 - Ledger/create/detail components: loading, empty, validation, confirmation, submit, and post-mutation refresh behavior.
-- The ledger follows the project-application card design: the shared `PageHeader` carries a `ConditionFilter` whose name and status fields submit the component's standard `terms` model alongside the primary create action, followed by a responsive three-column card wall and an inline create card. Each card shows icon, name, status, template, description, creation time, edit/status actions, and the primary open action. Application cards reuse `jetlinks-web-core/src/components/CardBox/CardSummary.vue`; unsupported gateway/camera metrics and the template filter are not rendered.
+- The ledger follows the project-application card design: the shared `PageHeader` carries a `ConditionFilter` whose name and status fields submit the component's standard `terms` model alongside the primary create action, followed by a responsive three-column card wall and an inline create card. Each card shows icon, name, status, template, description, creation time, edit/status actions, and the primary open action. Application cards reuse `jetlinks-web-core/src/components/CardBox/index.vue` (see 应用列表卡片改为 CardBox 壳层 for the bottom toolbar); unsupported gateway/camera metrics and the template filter are not rendered.
 - `views/application-center/Template/`: template ledger, create dialog, tag sidebar, and Save workspace. The Save workspace keeps the top summary as a detail display, then separates document and configuration tabs. Configuration reuses `MenuAssetPermissionEditor` with asset permission batch selection and writes scope strategy to `assetAccesses[].options.scopeStrategy`.
 - `baseMenu.json`: visible name “应用管理” and backend resource actions required by the page.
 - `locales/lang/zh.json` and `locales/lang/en.json`: synchronized user-visible copy.
@@ -399,6 +399,36 @@ Run the production build command for this module from `ui/jetlinks-web-core`:
 ```bash
 node --max_old_space_size=8192 --max-semi-space-size=64 -e "process.argv.push('--module-name','authentication-manager-ui'); import('vite').then(({ build }) => build())"
 ```
+
+### 应用列表卡片改为 CardBox 壳层
+
+Goal: 把 `ProjectApplication` 列表卡片的壳层从 `CardSummary` 换成通用 `CardBox`（`jetlinks-web-core/src/components/CardBox/index.vue`），并让卡片底栏采用 `DeviceAlarmRecordCard` 的按钮排布：左侧图标文字按钮 + 右侧主按钮，底栏与内容之间用分隔线隔开。
+
+Owning module: `runtime-ui/modules/authentication-manager-ui`。`ui/` 运营端的同名模块、`CardBox` 组件本身、接口契约、路由、菜单和 i18n key 都不在本次范围内。
+
+Implementation:
+
+1. `views/application-center/ProjectApplication/components/ApplicationCard.vue` 保留对外 `item` / `loading` / `opening` props 与 `edit` / `open` / `toggle-status` 事件契约，内部把 `CardSummary` 换成 `CardBox`：`#img` 复用 `CardBox/CardAvatar.vue` 承载应用图标，`#content` 承载名称、模板、描述和创建时间，`#bottom-tool` 承载底栏按钮。
+2. `CardBox` 的 `status` / `status-text` / `status-names` 接管右上状态位与顶部色条：`enabled -> success`、`disabled -> default`，不再自己画状态图标。
+3. 底栏样式对齐 `modules/device-manager-ui/views/device/alarm/components/DeviceAlarmRecordCard.vue`：`border-top: 1px solid var(--jet-theme-border-color-1)`，左侧 `编辑` / `停用|启用` 为 `type="text"` 图标按钮，右侧 `打开应用` 为 `type="primary"` 主按钮。
+4. `ProjectApplication/index.vue` 继续使用 `<ApplicationCard>`，列表页模板、筛选和创建入口不变；只把内联「创建应用」卡片的固定高度换成共享的 `--application-card-block-size`，让它和更高的 CardBox 卡片在同一栅格里保持等高。
+
+不做：不新增后端接口或字段，不改 `ProjectApplication` 的请求编排与 `useApplicationList` 逻辑，不改 `CardBox`/`CardAvatar` 组件实现，不同步改 `ui/` 下的同名页面。
+
+Risks / 待确认点:
+
+- 卡片高度改由栅格行高驱动（`height: 100%` + `min-height`），需要与同行的内联「创建应用」卡片（固定高度）保持等高。实测 App 卡片内容高 `219px`，而内联创建卡只有 `204px`，两者落在不同栅格行时会不一致，因此引入共享的 `--application-card-block-size: 14rem`，两边都按它取高。
+- `statusText` 仍来自后端枚举 `text`；字典缺失时会回退成裸状态值，这是既有行为，本次不额外兜底。
+- `CardAvatar.vue` 仍是非公开导出的内部头像层，这里按仓库既有做法直接按文件路径引用。
+
+Verification result:
+
+- SFC 编译：`ApplicationCard.vue`（script / template / less scoped style）与 `index.vue` 全部编译通过。
+- 聚焦 `vue-tsc`：`ApplicationCard.vue` 与 `ProjectApplication/index.vue` 无任何诊断；本次运行剩余的非零诊断全部来自既有共享核心文件（`ConditionFilter`、`CardBox/index.vue`、`Search/Filter`），与本次改动无关。
+- 模块生产构建：`authentication-manager-ui` 生产构建通过（`✓ built in 1m 23s`，退出码 0）。
+- 视觉核验：用一次性 Vite 预览页 + 无头 Chromium 渲染「4 张应用卡片 + 内联创建卡」的栅格并取盒模型，结果为 `cardHeights=[224,224,224,224]`、`createCardHeight=224`、`avatarTops=[0,0,0,0]`（头像与名称顶对齐）、`actionsBorders=["1px",...]`（底栏分隔线存在）；`enabled/disabled` 分别渲染为绿色「运行中」和灰色「已停用」，长名称和两行描述按 `j-ellipsis` 截断。该预览只用临时脚手架验证样式，验证后已删除，未进入提交。
+- 未验证：真实运行时页面里带鉴权的列表交互（登录后打开 `/application-center/ProjectApplication`）未在本任务中执行。
+- `git diff --check` 通过；`ApplicationCard.vue` 224 行、`ProjectApplication/index.vue` 174 行，均在 300 行门禁内。
 
 ## 项目概览归属迁移
 
