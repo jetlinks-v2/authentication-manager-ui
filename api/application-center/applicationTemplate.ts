@@ -85,7 +85,7 @@ export const getCurrentUserMenuTree = (data: Record<string, unknown>): Promise<a
 export const getAssetTypes = (): Promise<any> => request.get('/asset/types')
 
 export const getGrantableAssetAccesses = (menus: MenuPermissionNode[]): Promise<any> =>
-  request.post('/menu/asset-accesses/grantable', menus)
+  menus.length ? request.post('/menu/asset-accesses/grantable', menus) : Promise.resolve([])
 
 export const getAssetScopeStrategies = (): Promise<any> =>
   request.get('/dictionary/asset-scope-strategy/items')
