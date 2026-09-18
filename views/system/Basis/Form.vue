@@ -21,7 +21,7 @@
     :scrollToFirstError="true"
     layout="vertical"
   >
-    <BasisSection :title="$t('Basis.Config.basicInfo')">
+    <BasisSection :title="$t('Basis.Config.basicInfo')" :icon="BASIS_SECTION_ICON.basic">
       <template v-if="sectionEditMode" #extra>
         <BasisSectionActions
           section="basic"
@@ -41,6 +41,7 @@
           :key="'title'"
           :label="$t('Basis.Form.436809-0')"
           name="title"
+          :column="1"
           :editing="isEditing('basic')"
           :display="displayValue(formData.title)"
         >
@@ -49,33 +50,10 @@
             :placeholder="$t('Basis.Form.436809-1')"
           />
         </BasisField>
-<!--        <BasisField-->
-<!--          :key="'headerTheme'"-->
-<!--          :label="$t('Basis.Form.436809-2')"-->
-<!--          name="headerTheme"-->
-<!--          :editing="isEditing('basic')"-->
-<!--          :display="displayTheme"-->
-<!--        >-->
-<!--          <a-select-->
-<!--            v-model:value="formData.headerTheme"-->
-<!--            :options="headerThemeAreas"-->
-<!--            @change="changeHeaderTheme"-->
-<!--          />-->
-<!--        </BasisField>-->
-<!--        <BasisField-->
-<!--          :key="'layout'"-->
-<!--          :label="$t('Basis.Form.436809-27')"-->
-<!--          name="layout"-->
-<!--          :align="isEditing('basic') ? 'start' : 'center'"-->
-<!--          :editing="isEditing('basic')"-->
-<!--          :display="displayLayout"-->
-<!--        >-->
-<!--          <LayoutModeSelector v-model:value="formData.layout" />-->
-<!--        </BasisField>-->
         <BasisField
           :key="'logo'"
           :label="$t('Basis.Form.436809-15')"
-          :align="isEditing('basic') ? 'start' : 'center'"
+          :column="2"
           :editing="isEditing('basic')"
         >
           <Upload v-model:img-src="formData.logo" upload-type="logo" />
@@ -90,7 +68,7 @@
         <BasisField
           :key="BASIS_FORM_FIELD.ICO"
           :label="$t('Basis.Form.436809-16')"
-          :align="isEditing('basic') ? 'start' : 'center'"
+          :column="3"
           :editing="isEditing('basic')"
         >
           <Upload v-model:img-src="formData.ico" upload-type="ico" />
@@ -129,7 +107,7 @@
       </RegistryComponent>
     </BasisSection>
 
-    <BasisSection :title="$t('Basis.Config.mapConfig')">
+    <BasisSection :title="$t('Basis.Config.mapConfig')" :icon="BASIS_SECTION_ICON.map">
       <template v-if="sectionEditMode" #extra>
         <BasisSectionActions
           section="map"
@@ -158,6 +136,7 @@
           :key="BASIS_FORM_FIELD.BASE_PATH"
           label="base-path"
           name="base-path"
+          :column="4"
           :rules="isEditing('map') ? basePathRules : undefined"
           :editing="isEditing('map')"
           :display="displayValue(formData['base-path'])"
@@ -183,7 +162,11 @@
       :page-code="BASIS_FORM_PAGE_CODE"
       :code="BASIS_FORM_MODULE_CODE"
     >
-      <BasisSection :key="BASIS_FORM_FIELD.BACKGROUND" :title="$t('Basis.Form.436809-18')">
+      <BasisSection
+        :key="BASIS_FORM_FIELD.BACKGROUND"
+        :title="$t('Basis.Form.436809-18')"
+        :icon="BASIS_SECTION_ICON.background"
+      >
         <template v-if="sectionEditMode" #extra>
           <BasisSectionActions
             section="background"
@@ -198,7 +181,7 @@
         <BasisField
           :label="$t('Basis.Form.436809-18')"
           name="background"
-          :align="isEditing('background') ? 'start' : 'center'"
+          :column="1"
           :editing="isEditing('background')"
         >
           <Upload
@@ -243,6 +226,7 @@ import BasisSectionActions from './components/BasisSectionActions.vue'
 import BasisField from './components/BasisField.vue'
 import BasisImagePreview from './components/BasisImagePreview.vue'
 import { BASIS_FORM_FIELD, BASIS_FORM_MODULE_CODE, BASIS_FORM_PAGE_CODE } from './fieldRegistry'
+import { BASIS_SECTION_ICON } from './sectionIcons'
 import { useBasisForm } from './useBasisForm'
 
 const props = defineProps({

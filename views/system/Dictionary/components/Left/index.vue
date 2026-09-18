@@ -1,5 +1,5 @@
 <template>
-    <ContentPanel class="left-contain">
+    <div class="left-contain">
         <a-input :placeholder="$t('Left.index.036608-0')" v-model:value="searchValue" @pressEnter="search" @change="searchChange">
             <template #suffix>
                 <AIcon type="SearchOutlined" @click="search" />
@@ -83,7 +83,7 @@
             </a-tree>
             <CloudEmpty v-else style="margin-top: 6.25rem;" />
         </div>
-    </ContentPanel>
+    </div>
     <Save v-if="saveShow" :type="addType" @close-save="saveShow = false" @success="saveSuccess" :data="editData" />
     <Export v-if="downVisible" @closeDown="closeDown" />
 </template>

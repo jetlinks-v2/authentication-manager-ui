@@ -1,15 +1,15 @@
 <template>
-  <div class="basis-field-row" :class="{ 'basis-field-row--start': align === 'start' }">
-    <dt>
+  <div class="basis-field">
+    <dt class="basis-field__label" :style="columnStyle">
       <span>{{ label }}</span>
       <a-tooltip v-if="tooltip || $slots.tooltip">
         <template #title>
           <slot name="tooltip">{{ tooltip }}</slot>
         </template>
-        <AIcon type="QuestionCircleOutlined" />
+        <AIcon class="basis-field__hint" type="QuestionCircleOutlined" />
       </a-tooltip>
     </dt>
-    <dd>
+    <dd class="basis-field__value" :style="columnStyle">
       <a-form-item v-if="editing" :name="name" :rules="rules" :required="required">
         <slot />
       </a-form-item>
@@ -21,80 +21,62 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { RuleObject } from 'ant-design-vue/es/form/interface'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   label: string
   name?: string
   tooltip?: string
   required?: boolean
-  align?: 'center' | 'start'
   editing?: boolean
   display?: string
   rules?: RuleObject[]
+  /** 该字段在分组内的列序号（从 1 开始）；不传则交给父级自动排布。 */
+  column?: number
 }>(), {
-  align: 'center',
   editing: true,
 })
+
+const columnStyle = computed(() => (
+  props.column ? { gridColumn: String(props.column) } : undefined
+))
 </script>
 
 <style scoped lang="less">
-.basis-field-row {
-  display: grid;
-  min-height: var(--space-12);
-  grid-template-columns: 10rem minmax(0, 1fr);
+// 字段自身不参与布局，只把「标签行 / 值行」两行交给父级行网格，
+// 这样同一字段的标签与值始终处于同一列、同一行轨道。
+.basis-field {
+  display: contents;
+}
+
+.basis-field__label {
+  display: flex;
   align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-3) var(--space-4);
-  border-bottom: var(--jet-theme-stroke-width) solid var(--jet-theme-border-secondary);
-
-  &:last-child {
-    border-bottom: 0;
-  }
-
-  dt {
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
-    color: var(--jet-theme-text-disabled);
-    font-size: var(--fs-14);
-    font-weight: 400;
-    line-height: var(--lh-normal);
-  }
-
-  dd {
-    min-width: 0;
-    margin: 0;
-    overflow-wrap: anywhere;
-    color: var(--jet-theme-text);
-    font-size: var(--fs-body);
-    line-height: var(--lh-relaxed);
-  }
+  gap: var(--space-1);
+  grid-row: 1;
+  color: var(--jet-theme-text-disabled);
+  font-size: var(--fs-14);
+  line-height: var(--lh-normal);
 }
 
-.basis-field-row--start {
-  align-items: flex-start;
-  padding-top: var(--space-4);
-  padding-bottom: var(--space-4);
+.basis-field__hint {
+  color: var(--jet-theme-text-disabled);
+  cursor: help;
 }
 
-.basis-field-row :deep(.ant-form-item) {
-  max-width: 42rem;
+.basis-field__value {
+  min-width: 0;
   margin: 0;
+  grid-row: 2;
+  overflow-wrap: anywhere;
+  color: var(--jet-theme-text);
+  font-size: var(--fs-16);
+  line-height: var(--lh-relaxed);
 }
 
-.basis-field-row :deep(.ant-input),
-.basis-field-row :deep(.ant-input-affix-wrapper),
-.basis-field-row :deep(.ant-select) {
-  max-width: 42rem;
-}
-
-@media (max-width: 48rem) {
-  .basis-field-row {
-    min-height: 0;
-    grid-template-columns: 1fr;
-    gap: var(--space-2);
-    padding: var(--space-4);
-  }
+.basis-field__value:deep(.ant-form-item) {
+  width: 100%;
+  margin: 0;
 }
 </style>

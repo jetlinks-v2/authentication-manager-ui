@@ -2,6 +2,7 @@
   <BasisField
     :label="$t('Basis.Form.436809-3')"
     name="webKey"
+    :column="offset + 1"
     :tooltip="$t('Basis.Form.436809-4')"
     :editing="editing"
     :display="webKey || placeholder"
@@ -11,6 +12,7 @@
   <BasisField
     :label="$t('Basis.Form.436809-6')"
     name="apiKey"
+    :column="offset + 2"
     :tooltip="$t('Basis.Form.436809-7')"
     :editing="editing"
     :display="apiKey || placeholder"
@@ -19,6 +21,7 @@
   </BasisField>
   <BasisField
     :label="$t('Basis.Form.436809-9')"
+    :column="offset + 3"
     :tooltip="$t('Basis.Form.436809-10')"
     :editing="editing"
     :display="secretDisplay"
@@ -35,6 +38,11 @@ const props = defineProps({
   webKey: String,
   apiKey: String,
   secretKey: String,
+  /** 本组字段在分组内的起始列序号（从 0 开始）。 */
+  offset: {
+    type: Number,
+    default: 0,
+  },
   editing: {
     type: Boolean,
     default: true,

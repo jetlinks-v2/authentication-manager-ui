@@ -1,6 +1,9 @@
-<script setup name="Detail">
+<script setup lang="ts" name="Detail">
 import { useI18n } from 'vue-i18n';
 import User from './User.vue'
+import PageChrome from '@jetlinks-web-core/components/PageChrome/index.vue'
+import SlantedTabs from '@jetlinks-web-core/components/SlantedTabs'
+import type { SlantedTabKey, SlantedTabOption } from '@jetlinks-web-core/components/SlantedTabs'
 import {onlyMessage} from "@jetlinks-web/utils";
 import {detail, save, update} from '@authentication-manager-ui/api/system/positions'
 import { useRequest } from '@jetlinks-web/hooks'
@@ -123,13 +126,19 @@ const formModel = reactive({
   description: undefined,
 })
 
-const onTabClick = (v) => {
+const onTabClick = (v: SlantedTabKey) => {
   if (route.params.id !== ':id') {
-    activeKey.value = v
+    activeKey.value = String(v)
     return
   }
   onlyMessage($t('positions.index.223804-3'), 'warning')
 }
+
+// 页签文案由调用方国际化；数量能力当前未接入，省略 count。
+const tabs = computed<SlantedTabOption[]>(() => [
+  { key: 'basic', label: $t('Detail.index.765389-0') },
+  { key: 'user', label: $t('Detail.index.386725-1') },
+])
 
 const onSave = async () => {
   const result = await formRef.value.validateFields()
@@ -178,114 +187,115 @@ watch(() => route.query.tab, (v) => {
 </script>
 
 <template>
-  <j-page-container>
-    <full-page>
-      <div class="menu-detail-container">
-        <a-tabs :activeKey="activeKey" type="card" @tabClick="onTabClick">
-          <a-tab-pane key="basic" :tab="$t('Detail.index.765389-0')">
-            <a-form ref="formRef" :model="formModel" layout="vertical">
-              <a-row :gutter="24">
-                <a-col :span="12">
-                  <a-form-item validate-first :label="$t('components.EditUserDialog.939453-37')" name="code" :rules="[
-                    { required: true, message: $t('components.EditUserDialog.939453-36') },
-                    { max: 64, message: $t('components.EditUserDialog.939453-5')},
-                     {
-                                    pattern: /^[a-zA-Z0-9_\-]+$/,
-                                    message: $t('Save.index.902471-2'),
-                                }
-                  ]">
-                    <a-input v-model:value="formModel.code" :placeholder="$t('components.EditUserDialog.939453-36')"></a-input>
-                  </a-form-item>
-                </a-col>
-                <a-col :span="12">
-                  <a-form-item
-                    :label="$t('components.EditUserDialog.939453-3-1')"
-                    name="name"
-                    :rules="[
-                            { required: true, message: $t('positions.index.223804-4') },
-                            {
-                                max: 64,
-                                message: $t('components.EditUserDialog.939453-5'),
-                            },
-                        ]"
-                  >
-                    <a-input v-model:value="formModel.name" :placeholder="$t('positions.index.223804-4')" />
-                  </a-form-item>
-                </a-col>
-              </a-row>
-              <a-row :gutter="24">
-                <a-col :span="12">
-                  <a-form-item name="orgId" :label="$t('components.EditUserDialog.939453-14-1')" :rules="[{ required : true, message: '请选择组织'}]">
-                    <form-item-org v-model:value="formModel.orgId" :extraProps="{ multiple: false, disabled: true }" />
-                  </a-form-item>
-                </a-col>
-                <a-col :span="12">
-                  <a-form-item
-                    name="roles"
-                    :label="$t('components.EditUserDialog.939453-12')"
-                    :rules="[{ required: true, message: $t('components.EditUserDialog.939453-13') }]"
-                  >
-                    <form-item-role v-model:value="formModel.roles" :extraProps="{multiple: true}" />
-                  </a-form-item>
-                </a-col>
-                <a-col :span="12">
-                  <a-form-item :label="$t('positions.index.223804-1')">
-                    <a-tree-select :tree-line="{ showLeafIcon: false }" :filterTreeNode="(v, node) => filterSelectNode(v, node, 'name')" showSearch :fieldNames="{ label: 'name', value: 'id' }" allowClear v-model:value="formModel.parentId" :tree-data="_treeData" :placeholder="$t('positions.index.223804-2')" />
-                  </a-form-item>
-                </a-col>
-              </a-row>
-              <a-row :gutter="24">
-                <a-col :span="24">
-                  <a-form-item :label="$t('BasicInfo.Info.607342-15')" name="description">
-                    <a-textarea
-                      v-model:value="formModel.description"
-                      :rows="4"
-                      show-count
-                      :maxlength="200"
-                      :placeholder="$t('BasicInfo.Info.607342-16')"
-                    />
-                  </a-form-item>
-                </a-col>
-              </a-row>
-            </a-form>
-            <j-permission-button
-              hasPermission="system/Department:bind-position"
-              type="primary"
-              :loading="loading || updateLoading"
-              @click="onSave"
-            >
-              {{ $t('Setting.index.113436-2')}}
-            </j-permission-button>
-          </a-tab-pane>
-          <a-tab-pane key="user" :tab="$t('Detail.index.386725-1')">
-            <User :orgId="formModel.orgId" :roleIds="formModel.roles"/>
-          </a-tab-pane>
-        </a-tabs>
+    <!-- 斜边页签充当面板顶栏：flush 让它与布局面板贴合。 -->
+    <PageChrome flush>
+      <SlantedTabs
+        class="position-detail__types"
+        :activeKey="activeKey"
+        :options="tabs"
+        @change="onTabClick(String($event))"
+      />
+    </PageChrome>
+    <div class="position-detail">
+      <div class="position-detail__content">
+        <template v-if="activeKey === 'basic'">
+          <a-form ref="formRef" :model="formModel" layout="vertical">
+            <a-row :gutter="24">
+              <a-col :span="12">
+                <a-form-item validate-first :label="$t('components.EditUserDialog.939453-37')" name="code" :rules="[
+                  { required: true, message: $t('components.EditUserDialog.939453-36') },
+                  { max: 64, message: $t('components.EditUserDialog.939453-5')},
+                   {
+                                  pattern: /^[a-zA-Z0-9_\-]+$/,
+                                  message: $t('Save.index.902471-2'),
+                              }
+                ]">
+                  <a-input v-model:value="formModel.code" :placeholder="$t('components.EditUserDialog.939453-36')"></a-input>
+                </a-form-item>
+              </a-col>
+              <a-col :span="12">
+                <a-form-item
+                  :label="$t('components.EditUserDialog.939453-3-1')"
+                  name="name"
+                  :rules="[
+                          { required: true, message: $t('positions.index.223804-4') },
+                          {
+                              max: 64,
+                              message: $t('components.EditUserDialog.939453-5'),
+                          },
+                      ]"
+                >
+                  <a-input v-model:value="formModel.name" :placeholder="$t('positions.index.223804-4')" />
+                </a-form-item>
+              </a-col>
+            </a-row>
+            <a-row :gutter="24">
+              <a-col :span="12">
+                <a-form-item name="orgId" :label="$t('components.EditUserDialog.939453-14-1')" :rules="[{ required : true, message: '请选择组织'}]">
+                  <form-item-org v-model:value="formModel.orgId" :extraProps="{ multiple: false, disabled: true }" />
+                </a-form-item>
+              </a-col>
+              <a-col :span="12">
+                <a-form-item
+                  name="roles"
+                  :label="$t('components.EditUserDialog.939453-12')"
+                  :rules="[{ required: true, message: $t('components.EditUserDialog.939453-13') }]"
+                >
+                  <form-item-role v-model:value="formModel.roles" :extraProps="{multiple: true}" />
+                </a-form-item>
+              </a-col>
+              <a-col :span="12">
+                <a-form-item :label="$t('positions.index.223804-1')">
+                  <a-tree-select :tree-line="{ showLeafIcon: false }" :filterTreeNode="(v, node) => filterSelectNode(v, node, 'name')" showSearch :fieldNames="{ label: 'name', value: 'id' }" allowClear v-model:value="formModel.parentId" :tree-data="_treeData" :placeholder="$t('positions.index.223804-2')" />
+                </a-form-item>
+              </a-col>
+            </a-row>
+            <a-row :gutter="24">
+              <a-col :span="24">
+                <a-form-item :label="$t('BasicInfo.Info.607342-15')" name="description">
+                  <a-textarea
+                    v-model:value="formModel.description"
+                    :rows="4"
+                    show-count
+                    :maxlength="200"
+                    :placeholder="$t('BasicInfo.Info.607342-16')"
+                  />
+                </a-form-item>
+              </a-col>
+            </a-row>
+          </a-form>
+          <j-permission-button
+            hasPermission="system/Department:bind-position"
+            type="primary"
+            :loading="loading || updateLoading"
+            @click="onSave"
+          >
+            {{ $t('Setting.index.113436-2')}}
+          </j-permission-button>
+        </template>
+        <User v-else :orgId="formModel.orgId" :roleIds="formModel.roles"/>
       </div>
-    </full-page>
-  </j-page-container>
+    </div>
 </template>
 
 <style scoped lang="less">
-  .menu-detail-container {
-    padding: 1.5rem;
-    height: 100%;
+  /*
+   * 作为布局面板的 flex 项：面板已定高，这里撑满并把滚动留给内容区，
+   * 避免出现第二条滚动条。
+   */
+  .position-detail {
+    display: flex;
+    flex: 0 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
 
-     :deep(.ant-tabs) {
-      height: 100%;
-
-      .ant-tabs-content-holder {
-        flex: 1;
-        min-height: 0;
-
-        .ant-tabs-content-top {
-          height: 100% !important;
-
-          .ant-tabs-tabpane {
-            height: 100%;
-          }
-        }
-      }
+    &__content {
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      min-height: 0;
+      overflow-y: auto;
     }
   }
 </style>
