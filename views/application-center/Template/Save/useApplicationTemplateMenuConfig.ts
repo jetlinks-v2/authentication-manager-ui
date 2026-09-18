@@ -155,10 +155,10 @@ export const useApplicationTemplateMenuConfig = (
       onlyMessage(messages.notReady, 'warning')
       return
     }
-    if (missingMenuIds.value.length) {
-      onlyMessage(messages.missingMenus(missingMenuIds.value.length), 'warning')
-      return
-    }
+    // if (missingMenuIds.value.length) {
+    //   onlyMessage(messages.missingMenus(missingMenuIds.value.length), 'warning')
+    //   return
+    // }
 
     saving.value = true
     try {
