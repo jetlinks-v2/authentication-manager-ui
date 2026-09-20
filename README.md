@@ -2,6 +2,27 @@
 
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.
 
+## 运行时运维中心日志与应用模版表格工具栏布局计划
+
+状态：已实施并验证。
+
+目标：统一运行时运维中心“日志管理 > 访问日志 / 系统日志”与“应用模版”的表格顶部插槽布局，跟随“接入组件 > 网络组件”：左侧页面标题，右侧搜索和该页面已有的顶层操作。
+
+影响范围与 owning module：仅 `runtime-ui/modules/authentication-manager-ui` 的 `views/system/Log/Access/index.vue`、`views/system/Log/System/index.vue`、`views/application-center/Template/index.vue`。参考实现为 `runtime-ui/modules/device-manager-ui/views/link/Type/index.vue`。不修改 `ui/`、后端接口、权限定义、查询字段、表格列、行操作、路由、共享样式或 locale 资源。
+
+实施步骤：
+
+1. 三个 `j-pro-table` 使用 `headerLeftRender` 放标题容器和已有 i18n 标题；使用 `headerRightRender` 放右侧工具栏。
+2. 将三个页面已有的 `ConditionFilter` 移到右侧工具栏；应用模版页面保留“新增应用模版”权限按钮，与搜索置于同一 `a-flex` 操作组。
+3. 访问日志和系统日志保持只读：右侧只放搜索，不新增创建、删除、导出或清理等缺少业务契约的顶层按钮；详情行操作、筛选条件和请求参数保持不变。
+4. 标题和工具栏样式仅写在对应页面内，保持网络组件的视觉层级和间距；不改动 `j-pro-table`、`ConditionFilter`、共享样式或任何共享核心组件。
+
+风险 / 待确认：若“按钮操作”要求日志页新增导出、清理或其他顶层能力，须先明确操作行为、权限与接口契约；当前计划以保留其现有只读语义为准。用户已明确本次不改业务逻辑，也不因访问日志页超过 300 行而拆分组件。
+
+验证方式：检查三页的标题、筛选回传、应用模版新增权限按钮和日志详情行操作；执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`、Vue 文件行数检查和 `git diff --check`。若既有构建问题阻断验证，记录实际错误、待执行命令与剩余风险。
+
+验证结果：三个页面均使用一组 `headerLeftRender` 与 `headerRightRender`，访问日志和系统日志的筛选条件仍分别回传 `search-access`、`search-system`，应用模版仍调用原有 `table.handleSearch` 与 `table.openCreateDialog`。`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 构建通过，`git diff --check` 通过。访问日志 362 行、系统日志 288 行、应用模版 179 行；按本次确认范围不拆分既有访问日志页面。
+
 ## System Bulletin Ownership
 
 System bulletin pages, API contracts, types, notification detail rendering, and provider constants are owned by `views/system/Announcement/`; user-facing copy follows this module's locale convention. The shared web core only exposes generic notification-provider and detail-component registration points; it does not identify `SystemBulletin` or call bulletin APIs. SaaS modules may contribute menu binding metadata, but they do not implement bulletin pages or APIs.
