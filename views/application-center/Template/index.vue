@@ -16,7 +16,14 @@
 		            :scroll="{ y: 'calc(100% - 3.75rem)' }"
 		          >
 		            <template #headerLeftRender>
-			            <a-flex :gap="16">
+		              <div class="application-template-page__toolbar">
+		                <h2 class="application-template-page__title">
+		                  {{ $t('ProjectApplication.create.template') }}
+		                </h2>
+		              </div>
+		            </template>
+		            <template #headerRightRender>
+		              <a-flex :gap="16">
 				            <ConditionFilter
 					            class="application-template-page__search"
 					            :columns="columns"
@@ -30,7 +37,7 @@
 					            <AIcon type="PlusOutlined" />
 					            {{ $t('ApplicationTemplate.list.add') }}
 				            </j-permission-button>
-			            </a-flex>
+		              </a-flex>
 		            </template>
 		
 		            <template #name="slotProps">
@@ -121,6 +128,29 @@ const {
   &__link {
     color: var(--jet-theme-primary);
     cursor: pointer;
+  }
+
+  &__toolbar {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+  }
+
+  &__title {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.85);
+    font-size: var(--fs-18);
+    font-weight: 600;
+    line-height: 32px;
+    white-space: nowrap;
+  }
+
+  &__search {
+    flex: 1 1 360px;
+    min-width: 25rem;
+    max-width: 40rem;
   }
 
   &__table-spin {
