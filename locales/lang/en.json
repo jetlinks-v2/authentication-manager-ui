@@ -1687,8 +1687,6 @@
   "packages.ProjectHome.group_devices": "Devices",
   "packages.ProjectHome.group_collection": "Collectors and SIM cards",
   "packages.ProjectHome.group_visualization": "Big screen visualization",
-  "packages.ProjectHome.group_screens": "Screens",
-  "packages.ProjectHome.group_assets": "Assets",
   "packages.ProjectHome.group_intelligence": "AI and rule engine",
   "packages.ProjectHome.group_intelligence_saas": "Algorithms and rule engine",
   "packages.ProjectHome.group_ai": "AI center",

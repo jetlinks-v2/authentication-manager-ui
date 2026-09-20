@@ -6,7 +6,7 @@
 
 概览个人布局固定使用 `project-overview`。页面通过 `legacyStorageKeys` 向 DashBoardCanvas 声明历史 key，由画布恢复布局时迁移 `project-overview-vN`：优先保留固定 key，缺失时采用版本号最高的有效布局，写入成功后清理版本 key；不会清理其他页面缓存。普通布局调整不再更换 key。迁移的有效数据选择、幂等性、固定 key 优先、无关缓存保留及写入失败保护检查通过；DashBoardCanvas 的 SFC 脚本与模板编译、概览 63 个 SFC 与相对导入检查及两处仓库的 diff 检查通过。用户最新 DevTools 截图已显示固定 key，旧版本 key 不再出现。未运行全量 lint/typecheck/build。
 
-SaaS 初始布局按用户最新 `project-overview` 截图中的 9 组坐标同步到 `views/project/Overview/useOverviewDashboard.ts`：设备与可视化从 y=9 起高 14；运维从 y=9 起高 10，应用紧接 y=19、公告紧接 y=30；AI 与规则位于 y=23。私有化布局保留原配置。验证默认坐标与截图一致、12 栏内无重叠；已有个人缓存继续优先使用。
+SaaS 初始布局按当前概览设计的 9 组坐标同步到 `views/project/Overview/useOverviewDashboard.ts`：设备与可视化从 y=9 起高 13；运维从 y=9 起高 10，应用位于 y=19、公告位于 y=30；AI 与规则位于 y=22。私有化布局保留原配置。验证默认坐标与设计一致、12 栏内无重叠；已有个人缓存继续优先使用。
 
 额度查询由 `visDashboard/Base/shared/apiQuotas.ts` 复用公共请求层的项目上下文，使用当前项目会话及租户域名，不设置 `projectContext: false`。`/tenant/me/limits` 保持后端登录与租户成员校验，前端不自行指定租户或回退到平台账号。轻量验证已通过请求配置、额度数据转换、空结果、403 错误传递、TypeScript 语法和 `git diff --check`；未运行全量类型检查或构建。真实 SaaS 会话返回状态需在概览页刷新后核验，不能以模拟请求验证代替实际接口联调。
 
@@ -292,7 +292,7 @@ Chrome 实测：画布 layout/content 的 overflowY 均为 visible；外层页�
 
 2. **组件拆分与落点**：
    - `visDashboard/Base/Resources/components/DeviceAccessCard.vue`：**设备与接入**独立卡片（标题 18px 600 #1D2129），单列展示物联设备、视频通道、边缘节点（私有化场景保留采集器与物联网卡）。
-   - `visDashboard/Base/Resources/components/VisualizationCard.vue`：**大屏可视化**独立卡片，内部采用双列网格（左列为素材库：图片、组件、模型；右列为大屏：数据大屏、大屏模板）。
+   - `visDashboard/Base/Resources/components/VisualizationCard.vue`：**大屏可视化**独立卡片，内部采用双列网格（左列展示图片、组件、模型；右列展示数据大屏、大屏模板）。
    - `visDashboard/Base/Resources/components/AiCenterCard.vue`：**AI中心**独立卡片，展示智能体、启用算法、覆盖通道。
    - `visDashboard/Base/Resources/components/RuleEngineCard.vue`：**规则引擎**独立卡片，展示场景联动。
    - `visDashboard/Base/Resources/components/ResourceItem.vue`：抽离为通用条目胶囊组件，采用 `#F8FAFC` 浅灰底板、`40px × 40px` 圆形柔和浅色背景图标、`14px / #1D2129` 名称、`16px 500 / #1D2129` 数值与 `14px / #4E5969` 单位（`个`），支持 `:hover` 浅蓝（`#EEF5FF`）高亮与禁用态 Tooltip 提示。
@@ -443,7 +443,7 @@ Chrome 实测：画布 layout/content 的 overflowY 均为 visible；外层页�
 2. **独立组件落地**：
    - 彻底拆分为 4 个标准 DashBoardCanvas 看板组件（均置于 `visDashboard/Base/` 下）：
      - `DeviceAccess`（设备与接入，`w: 3, h: 10`）：展示物联设备、视频通道、边缘节点（私有化包含采集器与物联网卡）。
-     - `Visualization`（大屏可视化，`w: 5, h: 10`）：左列展示素材库（图片、组件、模型），右列展示大屏（数据大屏、大屏模板）。
+     - `Visualization`（大屏可视化，`w: 5, h: 10`）：左列展示图片、组件、模型，右列展示数据大屏、大屏模板。
      - `AiCenter`（AI中心，`w: 4, h: 10`）：展示智能体、启用算法、覆盖通道。
      - `RuleEngine`（规则引擎，`w: 4, h: 10`）：展示场景联动。
    - 各组件外壳均使用通用的 `HomeWidget.vue`（统一 6px 圆角、标题、加载/错误/轮询态），内部使用共享的 `ResourceItem.vue` 统一呈现各指标项。

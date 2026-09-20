@@ -1687,8 +1687,6 @@
   "packages.ProjectHome.group_devices": "设备",
   "packages.ProjectHome.group_collection": "采集器与物联网卡",
   "packages.ProjectHome.group_visualization": "大屏可视化",
-  "packages.ProjectHome.group_screens": "大屏",
-  "packages.ProjectHome.group_assets": "素材库",
   "packages.ProjectHome.group_intelligence": "AI 中心与规则引擎",
   "packages.ProjectHome.group_intelligence_saas": "算法与规则引擎",
   "packages.ProjectHome.group_ai": "AI中心",
