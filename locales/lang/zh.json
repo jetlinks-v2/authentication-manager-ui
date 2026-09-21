@@ -1718,6 +1718,7 @@
   "packages.ProjectHome.action_deviceAlarm": "物联告警",
   "packages.ProjectHome.action_deviceAlarmDesc": "核查设备异常并记录处理",
   "packages.ProjectHome.AnnouncementsDesc": "查看近期通知、功能更新与维护安排",
+  "packages.ProjectHome.new": "NEW",
   "packages.ProjectHome.ResourcesDesc": "了解各类资源用途并进入管理",
   "packages.ProjectHome.AnnouncementsEmptyHint": "暂无系统公告，新的通知和维护安排将在这里显示",
   "packages.ProjectHome.QuotasEmptyHint": "暂未获取到可展示的资源额度，请在用量详情中查看已开通资源",

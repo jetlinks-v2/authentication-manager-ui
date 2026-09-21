@@ -2,6 +2,13 @@
 
 # 项目概览
 
+## 系统公告卡片样式优化（2026-09-21）
+
+- 目标：优化概览页系统公告列表的阅读层级，同时兼顾带 NEW 标识和普通公告；标题始终从同一位置开始，NEW 作为标题后的轻量状态，日期固定在右侧，摘要独立成行。
+- 范围：仅调整 `visDashboard/Base/Announcements/components/HomeView.vue` 及中英文文案，不修改公告查询、未读判定、详情弹窗、跳转和网格布局。
+- 实现：公告使用与概览其他资源项一致的浅色承载面和圆角 hover；长标题、长摘要和日期分别约束溢出，小尺寸卡片保持可读；NEW 文案接入模块 i18n。
+- 验证：`HomeView.vue` 的 SFC、模板、TypeScript 与两份 Less 编译通过，文件 156 行；中英文 locale JSON 与 NEW 文案检查通过；`verify-announcements.cjs` 覆盖最新 5 条、标题摘要、第一条未读 NEW、普通公告、缺失日期及异常响应并通过；`verify-overview-components.cjs` 检查 63 个 Vue SFC，0 编译错误、0 相对导入缺失；`git diff --check` 通过。当前 9000 页面仍使用旧静态产物，未完成新样式浏览器视觉验收；未运行全量 lint/typecheck/build。无需新增依赖或重启后端，生产环境需重新发布 runtime-ui。
+
 ## 添加视频快捷入口调整
 
 目标：概览“添加视频”进入视频管理下的视频列表（菜单 `video/resources`，URL `/resources/video/list`），并打开接入弹窗。
