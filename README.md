@@ -2,6 +2,8 @@
 
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.
 
+概览页的系统公告组件（`visDashboard/Base/Announcements/ProjectHomeAnnouncements.vue`）隐藏标题右侧及空态的整个“更多”入口，包括文字与箭头；公告条目点击打开详情的交互保持不变。`shared/HomeWidget.vue` 的其余组件仍显示原有入口。两个组件的 Vue 模板和脚本编译检查通过，未运行整仓构建。
+
 ## 角色、组织与数据字典左侧树布局统一计划
 
 状态：已实施并验证。

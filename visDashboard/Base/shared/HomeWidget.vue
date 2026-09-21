@@ -4,7 +4,7 @@
     <template #title><div class="home-widget-title"><strong>{{ t(`packages.ProjectHome.${feature}`) }}</strong><span v-if="description">{{ description }}</span></div></template>
     <template #extra>
       <slot name="extra" :more-target="moreTarget" :can-open="canOpen" :open="open">
-        <a-button v-if="moreTarget && config.chart.navigation" type="link" size="small" :disabled="!canOpen(moreTarget)" @click="open(moreTarget)">
+        <a-button v-if="!hideMore && moreTarget && config.chart.navigation" type="link" size="small" :disabled="!canOpen(moreTarget)" @click="open(moreTarget)">
           {{ moreText }} ›
         </a-button>
       </slot>
@@ -14,7 +14,7 @@
     <slot v-else-if="!rows.length" name="empty" :can-open="canOpen" :open="open">
       <div class="home-state">
         <a-empty :description="emptyDescription">
-          <a-button v-if="moreTarget && canOpen(moreTarget)" size="small" @click="open(moreTarget)">{{ moreText }}</a-button>
+          <a-button v-if="!hideMore && moreTarget && canOpen(moreTarget)" size="small" @click="open(moreTarget)">{{ moreText }}</a-button>
         </a-empty>
       </div>
     </slot>
@@ -35,7 +35,7 @@ import { useHomeRuntime } from './useHomeRuntime'
 import { useHomeNavigation } from './useHomeNavigation'
 import { HOME_MORE_TARGETS } from './navigation'
 import type { HomeFeature, HomeInfo } from './types'
-const props = defineProps<{ feature: HomeFeature; info?: HomeInfo; isEdit: boolean; refreshKey?: number }>()
+const props = defineProps<{ feature: HomeFeature; info?: HomeInfo; isEdit: boolean; refreshKey?: number; hideMore?: boolean }>()
 const { t, te } = useI18n()
 const description = computed(() => {
   const key = `packages.ProjectHome.${props.feature}Desc`
