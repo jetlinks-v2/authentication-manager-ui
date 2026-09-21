@@ -99,6 +99,10 @@ const option = computed(() => ({
   position: relative;
   flex-shrink: 0;
 }
+.donut :deep(.echarts-warp) {
+  position: relative;
+  z-index: 1;
+}
 .zero-total::before {
   content: '';
   position: absolute;
@@ -110,6 +114,7 @@ const option = computed(() => ({
 .total {
   position: absolute;
   inset: 0;
+  z-index: 0;
   display: flex;
   flex-direction: column;
   align-items: center;

@@ -4,27 +4,38 @@ const Module = require('node:module');
 const root = path.resolve(__dirname, '../../..');
 const esbuild = require(path.join(root,'node_modules/esbuild'));
 const group = path.join(root,'modules/authentication-manager-ui/visDashboard/ResourceCenter');
+const groupImport = group.replace(/\\/g, '/');
 let calls=[];
 global.__resourceRequest={
   post:async(...args)=>{calls.push(args);throw new Error('Unexpected request '+args[0])},
   get:async(...args)=>{calls.push(args);throw new Error('Unexpected get '+args[0])}
 };
 (async()=>{
- const result=await esbuild.build({stdin:{contents:`export * from '${group}/services/distribution.ts';export * from '${group}/services/trends.ts';export * from '${group}/services/metrics.ts';export * from '${group}/shared.ts';export * from '${group}/hooks/useResourceWidget.ts';`,resolveDir:root},bundle:true,write:false,format:'cjs',platform:'node',packages:'external',plugins:[{name:'test-boundaries',setup(build){
+ const result=await esbuild.build({stdin:{contents:`export * from '${groupImport}/services/distribution.ts';export * from '${groupImport}/services/trends.ts';export * from '${groupImport}/services/metrics.ts';export * from '${groupImport}/shared.ts';export * from '${groupImport}/hooks/useResourceWidget.ts';`,resolveDir:root},bundle:true,write:false,format:'cjs',platform:'node',packages:'external',plugins:[{name:'test-boundaries',setup(build){
  build.onResolve({filter:/^@jetlinks-web\/core$/},()=>({path:'request',namespace:'test'}));
  build.onResolve({filter:/^@jetlinks-web-core\/utils\/consts$/},()=>({path:'platform',namespace:'test'}));
  build.onResolve({filter:/^@jetlinks-web-core\/locales$/},()=>({path:'locale',namespace:'test'}));
  build.onResolve({filter:/api\/overview$/},()=>({path:'overview',namespace:'test'}));
- build.onLoad({filter:/.*/,namespace:'test'},args=>({contents:args.path==='platform'?'export const isSaaS=false':args.path==='locale'?'export default {global:{t:key=>key}}':args.path==='request'?'export const request=global.__resourceRequest':`export const queryOverviewDeviceIds=async()=>new Set(['iot-1','edge-1']); export const queryOverviewGatewaySummary=async()=>({total:5,online:3});export const queryOverviewIotDeviceSummary=queryOverviewGatewaySummary;export const queryOverviewChannelSummary=queryOverviewGatewaySummary;`}));
+ build.onLoad({filter:/.*/,namespace:'test'},args=>({contents:args.path==='platform'?'export const isSaaS=false':args.path==='locale'?'export default {global:{t:key=>key}}':args.path==='request'?'export const request=global.__resourceRequest':`export const buildOverviewDeviceTerms=kind=>[{column:'product',value:kind}]; export const queryOverviewGatewaySummary=async()=>({total:5,online:3});export const queryOverviewIotDeviceSummary=queryOverviewGatewaySummary;export const queryOverviewChannelSummary=queryOverviewGatewaySummary;`}));
  }}]});
  const mod=new Module(path.join(root,'resource-check.cjs'));mod.paths=Module._nodeModulePaths(root);mod._compile(result.outputFiles[0].text,path.join(root,'resource-check.cjs'));
  const api=mod.exports;
  const spaces=api.flattenSpaces([{id:'parent',name:'园区',children:[{id:'child',name:'楼栋'}]}]);
  assert.equal(spaces.length,2);
- const rows=[{spaceId:'parent',deviceId:'iot-1'},{spaceId:'parent',deviceId:'iot-1'},{spaceId:'child',deviceId:'iot-1'},{spaceId:'parent',edgeDeviceId:'edge-1',deviceId:'cam',channelRecordId:'ch'},{spaceId:'parent',edgeDeviceId:'edge-2',deviceId:'cam',channelRecordId:'ch'}];
- assert.deepEqual(api.mapDistribution(spaces,rows,'iot',new Set(['iot-1'])).map(x=>x.value),[1,1]);
- assert.deepEqual(api.mapDistribution(spaces,rows,'video').map(x=>x.value),[2,0]);
- assert.deepEqual(api.mapDistribution(spaces,rows,'edge',new Set(['edge-1'])).map(x=>x.value),[1,0]);
+ const scopes=api.buildRootSpaceScopes([{id:'area-a',name:'区域A',children:[{id:'floor-a'}]},{id:'area-b',name:'区域B'}]);
+ assert.deepEqual(scopes.map(x=>x.spaceIds),[['area-a','floor-a'],['area-b']]);
+ const distributionRequests=api.buildDeviceDistributionRequests(scopes,['area-a','floor-a','area-b'],[{column:'product',value:'edge'}]);
+ assert.equal(distributionRequests[0].query.terms[1].termType,'space-bind$device');
+ assert.deepEqual(distributionRequests[0].query.terms[1].value,['area-a','floor-a']);
+ assert.equal(distributionRequests.at(-1).query.terms[1].termType,'space-bind$not$device');
+ assert.deepEqual(api.mapDeviceDistribution(scopes,[{id:'area:area-a',deviceCount:1},{id:'area:area-b',deviceCount:1},{id:'__iot-unbound-area__',deviceCount:4}],'未绑定区域').map(x=>x.value),[1,1,4]);
+ assert.deepEqual(api.buildDeviceDistributionRequests([],[],[{column:'product',value:'edge'}])[0].query.terms,[{column:'product',value:'edge'}]);
+ const videoBindings=[
+   {spaceId:'parent',edgeDeviceId:'edge-1',deviceId:'cam-1',channelRecordId:'record-1'},
+   {spaceId:'parent',edgeDeviceId:'edge-1',deviceId:'cam-1',channelRecordId:'record-1'},
+   {spaceId:'parent',edgeDeviceId:'edge-2',deviceId:'cam-1',channelRecordId:'record-1'},
+ ];
+ assert.deepEqual(api.mapVideoDistribution(spaces,videoBindings).map(x=>x.value),[2,0]);
  assert.throws(()=>api.numberOf(null));assert.throws(()=>api.numberOf('oops'));assert.equal(api.numberOf(0),0);
  const dayjs=require(path.join(root,'node_modules/dayjs'));const now=dayjs('2026-09-10T12:00:00');
  const yesterday=api.rangeOf('yesterday',now);assert.equal(dayjs(yesterday.from).format('YYYY-MM-DD HH:mm:ss'),'2026-09-09 00:00:00');assert.equal(dayjs(yesterday.to).format('YYYY-MM-DD HH:mm:ss'),'2026-09-09 23:59:59');
@@ -66,10 +77,6 @@ global.__resourceRequest={
  assert.equal(algoWidget.data.value.algorithms[0].value,1);
  assert.equal(algoWidget.data.value.algorithms.find(x=>x.id==='unconfigured').value,4);
  algoScope.stop();
- const videoScope=effectScope();let videoWidget;
- videoScope.run(()=>{videoWidget=api.useResourceWidget('VideoPlaybackTrend',ref({}),ref(false))});
- await new Promise(resolve => setTimeout(resolve, 20));
- assert.equal(videoWidget.data.value.series.length,24);
- videoScope.stop();
- console.log('PASS: lifecycle stale responses, unmount cleanup, preview request isolation;  distribution deduplication, device scopes, tree flattening, invalid metrics, five natural-day ranges, config bounds, partial errors, trend ordering, flow sums/ranking and independent failure; algorithm coverage and video playback trend widgets');
+ // 网关状态已替代视频播放趋势，独立验证见 verify-gateway-status.cjs。
+ console.log('PASS: lifecycle stale responses, unmount cleanup, preview request isolation; distribution deduplication, device scopes, tree flattening, invalid metrics, five natural-day ranges, config bounds, partial errors, trend ordering, flow sums/ranking and independent failure; algorithm coverage');
 })().catch(error=>{console.error(error);process.exitCode=1});

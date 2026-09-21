@@ -63,14 +63,15 @@ const { catalog, dashboard, loading, errors } = useResourceDashboard(preview)
 | 消息趋势 | `/dashboard/_multi`，device/message/quantity/agg；今天、昨天、近3/7/30天 | 200，图表渲染及时间切换通过 |
 | 数据采集 | channel/collector `_count`；异常为 runningState != running | 当前 SaaS 代理四个请求均 404，运行态已隐藏；需私有化环境继续实测 |
 | 物联网卡 | `/dashboard/_multi`，flow/networkCardFlow/trend 与 rank；MB 展示时转换；排行为本月 | 两个请求 200，暂无流量记录；非空映射和排序通过隔离数据测试 |
-| 设备分布 | `/space/_query/tree`、`/space/data-bind/_query/no-paging`；设备 ID 范围复用概览 | 全部 200，回显园区/E栋/4F 三个空间，各类型当前均为 0 |
+| 设备分布 | 区域树使用 `/space/_query/tree`；边缘节点和物联设备复用设备列表的 `/device/group/device/_summary/_batch` 聚合；视频设备保留空间绑定明细统计 | localhost 边缘节点总数 6；视频设备沿用原绑定口径 |
 | 算法覆盖统计 | `GET /ai/edge/task/coverage/scene/_counts` 与 `_count`；展示各算法通道数，并计算未配置通道 | 后端待部署，已完成前端契约对接与容错 |
 | 快速开始 | 通过当前 menu store 的叶子菜单编码导航 | 边缘网关、物联设备、视频设备、大屏页面均实测跳转；私有化入口待对应环境验收 |
 
-分布按直属空间统计，同空间目标去重，不汇总子空间到父空间。边缘节点统计绑定引用的有效 edgeDeviceId 或直接绑定的网关 deviceId；物联设备排除视频通道与非物联产品；视频使用边缘节点+设备+通道组合去重。展示超限合并为其他，总数和圆环口径保持一致。同一目标绑定多个空间时会分别计入对应空间。
+边缘节点和物联设备分布与设备列表区域侧栏使用同一口径：展示一级区域，每个一级区域包含自身和全部子区域，并追加未绑定区域；产品范围与对应数量卡一致。视频设备保留原有直属空间绑定统计，在同一空间内按边缘节点、设备和通道组合去重；同一通道绑定多个空间时仍分别计入对应空间。展示超限合并为其他。
 
 ## 验证结果
 
+- 边缘节点分布抓包确认请求 `/device/group/device/_summary/_batch` 返回一级区域 `1、1` 和未绑定区域 `4`，页面中心总数为 `6`，与设备列表“边缘节点 6”及区域侧栏完全一致；定向 esbuild 覆盖子树、未绑定、无区域和视频原链路，63个仪表盘相关 SFC 编译及相对引用检查通过。
 - 九种组件通过脚本派发 dragstart/dragover/drop/dragend，从组件库逐一拖入画布，实例数 9 → 18；这是浏览器 DOM 拖拽事件验证，未验证操作系统原生拖放手势。
 - 九个组件分别修改标题并应用，仍正常渲染；分布展示数量改为 3 后其余空间汇总到其他，中心总数保持不变；设备类型和时间范围切换通过。
 - 取消标题修改后原组件名称不变；1280px 视口下九个组件默认布局均无内容横向或纵向溢出，已修正快捷操作三行布局遮挡问题，并恢复浏览器默认尺寸。组件日志未发现 ResourceCenter 报错。
@@ -235,3 +236,15 @@ const { catalog, dashboard, loading, errors } = useResourceDashboard(preview)
 8. **算法覆盖统计（AlgorithmCoverage）路由跳转与条目间距优化**：
    - 卡片头部“算法配置”快捷入口跳转路由精准对齐至 `#/resources/devices/list/batch?type=gateway&gatewayScope=query`，在 `ResourceWidget.vue` 中调用 `menuStore.jumpPage('iot-user-device-list/Batch', { query: { type: 'gateway', gatewayScope: 'query' } })`；
    - 优化 `AlgorithmCoveragePanel.vue` 条目垂直布局：将原有的 `justify-content: space-around` 改为 `justify-content: flex-start` 并设置统一间距 `gap: 16px`，彻底解决条目数量较少（如仅有 1 种已配置算法 + 未配置算法共 2 项）时条目被过度拉伸分置顶部与底部、中间留下大面积空白的问题。
+
+### 网关状态指标替换视频播放趋势（2026-09-21）
+
+- 保留历史类型 resourceCenterVideoPlaybackTrend 与配置命名空间，兼容已保存布局；UI使用网关状态指标，提供复判队列、CPU、内存和磁盘切换。
+- 按《AI网关监控指标前端聚合查询接口文档》V2.1接入 POST /device/metrics/_agg。当前部署未提供 GET /device/metrics/_supported，因此前端不再请求该接口；正式数据也不使用设备 properties/latest 或 agg/_query，不猜测物模型字段。
+- 复判指标：edge-ai-gateway / edge.ai.review.queue.pending。系统指标：device-health / system.cpu.usage、system.memory.usage、system.disk.usage。
+- 排行查询只含一个LAST指标，thingIds来自当前项目网关列表的全部分页，groupBy为thingId，按指标别名DESC排序，limit=10。名称和在线状态仍来自业务目录。网关总体查询不带任务标签。
+- 复判排行取最近20分钟（覆盖5分钟采集周期，与云端staleAfter一致），系统指标取最近2分钟；查询时间不冒充最后采样时间。
+- 单网关趋势固定最近24小时，interval=15m，每桶LAST，时间为Asia/Shanghai字符串，读取result数组和timestamp字段。保留空值及缺失桶断点，不插值、不补0；全空显示暂无数据。
+- 单位按文档固定：复判积压为“条”，system.*.usage 为“%”。后端配置的系统点位直接映射既有使用率属性，前端不根据值小于1而自动乘100。
+- 聚合结果无采样时显示空态，请求失败提供重试。设计预览独立使用示例数据，不调用接口。
+- 专项验证：node modules/authentication-manager-ui/scripts/verify-gateway-status.cjs。覆盖四项请求契约、分页、单位、空值/零值、历史断点、预览隔离、迟到响应、卸载与Vue编译。此验证使用契约响应模拟，不代表真实部署联调通过。
