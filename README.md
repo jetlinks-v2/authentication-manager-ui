@@ -70,6 +70,10 @@ Implementation: the original `system/NoticeRule` contract from `61fba7e` is rest
 
 Validation: `baseMenu.json` parses successfully; aside from the restored NoticeRule and the runtime-required Announcement owner, the file canonically matches remote parent `44bcfd9`, while both cloud menu contracts match the pre-merge project-runtime semantics. The focused Node menu/announcement suite passes all 19 tests, the production build passes with 10,222 transformed modules, the built `dist/baseMenu.json` matches the source, and `git diff --check` passes. Authenticated project-runtime menu synchronization remains pending because no usable logged-in runtime context was verified in this task.
 
+## Access Log User Filter
+
+Access logs can be filtered by login username in `views/system/Log/Access/index.vue`. The displayed request user reads `context.username`; the filter sends a `json_value` condition on the `context` JSONB column, with `value.path: 'username'`, the selected comparison operator, and the normalized input value. The other filters, API path, backend, and menu remain unchanged.
+
 ## Project Owner Role Editing Guard
 
 The system user edit dialog keeps profile fields editable for project owners while disabling the role selector when the stable runtime user type is `projectOwner`. The guard accepts the user-list `typeId` and the detail response enum object so list and detail response shapes behave consistently. It reuses the existing `FormItemRole` disabled contract, which also hides the add-role action and prevents tag removal. Scope is limited to `views/system/User/components/EditUserDialog.vue`; user APIs, backend authorization, other user types, organizations, positions, and password operations remain unchanged. The module production build (`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`) and `git diff --check` pass. The touched Vue file remains over the preferred 300-line limit because this is a narrow fix in an existing 491-line component; no structural refactor is included.
