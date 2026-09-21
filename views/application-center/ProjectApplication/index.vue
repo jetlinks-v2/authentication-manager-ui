@@ -4,20 +4,23 @@
       <full-page transparentBackground hasPadding>
         <a-spin :spinning="loading">
           <div style="margin-bottom: var(--space-4);">
-            <a-flex :gap="16">
-              <ConditionFilter
-                  :fields="filterFields"
-                  @change="handleSearch"
-              />
+            <a-flex justify="space-between" align="center">
+              <h2 class="project-page-title">应用列表</h2>
+	            <a-space>
+		            <ConditionFilter
+			            :fields="filterFields"
+			            @change="handleSearch"
+		            />
 
-              <a-button
-                  class="create-application-button"
-                  type="primary"
-                  @click="createOpen = true"
-              >
-                <template #icon><AIcon type="PlusOutlined" /></template>
-                {{ $t('ProjectApplication.list.create') }}
-              </a-button>
+		            <a-button
+			            class="create-application-button"
+			            type="primary"
+			            @click="createOpen = true"
+		            >
+			            <template #icon><AIcon type="PlusOutlined" /></template>
+			            {{ $t('ProjectApplication.list.create') }}
+		            </a-button>
+	            </a-space>
             </a-flex>
           </div>
           <CloudEmpty v-if="loadFailed" type="page" :description="$t('ProjectApplication.list.loadFailed')">
@@ -113,6 +116,11 @@ const {
   --application-card-block-size: 14rem;
 
   min-height: 100%;
+}
+
+.project-page-title {
+	font-size: var(--fs-18);
+	font-weight: 600;
 }
 
 .page-filters {

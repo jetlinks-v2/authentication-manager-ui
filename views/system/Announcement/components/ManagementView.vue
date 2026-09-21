@@ -11,7 +11,12 @@
       :scroll="{ y: 'calc(100% - 3.75rem)' }"
     >
       <template #headerLeftRender>
-        <a-flex gap="small">
+        <div class="announcement-list-toolbar">
+          <h2 class="announcement-list-title">{{ $t('Announcement.title.management') }}</h2>
+        </div>
+      </template>
+      <template #headerRightRender>
+        <a-flex :gap="16">
           <ConditionFilter
             class="authentication-system-list-page__filter"
             :columns="columns"
@@ -255,5 +260,20 @@ defineExpose({ reload: () => tableRef.value?.reload() })
     color: var(--jet-theme-text-secondary);
     font-size: var(--fs-14);
   }
+}
+
+.announcement-list-toolbar {
+  display: flex;
+  flex: 1;
+  align-items: center;
+}
+
+.announcement-list-title {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: var(--fs-18);
+  font-weight: 600;
+  line-height: 32px;
+  white-space: nowrap;
 }
 </style>

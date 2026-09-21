@@ -1,7 +1,14 @@
 <template>
   <div class="left-tree-contain">
+    <header class="left-tree-contain__header">
+      <strong>{{ $t('components.LeftTree.755653-7') }}</strong>
+      <j-permission-button type="link" :tooltip="{ title: $t('components.LeftTree.755653-8') }" @click="batchImportVisible = true">
+        <template #icon><AIcon type="ImportOutlined" /></template>
+      </j-permission-button>
+    </header>
     <a-input
       v-model:value="searchValue"
+      class="left-tree-contain__search"
       @change="onSearch"
       :placeholder="$t('components.LeftTree.755653-0')"
       allowClear
@@ -10,27 +17,6 @@
         <AIcon type="SearchOutlined" />
       </template>
     </a-input>
-    <a-row>
-      <a-col flex="1">
-        <j-permission-button
-          type="primary"
-          :hasPermission="`${permission}:add`"
-          @click="openDialog()"
-          style="width: 100%; margin: 0.75rem 0"
-        >
-          {{ $t('components.LeftTree.755653-1') }}
-        </j-permission-button>
-      </a-col>
-      <a-col flex="3.125rem">
-        <j-permission-button
-          type="link"
-          style="width: 100%; margin: 0.75rem 0"
-          @click="batchImportVisible = true"
-        >
-          <AIcon type="ImportOutlined"/>
-        </j-permission-button>
-      </a-col>
-    </a-row>
     <div class="tree" ref="treeContainer">
       <a-spin :spinning="loading">
         <a-tree
@@ -102,6 +88,15 @@
         <CloudEmpty v-else />
       </a-spin>
     </div>
+    <j-permission-button
+      class="left-tree-contain__create"
+      block
+      :hasPermission="`${permission}:add`"
+      @click="openDialog()"
+    >
+      <template #icon><AIcon type="PlusOutlined" /></template>
+      {{ $t('components.LeftTree.755653-1') }}
+    </j-permission-button>
     <!-- 编辑弹窗 -->
     <Save
       v-if="visible"
@@ -350,11 +345,33 @@ onUnmounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
+  gap: var(--space-4);
+
+  &__header {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    min-height: 0;
+
+    strong {
+      color: var(--jet-theme-text-title);
+      font-size: var(--fs-18);
+      font-weight: 600;
+      line-height: var(--lh-24);
+    }
+  }
+
+  &__search,
+  &__create {
+    flex: 0 0 auto;
+  }
 
   .tree {
     flex: 1;
-    min-height: 0; // 重要：确保flex子元素可以收缩
-    // overflow: hidden; // 移除overflow-y，让a-tree自己处理滚动
+    min-height: 0;
+    overflow: auto;
   }
 }
 .department-tree-item-content {
