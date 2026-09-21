@@ -1725,6 +1725,7 @@
   "packages.ProjectHome.action_deviceAlarm": "IoT alarms",
   "packages.ProjectHome.action_deviceAlarmDesc": "Review device alerts and record resolution",
   "packages.ProjectHome.AnnouncementsDesc": "Recent notices, updates and maintenance",
+  "packages.ProjectHome.new": "NEW",
   "packages.ProjectHome.ResourcesDesc": "Explore resources and open management",
   "packages.ProjectHome.AnnouncementsEmptyHint": "New notices and maintenance updates will appear here",
   "packages.ProjectHome.QuotasEmptyHint": "No resource allowances to display. Check enabled resources in usage details",
