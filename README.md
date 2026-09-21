@@ -2,6 +2,24 @@
 
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.
 
+## 角色、组织与数据字典左侧树布局统一计划
+
+状态：已实施并验证。
+
+目标：将“系统设置 > 组织与用户 > 角色管理”、“系统设置 > 组织与用户 > 组织管理”和“系统设置 > 平台设置 > 数据字典”的左侧树，统一为资源中心“设备管理 > 产品列表”分类树的垂直结构：标题、搜索框、可滚动树列表、底部新增操作。组织管理的标题行使用 `space-between`，在右侧保留现有批量导入入口；数据字典右侧保留下载和导入入口。
+
+影响范围与 owning module：仅 `runtime-ui/modules/authentication-manager-ui` 的 `views/system/Role/RoleLeft/index.vue`、`views/system/Department/components/LeftTree.vue`、`views/system/Dictionary/components/Left/index.vue`、中英文 locale 资源及本文档。参考锚点为 `runtime-ui/modules/device-manager-ui/views/device/Product/components/ProductCategoryTree.vue`。不修改 `ui/`、`runtime-ui` 其他模块、接口、权限、树数据与筛选契约、树节点编辑/删除操作、路由或共享组件。
+
+实施步骤：
+
+1. 为两个左树组件补齐与产品分类树一致的纵向容器、标题和搜索区；树区域保持弹性撑满并独立滚动。
+2. 将角色管理原有“新增角色组”操作移到树底部，保留管理员可见性、创建逻辑和选中/展开行为。
+3. 将组织管理原有“新增组织”操作移到树底部；标题行左侧显示组织标题，右侧以 `space-between` 保留批量导入按钮，继续使用既有导入弹窗和权限/调用逻辑。
+4. 将数据字典的新增操作移到树底部，并将既有下载、导入操作收纳到标题右侧，继续使用原有权限和上传/下载逻辑。
+5. 复用 Ant Design Vue 组件和全局样式 token；为新增标题和文字化入口补齐中英文 i18n key，仅调整局部布局与样式，不新增页面组件或业务逻辑。
+
+验证：中英文 locale JSON 均可解析，目标文件 `git diff --check` 通过；`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 在角色与组织改造后通过（10,786 个模块，31.64 秒），在数据字典改造后再次通过（10,788 个模块，36.26 秒）。构建保留既有 Rollup output option、CSS 注释和大包提示；未启动登录态页面进行浏览器交互回归。批量导入继续调用原有弹窗，角色新增仍只对管理员显示；数据字典的新增、下载、导入、选择和节点编辑/删除入口保持既有调用。
+
 ## 运行时运维中心日志与应用模版表格工具栏布局计划
 
 状态：已实施并验证。
@@ -133,6 +151,22 @@ Verification:
 - All 12 matching Vue files contain one `PageHeader`, one `ConditionFilter`, and one `j-pro-table`; their SFC templates and `script setup` blocks compile independently.
 - The production build passes from `jetlinks-web-core` with the programmatic Vite entry documented below.
 - The module-wide Vue type-check still exits non-zero because of pre-existing shared-core and legacy-module diagnostics; it reports no new `PageHeader`, list-title i18n, or shared list-layout contract error.
+
+## 平台管理与用户管理列表工具栏布局计划
+
+状态：已实施并验证。
+
+目标：将“系统设置 > 平台管理”的权限管理、菜单管理、公告管理，以及“系统设置 > 组织与用户 > 用户管理”的列表表头统一为网络组件的结构：左侧显示对应列表标题，右侧放条件搜索和该页面原有的顶层操作。
+
+影响范围：仅 `views/system/Permission/index.vue`、`views/system/Menu/index.vue`、`views/system/Announcement/components/ManagementView.vue`、`views/system/User/index.vue`、现有中英文 locale（仅在缺少标题键时）和本文档。保留接口、查询参数、树展开、权限控制、导入导出、弹窗、行操作、路由及共享 `j-pro-table`、`ConditionFilter` 实现。
+
+实施步骤：
+
+1. 四页分别在 `headerLeftRender` 渲染现有 i18n 标题，`headerRightRender` 渲染搜索与已有顶部操作。
+2. 权限管理保留新增与批量导入/导出；菜单管理保留新增与管理员菜单配置；公告管理保留新增；用户管理保留新增与导入/导出，均与搜索同行右对齐。
+3. 沿用网络组件的标题层级和间距，只添加页面内必要的响应式样式；不添加无业务契约的操作或统计信息。
+
+风险与验证：现有文档中的 “System Management List Layout” 描述已由本次实际页面实现校正：四页均按标题左置、工具右置的表格插槽布局呈现。筛选参数、菜单树展开、各权限按钮及用户导入导出行为保持原实现；`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 和目标文件 `git diff --check` 均通过。构建仍报告工作区既有的 Rollup `input` 配置、CSS `//` 注释及大包提示。
 
 ## System Basis Navigation Layout
 

@@ -1,16 +1,14 @@
-<template>
-	<div class="left-contain">
-		<a-input v-model:value="searchValue" :placeholder="$t('RoleLeft.index.507330-0')" @change="searchChange" @pressEnter="search">
-			<template #suffix>
-				<AIcon type="SearchOutlined" @click="search"/>
-			</template>
-		</a-input>
-		<div v-if="isAdmin" class="controls">
-			<j-permission-button block type="primary" @click="addGroup">
-				{{ $t('RoleLeft.index.507330-1') }}
-			</j-permission-button>
-		</div>
-		<div class="listBox">
+	<template>
+		<div class="left-contain">
+			<header class="left-contain__header">
+				<strong>{{ $t('RoleLeft.index.507330-8') }}</strong>
+			</header>
+			<a-input class="left-contain__search" v-model:value="searchValue" :placeholder="$t('RoleLeft.index.507330-0')" @change="searchChange" @pressEnter="search">
+				<template #suffix>
+					<AIcon type="SearchOutlined" @click="search"/>
+				</template>
+			</a-input>
+			<div class="listBox">
 			<a-tree
           v-if="listData.length"
           :default-expanded-keys="['global_role']"
@@ -57,9 +55,13 @@
 					</div>
 				</template>
 			</a-tree>
-			<CloudEmpty v-else style="margin-top: 6.25rem;"/>
+				<CloudEmpty v-else style="margin-top: 6.25rem;"/>
+			</div>
+			<j-permission-button v-if="isAdmin" class="left-contain__create" block @click="addGroup">
+				<template #icon><AIcon type="PlusOutlined" /></template>
+				{{ $t('RoleLeft.index.507330-1') }}
+			</j-permission-button>
 		</div>
-	</div>
 </template>
 
 <script lang="ts" name="RoleLeft" setup>
@@ -191,7 +193,26 @@ onMounted(() => {
 	height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+	gap: var(--space-4);
+
+	&__header {
+		display: flex;
+		flex: 0 0 auto;
+		align-items: center;
+		min-height: 0;
+
+		strong {
+			color: var(--jet-theme-text-title);
+			font-size: var(--fs-18);
+			font-weight: 600;
+			line-height: var(--lh-24);
+		}
+	}
+
+	&__search,
+	&__create {
+		flex: 0 0 auto;
+	}
 }
 
 .treeItem {
@@ -205,7 +226,8 @@ onMounted(() => {
 }
 
 .listBox {
-	flex: 1 auto;
-	overflow-y: auto;
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
 }
 </style>

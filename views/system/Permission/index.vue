@@ -15,7 +15,12 @@
           }"
         >
           <template #headerLeftRender>
-              <a-flex gap="small">
+              <div class="permission-list-toolbar">
+                <h2 class="permission-list-title">{{ $t('SystemList.permissionManagement') }}</h2>
+              </div>
+          </template>
+          <template #headerRightRender>
+              <a-flex :gap="16">
                   <ConditionFilter
                       class="authentication-system-list-page__filter"
                       :columns="columns"
@@ -149,7 +154,6 @@ import {downloadJson} from '@jetlinks-web-core/utils/comm'
 import {columns} from './util'
 import {useI18n} from 'vue-i18n';
 import {FullPage} from "@jetlinks-web-core/layout";
-import PageHeader from '@jetlinks-web-core/components/PageHeader';
 
 const {t: $t} = useI18n();
 const permission = 'system/Permission'
@@ -242,3 +246,20 @@ const triggerUpload = () =>{
   uploadRef.value.click()
 }
 </script>
+
+<style scoped lang="less">
+.permission-list-toolbar {
+  display: flex;
+  flex: 1;
+  align-items: center;
+}
+
+.permission-list-title {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: var(--fs-18);
+  font-weight: 600;
+  line-height: 32px;
+  white-space: nowrap;
+}
+</style>

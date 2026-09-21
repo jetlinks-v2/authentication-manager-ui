@@ -16,7 +16,12 @@
             v-model:expandedRowKeys="expandedRowKeys"
           >
             <template #headerLeftRender>
-              <a-flex gap="small">
+              <div class="menu-list-toolbar">
+                <h2 class="menu-list-title">{{ $t('SystemList.menuManagement') }}</h2>
+              </div>
+            </template>
+            <template #headerRightRender>
+              <a-flex :gap="16">
                 <ConditionFilter
                   class="authentication-system-list-page__filter"
                   :labelWidth="56"
@@ -99,7 +104,6 @@ import { useI18n } from 'vue-i18n';
 import { useUserStore } from '@jetlinks-web-core/store/user';
 import { storeToRefs } from 'pinia'
 import type {ConditionFilterChangePayload} from '@jetlinks-web-core/components/ConditionFilter'
-import PageHeader from '@jetlinks-web-core/components/PageHeader'
 
 const { t: $t } = useI18n();
 const permission = 'system/Menu'
@@ -309,3 +313,20 @@ const clickDel = (row: any) => {
   })
 }
 </script>
+
+<style scoped lang="less">
+.menu-list-toolbar {
+  display: flex;
+  flex: 1;
+  align-items: center;
+}
+
+.menu-list-title {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: var(--fs-18);
+  font-weight: 600;
+  line-height: 32px;
+  white-space: nowrap;
+}
+</style>

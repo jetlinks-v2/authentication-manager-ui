@@ -1,16 +1,8 @@
 <template>
     <div class="left-contain">
-        <a-input :placeholder="$t('Left.index.036608-0')" v-model:value="searchValue" @pressEnter="search" @change="searchChange">
-            <template #suffix>
-                <AIcon type="SearchOutlined" @click="search" />
-            </template>
-        </a-input>
-        <div class="controls">
-            <a-flex gap="small">
-                <j-permission-button type="primary" hasPermission="system/Dictionary:add" style="flex: 1;min-width: 0;"
-                                     @click="showSave" >
-                    {{ $t('Left.index.036608-1') }}
-                </j-permission-button>
+        <header class="left-contain__header">
+            <strong>{{ $t('Left.index.036608-16') }}</strong>
+            <a-flex gap="small" align="center">
                 <j-permission-button type="text" hasPermission="system/Dictionary:down" @click="downVisible = true">
                     {{ $t('Left.index.036608-2') }}
                 </j-permission-button>
@@ -21,7 +13,12 @@
                     </j-permission-button>
                 </a-upload>
             </a-flex>
-        </div>
+        </header>
+        <a-input class="left-contain__search" :placeholder="$t('Left.index.036608-0')" v-model:value="searchValue" @pressEnter="search" @change="searchChange">
+            <template #suffix>
+                <AIcon type="SearchOutlined" @click="search" />
+            </template>
+        </a-input>
         <div class="tree">
             <a-tree :tree-data="listData" v-if="listData.length" :fieldNames="{ title: 'name', key: 'id' }" blockNode
                 :selectedKeys="selectedKeys">
@@ -83,6 +80,10 @@
             </a-tree>
             <CloudEmpty v-else style="margin-top: 6.25rem;" />
         </div>
+        <j-permission-button class="left-contain__create" block hasPermission="system/Dictionary:add" @click="showSave">
+            <template #icon><AIcon type="PlusOutlined" /></template>
+            {{ $t('Left.index.036608-1') }}
+        </j-permission-button>
     </div>
     <Save v-if="saveShow" :type="addType" @close-save="saveShow = false" @success="saveSuccess" :data="editData" />
     <Export v-if="downVisible" @closeDown="closeDown" />
@@ -230,8 +231,31 @@ onMounted(() => {
 </script>
 <style lang="less" scoped>
 .left-contain {
-    width: 18.75rem;
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+
+    &__header {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+        min-height: 0;
+
+        strong {
+            color: var(--jet-theme-text-title);
+            font-size: var(--fs-18);
+            font-weight: 600;
+            line-height: var(--lh-24);
+        }
+    }
+
+    &__search,
+    &__create {
+        flex: 0 0 auto;
+    }
 }
 
 :deep(.ant-tree-switcher) {
@@ -239,12 +263,9 @@ onMounted(() => {
 }
 
 .tree {
-    height: calc(100% - 6.875rem);
-    overflow-y: auto;
-}
-
-.controls {
-    margin: 0.625rem 0;
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
 }
 
 .treeItem {
