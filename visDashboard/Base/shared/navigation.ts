@@ -21,6 +21,7 @@ export const HOME_TARGETS: Record<string, HomeTarget> = {
   search: { menus: [] },
   notifications: { menus: ['notice/channel'] },
   messages: { menus: ['account/center'], params: { tabKey: 'StationMessage' } },
+  announcements: { menus: ['system/Announcement'] },
   usage: { menus: ['system/ProjectUsage', 'system/Operations/Quota'] },
   collector: { menus: ['data-collect'] },
   card: { menus: ['iot-card/CardManagement'] },
@@ -35,7 +36,7 @@ export const HOME_TARGETS: Record<string, HomeTarget> = {
   deviceAlarm: { menus: ['iot-user/device/alarm'] },
 }
 export const HOME_MORE_TARGETS: Partial<Record<HomeFeature, HomeTarget>> = {
-  Applications: HOME_TARGETS.applications, Quotas: HOME_TARGETS.usage, Announcements: HOME_TARGETS.messages,
+  Applications: HOME_TARGETS.applications, Quotas: HOME_TARGETS.usage, Announcements: HOME_TARGETS.announcements,
 }
 export const QUICK_ACTIONS = [
   { id: 'devices', target: HOME_TARGETS.addDevice },

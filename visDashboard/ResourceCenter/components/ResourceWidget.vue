@@ -3,7 +3,7 @@
     <header v-if="!isMetricCard">
       <h3>{{ title }}</h3>
       <a-segmented v-if="kind === 'DeviceDistribution'" v-model:value="deviceType" class="resource-switch" size="small" :options="deviceOptions" />
-      <a-segmented v-if="kind === 'MessageTrend' || (kind === 'VideoPlaybackTrend' && isPreview)" v-model:value="timeRange" class="resource-switch" size="small" :options="timeOptions" />
+      <a-segmented v-if="kind === 'MessageTrend'" v-model:value="timeRange" class="resource-switch" size="small" :options="timeOptions" />
       <a-button v-if="kind === 'AlgorithmCoverage'" type="link" size="small" class="action-link" @click="openAlgorithmConfig">
         {{ t('resourceDashboard.algorithmConfig') }} <RightOutlined class="action-arrow" />
       </a-button>
@@ -11,12 +11,11 @@
     <div v-if="unavailable" class="state"><a-empty :description="t('resourceDashboard.privateOnly')" /></div>
     <div v-else-if="loading" class="state"><a-spin /></div>
     <div v-else-if="error" class="state"><a-empty :description="t('resourceDashboard.loadError')" /><a-button size="small" @click="refresh">{{ t('resourceDashboard.retry') }}</a-button></div>
-    <div v-else class="content" :class="{ 'chart-content': ['DeviceDistribution','MessageTrend','VideoPlaybackTrend'].includes(kind) }">
+    <div v-else class="content" :class="{ 'chart-content': ['DeviceDistribution','MessageTrend'].includes(kind) }">
       <QuickStartPanel v-if="kind === 'QuickStart'" :actions="actions" @open="open" />
       <AlgorithmCoveragePanel v-else-if="kind === 'AlgorithmCoverage'" :items="data.algorithms || []" />
       <DistributionPanel v-else-if="kind === 'DeviceDistribution'" :items="data.distribution" :device-type="deviceType" :limit="config.limit" />
       <TrendPanel v-else-if="kind === 'MessageTrend'" :series="data.series" />
-      <VideoPlaybackTrendPanel v-else-if="kind === 'VideoPlaybackTrend'" :series="data.series" />
       <FlowPanel v-else-if="kind === 'NetworkCards'" :data="data" :limit="config.limit" />
       <MetricPanel v-else :kind="kind" :metrics="data.metrics" :title="title" />
     </div>
@@ -37,7 +36,6 @@ import AlgorithmCoveragePanel from './AlgorithmCoveragePanel.vue'
 
 const DistributionPanel = defineAsyncComponent(() => import('./DistributionPanel.vue'))
 const TrendPanel = defineAsyncComponent(() => import('./TrendPanel.vue'))
-const VideoPlaybackTrendPanel = defineAsyncComponent(() => import('./VideoPlaybackTrendPanel.vue'))
 const props = defineProps<{ kind: ResourceKind; info?: ResourceInfo; isEdit: boolean }>()
 const { t } = useI18n()
 const menuStore = useMenuStore()
