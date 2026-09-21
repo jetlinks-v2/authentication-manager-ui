@@ -19,7 +19,12 @@
             :scroll="{ y: 'calc(100% - 3.75rem)' }"
         >
           <template #headerLeftRender>
-              <a-flex gap="small">
+              <div class="user-list-toolbar">
+                <h2 class="user-list-title">{{ $t('SystemList.userManagement') }}</h2>
+              </div>
+          </template>
+          <template #headerRightRender>
+              <a-flex :gap="16">
                   <ConditionFilter
                       class="authentication-system-list-page__filter"
                       :columns="columns"
@@ -208,7 +213,6 @@ import {queryPageNoPage} from "@authentication-manager-ui/api/system/positions";
 import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
 import type {ConditionFilterChangePayload} from '@jetlinks-web-core/components/ConditionFilter';
 import {transformConditionTerms} from '@authentication-manager-ui/views/system/conditionFilterUtils';
-import PageHeader from '@jetlinks-web-core/components/PageHeader';
 
 const {t: $t} = useI18n();
 const permission = 'system/User';
@@ -493,6 +497,21 @@ onMounted(() => {
       }
     }
   }
+}
+
+.user-list-toolbar {
+  display: flex;
+  flex: 1;
+  align-items: center;
+}
+
+.user-list-title {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: var(--fs-18);
+  font-weight: 600;
+  line-height: 32px;
+  white-space: nowrap;
 }
 
 .user-tag {
