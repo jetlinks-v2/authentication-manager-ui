@@ -22,7 +22,7 @@
     layout="vertical"
   >
     <BasisSection :title="$t('Basis.Config.basicInfo')" :icon="BASIS_SECTION_ICON.basic">
-      <template v-if="sectionEditMode" #extra>
+      <template v-show="sectionEditMode" #extra>
         <BasisSectionActions
           section="basic"
           :active-section="editingSection"
@@ -34,81 +34,90 @@
         />
       </template>
       <RegistryComponent
+        is="a-descriptions"
+        class="basis-section__descriptions"
+        :column="3"
+        :colon="false"
         :page-code="BASIS_FORM_PAGE_CODE"
         :code="BASIS_FORM_MODULE_CODE"
       >
-        <BasisField
-          :key="'title'"
-          :label="$t('Basis.Form.436809-0')"
-          name="title"
-          :column="1"
-          :editing="isEditing('basic')"
-          :display="displayValue(formData.title)"
-        >
-          <a-input
-            v-model:value="formData.title"
-            :placeholder="$t('Basis.Form.436809-1')"
-          />
-        </BasisField>
-        <BasisField
-          :key="'logo'"
-          :label="$t('Basis.Form.436809-15')"
-          :column="2"
-          :editing="isEditing('basic')"
-        >
-          <Upload v-model:img-src="formData.logo" upload-type="logo" />
-          <template #view>
-            <BasisImagePreview
-              :src="logoSrc"
-              :alt="$t('Basis.Form.436809-15')"
-              :placeholder="placeholder"
-            />
-          </template>
-        </BasisField>
-        <BasisField
-          :key="BASIS_FORM_FIELD.ICO"
-          :label="$t('Basis.Form.436809-16')"
-          :column="3"
-          :editing="isEditing('basic')"
-        >
-          <Upload v-model:img-src="formData.ico" upload-type="ico" />
-          <template #view>
-            <BasisImagePreview
-              :src="icoSrc"
-              :alt="$t('Basis.Form.436809-16')"
-              :placeholder="placeholder"
-            />
-          </template>
-        </BasisField>
-        <div :key="BASIS_FORM_FIELD.RECORD_NUMBER" class="basis-field-group">
+        <a-descriptions-item :span="1">
           <BasisField
-            :label="$t('Basis.Form.436809-24')"
-            name="showRecordNumber"
-            :required="isEditing('basic')"
+              key="title"
+            :label="$t('Basis.Form.436809-0')"
+            name="title"
             :editing="isEditing('basic')"
-            :display="displayValue(formData.showRecordNumber)"
-          >
-            <a-switch v-model:checked="formData.showRecordNumber" />
-          </BasisField>
-          <BasisField
-            v-if="formData.showRecordNumber"
-            :label="$t('Basis.Form.436809-25')"
-            name="recordNumber"
-            :rules="isEditing('basic') && formData.showRecordNumber ? recordNumberRules : undefined"
-            :editing="isEditing('basic')"
-            :display="displayValue(formData.recordNumber)"
+            :display="displayValue(formData.title)"
           >
             <a-input
-              v-model:value="formData.recordNumber"
-              :placeholder="$t('Basis.Form.436809-26')"
+              v-model:value="formData.title"
+              :placeholder="$t('Basis.Form.436809-1')"
             />
           </BasisField>
-        </div>
+        </a-descriptions-item>
+        <a-descriptions-item :span="1">
+          <BasisField
+              key="logo"
+            :label="$t('Basis.Form.436809-15')"
+            :editing="isEditing('basic')"
+          >
+            <Upload v-model:img-src="formData.logo" upload-type="logo" />
+            <template #view>
+              <BasisImagePreview
+                :src="logoSrc"
+                :alt="$t('Basis.Form.436809-15')"
+                :placeholder="placeholder"
+              />
+            </template>
+          </BasisField>
+        </a-descriptions-item>
+        <a-descriptions-item :span="1">
+          <BasisField
+              :key="BASIS_FORM_FIELD.ICO"
+            :label="$t('Basis.Form.436809-16')"
+            :editing="isEditing('basic')"
+          >
+            <Upload v-model:img-src="formData.ico" upload-type="ico" />
+            <template #view>
+              <BasisImagePreview
+                :src="icoSrc"
+                :alt="$t('Basis.Form.436809-16')"
+                :placeholder="placeholder"
+              />
+            </template>
+          </BasisField>
+        </a-descriptions-item>
+        <a-descriptions-item :key="BASIS_FORM_FIELD.RECORD_NUMBER" :span="1">
+          <div class="basis-field-group">
+            <BasisField
+              :label="$t('Basis.Form.436809-24')"
+              name="showRecordNumber"
+              :required="isEditing('basic')"
+              :editing="isEditing('basic')"
+              :display="displayValue(formData.showRecordNumber)"
+            >
+              <a-switch v-model:checked="formData.showRecordNumber" />
+            </BasisField>
+            <BasisField
+              v-if="formData.showRecordNumber"
+              :label="$t('Basis.Form.436809-25')"
+              name="recordNumber"
+              :rules="isEditing('basic') && formData.showRecordNumber ? recordNumberRules : undefined"
+              :editing="isEditing('basic')"
+              :display="displayValue(formData.recordNumber)"
+            >
+              <a-input
+                v-model:value="formData.recordNumber"
+                :placeholder="$t('Basis.Form.436809-26')"
+              />
+            </BasisField>
+          </div>
+        </a-descriptions-item>
       </RegistryComponent>
     </BasisSection>
 
     <BasisSection :title="$t('Basis.Config.mapConfig')" :icon="BASIS_SECTION_ICON.map">
-      <template v-if="sectionEditMode" #extra>
+      <template v-show="sectionEditMode" #extra>
         <BasisSectionActions
           section="map"
           :active-section="editingSection"
@@ -119,43 +128,38 @@
           @save="submit"
         />
       </template>
-      <RegistryComponent
-        :page-code="BASIS_FORM_PAGE_CODE"
-        :code="BASIS_FORM_MODULE_CODE"
+      <MapSettings
+        v-model:web-key="formData.webKey"
+        v-model:api-key="formData.apiKey"
+        v-model:secret-key="formData.secretKey"
+        :editing="isEditing('map')"
+        :placeholder="placeholder"
+        :secret-display="maskedSecret"
       >
-        <MapSettings
-          :key="'map-keys'"
-          v-model:web-key="formData.webKey"
-          v-model:api-key="formData.apiKey"
-          v-model:secret-key="formData.secretKey"
-          :editing="isEditing('map')"
-          :placeholder="placeholder"
-          :secret-display="maskedSecret"
-        />
-        <BasisField
-          :key="BASIS_FORM_FIELD.BASE_PATH"
-          label="base-path"
-          name="base-path"
-          :column="4"
-          :rules="isEditing('map') ? basePathRules : undefined"
-          :editing="isEditing('map')"
-          :display="displayValue(formData['base-path'])"
-        >
-          <template #tooltip>
-            <div>
-              <div>{{ $t('Basis.Form.436809-12') }}</div>
+        <a-descriptions-item :key="BASIS_FORM_FIELD.BASE_PATH" :span="1">
+          <BasisField
+            label="base-path"
+            name="base-path"
+            :rules="isEditing('map') ? basePathRules : undefined"
+            :editing="isEditing('map')"
+            :display="displayValue(formData['base-path'])"
+          >
+            <template #tooltip>
               <div>
-                {{ $t('Basis.Form.436809-13') }}{http/https}:
-                //{前端所在服务器IP地址}:{前端暴露的服务端口}/api
+                <div>{{ $t('Basis.Form.436809-12') }}</div>
+                <div>
+                  {{ $t('Basis.Form.436809-13') }}{http/https}:
+                  //{前端所在服务器IP地址}:{前端暴露的服务端口}/api
+                </div>
               </div>
-            </div>
-          </template>
-          <a-input
-            v-model:value="formData['base-path']"
-            :placeholder="$t('Basis.Form.436809-14')"
-          />
-        </BasisField>
-      </RegistryComponent>
+            </template>
+            <a-input
+              v-model:value="formData['base-path']"
+              :placeholder="$t('Basis.Form.436809-14')"
+            />
+          </BasisField>
+        </a-descriptions-item>
+      </MapSettings>
     </BasisSection>
 
     <RegistryComponent
@@ -219,7 +223,6 @@
 
 <script lang="ts" name="BasicForm" setup>
 import Upload from '@jetlinks-web-core/views/init-home/Basic/components/upload/upload.vue'
-import LayoutModeSelector from './components/LayoutModeSelector.vue'
 import MapSettings from './components/MapSettings.vue'
 import BasisSection from './components/BasisSection.vue'
 import BasisSectionActions from './components/BasisSectionActions.vue'
@@ -242,7 +245,6 @@ const {
   formRules,
   recordNumberRules,
   basePathRules,
-  headerThemeAreas,
   loading,
   error,
   saving,
@@ -251,13 +253,10 @@ const {
   sectionEditMode,
   editingSection,
   placeholder,
-  displayTheme,
-  displayLayout,
   maskedSecret,
   logoSrc,
   icoSrc,
   backgroundSrc,
-  changeHeaderTheme,
   displayValue,
   isEditing,
   startEdit,

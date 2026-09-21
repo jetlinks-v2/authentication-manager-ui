@@ -97,12 +97,14 @@ withDefaults(
 
 .basis-section__action {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: flex-end;
+  width: 10rem;
   // 跨满所有行并拉伸，因此按钮相对整个内容面板垂直居中。
   grid-row: 1 / -1;
   align-self: stretch;
   white-space: nowrap;
+  padding-bottom: 2px;
 }
 
 // 字段组（如「展示备案号」+「备案号」）作为一个整体占一列并跨满所有行。
@@ -111,6 +113,44 @@ withDefaults(
   grid-row: 1 / -1;
   align-content: center;
   gap: var(--space-2);
+}
+
+// 描述列表接管字段换行，外层网格仅保留原有操作列和卡片样式。
+.basis-section__fields :deep(.basis-section__descriptions) {
+  min-width: 0;
+  grid-column: 1 / -2;
+  grid-row: 1 / -1;
+
+  table {
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .ant-descriptions-row > td {
+    padding-bottom: var(--space-3);
+    padding-inline-end: var(--space-3);
+    vertical-align: top;
+  }
+
+  .ant-descriptions-row > td:last-child {
+    padding-inline-end: 0;
+  }
+
+  .ant-descriptions-row:last-child > td {
+    padding-bottom: 0;
+  }
+
+  .ant-descriptions-item-content {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .basis-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
 }
 
 // 自定义域名等自行排布的卡片：单列、无操作列。
