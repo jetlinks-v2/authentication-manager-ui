@@ -4,7 +4,7 @@ export const HOME_TARGETS: Record<string, HomeTarget> = {
   devices: { menus: ['iot-user-device-list', 'iot-user/device/list'] },
   addDevice: { menus: ['iot-user-device-list'], query: { type: 'device', action: 'create' } },
   video: { menus: ['video/resources', 'media/Device', 'video/live'] },
-  addVideo: { menus: ['media/Device/Save', 'media/Device'], params: { id: ':id' }, query: { type: 'video', action: 'create' } },
+  addVideo: { menus: ['video/resources'], query: { perspective: 'edge-node', action: 'access' } },
   gateway: { menus: ['iot-user-device-list', 'iot-user/device/list'], query: { type: 'gateway' } },
   createApplication: { menus: ['application-center/ProjectApplication'], query: { action: 'create' } },
   applications: { menus: ['application-center/ProjectApplication'] },

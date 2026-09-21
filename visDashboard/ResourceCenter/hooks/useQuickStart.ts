@@ -1,6 +1,7 @@
 import { computed, type Ref } from 'vue'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { isSaaS } from '@jetlinks-web-core/utils/consts'
+import { HOME_TARGETS } from '../../Base/shared/navigation'
 
 type QuickStartAction = {
   key: string
@@ -15,7 +16,7 @@ type QuickStartAction = {
 const actions: QuickStartAction[] = [
   { key: 'edge', icon: 'ApiOutlined', menu: 'iot-user-device-list', query: { type: 'gateway' } },
   { key: 'iot', icon: 'DatabaseOutlined', menu: 'iot-user/device/list', query: { type: 'device', action: 'create' } },
-  { key: 'video', icon: 'VideoCameraAddOutlined', menu: 'media/Device/Save', fallbackMenu: 'media/Device', params: { id: ':id' }, query: { type: 'video', action: 'create' } },
+  { key: 'video', icon: 'VideoCameraAddOutlined', menu: HOME_TARGETS.addVideo.menus[0], query: HOME_TARGETS.addVideo.query },
   { key: 'screen', icon: 'DashboardOutlined', menu: 'visualization/project', query: { action: 'create', kind: 'screen' } },
   { key: 'collector', icon: 'FundOutlined', menu: 'data-collect', privateOnly: true },
   { key: 'card', icon: 'WifiOutlined', menu: 'iot-card/CardManagement', privateOnly: true },

@@ -1796,7 +1796,7 @@
   "resourceDashboard": {
     "EdgeNodes": "边缘节点",
     "IotDevices": "物联设备",
-    "VideoDevices": "视频设备",
+    "VideoDevices": "视频通道",
     "Visualization": "可视化",
     "QuickStart": "快速开始",
     "AlgorithmCoverage": "算法覆盖统计",
@@ -1887,7 +1887,7 @@
     "action": {
       "edge": "查看边缘节点",
       "iot": "接入物联设备",
-      "video": "接入视频设备",
+      "video": "接入视频",
       "screen": "创建数据大屏",
       "collector": "接入数据采集",
       "card": "新增物联网卡"

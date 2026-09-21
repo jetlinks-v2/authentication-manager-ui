@@ -1,5 +1,13 @@
 # 资源中心仪表盘组件
 
+## 视频指标与接入入口
+
+目标与范围：仅调整本模块资源中心仪表盘。顶部 `VideoDevices` 指标标题改为“视频通道”，继续使用 `hooks/videoSummaryContext.ts` 的 `queryOverviewChannelSummary` 通道总数与在线数；保持组件类型和配置键，兼容已保存的画布布局。
+
+实施：更新 `locales/lang/zh.json`、`en.json` 的指标标题和快速开始文案；`visDashboard/ResourceCenter/hooks/useQuickStart.ts` 复用概览 `Base/shared/navigation.ts` 的 `HOME_TARGETS.addVideo`。快速开始“接入视频”进入菜单 `video/resources`，携带 `perspective=edge-node&action=access`，由视频列表自动选中网关后显示现有接入弹窗。动作清理与远程网关访问沿用媒体模块已实现逻辑。
+
+验证结果：双语 JSON、指标/按钮文案和 TypeScript 语法检查通过；使用真实 Vue 响应式状态执行快捷入口，SaaS/私有化两种模式均正确传入视频列表菜单和一次性动作，菜单缺失、设计预览与编辑状态均阻止跳转；定向 `git diff --check` 通过。媒体弹窗动作消费沿用本会话此前已通过的 7 项导航测试，本次未改动消费逻辑。按性能约束未执行全量类型检查或构建，后续命令为 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json`、`pnpm build`（在 runtime-ui 运行）；无独立 lint 命令。浏览器工具认证不可用，真实页面交互仍待人工验证。无后端或菜单定义变更；开发环境前端热更新生效，无需重启后端，生产环境需重新发布运行时前端。
+
 ## 目标与范围
 
 在 `authentication-manager-ui/visDashboard/ResourceCenter` 开发九个组件：边缘节点、物联设备、视频设备、可视化、快速开始、设备上报消息趋势、数据采集、物联网卡、设备分布。复用新 `DashBoardCanvas` 的 manifest、懒加载入口和三组导出协议，不接入旧 dashboard，不改概览六组件及菜单。
@@ -12,9 +20,9 @@
 
 接入现有菜单 `resources/Dashboard`、路径 `/resources/dashboard`。页面位于 `views/resources/Dashboard/index.vue`，由模块已有 `getModuleRoutesMap` 自动发现，不增加兼容路由或修改已下发菜单。页面交互使用 `editable=false`、`layoutEditable=true`、`storageKey=resource-center-dashboard`：允许调整已有组件的位置和大小，布局保存在当前浏览器 localStorage，不显示画布设置、组件编辑、添加或删除入口。保留组件自身的时间/类型筛选、重试和快捷跳转，继续遵守 SaaS/私有化可见规则。外层页面负责滚动，画布不增加内层滚动条。
 
-快速开始仅复用目标页已有能力，不为快捷入口新增按钮或弹窗。边缘节点携带 `type=gateway` 进入统一设备列表对应分类，仅用于查看和管理，不触发新增弹层；物联设备以一次性 `action=create` 打开已有新增弹层；大屏进入可视化作品列表并打开已有创建弹窗，默认选择“大屏”。目标页消费创建动作后移除参数，避免刷新时重复打开。视频设备携带 `type=video&action=create` 进入视频分类，由统一设备列表自动触发路由型视频接入 `media/Device/Save` 并清理参数；私有化采集器/物联网卡入口保持原有跳转。
+快速开始仅复用目标页已有能力，不为快捷入口新增按钮或弹窗。边缘节点携带 `type=gateway` 进入统一设备列表对应分类，仅用于查看和管理，不触发新增弹层；物联设备以一次性 `action=create` 打开已有新增弹层；大屏进入可视化作品列表并打开已有创建弹窗，默认选择“大屏”。目标页消费创建动作后移除参数，避免刷新时重复打开。“接入视频”复用概览导航配置，携带 `perspective=edge-node&action=access` 进入 `video/resources`，待自动选中网关后打开接入提示弹窗并清理动作；私有化采集器/物联网卡入口保持原有跳转。
 
-入口配置位于 `visDashboard/ResourceCenter/hooks/useQuickStart.ts`；目标页动作分别由 `device-manager-ui/views/device/list/unified/useUnifiedDeviceActions.ts` 和 `visualization-manager-ui/views/project/hooks/useVizScreenBoard.ts` 承接，展示组件只传递菜单编码。边缘节点入口不携带 `action=create`，其余创建入口继续沿用目标页已有能力。当前变更仅完成静态调用链和差异检查，浏览器交互、真实创建保存及私有化环境仍待人工验收。
+入口配置位于 `visDashboard/ResourceCenter/hooks/useQuickStart.ts`；目标页动作由 `device-manager-ui/views/device/list/unified/useUnifiedDeviceActions.ts`、`visualization-manager-ui/views/project/hooks/useVizScreenBoard.ts` 和 `jetlinks-media-ui/views/video/components/resources/useVideoGatewayNavigation.ts` 承接，展示组件只传递菜单编码。边缘节点入口不携带 `action=create`，其余创建入口继续沿用目标页已有能力。当前变更仅完成静态调用链和差异检查，浏览器交互、真实创建保存及私有化环境仍待人工验收。
 
 SaaS 布局将设备分布置于快速开始下方（x=0、y=13、w=6、h=16），设备上报消息趋势置于右侧（x=6、y=5、w=6、h=24），互换原位置和尺寸。仅调整 `useResourceDashboard.ts` 的 SaaS 默认布局，私有化布局保持原样。正式页面实测分布卡位于左下、尺寸 804×520，趋势卡位于右侧、尺寸 804×784，底边齐平；TypeScript 语法检查和 diff 空白检查通过，本次未重复运行完整类型检查或构建。
 

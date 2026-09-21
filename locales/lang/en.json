@@ -1796,7 +1796,7 @@
   "resourceDashboard": {
     "EdgeNodes": "Edge nodes",
     "IotDevices": "IoT devices",
-    "VideoDevices": "Video devices",
+    "VideoDevices": "Video channels",
     "Visualization": "Visualization",
     "QuickStart": "Quick start",
     "AlgorithmCoverage": "Algorithm coverage",
@@ -1887,7 +1887,7 @@
     "action": {
       "edge": "View edge nodes",
       "iot": "Connect IoT device",
-      "video": "Connect video device",
+      "video": "Connect video",
       "screen": "Create data screen",
       "collector": "Connect data collection",
       "card": "Add IoT card"

@@ -2,6 +2,22 @@
 
 # 项目概览
 
+## 添加视频快捷入口调整
+
+目标：概览“添加视频”进入视频管理下的视频列表（菜单 `video/resources`，URL `/resources/video/list`），并打开接入弹窗。
+
+影响范围：本模块 `visDashboard/Base/shared/navigation.ts` 与媒体模块的视频列表接线。快捷入口由旧的 `media/Device/Save` 改为视频列表；现有 `VideoGatewayAccessDialog.vue` 依赖所选边缘网关的名称与 ID，因此由列表完成选择后打开。
+
+已确认方案：沿用视频列表自动选择设备的逻辑，选中边缘网关后打开现有“请进入边缘网关接入视频”弹窗。快捷入口携带 `action=access`、`perspective=edge-node`；媒体模块在当前页面且选中网关后消费一次性动作，保留其他查询参数。网关数据未就绪时等待；没有网关或选中普通媒体设备时不打开网关弹窗。关闭后刷新不重复弹出，从概览再次点击可重新触发。
+
+实现入口：本模块菜单目标已调整；媒体模块既有 `views/video/components/resources/useVideoGatewayNavigation.ts` 的 `useVideoGatewayAccess` 承载弹窗状态、网关访问和路由动作消费，`VideoResourcesView.vue` 复用该 hook 接线。保持现有设备树、视频卡片和弹窗结构，不增加选择弹窗或平台侧配置表单。网关访问复用注册中心的 `edge-master-ui/apis/openGatewayEdgeUrl`，不复制代理地址或 token 处理。
+
+范围约束：不修改运营端 `ui/`、其他快捷操作、页面壳层、后端接口或菜单权限定义。菜单可用性继续由现有 `useHomeNavigation` 判断。
+
+验证：从 `runtime-ui` 执行 `node --test modules/jetlinks-media-ui/views/video/components/resources/videoGatewayNavigation.test.mjs`，7 项测试全部通过，包括等待自动选择、动作清除与查询参数保留、关闭后数据刷新不重开、再次点击重开、普通访问与非网关不弹出、缓存页面隔离、取消导航及原有设备目录导航。`VideoResourcesView.vue` 的 SFC script/template 检查、两个 TypeScript 实现文件语法检查和两个 owning module 的 `git diff --check` 通过；该 Vue 文件由 310 行收敛至 282 行。
+
+按性能约束未执行完整类型检查或构建，后续命令为 `pnpm exec vue-tsc --noEmit -p modules/jetlinks-media-ui/tsconfig.json`、`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 和 `pnpm build`；根 package.json 未提供独立 lint 命令。浏览器工具因 `Codex auth token is unavailable` 无法读取会话，真实概览点击、浏览器刷新及远程网关打开仍待人工验收。开发环境可由前端热更新生效，不需要重启后端服务；生产环境需重新发布运行时前端。
+
 ## 当前组件内容优化
 
 概览个人布局固定使用 `project-overview`。页面通过 `legacyStorageKeys` 向 DashBoardCanvas 声明历史 key，由画布恢复布局时迁移 `project-overview-vN`：优先保留固定 key，缺失时采用版本号最高的有效布局，写入成功后清理版本 key；不会清理其他页面缓存。普通布局调整不再更换 key。迁移的有效数据选择、幂等性、固定 key 优先、无关缓存保留及写入失败保护检查通过；DashBoardCanvas 的 SFC 脚本与模板编译、概览 63 个 SFC 与相对导入检查及两处仓库的 diff 检查通过。用户最新 DevTools 截图已显示固定 key，旧版本 key 不再出现。未运行全量 lint/typecheck/build。
@@ -81,7 +97,7 @@ SaaS 初始布局按当前概览设计的 9 组坐标同步到 `views/project/Ov
 
 配额优先使用项目会话 ID；直接进入运行端且缺少 ID 时，按后端正式控制端项目列表契约匹配当前 code。当前运行端代理不提供该控制端接口，需部署侧提供控制端访问和完整项目上下文才能继续验证配额回显。算法中心虽能打开，但其场景树接口也返回 404；设备列表可打开，但部分明细请求权限不足。这些不属于组件渲染故障。
 
-快捷操作已移除文搜图、消息通知、成员管理和算法配置，保留添加设备、添加视频、查看边缘节点、创建应用、空间配置、视联告警、物联告警 7 项。空间配置通过菜单 `space/AreaManagement` 进入 `/resources/space/management`；视联告警和物联告警分别通过 `machine-vision/VisualAlarm`、`iot-user/device/alarm` 进入项目告警页面。创建应用先进入应用列表并以一次性 `action=create` 打开创建弹窗，列表与弹窗同时渲染；查看边缘节点仅跳转到边缘节点列表，不携带创建动作或打开弹窗；添加设备与添加视频使用统一动作契约，由统一设备列表分别打开设备新增抽屉或跳转触发视频接入。未配置的采集器和卡管理入口保持禁用。既有运维专题页沿用源模块的演示契约，没有将其演示数据用于本次概览。
+快捷操作已移除文搜图、消息通知、成员管理和算法配置，保留添加设备、添加视频、查看边缘节点、创建应用、空间配置、视联告警、物联告警 7 项。空间配置通过菜单 `space/AreaManagement` 进入 `/resources/space/management`；视联告警和物联告警分别通过 `machine-vision/VisualAlarm`、`iot-user/device/alarm` 进入项目告警页面。创建应用先进入应用列表并以一次性 `action=create` 打开创建弹窗，列表与弹窗同时渲染；查看边缘节点仅跳转到边缘节点列表，不携带创建动作或打开弹窗；添加设备由统一设备列表打开新增抽屉；添加视频直接进入视频列表，待自动选中边缘网关后打开现有接入提示弹窗，动作消费规则见“添加视频快捷入口调整”。未配置的采集器和卡管理入口保持禁用。既有运维专题页沿用源模块的演示契约，没有将其演示数据用于本次概览。
 
 ## 文件入口
 
