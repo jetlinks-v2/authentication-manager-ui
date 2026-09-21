@@ -134,6 +134,7 @@ const columns = [
     search: {
       type: 'string',
     },
+    columnEmpty:$t('comm.table.empty')
   },
   {
     title: $t('RoleRight.index.470525-4'),

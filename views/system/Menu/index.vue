@@ -176,6 +176,7 @@ const columns = [
     dataIndex: 'describe',
     key: 'describe',
     ellipsis: true,
+    columnEmpty: $t('comm.table.empty')
   },
   {
     title: $t('Menu.index.599742-14'),
@@ -186,6 +187,7 @@ const columns = [
     },
     width: 200,
     scopedSlots: true,
+
   },
   {
     title: $t('Menu.index.599742-15'),
@@ -251,7 +253,6 @@ const getList = async (_params: any) => {
   }
   const params = {
     ..._params,
-    terms: [],
     sorts: [{ name: 'sortIndex', order: 'asc' }],
     paging: false,
   }

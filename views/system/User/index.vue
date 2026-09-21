@@ -80,7 +80,7 @@
                     ?.map((item) => {
                       return item.name;
                     })
-                    .join(',') || '--'
+                    .join(',') || $t('comm.table.empty')
               }}
             </j-ellipsis>
           </template>
@@ -94,7 +94,7 @@
               {{
                 slotProps?.positions
                     ?.map((item) => item.name)
-                    .join(',') || '--'
+                    .join(',') || $t('comm.table.empty')
               }}
             </j-ellipsis>
           </template>
@@ -311,6 +311,7 @@ const columns = [
     search: {
       type: 'string',
     },
+    columnEmpty: $t('comm.table.empty')
   },
   {
     title: $t('User.index.673867-16'),
@@ -320,6 +321,7 @@ const columns = [
     search: {
       type: 'string',
     },
+    columnEmpty: $t('comm.table.empty')
   },
   {
     title: $t('User.index.673867-17'),
