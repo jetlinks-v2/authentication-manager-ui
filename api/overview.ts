@@ -8,6 +8,8 @@ type DeviceDetailTerm = {
   value: unknown
 }
 
+export type OverviewDeviceTerm = DeviceDetailTerm
+
 export interface OverviewCountSummary {
   total: number
   online: number
@@ -214,12 +216,10 @@ export const queryOverviewGatewaySummary = () => queryDeviceCountSummary(buildGa
 /** 查询项目内物联设备的当前在线数与总数，不包含网关和视频接入产品。 */
 export const queryOverviewIotDeviceSummary = () => queryDeviceCountSummary(buildIotDeviceTerms())
 
-/** 空间分布复用数量卡的产品范围，读取完整设备 ID 集合以排除视频产品和网关。 */
-export const queryOverviewDeviceIds = async (kind: 'edge' | 'iot'): Promise<Set<string>> => {
-  const terms = kind === 'edge' ? buildGatewayTerms() : buildIotDeviceTerms()
-  const rows = await queryAllPages('/device/instance/_query', { terms, includes: ['id'] })
-  return new Set(rows.map(row => textOf(row.id)).filter(Boolean))
-}
+/** 设备分布与数量卡、统一设备列表共用同一产品范围。 */
+export const buildOverviewDeviceTerms = (kind: 'edge' | 'iot'): OverviewDeviceTerm[] => (
+  kind === 'edge' ? buildGatewayTerms() : buildIotDeviceTerms()
+)
 
 /** 按视频资源页的设备与通道链路统计当前在线通道和通道总数。 */
 export const queryOverviewChannelSummary = async (): Promise<OverviewCountSummary> => {
@@ -257,11 +257,11 @@ export const queryOverviewChannelSummary = async (): Promise<OverviewCountSummar
 }
 
 
-/** 查询概览页展示的前几台网关；运行指标由展示层保留既有演示数据。 */
-export const queryOverviewGatewayPage = async (pageSize = 4): Promise<OverviewGatewayPage> => {
+/** 默认查询概览前几台网关；仪表盘指标可分页遍历同一网关范围。 */
+export const queryOverviewGatewayPage = async (pageSize = 4, pageIndex = 0): Promise<OverviewGatewayPage> => {
   const response = await request.post(
     '/device/instance/detail/_query',
-    buildDetailQuery(buildGatewayTerms(), pageSize),
+    { ...buildDetailQuery(buildGatewayTerms(), pageSize), pageIndex },
     { hiddenError: true },
   )
   const result = unwrapResult(response)

@@ -6,26 +6,29 @@ import type { DashboardValue } from '@jetlinks-web-core/components/DashBoardCanv
 import { kinds,typeOf,type ResourceKind } from '../../../visDashboard/ResourceCenter/shared'
 
 const thumbnails = import.meta.glob('../../../visDashboard/ResourceCenter/*/thumbnail.svg', { eager: true,query: '?url',import: 'default' }) as Record<string,string>
+const layoutStorageKey = 'resource-center-dashboard-v5'
+const previousLayoutStorageKey = 'resource-center-dashboard-v4'
 const base = [
   ['EdgeNodes',0,0,3,4],['IotDevices',3,0,3,4],['VideoDevices',6,0,3,4],['Visualization',9,0,3,4],
 ] as const
-// 私有化使用24列布局：顶部四卡各6列；快速开始(左12列)与数据采集(中6列)高度为9，物联网卡(右6列)贯穿右侧；下方算法覆盖与视频播放各9列，设备分布与消息趋势各9列。
+// 私有化使用24列布局；网关状态指标压缩为7行，减少概览页纵向占用。
 const privateLayout = [
   ['EdgeNodes', 0, 0, 6, 4], ['IotDevices', 6, 0, 6, 4], ['VideoDevices', 12, 0, 6, 4], ['Visualization', 18, 0, 6, 4],
   ['QuickStart', 0, 4, 12, 9], ['Collection', 12, 4, 6, 9], ['NetworkCards', 18, 4, 6, 27],
-  ['AlgorithmCoverage', 0, 13, 9, 9], ['VideoPlaybackTrend', 9, 13, 9, 9],
+  ['AlgorithmCoverage', 0, 13, 9, 9], ['VideoPlaybackTrend', 9, 13, 9, 7],
   ['DeviceDistribution', 0, 22, 9, 9], ['MessageTrend', 9, 22, 9, 9],
 ] as const
-// SaaS 使用12列双栏布局：左栏(6列)快速开始/算法覆盖/设备分布，右栏(6列)消息趋势/视频播放趋势；快速开始与消息趋势默认高度同步增加至9。
+// SaaS 窄栏下组件内部改为上下布局，因此保留14行，仍比原18行更紧凑。
 const saasLayout = [
   ...base,
   ['QuickStart', 0, 4, 6, 9], ['MessageTrend', 6, 4, 6, 9],
-  ['AlgorithmCoverage', 0, 13, 6, 9], ['VideoPlaybackTrend', 6, 13, 6, 18],
+  ['AlgorithmCoverage', 0, 13, 6, 9], ['VideoPlaybackTrend', 6, 13, 6, 14],
   ['DeviceDistribution', 0, 22, 6, 9],
 ] as const
 
 /** 资源中心页面的组件发现范围与默认布局。 */
 export function useResourceDashboard(preview: Ref<boolean> = ref(false)) {
+  migrateCompactGatewayLayout()
   const allowed = computed(() => kinds.filter(kind => preview.value || !isSaaS || !['Collection','NetworkCards'].includes(kind)))
   const discovery = useDashboardCatalog(dashboardSources,computed(() => ({
     modules: ['authentication-manager-ui'],directories: ['visDashboard'],
@@ -47,4 +50,18 @@ export function useResourceDashboard(preview: Ref<boolean> = ref(false)) {
     }),
   }))
   return { ...discovery,catalog,dashboard }
+}
+
+/** 保留用户其余组件的位置，仅在首次升级时压缩旧版网关指标高度。 */
+function migrateCompactGatewayLayout() {
+  if (typeof localStorage === 'undefined' || localStorage.getItem(layoutStorageKey)) return
+  try {
+    const saved = JSON.parse(localStorage.getItem(previousLayoutStorageKey) || 'null')
+    if (!Array.isArray(saved)) return
+    const height = isSaaS ? 14 : 7
+    const next = saved.map(item => item?.i === 'resourceCenterVideoPlaybackTrend'
+      ? { ...item, h: Math.min(Number(item.h) || height, height) }
+      : item)
+    localStorage.setItem(layoutStorageKey, JSON.stringify(next))
+  } catch { /* 无效或不可用的本地布局由画布回退到默认配置。 */ }
 }

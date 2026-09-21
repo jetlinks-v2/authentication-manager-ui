@@ -40,8 +40,6 @@ export function useResourceWidget(kind: ResourceKind, info: Ref<ResourceInfo | u
     error.value = false
     if (unavailable.value || kind === 'QuickStart') { data.value = emptyData(); loading.value = false; return }
     if (isPreview.value) { data.value = previewData(kind, deviceType.value, timeRange.value); loading.value = false; return }
-    // 尚无播放次数统计接口，运行态不以视频数量生成虚假的全零曲线。
-    if (kind === 'VideoPlaybackTrend') { data.value = emptyData(); loading.value = false; return }
     loading.value = true
     try {
       const result = emptyData()
