@@ -4,16 +4,10 @@
         <full-page hasPadding>
             <div style="height: 100%; display: flex;flex-direction: column">
                 <div style="min-height: 0; flex: 1">
-                    <ConditionFilter
-                        class="authentication-system-list-page__filter"
-                        :columns="columns"
-                        target="search-system"
-                        @change="handleSearch"
-                    />
                 <j-pro-table
                     ref="tableRef"
                     mode="TABLE"
-                    style="padding: 1rem 0 0"
+                    class="pro-table__no-padding"
                     :columns="columns"
                     :request="querySystem"
                     :defaultParams="{
@@ -21,6 +15,23 @@
                     }"
                     :params="params"
                 >
+                    <template #headerLeftRender>
+                        <div class="log-table-toolbar">
+                            <h2 class="log-table-title">
+                                {{ $t('Log.index.407378-1') }}
+                            </h2>
+                        </div>
+                    </template>
+                    <template #headerRightRender>
+                        <a-flex :gap="16">
+                            <ConditionFilter
+                                class="authentication-system-list-page__filter"
+                                :columns="columns"
+                                target="search-system"
+                                @change="handleSearch"
+                            />
+                        </a-flex>
+                    </template>
                     <template #level="slotProps">
                     <a-tag
                         :color="
@@ -258,5 +269,20 @@ const handleSearch = ({ filter }: ConditionFilterChangePayload) => {
   border: 1px solid #d9d9d9;
   padding: 0.75rem;
   border-radius: 0.125rem;
+}
+.log-table-toolbar {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+.log-table-title {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: var(--fs-18);
+  font-weight: 600;
+  line-height: 32px;
+  white-space: nowrap;
 }
 </style>
