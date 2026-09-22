@@ -2,6 +2,8 @@ import { computed, onActivated, onDeactivated, onScopeDispose, ref, shallowRef, 
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import dayjs from 'dayjs'
+import { useDocumentVisibility } from '@vueuse/core'
+import { useGatewayRotation } from './useGatewayRotation'
 import { getProjectCodeFromLocation } from '@jetlinks-web-core/utils/project-runtime'
 import { settingsOf, type ResourceInfo } from '../shared'
 import { gatewayMetrics, loadGatewayStatuses, loadGatewayHistory, type GatewayStatus, type GatewayMetric, type GatewayPoint } from '../services/gatewayStatus'
@@ -36,8 +38,21 @@ export function useGatewayStatus(info: Ref<ResourceInfo | undefined>, isEdit: Re
     })
   })
   const selected = computed(() => rows.value.find(item => item.id === selectedId.value))
+  const visibility = useDocumentVisibility()
+  const rotation = useGatewayRotation({
+    ids: computed(() => rows.value.map(item => item.id)),
+    selectedId,
+    enabled: computed(() => active.value && !preview.value && visibility.value === 'visible'
+      && !loading.value && !error.value && !trendLoading.value),
+  })
   const trendTitle = computed(() => t('resourceDashboard.gatewayStatus.trendTitle', {
     name: selected.value?.name || '', metric: t(`resourceDashboard.gatewayStatus.${metric.value === 'queue' ? 'backlog' : metric.value === 'cpu' ? 'cpuUsage' : metric.value}`),
+  }))
+  const trendSummary = computed(() => ({
+    name: selected.value?.name || '',
+    description: t('resourceDashboard.gatewayStatus.trendDescription', {
+      metric: t(`resourceDashboard.gatewayStatus.${metric.value === 'queue' ? 'backlog' : metric.value === 'cpu' ? 'cpuUsage' : metric.value}`),
+    }),
   }))
   let generation = 0, trendGeneration = 0
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -94,17 +109,24 @@ export function useGatewayStatus(info: Ref<ResourceInfo | undefined>, isEdit: Re
   const hasHistory = computed(() => points.value.some(point => point.value !== null))
   const option = computed(() => ({
     tooltip: { trigger: 'axis', renderMode: 'richText', valueFormatter: (value: number | null) => value === null ? '—' : `${Number(value.toFixed(1))}${unit.value}` },
-    grid: { left: 4, right: 4, top: 10, bottom: 6, containLabel: true },
+    grid: { left: 0, right: 10, top: 8, bottom: 4, containLabel: true },
     xAxis: { type: 'time', min: trendEnd.value - 86400000, max: trendEnd.value,
       boundaryGap: false, splitNumber: 5, axisTick: { show: false }, axisLine: { show: false },
-      axisLabel: { color: '#86909c', fontSize: 10, hideOverlap: true, formatter: (value: number) => dayjs(value).format('HH:mm') }, splitLine: { show: false } },
-    yAxis: { type: 'value', show: false, min: 0 },
+      axisLabel: { color: '#86909c', fontSize: 11, margin: 12, hideOverlap: true, formatter: (value: number) => dayjs(value).format('HH:mm') }, splitLine: { show: false } },
+    yAxis: { type: 'value', min: 0, max: unit.value === '%' ? 100 : undefined, splitNumber: 4,
+      interval: unit.value === '%' ? 25 : undefined,
+      minInterval: unit.value === '%' ? undefined : 1, axisTick: { show: false }, axisLine: { show: false },
+      axisLabel: { color: '#86909c', fontSize: 11, formatter: (value: number) => `${value}${unit.value === '%' ? '%' : ''}` },
+      splitLine: { lineStyle: { color: '#edf0f4', type: 'dashed' } } },
     series: [{ type: 'line', name: t(`resourceDashboard.gatewayStatus.${metric.value}`), smooth: false, connectNulls: false, showSymbol: false,
-      data: points.value.map(point => [point.time, point.value]), lineStyle: { color: '#1677ff', width: 1.5 },
-      itemStyle: { color: '#1677ff' }, areaStyle: { color: 'rgba(22,119,255,.15)' } }],
+      data: points.value.map(point => [point.time, point.value]), lineStyle: { color: '#1677ff', width: 2 },
+      itemStyle: { color: '#1677ff' }, areaStyle: { color: {
+        type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+        colorStops: [{ offset: 0, color: 'rgba(22,119,255,.16)' }, { offset: 1, color: 'rgba(22,119,255,.01)' }],
+      } } }],
   }))
-  return { title, metric, tabs, rankingTitle, rows, selectedId, trendTitle, option, points,
-    loading, error, hasHistory, trendLoading, trendError, refresh, refreshTrend }
+  return { title, metric, tabs, rankingTitle, rows, selectedId, trendTitle, trendSummary, option, points,
+    loading, error, hasHistory, trendLoading, trendError, refresh, refreshTrend, rotation }
 }
 
 function previewGateways(): GatewayStatus[] {

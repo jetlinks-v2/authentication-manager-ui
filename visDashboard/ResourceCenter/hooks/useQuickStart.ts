@@ -15,7 +15,7 @@ type QuickStartAction = {
 
 const actions: QuickStartAction[] = [
   { key: 'edge', icon: 'ApiOutlined', menu: 'iot-user-device-list', query: { type: 'gateway' } },
-  { key: 'iot', icon: 'DatabaseOutlined', menu: 'iot-user/device/list', query: { type: 'device', action: 'create' } },
+  { key: 'iot', icon: 'DatabaseOutlined', menu: HOME_TARGETS.addDevice.menus[0], query: HOME_TARGETS.addDevice.query },
   { key: 'video', icon: 'VideoCameraAddOutlined', menu: HOME_TARGETS.addVideo.menus[0], query: HOME_TARGETS.addVideo.query },
   { key: 'screen', icon: 'DashboardOutlined', menu: 'visualization/project', query: { action: 'create', kind: 'screen' } },
   { key: 'collector', icon: 'FundOutlined', menu: 'data-collect', privateOnly: true },
@@ -36,8 +36,8 @@ export function useQuickStart(isEdit: Ref<boolean>, isPreview?: Ref<boolean>) {
     disabled: !preview.value && !resolveMenu(action),
   })))
   /** 独立路由新增页直接直达，弹层类新增跳转到列表并携带创建动作。 */
-  function open(code: string) {
-    const action = visibleActions.value.find(item => item.menu === code || item.fallbackMenu === code)
+  function open(key: string) {
+    const action = visibleActions.value.find(item => item.key === key)
     if (preview.value || !action) return
     const targetMenu = resolveMenu(action)
     if (!targetMenu) return

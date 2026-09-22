@@ -1821,6 +1821,7 @@
       "memoryRanking": "Edge node memory usage (%)",
       "diskRanking": "Edge node disk usage (%)",
       "trendTitle": "{name} · {metric} over the past 24 hours",
+      "trendDescription": "{metric} · Past 24 hours",
       "empty": "No gateway metrics",
       "emptyDescription": "Connect edge nodes to view review queues and resource usage",
       "unsupported": "Metric is not enabled",

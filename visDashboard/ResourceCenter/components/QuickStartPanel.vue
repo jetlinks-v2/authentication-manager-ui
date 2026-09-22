@@ -5,7 +5,7 @@
       :key="item.key"
       class="action"
       :disabled="item.disabled"
-      @click="$emit('open', item.menu)"
+      @click="$emit('open', item.key)"
     >
       <div class="icon-wrap">
         <img v-if="iconMap[item.key]" :src="iconMap[item.key]" class="action-img" alt="" />
@@ -30,8 +30,8 @@ import iconScreen from '../assets/quick-start-screen.png'
 import iconCollector from '../assets/quick-start-collector.svg'
 import iconCard from '../assets/quick-start-card.svg'
 
-defineProps<{ actions: { key: string; icon: string; menu: string; disabled: boolean }[] }>()
-defineEmits<{ open: [menu: string] }>()
+defineProps<{ actions: { key: string; icon: string; disabled: boolean }[] }>()
+defineEmits<{ open: [key: string] }>()
 
 const { t } = useI18n()
 
@@ -65,13 +65,15 @@ const iconMap: Record<string, string> = {
   text-align: left;
   padding: 8px 14px;
   height: 100% !important;
+  min-width: 0;
   min-height: 0;
+  overflow: hidden;
   white-space: normal;
   border: 1px solid #E5EFFD;
   border-radius: 4px;
   box-shadow: none;
   background: linear-gradient(90deg, #F0F6FF 0%, #FCFEFF 100%);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s, color 0.2s;
   position: relative;
   cursor: pointer;
   box-sizing: border-box;
@@ -87,11 +89,10 @@ const iconMap: Record<string, string> = {
 }
 .action:not(:disabled):hover .arrow {
   color: #1E72F0;
-  transform: translateX(2px);
 }
 .action:focus-visible {
   outline: 2px solid #1677ff;
-  outline-offset: 1px;
+  outline-offset: -2px;
 }
 .icon-wrap {
   display: flex;
@@ -149,7 +150,7 @@ const iconMap: Record<string, string> = {
   color: #C9CDD4;
   font-size: 12px;
   margin-left: 8px;
-  transition: all 0.2s;
+  transition: color 0.2s;
 }
 @container resource-widget (max-width: 480px) {
   .actions {
@@ -157,10 +158,10 @@ const iconMap: Record<string, string> = {
     gap: 8px;
   }
   .actions.actions-4 {
-    grid-template-rows: repeat(4, 1fr);
+    grid-template-rows: repeat(4, minmax(0, 1fr));
   }
   .actions.actions-more {
-    grid-template-rows: repeat(6, 1fr);
+    grid-template-rows: repeat(6, minmax(0, 1fr));
   }
   .action {
     padding: 6px 10px;
