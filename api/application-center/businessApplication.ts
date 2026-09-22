@@ -46,6 +46,8 @@ export interface BusinessApplicationTemplateEntity {
   code: string
   icon?: string
   description?: string
+  i18nName?: string
+  i18nDescription?: string
   templateUrl?: string
   layoutVariant?: BasicLayoutVariant
   state?: string | EnumValue

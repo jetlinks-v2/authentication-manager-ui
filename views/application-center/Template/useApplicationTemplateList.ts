@@ -55,7 +55,7 @@ export const useApplicationTemplateList = () => {
     },
     {
       title: $t('ApplicationTemplate.field.description'),
-      dataIndex: 'description', key: 'description', ellipsis: true,
+      dataIndex: 'description', key: 'description', ellipsis: true, scopedSlots: true,
     },
     {
       title: $t('ApplicationTemplate.field.state'),
