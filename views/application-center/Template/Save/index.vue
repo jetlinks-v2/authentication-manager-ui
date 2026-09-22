@@ -18,6 +18,7 @@
           <a-tab-pane key="document" :tab="$t('ApplicationTemplate.detail.document')">
             <DocumentPane
               v-model:draft="detailState.documentDraft.value"
+              v-model:i18n-draft="detailState.documentI18nDraft.value"
               :dirty="detailState.documentDirty.value"
               :can-update="canUpdate"
               :saving="detailState.saving.value"
@@ -90,7 +91,12 @@ const menuConfig = useApplicationTemplateMenuConfig(
 )
 
 const resetDocument = () => {
-  detailState.documentDraft.value = String(detailState.detail.value.document || '')
+  detailState.documentDraft.value = String(
+    detailState.detail.value.i18nDocument || detailState.detail.value.document || '',
+  )
+  detailState.documentI18nDraft.value = {
+    ...(detailState.detail.value.i18nMessages?.document || {}),
+  }
 }
 
 watch(templateId, id => {

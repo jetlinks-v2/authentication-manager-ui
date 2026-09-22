@@ -89,10 +89,10 @@ export const normalizeTemplate = (
   const status = normalizeStatus(entity.state)
   return {
     id: entity.id,
-    name: entity.name,
+    name: entity.i18nName || entity.name,
     code: entity.code,
     icon: entity.icon,
-    description: entity.description || '',
+    description: entity.i18nDescription || entity.description || '',
     templateUrl: textOf(entity.templateUrl).trim(),
     status,
     statusText: enumText(entity.state, status),

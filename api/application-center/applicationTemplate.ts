@@ -12,6 +12,8 @@ interface EnumItem {
   text?: string
 }
 
+export type I18nMessages = Record<string, Record<string, string>>
+
 export interface BusinessApplicationTemplate {
   id: string
   name: string
@@ -20,6 +22,10 @@ export interface BusinessApplicationTemplate {
   description?: string
   templateUrl?: string
   document?: string
+  i18nName?: string
+  i18nDescription?: string
+  i18nDocument?: string
+  i18nMessages?: I18nMessages
   layoutVariant?: BasicLayoutVariant
   state?: string | EnumItem
   sortIndex?: number
