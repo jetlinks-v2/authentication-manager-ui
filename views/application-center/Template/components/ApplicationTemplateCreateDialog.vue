@@ -37,7 +37,7 @@ import type { FormInstance } from 'ant-design-vue'
 import type { RuleObject } from 'ant-design-vue/es/form/interface'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
-import I18nTextField from '@device-manager-ui/components/I18n/I18nTextField.vue'
+import { I18nTextField } from '@jetlinks-web-core/components'
 import { createApplicationTemplate } from '@authentication-manager-ui/api/application-center/applicationTemplate'
 
 const props = defineProps({
