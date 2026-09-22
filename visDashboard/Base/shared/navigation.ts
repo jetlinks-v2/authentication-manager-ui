@@ -1,10 +1,17 @@
+import { isPrivateDeployment } from '@jetlinks-web-core/utils/deployment'
 import type { HomeFeature, HomeTarget } from './types'
+
+// 私有化统一在设备列表管理视频设备；SaaS 保留边缘网关接入流程。
+const addVideoTarget: HomeTarget = isPrivateDeployment()
+  ? { menus: ['iot-user-device-list'], query: { type: 'video' } }
+  : { menus: ['video/resources'], query: { perspective: 'edge-node', action: 'access' } }
+
 /** 菜单编码来自各 owning module，运行时只解析当前项目已授予的菜单。 */
 export const HOME_TARGETS: Record<string, HomeTarget> = {
   devices: { menus: ['iot-user-device-list', 'iot-user/device/list'] },
   addDevice: { menus: ['iot-user-device-list'], query: { type: 'device', action: 'create' } },
   video: { menus: ['video/resources', 'media/Device', 'video/live'] },
-  addVideo: { menus: ['video/resources'], query: { perspective: 'edge-node', action: 'access' } },
+  addVideo: addVideoTarget,
   gateway: { menus: ['iot-user-device-list', 'iot-user/device/list'], query: { type: 'gateway' } },
   createApplication: { menus: ['application-center/ProjectApplication'], query: { action: 'create' } },
   applications: { menus: ['application-center/ProjectApplication'] },
