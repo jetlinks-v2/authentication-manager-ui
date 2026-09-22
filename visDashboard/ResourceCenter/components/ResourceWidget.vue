@@ -118,6 +118,10 @@ h3 {
   flex: 1;
   min-height: 0;
 }
+[data-resource-kind="QuickStart"] > .content {
+  /* 快捷卡片随网格收缩，悬浮装饰和亚像素溢出不应触发滚动条。 */
+  overflow: clip;
+}
 .state {
   flex: 1;
   min-height: 0;
