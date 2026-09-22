@@ -1,8 +1,7 @@
 <template>
   <j-page-container>
     <FullPage hasPadding transparentBackground>
-      
-        <div class="user-container">
+
         <j-pro-table
             ref="tableRef"
             class="pro-table__no-padding"
@@ -16,7 +15,7 @@
                             { name: 'username', order: 'asc', value: 'admin' },
                         ],
                     }"
-            :scroll="{ y: 'calc(100% - 3.75rem)' }"
+            :scroll="{ x: 'max-content' }"
         >
           <template #headerLeftRender>
               <div class="user-list-toolbar">
@@ -173,7 +172,6 @@
             </a-space>
           </template>
         </j-pro-table>
-        </div>
       
     </FullPage>
   </j-page-container>
