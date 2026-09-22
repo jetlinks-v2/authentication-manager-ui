@@ -2,6 +2,14 @@
 
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.
 
+## 第三方登录配置（第一阶段）
+
+`views/system/ThirdPartyLogin/` 是独立于现有 `system/Apply`“单点登录”的第三方身份源配置页面，菜单位于“开放与集成”下。当前仅提供平台风格的交互预览：初始为空，配置只保存在页面内存中，刷新即清空，不调用接口，也不影响实际登录、登录页展示或钉钉组织同步；仅可输入示例凭据。`baseMenu.json` 是运行端菜单模板；运营端 auth 模板另有同 ID 的运行时专用授权候选，SaaS 运营端在区域菜单同步后才从运行时 auth 服务持久菜单树中读取它。同步不会自动授予服务，本阶段仅在本地/评审环境由有权限的管理员验收，不同步到生产菜单，也不作为已上线认证能力发布。后续按 [第三方登录待办](views/system/ThirdPartyLogin/TODO.md) 先完成配置前后端联调，再实现真实第三方登录及登录页接入，最后补齐日志审计。
+
+本地可用 Vite 开发服务打开 `views/system/ThirdPartyLogin/preview.html` 免登录查看页面；该入口仅用于评审，不参与正式菜单路由。验证：配置模型 4 项测试通过，模块生产构建通过（10,869 个模块），页面空态和新增抽屉已在浏览器实测；`vue-tsc` 全模块仍有 631 条既有诊断，新目录无诊断；菜单及中英文 JSON 可解析，`git diff --check` 通过。
+
+菜单归位后的补充验证：`system/ThirdPartyLogin` 在“开放与集成”子级、`owner: cloud`，原“单点登录”仍在系统管理；菜单聚焦测试与配置模型测试共 5/5 通过，运行端模块构建通过。SaaS 运营端授权树只在目标区域菜单同步后读取运行时 auth 持久数据，真实区域同步及服务端可见性尚未验收，不能把模板变更视作已授权或可生产使用。
+
 ## 角色、组织与数据字典左侧树布局统一计划
 
 状态：已实施并验证。

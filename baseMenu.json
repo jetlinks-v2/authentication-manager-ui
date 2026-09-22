@@ -2576,6 +2576,25 @@
         },
         "permissions": [],
         "buttons": []
+      },
+      {
+        "code": "system/ThirdPartyLogin",
+        "name": "第三方登录",
+        "i18nMessages": {
+          "name": {
+            "zh_CN": "第三方登录",
+            "en_US": "Third-Party Login",
+            "en": "Third-Party Login"
+          }
+        },
+        "owner": "cloud",
+        "id": "system-third-party-login",
+        "sortIndex": 5,
+        "url": "/system/third-party-login",
+        "icon": "icon-yingyongguanli",
+        "showPage": ["application"],
+        "permissions": [],
+        "buttons": []
       }
     ]
   }
