@@ -21,7 +21,8 @@
           blockNode
       >
 				<template #title="item">
-					<div v-if="selectId === item.data.id">
+					<div v-if="selectId === item.data.id" class="editingItem">
+						<AIcon class="treeItem__icon" type="icon-moren" />
 						<a-input
                 ref="inputRef"
                 v-model:value="addName"
@@ -32,6 +33,7 @@
           <div v-else class="treeItem" @click="() => selectGroup(item.data.id)">
 						<template v-if="!item?.children">
 							<div class="itemText">
+								<AIcon class="treeItem__icon" type="icon-moren" />
 								<j-ellipsis style="width: calc(100%-6.25rem)">{{ item.i18nName || item.name }}</j-ellipsis>
 							</div>
 							<div v-if="item.id !== 'default_group' && isAdmin" @click="(e) => e.stopPropagation()">
@@ -50,7 +52,10 @@
 							</div>
 						</template>
 						<template v-else>
-							<j-ellipsis style="width: calc(100% - 6.25rem)">{{ item.name }}</j-ellipsis>
+							<div class="parentText">
+								<AIcon class="treeItem__icon" type="icon-jiaose" />
+								<j-ellipsis style="flex: 1; min-width: 0">{{ item.name }}</j-ellipsis>
+							</div>
 						</template>
 					</div>
 				</template>
@@ -220,9 +225,29 @@ onMounted(() => {
 	justify-content: space-between;
 
 	.itemText {
+		display: flex;
+		align-items: center;
+		gap: var(--space-1);
 		line-height: 2rem;
 		max-width: 40%
 	}
+}
+
+.parentText,
+.editingItem {
+	display: flex;
+	align-items: center;
+	gap: var(--space-1);
+}
+
+.parentText {
+	flex: 1;
+	min-width: 0;
+}
+
+.treeItem__icon {
+	flex: none;
+	color: var(--text-color-secondary);
 }
 
 .listBox {

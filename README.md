@@ -2,6 +2,22 @@
 
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.
 
+## 角色分组树节点图标
+
+目标与范围：仅调整 `views/system/Role/RoleLeft/index.vue` 的角色分组树标题，父节点使用现有图标 `icon-jiaose`，叶子节点（包括编辑中）使用 `icon-moren`。不改树数据、接口、权限、选中/展开、编辑/删除或其他前端工作区。
+
+实施：在现有标题插槽添加图标并保持文字、操作入口与行内编辑布局；使用运行时已有的 `AIcon` 和图标资源，不新增组件或图标文件。风险是图标与树线、标题及行内输入框的间距；验证以本地角色管理页面可见的父/叶节点图标、交互检查、模块构建和 diff 检查为准。
+
+验证：本地 `http://localhost:9200/#/system/ou/role` 的父节点和叶子节点分别显示 `icon-jiaose`、`icon-moren`，点击“默认”后叶节点正常选中，再切回“全局角色”正常选中；`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过（10,799 个模块，38.33 秒），`git diff --check` 通过。构建仅保留现有的 Rollup output option、CSS 注释与大包提示；未触发节点编辑/删除的后端写入验证。
+
+## 组织树节点图标
+
+目标与范围：仅调整 `views/system/Department/components/LeftTree.vue` 的组织树节点标题。当前展示树中有子节点的组织使用 `icon-zuzhiguanli`，无子节点的组织使用 `icon-zuzhi`；搜索重建树产生的空 `children` 数组仍按叶节点显示。不修改组织接口、树数据、筛选、选中/展开、权限按钮或其他前端工作区。
+
+实施：在现有标题插槽的文字左侧复用 `AIcon`，用 `children?.length` 选择图标，沿用局部间距 token 并保持省略文本的收缩能力。风险集中在长名称、操作按钮同排时的宽度；验证本地页面图标与展开/选中表现、模块构建及 diff 检查。
+
+验证：本地 `http://localhost:9200/#/system/ou/department` 的父节点显示 `icon-zuzhiguanli`、叶子节点显示 `icon-zuzhi`，展开父节点后子节点图标仍按其子级判断；随后恢复原有折叠与选中状态。`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过（10,799 个模块，27.51 秒），`git diff --check` 通过；构建仅有既有的 Rollup output option、CSS 注释与大包提示。未触发编辑、删除或导入等写入操作。
+
 概览页的系统公告组件（`visDashboard/Base/Announcements/ProjectHomeAnnouncements.vue`）隐藏标题右侧及空态的整个“更多”入口，包括文字与箭头；公告条目点击打开详情的交互保持不变。`shared/HomeWidget.vue` 的其余组件仍显示原有入口。两个组件的 Vue 模板和脚本编译检查通过，未运行整仓构建。
 
 ## 角色、组织与数据字典左侧树布局统一计划
