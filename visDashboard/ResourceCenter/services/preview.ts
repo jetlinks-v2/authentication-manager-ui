@@ -1,8 +1,7 @@
-import dayjs from 'dayjs'
 import { emptyData, type ResourceData, type ResourceKind, type DeviceKind, type TimeRange } from '../shared'
 import i18n from '@jetlinks-web-core/locales'
 
-/** 样例在 isEdit 设计预览及未就绪接口的临时展示中使用。 */
+/** 样例仅用于设计预览，运行态由服务查询真实数据。 */
 export function previewData(kind: ResourceKind, deviceType: DeviceKind, timeRange: TimeRange = 'today'): ResourceData {
   const data = emptyData()
   if (['EdgeNodes', 'IotDevices', 'VideoDevices'].includes(kind)) {
@@ -31,21 +30,6 @@ export function previewData(kind: ResourceKind, deviceType: DeviceKind, timeRang
       { id: 'vest', name: i18n.global.t('resourceDashboard.algorithm.vest'), value: 1 },
       { id: 'unconfigured', name: i18n.global.t('resourceDashboard.algorithm.unconfigured'), value: 5, unconfigured: true },
     ]
-  }
-  if (kind === 'VideoPlaybackTrend') {
-    if (timeRange === 'yesterday' || timeRange === 'today') {
-      data.series = Array.from({ length: 24 }, (_, index) => ({
-        time: `${String(index).padStart(2, '0')}:00`,
-        value: 0,
-      }))
-    } else {
-      const days = timeRange === '3d' ? 3 : timeRange === '7d' ? 7 : 30
-      const now = dayjs()
-      data.series = Array.from({ length: days }, (_, i) => ({
-        time: now.subtract(days - 1 - i, 'day').format('YYYY-MM-DD'),
-        value: 0,
-      }))
-    }
   }
   return data
 }

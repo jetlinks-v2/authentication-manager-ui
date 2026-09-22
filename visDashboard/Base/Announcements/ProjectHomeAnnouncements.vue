@@ -1,5 +1,5 @@
 <template>
-  <HomeWidget feature="Announcements" :info="info" :is-edit="isEdit">
+  <HomeWidget feature="Announcements" :info="info" :is-edit="isEdit" hide-more>
     <template #default="view"><HomeView v-bind="view" @select="select" /></template>
   </HomeWidget>
   <a-modal :open="!!selected" :title="selected?.label" :footer="null" :width="754" @cancel="selected = undefined" destroy-on-close>

@@ -54,7 +54,7 @@
                     <!-- <j-tag color="geekblue"> -->
                     <div class="userName">
                         <j-ellipsis style="max-width: 6.25rem;">
-                        {{ slotProps.context.userName }}
+                        {{ slotProps.context.username }}
                         </j-ellipsis>
                         <!-- </j-tag> -->
                     </div>
@@ -249,10 +249,20 @@ const columns = [
         title: $t('Access.index.480752-13'),
         dataIndex: 'username',
         key: 'username',
-        // search: {
-        //     type: 'string',
-        //     rename: 'context.username',
-        // },
+        search: {
+            type: 'string',
+            rename: 'context.username',
+            handleTerms: (term) => ({
+                ...term,
+                column: 'context',
+                termType: 'json_value',
+                value: {
+                    path: 'username',
+                    termType: term.termType,
+                    value: term.value,
+                },
+            }),
+        },
         width: 150,
         scopedSlots: true,
     },

@@ -61,7 +61,7 @@
             </a-flex>
         </template>
         <template #positions="slotProps">
-          {{ slotProps.positions?.filter(item => item.orgId === props.parentId)?.map(item => item.name).join(',') || '--' }}
+          {{ slotProps.positions?.filter(item => item.orgId === props.parentId)?.map(item => item.name).join(',') || $t('comm.table.empty') }}
         </template>
         <template #status="slotProps">
           <j-badge-status

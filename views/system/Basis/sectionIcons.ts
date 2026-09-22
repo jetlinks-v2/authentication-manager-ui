@@ -9,6 +9,5 @@
 export const BASIS_SECTION_ICON = {
   basic: 'authentication-manager-ui/system/basic-info',
   map: 'authentication-manager-ui/system/map-config',
-  domain: 'authentication-manager-ui/system/custom-domain',
   background: 'authentication-manager-ui/system/basic-info',
 } as const
