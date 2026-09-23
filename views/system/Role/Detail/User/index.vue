@@ -1,22 +1,6 @@
 <template>
   <div class="role-user-container">
-    <PageHeader class="authentication-system-list-page__header" :title="$t('User.index.673867-23')">
-      <template #actions>
-        <ConditionFilter
-          class="authentication-system-list-page__filter"
-          :columns="columns"
-          target="system-role-user"
-          @change="({filter})=> queryParams = {...filter}"
-        />
-        <a-button
-          class="authentication-system-list-page__primary-action"
-          type="primary"
-          @click="dialogVisible = true"
-        >
-          <AIcon type="PlusOutlined" />{{ $t('User.index.667995-0') }}
-        </a-button>
-      </template>
-    </PageHeader>
+
     <div style="min-height: 0; flex: 1">
       <j-pro-table
           ref="tableRef"
@@ -35,16 +19,6 @@
                         sorts: [{ name: 'createTime', order: 'desc' }],
                     }"
       >
-        <template #headerLeftRender>
-          <j-permission-button
-              :popConfirm="{
-              title: $t('User.index.667995-1'),
-              onConfirm: () => table.unbind(),
-            }"
-          >
-            <AIcon type="DisconnectOutlined" />{{ $t('User.index.667995-2') }}
-          </j-permission-button>
-        </template>
         <template #status="slotProps">
           <j-badge-status
               :status="slotProps.status"
@@ -54,6 +28,31 @@
             0: 'error',
           }"
           ></j-badge-status>
+        </template>
+        <template #headerRightRender>
+          <a-space>
+            <ConditionFilter
+                class="authentication-system-list-page__filter"
+                :columns="columns"
+                target="system-role-user"
+                @change="({filter})=> queryParams = {...filter}"
+            />
+            <a-button
+                class="authentication-system-list-page__primary-action"
+                type="primary"
+                @click="dialogVisible = true"
+            >
+              <AIcon type="PlusOutlined" />{{ $t('User.index.667995-0') }}
+            </a-button>
+            <j-permission-button
+                :popConfirm="{
+              title: $t('User.index.667995-1'),
+              onConfirm: () => table.unbind(),
+            }"
+            >
+              <AIcon type="DisconnectOutlined" />{{ $t('User.index.667995-2') }}
+            </j-permission-button>
+          </a-space>
         </template>
         <template #createTime="slotProps">
           {{ slotProps.createTime ? dayjs(slotProps.createTime).format("YYYY-MM-DD HH:mm:ss") : '--' }}

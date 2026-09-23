@@ -5,12 +5,14 @@
         <TitleComponent :data="$t('Permission.index.071527-0')" />
       </div>
       <PermissionTree ref="permissionTreeRef" />
-      <div class="bottom">
+      <div class="role-bottom">
+        <a-button @click="goBack">
+          {{ $t('Api.index.558884-1') }}
+        </a-button>
         <a-button
             type="primary"
             :loading="loading"
             @click="clickSave"
-            style="margin-top: 1.5rem"
         >{{ $t('Permission.index.071527-1') }}</a-button>
       </div>
     </div>
@@ -25,6 +27,7 @@ import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n();
 const route = useRoute()
+const router = useRouter()
 const roleId = route.params.id as string
 const loading = ref(false)
 const permissionTreeRef = ref<any>()
@@ -39,6 +42,10 @@ const clickSave = () => {
   }).finally(()=>{
     loading.value = false
   })
+}
+
+const goBack = () => {
+  router.go(-1)
 }
 </script>
 
@@ -81,6 +88,12 @@ const clickSave = () => {
         width: 60%;
       }
     }
+  }
+
+  .role-bottom {
+    margin-top: var(--space-4);
+    display: flex;
+    justify-content: space-between;
   }
 }
 </style>
