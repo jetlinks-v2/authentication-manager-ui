@@ -11,6 +11,7 @@ const require = createRequire(import.meta.url)
 const esbuild = require(path.join(runtimeRoot, 'node_modules/esbuild'))
 const navigationSource = await readFile(new URL('../visDashboard/Base/shared/navigation.ts', import.meta.url), 'utf8')
 const quickStartSource = await readFile(new URL('../visDashboard/ResourceCenter/hooks/useQuickStart.ts', import.meta.url), 'utf8')
+const coveragePanelSource = await readFile(new URL('../visDashboard/ResourceCenter/components/AlgorithmCoveragePanel.vue', import.meta.url), 'utf8')
 
 async function loadNavigation(privateDeployment) {
   const source = navigationSource.replace(
@@ -43,4 +44,9 @@ test('SaaS keeps the edge-gateway video access flow', async () => {
 test('resource-center quick start reuses the shared video target', () => {
   assert.match(quickStartSource, /menu: HOME_TARGETS\.addVideo\.menus\[0\]/)
   assert.match(quickStartSource, /query: HOME_TARGETS\.addVideo\.query/)
+})
+
+test('algorithm coverage empty action opens the video resource list', () => {
+  assert.match(coveragePanelSource, /const target = 'video\/resources'/)
+  assert.match(coveragePanelSource, /menuStore\.jumpPage\(target\)/)
 })
