@@ -37,9 +37,9 @@ const menuStore = useMenuStore()
 const isAllZero = computed(() => !props.items.length || props.items.every(item => item.value === 0))
 
 function handleAddVideoDevice() {
-  const target = menuStore.getMenu('media/Device') ? 'media/Device' : 'media/Device/Save'
+  const target = 'video/resources'
   if (menuStore.getMenu(target)) {
-    menuStore.jumpPage(target, { query: { type: 'video', action: 'create' } })
+    menuStore.jumpPage(target)
   }
 }
 
