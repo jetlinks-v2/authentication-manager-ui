@@ -5,7 +5,6 @@
         <header class="page-heading">
           <h2>{{ $t('ThirdPartyLogin.title') }}</h2>
         </header>
-        <a-alert class="preview-notice" type="info" show-icon :message="$t('ThirdPartyLogin.previewNotice')" />
 
         <EqualHeightColumns class="config-layout" height="auto" left-width="14.5rem" right-width="1fr">
           <template #left>
@@ -42,66 +41,68 @@
                 </a-space>
               </a-flex>
 
-              <a-table
-                v-if="visibleRecords.length"
-                :columns="columns"
-                :data-source="visibleRecords"
-                :pagination="{ pageSize: 8, hideOnSinglePage: true }"
-                row-key="id"
-                class="config-table"
-              >
-                <template #bodyCell="{ column, record }">
-                  <template v-if="column.key === 'name'">
-                    <div class="entry-name">
-                      <a-avatar shape="square" :size="36" :src="record.iconDataUrl || methodIcons[record.method as LoginMethod]" />
-                      <div class="entry-copy">
-                        <strong>{{ record.name }}</strong>
-                        <span>{{ record.displayName }}</span>
-                      </div>
-                    </div>
+              <a-spin :spinning="loading">
+                <a-result v-if="error" status="error" :title="$t('ThirdPartyLogin.loadFailed')">
+                  <template #extra>
+                    <a-button type="primary" @click="retryLoad">{{ $t('ThirdPartyLogin.retry') }}</a-button>
                   </template>
-                  <template v-else-if="column.key === 'method'">
-                    {{ $t(`ThirdPartyLogin.${record.method}`) }}
-                  </template>
-                  <template v-else-if="column.key === 'identifier'">
-                    <a-tooltip :title="identifierOf(record as LoginConfig)">
-                      <span class="identifier">{{ identifierOf(record as LoginConfig) }}</span>
-                    </a-tooltip>
-                  </template>
-                  <template v-else-if="column.key === 'showOnLogin'">
-                    <a-popconfirm :title="$t('ThirdPartyLogin.visibilityConfirm')" @confirm="changeFlag(record.id, 'showOnLogin', !record.showOnLogin)">
-                      <a-switch :checked="record.showOnLogin" size="small" />
-                    </a-popconfirm>
-                    <span class="flag-label">{{ $t(record.showOnLogin ? 'ThirdPartyLogin.visible' : 'ThirdPartyLogin.hidden') }}</span>
-                  </template>
-                  <template v-else-if="column.key === 'status'">
-                    <a-popconfirm :title="$t('ThirdPartyLogin.toggleConfirm')" @confirm="changeFlag(record.id, 'enabled', !record.enabled)">
-                      <a-switch :checked="record.enabled" size="small" />
-                    </a-popconfirm>
-                    <span class="flag-label">{{ $t(record.enabled ? 'ThirdPartyLogin.enabled' : 'ThirdPartyLogin.disabled') }}</span>
-                  </template>
-                  <template v-else-if="column.key === 'actions'">
-                    <a-space :size="8">
-                      <a-button type="link" size="small" @click="openEdit(record as LoginConfig)">{{ $t('ThirdPartyLogin.edit') }}</a-button>
-                      <a-popconfirm :title="$t('ThirdPartyLogin.deleteConfirm')" @confirm="deleteRecord(record as LoginConfig)">
-                        <a-button type="link" size="small" danger>{{ $t('ThirdPartyLogin.delete') }}</a-button>
-                      </a-popconfirm>
-                    </a-space>
-                  </template>
-                </template>
-              </a-table>
+                </a-result>
 
-              <CloudEmpty
-                v-else
-                type="page"
-                :description="$t(records.length && (filterTerms.length || selectedMethod !== 'all')
-                  ? 'ThirdPartyLogin.emptyFiltered' : 'ThirdPartyLogin.empty')"
-              >
-                <a-button v-if="!records.length" type="primary" @click="openCreate">
-                  {{ $t('ThirdPartyLogin.addFirst') }}
-                </a-button>
-                <a-button v-else @click="clearFilters">{{ $t('ThirdPartyLogin.clearSearch') }}</a-button>
-              </CloudEmpty>
+                <a-table
+                  v-else-if="visibleRecords.length"
+                  :columns="columns"
+                  :data-source="visibleRecords"
+                  :pagination="{ pageSize: 8, hideOnSinglePage: true }"
+                  row-key="id"
+                  class="config-table"
+                >
+                  <template #bodyCell="{ column, record }">
+                    <template v-if="column.key === 'name'">
+                      <div class="entry-name">
+                        <a-avatar shape="square" :size="36" :src="record.logoUrl || methodIcons[record.method as LoginMethod]" />
+                        <div class="entry-copy">
+                          <strong>{{ record.name }}</strong>
+                        </div>
+                      </div>
+                    </template>
+                    <template v-else-if="column.key === 'method'">
+                      {{ $t(`ThirdPartyLogin.${record.method}`) }}
+                    </template>
+                    <template v-else-if="column.key === 'identifier'">
+                      <a-tooltip :title="identifierOf(record as LoginConfig)">
+                        <span class="identifier">{{ identifierOf(record as LoginConfig) }}</span>
+                      </a-tooltip>
+                    </template>
+                    <template v-else-if="column.key === 'status'">
+                      <a-popconfirm :title="$t('ThirdPartyLogin.toggleConfirm')" @confirm="changeEnabled(record.id, !record.enabled)">
+                        <a-switch :checked="record.enabled" size="small" />
+                      </a-popconfirm>
+                      <span class="flag-label">{{ $t(record.enabled ? 'ThirdPartyLogin.enabled' : 'ThirdPartyLogin.disabled') }}</span>
+                    </template>
+                    <template v-else-if="column.key === 'actions'">
+                      <a-space :size="8">
+                        <!-- 后端暂无无副作用的 SSO 测试接口，接口补齐后再开放测试入口。 -->
+                        <a-button type="link" size="small" @click="editRecord(record as LoginConfig)">{{ $t('ThirdPartyLogin.edit') }}</a-button>
+                        <a-popconfirm :disabled="record.enabled" :title="$t('ThirdPartyLogin.deleteConfirm')" @confirm="deleteRecord(record as LoginConfig)">
+                          <a-button type="link" size="small" danger :disabled="record.enabled">{{ $t('ThirdPartyLogin.delete') }}</a-button>
+                        </a-popconfirm>
+                      </a-space>
+                    </template>
+                  </template>
+                </a-table>
+
+                <CloudEmpty
+                  v-else-if="!loading"
+                  type="page"
+                  :description="$t(records.length && (filterTerms.length || selectedMethod !== 'all')
+                    ? 'ThirdPartyLogin.emptyFiltered' : 'ThirdPartyLogin.empty')"
+                >
+                  <a-button v-if="!records.length" type="primary" @click="openCreate">
+                    {{ $t('ThirdPartyLogin.addFirst') }}
+                  </a-button>
+                  <a-button v-else @click="clearFilters">{{ $t('ThirdPartyLogin.clearSearch') }}</a-button>
+                </CloudEmpty>
+              </a-spin>
             </section>
           </template>
         </EqualHeightColumns>
@@ -111,7 +112,8 @@
       :open="drawerOpen"
       :method="creatingMethod"
       :editing="editing"
-      :records="records"
+      :saving="saving"
+      :callback-base-path="callbackBasePath"
       @update:open="drawerOpen = $event"
       @save="onSave"
     />
@@ -132,7 +134,8 @@ import './index.less'
 const { t } = useI18n()
 const {
   records, selectedMethod, filterTerms, visibleRecords, drawerOpen, editing, creatingMethod,
-  countFor, openCreate, openEdit, save, remove, updateFlag,
+  loading, saving, error, callbackBasePath,
+  countFor, loadRecords, openCreate, openEdit, save, remove, updateEnabled,
 } = useThirdPartyLogin()
 
 const methodSections = computed(() => [{
@@ -159,8 +162,7 @@ const columns = computed(() => [
   { title: t('ThirdPartyLogin.status'), key: 'status', width: 105 },
   { title: t('ThirdPartyLogin.type'), key: 'method', width: 85 },
   { title: t('ThirdPartyLogin.identifier'), key: 'identifier', width: 150 },
-  { title: t('ThirdPartyLogin.showOnLogin'), key: 'showOnLogin', width: 115 },
-  { title: t('ThirdPartyLogin.updatedAt'), dataIndex: 'updatedAt', width: 145 },
+  { title: t('ThirdPartyLogin.createdAt'), dataIndex: 'createdAt', width: 145 },
   { title: t('ThirdPartyLogin.actions'), key: 'actions', width: 110, align: 'right' as const },
 ])
 
@@ -168,18 +170,46 @@ function onSelectMethod(_section: string, item: { value?: string | number | bool
   selectedMethod.value = (item.value || 'all') as MethodFilter
 }
 
-function onSave(draft: LoginConfigDraft) {
-  if (save(draft)) message.info(t('ThirdPartyLogin.savedPreview'))
+async function onSave(draft: LoginConfigDraft) {
+  try {
+    if (await save(draft)) message.success(t('ThirdPartyLogin.saved'))
+  } catch {
+    message.error(t('ThirdPartyLogin.saveFailed'))
+  }
 }
 
-function deleteRecord(record: LoginConfig) {
-  remove(record)
-  message.info(t('ThirdPartyLogin.deletedPreview'))
+async function editRecord(record: LoginConfig) {
+  try {
+    await openEdit(record)
+  } catch {
+    message.error(t('ThirdPartyLogin.loadDetailFailed'))
+  }
 }
 
-function changeFlag(id: string, key: 'enabled' | 'showOnLogin', value: boolean) {
-  updateFlag(id, key, value)
-  message.info(t(key === 'enabled' ? 'ThirdPartyLogin.statusChangedPreview' : 'ThirdPartyLogin.visibilityChangedPreview'))
+async function deleteRecord(record: LoginConfig) {
+  try {
+    await remove(record)
+    message.success(t('ThirdPartyLogin.deleted'))
+  } catch {
+    message.error(t('ThirdPartyLogin.deleteFailed'))
+  }
+}
+
+async function changeEnabled(id: string, enabled: boolean) {
+  try {
+    await updateEnabled(id, enabled)
+    message.success(t('ThirdPartyLogin.statusChanged'))
+  } catch {
+    message.error(t('ThirdPartyLogin.statusChangeFailed'))
+  }
+}
+
+async function retryLoad() {
+  try {
+    await loadRecords()
+  } catch {
+    message.error(t('ThirdPartyLogin.loadFailed'))
+  }
 }
 
 function clearFilters() {

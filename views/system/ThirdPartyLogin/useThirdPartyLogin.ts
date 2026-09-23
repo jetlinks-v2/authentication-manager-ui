@@ -1,11 +1,20 @@
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { onBeforeRouteLeave } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+import { computed, onMounted, ref } from 'vue'
 import type { ConditionFilterTerm } from '@jetlinks-web-core/components/ConditionFilter'
 import {
-  createDraft,
+  createThirdPartyApplication,
+  deleteThirdPartyApplication,
+  getThirdPartyApplication,
+  getSystemPaths,
+  queryThirdPartyApplications,
+  updateThirdPartyApplication,
+  updateThirdPartyApplicationState,
+  type ThirdPartyApplication,
+} from '@authentication-manager-ui/api/system/thirdPartyLogin'
+import {
   filterConfigs,
-  hasDuplicateIdentifier,
+  fromApplication,
+  isSupportedApplication,
+  toApplicationPayload,
   type LoginConfig,
   type LoginConfigDraft,
   type LoginMethod,
@@ -13,74 +22,108 @@ import {
 } from './model'
 
 export function useThirdPartyLogin() {
-  const { t } = useI18n()
   const records = ref<LoginConfig[]>([])
   const selectedMethod = ref<MethodFilter>('all')
   const filterTerms = ref<ConditionFilterTerm[]>([])
   const drawerOpen = ref(false)
   const editing = ref<LoginConfig>()
+  const editingApplication = ref<ThirdPartyApplication>()
   const creatingMethod = ref<LoginMethod>('wechat')
-  const hasTemporaryChanges = ref(false)
+  const loading = ref(false)
+  const saving = ref(false)
+  const error = ref(false)
+  const callbackBasePath = ref('')
 
   const visibleRecords = computed(() => filterConfigs(records.value, selectedMethod.value, filterTerms.value))
   const countFor = (method: MethodFilter) => method === 'all'
     ? records.value.length
     : records.value.filter(item => item.method === method).length
 
+  /** 从应用管理读取并筛选当前后端已支持的第三方 SSO 应用。 */
+  async function loadRecords() {
+    loading.value = true
+    error.value = false
+    try {
+      const response = await queryThirdPartyApplications()
+      records.value = response.result.data
+        .filter(isSupportedApplication)
+        .map(item => fromApplication(item))
+        .filter((item): item is LoginConfig => Boolean(item))
+    } catch (reason) {
+      error.value = true
+      throw reason
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loadCallbackBasePath() {
+    const response = await getSystemPaths()
+    callbackBasePath.value = response.result['base-path']?.replace(/\/+$/, '') || ''
+  }
+
   function openCreate() {
     editing.value = undefined
+    editingApplication.value = undefined
     creatingMethod.value = selectedMethod.value === 'all' ? 'wechat' : selectedMethod.value
     drawerOpen.value = true
   }
 
-  function openEdit(record: LoginConfig) {
-    editing.value = record
-    drawerOpen.value = true
-  }
-
-  // 只修改当前页面的内存记录，真实写入和登录联动留给下一阶段。
-  function save(draft: LoginConfigDraft): boolean {
-    if (hasDuplicateIdentifier(records.value, draft, editing.value?.id)) return false
-    const record: LoginConfig = {
-      ...createDraft(draft.method),
-      ...draft,
-      id: editing.value?.id ?? crypto.randomUUID(),
-      updatedAt: new Date().toLocaleString(),
+  /** 编辑前读取完整详情，保存时保留页面没有承载的既有应用配置。 */
+  async function openEdit(record: LoginConfig) {
+    loading.value = true
+    try {
+      const response = await getThirdPartyApplication(record.id)
+      const config = fromApplication(response.result, true)
+      if (!config) return
+      editingApplication.value = response.result
+      editing.value = config
+      drawerOpen.value = true
+    } finally {
+      loading.value = false
     }
-    records.value = editing.value
-      ? records.value.map(item => item.id === editing.value?.id ? record : item)
-      : [record, ...records.value]
-    hasTemporaryChanges.value = true
-    drawerOpen.value = false
-    editing.value = undefined
-    return true
   }
 
-  function remove(record: LoginConfig) {
-    records.value = records.value.filter(item => item.id !== record.id)
-    hasTemporaryChanges.value = true
+  /** 新增或更新现有应用 SSO 配置，成功后刷新服务端列表。 */
+  async function save(draft: LoginConfigDraft): Promise<boolean> {
+    saving.value = true
+    try {
+      const payload = toApplicationPayload(draft, editingApplication.value)
+      if (editing.value) {
+        await updateThirdPartyApplication(editing.value.id, payload)
+      } else {
+        await createThirdPartyApplication(payload)
+      }
+      drawerOpen.value = false
+      editing.value = undefined
+      editingApplication.value = undefined
+      await loadRecords()
+      return true
+    } finally {
+      saving.value = false
+    }
   }
 
-  function updateFlag(id: string, key: 'enabled' | 'showOnLogin', value: boolean) {
-    records.value = records.value.map(item => item.id === id
-      ? { ...item, [key]: value, updatedAt: new Date().toLocaleString() }
-      : item)
-    hasTemporaryChanges.value = true
+  /** 删除应用后重新读取列表，避免保留服务端已失效的数据。 */
+  async function remove(record: LoginConfig) {
+    await deleteThirdPartyApplication(record.id)
+    await loadRecords()
   }
 
-  function warnBeforeUnload(event: BeforeUnloadEvent) {
-    if (!hasTemporaryChanges.value) return
-    event.preventDefault()
-    event.returnValue = ''
+  /** 启停直接复用应用管理的 state 局部更新语义。 */
+  async function updateEnabled(id: string, enabled: boolean) {
+    await updateThirdPartyApplicationState(id, enabled ? 'enabled' : 'disabled')
+    await loadRecords()
   }
 
-  onMounted(() => window.addEventListener('beforeunload', warnBeforeUnload))
-  onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnload))
-  onBeforeRouteLeave(() => !hasTemporaryChanges.value
-    || window.confirm(`${t('ThirdPartyLogin.discardChanges')}\n${t('ThirdPartyLogin.discardConfirm')}`))
+  onMounted(() => {
+    void loadRecords().catch(() => undefined)
+    void loadCallbackBasePath().catch(() => undefined)
+  })
 
   return {
     records, selectedMethod, filterTerms, visibleRecords, drawerOpen, editing, creatingMethod,
-    countFor, openCreate, openEdit, save, remove, updateFlag,
+    loading, saving, error, callbackBasePath,
+    countFor, loadRecords, openCreate, openEdit, save, remove, updateEnabled,
   }
 }
