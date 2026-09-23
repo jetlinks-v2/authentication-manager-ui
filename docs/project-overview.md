@@ -9,21 +9,19 @@
 - 实现：公告使用与概览其他资源项一致的浅色承载面和圆角 hover；长标题、长摘要和日期分别约束溢出，小尺寸卡片保持可读；NEW 文案接入模块 i18n。
 - 验证：`HomeView.vue` 的 SFC、模板、TypeScript 与两份 Less 编译通过，文件 156 行；中英文 locale JSON 与 NEW 文案检查通过；`verify-announcements.cjs` 覆盖最新 5 条、标题摘要、第一条未读 NEW、普通公告、缺失日期及异常响应并通过；`verify-overview-components.cjs` 检查 63 个 Vue SFC，0 编译错误、0 相对导入缺失；`git diff --check` 通过。当前 9000 页面仍使用旧静态产物，未完成新样式浏览器视觉验收；未运行全量 lint/typecheck/build。无需新增依赖或重启后端，生产环境需重新发布 runtime-ui。
 
-## 添加视频快捷入口调整
+## 添加视频快捷入口按部署方式分流（已实施，2026-09-22）
 
-目标：概览“添加视频”进入视频管理下的视频列表（菜单 `video/resources`，URL `/resources/video/list`），并打开接入弹窗。
+目标：概览“添加视频”在私有化构建中进入统一设备列表的“视频”页签，在 SaaS 构建中继续进入视频管理下的视频列表并打开边缘网关接入提示。
 
-影响范围：本模块 `visDashboard/Base/shared/navigation.ts` 与媒体模块的视频列表接线。快捷入口由旧的 `media/Device/Save` 改为视频列表；现有 `VideoGatewayAccessDialog.vue` 依赖所选边缘网关的名称与 ID，因此由列表完成选择后打开。
+影响范围：本模块 `visDashboard/Base/shared/navigation.ts` 的共享目标，以及复用该目标的概览快捷操作和资源中心仪表盘；媒体模块继续承载 SaaS 既有接入流程，设备模块承载私有化 `?type=video` 分类页。
 
-已确认方案：沿用视频列表自动选择设备的逻辑，选中边缘网关后打开现有“请进入边缘网关接入视频”弹窗。快捷入口携带 `action=access`、`perspective=edge-node`；媒体模块在当前页面且选中网关后消费一次性动作，保留其他查询参数。网关数据未就绪时等待；没有网关或选中普通媒体设备时不打开网关弹窗。关闭后刷新不重复弹出，从概览再次点击可重新触发。
+已确认方案：使用 `isPrivateDeployment()` 生成共享 `HOME_TARGETS.addVideo`。私有化目标为菜单 `iot-user-device-list` 和查询参数 `type=video`，只落到视频页签；SaaS 目标保持菜单 `video/resources` 及 `perspective=edge-node&action=access`，继续由视频列表自动选择网关并打开现有提示弹窗。
 
-实现入口：本模块菜单目标已调整；媒体模块既有 `views/video/components/resources/useVideoGatewayNavigation.ts` 的 `useVideoGatewayAccess` 承载弹窗状态、网关访问和路由动作消费，`VideoResourcesView.vue` 复用该 hook 接线。保持现有设备树、视频卡片和弹窗结构，不增加选择弹窗或平台侧配置表单。网关访问复用注册中心的 `edge-master-ui/apis/openGatewayEdgeUrl`，不复制代理地址或 token 处理。
+实现入口：仅在共享导航目标中增加部署分支；`visDashboard/ResourceCenter/hooks/useQuickStart.ts` 继续复用该目标，不再维护第二套视频路由。SaaS 保持 `useVideoGatewayAccess` 接线，私有化复用统一设备列表现有分类选择能力。
 
 范围约束：不修改运营端 `ui/`、其他快捷操作、页面壳层、后端接口或菜单权限定义。菜单可用性继续由现有 `useHomeNavigation` 判断。
 
-验证：从 `runtime-ui` 执行 `node --test modules/jetlinks-media-ui/views/video/components/resources/videoGatewayNavigation.test.mjs`，7 项测试全部通过，包括等待自动选择、动作清除与查询参数保留、关闭后数据刷新不重开、再次点击重开、普通访问与非网关不弹出、缓存页面隔离、取消导航及原有设备目录导航。`VideoResourcesView.vue` 的 SFC script/template 检查、两个 TypeScript 实现文件语法检查和两个 owning module 的 `git diff --check` 通过；该 Vue 文件由 310 行收敛至 282 行。
-
-按性能约束未执行完整类型检查或构建，后续命令为 `pnpm exec vue-tsc --noEmit -p modules/jetlinks-media-ui/tsconfig.json`、`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 和 `pnpm build`；根 package.json 未提供独立 lint 命令。浏览器工具因 `Codex auth token is unavailable` 无法读取会话，真实概览点击、浏览器刷新及远程网关打开仍待人工验收。开发环境可由前端热更新生效，不需要重启后端服务；生产环境需重新发布运行时前端。
+验证结果：`node --test tests/videoNavigationTarget.test.mjs` 共 3 项通过，分别断言私有化目标为 `iot-user-device-list?type=video`、SaaS 目标仍为 `video/resources?perspective=edge-node&action=access`，并确认资源中心继续引用同一个共享目标；本模块 `git diff --check` 通过。按性能约束未执行浏览器、完整类型检查或构建。无需重启后端，生产环境需重新发布对应运行时前端。
 
 ## 当前组件内容优化
 

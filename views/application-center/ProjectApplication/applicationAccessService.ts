@@ -1,5 +1,9 @@
-import type { UserDetailEntity } from '@authentication-manager-ui/api/application-center/businessApplication'
-import { normalizeRole, normalizeUser } from './applicationModel'
+import {
+  getCurrentUserAuthorization,
+  type AuthorizationDimension,
+  type UserDetailEntity,
+} from '@authentication-manager-ui/api/application-center/businessApplication'
+import { normalizeRole, normalizeUser, resultOf } from './applicationModel'
 import { loadBusinessApplicationRoles } from './applicationRoleService'
 import {
   bindProjectUsersToBusinessApplication,
@@ -33,6 +37,23 @@ const applicationRoleIdsOf = (roles: ApplicationRole[]) => new Set(roles.map(rol
 
 const hasApplicationRole = (user: ApplicationUser, roleIds: ReadonlySet<string>) =>
   user.roleIds.some(roleId => roleIds.has(roleId))
+
+const dimensionTypeIdOf = (dimension: AuthorizationDimension) =>
+  typeof dimension.type === 'string' ? dimension.type : dimension.type?.id
+
+/**
+ * 认证维度是当前用户实际拥有角色的来源，不能以受 role 资产权限过滤的角色列表否定它。
+ * 与后端应用认证初始化保持一致，忽略被标记为 ignore 的角色维度。
+ */
+const loadCurrentApplicationRoleIds = async (applicationId: string) => {
+  const authorization = resultOf(await getCurrentUserAuthorization())
+  return new Set((authorization.dimensions || [])
+    .filter(dimension => dimensionTypeIdOf(dimension) === 'role'
+      && dimension.options?.ignore !== true
+      && dimension.options?.applicationId === applicationId)
+    .map(dimension => dimension.id)
+    .filter((id): id is string => !!id))
+}
 
 const toUserState = (
   raw: UserDetailEntity | undefined,
@@ -87,14 +108,18 @@ export const ensureBusinessApplicationOpenAccess = async (
   userId: string,
   selectedRoleId?: string,
 ): Promise<ApplicationAccessResult> => {
-  const roles = (await loadBusinessApplicationRoles(applicationId)).map(normalizeRole)
+  const currentApplicationRoleIds = await loadCurrentApplicationRoleIds(applicationId)
+  // 已确认当前用户有应用角色时，无需查询受 role 资产权限约束的可管理角色列表。
+  const roles = currentApplicationRoleIds.size
+    ? []
+    : (await loadBusinessApplicationRoles(applicationId)).map(normalizeRole)
   const applicationRoleIds = applicationRoleIdsOf(roles)
   const currentUser = await loadCurrentUserState(applicationId, userId, applicationRoleIds)
 
   if (!currentUser.user || !currentUser.raw) {
     return { type: 'missing-user', changed: currentUser.changed }
   }
-  if (hasApplicationRole(currentUser.user, applicationRoleIds)) {
+  if (currentApplicationRoleIds.size || hasApplicationRole(currentUser.user, applicationRoleIds)) {
     if (currentUser.bound) return { type: 'ready', changed: false }
     return {
       type: 'ready',

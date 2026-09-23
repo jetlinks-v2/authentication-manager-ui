@@ -1900,6 +1900,7 @@
       "memoryRanking": "边缘节点内存使用率排行(%)",
       "diskRanking": "边缘节点磁盘使用率排行(%)",
       "trendTitle": "{name} · {metric}趋势近24小时",
+      "trendDescription": "{metric} · 近24小时",
       "empty": "暂无网关指标",
       "emptyDescription": "接入边缘节点后可查看复判队列与负载指标",
       "unsupported": "当前指标尚未启用",

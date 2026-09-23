@@ -73,20 +73,27 @@ export async function loadGatewayStatuses(metric: GatewayMetric, now = Date.now(
 
 /** 文档5.3/5.12：24小时、15分钟桶、LAST快照；保留空桶，不插值或补0。 */
 export function normalizeGatewayHistory(response: unknown, alias: string, from: number, to: number): GatewayPoint[] {
-  const firstBucket = Math.floor(from / bucketMs) * bucketMs
   const values = new Map<number, number | null>()
   for (const row of rowsOf(response)) {
     if (typeof row.timestamp !== 'string' && typeof row.timestamp !== 'number') continue
     let time: number
     try { time = typeof row.timestamp === 'number' ? row.timestamp : dayjs.tz(row.timestamp, 'Asia/Shanghai').valueOf() }
     catch { continue }
-    if (Number.isFinite(time) && time >= firstBucket && time < to) {
+    if (Number.isFinite(time) && time > from - bucketMs && time < to) {
       values.set(time, metricNumber(row[alias]) ?? null)
     }
   }
-  if (!values.size) return []
   const points: GatewayPoint[] = []
-  for (let time = firstBucket; time < to; time += bucketMs) points.push({ time, value: values.get(time) ?? null })
+  // 服务端时间桶可能随查询窗口偏移，不能按整点刻度重新取值，否则有效值会全部丢失。
+  for (const [time, value] of [...values].sort(([a], [b]) => a - b)) {
+    const previous = points.at(-1)
+    if (previous) {
+      for (let missing = previous.time + bucketMs; missing < time; missing += bucketMs) {
+        points.push({ time: missing, value: null })
+      }
+    }
+    points.push({ time, value })
+  }
   return points
 }
 

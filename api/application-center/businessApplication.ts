@@ -46,6 +46,8 @@ export interface BusinessApplicationTemplateEntity {
   code: string
   icon?: string
   description?: string
+  i18nName?: string
+  i18nDescription?: string
   templateUrl?: string
   layoutVariant?: BasicLayoutVariant
   state?: string | EnumValue
@@ -60,6 +62,16 @@ export interface BusinessApplicationRoleEntity {
   groupId?: string
   applicationId?: string
   [key: string]: unknown
+}
+
+export interface AuthorizationDimension {
+  id?: string
+  type?: string | { id?: string }
+  options?: Record<string, unknown>
+}
+
+export interface CurrentUserAuthorization {
+  dimensions?: AuthorizationDimension[]
 }
 
 export interface RoleInfo {
@@ -166,6 +178,14 @@ export interface MenuView {
 export const queryBusinessApplications = (data: QueryPayload) =>
   apiRequest.post<BusinessApplicationEntity[]>('/business-application/_query/no-paging?paging=false', data)
 
+/** 获取当前用户可进入的业务应用，用于补充维度成员查询不可见的本人应用关系。 */
+export const getCurrentUserBusinessApplications = () =>
+  apiRequest.get<BusinessApplicationEntity[]>('/business-application/me')
+
+/** 获取当前用户认证维度，用于识别不受角色资产范围影响的已分配应用角色。 */
+export const getCurrentUserAuthorization = () =>
+  apiRequest.get<CurrentUserAuthorization>('/authorize/me')
+
 export const getBusinessApplication = (id: string) =>
   apiRequest.get<BusinessApplicationEntity>(`/business-application/${id}`)
 
@@ -229,6 +249,9 @@ export const unbindBusinessApplicationUsers = (applicationId: string, userIds: s
 
 export const queryUserDetails = (data: QueryPayload) =>
   apiRequest.post<PagerResult<UserDetailEntity>>('/user/detail/_query', data)
+
+/** 获取当前登录用户详情，不受通用用户资产范围影响。 */
+export const getCurrentUserDetail = () => apiRequest.get<UserDetailEntity>('/user/detail')
 
 export const createBusinessApplicationUser = (data: SaveBusinessApplicationUserRequest) =>
   apiRequest.post<string>('/user/detail/_create', data)

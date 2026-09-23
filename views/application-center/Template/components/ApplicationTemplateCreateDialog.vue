@@ -10,9 +10,13 @@
   >
     <a-form ref="formRef" layout="vertical" :model="formData" :rules="rules">
       <a-form-item :label="$t('ApplicationTemplate.field.name')" name="name">
-        <a-input
+        <I18nTextField
           v-model:value="formData.name"
+          v-model:i18nMessages="formData.i18nMessages"
+          field="name"
+          :label="$t('ApplicationTemplate.field.name')"
           :maxlength="64"
+          :i18n-max-length="64"
           :placeholder="$t('ApplicationTemplate.field.namePlaceholder')"
         />
       </a-form-item>
@@ -33,6 +37,7 @@ import type { FormInstance } from 'ant-design-vue'
 import type { RuleObject } from 'ant-design-vue/es/form/interface'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
+import { I18nTextField } from '@jetlinks-web-core/components'
 import { createApplicationTemplate } from '@authentication-manager-ui/api/application-center/applicationTemplate'
 
 const props = defineProps({
@@ -51,7 +56,7 @@ const dialogOpen = computed({
   get: () => props.open,
   set: (value: boolean) => emit('update:open', value),
 })
-const formData = reactive({ name: '', code: '' })
+const formData = reactive({ name: '', code: '', i18nMessages: {} as Record<string, Record<string, string>> })
 const rules: Record<string, RuleObject[]> = {
   name: [
     { required: true, message: $t('ApplicationTemplate.message.nameRequired'), trigger: 'blur' },
@@ -67,6 +72,7 @@ const rules: Record<string, RuleObject[]> = {
 const resetForm = () => {
   formData.name = ''
   formData.code = ''
+  formData.i18nMessages = {}
 }
 
 watch(() => props.open, async value => {
@@ -87,6 +93,7 @@ const handleOk = async () => {
     const response = await createApplicationTemplate({
       name: formData.name,
       code: formData.code,
+      i18nMessages: formData.i18nMessages,
       layoutVariant: 'application',
       state: 'enabled',
     })

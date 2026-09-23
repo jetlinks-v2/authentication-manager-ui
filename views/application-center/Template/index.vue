@@ -40,11 +40,15 @@
 		              </a-flex>
 		            </template>
 		
-		            <template #name="slotProps">
-		              <a class="application-template-page__link" @click="table.viewDetail(slotProps)">
-		                {{ slotProps.name || '--' }}
-		              </a>
-		            </template>
+	            <template #name="slotProps">
+	              <a class="application-template-page__link" @click="table.viewDetail(slotProps)">
+	                {{ slotProps.i18nName || slotProps.name || '--' }}
+	              </a>
+	            </template>
+
+	            <template #description="slotProps">
+	              {{ slotProps.i18nDescription || slotProps.description || '--' }}
+	            </template>
 		
 		            <template #state="slotProps">
 		              <a-switch
