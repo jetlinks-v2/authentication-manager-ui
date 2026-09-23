@@ -58,3 +58,50 @@ _Locked via grill — Codex + 用户_
 风险和待确认：运营端模板的 `owner: iot` 节点目前被 `baseMenu.ts` 标为 `runtime: false`，SaaS 默认同步只收 `runtime` 节点；简单复制现有第三方节点并不能出现在授权树。现有同步 API 会按 owner 全量替换区域菜单，不能未经核对对生产区域执行。此前“仅本地/评审环境同步”的范围继续有效；本增补不代表第三方登录配置接口或真实登录已可用。
 
 实施结果：运行端菜单已归入“开放与集成”，运营端 auth 菜单增加 `owner: cloud`、`runtimeOnly: true` 候选；运营端默认初始化及微应用 JSON 动态加载均过滤该标记，SaaS 同步时去标记。SaaS 授权抽屉提供带全量替换风险提示的确认入口；同步仅提交 runtime 节点，跨 owner 子菜单引用已有 IoT 父菜单，父级不存在则拒绝同步。双端菜单、运营端过滤与 SaaS 纯选择逻辑共 9 项测试通过，三个前端模块构建通过；未向任何真实区域发起同步，目标区域的持久菜单与授权编辑器仍须由管理员在本地/评审环境验收。
+
+## 第二阶段计划（用户已确认）：复用应用管理现有接口
+
+### 当前结论
+
+现有认证模块已经以 `ApplicationEntity` 和 `/application` CRUD 承载应用单点登录，登录页也通过 `GET /application/sso/_all` 获取启用了 `ssoClient` 的应用，并以 `/application/sso/{appId}/login` 发起登录。因此新页面不新建第二套“第三方登录配置”表，优先作为现有应用单点登录配置的专用管理视图。
+
+现有契约不能原样覆盖当前页面：微信（网页、公众号、小程序）、钉钉和通用 OAuth2 已有 provider/配置结构；企业微信 `CorpId/AgentId/Secret`、组织同步开关、独立的 `showOnLogin` 与 `displayName` 没有现成契约。本阶段按用户确认仅对接后端已有能力，不补 provider 或其他后端契约，不把前端字段写入 `configurations` 冒充生效。
+
+### 目标与范围
+
+- 删除页面和抽屉内“仅供预览/请勿填写真实密钥”的提示及相关临时交互，改为真实保存。
+- 复用 `/application` 查询、新增、详情、修改、删除、状态修改接口；页面只管理带 `ssoClient` 集成方式的第三方登录应用。
+- 只保留现有 provider 能承载的微信、钉钉和 OAuth2。企业微信及组织同步本阶段不展示、不保存、不补后端实现。
+- 不保留后端没有的独立登录页显示名称和登录页展示开关；登录图标复用应用的 `logoUrl` 上传、保存和展示能力。
+- 不修改 `modules/authentication-manager`、运营端 `ui/`、登录协议、组织同步或登录审计。
+
+### 实施步骤与验证
+
+1. 核对微信、钉钉、OAuth2 的 provider 和真实字段映射。当前登录页的微信授权固定映射为 `wechat-official-account`，钉钉映射为 `dingtalk-ent-app`，OAuth2 映射为 `third-party` + `sso.configuration.oauth2`；开放平台网站应用和小程序不纳入本页。
+2. 在当前模块新增有类型的 API 封装和纯映射函数，把页面草稿与现有 `ApplicationEntity` 契约互转；查询只保留上述 provider 且包含 `ssoClient` 的应用。
+3. 将 `useThirdPartyLogin` 改为服务端加载和异步 CRUD，提供 loading/error/empty 状态；编辑时按需读取详情。移除内存 UUID、刷新丢失提醒、`demo-` Secret 校验和所有预览反馈。
+4. 页面删除预览提示、企业微信入口、登录页展示开关；抽屉删除预览提示、组织同步和显示名称，登录图标直接保存至应用 `logoUrl`。新增、编辑、删除和启停分别调用现有应用接口，操作成功后刷新列表。
+5. 用 mapper 单测覆盖三类页面模型与三个 provider 的互转、provider 过滤和状态映射；运行前端聚焦测试及 `authentication-manager-ui` 构建。登录跳转继续复用已有 `/application/sso/{appId}/login`，本轮不修改登录页。
+
+### 风险与待确认
+
+- 现有应用详情与旧应用管理页会回显 Secret，本轮保持既有接口行为，不扩大到新的后端安全改造；前端不记录、不额外展示明文，但编辑表单仍受现有接口契约约束。
+- 企业微信、组织同步和独立展示开关待后端出现真实能力后再接入；本轮不显示禁用占位或待开发入口。
+- 只修改当前 `runtime-ui/modules/authentication-manager-ui`；旧应用管理页面和登录页只做兼容验证，不改变代码。
+
+### 实施结果
+
+当前页面已改为复用 `/application/_query`、`/application/{id}` 及现有新增、更新、删除接口，列表只接收带 `ssoClient` 的微信公众号、钉钉和 OAuth2 应用。微信授权固定使用当前登录页识别的 `wechat-official-account`，钉钉使用 `dingtalk-ent-app`，OAuth2 仅接收 `third-party` 的 `oauth2` 配置；开放平台网站应用、小程序和企业微信均不在本页展示。
+
+页面已删除预览提示、内存状态、`demo-` 密钥限制、组织同步、独立登录页展示、显示名称和本地图标上传；新增、编辑、启停和删除均刷新服务端数据，并提供加载、失败、空态和提交状态。列表转换不携带 Secret，编辑时才读取详情；受现有后端契约限制，Secret 仍会由详情接口明文返回。
+
+验证结果：第三方登录模型与菜单聚焦测试 7 项通过；本次 `ThirdPartyLogin` 与 `thirdPartyLogin` 文件的 `vue-tsc` 筛选无错误；`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 构建成功。全模块 `vue-tsc` 仍存在大量与本次无关的既有错误，未在本次范围内处理。
+
+### OAuth2 自定义回调地址（待确认）
+
+- 目标：OAuth2 登录配置允许按应用修改完整 `redirectUri`；未配置时继续使用 `base-path + /application/sso/{appId}/notify` 自动生成地址。
+- 影响范围：运行时前端 `ThirdPartyLogin` 草稿、回显、校验和保存映射，以及后端 `authentication-manager` 的授权跳转与换取 token 回调地址选择。
+- 非目标：不修改微信、钉钉回调行为，不新增接口或持久化字段，不改变现有回调 Controller 路径。
+- 实施：前端复用现有 `sso.configuration.oauth2.redirectUri`；后端优先使用该配置，为空时兼容原自动生成逻辑，并保持授权请求与 token 请求使用同一地址。
+- 风险：自定义地址必须真实转发到当前应用的固定回调入口，否则第三方授权后平台无法收到回调；仅放开前端编辑不会生效。
+- 验证：前端覆盖默认回填、自定义值回显/保存和非法 URL；后端覆盖自定义地址优先、空值回退，以及授权与 token 请求参数一致。
