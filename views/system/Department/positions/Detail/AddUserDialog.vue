@@ -66,7 +66,7 @@
                     </a-form-item>
                 </a-col>
             </a-row>
-            <a-row :gutter="24" v-if="IsShow('add', 'edit') && isNoCommunity">
+            <a-row :gutter="24" v-if="IsShow('add', 'edit') && isNoCommunity && hasPositionMenu">
                 <a-col :span="12">
                     <a-form-item name="positions" :label="$t('components.EditUserDialog.939453-31')">
                         <form-item-position :extraData="detail.positions" :disabledData="disabledData.positions"
@@ -134,8 +134,6 @@ import { FormInstance } from 'ant-design-vue';
 import {
     validateField_api,
     addUser_api,
-    updateUser_api,
-    updatePassword_api,
     getUser_api,
 } from '@authentication-manager-ui/api/system/user';
 import { Rule } from 'ant-design-vue/es/form';
@@ -147,6 +145,7 @@ import { cloneDeep, flatten, map } from 'lodash-es';
 import { useI18n } from 'vue-i18n';
 import { queryPositionDetailNoPage } from "@authentication-manager-ui/api/system/positions";
 import { isNoCommunity } from '@jetlinks-web-core/utils/utils';
+import { useMenuStore } from '@jetlinks-web-core/store'
 
 const { t: $t } = useI18n();
 
@@ -164,6 +163,7 @@ const route = useRoute()
 // 弹窗相关
 const loading = ref(false);
 const positionsMap = new Map()
+const hasPositionMenu = useMenuStore().hasMenu('system/positions');
 
 const disabledData = reactive<{
     roles: any[],

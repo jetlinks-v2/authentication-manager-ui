@@ -350,7 +350,7 @@ const columns = [
     dataIndex: 'state',
     key: 'state',
     ellipsis: true,
-    width: 80,
+    width: 90,
     search: {
       type: 'select',
       options: [

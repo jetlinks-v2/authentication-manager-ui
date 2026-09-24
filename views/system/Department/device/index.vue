@@ -360,7 +360,7 @@ const columns = [
       ],
     },
     scopedSlots: true,
-    width: 80
+    width: 90
   },
   {
     title: $t('product.index.083446-7'),

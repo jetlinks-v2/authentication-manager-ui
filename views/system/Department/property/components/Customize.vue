@@ -19,6 +19,8 @@
       }),
     }"
     :columns="columns"
+                 mode="TABLE"
+                 style="padding: 1rem 0 0"
     >
     <template #card="slotProps">
       <CardBox :value="slotProps" v-bind="slotProps" :active="_selectedRowKeys.includes(slotProps.id)

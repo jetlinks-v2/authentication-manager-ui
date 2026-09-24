@@ -60,12 +60,11 @@ interface DepartmentTabOption {
 const Position = defineAsyncComponent(() => import('./positions/index.vue'))
 const User = defineAsyncComponent(() => import('./user/index.vue'))
 const Property = defineAsyncComponent(() => import('./property/index.vue'))
-
 const baseTabs = shallowRef<DepartmentTabOption[]>([
-  {
-    key: 'position',
-    label: 'Department.index.945805-3',
-  },
+  // {
+  //   key: 'position',
+  //   label: 'Department.index.945805-3',
+  // },
   {
     key: 'user',
     label: 'Department.index.945805-2',

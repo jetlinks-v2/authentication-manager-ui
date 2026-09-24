@@ -45,7 +45,8 @@
                 }),
             }"
             :columns="columns"
-            style="max-height: 31.25rem; overflow:auto"
+            style="max-height: 31.25rem; overflow:auto;padding:0;"
+            mode="TABLE"
         >
             <template #card="slotProps">
                 <CardBox
