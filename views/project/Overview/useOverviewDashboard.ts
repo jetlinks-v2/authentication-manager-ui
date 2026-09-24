@@ -1,7 +1,8 @@
-import { computed, markRaw } from 'vue'
+import { computed, markRaw, type Ref } from 'vue'
 import { isSaaS } from '@jetlinks-web-core/utils/consts'
 import { dashboardSources } from '@jetlinks-web-core/components/DashBoardCanvas/dashboard-sources'
 import { useDashboardCatalog } from '@jetlinks-web-core/components/DashBoardCanvas/discovery'
+import { readDashboardLayout } from '@jetlinks-web-core/components/DashBoardCanvas/utils/layoutStorage'
 import type { DashboardValue } from '@jetlinks-web-core/components/DashBoardCanvas'
 import {
   ProjectHomeQuickGuide,
@@ -39,23 +40,46 @@ import {
   ProjectHomeQuotasConfigProps,
 } from '../../../visDashboard/Base/Quotas/index'
 
+const guideRows = 6
+const legacyLayoutKeys = Array.from({ length: 14 }, (_, index) => `project-overview-v${14 - index}`)
+
 const saasLayout = [
-  ['QuickActions', 0, 0, 8, 9], ['Quotas', 8, 0, 4, 9],
-  ['DeviceAccess', 0, 9, 3, 13], ['Visualization', 3, 9, 5, 13], ['Operations', 8, 9, 4, 10],
-  ['AiCenter', 0, 22, 4, 11], ['RuleEngine', 4, 22, 4, 11], ['Applications', 8, 19, 4, 11],
-  ['Announcements', 8, 30, 4, 12],
+  ['QuickGuide', 0, 0, 12, guideRows],
+  ['QuickActions', 0, 6, 8, 9], ['Quotas', 8, 6, 4, 9],
+  // 运维卡包含健康状态与告警操作，窄列时健康状态会换行，预设高度需完整容纳两个分组。
+  ['DeviceAccess', 0, 15, 3, 13], ['Visualization', 3, 15, 5, 13], ['Operations', 8, 15, 4, 13],
+  ['AiCenter', 0, 28, 4, 11], ['RuleEngine', 4, 28, 4, 11], ['Applications', 8, 28, 4, 11],
+  ['Announcements', 8, 39, 4, 12],
 ] as const
 
 const privateLayout = [
-  ['QuickActions', 0, 0, 12, 9],
-  ['DeviceAccess', 0, 9, 3, 13], ['Visualization', 3, 9, 5, 13], ['Operations', 8, 9, 4, 13],
-  ['AiCenter', 0, 22, 4, 11], ['RuleEngine', 4, 22, 4, 11], ['Applications', 8, 22, 4, 11],
-  ['Collection', 0, 33, 4, 10], ['Announcements', 4, 33, 8, 10],
+  ['QuickGuide', 0, 0, 12, guideRows],
+  ['DeviceAccess', 0, 0, 3, 13], ['Collection', 3, 0, 3, 13],
+  ['RuleEngine', 6, 0, 3, 13], ['AiCenter', 9, 0, 3, 13],
+  ['QuickActions', 0, 13, 6, 9], ['Applications', 6, 13, 6, 9],
+  ['Visualization', 0, 22, 6, 14], ['Operations', 6, 22, 6, 14],
+  // 保留旧布局里的公告 ID 以兼容个人缓存；私有化组装时隐藏，不发起公告请求。
+  ['Announcements', 8, 36, 4, 12],
 ] as const
 
 const layout = isSaaS ? saasLayout : privateLayout
 
-export function useOverviewDashboard() {
+function migrateQuickGuideLayout() {
+  try {
+    const saved = readDashboardLayout(localStorage, 'project-overview', legacyLayoutKeys)
+    if (!saved || saved.some(item => item.i === 'projectHomeQuickGuide')) return
+    const previousIds = new Set(layout.slice(1).map(([feature]) => `projectHome${feature}`))
+    if (saved.length !== previousIds.size || new Set(saved.map(item => item.i)).size !== previousIds.size
+      || saved.some(item => !previousIds.has(item.i))) return
+    localStorage.setItem('project-overview', JSON.stringify([
+      { i: 'projectHomeQuickGuide', x: 0, y: 0, w: 12, h: guideRows },
+      ...saved.map(item => ({ ...item, y: item.y + guideRows })),
+    ]))
+  } catch { /* 存储不可用时沿用默认布局。 */ }
+}
+
+export function useOverviewDashboard(showQuickGuide: Ref<boolean>) {
+  migrateQuickGuideLayout()
   const { catalog, loading, errors, reload } = useDashboardCatalog(dashboardSources, {
     modules: ['authentication-manager-ui'], directories: ['visDashboard'],
     groups: ['authentication-manager-ui/visDashboard/Base'],
@@ -88,7 +112,7 @@ export function useOverviewDashboard() {
       ProjectHomeQuickGuide,
       ProjectHomeQuickGuideConfig,
       ProjectHomeQuickGuideConfigProps,
-      { w: 8, h: 5, x: 0, y: 7, minW: 4, minH: 2 },
+      { w: 12, h: guideRows, x: 0, y: 0, minW: 4, minH: 3 },
     )
     registerFallback(
       'projectHomeDeviceAccess',
@@ -143,10 +167,12 @@ export function useOverviewDashboard() {
       const type = `projectHome${feature}`, definition = fullCatalog.value.components[type]
       if (!definition) return []
       return [{ ...definition.defaultConfig, id: type, type,
+        ...(feature === 'QuickGuide' ? { visible: showQuickGuide.value } : {}),
+        ...(!isSaaS && feature === 'Announcements' ? { visible: false } : {}),
         componentProps: { ...definition.defaultConfig.componentProps,
           gridItem: { ...definition.defaultGridItem, ...definition.defaultConfig.componentProps.gridItem, x, y, w, h } } }]
     }),
   }))
 
-  return { catalog: fullCatalog, loading, errors, reload, dashboard }
+  return { catalog: fullCatalog, loading, errors, reload, dashboard, legacyLayoutKeys }
 }

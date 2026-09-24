@@ -3,13 +3,19 @@
     <template v-for="(step, index) in steps" :key="step.key">
       <div
         class="step-card"
-        :class="{ 'is-disabled': step.disabled }"
-        :title="step.disabled ? t('packages.ProjectHome.unavailable') : (step.title + ' - ' + step.description)"
+        :class="{ 'is-disabled': step.disabled, 'is-complete': step.status === 'complete' }"
+        :title="step.disabled ? t('packages.ProjectHome.unavailable') : (step.title + ' - ' + step.description + ' · ' + step.statusText)"
         @click="!step.disabled && $emit('action', step)"
       >
         <div class="step-card-header">
-          <span class="step-badge">{{ index + 1 }}</span>
+          <span class="step-badge" :class="{ 'is-complete': step.status === 'complete', 'is-unknown': step.status === 'unknown' }">
+            <CheckOutlined v-if="step.status === 'complete'" />
+            <LoadingOutlined v-else-if="step.status === 'loading'" spin />
+            <QuestionOutlined v-else-if="step.status === 'unknown'" />
+            <template v-else>{{ index + 1 }}</template>
+          </span>
           <strong class="step-title">{{ step.title }}</strong>
+          <span v-if="step.status === 'complete'" class="step-status">{{ step.statusText }}</span>
         </div>
         <div class="step-card-desc">{{ step.description }}</div>
         <div class="step-card-action">
@@ -31,17 +37,19 @@
 </template>
 
 <script setup lang="ts">
-import { RightOutlined } from '@ant-design/icons-vue'
+import { CheckOutlined, LoadingOutlined, QuestionOutlined, RightOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
+import type { HomeTarget } from '../../shared/types'
+import type { GuideStatus } from '../quickGuideStatus'
 
 export interface GuideStep {
   key: string
   title: string
   description: string
   actionText: string
-  menu: string
-  fallbackMenu?: string
-  query?: Record<string, string>
+  target: HomeTarget
+  status: GuideStatus
+  statusText: string
   disabled?: boolean
 }
 
@@ -138,6 +146,10 @@ const { t } = useI18n()
   flex-shrink: 0;
 }
 
+.step-badge.is-complete { background: #1677ff; border-color: #1677ff; color: #fff; }
+.step-badge.is-unknown { background: #f2f3f5; border-color: #d9dce3; color: #86909c; }
+.step-status { color: #1677ff; font-size: 11px; white-space: nowrap; }
+
 .step-title {
   font-size: 13px;
   line-height: 20px;
@@ -188,13 +200,33 @@ const { t } = useI18n()
   user-select: none;
 }
 
-@container business-component-shell (max-width: 600px) {
+@container business-component-shell (max-width: 900px) {
   .quick-guide-view {
-    flex-direction: column;
-    overflow-y: auto;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
   }
-  .step-separator {
-    display: none;
+  .step-card {
+    flex: 0 0 220px;
+    scroll-snap-align: start;
+  }
+  .step-separator { display: none; }
+}
+
+@container business-component-shell (max-width: 900px) and (min-height: 240px) {
+  .quick-guide-view {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+  .step-card { min-width: 0; }
+}
+
+@container business-component-shell (max-width: 400px) and (min-height: 400px) {
+  .quick-guide-view {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: repeat(4, minmax(0, 1fr));
   }
 }
 </style>

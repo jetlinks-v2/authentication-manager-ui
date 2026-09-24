@@ -7,4 +7,5 @@ export function provideHomePolling() {
   const polling = createHomePolling(loadHomeRows)
   provide(homePollingKey, polling)
   onScopeDispose(() => polling.dispose())
+  return polling
 }

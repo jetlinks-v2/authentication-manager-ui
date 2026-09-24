@@ -4,7 +4,7 @@
       <template #alarm="{ row }">
         <AlarmQuickEntry v-if="row.id === 'deviceAlarm' || row.id === 'visionAlarm'" :category="row.id"
           :title="t(`packages.ProjectHome.${row.id}`)" :count="row.value" :disabled="isEdit || !view.chart.navigation"
-          @handled="refreshKey++" />
+          :can-configure="!isEdit && view.canOpen(row.target)" @handled="refreshKey++" @configure="view.open(row.target)" />
       </template>
     </HomeView></template>
   </HomeWidget>

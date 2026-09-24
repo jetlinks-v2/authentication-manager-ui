@@ -8,6 +8,7 @@ import { rowsOf, textOf } from './apiResult'
 import { loadAnnouncements } from './apiAnnouncements'
 import { loadResourceRows, loadOperationRows, loadHealthRows } from './apiResources'
 import { loadQuotaRows } from './apiQuotas'
+import { loadQuickGuideRows } from '../QuickGuide/apiQuickGuide'
 import type { HomeFeature, HomeRow } from './types'
 
 const formatTime = (value?: number | string) => {
@@ -44,6 +45,7 @@ export const loadHomeRows = (feature: HomeFeature): Promise<HomeRow[]> => {
     case 'Quotas': return loadQuotaRows()
     case 'Operations': return loadOperationRows()
     case 'Announcements': return loadAnnouncements()
+    case 'QuickGuide': return loadQuickGuideRows()
     default: return Promise.resolve([])
   }
 }
