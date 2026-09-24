@@ -9,8 +9,8 @@ import { RESOURCE_ROWS } from './resources'
 import type { HomeFeature, HomeRow } from './types'
 
 /** 卡片订阅所需数据；运维与设备卡片共享健康统计，离页停止订阅。 */
-export function useHomeRuntime(feature: HomeFeature, isEdit: Ref<boolean>, refreshTime: Ref<number>, refreshKey: Ref<number> = ref(0)) {
-  const polling = inject(homePollingKey, undefined) ?? createHomePolling(loadHomeRows)
+export function useHomeRuntime(feature: HomeFeature, isEdit: Ref<boolean>, refreshTime: Ref<number>, refreshKey: Ref<number> = ref(0), sharedPolling?: ReturnType<typeof createHomePolling>) {
+  const polling = sharedPolling ?? inject(homePollingKey, undefined) ?? createHomePolling(loadHomeRows)
   const route = useRoute()
   const rows = ref<HomeRow[]>([]), loading = ref(false), error = ref(false)
   const active = ref(true)
