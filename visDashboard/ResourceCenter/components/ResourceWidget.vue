@@ -61,7 +61,7 @@ function openAlgorithmConfig() {
   height: 100%;
   box-sizing: border-box;
   background: var(--ant-color-bg-container, #fff);
-  border-radius: 6px;
+  border-radius: var(--r-3, 8px);
   padding: 16px;
   display: flex;
   flex-direction: column;
