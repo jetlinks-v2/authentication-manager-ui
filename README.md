@@ -18,11 +18,23 @@
 
 验证：本地 `http://localhost:9200/#/system/ou/department` 的父节点显示 `icon-zuzhiguanli`、叶子节点显示 `icon-zuzhi`，展开父节点后子节点图标仍按其子级判断；随后恢复原有折叠与选中状态。`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过（10,799 个模块，27.51 秒），`git diff --check` 通过；构建仅有既有的 Rollup output option、CSS 注释与大包提示。未触发编辑、删除或导入等写入操作。
 
+## 组织树底部操作菜单
+
+目标与范围：仅调整 `views/system/Department/components/LeftTree.vue` 的顶层操作布局。参考 `modules/jetlinks-space-ui/views/space/AreaManagement/components/AreaTreePanel.vue` 的底部点击式菜单：移除标题栏的批量导入图标，点击底部“新增”按钮后显示“批量导入”和“新增”。沿用现有弹窗、文案和新增权限；不改树节点操作、接口、树数据、搜索或其他前端模块。
+
+实施与风险：复用 Ant Design Vue 的 `a-dropdown` / `a-menu`，将导入和新增分别接到现有 `batchImportVisible` 与 `openDialog()`；新增菜单项继续按 `system/Department:add` 控制可见性。检查无新增权限时仍可打开原有不受该权限限制的导入入口，以及菜单在树底部向上弹出。
+
+验证方式：执行模块构建与 `git diff --check`；如有本地登录态页面，再检查底部菜单及两个弹窗的点击交互。
+
+验证结果：本地 `http://localhost:9200/#/system/ou/department` 显示底部“新增”按钮，点击后菜单向上弹出“批量导入”和“新增”；分别点击可打开原有导入和新增弹窗，关闭后未提交数据。`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过（10,823 个模块）；`git diff --check` 通过。模块未配置 lint 脚本；`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 被工作区既有的 637 项诊断阻断，其中本组件的 3 项均位于本次未改动的树选择、展开键类型和删除回调代码。未验证无新增权限账号的菜单显示状态；其可见性沿用 `usePermission` 的 `system/Department:add` 判断。
+
+交付入口：提交 `96cf99b`；PR https://github.com/jetlinks-v2/authentication-manager-ui/pull/97。
+
 概览页的系统公告组件（`visDashboard/Base/Announcements/ProjectHomeAnnouncements.vue`）隐藏标题右侧及空态的整个“更多”入口，包括文字与箭头；公告条目点击打开详情的交互保持不变。`shared/HomeWidget.vue` 的其余组件仍显示原有入口。两个组件的 Vue 模板和脚本编译检查通过，未运行整仓构建。
 
 ## 角色、组织与数据字典左侧树布局统一计划
 
-状态：已实施并验证。
+状态：已实施并验证；组织树导入入口的后续调整见上方“组织树底部操作菜单”。
 
 目标：将“系统设置 > 组织与用户 > 角色管理”、“系统设置 > 组织与用户 > 组织管理”和“系统设置 > 平台设置 > 数据字典”的左侧树，统一为资源中心“设备管理 > 产品列表”分类树的垂直结构：标题、搜索框、可滚动树列表、底部新增操作。组织管理的标题行使用 `space-between`，在右侧保留现有批量导入入口；数据字典右侧保留下载和导入入口。
 
