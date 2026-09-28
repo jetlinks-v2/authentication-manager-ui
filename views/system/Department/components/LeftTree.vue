@@ -2,9 +2,6 @@
   <div class="left-tree-contain">
     <header class="left-tree-contain__header">
       <strong>{{ $t('components.LeftTree.755653-7') }}</strong>
-      <j-permission-button type="link" :tooltip="{ title: $t('components.LeftTree.755653-8') }" @click="batchImportVisible = true">
-        <template #icon><AIcon type="ImportOutlined" /></template>
-      </j-permission-button>
     </header>
     <a-input
       v-model:value="searchValue"
@@ -89,15 +86,26 @@
         <CloudEmpty v-else />
       </a-spin>
     </div>
-    <j-permission-button
-      class="left-tree-contain__create"
-      block
-      :hasPermission="`${permission}:add`"
-      @click="openDialog()"
-    >
-      <template #icon><AIcon type="PlusOutlined" /></template>
-      {{ $t('components.LeftTree.755653-1') }}
-    </j-permission-button>
+    <div class="left-tree-contain__footer">
+      <a-dropdown :trigger="['click']" placement="topCenter">
+        <a-button block>
+          <AIcon type="PlusOutlined" />
+          {{ $t('components.LeftTree.755653-1') }}
+        </a-button>
+        <template #overlay>
+          <a-menu>
+            <a-menu-item key="import" @click="batchImportVisible = true">
+              <AIcon type="ImportOutlined" />
+              {{ $t('components.LeftTree.755653-8') }}
+            </a-menu-item>
+            <a-menu-item v-if="canAdd" key="add" @click="openDialog()">
+              <AIcon type="PlusOutlined" />
+              {{ $t('components.LeftTree.755653-1') }}
+            </a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
+    </div>
     <!-- 编辑弹窗 -->
     <Save
       v-if="visible"
@@ -125,9 +133,11 @@ import { useRoute } from 'vue-router'
 import { ArrayToTree } from '../util'
 import { useI18n } from 'vue-i18n';
 import { useTabSaveSuccessBack } from '@jetlinks-web-core/hooks'
+import { usePermission } from '@jetlinks-web/hooks'
 
 const { t: $t } = useI18n();
 const permission = 'system/Department'
+const { hasPerm: canAdd } = usePermission(`${permission}:add`)
 const route = useRoute();
 
 const save = useRoute().query.save
@@ -365,7 +375,7 @@ onUnmounted(() => {
   }
 
   &__search,
-  &__create {
+  &__footer {
     flex: 0 0 auto;
   }
 
