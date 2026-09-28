@@ -1708,167 +1708,6 @@
             "supportDataAccess": false
           }
         ]
-      },
-      {
-        "code": "system/Apply",
-        "name": "单点登录",
-        "i18nMessages": {
-          "name": {
-            "zh_CN": "单点登录",
-            "en_US": "Single Sign-On",
-            "en": "Single Sign-On"
-          }
-        },
-        "owner": "iot",
-        "id": "e0640f9621c21078cad62d5646a5579d",
-        "sortIndex": 40,
-        "url": "/system/single-sign-on",
-        "icon": "icon-yingyongguanli",
-        "showPage": [
-          "application"
-        ],
-        "permissions": [],
-        "buttons": [
-          {
-            "id": "delete",
-            "name": "删除",
-            "i18nMessages": {
-              "zh_CN": "删除",
-              "en_US": "Delete",
-              "en": "Delete"
-            },
-            "permissions": [
-              {
-                "permission": "application",
-                "actions": [
-                  "query",
-                  "delete"
-                ]
-              }
-            ]
-          },
-          {
-            "id": "add",
-            "name": "新增",
-            "i18nMessages": {
-              "zh_CN": "新增",
-              "en_US": "Add",
-              "en": "Add"
-            },
-            "permissions": [
-              {
-                "permission": "role",
-                "actions": [
-                  "query"
-                ]
-              },
-              {
-                "permission": "menu",
-                "actions": [
-                  "query"
-                ]
-              },
-              {
-                "permission": "application",
-                "actions": [
-                  "query",
-                  "save"
-                ]
-              },
-              {
-                "permission": "open-api",
-                "actions": [
-                  "query",
-                  "save",
-                  "delete"
-                ]
-              }
-            ]
-          },
-          {
-            "id": "update",
-            "name": "编辑",
-            "i18nMessages": {
-              "zh_CN": "编辑",
-              "en_US": "Edit",
-              "en": "Edit"
-            },
-            "permissions": [
-              {
-                "permission": "role",
-                "actions": [
-                  "query"
-                ]
-              },
-              {
-                "permission": "menu",
-                "actions": [
-                  "query"
-                ]
-              },
-              {
-                "permission": "application",
-                "actions": [
-                  "query",
-                  "save"
-                ]
-              },
-              {
-                "permission": "open-api",
-                "actions": [
-                  "query",
-                  "save",
-                  "delete"
-                ]
-              }
-            ]
-          },
-          {
-            "id": "view",
-            "name": "查看",
-            "i18nMessages": {
-              "zh_CN": "查看",
-              "en_US": "View",
-              "en": "View"
-            },
-            "permissions": [
-              {
-                "permission": "application",
-                "actions": [
-                  "query"
-                ]
-              },
-              {
-                "permission": "role",
-                "actions": [
-                  "query"
-                ]
-              }
-            ]
-          },
-          {
-            "id": "action",
-            "name": "启/禁用",
-            "i18nMessages": {
-              "zh_CN": "启/禁用",
-              "en_US": "Enable/Disable",
-              "en": "Enable/Disable"
-            },
-            "permissions": [
-              {
-                "permission": "application",
-                "actions": [
-                  "save"
-                ]
-              }
-            ]
-          }
-        ],
-        "accessSupport": {
-          "text": "不支持",
-          "value": "unsupported"
-        },
-        "supportDataAccess": false
       }
     ]
   },
@@ -2400,6 +2239,167 @@
         },
         "permissions": [],
         "buttons": []
+      },
+      {
+        "code": "system/Apply",
+        "name": "第三方应用",
+        "i18nMessages": {
+          "name": {
+            "zh_CN": "第三方应用",
+            "en_US": "Third-Party Application",
+            "en": "Third-Party Application"
+          }
+        },
+        "owner": "iot",
+        "id": "e0640f9621c21078cad62d5646a5579d",
+        "sortIndex": 5,
+        "url": "/system/Apply",
+        "icon": "icon-yingyongguanli",
+        "showPage": [
+          "application"
+        ],
+        "permissions": [],
+        "buttons": [
+          {
+            "id": "delete",
+            "name": "删除",
+            "i18nMessages": {
+              "zh_CN": "删除",
+              "en_US": "Delete",
+              "en": "Delete"
+            },
+            "permissions": [
+              {
+                "permission": "application",
+                "actions": [
+                  "query",
+                  "delete"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "add",
+            "name": "新增",
+            "i18nMessages": {
+              "zh_CN": "新增",
+              "en_US": "Add",
+              "en": "Add"
+            },
+            "permissions": [
+              {
+                "permission": "role",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "menu",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "application",
+                "actions": [
+                  "query",
+                  "save"
+                ]
+              },
+              {
+                "permission": "open-api",
+                "actions": [
+                  "query",
+                  "save",
+                  "delete"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "update",
+            "name": "编辑",
+            "i18nMessages": {
+              "zh_CN": "编辑",
+              "en_US": "Edit",
+              "en": "Edit"
+            },
+            "permissions": [
+              {
+                "permission": "role",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "menu",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "application",
+                "actions": [
+                  "query",
+                  "save"
+                ]
+              },
+              {
+                "permission": "open-api",
+                "actions": [
+                  "query",
+                  "save",
+                  "delete"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "view",
+            "name": "查看",
+            "i18nMessages": {
+              "zh_CN": "查看",
+              "en_US": "View",
+              "en": "View"
+            },
+            "permissions": [
+              {
+                "permission": "application",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "role",
+                "actions": [
+                  "query"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "action",
+            "name": "启/禁用",
+            "i18nMessages": {
+              "zh_CN": "启/禁用",
+              "en_US": "Enable/Disable",
+              "en": "Enable/Disable"
+            },
+            "permissions": [
+              {
+                "permission": "application",
+                "actions": [
+                  "save"
+                ]
+              }
+            ]
+          }
+        ],
+        "accessSupport": {
+          "text": "不支持",
+          "value": "unsupported"
+        },
+        "supportDataAccess": false
       },
       {
         "code": "system/ThirdPartyLogin",
