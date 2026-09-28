@@ -21,11 +21,12 @@ import { useI18n } from 'vue-i18n'
 import { DashBoardCanvas } from '@jetlinks-web-core/components/DashBoardCanvas'
 import { useOverviewDashboard } from './useOverviewDashboard'
 import { provideHomePolling } from '../../../visDashboard/Base/shared/homePollingContext'
+import { useQuickGuideSteps } from '../../../visDashboard/Base/QuickGuide/useQuickGuideSteps'
 
-const legacyLayoutKeys = Array.from({ length: 14 }, (_, index) => `project-overview-v${14 - index}`)
-provideHomePolling()
+const polling = provideHomePolling()
 const { t } = useI18n()
-const { catalog, loading, errors, reload, dashboard } = useOverviewDashboard()
+const { showGuide } = useQuickGuideSteps(() => false, polling)
+const { catalog, loading, errors, reload, dashboard, legacyLayoutKeys } = useOverviewDashboard(showGuide)
 </script>
 <style scoped>
 .project-overview {

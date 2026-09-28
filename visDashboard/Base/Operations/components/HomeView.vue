@@ -19,7 +19,7 @@
               </span>
               <span class="health-card-title">{{ label(row) }}</span>
             </div>
-            <span class="health-rate">{{ row.value && row.online !== undefined ? t('packages.ProjectHome.onlineRate', { value: Math.round(healthPercent(row)) }) : row.value === 0 ? t('packages.ProjectHome.empty') : t('packages.ProjectHome.metricUnknown') }}</span>
+            <span class="health-rate">{{ row.value !== undefined && row.online !== undefined ? t('packages.ProjectHome.onlineRate', { value: Math.round(healthPercent(row)) }) : t('packages.ProjectHome.metricUnknown') }}</span>
             <div v-if="row.value && row.online !== undefined" class="health-card-progress">
               <div class="health-progress-bar" :style="{ width: `${healthPercent(row)}%` }" />
             </div>
@@ -97,7 +97,7 @@ const getGroupRows = (group: string) => {
   overflow: auto;
 }
 
-.home-operation-group-title {
+.home-operations .home-operation-group-title {
   font-size: 13px;
   font-weight: 500;
   color: #1d2129;
@@ -230,14 +230,24 @@ const getGroupRows = (group: string) => {
 }
 
 @container business-component-shell (max-width: 440px) {
+  .home-operations { gap: 8px; }
+  .home-operations .home-operation-group-title { margin-bottom: 6px; }
+
   .home-operation-items.items--health {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .home-operations:not(.home-operations--cards) .home-operation-group--alarms .home-operation-items.items--alarms {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-health-card { min-height: 72px; padding-block: 4px; }
+  .home-health-card .health-rate { margin-top: 2px; }
 }
 
-@container business-component-shell (max-width: 320px) {
+@container business-component-shell (max-width: 260px) {
   .home-operation-items.items--health,
-  .home-operation-items.items--alarms {
+  .home-operations:not(.home-operations--cards) .home-operation-group--alarms .home-operation-items.items--alarms {
     grid-template-columns: 1fr;
   }
 }

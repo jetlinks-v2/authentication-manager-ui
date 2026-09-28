@@ -4,9 +4,9 @@
       <button
         type="button"
         class="resource-item-btn"
-        :class="{ 'is-disabled': disabled, 'is-metric': metric, 'has-icon': showIcon }"
+        :class="{ 'is-disabled': disabled, 'is-metric': metric, 'is-empty': isEmpty, 'has-icon': showIcon }"
         :disabled="disabled"
-        :aria-label="disabled ? unavailableHintText : label(row)"
+        :aria-label="accessibilityLabel"
         @click="$emit('navigate', row.target)"
       >
         <div v-if="showIcon" class="resource-item-icon-box" :style="{ background: disabled ? '#F2F3F5' : iconBgTone }">
@@ -14,7 +14,7 @@
         </div>
         <span class="resource-item-copy">
           <span class="resource-item-label">{{ label(row) }}</span>
-          <j-ellipsis v-if="row.description || row.descriptionKey" class="resource-item-description">{{ row.description || description(row) }}</j-ellipsis>
+          <j-ellipsis v-if="isEmpty || row.description || row.descriptionKey" class="resource-item-description">{{ visibleDescription }}</j-ellipsis>
         </span>
         <div class="resource-item-value-box">
           <strong class="resource-item-value">{{ number(row.value) }}</strong>
@@ -22,12 +22,15 @@
         </div>
         <span class="resource-item-detail">
           <template v-if="row.failed || row.value === undefined">{{ t('packages.ProjectHome.metricUnknown') }}</template>
+          <template v-else-if="isEmpty">
+            <span v-if="!disabled" class="resource-item-action">{{ emptyAction }} ›</span>
+            <span v-else class="resource-item-unavailable">{{ unavailableHintText }}</span>
+          </template>
           <template v-else-if="row.online !== undefined && row.offline !== undefined">
             <span>{{ t('packages.ProjectHome.online') }} <b>{{ number(row.online) }}</b></span>
             <span>{{ t('packages.ProjectHome.offline') }} <b>{{ number(row.offline) }}</b></span>
             <span v-if="row.value > 0">{{ t('packages.ProjectHome.onlineRate', { value: Math.round(row.online / row.value * 100) }) }}</span>
           </template>
-          <template v-else-if="row.value === 0">{{ t('packages.ProjectHome.resourceZero') }}</template>
           <template v-else>{{ disabled ? unavailableHintText : t('packages.ProjectHome.resourceManage') + ' ›' }}</template>
         </span>
       </button>
@@ -53,6 +56,13 @@ defineEmits<{ navigate: [target?: HomeTarget] }>()
 
 const { t } = useI18n()
 
+// 数量为 0 的资源共用同一引导布局，按资源类型展示对应的说明和入口。
+const guidedResourceIds = new Set([
+  'devices', 'video', 'gateway', 'collector', 'card',
+  'image', 'component', 'model', 'screen', 'template',
+  'agent', 'algorithm', 'coverage', 'scene',
+])
+
 const iconBgTones: Record<string, string> = {
   devices: '#E8F3FF',
   video: '#E8F3FF',
@@ -73,8 +83,24 @@ const iconBgTones: Record<string, string> = {
 const iconBgTone = computed(() => (props.row.icon && iconBgTones[props.row.icon]) || '#E8F3FF')
 
 const disabled = computed(() => !props.canOpen(props.row.target))
+const isEmpty = computed(() => !props.row.failed && props.row.value === 0)
 const label = (row: HomeRow) => row.label || t(`packages.ProjectHome.${row.labelKey}`)
 const description = (row: HomeRow) => row.descriptionKey ? t(`packages.ProjectHome.${row.descriptionKey}`) : ''
+const emptyHint = computed(() => {
+  return guidedResourceIds.has(props.row.id)
+    ? t(`packages.ProjectHome.resourceEmpty_${props.row.id}`)
+    : t('packages.ProjectHome.resourceZero')
+})
+const emptyAction = computed(() => {
+  return guidedResourceIds.has(props.row.id)
+    ? t(`packages.ProjectHome.resourceAction_${props.row.id}`)
+    : t('packages.ProjectHome.resourceManage')
+})
+const visibleDescription = computed(() => isEmpty.value
+  ? disabled.value ? unavailableHintText.value : emptyHint.value
+  : props.row.description || description(props.row))
+const accessibilityLabel = computed(() => disabled.value ? unavailableHintText.value
+  : isEmpty.value ? `${label(props.row)}，${emptyHint.value}，${emptyAction.value}` : label(props.row))
 const number = (value?: number) => (value === undefined ? '—' : value.toLocaleString())
 const unitText = computed(() => props.row.unit || t('packages.ProjectHome.unitPiece') || '个')
 
@@ -107,8 +133,8 @@ const unavailableHintText = computed(() => {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover:not(:disabled) {
-    background: #eef5ff;
-    border-color: #d0e2ff;
+    background: #f5f7fa;
+    border-color: #e5effd;
   }
 
   &:focus-visible {
@@ -167,6 +193,11 @@ const unavailableHintText = computed(() => {
 .resource-item-btn.has-icon .resource-item-copy { grid-column: 2; }
 .resource-item-detail { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 12px; padding-top: 8px; border-top: 1px solid var(--line, #edf0f5); color: var(--business-component-muted); font-size: 12px; line-height: 18px; }
 .resource-item-detail b { color: var(--business-component-text); font-weight: 500; }
+.resource-item-btn.is-empty .resource-item-detail { justify-content: center; padding: 6px 8px; border-top: 0; border-radius: 4px; background: #eef5ff; }
+.resource-item-btn.is-empty:hover:not(:disabled) .resource-item-detail { background: #e5f0ff; }
+.resource-item-btn.is-empty .resource-item-action { color: var(--business-component-primary, #1677ff); font-weight: 500; }
+.resource-item-btn.is-empty:disabled .resource-item-detail { background: #f0f2f5; }
+.resource-item-unavailable { color: var(--business-component-muted); }
 .resource-item-btn:disabled .resource-item-copy :deep(.resource-item-description) { color: inherit; }
 
 .resource-item-value-box {

@@ -63,7 +63,7 @@ SaaS 初始布局按当前概览设计的 9 组坐标同步到 `views/project/Ov
 
 - `useDashboardCatalog` 发现 6 个组件、1 个分组，`errors=[]`；所有 `configs=[]`。页面显式设置 `editable=false`、`previewMode=false`，实例锁定，配置不写入服务端。
 - 六张卡片均渲染，应用与公告空数据展示正常；资源回显为大屏 2、模板 1、智能体 2，设备、视频、边缘节点及两类业务告警为 0。
-- 实际点击设备、边缘节点、大屏、算法和公告更多入口，分别打开设备列表、网关设备列表、作品管理、算法中心和个人中心消息页。设备菜单 `iot-user-device-list` 与既有注册编码不一致，在 `../device-manager-ui/index.ts` 补齐页面别名与详情路由。存在菜单但缺少页面的空间入口未启用。
+- 初次接入时实际点击设备、边缘节点、大屏、算法和公告更多入口，分别打开设备列表、网关设备列表、作品管理、算法中心和个人中心消息页；这是当时的验证记录，公告更多入口的当前目标见下文“系统公告契约”。设备菜单 `iot-user-device-list` 与既有注册编码不一致，在 `../device-manager-ui/index.ts` 补齐页面别名与详情路由。存在菜单但缺少页面的空间入口未启用。
 - 补齐模块时复用 `saas-runtime-ui` 头像，补入原先来自运营端其他模块的 56 个 zh/en 文案，避免个人中心展示国际化 key。
 - `node modules/authentication-manager-ui/scripts/verify-overview-components.cjs`：81 个 Vue 文件 SFC 编译通过，相对导入缺失为 0。
 - 定向 `vue-tsc` 仍受导入的 core 等既有类型错误影响，未将其作为本 PR 的通过门禁；完整模块检查还包含从运营端同步的个人中心历史类型问题。
@@ -81,7 +81,7 @@ SaaS 初始布局按当前概览设计的 9 组坐标同步到 `views/project/Ov
 
 首页使用当前用户通知接口 `POST /notifications/_query`，传 `topicProvider eq SystemBulletin`、`paging=true`、`pageIndex=0`、`pageSize=4`，按 `notifyTime desc` 查询最新公告，不再依赖提供者名称匹配。标题取 topicName，摘要取 message，不查询公告管理列表、不传用户过滤条件。此处采用文档的“最新公告列表”模式，不采用铃铛的未读优先组合。
 
-点击公告复用 authentication-manager-ui 注册的 SystemBulletinNotificationDetail，按 detailJson 中的 bulletinId/publishVersion 请求正文；更多进入个人中心消息页。本期不自动标记已读。详情通过模块公开注册项复用现有 NotificationDetail，不另写正文请求或渲染器。首行橙色 `New` 标签严格按“最新第 1 条且通知状态未读（`state === 'unread'`）”展示，已读后自动隐去。
+点击公告复用 authentication-manager-ui 注册的 SystemBulletinNotificationDetail，按 detailJson 中的 bulletinId/publishVersion 请求正文；“更多”的导航目标为公告管理页（菜单 `system/Announcement`），当前公告组件隐藏该入口。本期不自动标记已读。详情通过模块公开注册项复用现有 NotificationDetail，不另写正文请求或渲染器。首行橙色 `New` 标签严格按“最新第 1 条且通知状态未读（`state === 'unread'`）”展示，已读后自动隐去。
 
 验证：`node modules/authentication-manager-ui/scripts/verify-announcements.cjs` 通过，覆盖最新 5 条查询参数、标题/摘要映射、详情引用、未读第一条 New 标识、缺失日期、空列表和失败响应；81 个 Vue 文件的 SFC/相对导入检查通过。针对概览的 vue-tsc 仍为已有依赖 161 项错误，概览自身无报错。
 
