@@ -41,6 +41,8 @@ SaaS 初始布局按当前概览设计的 9 组坐标同步到 `views/project/Ov
 
 快捷操作、应用中心和共用资源项的描述复用 `j-ellipsis`，保持默认单行裁切与溢出提示。描述节点保留 `display: -webkit-box`、纵向裁切及正常空白规则，不能覆盖为 `display: block` / `white-space: nowrap`，否则会破坏省略与基于高度的 Tooltip 检测。外层文字容器允许收缩，描述宽度为 100%，避免描述长度改变同类卡片高度。
 
+应用中心两列网格在只有两行应用卡片时贴顶排列，保持行间距与多行时一致。`visDashboard/Base/Applications/components/HomeView.vue` 的宽容器规则增加 `align-content: start`，消除剩余高度对网格行的拉伸；不改变卡片高度与列数。定向 SFC/Less 解析及 `git diff --check` 通过；现有浏览器页为远端 UAT，尚不能据此验收本地改动。按机器性能约束未运行全量构建，本地开发服务刷新概览页后可检查两行场景，无需重启后端。
+
 快捷操作需通过 `.home-action-copy :deep(.home-action-description)` 匹配 Ellipsis 实际文本节点；Tooltip 根节点未透传调用方 scoped 标记，普通 scoped 选择器不生效。共用样式的 `.home-action span` 收窄为 `.home-action-label`，避免强制所有内部文本 nowrap。已在实际 `/overview` 页面确认快捷操作显示省略号；描述可见高度 18px、内容高度 36px，满足通用组件提示的溢出判定。63 个 SFC 解析与相对导入检查、git diff --check 通过；鼠标悬停的人工验收仍待完成（检查时用户切换窗口）。未执行全量构建。
 
 本次在 `views/project/Overview` 和 `visDashboard/Base` 完成全部默认卡片的内容优化，沿用 DashBoardCanvas 项目工作台，不增加顶部欢迎条。面向项目使用者，先识别资源、理解数量口径，再进入已有管理入口。保留请求权限、真实数据、告警处理和个人布局能力。
