@@ -58,14 +58,6 @@
       </CloudEmpty>
       </a-spin>
 
-      <ApplicationRoleSelectModal
-        v-model:open="roleSelectOpen"
-        :roles="roleSelectRoles"
-        :application-name="pendingApplication?.name || ''"
-        :confirm-loading="roleBinding"
-        @confirm="confirmSelectedRole"
-        @cancel="resetRoleSelection"
-      />
     </div>
   </j-page-container>
 </template>
@@ -78,7 +70,6 @@ import { onlyMessage } from '@jetlinks-web/utils'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import ApplicationSummary from './components/ApplicationSummary.vue'
 import ApplicationSettings from './components/ApplicationSettings.vue'
-import ApplicationRoleSelectModal from '../components/ApplicationRoleSelectModal.vue'
 import RoleManagement from './components/RoleManagement.vue'
 import UserManagement from './components/UserManagement.vue'
 import { useApplicationOpenGuard } from '../useApplicationOpenGuard'
@@ -105,15 +96,8 @@ const application = computed(() => store.applications.find((item) => item.id ===
 const detail = computed(() => store.details[applicationId.value])
 const template = computed(() => store.templates.find((item) => item.id === application.value?.templateId))
 const {
-  roleSelectOpen,
-  roleSelectRoles,
-  pendingApplication,
   openingApplicationIds,
-  roleBinding,
   openApplication: openGuardedApplication,
-  confirmSelectedRole,
-  resetRoleSelection,
-  ensureCurrentUserBound,
 } = useApplicationOpenGuard({
   syncDetail: async id => {
     if (applicationId.value === id) await store.loadDetail(id)
@@ -127,9 +111,6 @@ watch(applicationId, async id => {
   try {
     await Promise.all([store.loadTemplates(), store.loadApplication(id)])
     await store.loadDetail(id)
-    if (applicationId.value === id) {
-      await ensureCurrentUserBound(id, store.details[id]?.roles || [])
-    }
   } catch {
     // The shared request layer reports the backend error.
   } finally {

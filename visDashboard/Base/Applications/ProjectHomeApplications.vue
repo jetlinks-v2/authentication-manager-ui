@@ -20,14 +20,6 @@
       </div>
     </template>
   </HomeWidget>
-  <ApplicationRoleSelectModal
-    v-model:open="roleSelectOpen"
-    :roles="roleSelectRoles"
-    :application-name="pendingApplication?.name || ''"
-    :confirm-loading="roleBinding"
-    @confirm="confirmSelectedRole"
-    @cancel="resetRoleSelection"
-  />
 </template>
 <script setup lang="ts">
 import { AppstoreOutlined } from '@ant-design/icons-vue'
@@ -37,7 +29,6 @@ import HomeWidget from '../shared/HomeWidget.vue'
 import HomeView from './components/HomeView.vue'
 import type { HomeInfo, HomeRow } from '../shared/types'
 import { useApplicationOpenGuard } from '../../../views/application-center/ProjectApplication/useApplicationOpenGuard'
-import ApplicationRoleSelectModal from '../../../views/application-center/ProjectApplication/components/ApplicationRoleSelectModal.vue'
 import type { ProjectApplication } from '../../../views/application-center/ProjectApplication/types'
 
 const props = withDefaults(defineProps<{ info?: HomeInfo; isEdit?: boolean }>(), { isEdit: false })
@@ -45,14 +36,8 @@ const { t } = useI18n()
 const menuStore = useMenuStore()
 
 const {
-  roleSelectOpen,
-  roleSelectRoles,
-  pendingApplication,
   openingApplicationIds,
-  roleBinding,
   openApplication,
-  confirmSelectedRole,
-  resetRoleSelection,
 } = useApplicationOpenGuard()
 
 const canOpenApp = (row: HomeRow) => {

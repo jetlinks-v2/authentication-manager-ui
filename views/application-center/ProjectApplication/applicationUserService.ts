@@ -5,6 +5,7 @@ import {
   queryBusinessApplicationUsers,
   queryUserDetails,
   unbindBusinessApplicationUsers,
+  unbindCurrentUserFromBusinessApplication,
   updateBusinessApplicationUser,
   type PagerResult,
   type BusinessApplicationEntity,
@@ -152,6 +153,12 @@ export const unbindProjectUsersFromBusinessApplication = async (
   applicationId: string,
   userIds: string[],
 ) => {
+  const currentUser = resultOf<UserDetailEntity>(await getCurrentUserDetail())
+  // 普通用户只能解除本人关系，避免通用接口继续校验其无权访问的 user 资产。
+  if (userIds.length === 1 && userIds[0] === currentUser?.id) {
+    await unbindCurrentUserFromBusinessApplication(applicationId)
+    return
+  }
   await unbindBusinessApplicationUsers(applicationId, userIds)
 }
 
