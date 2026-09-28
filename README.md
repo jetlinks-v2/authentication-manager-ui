@@ -28,6 +28,8 @@
 
 验证结果：本地 `http://localhost:9200/#/system/ou/department` 显示底部“新增”按钮，点击后菜单向上弹出“批量导入”和“新增”；分别点击可打开原有导入和新增弹窗，关闭后未提交数据。`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过（10,823 个模块）；`git diff --check` 通过。模块未配置 lint 脚本；`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 被工作区既有的 637 项诊断阻断，其中本组件的 3 项均位于本次未改动的树选择、展开键类型和删除回调代码。未验证无新增权限账号的菜单显示状态；其可见性沿用 `usePermission` 的 `system/Department:add` 判断。
 
+交付入口：提交 `96cf99b`；PR https://github.com/jetlinks-v2/authentication-manager-ui/pull/97。
+
 概览页的系统公告组件（`visDashboard/Base/Announcements/ProjectHomeAnnouncements.vue`）隐藏标题右侧及空态的整个“更多”入口，包括文字与箭头；公告条目点击打开详情的交互保持不变。`shared/HomeWidget.vue` 的其余组件仍显示原有入口。两个组件的 Vue 模板和脚本编译检查通过，未运行整仓构建。
 
 ## 角色、组织与数据字典左侧树布局统一计划
