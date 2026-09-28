@@ -4,8 +4,8 @@
             
                 <EqualHeightColumns
                     class="save-layout"
-                    left-width="18.75rem"
-                    right-width="1fr"
+                    left-width="1fr"
+                    right-width="18.75rem"
                 >
                     <template #left>
                         <div class="save-layout__form">
@@ -28,7 +28,7 @@ import Does from './components/Does.vue';
 import EditForm from './components/EditForm.vue';
 import type { applyType } from './typing';
 
-const rightType = ref<applyType>('internal-standalone');
+const rightType = ref<applyType>('third-party');
 const changeType = (newType: applyType) => {
     rightType.value = newType;
 };

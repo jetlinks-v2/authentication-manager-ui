@@ -13,7 +13,7 @@
             style="padding: 1rem 0 0"
             :columns="columns"
             modeValue="CARD"
-            :request="getApplyList_api"
+            :request="queryThirdPartyApplications"
             :defaultParams="{
                         sorts: [{ name: 'createTime', order: 'desc' }],
                     }"
@@ -230,7 +230,6 @@
                 "
       />
     </div>
-    <Add v-if="visible" @close="visible = false"/>
   </j-page-container>
 </template>
 
@@ -246,7 +245,6 @@ import {
 } from '@authentication-manager-ui/api/system/apply';
 import {onlyMessage} from '@jetlinks-web/utils';
 import {useMenuStore} from '@jetlinks-web-core/store/menu';
-import Add from './Save/Add.vue';
 import {systemImg} from "@authentication-manager-ui/assets";
 import {useI18n} from 'vue-i18n';
 
@@ -255,9 +253,6 @@ const menuStory = useMenuStore();
 const permission = 'system/Apply';
 
 const typeOptions = ref<any[]>([]);
-const visible = ref<boolean>(false);
-const addMenuVisible = ref<boolean>(false);
-
 const columns = [
   {
     title: $t('Apply.index.483342-4'),
@@ -274,20 +269,6 @@ const columns = [
     dataIndex: 'provider',
     key: 'provider',
     ellipsis: true,
-    search: {
-      type: 'select',
-      options: () =>
-          new Promise((resolve) => {
-            queryType().then((resp: any) => {
-              resolve(
-                  resp.result.map((item: any) => ({
-                    label: item.name,
-                    value: item.provider,
-                  })),
-              );
-            });
-          }),
-    },
     scopedSlots: true,
   },
   {
@@ -331,6 +312,21 @@ const columns = [
 ];
 const queryParams = ref({});
 
+const queryThirdPartyApplications = (params: Record<string, any>) =>
+    getApplyList_api({
+      ...params,
+      terms: [
+        ...(Array.isArray(params?.terms)
+            ? params.terms.filter((term: any) => term?.column !== 'provider')
+            : []),
+        {
+          column: 'provider',
+          termType: 'eq',
+          value: 'third-party',
+        },
+      ],
+    });
+
 const tableRef = ref();
 const current = ref<any>({});
 const table = {
@@ -339,7 +335,11 @@ const table = {
     // window.location.reload();
   },
   toAdd: () => {
-    visible.value = true;
+    menuStory.jumpPage('system/Apply/Save', {
+      query: {
+        provider: 'third-party',
+      },
+    });
   },
   toSave: (id?: string, view = false) => {
     if (id) menuStory.jumpPage('system/Apply/Save', {
