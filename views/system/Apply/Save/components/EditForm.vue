@@ -1606,8 +1606,8 @@ const { onOpen } = useTabSaveSuccess('system/Role')
 // 初始化表单
 const initForm: formType = {
   name: '',
-  provider: 'internal-standalone',
-  logoUrl: systemImg.internalStandaloneImg,
+  provider: 'third-party',
+  logoUrl: systemImg.thirdParty,
   integrationModes: [],
   description: '',
   page: {
