@@ -42,6 +42,7 @@ export interface BusinessApplicationTemplate {
   i18nDocument?: string
   i18nMessages?: I18nMessages
   layoutVariant?: BasicLayoutVariant
+  provider?: string
   configuration?: ApplicationTemplateConfiguration
   state?: string | EnumItem
   sortIndex?: number

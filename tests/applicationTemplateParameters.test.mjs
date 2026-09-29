@@ -27,7 +27,7 @@ const messages = {
 }
 
 function fixture(parameters = []) {
-  const detail = ref({ id: 'template', configuration: { retained: 'value', externalParameters: parameters } })
+  const detail = ref({ id: 'template', provider: 'third-party', configuration: { retained: 'value', externalParameters: parameters } })
   const writes = []
   const state = useApplicationTemplateParameters(() => detail.value, async configuration => {
     writes.push(configuration)
@@ -110,6 +110,26 @@ test('loads server provider choices and allows retry after failure', async () =>
   await state.loadProviders()
   assert.deepEqual(state.options.value, [{ value: 'custom', label: 'Custom Ticket' }])
   assert.equal(state.loadError.value, '')
+})
+
+test('only requests parameter providers after detail identifies a third-party template', async () => {
+  const { state, detail } = fixture()
+  let requests = 0
+  globalThis.parameterProviders = async () => {
+    requests += 1
+    return { result: [{ id: 'fixed', name: 'Fixed' }] }
+  }
+  for (const provider of [undefined, 'official', 'custom']) {
+    detail.value = { ...detail.value, provider }
+    assert.equal(state.supported.value, false)
+    await state.loadProviders()
+  }
+  assert.equal(requests, 0)
+  detail.value = { ...detail.value, provider: 'third-party' }
+  assert.equal(state.supported.value, true)
+  await state.loadProviders()
+  assert.equal(requests, 1)
+  assert.deepEqual(state.options.value, [{ value: 'fixed', label: 'Fixed' }])
 })
 
 test('reports save failures without discarding the draft', async () => {
