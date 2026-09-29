@@ -24,6 +24,10 @@ import {
   resultOf,
 } from './applicationModel'
 import {
+  buildApplicationConfiguration,
+  buildInitialApplicationConfiguration,
+} from './applicationConfiguration'
+import {
   bindProjectUsersToBusinessApplication,
   loadBusinessApplicationUsers,
   unbindProjectUsersFromBusinessApplication,
@@ -122,14 +126,8 @@ export const useProjectApplication = () => {
       name: draft.name,
       icon: draft.icon,
       description: draft.description,
-      configuration: {
-        // 布局配置在创建应用时形成模板快照，模板后续变更不反向影响已有应用。
-        layoutVariant: template?.layoutVariant || 'application',
-        layout: template?.layout || 'side',
-        defaultLanguage: 'zh-CN',
-        timezone: 'Asia/Shanghai',
-        customDomain: '',
-      },
+      // 创建时形成模板配置快照，模板后续变更不反向影响已有应用。
+      configuration: buildInitialApplicationConfiguration(template),
       state: 'enabled',
     })
     const result = resultOf<unknown>(response)
@@ -160,12 +158,7 @@ export const useProjectApplication = () => {
       icon: next.icon,
       description: next.description,
       state: next.status,
-      configuration: {
-        ...raw?.configuration,
-        defaultLanguage: next.defaultLanguage,
-        timezone: next.timezone,
-        customDomain: next.domain,
-      },
+      configuration: buildApplicationConfiguration(raw?.configuration, next),
     })
     return loadApplication(id)
   }

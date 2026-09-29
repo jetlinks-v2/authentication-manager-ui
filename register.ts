@@ -8,6 +8,7 @@ export default {
     exportPermission_api
   },
   components: {
+    ThirdPartyAccountBindingRows: defineAsyncComponent(() => import('./components/ThirdPartyAccountBindingRows/index.vue')),
     SystemBulletinNotificationDetail: defineAsyncComponent(() => import("./views/system/Announcement/components/NotificationDetail.vue")),
     Calendar: defineAsyncComponent(() => import("./views/system/Calendar/FullCalendar/index.vue")),
     CalendarPage: defineAsyncComponent(() => import("./views/system/Calendar/index.vue")),

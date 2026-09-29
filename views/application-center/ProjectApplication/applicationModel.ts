@@ -21,6 +21,10 @@ import type {
   ApplicationUser,
   ProjectApplication,
 } from './types'
+import {
+  normalizeApplicationOpenConfiguration,
+  normalizeApplicationOpenMode,
+} from './applicationConfiguration'
 
 type ResultEnvelope<T> = { result: T }
 
@@ -80,6 +84,7 @@ export const normalizeApplication = (entity: BusinessApplicationEntity): Project
     defaultLanguage: String(entity.configuration?.defaultLanguage || 'zh-CN'),
     timezone: String(entity.configuration?.timezone || 'Asia/Shanghai'),
     domain: String(entity.configuration?.customDomain || ''),
+    ...normalizeApplicationOpenConfiguration(entity.configuration),
   }
 }
 
@@ -98,7 +103,8 @@ export const normalizeTemplate = (
     statusText: enumText(entity.state, status),
     sortIndex: Number(entity.sortIndex || 0),
     layoutVariant: normalizeTemplateLayoutVariant(entity.layoutVariant),
-      layout: entity.layout,
+    layout: String(entity.configuration?.layout || 'side'),
+    openMode: normalizeApplicationOpenMode(entity.configuration?.openMode),
     disabled: status !== 'enabled',
   }
 }

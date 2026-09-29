@@ -1,11 +1,12 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
-import { hasOwnBusinessApplicationMenu } from '@jetlinks-web-core/api/system/menu'
 import { prepareApplicationAccess } from '@jetlinks-web-core/utils/application-access'
 import { getApplicationAccessContext } from '@jetlinks-web-core/utils/request-context'
+import { getBusinessApplicationExternalUrl } from '../../../api/application-center/businessApplication'
 import {
   ensureBusinessApplicationMembership,
+  hasOwnBusinessApplicationMenu,
 } from './applicationAccessService'
 import type { ProjectApplication } from './types'
 
@@ -27,7 +28,19 @@ export const useApplicationOpenGuard = (options: ApplicationOpenGuardOptions = {
       : openingApplicationIds.value.filter(id => id !== applicationId)
   }
 
-  const openPreparedApplication = (application: ProjectApplication) => {
+  const openPreparedApplication = async (application: ProjectApplication, externalWindow?: Window | null) => {
+    if (application.openMode === 'external') {
+      if (!externalWindow || externalWindow.closed) return false
+      const response = await getBusinessApplicationExternalUrl(application.id)
+      const url = response.result?.url
+      if (!url) {
+        onlyMessage($t('ProjectApplication.detail.accessFailed'), 'warning')
+        return false
+      }
+      externalWindow.location.replace(url)
+      return true
+    }
+
     const access = prepareApplicationAccess({
       applicationId: application.id,
       applicationName: application.name,
@@ -43,25 +56,47 @@ export const useApplicationOpenGuard = (options: ApplicationOpenGuardOptions = {
     return true
   }
 
-  const requestApplicationAccess = async (application: ProjectApplication) => {
+  const requestApplicationAccess = async (
+    application: ProjectApplication,
+    externalWindow?: Window | null,
+  ) => {
     const changed = await ensureBusinessApplicationMembership(application.id)
     if (!await hasOwnBusinessApplicationMenu(application.id)) {
       onlyMessage($t('ProjectApplication.access.notConfigured', { name: application.name }), 'warning')
       return false
     }
-    const opened = openPreparedApplication(application)
+    const opened = await openPreparedApplication(application, externalWindow)
     if (opened) void syncChangedDetail(application.id, changed).catch(() => undefined)
     return opened
   }
 
   const openApplication = async (application: ProjectApplication) => {
     if (openingApplicationIds.value.includes(application.id)) return false
+    if (application.openMode === 'external' && !application.externalUrl) {
+      onlyMessage($t('ProjectApplication.settings.externalUrlRequired'), 'warning')
+      return false
+    }
+    // 在点击事件中预留窗口，避免异步准入和外链地址请求触发浏览器弹窗拦截。
+    const externalWindow = reserveExternalWindow(application)
+    if (application.openMode === 'external' && !externalWindow) return false
+    let opened = false
     setOpening(application.id, true)
     try {
-      return await requestApplicationAccess(application)
+      opened = await requestApplicationAccess(application, externalWindow)
+      return opened
     } finally {
+      if (!opened) externalWindow?.close()
       setOpening(application.id, false)
     }
+  }
+
+  /** 外部站点不保留对 Runtime 窗口的 opener 引用。 */
+  const reserveExternalWindow = (application: ProjectApplication) => {
+    if (application.openMode !== 'external') return undefined
+    const externalWindow = window.open('about:blank', '_blank')
+    if (externalWindow) externalWindow.opener = null
+    else onlyMessage($t('ProjectApplication.detail.accessFailed'), 'warning')
+    return externalWindow
   }
 
   return {
