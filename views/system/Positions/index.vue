@@ -111,7 +111,7 @@ const onSearch = ({filter}) => {
             </template>
             <template #parentId="record">
               <j-ellipsis>
-                {{ record.parentName || '--' }}
+                {{ record.parentName || $t('comm.table.empty') }}
               </j-ellipsis>
             </template>
             <template #orgId="record">

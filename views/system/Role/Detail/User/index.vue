@@ -55,7 +55,7 @@
           </a-space>
         </template>
         <template #createTime="slotProps">
-          {{ slotProps.createTime ? dayjs(slotProps.createTime).format("YYYY-MM-DD HH:mm:ss") : '--' }}
+          {{ slotProps.createTime ? dayjs(slotProps.createTime).format("YYYY-MM-DD HH:mm:ss") : $t('comm.table.empty-2') }}
         </template>
         <template #action="slotProps">
           <j-permission-button

@@ -23,6 +23,9 @@
         </span>
       </span>
     </template>
+    <template v-for="field in ['gateway', 'area']" :key="field" #[field]="resource">
+      {{ formatApplicationCameraText(resource[field], $t('comm.table.empty')) }}
+    </template>
     <template #status="resource">
       <MetaChip :tone="resource.status === 'online' ? 'ok' : 'warn'">{{ resource.statusText }}</MetaChip>
     </template>
@@ -37,6 +40,7 @@ import type { PropType } from 'vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TableColumnType } from 'ant-design-vue'
+import { formatApplicationCameraText } from '../../applicationCameraService'
 import type {
   ApplicationResource,
   ResourcePickerData,
@@ -110,8 +114,8 @@ const columns = computed<PickerColumn[]>(() => [
   { title: $t('ProjectApplication.resource.serial'), dataIndex: 'serial', key: 'serial', width: 170, ellipsis: true },
   ...(props.type === 'camera'
     ? [
-        { title: $t('ProjectApplication.resource.gateway'), dataIndex: 'gateway', key: 'gateway', width: 150, ellipsis: true },
-        { title: $t('ProjectApplication.camera.area'), dataIndex: 'area', key: 'area', width: 150, ellipsis: true },
+        { title: $t('ProjectApplication.resource.gateway'), dataIndex: 'gateway', key: 'gateway', width: 150, ellipsis: true, scopedSlots: true },
+        { title: $t('ProjectApplication.camera.area'), dataIndex: 'area', key: 'area', width: 150, ellipsis: true, scopedSlots: true },
       ]
     : []),
   { title: $t('ProjectApplication.resource.status'), dataIndex: 'status', key: 'status', scopedSlots: true, width: 110 },

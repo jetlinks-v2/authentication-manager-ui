@@ -175,7 +175,7 @@ onUnmounted(() => {
       <template #announcementTitle="record">
         <div class="announcement-title-cell">
           <AIcon :type="resolveBulletinTypeIcon(parseDetail(record)?.type)" />
-          <j-ellipsis>{{ getNotificationTitle(record) || '--' }}</j-ellipsis>
+          <j-ellipsis>{{ getNotificationTitle(record) || $t('comm.table.empty') }}</j-ellipsis>
         </div>
       </template>
       <template #announcementSummary="record">
@@ -184,11 +184,11 @@ onUnmounted(() => {
           :tooltip="{ placement: 'topLeft' }"
           class="announcement-summary-cell"
         >
-          {{ getNotificationSummary(record) || '--' }}
+          {{ getNotificationSummary(record) || $t('comm.table.empty') }}
         </j-ellipsis>
       </template>
       <template #notifyTime="record">
-        {{ record.notifyTime ? dayjs(record.notifyTime).format('YYYY-MM-DD HH:mm:ss') : '--' }}
+        {{ record.notifyTime ? dayjs(record.notifyTime).format('YYYY-MM-DD HH:mm:ss') : $t('comm.table.empty-2') }}
       </template>
       <template #state="record">
         <j-badge-status

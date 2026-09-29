@@ -80,3 +80,10 @@ export const loadBusinessApplicationAvailableCameras = async (
     pageSize: Number(result.pageSize ?? pageSize),
   }
 }
+
+/** 资源模型的缺失标记仅在表格展示时转换，查询仍使用原始资源标识。 */
+export function formatApplicationCameraText(text: unknown, emptyText: string): string {
+  return text === undefined || text === null || text === '' || text === '--'
+    ? emptyText
+    : String(text)
+}
