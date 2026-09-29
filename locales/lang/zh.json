@@ -1274,6 +1274,7 @@
   "ProjectApplication.settings.externalUrl": "外部链接",
   "ProjectApplication.settings.externalUrlPlaceholder": "请输入以 http:// 或 https:// 开头的链接",
   "ProjectApplication.settings.externalUrlRequired": "请输入外部链接",
+  "ProjectApplication.settings.externalUrlInvalid": "请输入以 http:// 或 https:// 开头的有效链接",
   "ProjectApplication.settings.zhCN": "简体中文",
   "ProjectApplication.settings.enUS": "English",
   "ProjectApplication.settings.timezone": "应用时区",

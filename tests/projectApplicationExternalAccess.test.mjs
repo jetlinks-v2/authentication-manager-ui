@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { readFile } from 'node:fs/promises'
 import { build } from 'esbuild'
+import { compileScript, parse } from 'vue/compiler-sfc'
 import {
   buildApplicationConfiguration,
   buildInitialApplicationConfiguration,
@@ -47,6 +49,37 @@ const modelBuild = await build({
   }],
 })
 const { normalizeTemplate } = await import(`data:text/javascript;base64,${Buffer.from(modelBuild.outputFiles[0].text).toString('base64')}`)
+
+const settingsPath = new URL('../views/application-center/ProjectApplication/Detail/components/ApplicationSettings.vue', import.meta.url)
+const { descriptor } = parse(await readFile(settingsPath, 'utf8'))
+const settingsBuild = await build({
+  stdin: {
+    contents: compileScript(descriptor, { id: 'application-settings-test' }).content,
+    loader: 'ts',
+    resolveDir: new URL('.', settingsPath).pathname,
+  },
+  bundle: true,
+  write: false,
+  format: 'esm',
+  plugins: [{
+    name: 'application-settings-fixture',
+    setup(plugin) {
+      plugin.onResolve({ filter: /^(vue-i18n|@jetlinks-web)/ }, args => ({ path: args.path, namespace: 'fixture' }))
+      plugin.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ contents: `
+        export const useI18n = () => ({ t: value => value });
+        export const onlyMessage = () => {};
+        export const createApplicationAccessDisplayUrl = id => '/' + id + '/';
+      ` }))
+    },
+  }],
+})
+const { default: ApplicationSettings } = await import(`data:text/javascript;base64,${Buffer.from(settingsBuild.outputFiles[0].text).toString('base64')}`)
+
+const validExternalUrls = ['http://training.example/ui/', 'HTTPS://training.example/ui/?page=dashboard#home']
+const invalidExternalUrls = [
+  'javascript:alert(1)', 'data:text/html,<script>alert(1)</script>', 'file:///etc/hosts',
+  '/training', '//training.example/ui/', 'http:training.example', 'https:/training.example', 'https://',
+]
 
 const application = {
   id: 'training',
@@ -117,6 +150,34 @@ test('submits the edited external URL with the rest of the configuration', () =>
   assert.equal(result.externalUrl, 'https://training.example/ui/?page=dashboard')
 })
 
+test('settings validate external protocols before emitting a save and keep runtime settings valid', async () => {
+  const saves = []
+  const settings = ApplicationSettings.setup({ data: { application, template: {} }, editing: false }, {
+    expose: () => {},
+    emit: (event, patch) => { if (event === 'save') saves.push(patch) },
+  })
+  Object.assign(settings.draft, { name: 'Training', openMode: 'external' })
+  const validate = value => settings.rules.value.externalUrl[0].validator({}, value)
+  settings.formRef.value = { validate: () => validate(settings.draft.externalUrl) }
+  for (const url of invalidExternalUrls) {
+    settings.draft.externalUrl = url
+    await assert.rejects(validate(url), /externalUrlInvalid/)
+    await settings.saveSettings()
+  }
+  assert.deepEqual(saves, [])
+  await assert.rejects(validate('  '), /externalUrlRequired/)
+  for (const url of validExternalUrls) {
+    settings.draft.externalUrl = ` ${url} `
+    await settings.saveSettings()
+    assert.equal(saves.at(-1).externalUrl, url)
+  }
+  assert.equal(saves.length, validExternalUrls.length)
+  settings.draft.openMode = 'runtime'
+  settings.draft.externalUrl = ''
+  await settings.saveSettings()
+  assert.equal(saves.at(-1).openMode, 'runtime')
+})
+
 test('prompts without opening or checking access when an external URL is not configured', async () => {
   const { calls, guard } = createFixture()
   assert.equal(await guard.openApplication({ ...application, externalUrl: '' }), false)
@@ -145,6 +206,25 @@ test('does not navigate when the external URL response is empty', async () => {
   assert.equal(await guard.openApplication(application), false)
   assert.equal(calls.some(call => call[0] === 'navigate'), false)
   assert.deepEqual(calls.at(-1), ['close'])
+})
+
+test('navigates to valid HTTP and HTTPS external URLs', async () => {
+  for (const url of validExternalUrls) {
+    const { calls, guard } = createFixture({ externalUrl: async () => ({ result: { url } }) })
+    assert.equal(await guard.openApplication(application), true)
+    assert.deepEqual(calls.at(-1), ['navigate', url])
+  }
+})
+
+test('does not navigate to non-http, relative or malformed external URLs', async () => {
+  for (const url of invalidExternalUrls) {
+    const { calls, guard } = createFixture({ externalUrl: async () => ({ result: { url } }) })
+    assert.equal(await guard.openApplication(application), false)
+    assert.equal(calls.some(call => call[0] === 'navigate'), false)
+    assert.deepEqual(calls.at(-2), ['message', 'ProjectApplication.detail.accessFailed', 'warning'])
+    assert.deepEqual(calls.at(-1), ['close'])
+    assert.deepEqual(guard.openingApplicationIds.value, [])
+  }
 })
 
 test('external applications do not require a Runtime application menu', async () => {

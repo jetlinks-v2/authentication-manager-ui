@@ -1274,6 +1274,7 @@
   "ProjectApplication.settings.externalUrl": "External Link",
   "ProjectApplication.settings.externalUrlPlaceholder": "Enter a URL beginning with http:// or https://",
   "ProjectApplication.settings.externalUrlRequired": "Enter the external link",
+  "ProjectApplication.settings.externalUrlInvalid": "Enter a valid URL beginning with http:// or https://",
   "ProjectApplication.settings.zhCN": "Simplified Chinese",
   "ProjectApplication.settings.enUS": "English",
   "ProjectApplication.settings.timezone": "Application Timezone",

@@ -31,9 +31,10 @@ export const normalizeApplicationOpenConfiguration = (configuration?: Applicatio
   externalUrl: normalizeExternalApplicationUrl(configuration?.externalUrl),
 })
 
-export const isHttpExternalApplicationUrl = (value: unknown) => {
+/** 保存与跳转共用协议边界，拒绝浏览器会自动补全的相对或缺少双斜杠的地址。 */
+export const isHttpExternalApplicationUrl = (value: unknown): value is string => {
   const url = normalizeExternalApplicationUrl(value)
-  if (!url) return false
+  if (!/^https?:\/\//i.test(url)) return false
   try {
     return ['http:', 'https:'].includes(new URL(url).protocol)
   } catch {

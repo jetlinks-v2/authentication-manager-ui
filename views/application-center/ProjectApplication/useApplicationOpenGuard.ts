@@ -4,6 +4,7 @@ import { onlyMessage } from '@jetlinks-web/utils'
 import { prepareApplicationAccess } from '@jetlinks-web-core/utils/application-access'
 import { getApplicationAccessContext } from '@jetlinks-web-core/utils/request-context'
 import { getBusinessApplicationExternalUrl } from '../../../api/application-center/businessApplication'
+import { isHttpExternalApplicationUrl } from './applicationConfiguration'
 import {
   ensureBusinessApplicationMembership,
   hasOwnBusinessApplicationMenu,
@@ -33,7 +34,8 @@ export const useApplicationOpenGuard = (options: ApplicationOpenGuardOptions = {
       if (!externalWindow || externalWindow.closed) return false
       const response = await getBusinessApplicationExternalUrl(application.id)
       const url = response.result?.url
-      if (!url) {
+      // 后端地址仍需在浏览器边界校验，避免不可信配置触发 javascript: 等协议。
+      if (!isHttpExternalApplicationUrl(url)) {
         onlyMessage($t('ProjectApplication.detail.accessFailed'), 'warning')
         return false
       }
