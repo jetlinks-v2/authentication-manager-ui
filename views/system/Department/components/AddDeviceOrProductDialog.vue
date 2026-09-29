@@ -45,7 +45,8 @@
                 }),
             }"
             :columns="columns"
-            style="max-height: 31.25rem; overflow:auto"
+            style="max-height: 31.25rem; overflow:auto;padding:0;"
+            mode="TABLE"
         >
             <template #card="slotProps">
                 <CardBox
@@ -119,7 +120,7 @@
             </template>
             <template #registryTime="slotProps">
                 <span>{{
-                    slotProps.registryTime ? dayjs(slotProps.registryTime).format('YYYY-MM-DD HH:mm:ss') : "--"
+                    slotProps.registryTime ? dayjs(slotProps.registryTime).format('YYYY-MM-DD HH:mm:ss') : $t('comm.table.empty-2')
                 }}</span>
             </template>
         </j-pro-table>

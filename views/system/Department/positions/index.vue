@@ -355,7 +355,7 @@ watch(
         {{ slotProps.roles?.map(item => item.name).join(',') }}
       </template>
       <template #parentId="slotProps">
-        {{ slotProps.parentName || "--" }}
+        {{ slotProps.parentName || $t('comm.table.empty') }}
       </template>
       <template #memberCount="slotProps">
         <a @click="onJumpPage(slotProps)">{{ slotProps.memberCount }}</a>

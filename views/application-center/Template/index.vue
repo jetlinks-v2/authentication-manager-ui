@@ -42,12 +42,12 @@
 		
 	            <template #name="slotProps">
 	              <a class="application-template-page__link" @click="table.viewDetail(slotProps)">
-	                {{ slotProps.i18nName || slotProps.name || '--' }}
+	                {{ slotProps.i18nName || slotProps.name || $t('comm.table.empty') }}
 	              </a>
 	            </template>
 
 	            <template #description="slotProps">
-	              {{ slotProps.i18nDescription || slotProps.description || '--' }}
+	              {{ slotProps.i18nDescription || slotProps.description || $t('comm.table.empty') }}
 	            </template>
 		
 		            <template #state="slotProps">

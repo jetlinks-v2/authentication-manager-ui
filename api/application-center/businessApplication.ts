@@ -255,6 +255,14 @@ export const queryBusinessApplicationUsers = (
 export const bindBusinessApplicationUsers = (applicationId: string, userIds: string[]) =>
   apiRequest.post<void>(`/business-application/${applicationId}/users/_bind`, userIds)
 
+/** 将当前登录用户绑定到应用；服务端从认证上下文确定绑定对象。 */
+export const bindCurrentUserToBusinessApplication = (applicationId: string) =>
+  apiRequest.post<void>(`/business-application/${applicationId}/users/me/_bind`)
+
+/** 解绑当前登录用户；服务端从认证上下文确定解绑对象。 */
+export const unbindCurrentUserFromBusinessApplication = (applicationId: string) =>
+  apiRequest.post<number>(`/business-application/${applicationId}/users/me/_unbind`)
+
 export const unbindBusinessApplicationUsers = (applicationId: string, userIds: string[]) =>
   apiRequest.post<number>(`/business-application/${applicationId}/users/_unbind`, userIds)
 

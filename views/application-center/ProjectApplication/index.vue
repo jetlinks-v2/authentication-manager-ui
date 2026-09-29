@@ -66,14 +66,6 @@
         embedded
         @created="handleCreated"
       />
-      <ApplicationRoleSelectModal
-        v-model:open="roleSelectOpen"
-        :roles="roleSelectRoles"
-        :application-name="pendingApplication?.name || ''"
-        :confirm-loading="roleBinding"
-        @confirm="confirmSelectedRole"
-        @cancel="resetRoleSelection"
-      />
     </div>
   </j-page-container>
 </template>
@@ -83,7 +75,6 @@ import ConditionFilter from '@jetlinks-web-core/components/ConditionFilter'
 import PageHeader from '@jetlinks-web-core/components/PageHeader'
 import ApplicationCreateDialog from './Create/index.vue'
 import ApplicationCard from './components/ApplicationCard.vue'
-import ApplicationRoleSelectModal from './components/ApplicationRoleSelectModal.vue'
 import { useApplicationList } from './useApplicationList'
 
 const {
@@ -94,14 +85,8 @@ const {
   hasFilters,
   cardItems,
   updatingApplicationIds,
-  roleSelectOpen,
-  roleSelectRoles,
-  pendingApplication,
   openingApplicationIds,
-  roleBinding,
   openApplication,
-  confirmSelectedRole,
-  resetRoleSelection,
   refresh,
   handleSearch,
   openDetail,

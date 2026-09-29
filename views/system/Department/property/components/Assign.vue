@@ -19,7 +19,7 @@
           target="category-bind-modal"
           @change="({filter}) => search(filter)"
       /> -->
-      <div style="display: flex; align-items: flex-end; margin: 1rem; justify-content: space-between">
+      <div style="display: flex; align-items: flex-end; margin-bottom: 1rem; justify-content: space-between">
         <div>
           <TabsCard :options="typeOptions" v-model:activeKey="activeKey"/>
         </div>
@@ -238,7 +238,7 @@ watch(() => activeKey.value, (val) => {
       align-items: center;
       justify-content: space-between;
       display: flex;
-      margin: 1rem;
+      margin-bottom: 1rem;
   }
 }
 :deep(.jtable-body-header-left){

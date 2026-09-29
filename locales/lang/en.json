@@ -1263,6 +1263,7 @@
   "ProjectApplication.access.roleSelectTip": "Select the role to use before opening “{name}”.",
   "ProjectApplication.access.bindAndOpen": "Bind and Open",
   "ProjectApplication.access.roleRequired": "Select an application role",
+  "ProjectApplication.access.notConfigured": "Unable to open “{name}”. No access is configured. Contact an administrator.",
   "ProjectApplication.settings.title": "Application Basics",
   "ProjectApplication.settings.subtitle": "Maintain the application icon, name, description, and access address",
   "ProjectApplication.settings.icon": "Application Icon",

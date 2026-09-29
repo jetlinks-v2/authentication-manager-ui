@@ -19,6 +19,8 @@
       }),
     }"
     :columns="columns"
+                 mode="TABLE"
+                 style="padding: 1rem 0 0"
     >
     <template #card="slotProps">
       <CardBox :value="slotProps" v-bind="slotProps" :active="_selectedRowKeys.includes(slotProps.id)
@@ -81,7 +83,7 @@
     </template>
     <template #registryTime="slotProps">
       <span>{{
-        slotProps.registryTime ? dayjs(slotProps.registryTime).format('YYYY-MM-DD HH:mm:ss') : "--"
+        slotProps.registryTime ? dayjs(slotProps.registryTime).format('YYYY-MM-DD HH:mm:ss') : $t('comm.table.empty-2')
       }}</span>
     </template>
   </j-pro-table>

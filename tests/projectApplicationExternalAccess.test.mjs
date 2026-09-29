@@ -24,9 +24,8 @@ const { outputFiles } = await build({
         export const getApplicationAccessContext = () => ({});
         export const prepareApplicationAccess = () => globalThis.openFixture.prepare();
         export const getBusinessApplicationExternalUrl = id => globalThis.openFixture.externalUrl(id);
-        export const ensureBusinessApplicationOpenAccess = (...args) => globalThis.openFixture.access(...args);
-        export const bindSelectedBusinessApplicationRole = async () => {};
-        export const ensureBusinessApplicationMembership = async () => false;
+        export const hasOwnBusinessApplicationMenu = id => globalThis.openFixture.menu(id);
+        export const ensureBusinessApplicationMembership = id => globalThis.openFixture.membership(id);
       ` }))
     },
   }],
@@ -63,7 +62,8 @@ function createFixture(overrides = {}) {
   globalThis.openFixture = {
     user: { userInfo: { id: 'user' }, isAdmin: false },
     message: (...args) => calls.push(['message', ...args]),
-    access: async (...args) => { calls.push(['access', ...args]); return { type: 'ready', changed: false } },
+    membership: async id => { calls.push(['membership', id]); return false },
+    menu: async id => { calls.push(['menu', id]); return true },
     externalUrl: async id => { calls.push(['externalUrl', id]); return { result: { url: 'https://training.example/ui/?page=dashboard&login=tenant-token' } } },
     prepare: () => { calls.push(['runtime']); return { success: true, url: '/runtime/#/?applicationScope=runtime' } },
     ...overrides,
@@ -127,10 +127,10 @@ test('prompts without opening or checking access when an external URL is not con
 test('opens the dynamic external URL after membership validation', async () => {
   const { calls, popup, guard } = createFixture()
   assert.equal(await guard.openApplication(application), true)
-  assert.deepEqual(calls.map(call => call[0]), ['window', 'access', 'externalUrl', 'navigate'])
+  assert.deepEqual(calls.map(call => call[0]), ['window', 'membership', 'menu', 'externalUrl', 'navigate'])
   assert.equal(popup.opener, null)
-  assert.deepEqual(calls[2], ['externalUrl', 'training'])
-  assert.deepEqual(calls[3], ['navigate', 'https://training.example/ui/?page=dashboard&login=tenant-token'])
+  assert.deepEqual(calls[3], ['externalUrl', 'training'])
+  assert.deepEqual(calls[4], ['navigate', 'https://training.example/ui/?page=dashboard&login=tenant-token'])
 })
 
 test('closes the reserved window when external URL loading fails', async () => {
@@ -147,18 +147,15 @@ test('does not navigate when the external URL response is empty', async () => {
   assert.deepEqual(calls.at(-1), ['close'])
 })
 
-test('role selection requests no external URL until the user confirms a role', async () => {
-  const { calls, guard } = createFixture({ access: async () => ({ type: 'select-role', roles: [{ id: 'role' }], selection: {} }) })
+test('does not request the external URL when no application menu is configured', async () => {
+  const { calls, guard } = createFixture({ menu: async id => { calls.push(['menu', id]); return false } })
   assert.equal(await guard.openApplication(application), false)
-  assert.equal(guard.roleSelectOpen.value, true)
   assert.equal(calls.some(call => call[0] === 'externalUrl'), false)
-  await guard.confirmSelectedRole('role')
-  assert.deepEqual(calls.at(-1), ['navigate', 'https://training.example/ui/?page=dashboard&login=tenant-token'])
-  assert.equal(guard.roleSelectOpen.value, false)
+  assert.deepEqual(calls.map(call => call[0]), ['window', 'membership', 'menu', 'message', 'close'])
 })
 
 test('internal applications retain Runtime access preparation without an external URL request', async () => {
   const { calls, guard } = createFixture()
   assert.equal(await guard.openApplication({ ...application, openMode: 'runtime' }), true)
-  assert.deepEqual(calls.map(call => call[0]), ['access', 'runtime', 'window'])
+  assert.deepEqual(calls.map(call => call[0]), ['membership', 'menu', 'runtime', 'window'])
 })

@@ -8,7 +8,8 @@
   />
   <div style="height: 31.25rem">
     <j-pro-table ref="tableRef" :request="requestFun" :gridColumn="2" :gridColumns="[2]" :params="queryParams"
-                 :columns="columns">
+                 :columns="columns" mode="TABLE"
+                 style="padding: 1rem 0 0">
       <template #card="slotProps">
         <CardBox :value="slotProps" v-bind="slotProps"
                  :status="slotProps.state?.value" :statusText="slotProps.state?.text"
@@ -70,7 +71,7 @@
       </template>
       <template #registryTime="slotProps">
       <span>{{
-          slotProps.registryTime ? dayjs(slotProps.registryTime).format('YYYY-MM-DD HH:mm:ss') : "--"
+          slotProps.registryTime ? dayjs(slotProps.registryTime).format('YYYY-MM-DD HH:mm:ss') : $t('comm.table.empty-2')
         }}</span>
       </template>
     </j-pro-table>

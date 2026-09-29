@@ -47,7 +47,7 @@
           :tooltip="{ placement: 'topLeft' }"
           class="announcement-summary-cell"
         >
-          {{ record.summary || '--' }}
+          {{ record.summary || $t('comm.table.empty') }}
         </j-ellipsis>
       </template>
       <template #state="record">
@@ -65,7 +65,7 @@
         {{ audienceText(record) }}
       </template>
       <template #deployTime="record">
-        {{ record.deployTime || '--' }}
+        {{ record.deployTime || $t('comm.table.empty-2') }}
       </template>
       <template #action="record">
         <a-space :size="16">

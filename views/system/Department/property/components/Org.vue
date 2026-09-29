@@ -18,6 +18,7 @@
       onSelect,
       onSelectNone,
     }"
+    style="padding: 1rem 0 0"
   >
     <template #alertRender>
       <a-alert :message="`包含${productCount}个${assetsName}`">
