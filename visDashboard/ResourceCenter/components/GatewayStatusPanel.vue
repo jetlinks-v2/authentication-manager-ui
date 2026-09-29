@@ -63,7 +63,7 @@ const { title, metric, tabs, rankingTitle, rows, selectedId, trendTitle, trendSu
 const { rankingList } = rotation
 </script>
 <style scoped>
-.gateway-status { width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: 16px; background: var(--ant-color-bg-container, #fff); border: 1px solid #eceff3; border-radius: 6px; color: #1d2129; container: gateway-status / inline-size; }
+.gateway-status { width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: 16px; background: var(--ant-color-bg-container, #fff); border: 1px solid #eceff3; border-radius: var(--r-3, 8px); color: #1d2129; container: gateway-status / inline-size; }
 header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; padding-bottom: 8px; flex-shrink: 0; }
 h3 { margin: 0; font-size: 16px; line-height: 24px; font-weight: 500; }
 header :deep(.ant-segmented) { padding: 3px; font-size: 12px; background: #f5f6f8; border-radius: 6px; }

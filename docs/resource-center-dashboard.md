@@ -1,5 +1,9 @@
 # 资源中心仪表盘组件
 
+## 仪表盘圆角
+
+资源卡片外壳（`visDashboard/ResourceCenter/components/ResourceWidget.vue`、`GatewayStatusPanel.vue`）和 core 画布的拖拽条、拖动/缩放裁切统一读取 `--r-3`（8px），与概览保持一致。定向 SFC/样式解析与 diff 检查通过；共用拖拽条已在概览页确认计算值为 8px。资源中心及实际拖动/缩放视觉验收待完成；按性能约束未运行全量构建。无需重启后端，生产环境需重新发布 runtime-ui。
+
 ## 视频指标与接入入口按部署方式分流（已实施，2026-09-22）
 
 目标与范围：仅调整本模块资源中心仪表盘。顶部 `VideoDevices` 指标标题改为“视频通道”，继续使用 `hooks/videoSummaryContext.ts` 的 `queryOverviewChannelSummary` 通道总数与在线数；保持组件类型和配置键，兼容已保存的画布布局。

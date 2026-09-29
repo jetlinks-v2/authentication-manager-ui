@@ -2,6 +2,10 @@
 
 # 项目概览
 
+## 仪表盘圆角
+
+概览卡片外壳（`visDashboard/Base/shared/HomeWidget.vue`、`QuickGuide/ProjectHomeQuickGuide.vue`）和 core 画布的拖拽条、拖动/缩放裁切统一读取 `--r-3`（8px），避免边缘缝隙。定向 SFC/样式解析与 diff 检查通过；概览页 DevTools 确认拖拽条上角计算值为 8px。实际拖动/缩放视觉验收待完成；按性能约束未运行全量构建。无需重启后端，生产环境需重新发布 runtime-ui。
+
 ## 系统公告卡片样式优化（2026-09-21）
 
 - 目标：优化概览页系统公告列表的阅读层级，同时兼顾带 NEW 标识和普通公告；标题始终从同一位置开始，NEW 作为标题后的轻量状态，日期固定在右侧，摘要独立成行。
@@ -36,6 +40,8 @@ SaaS 初始布局按当前概览设计的 9 组坐标同步到 `views/project/Ov
 系统公告采用纵向标题、摘要和日期布局，三者沿内容区左侧对齐；日期不再保留横向列表的左侧间距。
 
 快捷操作、应用中心和共用资源项的描述复用 `j-ellipsis`，保持默认单行裁切与溢出提示。描述节点保留 `display: -webkit-box`、纵向裁切及正常空白规则，不能覆盖为 `display: block` / `white-space: nowrap`，否则会破坏省略与基于高度的 Tooltip 检测。外层文字容器允许收缩，描述宽度为 100%，避免描述长度改变同类卡片高度。
+
+应用中心两列网格在只有两行应用卡片时贴顶排列，保持行间距与多行时一致。`visDashboard/Base/Applications/components/HomeView.vue` 的宽容器规则增加 `align-content: start`，消除剩余高度对网格行的拉伸；不改变卡片高度与列数。定向 SFC/Less 解析及 `git diff --check` 通过；现有浏览器页为远端 UAT，尚不能据此验收本地改动。按机器性能约束未运行全量构建，本地开发服务刷新概览页后可检查两行场景，无需重启后端。
 
 快捷操作需通过 `.home-action-copy :deep(.home-action-description)` 匹配 Ellipsis 实际文本节点；Tooltip 根节点未透传调用方 scoped 标记，普通 scoped 选择器不生效。共用样式的 `.home-action span` 收窄为 `.home-action-label`，避免强制所有内部文本 nowrap。已在实际 `/overview` 页面确认快捷操作显示省略号；描述可见高度 18px、内容高度 36px，满足通用组件提示的溢出判定。63 个 SFC 解析与相对导入检查、git diff --check 通过；鼠标悬停的人工验收仍待完成（检查时用户切换窗口）。未执行全量构建。
 

@@ -177,6 +177,7 @@ const handleClick = (row: HomeRow) => {
   .home-apps:not(.home-apps--cards) {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
   }
 }
 @container business-component-shell (min-width: 640px) {
