@@ -43,6 +43,7 @@
 				        :roles="detail.roles"
 				        :users="detail.users"
 				        :template-id="application.templateId"
+				        :is-external="application.openMode === 'external'"
 				        @save-role="saveRole"
 				        @delete-role="removeRole"
 			        />

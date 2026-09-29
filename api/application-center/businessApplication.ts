@@ -25,6 +25,9 @@ export interface BusinessApplicationConfiguration {
   customDomain?: string
   timezone?: string
   layoutVariant?: BasicLayoutVariant
+  layout?: string
+  openMode?: 'runtime' | 'external'
+  externalUrl?: string
   [key: string]: unknown
 }
 
@@ -50,6 +53,7 @@ export interface BusinessApplicationTemplateEntity {
   i18nDescription?: string
   templateUrl?: string
   layoutVariant?: BasicLayoutVariant
+  configuration?: BusinessApplicationConfiguration
   state?: string | EnumValue
   sortIndex?: number
 }
@@ -188,6 +192,13 @@ export const getCurrentUserAuthorization = () =>
 
 export const getBusinessApplication = (id: string) =>
   apiRequest.get<BusinessApplicationEntity>(`/business-application/${id}`)
+
+export const getBusinessApplicationExternalUrl = (id: string) =>
+  apiRequest.post<{ url: string }>(
+    `/business-application/${encodeURIComponent(id)}/external-url`,
+    undefined,
+    { applicationScope: false },
+  )
 
 export const createBusinessApplication = (data: Partial<BusinessApplicationEntity>) =>
   apiRequest.post<unknown>('/business-application', data)

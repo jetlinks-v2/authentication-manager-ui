@@ -27,6 +27,7 @@
             />
           </a-tab-pane>
           <a-tab-pane key="config" :tab="$t('ApplicationTemplate.detail.config')">
+            <ExternalParameterConfig :state="parameters" :can-update="canUpdate && !!detailState.detail.value.id" />
             <ConfigPane
               :can-update="canUpdate"
               :scope-strategy-options="menuConfig.scopeStrategyOptions.value"
@@ -48,7 +49,7 @@
 </template>
 
 <script setup lang="ts" name="ApplicationTemplateSave">
-import { computed, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@jetlinks-web-core/store'
@@ -58,6 +59,9 @@ import DocumentPane from './DocumentPane.vue'
 import TemplateSummary from './TemplateSummary.vue'
 import { useApplicationTemplateDetail } from './useApplicationTemplateDetail'
 import { useApplicationTemplateMenuConfig } from './useApplicationTemplateMenuConfig'
+import { useApplicationTemplateParameters } from './useApplicationTemplateParameters'
+
+const ExternalParameterConfig = defineAsyncComponent(() => import('./ExternalParameterConfig.vue'))
 
 const { t: $t } = useI18n()
 const route = useRoute()
@@ -89,6 +93,16 @@ const menuConfig = useApplicationTemplateMenuConfig(
     missingMenus: count => $t('ApplicationTemplate.config.missingMenus', { count }),
   },
 )
+const parameters = useApplicationTemplateParameters(
+  () => detailState.detail.value,
+  detailState.updateConfiguration,
+  {
+    loadFailed: $t('ApplicationTemplate.parameters.loadFailed'),
+    invalidParameter: $t('ApplicationTemplate.parameters.invalidParameter'),
+    invalidConfiguration: $t('ApplicationTemplate.parameters.invalidConfiguration'),
+    saveFailed: $t('ApplicationTemplate.parameters.saveFailed'),
+  },
+)
 
 const resetDocument = () => {
   detailState.documentDraft.value = String(
@@ -105,7 +119,7 @@ watch(templateId, id => {
     return
   }
   activeTab.value = 'document'
-  void Promise.all([detailState.load(), menuConfig.loadOptions(), menuConfig.loadEditor()])
+  void Promise.all([detailState.load(), menuConfig.loadOptions(), menuConfig.loadEditor(), parameters.loadProviders()])
 }, { immediate: true })
 </script>
 
