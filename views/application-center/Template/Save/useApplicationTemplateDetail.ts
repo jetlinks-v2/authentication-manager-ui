@@ -5,6 +5,7 @@ import {
   updateApplicationTemplate,
   type BusinessApplicationTemplate,
   type I18nMessages,
+  type ApplicationTemplateConfiguration,
 } from '@authentication-manager-ui/api/application-center/applicationTemplate'
 import { templateState, unwrapResult } from './menu-config.shared'
 
@@ -96,6 +97,8 @@ export const useApplicationTemplateDetail = (
 
   const toggleState = () => patch({ state: state.value === 'enabled' ? 'disabled' : 'enabled' })
 
+  const updateConfiguration = (configuration: ApplicationTemplateConfiguration) => patch({ configuration })
+
   const saveDocument = async () => {
     if (documentDraft.value.length > 200000) {
       onlyMessage(messages.documentMaxLength, 'error')
@@ -126,6 +129,7 @@ export const useApplicationTemplateDetail = (
     updateDescription,
     updateTemplateUrl,
     updateIcon,
+    updateConfiguration,
     toggleState,
     saveDocument,
   }

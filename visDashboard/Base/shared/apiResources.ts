@@ -4,6 +4,7 @@ import * as overviewApis from '../../../api/overview'
 import { countOf } from './apiResult'
 import { RESOURCE_ROWS } from './resources'
 import { HOME_TARGETS } from './navigation'
+import { ALARM_TARGETS, buildPendingAlarmTerms, type AlarmCategory } from './alarmQuery'
 import type { HomeRow } from './types'
 interface Summary { total: number; online: number }
 interface OverviewApis {
@@ -55,11 +56,10 @@ export const loadResourceRows = async (select: (row: HomeRow) => boolean = () =>
   }))
 }
 export const loadOperationRows = async (): Promise<HomeRow[]> => {
-  const alarms = await Promise.all([
-    ['visionAlarm', 'aiTaskMediaTarget'], ['deviceAlarm', 'device'],
-  ].map(async ([id, target]) => {
+  const categories: AlarmCategory[] = ['visionAlarm', 'deviceAlarm']
+  const alarms = await Promise.all(categories.map(async id => {
     try {
-      const value = countOf(await request.post(`/alarm/record/${target}/_count`, { terms: [{ column: 'state', value: 'warning' }] }, { hiddenError: true }))
+      const value = countOf(await request.post(`/alarm/record/${ALARM_TARGETS[id]}/_count`, { terms: buildPendingAlarmTerms(id) }, { hiddenError: true }))
       return { id, labelKey: id, group: 'alarms', value, target: HOME_TARGETS[id] }
     } catch { return { id, labelKey: id, group: 'alarms', failed: true, target: HOME_TARGETS[id] } }
   }))

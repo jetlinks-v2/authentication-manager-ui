@@ -3,7 +3,17 @@ import {
   getCurrentUserBusinessApplications,
   type BusinessApplicationEntity,
 } from '@authentication-manager-ui/api/application-center/businessApplication'
+import { getOwnMenuThree } from '@jetlinks-web-core/api/system/menu'
 import { listOf } from './applicationModel'
+
+export const hasOwnBusinessApplicationMenu = async (applicationId: string) => {
+  const response = await getOwnMenuThree({
+    paging: false,
+    terms: [{ column: 'owner', value: 'app' }],
+    sorts: [{ name: 'sortIndex', order: 'asc' }],
+  }, `business_application:${applicationId}`)
+  return Array.isArray(response?.result) && response.result.length > 0
+}
 
 /**
  * 应用成员关系是打开应用的唯一准入条件；应用角色只影响进入后的菜单和功能权限。

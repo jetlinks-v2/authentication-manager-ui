@@ -1,9 +1,9 @@
 import dayjs from 'dayjs'
 import { request } from '@jetlinks-web/core'
 import { countOf, recordOf, resultOf, rowsOf, textOf } from '../shared/apiResult'
+import { ALARM_TARGETS, buildAlarmTerms, buildPendingAlarmTerms, type AlarmCategory } from '../shared/alarmQuery'
 
-export const ALARM_TARGETS = { deviceAlarm: 'device', visionAlarm: 'aiTaskMediaTarget' } as const
-export type AlarmCategory = keyof typeof ALARM_TARGETS
+export { ALARM_TARGETS, type AlarmCategory } from '../shared/alarmQuery'
 export interface QuickAlarm {
   id: string
   title: string
@@ -68,7 +68,7 @@ export async function queryQuickAlarms(category: AlarmCategory, page = 1): Promi
   const response = await request.post(`/alarm/record/${ALARM_TARGETS[category]}/_query`, {
     paging: true, pageIndex: page - 1, pageSize: ALARM_PAGE_SIZE,
     sorts: [{ name: 'alarmTime', order: 'desc' }],
-    terms: [{ column: 'state', termType: 'eq', value: 'warning' }],
+    terms: buildPendingAlarmTerms(category),
   }, { hiddenError: true })
   return { rows: rowsOf(response).map(mapAlarm), total: countOf(response) }
 }
@@ -77,7 +77,7 @@ export async function queryQuickAlarms(category: AlarmCategory, page = 1): Promi
 export async function queryQuickAlarm(category: AlarmCategory, id: string): Promise<QuickAlarm> {
   const response = await request.post(`/alarm/record/${ALARM_TARGETS[category]}/_query`, {
     paging: true, pageIndex: 0, pageSize: 1,
-    terms: [{ column: 'id', termType: 'eq', value: id }],
+    terms: buildAlarmTerms(category, [{ column: 'id', termType: 'eq', value: id }]),
   }, { hiddenError: true })
   const row = rowsOf(response).find(item => textOf(item.id) === id)
   if (!row) throw new Error('Alarm record unavailable')

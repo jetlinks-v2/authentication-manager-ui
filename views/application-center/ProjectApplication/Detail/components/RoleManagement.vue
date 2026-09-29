@@ -104,15 +104,13 @@ import {
   getCurrentUserMenuTree,
 } from '@authentication-manager-ui/api/application-center/applicationTemplate'
 import {
-  filterAssetAccessPoliciesByMenuScope,
-  filterApplicationMenuTreeBySourceIds,
-  filterApplicationMenuInterfacePermissions,
-  filterGrantedMenuAssetAccessesByMenuScope,
   normalizeAssetTypeNames,
-  normalizeCandidateMenus,
-  normalizeGrantedMenus,
   unwrapResult,
 } from '../../../Template/Save/menu-config.shared'
+import {
+  buildApplicationRoleMenuQuery,
+  resolveApplicationRolePermissionScope,
+} from '../../applicationRolePermissionScope'
 import type { ApplicationRole, ApplicationRoleDraft, ApplicationUser } from '../../types'
 
 interface GrantDetail {
@@ -124,6 +122,7 @@ const props = defineProps({
   roles: { type: Array as PropType<ApplicationRole[]>, default: () => [] },
   users: { type: Array as PropType<ApplicationUser[]>, default: () => [] },
   templateId: { type: String, default: '' },
+  isExternal: { type: Boolean, default: false },
 })
 const emits = defineEmits(['save-role', 'delete-role'])
 const { t: $t } = useI18n()
@@ -175,7 +174,7 @@ const loadPermissions = async () => {
   try {
     const [templateResponse, menuResponse, detailResponse, assetTypes] = await Promise.all([
       getApplicationTemplateMenus(props.templateId),
-      getCurrentUserMenuTree({ paging: false, terms: [{ column: 'owner', value: 'app'}] }),
+      getCurrentUserMenuTree(buildApplicationRoleMenuQuery(props.isExternal)),
       getRolePermissionDetail(activeRoleId.value),
       loadAssetTypes(),
     ])
@@ -183,41 +182,20 @@ const loadPermissions = async () => {
 
     const templateDetail = assertSuccess<GrantDetail>(templateResponse, {})
     const roleDetail = assertSuccess<GrantDetail>(detailResponse, {})
-    const candidateTemplateMenus = filterApplicationMenuInterfacePermissions(
-      Array.isArray(templateDetail.menus) ? templateDetail.menus : [],
-    )
-    const currentUserMenus = filterApplicationMenuInterfacePermissions(
-      assertSuccess<MenuPermissionNode[]>(menuResponse, []),
-    )
-    const filteredTemplateMenus = filterApplicationMenuTreeBySourceIds(
-      candidateTemplateMenus,
-      currentUserMenus,
-    )
-    const templateMenus = normalizeCandidateMenus(filteredTemplateMenus)
-    const candidateRoleMenus = filterApplicationMenuInterfacePermissions(
-      Array.isArray(roleDetail.menus) ? roleDetail.menus : [],
-    )
-    const scopedRoleMenus = filterGrantedMenuAssetAccessesByMenuScope(
-      candidateRoleMenus,
-      templateMenus,
-    )
-    const roleMenus = normalizeGrantedMenus(scopedRoleMenus, templateMenus)
-    const templateAssetAccesses = filterAssetAccessPoliciesByMenuScope(
-      Array.isArray(templateDetail.assetAccesses) ? templateDetail.assetAccesses : [],
-      templateMenus,
-    )
-    const roleAssetAccesses = filterAssetAccessPoliciesByMenuScope(
-      Array.isArray(roleDetail.assetAccesses) ? roleDetail.assetAccesses : [],
-      templateMenus,
-    )
-    // 角色右侧资产权限不再单独开放编辑，优先沿用模板菜单返回的默认 assetAccesses；老数据若缺省则回退到角色已保存值。
-    const assetAccesses = templateAssetAccesses.length ? templateAssetAccesses : roleAssetAccesses
+    const permissionScope = resolveApplicationRolePermissionScope({
+      isExternal: props.isExternal,
+      currentUserMenus: assertSuccess<MenuPermissionNode[]>(menuResponse, []),
+      templateMenus: Array.isArray(templateDetail.menus) ? templateDetail.menus : [],
+      roleMenus: Array.isArray(roleDetail.menus) ? roleDetail.menus : [],
+      templateAssetAccesses: Array.isArray(templateDetail.assetAccesses) ? templateDetail.assetAccesses : [],
+      roleAssetAccesses: Array.isArray(roleDetail.assetAccesses) ? roleDetail.assetAccesses : [],
+    })
 
-    // 角色详情可能保存过模板侧高资产范围；回显前按当前项目菜单裁剪，避免保存时再次提交越权 supportId。
+    // 回显前按最终候选菜单裁剪，避免再次提交超出当前操作者可授范围的资产权限。
     editor.reset({
-      menus: templateMenus,
-      grantedMenus: roleMenus,
-      assetAccesses,
+      menus: permissionScope.menus,
+      grantedMenus: permissionScope.grantedMenus,
+      assetAccesses: permissionScope.assetAccesses,
       assetTypes,
     })
     initialized.value = true
@@ -234,6 +212,7 @@ watch(() => props.roles, roles => {
 watch([
   activeRoleId,
   () => props.templateId,
+  () => props.isExternal,
 ], loadPermissions, { immediate: true, deep: true })
 
 const savePermissions = async () => {

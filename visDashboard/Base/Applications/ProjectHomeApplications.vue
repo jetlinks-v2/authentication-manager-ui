@@ -56,6 +56,12 @@ const handleOpenApp = async (row: HomeRow) => {
     status: 'enabled',
     statusText: '',
     description: row.description || '',
+    createdAt: '',
+    defaultLanguage: 'zh-CN',
+    timezone: 'Asia/Shanghai',
+    domain: '',
+    openMode: 'runtime',
+    externalUrl: '',
   }
   await openApplication(application)
 }
@@ -105,4 +111,3 @@ function handleCreateApp() {
   font-size: 12px;
 }
 </style>
-

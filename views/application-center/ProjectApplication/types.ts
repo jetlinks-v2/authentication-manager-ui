@@ -2,6 +2,7 @@ import type { ConditionFilterChangePayload } from '@jetlinks-web-core/components
 import type { BasicLayoutVariant } from '@jetlinks-web-core/layout/runtime/layoutVariant'
 
 export type ApplicationStatus = 'enabled' | 'disabled'
+export type ApplicationOpenMode = 'runtime' | 'external'
 export type ResourceStatus = string
 
 export interface ApplicationTemplate {
@@ -15,6 +16,8 @@ export interface ApplicationTemplate {
   statusText: string
   sortIndex: number
   layoutVariant: BasicLayoutVariant
+  layout: string
+  openMode?: ApplicationOpenMode
   disabled: boolean
 }
 
@@ -30,6 +33,8 @@ export interface ProjectApplication {
   defaultLanguage: string
   timezone: string
   domain: string
+  openMode: ApplicationOpenMode
+  externalUrl: string
 }
 
 export interface ProjectApplicationDraft {
