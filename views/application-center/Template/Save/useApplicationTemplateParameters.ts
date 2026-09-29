@@ -21,7 +21,7 @@ interface ParameterMessages {
   saveFailed: string
 }
 
-/** 模板维护参数规则，运行时凭证始终由后端 Provider 解析。 */
+/** 模板维护参数规则，动态值始终由后端 Provider 解析。 */
 export const useApplicationTemplateParameters = (
   getDetail: () => BusinessApplicationTemplate,
   persist: (configuration: ApplicationTemplateConfiguration) => Promise<boolean>,

@@ -31,16 +31,6 @@ export const normalizeApplicationOpenConfiguration = (configuration?: Applicatio
   externalUrl: normalizeExternalApplicationUrl(configuration?.externalUrl),
 })
 
-export const isHttpExternalApplicationUrl = (value: unknown) => {
-  const url = normalizeExternalApplicationUrl(value)
-  if (!url) return false
-  try {
-    return ['http:', 'https:'].includes(new URL(url).protocol)
-  } catch {
-    return false
-  }
-}
-
 /** 保留未知配置，仅更新应用设置页负责的 configuration 字段。 */
 export const buildApplicationConfiguration = (
   current: ApplicationConfiguration | undefined,

@@ -115,7 +115,6 @@ import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { createApplicationAccessDisplayUrl } from '@jetlinks-web-core/utils/application-access'
 import type { ApplicationTemplate, ProjectApplication } from '../../types'
-import { isHttpExternalApplicationUrl } from '../../applicationConfiguration'
 
 interface SettingsData {
   application: ProjectApplication
@@ -198,8 +197,7 @@ const rules = computed(() => ({
       if (!value?.trim()) {
         return Promise.reject(new Error($t('ProjectApplication.settings.externalUrlRequired')))
       }
-      if (isHttpExternalApplicationUrl(value)) return Promise.resolve()
-      return Promise.reject(new Error($t('ProjectApplication.settings.externalUrlInvalid')))
+      return Promise.resolve()
     },
   }],
 }))

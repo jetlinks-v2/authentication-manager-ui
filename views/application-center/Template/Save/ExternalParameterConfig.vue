@@ -30,7 +30,7 @@
             <a-input v-model:value="parameter.value" />
           </a-form-item>
           <a-form-item
-            v-else-if="parameter.provider && parameter.provider !== 'access-token'"
+            v-else-if="parameter.provider"
             :label="$t('ApplicationTemplate.parameters.configuration')"
           >
             <a-textarea v-model:value="parameter.configuration" :auto-size="{ minRows: 2, maxRows: 8 }" />

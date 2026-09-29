@@ -37,19 +37,21 @@ function fixture(parameters = []) {
   return { state, writes, detail }
 }
 
-test('saves fixed and access-token rules on the template and echoes the saved values', async () => {
+test('saves fixed and current-user rules on the template and echoes the saved values', async () => {
   const { state, writes } = fixture()
   state.add()
   Object.assign(state.draft.value[0], { name: ' page ', provider: 'fixed', value: 'dashboard & reports' })
   state.add()
-  Object.assign(state.draft.value[1], { name: 'login', provider: 'access-token' })
+  Object.assign(state.draft.value[1], {
+    name: 'userId', provider: 'user', configuration: '{"field":"id"}',
+  })
   assert.equal(await state.save(), true)
   await nextTick()
   assert.deepEqual(writes[0], {
     retained: 'value',
     externalParameters: [
       { name: 'page', provider: 'fixed', configuration: { value: 'dashboard & reports' } },
-      { name: 'login', provider: 'access-token', configuration: {} },
+      { name: 'userId', provider: 'user', configuration: { field: 'id' } },
     ],
   })
   assert.equal(state.draft.value[0].name, 'page')
@@ -64,7 +66,7 @@ test('preserves unknown provider configuration through echo and save', async () 
 })
 
 test('clears all parameters explicitly while preserving other configuration', async () => {
-  const { state, writes } = fixture([{ name: 'login', provider: 'access-token' }])
+  const { state, writes } = fixture([{ name: 'userId', provider: 'user', configuration: { field: 'id' } }])
   state.remove(0)
   assert.equal(await state.save(), true)
   assert.deepEqual(writes[0], { retained: 'value', externalParameters: [] })
@@ -72,7 +74,7 @@ test('clears all parameters explicitly while preserving other configuration', as
 
 test('reset discards edits and provider changes clear incompatible configuration', () => {
   const { state } = fixture([{ name: 'page', provider: 'fixed', configuration: { value: 'dashboard' } }])
-  state.changeProvider(0, 'access-token')
+  state.changeProvider(0, 'user')
   assert.equal(state.draft.value[0].configuration, '{}')
   assert.equal(state.draft.value[0].value, '')
   state.reset()
