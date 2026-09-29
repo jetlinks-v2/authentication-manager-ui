@@ -22,14 +22,8 @@ export const useApplicationList = () => {
   const updatingApplicationIds = ref<string[]>([])
   let refreshSequence = 0
   const {
-    roleSelectOpen,
-    roleSelectRoles,
-    pendingApplication,
     openingApplicationIds,
-    roleBinding,
     openApplication,
-    confirmSelectedRole,
-    resetRoleSelection,
   } = useApplicationOpenGuard()
 
   const statusOptions = computed(() => [
@@ -146,14 +140,8 @@ export const useApplicationList = () => {
     hasFilters,
     cardItems,
     updatingApplicationIds,
-    roleSelectOpen,
-    roleSelectRoles,
-    pendingApplication,
     openingApplicationIds,
-    roleBinding,
     openApplication,
-    confirmSelectedRole,
-    resetRoleSelection,
     refresh,
     handleSearch,
     openDetail,
