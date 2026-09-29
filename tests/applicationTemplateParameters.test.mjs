@@ -27,7 +27,7 @@ const messages = {
 }
 
 function fixture(parameters = []) {
-  const detail = ref({ id: 'template', configuration: { retained: 'value', externalParameters: parameters } })
+  const detail = ref({ id: 'template', provider: 'third-party', configuration: { retained: 'value', externalParameters: parameters } })
   const writes = []
   const state = useApplicationTemplateParameters(() => detail.value, async configuration => {
     writes.push(configuration)
@@ -37,19 +37,21 @@ function fixture(parameters = []) {
   return { state, writes, detail }
 }
 
-test('saves fixed and access-token rules on the template and echoes the saved values', async () => {
+test('saves fixed and current-user rules on the template and echoes the saved values', async () => {
   const { state, writes } = fixture()
   state.add()
   Object.assign(state.draft.value[0], { name: ' page ', provider: 'fixed', value: 'dashboard & reports' })
   state.add()
-  Object.assign(state.draft.value[1], { name: 'login', provider: 'access-token' })
+  Object.assign(state.draft.value[1], {
+    name: 'userId', provider: 'user', configuration: '{"field":"id"}',
+  })
   assert.equal(await state.save(), true)
   await nextTick()
   assert.deepEqual(writes[0], {
     retained: 'value',
     externalParameters: [
       { name: 'page', provider: 'fixed', configuration: { value: 'dashboard & reports' } },
-      { name: 'login', provider: 'access-token', configuration: {} },
+      { name: 'userId', provider: 'user', configuration: { field: 'id' } },
     ],
   })
   assert.equal(state.draft.value[0].name, 'page')
@@ -64,7 +66,7 @@ test('preserves unknown provider configuration through echo and save', async () 
 })
 
 test('clears all parameters explicitly while preserving other configuration', async () => {
-  const { state, writes } = fixture([{ name: 'login', provider: 'access-token' }])
+  const { state, writes } = fixture([{ name: 'userId', provider: 'user', configuration: { field: 'id' } }])
   state.remove(0)
   assert.equal(await state.save(), true)
   assert.deepEqual(writes[0], { retained: 'value', externalParameters: [] })
@@ -72,7 +74,7 @@ test('clears all parameters explicitly while preserving other configuration', as
 
 test('reset discards edits and provider changes clear incompatible configuration', () => {
   const { state } = fixture([{ name: 'page', provider: 'fixed', configuration: { value: 'dashboard' } }])
-  state.changeProvider(0, 'access-token')
+  state.changeProvider(0, 'user')
   assert.equal(state.draft.value[0].configuration, '{}')
   assert.equal(state.draft.value[0].value, '')
   state.reset()
@@ -108,6 +110,26 @@ test('loads server provider choices and allows retry after failure', async () =>
   await state.loadProviders()
   assert.deepEqual(state.options.value, [{ value: 'custom', label: 'Custom Ticket' }])
   assert.equal(state.loadError.value, '')
+})
+
+test('only requests parameter providers after detail identifies a third-party template', async () => {
+  const { state, detail } = fixture()
+  let requests = 0
+  globalThis.parameterProviders = async () => {
+    requests += 1
+    return { result: [{ id: 'fixed', name: 'Fixed' }] }
+  }
+  for (const provider of [undefined, 'official', 'custom']) {
+    detail.value = { ...detail.value, provider }
+    assert.equal(state.supported.value, false)
+    await state.loadProviders()
+  }
+  assert.equal(requests, 0)
+  detail.value = { ...detail.value, provider: 'third-party' }
+  assert.equal(state.supported.value, true)
+  await state.loadProviders()
+  assert.equal(requests, 1)
+  assert.deepEqual(state.options.value, [{ value: 'fixed', label: 'Fixed' }])
 })
 
 test('reports save failures without discarding the draft', async () => {

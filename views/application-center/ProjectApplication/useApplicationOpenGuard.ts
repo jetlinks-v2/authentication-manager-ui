@@ -61,7 +61,7 @@ export const useApplicationOpenGuard = (options: ApplicationOpenGuardOptions = {
     externalWindow?: Window | null,
   ) => {
     const changed = await ensureBusinessApplicationMembership(application.id)
-    if (!await hasOwnBusinessApplicationMenu(application.id)) {
+    if (application.openMode !== 'external' && !await hasOwnBusinessApplicationMenu(application.id)) {
       onlyMessage($t('ProjectApplication.access.notConfigured', { name: application.name }), 'warning')
       return false
     }

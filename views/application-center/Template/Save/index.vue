@@ -27,7 +27,7 @@
             />
           </a-tab-pane>
           <a-tab-pane key="config" :tab="$t('ApplicationTemplate.detail.config')">
-            <ExternalParameterConfig :state="parameters" :can-update="canUpdate && !!detailState.detail.value.id" />
+            <ExternalParameterConfig v-if="parameters.supported.value" :state="parameters" :can-update="canUpdate && !!detailState.detail.value.id" />
             <ConfigPane
               :can-update="canUpdate"
               :scope-strategy-options="menuConfig.scopeStrategyOptions.value"
@@ -119,7 +119,14 @@ watch(templateId, id => {
     return
   }
   activeTab.value = 'document'
-  void Promise.all([detailState.load(), menuConfig.loadOptions(), menuConfig.loadEditor(), parameters.loadProviders()])
+  void Promise.all([
+    // 先取得模板 Provider，避免向仅支持直接跳转的后端请求参数接口。
+    detailState.load().then(() => {
+      if (detailState.detail.value.id === id) return parameters.loadProviders()
+    }),
+    menuConfig.loadOptions(),
+    menuConfig.loadEditor(),
+  ])
 }, { immediate: true })
 </script>
 

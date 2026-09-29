@@ -21,7 +21,7 @@ interface ParameterMessages {
   saveFailed: string
 }
 
-/** 模板维护参数规则，运行时凭证始终由后端 Provider 解析。 */
+/** 模板维护参数规则，动态值始终由后端 Provider 解析。 */
 export const useApplicationTemplateParameters = (
   getDetail: () => BusinessApplicationTemplate,
   persist: (configuration: ApplicationTemplateConfiguration) => Promise<boolean>,
@@ -33,6 +33,7 @@ export const useApplicationTemplateParameters = (
   const saving = ref(false)
   const loadError = ref('')
   const error = ref('')
+  const supported = computed(() => getDetail().provider === 'third-party')
   const options = computed(() => providers.value.map(provider => ({
     value: provider.id,
     label: provider.name,
@@ -50,6 +51,8 @@ export const useApplicationTemplateParameters = (
   }
 
   const loadProviders = async () => {
+    // 简单跳转模板不提供参数接口；只有第三方应用 Provider 使用参数规则。
+    if (!supported.value) return
     loading.value = true
     loadError.value = ''
     try {
@@ -112,5 +115,5 @@ export const useApplicationTemplateParameters = (
 
   watch(() => getDetail().configuration, reset, { immediate: true })
 
-  return { draft, options, loading, saving, loadError, error, reset, loadProviders, add, remove, changeProvider, save }
+  return { supported, draft, options, loading, saving, loadError, error, reset, loadProviders, add, remove, changeProvider, save }
 }
