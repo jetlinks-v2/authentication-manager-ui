@@ -521,3 +521,13 @@ Chrome 实测：画布 layout/content 的 overflowY 均为 visible；外层页�
    - `node scripts/verify-quick-alarms.cjs && node scripts/verify-resource-dashboard.cjs`：全部通过。
    - **Git Commit**：`0b2087c`
    - **Pull Request**：`https://github.com/jetlinks-v2/authentication-manager-ui/pull/66`
+
+## 运维告警分类查询
+
+概览的告警数量、快捷列表和详情由 `authentication-manager-ui` 维护。当前运行环境中，只有 `state=warning` 的物联计数请求返回了与视联相同的 2,858；本地后端依赖源码会注入 `targetType`，但源码不能代表运行服务的实际行为。
+
+实现：在 `visDashboard/Base/shared/alarmQuery.ts` 集中维护分类映射与查询条件，`shared/apiResources.ts` 的数量与 `Operations/alarmService.ts` 的列表显式限定 `targetType` 与 `state=warning`，详情限定类型与记录 ID。物联类型为 `device`，视联类型为 `aiTaskMediaTarget`；继续使用原有分类接口及公共请求权限上下文。
+
+验证：`node scripts/verify-quick-alarms.cjs` 通过，覆盖后端仅应用请求体条件时的混合告警分类计数、列表和详情隔离、计数与列表口径一致、分页、已处理详情复查、单类计数失败隔离及原有处理/异步生命周期行为。3 个变更 TypeScript 文件语法检查与 `git diff --check` 通过。Chrome 现有 `localhost:9200/#/overview` 页面已确认：物联数量由 2,858 恢复为 0，浮层为 0 条未处理；视联仍为 2,858，浮层返回真实识别告警记录。未提交任何告警处理。真实详情弹窗未完成浏览器复核；按性能约束未运行全量 lint/typecheck/build。
+
+部署：无需新增依赖或重启后端，本地 Vite 已自动更新，生产环境需重新发布 runtime-ui。运行服务仅凭分类 URL 未隔离数据的现象与本地后端依赖源码不一致，服务版本及后端过滤原因尚未核实。
