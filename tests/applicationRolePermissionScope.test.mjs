@@ -106,7 +106,7 @@ test('internal application roles remain limited to the template and app menu int
 })
 
 test('role page always loads the template and keeps the external all-owner menu query', () => {
-  assert.match(detailSource, /:is-external="application\.openMode === 'external'"/)
+  assert.match(detailSource, /:is-external="application\.provider === 'third-party'"/)
   assert.match(roleManagementSource, /getApplicationTemplateMenus\(props\.templateId\)/)
   assert.doesNotMatch(roleManagementSource, /Promise\.resolve\(undefined\)/)
   assert.match(roleManagementSource, /getCurrentUserMenuTree\(buildApplicationRoleMenuQuery\(props\.isExternal\)\)/)

@@ -2,18 +2,11 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { readFile } from 'node:fs/promises'
 import { build } from 'esbuild'
-import { compileScript, parse } from 'vue/compiler-sfc'
-import {
-  buildApplicationConfiguration,
-  buildInitialApplicationConfiguration,
-  normalizeApplicationOpenConfiguration,
-} from '../views/application-center/ProjectApplication/applicationConfiguration.ts'
+import { buildApplicationConfiguration, buildInitialApplicationConfiguration } from '../views/application-center/ProjectApplication/applicationConfiguration.ts'
 
 const { outputFiles } = await build({
   entryPoints: [new URL('../views/application-center/ProjectApplication/useApplicationOpenGuard.ts', import.meta.url).pathname],
-  bundle: true,
-  write: false,
-  format: 'esm',
+  bundle: true, write: false, format: 'esm',
   plugins: [{
     name: 'application-open-fixture',
     setup(plugin) {
@@ -21,11 +14,10 @@ const { outputFiles } = await build({
       plugin.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ contents: `
         export const ref = value => ({ value });
         export const useI18n = () => ({ t: value => value });
-        export const useUserStore = () => globalThis.openFixture.user;
         export const onlyMessage = (...args) => globalThis.openFixture.message(...args);
         export const getApplicationAccessContext = () => ({});
         export const prepareApplicationAccess = () => globalThis.openFixture.prepare();
-        export const getBusinessApplicationExternalUrl = id => globalThis.openFixture.externalUrl(id);
+        export const getBusinessApplicationRedirect = id => globalThis.openFixture.redirect(id);
         export const hasOwnBusinessApplicationMenu = id => globalThis.openFixture.menu(id);
         export const ensureBusinessApplicationMembership = id => globalThis.openFixture.membership(id);
       ` }))
@@ -36,9 +28,7 @@ const { useApplicationOpenGuard } = await import(`data:text/javascript;base64,${
 
 const modelBuild = await build({
   entryPoints: [new URL('../views/application-center/ProjectApplication/applicationModel.ts', import.meta.url).pathname],
-  bundle: true,
-  write: false,
-  format: 'esm',
+  bundle: true, write: false, format: 'esm',
   plugins: [{
     name: 'application-model-fixture',
     setup(plugin) {
@@ -48,177 +38,117 @@ const modelBuild = await build({
     },
   }],
 })
-const { normalizeTemplate } = await import(`data:text/javascript;base64,${Buffer.from(modelBuild.outputFiles[0].text).toString('base64')}`)
+const { normalizeTemplate, normalizeApplication } = await import(`data:text/javascript;base64,${Buffer.from(modelBuild.outputFiles[0].text).toString('base64')}`)
 
-const settingsPath = new URL('../views/application-center/ProjectApplication/Detail/components/ApplicationSettings.vue', import.meta.url)
-const { descriptor } = parse(await readFile(settingsPath, 'utf8'))
-const settingsBuild = await build({
-  stdin: {
-    contents: compileScript(descriptor, { id: 'application-settings-test' }).content,
-    loader: 'ts',
-    resolveDir: new URL('.', settingsPath).pathname,
-  },
-  bundle: true,
-  write: false,
-  format: 'esm',
+const homeBuild = await build({
+  entryPoints: [new URL('../visDashboard/Base/shared/api.ts', import.meta.url).pathname],
+  bundle: true, write: false, format: 'esm',
   plugins: [{
-    name: 'application-settings-fixture',
+    name: 'home-application-fixture',
     setup(plugin) {
-      plugin.onResolve({ filter: /^(vue-i18n|@jetlinks-web)/ }, args => ({ path: args.path, namespace: 'fixture' }))
+      plugin.onResolve({ filter: /^(dayjs|@authentication-manager-ui\/api\/application-center\/businessApplication|@jetlinks-web-core\/layout\/runtime\/layoutVariant|\.\/api(Announcements|Resources|Quotas)|\.\.\/QuickGuide\/apiQuickGuide)$/ }, args => ({ path: args.path, namespace: 'fixture' }))
       plugin.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ contents: `
-        export const useI18n = () => ({ t: value => value });
-        export const onlyMessage = () => {};
-        export const createApplicationAccessDisplayUrl = id => '/' + id + '/';
+        export default () => ({ format: () => '', isValid: () => true });
+        export const normalizeBasicLayoutVariant = value => value;
+        export const queryBusinessApplications = () => globalThis.homeFixture.applications();
+        export const queryBusinessApplicationTemplates = () => globalThis.homeFixture.templates();
+        export const loadAnnouncements = () => [];
+        export const loadResourceRows = () => [];
+        export const loadOperationRows = () => [];
+        export const loadHealthRows = () => [];
+        export const loadQuotaRows = () => [];
+        export const loadQuickGuideRows = () => [];
       ` }))
     },
   }],
 })
-const { default: ApplicationSettings } = await import(`data:text/javascript;base64,${Buffer.from(settingsBuild.outputFiles[0].text).toString('base64')}`)
+const { loadHomeRows } = await import(`data:text/javascript;base64,${Buffer.from(homeBuild.outputFiles[0].text).toString('base64')}`)
 
-const validExternalUrls = ['http://training.example/ui/', 'HTTPS://training.example/ui/?page=dashboard#home']
-const invalidExternalUrls = [
-  'javascript:alert(1)', 'data:text/html,<script>alert(1)</script>', 'file:///etc/hosts',
-  '/training', '//training.example/ui/', 'http:training.example', 'https:/training.example', 'https://',
-]
-
-const application = {
-  id: 'training',
-  name: 'Training',
-  openMode: 'external',
-  externalUrl: 'https://training.example/ui/?page=dashboard',
-}
+const validUrls = ['http://training.example/ui/', 'HTTPS://training.example/ui/?page=dashboard#home']
+const invalidUrls = ['javascript:alert(1)', 'data:text/html,<script>alert(1)</script>', 'file:///etc/hosts', '/training', '//training.example/ui/', 'http:training.example', 'https:/training.example', 'https://']
+const application = { id: 'training', name: 'Training', provider: 'third-party' }
 
 function createFixture(overrides = {}) {
   const calls = []
   const popup = { opener: {}, closed: false, location: { replace: url => calls.push(['navigate', url]) }, close: () => calls.push(['close']) }
   globalThis.window = { open: (...args) => { calls.push(['window', ...args]); return popup } }
   globalThis.openFixture = {
-    user: { userInfo: { id: 'user' }, isAdmin: false },
     message: (...args) => calls.push(['message', ...args]),
     membership: async id => { calls.push(['membership', id]); return false },
     menu: async id => { calls.push(['menu', id]); return true },
-    externalUrl: async id => { calls.push(['externalUrl', id]); return { result: { url: 'https://training.example/ui/?page=dashboard&userId=user-1&username=alice' } } },
-    prepare: () => { calls.push(['runtime']); return { success: true, url: '/runtime/#/?applicationScope=runtime' } },
+    redirect: async id => { calls.push(['redirect', id]); return { result: { location: 'https://training.example/ui/?page=dashboard#home' } } },
+    prepare: () => { calls.push(['runtime']); return { success: true, url: '/runtime' } },
     ...overrides,
   }
   return { calls, popup, guard: useApplicationOpenGuard() }
 }
 
-test('maps the upstream URL into the page model', () => {
-  assert.deepEqual(normalizeApplicationOpenConfiguration(), {
-    openMode: 'runtime', externalUrl: '',
-  })
-  assert.deepEqual(normalizeApplicationOpenConfiguration({
-    openMode: 'external', externalUrl: ' https://training.example/ui/?page=dashboard ',
-  }), { openMode: 'external', externalUrl: 'https://training.example/ui/?page=dashboard' })
+test('does not copy redirect or legacy instance fields when creating an application', () => {
+  const configuration = buildInitialApplicationConfiguration({ layoutVariant: 'application', layout: 'side', provider: 'third-party', redirectUri: 'https://training.example/ui/' })
+  for (const field of ['openMode', 'externalUrl', 'redirectUri']) assert.equal(Object.hasOwn(configuration, field), false)
 })
 
-test('uses the template open mode when creating an application', () => {
-  assert.equal(buildInitialApplicationConfiguration().openMode, 'runtime')
-  const external = buildInitialApplicationConfiguration({
-    layoutVariant: 'application',
-    layout: 'side',
-    openMode: 'external',
-  })
-  assert.equal(external.openMode, 'external')
-  assert.equal(external.externalUrl, '')
-})
-
-test('normalizes the template open mode without a runtime reference error', () => {
-  const template = normalizeTemplate({
-    id: 'training-template',
-    name: 'Training',
-    code: 'Training',
-    state: 'enabled',
-    configuration: { openMode: 'external' },
-  })
+test('uses template provider and redirect configuration instead of instance openMode', () => {
+  const template = normalizeTemplate({ id: 'training-template', name: 'Training', code: 'Training', state: 'enabled', provider: 'third-party', configuration: { redirectUri: 'https://training.example/ui/' } })
   assert.equal(template.status, 'enabled')
   assert.equal(template.disabled, false)
-  assert.equal(template.openMode, 'external')
+  assert.equal(template.provider, 'third-party')
+  assert.equal(template.redirectUri, 'https://training.example/ui/')
+  const entity = { id: 'app', templateId: template.id, name: 'Training', configuration: { openMode: 'runtime', externalUrl: 'javascript:alert(1)' } }
+  assert.equal(normalizeApplication(entity, template).provider, 'third-party')
+  assert.equal(Object.hasOwn(normalizeApplication(entity, template), 'externalUrl'), false)
+  assert.equal(normalizeApplication({ ...entity, configuration: { openMode: 'external' } }, { ...template, provider: 'official' }).provider, 'official')
 })
 
-test('submits the edited external URL with the rest of the configuration', () => {
-  const fields = {
-    defaultLanguage: 'zh-CN',
-    timezone: 'Asia/Shanghai',
-    domain: '',
-    openMode: 'external',
-    externalUrl: ' https://training.example/ui/?page=dashboard ',
-  }
-  const result = buildApplicationConfiguration({ retained: 'value' }, fields)
+test('preserves unknown instance configuration without adding legacy redirect fields', () => {
+  const result = buildApplicationConfiguration({ retained: 'value' }, { defaultLanguage: 'zh-CN', timezone: 'Asia/Shanghai', domain: '' })
   assert.equal(result.retained, 'value')
-  assert.equal(result.externalUrl, 'https://training.example/ui/?page=dashboard')
+  assert.equal(Object.hasOwn(result, 'openMode'), false)
+  assert.equal(Object.hasOwn(result, 'externalUrl'), false)
 })
 
-test('settings validate external protocols before emitting a save and keep runtime settings valid', async () => {
-  const saves = []
-  const settings = ApplicationSettings.setup({ data: { application, template: {} }, editing: false }, {
-    expose: () => {},
-    emit: (event, patch) => { if (event === 'save') saves.push(patch) },
-  })
-  Object.assign(settings.draft, { name: 'Training', openMode: 'external' })
-  const validate = value => settings.rules.value.externalUrl[0].validator({}, value)
-  settings.formRef.value = { validate: () => validate(settings.draft.externalUrl) }
-  for (const url of invalidExternalUrls) {
-    settings.draft.externalUrl = url
-    await assert.rejects(validate(url), /externalUrlInvalid/)
-    await settings.saveSettings()
-  }
-  assert.deepEqual(saves, [])
-  await assert.rejects(validate('  '), /externalUrlRequired/)
-  for (const url of validExternalUrls) {
-    settings.draft.externalUrl = ` ${url} `
-    await settings.saveSettings()
-    assert.equal(saves.at(-1).externalUrl, url)
-  }
-  assert.equal(saves.length, validExternalUrls.length)
-  settings.draft.openMode = 'runtime'
-  settings.draft.externalUrl = ''
-  await settings.saveSettings()
-  assert.equal(saves.at(-1).openMode, 'runtime')
+test('uses GET _redirect and does not expose instance open-mode or external-url editors', async () => {
+  const api = await readFile(new URL('../api/application-center/businessApplication.ts', import.meta.url), 'utf8')
+  const settings = await readFile(new URL('../views/application-center/ProjectApplication/Detail/components/ApplicationSettings.vue', import.meta.url), 'utf8')
+  assert.match(api, /apiRequest\.get<\{ location: string \}>\([\s\S]*?\/_redirect/)
+  assert.doesNotMatch(api, /external-url/)
+  assert.doesNotMatch(settings, /draft\.(openMode|externalUrl)/)
 })
 
-test('prompts without opening or checking access when an external URL is not configured', async () => {
-  const { calls, guard } = createFixture()
-  assert.equal(await guard.openApplication({ ...application, externalUrl: '' }), false)
-  assert.deepEqual(calls, [['message', 'ProjectApplication.settings.externalUrlRequired', 'warning']])
-  assert.deepEqual(guard.openingApplicationIds.value, [])
-})
-
-test('opens the dynamic external URL after membership validation', async () => {
+test('opens the template redirect location after membership validation', async () => {
   const { calls, popup, guard } = createFixture()
   assert.equal(await guard.openApplication(application), true)
-  assert.deepEqual(calls.map(call => call[0]), ['window', 'membership', 'externalUrl', 'navigate'])
+  assert.deepEqual(calls.map(call => call[0]), ['window', 'membership', 'redirect', 'navigate'])
   assert.equal(popup.opener, null)
-  assert.deepEqual(calls[2], ['externalUrl', 'training'])
-  assert.deepEqual(calls[3], ['navigate', 'https://training.example/ui/?page=dashboard&userId=user-1&username=alice'])
+  assert.deepEqual(calls[2], ['redirect', 'training'])
+  assert.deepEqual(calls[3], ['navigate', 'https://training.example/ui/?page=dashboard#home'])
 })
 
-test('closes the reserved window when external URL loading fails', async () => {
-  const { calls, guard } = createFixture({ externalUrl: async () => { throw new Error('unauthorized') } })
+test('closes the reserved window when redirect loading fails', async () => {
+  const { calls, guard } = createFixture({ redirect: async () => { throw new Error('unauthorized') } })
   await assert.rejects(guard.openApplication(application), /unauthorized/)
   assert.deepEqual(calls.at(-1), ['close'])
   assert.deepEqual(guard.openingApplicationIds.value, [])
 })
 
-test('does not navigate when the external URL response is empty', async () => {
-  const { calls, guard } = createFixture({ externalUrl: async () => ({ result: {} }) })
+test('does not navigate when the redirect response is empty', async () => {
+  const { calls, guard } = createFixture({ redirect: async () => ({ result: {} }) })
   assert.equal(await guard.openApplication(application), false)
   assert.equal(calls.some(call => call[0] === 'navigate'), false)
   assert.deepEqual(calls.at(-1), ['close'])
 })
 
-test('navigates to valid HTTP and HTTPS external URLs', async () => {
-  for (const url of validExternalUrls) {
-    const { calls, guard } = createFixture({ externalUrl: async () => ({ result: { url } }) })
+test('navigates to valid HTTP and HTTPS locations', async () => {
+  for (const location of validUrls) {
+    const { calls, guard } = createFixture({ redirect: async () => ({ result: { location } }) })
     assert.equal(await guard.openApplication(application), true)
-    assert.deepEqual(calls.at(-1), ['navigate', url])
+    assert.deepEqual(calls.at(-1), ['navigate', location])
   }
 })
 
-test('does not navigate to non-http, relative or malformed external URLs', async () => {
-  for (const url of invalidExternalUrls) {
-    const { calls, guard } = createFixture({ externalUrl: async () => ({ result: { url } }) })
+test('does not navigate to non-http, relative or malformed locations', async () => {
+  for (const location of invalidUrls) {
+    const { calls, guard } = createFixture({ redirect: async () => ({ result: { location } }) })
     assert.equal(await guard.openApplication(application), false)
     assert.equal(calls.some(call => call[0] === 'navigate'), false)
     assert.deepEqual(calls.at(-2), ['message', 'ProjectApplication.detail.accessFailed', 'warning'])
@@ -227,15 +157,42 @@ test('does not navigate to non-http, relative or malformed external URLs', async
   }
 })
 
-test('external applications do not require a Runtime application menu', async () => {
-  const { calls, guard } = createFixture({ menu: async id => { calls.push(['menu', id]); return false } })
+test('third-party applications do not require a Runtime application menu', async () => {
+  const { calls, guard } = createFixture()
   assert.equal(await guard.openApplication(application), true)
   assert.equal(calls.some(call => call[0] === 'menu'), false)
-  assert.deepEqual(calls.map(call => call[0]), ['window', 'membership', 'externalUrl', 'navigate'])
 })
 
-test('internal applications retain Runtime access preparation without an external URL request', async () => {
+test('internal applications retain Runtime access regardless of legacy openMode', async () => {
   const { calls, guard } = createFixture()
-  assert.equal(await guard.openApplication({ ...application, openMode: 'runtime' }), true)
+  assert.equal(await guard.openApplication({ ...application, provider: 'official', openMode: 'external' }), true)
   assert.deepEqual(calls.map(call => call[0]), ['membership', 'menu', 'runtime', 'window'])
+})
+
+test('home cards load template provider before opening and ignore legacy instance openMode', async () => {
+  globalThis.homeFixture = {
+    applications: async () => ({ result: [
+      { id: 'external', name: 'External', templateId: 'third', configuration: { openMode: 'runtime' } },
+      { id: 'internal', name: 'Internal', templateId: 'official', configuration: { openMode: 'external' } },
+    ] }),
+    templates: async () => ({ result: [
+      { id: 'third', name: 'Third-party', provider: 'third-party', configuration: { redirectUri: 'https://training.example/' } },
+      { id: 'official', name: 'Official', provider: 'official' },
+    ] }),
+  }
+  const rows = await loadHomeRows('Applications')
+  assert.equal(rows[0].application.provider, 'third-party')
+  assert.equal(rows[1].application.provider, 'official')
+  const { calls, guard } = createFixture()
+  assert.equal(await guard.openApplication(rows[0].application), true)
+  assert.equal(calls.some(call => call[0] === 'redirect'), true)
+  assert.equal(calls.some(call => call[0] === 'runtime'), false)
+})
+
+test('detail and shared application list load template information even when applications finish first', async () => {
+  const store = await readFile(new URL('../views/application-center/ProjectApplication/useProjectApplication.ts', import.meta.url), 'utf8')
+  const detail = await readFile(new URL('../views/application-center/ProjectApplication/Detail/index.vue', import.meta.url), 'utf8')
+  assert.match(store, /normalizeApplication\(entity, templates\.find/)
+  assert.match(store, /replace\(applications, applications\.map/)
+  assert.match(detail, /Promise\.all\(\[store\.loadTemplates\(\), store\.loadApplication\(id\)\]\)/)
 })

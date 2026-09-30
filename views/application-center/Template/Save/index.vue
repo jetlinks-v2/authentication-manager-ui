@@ -97,10 +97,9 @@ const parameters = useApplicationTemplateParameters(
   () => detailState.detail.value,
   detailState.updateConfiguration,
   {
-    loadFailed: $t('ApplicationTemplate.parameters.loadFailed'),
-    invalidParameter: $t('ApplicationTemplate.parameters.invalidParameter'),
-    invalidConfiguration: $t('ApplicationTemplate.parameters.invalidConfiguration'),
     saveFailed: $t('ApplicationTemplate.parameters.saveFailed'),
+    redirectUriRequired: $t('ApplicationTemplate.parameters.redirectUriRequired'),
+    redirectUriInvalid: $t('ApplicationTemplate.parameters.redirectUriInvalid'),
   },
 )
 
@@ -120,10 +119,7 @@ watch(templateId, id => {
   }
   activeTab.value = 'document'
   void Promise.all([
-    // 先取得模板 Provider，避免向仅支持直接跳转的后端请求参数接口。
-    detailState.load().then(() => {
-      if (detailState.detail.value.id === id) return parameters.loadProviders()
-    }),
+    detailState.load(),
     menuConfig.loadOptions(),
     menuConfig.loadEditor(),
   ])

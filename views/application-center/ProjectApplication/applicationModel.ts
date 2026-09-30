@@ -21,10 +21,6 @@ import type {
   ApplicationUser,
   ProjectApplication,
 } from './types'
-import {
-  normalizeApplicationOpenConfiguration,
-  normalizeApplicationOpenMode,
-} from './applicationConfiguration'
 
 type ResultEnvelope<T> = { result: T }
 
@@ -70,7 +66,8 @@ const normalizeStatus = (value: string | EnumValue | undefined): ApplicationStat
 const normalizeTemplateLayoutVariant = (value: unknown) =>
   normalizeBasicLayoutVariant(value) || 'application'
 
-export const normalizeApplication = (entity: BusinessApplicationEntity): ProjectApplication => {
+/** 应用类型由关联模板决定，忽略历史实例打开配置。 */
+export const normalizeApplication = (entity: BusinessApplicationEntity, template?: ApplicationTemplate): ProjectApplication => {
   const status = normalizeStatus(entity.state)
   return {
     id: entity.id,
@@ -84,7 +81,7 @@ export const normalizeApplication = (entity: BusinessApplicationEntity): Project
     defaultLanguage: String(entity.configuration?.defaultLanguage || 'zh-CN'),
     timezone: String(entity.configuration?.timezone || 'Asia/Shanghai'),
     domain: String(entity.configuration?.customDomain || ''),
-    ...normalizeApplicationOpenConfiguration(entity.configuration),
+    provider: template?.provider,
   }
 }
 
@@ -104,7 +101,8 @@ export const normalizeTemplate = (
     sortIndex: Number(entity.sortIndex || 0),
     layoutVariant: normalizeTemplateLayoutVariant(entity.layoutVariant),
     layout: String(entity.configuration?.layout || 'side'),
-    openMode: normalizeApplicationOpenMode(entity.configuration?.openMode),
+    provider: entity.provider,
+    redirectUri: textOf(entity.configuration?.redirectUri).trim(),
     disabled: status !== 'enabled',
   }
 }
