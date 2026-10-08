@@ -5,15 +5,17 @@
                 <pro-search style="margin-bottom: 0" :columns="columns" target="search-system" @search="handleSearch" />
                 <div style="min-height: 0; flex: 1">
                 <j-pro-table
-                    ref="tableRef"
                     mode="TABLE"
                     :columns="columns"
                     :request="querySystem"
-                    :defaultParams="{
-                        sorts: [{ name: 'createTime', order: 'desc' }],
-                    }"
+                    :defaultParams="defaultParams"
                     :params="params"
                 >
+                    <template #headerLeftRender>
+                        <j-permission-button hasPermission="system/Log/System:export" :loading="exporting" @click="handleExport">
+                            <AIcon type="ExportOutlined"/>{{ $t('Log.index.export') }}
+                        </j-permission-button>
+                    </template>
                     <template #level="slotProps">
                     <a-tag
                         :color="
@@ -107,12 +109,14 @@ import type { SystemLogItem } from '../typings';
 import { querySystem } from '@authentication-manager-ui/api/log';
 import dayjs from 'dayjs';
 import { useI18n } from 'vue-i18n';
+import { useLogExport } from '../useLogExport';
 
 const { t: $t } = useI18n();
 import { modifySearchColumnValue } from '@/utils/comm';
 
-const tableRef = ref<Record<string, any>>({});
 const params = ref<Record<string, any>>({});
+const defaultParams = { sorts: [{ name: 'createTime', order: 'desc' }] };
+const { exporting, handleExport } = useLogExport('system', $t('Log.index.407378-1'), () => ({ ...defaultParams, ...params.value }));
 
 const columns = [
     {

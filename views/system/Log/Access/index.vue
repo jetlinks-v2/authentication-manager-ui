@@ -5,15 +5,17 @@
                 <pro-search style="margin-bottom: 0" :columns="columns" target="search-access" @search="handleSearch" />
                 <div style="min-height: 0; flex: 1">
                 <j-pro-table
-                    ref="tableRef"
                     mode="TABLE"
                     :columns="columns"
                     :request="queryAccess"
-                    :defaultParams="{
-                        sorts: [{ name: 'responseTime', order: 'desc' }],
-                    }"
+                    :defaultParams="defaultParams"
                     :params="params"
                 >
+                    <template #headerLeftRender>
+                        <j-permission-button hasPermission="system/Log/Access:export" :loading="exporting" @click="handleExport">
+                            <AIcon type="ExportOutlined"/>{{ $t('Log.index.export') }}
+                        </j-permission-button>
+                    </template>
                     <template #requestTime="slotProps">
                     {{
                         dayjs(slotProps.requestTime).format('YYYY-MM-DD HH:mm:ss')
@@ -28,13 +30,10 @@
                     </a-tag>
                     </template>
                     <template #username="slotProps">
-
-                    <!-- <j-tag color="geekblue"> -->
                     <div class="userName">
                         <j-ellipsis style="max-width: 100px;">
-                        {{ slotProps.context.userName }}
+                        {{ slotProps.context?.userName }}
                         </j-ellipsis>
-                        <!-- </j-tag> -->
                     </div>
                     </template>
                     <template #action="slotProps">
@@ -118,10 +117,14 @@ import { queryAccess } from '@authentication-manager-ui/api/log';
 import dayjs from 'dayjs';
 import { modifySearchColumnValue } from '@/utils/comm';
 import { useI18n } from 'vue-i18n';
+import { useUserOptions } from './useUserOptions';
+import { useLogExport } from '../useLogExport';
 
 const { t: $t } = useI18n();
-const tableRef = ref<Record<string, any>>({});
 const params = ref<Record<string, any>>({});
+const defaultParams = { sorts: [{ name: 'responseTime', order: 'desc' }] };
+const { userOptions, userOptionsLoading, searchUsers } = useUserOptions();
+const { exporting, handleExport } = useLogExport('access', $t('Log.index.407378-0'), () => ({ ...defaultParams, ...params.value }));
 
 const columns = [
     {
@@ -207,9 +210,15 @@ const columns = [
         title: $t('Access.index.480752-13'),
         dataIndex: 'username',
         key: 'username',
-        // search: {
-        //     type: 'string',
-        // },
+        search: {
+            type: 'select',
+            options: userOptions,
+            componentProps: {
+                filterOption: false,
+                loading: userOptionsLoading,
+                onSearch: searchUsers,
+            },
+        },
         width: 150,
         scopedSlots: true,
     },
@@ -266,10 +275,6 @@ const column = {
     description: 'action',
 };
 
-/**
- * 搜索
- * @param params
- */
 const handleSearch = (e: any) => {
     params.value = modifySearchColumnValue(e, column);
 };

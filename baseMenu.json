@@ -1912,6 +1912,25 @@
             "showPage": [
               "access-logger"
             ],
+            "buttons": [
+              {
+                "id": "export",
+                "name": "导出",
+                "i18nMessages": {
+                  "zh_CN": "导出",
+                  "en_US": "Export",
+                  "en": "Export"
+                },
+                "permissions": [
+                  {
+                    "permission": "access-logger",
+                    "actions": [
+                      "query"
+                    ]
+                  }
+                ]
+              }
+            ],
             "accessSupport": {
               "text": "支持",
               "value": "support"
@@ -1934,6 +1953,25 @@
             },
             "showPage": [
               "system-logger"
+            ],
+            "buttons": [
+              {
+                "id": "export",
+                "name": "导出",
+                "i18nMessages": {
+                  "zh_CN": "导出",
+                  "en_US": "Export",
+                  "en": "Export"
+                },
+                "permissions": [
+                  {
+                    "permission": "system-logger",
+                    "actions": [
+                      "query"
+                    ]
+                  }
+                ]
+              }
             ],
             "code": "system/Log/System",
             "icon": "icon-rizhifuwu",
