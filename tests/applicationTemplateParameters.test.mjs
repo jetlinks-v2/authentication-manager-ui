@@ -50,6 +50,35 @@ test('reset discards only the address draft', () => {
   assert.equal(state.redirectUri.value, 'https://training.example/ui/')
 })
 
+test('echoes the declared redirect parameters read-only', () => {
+  const { state } = fixture({
+    externalParameters: [
+      { name: 'page', provider: 'fixed', configuration: { value: 'dashboard' } },
+      { name: 'test_key', provider: 'fixed', configuration: { value: '' } },
+      { name: 'test_user_id', provider: 'user', configuration: { field: 'id' } },
+      { name: 'test_username', provider: 'user', configuration: { field: 'username' } },
+      { name: 'legacy', provider: 'custom', configuration: { value: 10 } },
+      { provider: 'fixed', configuration: { value: 'ignored' } },
+      'not-an-object',
+    ],
+  })
+  assert.deepEqual(state.parameters.value, [
+    { name: 'page', provider: 'fixed', value: 'dashboard' },
+    { name: 'test_key', provider: 'fixed', value: '' },
+    { name: 'test_user_id', provider: 'user', value: 'id' },
+    { name: 'test_username', provider: 'user', value: 'username' },
+    { name: 'legacy', provider: 'custom', value: '10' },
+  ])
+  assert.deepEqual(fixture().state.parameters.value, [])
+})
+
+test('template page renders the declared parameters without free editing controls', async () => {
+  const form = await readFile(new URL('../views/application-center/Template/Save/ExternalParameterConfig.vue', import.meta.url), 'utf8')
+  assert.match(form, /ApplicationTemplate\.parameters\.listTitle/)
+  assert.match(form, /parameterRows/)
+  assert.doesNotMatch(form, /state\.(draft|add|remove|loadProviders|changeProvider)/)
+})
+
 test('only third-party templates display the redirect configuration', () => {
   const { state, detail } = fixture()
   for (const provider of [undefined, 'official', 'custom']) {
