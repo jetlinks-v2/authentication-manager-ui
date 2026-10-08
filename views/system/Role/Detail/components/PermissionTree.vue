@@ -15,6 +15,7 @@ import { onlyMessage } from '@jetlinks-web/utils'
 import { MenuAssetPermissionEditor } from '@jetlinks-web-core/components'
 import { useMenuAssetPermissionEditor, useRegistryOptions } from '@jetlinks-web-core/hooks'
 import type { AssetTypeName } from '@jetlinks-web-core/hooks'
+import type { MenuPermissionNode } from '@jetlinks-web-core/hooks'
 import { paramsEncodeQuery } from '@jetlinks-web-core/utils'
 import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
 import { USER_CENTER_MENU_CODE } from '@jetlinks-web-core/utils/consts'
@@ -47,6 +48,32 @@ const query = paramsEncodeQuery({
 const filterMenus = (menus: any[] = []): any[] => menus
   .filter(item => item.code !== NotificationSubscriptionCode)
   .map(item => ({ ...item, children: filterMenus(item.children || []) }))
+
+/**
+ * 构造完整菜单状态树，使取消某个 owner 下全部菜单时仍能让后端确定替换范围。
+ * 已授权节点沿用共享编辑器生成的最小资产权限字段，未授权节点保留详情接口的原始权限字段。
+ */
+const buildFullGrantTree = (
+  menus: MenuPermissionNode[],
+  grantedMenus: Map<string, MenuPermissionNode>,
+): MenuPermissionNode[] => menus.map(source => {
+  const menu = { ...source }
+  const grantedMenu = grantedMenus.get(source.id)
+
+  menu.granted = !!source.granted
+  menu.buttons = (source.buttons || []).map(button => ({ ...button, granted: !!button.granted }))
+  menu.assetAccesses = grantedMenu?.assetAccesses || source.assetAccesses
+  menu.children = source.children?.length
+    ? buildFullGrantTree(source.children, grantedMenus)
+    : null
+  delete menu.actions
+  delete menu._granted
+  delete menu.indeterminate
+  delete menu.dataAccesses
+  delete menu.selectAccesses
+  delete menu.selectAccessesByAssetType
+  return menu
+})
 
 const loadAssetTypes = async (): Promise<AssetTypeName[]> => {
   if (!isNoCommunity) return []
@@ -88,7 +115,17 @@ const load = async () => {
 }
 
 // 详情加载失败时禁止生成空快照，避免覆盖已有授权。
-const onSave = () => initialized.value ? editor.getSnapshot() : undefined
+const onSave = () => {
+  if (!initialized.value) return undefined
+
+  const snapshot = editor.getSnapshot()
+  const grantedMenus = new Map(snapshot.menus.map(menu => [menu.id, menu]))
+
+  return {
+    ...snapshot,
+    menus: buildFullGrantTree(editor.menuTree.value, grantedMenus),
+  }
+}
 onMounted(load)
 defineExpose({ onSave, load })
 </script>
