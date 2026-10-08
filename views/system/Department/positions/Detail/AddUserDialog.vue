@@ -49,7 +49,7 @@
                         <form-item-role :extraData="detail.roleList" :extraProps="{ multiple: true }"
                             :disabledData="disabledData.roles" :showAdd="false" v-model:value="form.data.roleIdList"
                             />
-                      <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 0.25rem" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
+                      <div v-if="isNoCommunity && props.positionId" class="tip"><AIcon style="margin-right: 0.25rem" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
                     </a-form-item>
                 </a-col>
                 <a-col :span="12">
@@ -62,11 +62,11 @@
                           :disabledShowTips="[orgId]"
                           v-model:value="form.data.orgIdList"
                         />
-                      <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 0.25rem" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
+                      <div v-if="isNoCommunity && props.positionId" class="tip"><AIcon style="margin-right: 0.25rem" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
                     </a-form-item>
                 </a-col>
             </a-row>
-            <a-row :gutter="24" v-if="IsShow('add', 'edit') && isNoCommunity && hasPositionMenu">
+            <a-row :gutter="24" v-if="IsShow('add', 'edit') && isNoCommunity && hasPositionMenu && props.positionId">
                 <a-col :span="12">
                     <a-form-item name="positions" :label="$t('components.EditUserDialog.939453-31')">
                         <form-item-position :extraData="detail.positions" :disabledData="disabledData.positions"
@@ -152,14 +152,14 @@ const { t: $t } = useI18n();
 const emits = defineEmits(['confirm', 'update:visible']);
 const props = defineProps<{
     type: modalType;
-    data: any;
+    data?: any;
     visible: boolean;
-    roleIds: string[];
-    orgId: string;
-    positionId: string;
+    roleIds?: string[];
+    orgId?: string;
+    positionId?: string;
 }>();
 
-const route = useRoute()
+// const route = useRoute()
 // 弹窗相关
 const loading = ref(false);
 const positionsMap = new Map()
@@ -277,9 +277,9 @@ const init = () => {
 const getUserInfo = () => {
     const id = props.data?.id || '';
     // disabledData.orgIds = props.orgId ? [props.orgId] : []
-    disabledData.roles = props.roleIds
+    disabledData.roles = props.roleIds ?? []
     disabledData.positions = props.positionId ? [props.positionId] : []
-    if (props.type === 'add') form.data = {orgIdList: props.orgId ? [props.orgId] : [], positions: props.positionId ? [props.positionId] : [], roleIdList: props.roleIds} as formType;
+    if (props.type === 'add') form.data = {orgIdList: props.orgId ? [props.orgId] : [], positions: props.positionId ? [props.positionId] : [], roleIdList: props.roleIds ?? []} as formType;
     else if (props.type === 'reset') form.data = { id } as formType;
     else if (props.type === 'edit') {
         getUser_api(id).then((resp: any) => {
@@ -347,7 +347,7 @@ const hasNodeWithId = (arr: any, id: any) => {
 }
 
 onMounted(() => {
-    if (isNoCommunity) {
+    if (isNoCommunity && props.positionId) {
         queryPositionDetailNoPage({
             paging: false,
             sorts: [{ name: 'sortIndex', order: 'asc' }]

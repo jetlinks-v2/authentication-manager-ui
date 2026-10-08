@@ -79,17 +79,24 @@
 <!--                      :rules="[-->
 <!--                      { required: form.data.username !== 'admin', message: $t('components.EditUserDialog.939453-13') },-->
 <!--                      ]"-->
+                      <!-- 职位关联禁用及提示已屏蔽，保留原配置。
                       <form-item-role :extraData="detail.roleList" :extraProps="{multiple: true}" :disabledData="disabledData.roles" v-model:value="form.data.roleIdList" :disabled="isRoleReadonly" />
                       <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 0.25rem" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
+                      -->
+                      <form-item-role :extraData="detail.roleList" :extraProps="{multiple: true}" v-model:value="form.data.roleIdList" :disabled="isRoleReadonly" />
                     </a-form-item>
                 </a-col>
                 <a-col :span="12" v-if="hasDepartmentMenu">
                     <a-form-item name="orgIdList" :label="$t('components.EditUserDialog.939453-14')">
+                      <!-- 职位关联禁用及提示已屏蔽，保留原配置。
                       <form-item-org :extraData="detail.orgList" :extraProps="{multiple: true}" :disabledData="disabledData.orgIds" v-model:value="form.data.orgIdList" :disabled="form.data.username === 'admin'" />
                       <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 0.25rem" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
+                      -->
+                      <form-item-org :extraData="detail.orgList" :extraProps="{multiple: true}" v-model:value="form.data.orgIdList" :disabled="form.data.username === 'admin'" />
                     </a-form-item>
                 </a-col>
             </a-row>
+          <!-- 职位输入已屏蔽，保留原表单。
           <a-row :gutter="24" v-if="form.IsShow('add', 'edit') && isNoCommunity && isIot">
             <a-col :span="12">
               <a-form-item name="positions" :label="$t('components.EditUserDialog.939453-31')">
@@ -97,6 +104,7 @@
               </a-form-item>
             </a-col>
           </a-row>
+          -->
             <div class="formName" v-if="form.IsShow('add', 'edit')">{{ $t('components.EditUserDialog.939453-16') }}</div>
             <a-row :gutter="24" v-if="form.IsShow('add', 'edit')">
                 <a-col :span="24">
@@ -183,10 +191,11 @@ import { DefaultOptionType } from 'ant-design-vue/es/vc-tree-select/TreeSelect';
 import { AxiosResponse } from 'axios';
 import { passwordRegEx } from '@jetlinks-web-core/utils/validate';
 import { onlyMessage } from '@jetlinks-web-core/utils/comm';
-import {cloneDeep, flatten, map} from 'lodash-es';
+// import {cloneDeep, flatten, map} from 'lodash-es';
+import {cloneDeep} from 'lodash-es';
 import { useI18n } from 'vue-i18n';
-import {queryPositionDetailNoPage} from "@authentication-manager-ui/api/system/positions";
-import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
+// import {queryPositionDetailNoPage} from "@authentication-manager-ui/api/system/positions";
+// import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
 import { useMenuStore } from '@jetlinks-web-core/store';  
 
 const { t: $t } = useI18n();
@@ -199,10 +208,11 @@ const props = defineProps<{
 }>();
 // 弹窗相关
 const loading = ref(false);
-const positionsMap = new Map()
+// const positionsMap = new Map()
 const menuStore = useMenuStore();
 const hasDepartmentMenu = menuStore.hasMenu('system/Department');
 
+/* 职位关联禁用状态已屏蔽，保留原实现。
 const disabledData = reactive<{
   roles: any[],
   orgIds: any[]
@@ -210,6 +220,7 @@ const disabledData = reactive<{
   roles: [],
   orgIds: []
 })
+*/
 const detail = ref({})
 
 const dialogTitle = computed(() => {
@@ -233,6 +244,7 @@ const confirm = () => {
         .finally(() => (loading.value = false));
 };
 
+/* 职位联动已屏蔽，保留原处理函数。
 const handleData = (data: string[], newData: string[], key: string) => {
   // 删除原本的数据，然后加入新的数据
   const _dataSet = new Set(data || []);
@@ -256,6 +268,7 @@ const onChange = (value: string[]) => {
   form.data.roleIdList = handleData(form.data.roleIdList, roles, 'roles')
   form.data.orgIdList = handleData(form.data.orgIdList, orgIds, 'orgIds')
 }
+*/
 
 const formRef = ref<FormInstance>();
 const _roleDetail = ref([] as any[]);
@@ -328,9 +341,10 @@ const form = reactive({
                     roleIdList: resp.result.roleList.map(
                         (item: dictType) => item.id,
                     ),
-                  positions: resp.result.positions?.map(item => item.id)
+                    // 职位字段不展示，但编辑提交必须保留现有绑定。
+                    positions: resp.result.positions?.map(item => item.id) ?? []
                 };
-                onChange(form.data.positions)
+                // onChange(form.data.positions)
 
                 form.data.roleIdList = resp.result?.roleList?.map((i: any) => {
                     return i.id
@@ -407,6 +421,7 @@ const hasNodeWithId = (arr: any, id: any)=>{
 }
 
 onMounted(async () => {
+  /* 职位查询已屏蔽，保留原加载逻辑。
   if(isNoCommunity) {
     const resp = await queryPositionDetailNoPage({
       paging: false,
@@ -421,6 +436,7 @@ onMounted(async () => {
       })
     }
   }
+  */
   form.init();
 })
 

@@ -60,8 +60,15 @@
               </a-space>
             </a-flex>
         </template>
+        <!-- 职位列已屏蔽，保留原渲染。
         <template #positions="slotProps">
           {{ slotProps.positions?.filter(item => item.orgId === props.parentId)?.map(item => item.name).join(',') || $t('comm.table.empty') }}
+        </template>
+        -->
+        <template #roleList="slotProps">
+          <j-ellipsis>
+            {{ formatRoleNames(slotProps.roleList) || $t('comm.table.empty') }}
+          </j-ellipsis>
         </template>
         <template #status="slotProps">
           <j-badge-status
@@ -110,14 +117,15 @@ import AddUserDialog from '../positions/Detail/AddUserDialog.vue'
 import {useColumns, requestFun} from '../util'
 import {onlyMessage} from '@jetlinks-web/utils'
 import {useI18n} from 'vue-i18n';
-import {useRouteQuery} from '@vueuse/router'
+// import {useRouteQuery} from '@vueuse/router'
 import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
 import type {ConditionFilterChangePayload} from '@jetlinks-web-core/components/ConditionFilter'
 import {transformConditionTerms} from '@authentication-manager-ui/views/system/conditionFilterUtils'
-import PageHeader from '@jetlinks-web-core/components/PageHeader'
+// import PageHeader from '@jetlinks-web-core/components/PageHeader'
 
 const {t: $t} = useI18n();
 const permission = 'system/Department'
+const formatRoleNames = (roles?: Array<{name: string}> | null) => (roles ?? []).map(role => role.name).join(',')
 
 const props = defineProps({
   parentId: {
@@ -133,9 +141,10 @@ const props = defineProps({
 const isShow = computed(() => {
   return !props.parentId
 })
-const show = ref(false)
-const search = useRouteQuery('q')
-const searchTarget = useRouteQuery('target')
+const show = ref(true)
+// 职位筛选路由联动已屏蔽，保留原查询参数。
+// const search = useRouteQuery('q')
+// const searchTarget = useRouteQuery('target')
 
 // 搜索参数
 const queryParams = ref({})
@@ -203,6 +212,7 @@ const onSelectAll = (selected: boolean, _: any[], changeRows: any) => {
 const handleParams = ({filter}: ConditionFilterChangePayload) => {
   queryParams.value = {
     terms: transformConditionTerms(filter.terms, (term) => {
+      /* 职位筛选已屏蔽，保留原转换逻辑。
       if (term.column !== 'positions') {
         return term
       }
@@ -220,6 +230,24 @@ const handleParams = ({filter}: ConditionFilterChangePayload) => {
         ...rest,
         column: `id$in-dimension$position${relationSuffix}`,
       }
+      */
+      if (term.column !== 'roleList') {
+        return term
+      }
+
+      // UserDimensionTerm 用 $any 表示存在角色绑定，用 $not$any 表示没有角色绑定。
+      const {termType, ...rest} = term
+      const relationSuffix = {
+        isnull: '$not$any',
+        notnull: '$any',
+        not: '$not',
+        nin: '$not',
+      }[termType || ''] || ''
+
+      return {
+        ...rest,
+        column: `id$in-dimension$role${relationSuffix}`,
+      }
     }),
   }
 }
@@ -229,7 +257,7 @@ const handleAddUser = () => {
   refresh()
 }
 
-// 请求数据
+// 保留职位关联形成的组织成员范围，避免隐藏职位入口后遗漏已有用户。
 const handleSearch = (oParams: any) =>
     requestFun(props.parentId, oParams, [
         {
@@ -284,6 +312,7 @@ const unBind = (row?: any) => {
   })
 }
 
+/* 职位筛选路由联动已屏蔽，保留原处理函数及监听。
 const handleRouteQuery = (v) => {
   const terms = [
     {
@@ -313,6 +342,7 @@ const handleRouteQuery = (v) => {
 watch(() => props.positionId, (v) => {
   handleRouteQuery(v)
 }, {immediate: true})
+*/
 
 watch(
     () => props.parentId,
