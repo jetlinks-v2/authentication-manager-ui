@@ -3,7 +3,8 @@ import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { prepareApplicationAccess } from '@jetlinks-web-core/utils/application-access'
 import { getApplicationAccessContext } from '@jetlinks-web-core/utils/request-context'
-import { getBusinessApplicationExternalUrl } from '../../../api/application-center/businessApplication'
+import { getBusinessApplicationRedirect } from '../../../api/application-center/businessApplication'
+import { isHttpExternalApplicationUrl } from './applicationConfiguration'
 import {
   ensureBusinessApplicationMembership,
   hasOwnBusinessApplicationMenu,
@@ -29,11 +30,12 @@ export const useApplicationOpenGuard = (options: ApplicationOpenGuardOptions = {
   }
 
   const openPreparedApplication = async (application: ProjectApplication, externalWindow?: Window | null) => {
-    if (application.openMode === 'external') {
+    if (application.provider === 'third-party') {
       if (!externalWindow || externalWindow.closed) return false
-      const response = await getBusinessApplicationExternalUrl(application.id)
-      const url = response.result?.url
-      if (!url) {
+      const response = await getBusinessApplicationRedirect(application.id)
+      const url = response.result?.location
+      // 后端地址仍需在浏览器边界校验，避免不可信配置触发 javascript: 等协议。
+      if (!isHttpExternalApplicationUrl(url)) {
         onlyMessage($t('ProjectApplication.detail.accessFailed'), 'warning')
         return false
       }
@@ -61,7 +63,7 @@ export const useApplicationOpenGuard = (options: ApplicationOpenGuardOptions = {
     externalWindow?: Window | null,
   ) => {
     const changed = await ensureBusinessApplicationMembership(application.id)
-    if (!await hasOwnBusinessApplicationMenu(application.id)) {
+    if (application.provider !== 'third-party' && !await hasOwnBusinessApplicationMenu(application.id)) {
       onlyMessage($t('ProjectApplication.access.notConfigured', { name: application.name }), 'warning')
       return false
     }
@@ -72,13 +74,9 @@ export const useApplicationOpenGuard = (options: ApplicationOpenGuardOptions = {
 
   const openApplication = async (application: ProjectApplication) => {
     if (openingApplicationIds.value.includes(application.id)) return false
-    if (application.openMode === 'external' && !application.externalUrl) {
-      onlyMessage($t('ProjectApplication.settings.externalUrlRequired'), 'warning')
-      return false
-    }
     // 在点击事件中预留窗口，避免异步准入和外链地址请求触发浏览器弹窗拦截。
     const externalWindow = reserveExternalWindow(application)
-    if (application.openMode === 'external' && !externalWindow) return false
+    if (application.provider === 'third-party' && !externalWindow) return false
     let opened = false
     setOpening(application.id, true)
     try {
@@ -92,7 +90,7 @@ export const useApplicationOpenGuard = (options: ApplicationOpenGuardOptions = {
 
   /** 外部站点不保留对 Runtime 窗口的 opener 引用。 */
   const reserveExternalWindow = (application: ProjectApplication) => {
-    if (application.openMode !== 'external') return undefined
+    if (application.provider !== 'third-party') return undefined
     const externalWindow = window.open('about:blank', '_blank')
     if (externalWindow) externalWindow.opener = null
     else onlyMessage($t('ProjectApplication.detail.accessFailed'), 'warning')

@@ -60,8 +60,6 @@ const handleOpenApp = async (row: HomeRow) => {
     defaultLanguage: 'zh-CN',
     timezone: 'Asia/Shanghai',
     domain: '',
-    openMode: 'runtime',
-    externalUrl: '',
   }
   await openApplication(application)
 }

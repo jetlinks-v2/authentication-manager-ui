@@ -57,27 +57,12 @@
 
         <div class="setting-row">
           <div class="setting-label">{{ $t('ProjectApplication.settings.openMode') }}</div>
-          <a-select
-            v-if="editingModel"
-            v-model:value="draft.openMode"
-            class="setting-select"
-            :options="openModeOptions"
-          />
-          <div v-else class="setting-value">{{ openModeDisplayValue }}</div>
+          <div class="setting-value">{{ openModeDisplayValue }}</div>
         </div>
 
-        <div v-if="draft.openMode === 'external' || (!editingModel && application.openMode === 'external')" class="setting-row">
-          <div class="setting-label" :class="{ required: editingModel }">
-            {{ $t('ProjectApplication.settings.externalUrl') }}
-          </div>
-          <a-form-item v-if="editingModel" class="setting-form-item" name="externalUrl">
-            <a-input
-              v-model:value="draft.externalUrl"
-              class="setting-control"
-              :placeholder="$t('ProjectApplication.settings.externalUrlPlaceholder')"
-            />
-          </a-form-item>
-          <div v-else class="setting-value">{{ application.externalUrl || '--' }}</div>
+        <div v-if="template.provider === 'third-party'" class="setting-row">
+          <div class="setting-label">{{ $t('ApplicationTemplate.parameters.redirectUri') }}</div>
+          <div class="setting-value">{{ template.redirectUri || '--' }}</div>
         </div>
 
         <div class="setting-row">
@@ -115,7 +100,6 @@ import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { createApplicationAccessDisplayUrl } from '@jetlinks-web-core/utils/application-access'
 import type { ApplicationTemplate, ProjectApplication } from '../../types'
-import { isHttpExternalApplicationUrl } from '../../applicationConfiguration'
 
 interface SettingsData {
   application: ProjectApplication
@@ -127,8 +111,6 @@ interface SettingsDraft {
   name: string
   description: string
   defaultLanguage: string
-  openMode: ProjectApplication['openMode']
-  externalUrl: string
 }
 
 const props = defineProps({
@@ -148,8 +130,6 @@ const draft = reactive<SettingsDraft>({
   name: '',
   description: '',
   defaultLanguage: 'zh-CN',
-  openMode: 'runtime',
-  externalUrl: '',
 })
 const iconTypes = ['image/jpeg', 'image/png']
 const iconUploadBorderStyle = {
@@ -172,18 +152,14 @@ const languageOptions = computed(() => [
   { label: $t('ProjectApplication.settings.zhCN'), value: 'zh-CN' },
   { label: $t('ProjectApplication.settings.enUS'), value: 'en-US' },
 ])
-const openModeOptions = computed(() => [
-  { label: $t('ProjectApplication.settings.openModeRuntime'), value: 'runtime' },
-  { label: $t('ProjectApplication.settings.openModeExternal'), value: 'external' },
-])
-const openModeDisplayValue = computed(() => openModeOptions.value.find(
-  item => item.value === application.value.openMode,
-)?.label || application.value.openMode)
+const openModeDisplayValue = computed(() => $t(template.value.provider === 'third-party'
+  ? 'ProjectApplication.settings.openModeExternal'
+  : 'ProjectApplication.settings.openModeRuntime'))
 const languageDisplayValue = computed(() => languageOptions.value.find(
   item => item.value === application.value.defaultLanguage,
 )?.label || application.value.defaultLanguage)
 const fallbackDomainUrl = computed(() => createApplicationAccessDisplayUrl(application.value.id))
-const domainDisplayValue = computed(() => application.value.openMode === 'external'
+const domainDisplayValue = computed(() => template.value.provider === 'third-party'
   ? `${window.location.origin}/${encodeURIComponent(application.value.id)}/`
   : application.value.domain || fallbackDomainUrl.value)
 const visibleIcon = computed(() => application.value.icon || template.value.icon)
@@ -192,16 +168,6 @@ const rules = computed(() => ({
     { required: true, message: $t('ProjectApplication.create.nameRequired') },
     { max: 30, message: $t('ProjectApplication.create.nameLength') },
   ],
-  externalUrl: [{
-    validator: (_rule: unknown, value: string) => {
-      if (draft.openMode !== 'external') return Promise.resolve()
-      if (!value?.trim()) {
-        return Promise.reject(new Error($t('ProjectApplication.settings.externalUrlRequired')))
-      }
-      if (isHttpExternalApplicationUrl(value)) return Promise.resolve()
-      return Promise.reject(new Error($t('ProjectApplication.settings.externalUrlInvalid')))
-    },
-  }],
 }))
 
 const resetDraft = () => {
@@ -209,8 +175,6 @@ const resetDraft = () => {
   draft.name = application.value.name
   draft.description = application.value.description || template.value.description
   draft.defaultLanguage = application.value.defaultLanguage
-  draft.openMode = application.value.openMode
-  draft.externalUrl = application.value.externalUrl
   formRef.value?.clearValidate()
 }
 
@@ -239,8 +203,6 @@ const saveSettings = async () => {
     name: draft.name.trim(),
     description: draft.description.trim(),
     defaultLanguage: draft.defaultLanguage,
-    openMode: draft.openMode,
-    externalUrl: draft.externalUrl.trim(),
   })
 }
 

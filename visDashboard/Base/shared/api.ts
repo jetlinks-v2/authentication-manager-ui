@@ -1,9 +1,11 @@
 import dayjs from 'dayjs'
 import {
   queryBusinessApplications,
+  queryBusinessApplicationTemplates,
   type BusinessApplicationEntity,
+  type BusinessApplicationTemplateEntity,
 } from '@authentication-manager-ui/api/application-center/businessApplication'
-import { normalizeApplication } from '../../../views/application-center/ProjectApplication/applicationModel'
+import { normalizeApplication, normalizeTemplate } from '../../../views/application-center/ProjectApplication/applicationModel'
 import { rowsOf, textOf } from './apiResult'
 import { loadAnnouncements } from './apiAnnouncements'
 import { loadResourceRows, loadOperationRows, loadHealthRows } from './apiResources'
@@ -18,9 +20,14 @@ const formatTime = (value?: number | string) => {
 }
 
 const loadApplications = async (): Promise<HomeRow[]> => {
-  const applicationResponse = await queryBusinessApplications({ paging: false, sorts: [{ name: 'createTime', order: 'desc' }] })
+  // 首页和应用列表使用相同模板类型，不能从实例的历史打开配置决定跳转。
+  const [applicationResponse, templateResponse] = await Promise.all([
+    queryBusinessApplications({ paging: false, sorts: [{ name: 'createTime', order: 'desc' }] }),
+    queryBusinessApplicationTemplates({ paging: false }),
+  ])
+  const templates = rowsOf(templateResponse).map(row => normalizeTemplate(row as unknown as BusinessApplicationTemplateEntity))
   return rowsOf(applicationResponse).map(row => {
-    const application = normalizeApplication(row as BusinessApplicationEntity)
+    const application = normalizeApplication(row as unknown as BusinessApplicationEntity, templates.find(template => template.id === row.templateId))
     const createTime = formatTime(row.createTime)
     return {
       id: textOf(row.id),

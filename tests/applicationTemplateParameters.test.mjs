@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { readFile } from 'node:fs/promises'
 import { build } from 'esbuild'
 
 const { outputFiles } = await build({
@@ -10,112 +11,171 @@ const { outputFiles } = await build({
   bundle: true,
   write: false,
   format: 'esm',
-  plugins: [{
-    name: 'parameter-api-fixture',
-    setup(plugin) {
-      plugin.onResolve({ filter: /^@authentication-manager-ui\/api\// }, args => ({ path: args.path, namespace: 'fixture' }))
-      plugin.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({
-        contents: 'export const getApplicationParameterProviders = () => globalThis.parameterProviders();',
-      }))
-    },
-  }],
 })
 const { useApplicationTemplateParameters, ref, nextTick } = await import(`data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString('base64')}`)
 const messages = {
-  loadFailed: 'load failed', invalidParameter: 'invalid parameter',
-  invalidConfiguration: 'invalid configuration', saveFailed: 'save failed',
+  saveFailed: 'save failed', redirectUriRequired: 'redirect required', redirectUriInvalid: 'invalid redirect',
+  invalidParameter: 'invalid parameter',
 }
 
-function fixture(parameters = []) {
-  const detail = ref({ id: 'template', configuration: { retained: 'value', externalParameters: parameters } })
+function fixture(configuration = {}) {
+  const detail = ref({ id: 'template', provider: 'third-party', configuration: { retained: 'value', redirectUri: 'https://training.example/ui/', ...configuration } })
   const writes = []
-  const state = useApplicationTemplateParameters(() => detail.value, async configuration => {
-    writes.push(configuration)
-    detail.value = { ...detail.value, configuration }
+  const state = useApplicationTemplateParameters(() => detail.value, async value => {
+    writes.push(value)
+    detail.value = { ...detail.value, configuration: value }
     return true
   }, messages)
   return { state, writes, detail }
 }
 
-test('saves fixed and access-token rules on the template and echoes the saved values', async () => {
-  const { state, writes } = fixture()
-  state.add()
-  Object.assign(state.draft.value[0], { name: ' page ', provider: 'fixed', value: 'dashboard & reports' })
-  state.add()
-  Object.assign(state.draft.value[1], { name: 'login', provider: 'access-token' })
+test('saves the edited parameters with the address and preserves all other Configuration values', async () => {
+  const { state, writes } = fixture({
+    externalParameters: [
+      { name: 'page', provider: 'fixed', configuration: { value: 'dashboard' } },
+      { name: 'test_user_id', provider: 'user', configuration: { field: 'id' } },
+    ],
+    parameters: { user: 'unchanged' },
+  })
+  state.redirectUri.value = ' https://training.example/new?page=dashboard#home '
+  state.parameters.value[0].name = ' page '
+  state.parameters.value[1].value = 'username'
+  state.addParameter()
+  state.parameters.value[2].name = 'test_key'
+  state.parameters.value[2].value = 'abc@123'
   assert.equal(await state.save(), true)
   await nextTick()
   assert.deepEqual(writes[0], {
-    retained: 'value',
+    retained: 'value', redirectUri: 'https://training.example/new?page=dashboard#home',
     externalParameters: [
-      { name: 'page', provider: 'fixed', configuration: { value: 'dashboard & reports' } },
-      { name: 'login', provider: 'access-token', configuration: {} },
+      { name: 'page', provider: 'fixed', configuration: { value: 'dashboard' } },
+      { name: 'test_user_id', provider: 'user', configuration: { field: 'username' } },
+      { name: 'test_key', provider: 'fixed', configuration: { value: 'abc@123' } },
+    ],
+    parameters: { user: 'unchanged' },
+  })
+  assert.equal(state.redirectUri.value, 'https://training.example/new?page=dashboard#home')
+  assert.equal('loadProviders' in state, false)
+})
+
+test('reset discards the address and parameter drafts', () => {
+  const { state } = fixture()
+  state.redirectUri.value = 'https://other.example/'
+  state.addParameter()
+  state.parameters.value[0].name = 'draft'
+  state.reset()
+  assert.equal(state.redirectUri.value, 'https://training.example/ui/')
+  assert.deepEqual(state.parameters.value, [])
+})
+
+test('loads the declared redirect parameters into editable drafts', () => {
+  const { state } = fixture({
+    externalParameters: [
+      { name: 'page', provider: 'fixed', configuration: { value: 'dashboard' } },
+      { name: 'test_key', provider: 'fixed', configuration: { value: '' } },
+      { name: 'test_user_id', provider: 'user', configuration: { field: 'id' } },
+      { name: 'test_username', provider: 'user', configuration: { field: 'username' } },
+      { name: 'legacy', provider: 'custom', configuration: { value: 10 } },
+      'not-an-object',
     ],
   })
-  assert.equal(state.draft.value[0].name, 'page')
-  assert.equal(state.draft.value[0].value, 'dashboard & reports')
+  assert.deepEqual(state.parameters.value, [
+    { name: 'page', provider: 'fixed', value: 'dashboard' },
+    { name: 'test_key', provider: 'fixed', value: '' },
+    { name: 'test_user_id', provider: 'user', value: 'id' },
+    { name: 'test_username', provider: 'user', value: 'username' },
+    { name: 'legacy', provider: 'fixed', value: '10' },
+  ])
+  assert.deepEqual(fixture().state.parameters.value, [])
+
+  state.parameters.value.forEach(parameter => { parameter.name = ` ${parameter.name} ` })
+  state.parameters.value[0].value = 'overview'
+  state.changeProvider(0, 'user')
+  assert.deepEqual(state.parameters.value[0], { name: ' page ', provider: 'user', value: 'id' })
+  state.changeProvider(0, 'fixed')
+  assert.deepEqual(state.parameters.value[0], { name: ' page ', provider: 'fixed', value: 'id' })
+  state.removeParameter(0)
+  assert.equal(state.parameters.value[0].name, ' test_key ')
 })
 
-test('preserves unknown provider configuration through echo and save', async () => {
-  const parameters = [{ name: 'ticket', provider: 'custom-ticket', configuration: { audience: 'training', options: { ttl: 60 } } }]
-  const { state, writes } = fixture(parameters)
-  assert.equal(await state.save(), true)
-  assert.deepEqual(writes[0].externalParameters, parameters)
-})
-
-test('clears all parameters explicitly while preserving other configuration', async () => {
-  const { state, writes } = fixture([{ name: 'login', provider: 'access-token' }])
-  state.remove(0)
-  assert.equal(await state.save(), true)
-  assert.deepEqual(writes[0], { retained: 'value', externalParameters: [] })
-})
-
-test('reset discards edits and provider changes clear incompatible configuration', () => {
-  const { state } = fixture([{ name: 'page', provider: 'fixed', configuration: { value: 'dashboard' } }])
-  state.changeProvider(0, 'access-token')
-  assert.equal(state.draft.value[0].configuration, '{}')
-  assert.equal(state.draft.value[0].value, '')
-  state.reset()
-  assert.equal(state.draft.value[0].provider, 'fixed')
-  assert.equal(state.draft.value[0].value, 'dashboard')
-})
-
-test('rejects missing and duplicate names and non-object custom configuration without saving', async () => {
+test('validates parameters before saving', async () => {
   const { state, writes } = fixture()
-  state.add()
+  state.addParameter()
+  state.parameters.value[0].name = ''
   assert.equal(await state.save(), false)
   assert.equal(state.error.value, messages.invalidParameter)
-  Object.assign(state.draft.value[0], { name: 'page', provider: 'custom' })
-  state.add()
-  Object.assign(state.draft.value[1], { name: ' page ', provider: 'fixed' })
+
+  state.parameters.value[0].name = 'page'
+  state.addParameter()
+  state.parameters.value[1].name = 'page'
   assert.equal(await state.save(), false)
-  state.remove(1)
-  for (const configuration of ['{', 'null', '[]', '1']) {
-    state.draft.value[0].configuration = configuration
-    assert.equal(await state.save(), false)
-    assert.equal(state.error.value, messages.invalidConfiguration)
-  }
+  assert.equal(state.error.value, messages.invalidParameter)
+
+  state.parameters.value[1].name = 'test_user_id'
+  state.changeProvider(1, 'user')
+  state.parameters.value[1].value = 'password'
+  assert.equal(await state.save(), false)
+  assert.equal(state.error.value, messages.invalidParameter)
   assert.deepEqual(writes, [])
+
+  state.parameters.value[1].value = 'username'
+  assert.equal(await state.save(), true)
+  assert.deepEqual(writes.at(-1).externalParameters, [
+    { name: 'page', provider: 'fixed', configuration: { value: '' } },
+    { name: 'test_user_id', provider: 'user', configuration: { field: 'username' } },
+  ])
 })
 
-test('loads server provider choices and allows retry after failure', async () => {
-  const { state } = fixture()
-  globalThis.parameterProviders = async () => { throw new Error('offline') }
-  await state.loadProviders()
-  assert.equal(state.loadError.value, messages.loadFailed)
-  assert.equal(state.loading.value, false)
-  globalThis.parameterProviders = async () => ({ result: [{ id: 'custom', name: 'Custom Ticket' }] })
-  await state.loadProviders()
-  assert.deepEqual(state.options.value, [{ value: 'custom', label: 'Custom Ticket' }])
-  assert.equal(state.loadError.value, '')
+test('template page renders editable parameter rows', async () => {
+  const form = await readFile(new URL('../views/application-center/Template/Save/ExternalParameterConfig.vue', import.meta.url), 'utf8')
+  assert.match(form, /ApplicationTemplate\.parameters\.listTitle/)
+  assert.match(form, /state\.addParameter/)
+  assert.match(form, /state\.removeParameter/)
+  assert.match(form, /state\.changeProvider/)
+  assert.doesNotMatch(form, /loadProviders/)
 })
 
-test('reports save failures without discarding the draft', async () => {
-  const state = useApplicationTemplateParameters(() => ({}), async () => { throw new Error('offline') }, messages)
-  state.add()
-  Object.assign(state.draft.value[0], { name: 'page', provider: 'fixed', value: 'dashboard' })
+test('only third-party templates display the redirect configuration', () => {
+  const { state, detail } = fixture()
+  for (const provider of [undefined, 'official', 'custom']) {
+    detail.value = { ...detail.value, provider }
+    assert.equal(state.supported.value, false)
+  }
+  detail.value = { ...detail.value, provider: 'third-party' }
+  assert.equal(state.supported.value, true)
+})
+
+test('validates HTTP(S) addresses before saving, preserving query and fragment', async () => {
+  const { state, writes } = fixture()
+  for (const value of ['javascript:alert(1)', '/training', '//training.example', 'https:/training.example', 'https://']) {
+    state.redirectUri.value = value
+    assert.equal(await state.save(), false)
+    assert.equal(state.error.value, messages.redirectUriInvalid)
+  }
+  state.redirectUri.value = '   '
+  assert.equal(await state.save(), false)
+  assert.equal(state.error.value, messages.redirectUriRequired)
+  assert.deepEqual(writes, [])
+  for (const value of ['http://training.example/ui/', 'HTTPS://training.example/ui/?page=dashboard#home']) {
+    state.redirectUri.value = ` ${value} `
+    assert.equal(await state.save(), true)
+    assert.equal(writes.at(-1).redirectUri, value)
+  }
+})
+
+test('reports save failure without discarding the address draft', async () => {
+  const state = useApplicationTemplateParameters(() => ({ provider: 'third-party', configuration: { redirectUri: 'https://training.example/' } }), async () => { throw new Error('offline') }, messages)
+  state.redirectUri.value = 'https://training.example/new'
   assert.equal(await state.save(), false)
   assert.equal(state.error.value, messages.saveFailed)
   assert.equal(state.saving.value, false)
-  assert.equal(state.draft.value[0].value, 'dashboard')
+  assert.equal(state.redirectUri.value, 'https://training.example/new')
+})
+
+test('template form keeps the built-in fixed/user sources without a provider metadata API', async () => {
+  const form = await readFile(new URL('../views/application-center/Template/Save/ExternalParameterConfig.vue', import.meta.url), 'utf8')
+  const api = await readFile(new URL('../api/application-center/applicationTemplate.ts', import.meta.url), 'utf8')
+  assert.match(form, /sourceFixed/)
+  assert.match(form, /sourceUser/)
+  assert.doesNotMatch(api, /parameter-providers|getApplicationParameterProviders/)
 })

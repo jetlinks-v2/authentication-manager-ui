@@ -27,7 +27,7 @@
             />
           </a-tab-pane>
           <a-tab-pane key="config" :tab="$t('ApplicationTemplate.detail.config')">
-            <ExternalParameterConfig :state="parameters" :can-update="canUpdate && !!detailState.detail.value.id" />
+            <ExternalParameterConfig v-if="parameters.supported.value" :state="parameters" :can-update="canUpdate && !!detailState.detail.value.id" />
             <ConfigPane
               :can-update="canUpdate"
               :scope-strategy-options="menuConfig.scopeStrategyOptions.value"
@@ -97,10 +97,10 @@ const parameters = useApplicationTemplateParameters(
   () => detailState.detail.value,
   detailState.updateConfiguration,
   {
-    loadFailed: $t('ApplicationTemplate.parameters.loadFailed'),
-    invalidParameter: $t('ApplicationTemplate.parameters.invalidParameter'),
-    invalidConfiguration: $t('ApplicationTemplate.parameters.invalidConfiguration'),
     saveFailed: $t('ApplicationTemplate.parameters.saveFailed'),
+    redirectUriRequired: $t('ApplicationTemplate.parameters.redirectUriRequired'),
+    redirectUriInvalid: $t('ApplicationTemplate.parameters.redirectUriInvalid'),
+    invalidParameter: $t('ApplicationTemplate.parameters.invalidParameter'),
   },
 )
 
@@ -119,7 +119,11 @@ watch(templateId, id => {
     return
   }
   activeTab.value = 'document'
-  void Promise.all([detailState.load(), menuConfig.loadOptions(), menuConfig.loadEditor(), parameters.loadProviders()])
+  void Promise.all([
+    detailState.load(),
+    menuConfig.loadOptions(),
+    menuConfig.loadEditor(),
+  ])
 }, { immediate: true })
 </script>
 

@@ -14,19 +14,8 @@ interface EnumItem {
 
 export type I18nMessages = Record<string, Record<string, string>>
 
-export interface BusinessApplicationParameter {
-  name: string
-  provider: string
-  configuration?: Record<string, unknown>
-}
-
-export interface BusinessApplicationParameterProvider {
-  id: string
-  name: string
-}
-
 export interface ApplicationTemplateConfiguration extends Record<string, unknown> {
-  externalParameters?: BusinessApplicationParameter[]
+  redirectUri?: string
 }
 
 export interface BusinessApplicationTemplate {
@@ -42,6 +31,7 @@ export interface BusinessApplicationTemplate {
   i18nDocument?: string
   i18nMessages?: I18nMessages
   layoutVariant?: BasicLayoutVariant
+  provider?: string
   configuration?: ApplicationTemplateConfiguration
   state?: string | EnumItem
   sortIndex?: number
@@ -77,10 +67,6 @@ export const queryApplicationTemplates = (data: Record<string, unknown>): Promis
 
 export const getApplicationTemplate = (id: string): Promise<any> =>
   request.get(`/business-application-template/${encode(id)}`)
-
-// 参数来源由后端扩展点提供，前端只保存稳定的 provider ID。
-export const getApplicationParameterProviders = (): Promise<{ result: BusinessApplicationParameterProvider[] }> =>
-  request.get('/business-application-template/parameter-providers')
 
 export const createApplicationTemplate = (
   data: Partial<BusinessApplicationTemplate>,

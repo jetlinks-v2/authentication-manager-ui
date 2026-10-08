@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import {
   createDraft,
@@ -17,7 +18,7 @@ test('only exposes login methods backed by existing providers', () => {
   assert.equal(draft.logoUrl, '')
   assert.equal(draft.enabled, false)
   assert.equal(draft.showOnLogin, true)
-  assert.equal(draft.autoCreateUser, false)
+  assert.equal('autoCreateUser' in draft, false)
   assert.equal(draft.usernamePrefix, '')
   assert.deepEqual(draft.roleIdList, [])
   assert.deepEqual(draft.orgIdList, [])
@@ -98,7 +99,7 @@ test('maps supported login providers to page records without list secrets', () =
     assert.equal(record?.logoUrl, 'https://example.com/icon.png')
     assert.equal(record?.enabled, true)
     assert.equal(record?.showOnLogin, true)
-    assert.equal(record?.autoCreateUser, true)
+    assert.equal('autoCreateUser' in record, false)
     assert.equal(record?.usernamePrefix, 'external-')
     assert.deepEqual(record?.roleIdList, ['role-1'])
     assert.deepEqual(record?.orgIdList, ['org-1'])
@@ -140,7 +141,6 @@ test('builds existing application payloads without prototype-only fields', () =>
     appId: 'wx-id',
     secret: 'wx-secret',
     showOnLogin: true,
-    autoCreateUser: true,
     usernamePrefix: 'wechat-',
     roleIdList: ['role-1'],
     orgIdList: ['org-1'],
@@ -162,12 +162,11 @@ test('builds existing application payloads without prototype-only fields', () =>
     appKey: 'ding-key',
     secret: 'ding-secret',
     showOnLogin: false,
-    autoCreateUser: false,
   })
   assert.equal(dingTalk.provider, 'dingtalk-ent-app')
   assert.equal(dingTalk.sso.configuration.appKey, 'ding-key')
   assert.equal(dingTalk.sso.configuration.appSecret, 'ding-secret')
-  assert.equal(dingTalk.sso.autoCreateUser, false)
+  assert.equal(dingTalk.sso.autoCreateUser, true)
   assert.deepEqual(dingTalk.integrationModes, [])
 
   const oauth2 = toApplicationPayload({
@@ -199,7 +198,7 @@ test('builds existing application payloads without prototype-only fields', () =>
   }
 })
 
-test('updates auto-create without replacing existing user provisioning settings', () => {
+test('always enables auto-create without replacing existing user provisioning settings', () => {
   const current = {
     id: 'oauth-app',
     name: 'OAuth2 登录',
@@ -223,7 +222,6 @@ test('updates auto-create without replacing existing user provisioning settings'
     clientId: 'client-id',
     secret: 'client-secret',
     userIdField: 'id',
-    autoCreateUser: true,
     usernamePrefix: 'gitee-',
     roleIdList: ['role-2'],
     orgIdList: ['org-2'],
@@ -243,4 +241,9 @@ test('updates auto-create without replacing existing user provisioning settings'
   assert.equal('usernamePrefix' in cleared.sso, false)
   assert.deepEqual(cleared.sso.roleIdList, [])
   assert.deepEqual(cleared.sso.orgIdList, [])
+})
+
+test('does not expose auto-create as a configurable drawer option', () => {
+  const drawer = readFileSync(new URL('../views/system/ThirdPartyLogin/components/ConfigDrawer.vue', import.meta.url), 'utf8')
+  assert.doesNotMatch(drawer, /draft\.autoCreateUser|ThirdPartyLogin\.autoCreateUser/)
 })

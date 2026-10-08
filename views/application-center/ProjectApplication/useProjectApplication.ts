@@ -66,12 +66,12 @@ const ensureDetail = (applicationId: string) => {
 
 const rememberApplications = (entities: BusinessApplicationEntity[]) => {
   entities.forEach(entity => applicationEntities.set(entity.id, entity))
-  return entities.map(normalizeApplication)
+  return entities.map(entity => normalizeApplication(entity, templates.find(item => item.id === entity.templateId)))
 }
 
 const upsertApplication = (entity: BusinessApplicationEntity) => {
   applicationEntities.set(entity.id, entity)
-  const application = normalizeApplication(entity)
+  const application = normalizeApplication(entity, templates.find(item => item.id === entity.templateId))
   const index = applications.findIndex(item => item.id === application.id)
   if (index < 0) applications.unshift(application)
   else applications.splice(index, 1, application)
@@ -102,6 +102,11 @@ export const useProjectApplication = () => {
       .map(normalizeTemplate)
       .sort((left, right) => left.sortIndex - right.sortIndex)
     replace(templates, values)
+    // 模板与应用并行加载时，模板完成后补齐现有列表的实现类型。
+    replace(applications, applications.map(application => {
+      const entity = applicationEntities.get(application.id)
+      return entity ? normalizeApplication(entity, values.find(item => item.id === entity.templateId)) : application
+    }))
     return templates
   }
 

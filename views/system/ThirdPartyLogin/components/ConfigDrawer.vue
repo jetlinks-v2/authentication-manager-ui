@@ -53,15 +53,7 @@
         <a-switch v-model:checked="draft.showOnLogin" />
         <span>{{ $t('ThirdPartyLogin.showOnLogin') }}</span>
       </div>
-      <div class="login-entry-switch login-entry-switch--detail">
-        <a-switch v-model:checked="draft.autoCreateUser" />
-        <div>
-          <div>{{ $t('ThirdPartyLogin.autoCreateUser') }}</div>
-          <div class="form-help">{{ $t('ThirdPartyLogin.autoCreateUserHint') }}</div>
-        </div>
-      </div>
       <a-form-item
-        v-if="draft.autoCreateUser"
         :label="$t('ThirdPartyLogin.usernamePrefix')"
         name="usernamePrefix"
         :rules="usernamePrefixRules"
@@ -74,7 +66,6 @@
         <div class="form-help">{{ $t('ThirdPartyLogin.usernamePrefixHint') }}</div>
       </a-form-item>
       <a-form-item
-        v-if="draft.autoCreateUser"
         :label="$t('ThirdPartyLogin.defaultRole')"
         name="roleIdList"
         :rules="roleRules"
@@ -86,7 +77,6 @@
         />
       </a-form-item>
       <a-form-item
-        v-if="draft.autoCreateUser"
         :label="$t('ThirdPartyLogin.organization')"
         name="orgIdList"
       >
@@ -290,9 +280,6 @@ async function submit() {
 .icon-preview--oauth2 { background: #f4f0ff; }
 .form-help { color: var(--ink-4); font-size: var(--fs-12); margin-top: var(--space-1); }
 .login-entry-switch { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4); }
-.login-entry-switch--detail { align-items: flex-start; }
-.login-entry-switch--detail :deep(.ant-switch) { flex: none; margin-top: 0.125rem; }
-.login-entry-switch--detail .form-help { margin-top: var(--space-1); }
 .callback-field { margin-bottom: 0; }
 .callback-row {
   display: flex;

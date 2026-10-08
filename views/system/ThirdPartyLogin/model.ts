@@ -25,7 +25,6 @@ export interface LoginConfigDraft {
   scope: string
   userIdField: string
   showOnLogin: boolean
-  autoCreateUser: boolean
   usernamePrefix: string
   roleIdList: string[]
   orgIdList: string[]
@@ -52,7 +51,6 @@ export function createDraft(method: LoginMethod): LoginConfigDraft {
     scope: '',
     userIdField: '',
     showOnLogin: true,
-    autoCreateUser: false,
     usernamePrefix: '',
     roleIdList: [],
     orgIdList: [],
@@ -139,7 +137,6 @@ export function fromApplication(
     userIdField: oauth2.userProperty?.userId || '',
     showOnLogin: (application.integrationModes || [])
       .some(mode => enumValue(mode) === 'ssoClient'),
-    autoCreateUser: application.sso?.autoCreateUser ?? false,
     usernamePrefix: application.sso?.usernamePrefix || '',
     roleIdList: [...(application.sso?.roleIdList || [])],
     orgIdList: [...(application.sso?.orgIdList || [])],
@@ -204,7 +201,7 @@ export function toApplicationPayload(
   const sso = {
     ...currentSso,
     configuration,
-    autoCreateUser: draft.autoCreateUser,
+    autoCreateUser: true,
     roleIdList: [...draft.roleIdList],
     orgIdList: [...draft.orgIdList],
   }

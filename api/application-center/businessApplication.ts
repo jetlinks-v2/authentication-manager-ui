@@ -26,8 +26,7 @@ export interface BusinessApplicationConfiguration {
   timezone?: string
   layoutVariant?: BasicLayoutVariant
   layout?: string
-  openMode?: 'runtime' | 'external'
-  externalUrl?: string
+  redirectUri?: string
   [key: string]: unknown
 }
 
@@ -47,6 +46,7 @@ export interface BusinessApplicationTemplateEntity {
   id: string
   name: string
   code: string
+  provider?: string
   icon?: string
   description?: string
   i18nName?: string
@@ -193,10 +193,10 @@ export const getCurrentUserAuthorization = () =>
 export const getBusinessApplication = (id: string) =>
   apiRequest.get<BusinessApplicationEntity>(`/business-application/${id}`)
 
-export const getBusinessApplicationExternalUrl = (id: string) =>
-  apiRequest.post<{ url: string }>(
-    `/business-application/${encodeURIComponent(id)}/external-url`,
-    undefined,
+/** 获取模板定义的第三方跳转地址，不使用应用实例打开配置。 */
+export const getBusinessApplicationRedirect = (id: string) =>
+  apiRequest.get<{ location: string }>(
+    `/business-application/${encodeURIComponent(id)}/_redirect`,
     { applicationScope: false },
   )
 
