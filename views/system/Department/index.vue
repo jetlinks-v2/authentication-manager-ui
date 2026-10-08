@@ -21,8 +21,9 @@
 					      :key="tab.key"
 					      :tab="$t(tab.label)"
 				      >
+					      <!-- 职位页签已屏蔽，保留原组件与交互。 -->
 					      <Position
-						      v-if="tab.key === 'position'"
+						      v-if="false && tab.key === 'position'"
 						      :parentId="departmentId"
 						      @changeTabs="onChangeTabs"
 					      />
@@ -74,12 +75,13 @@ const baseTabs = shallowRef<DepartmentTabOption[]>([
     label: 'Department.index.945805-4',
   },
 ])
-const { mergedOptions: departmentTabs } = useRegistryOptions<DepartmentTabOption>({
+const { mergedOptions } = useRegistryOptions<DepartmentTabOption>({
   baseOptions: baseTabs,
   code: 'department-tabs',
 })
+const departmentTabs = computed(() => mergedOptions.value.filter(tab => tab.key !== 'position'))
 
-const activeKey = ref<DepartmentTabKey | undefined>('position')
+const activeKey = ref<DepartmentTabKey | undefined>('user')
 const departmentId = ref('')
 const positionId = ref<string>()
 

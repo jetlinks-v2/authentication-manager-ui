@@ -106,7 +106,7 @@ Access logs can be filtered by login username in `views/system/Log/Access/index.
 
 ## Project Owner Role Editing Guard
 
-The system user edit dialog keeps profile fields editable for project owners while disabling the role selector when the stable runtime user type is `projectOwner`. The guard accepts the user-list `typeId` and the detail response enum object so list and detail response shapes behave consistently. It reuses the existing `FormItemRole` disabled contract, which also hides the add-role action and prevents tag removal. Scope is limited to `views/system/User/components/EditUserDialog.vue`; user APIs, backend authorization, other user types, organizations, positions, and password operations remain unchanged. The module production build (`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`) and `git diff --check` pass. The touched Vue file remains over the preferred 300-line limit because this is a narrow fix in an existing 491-line component; no structural refactor is included.
+The system user edit dialog keeps profile fields editable for project owners while disabling the role selector when the stable runtime user type is `projectOwner`. The guard accepts the user-list `typeId` and the detail response enum object so list and detail response shapes behave consistently. It reuses the existing `FormItemRole` disabled contract, which also hides the add-role action and prevents tag removal. This guard still applies after the later position-entry change described below. The module production build (`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`) and `git diff --check` passed for the original guard change.
 
 ## System Two-column Layout Unification
 
@@ -132,39 +132,61 @@ Verification: all touched Vue SFC script/template blocks compile, the seven page
 
 ## Department Tab Extensions
 
-The Department page uses the shared `EqualHeightColumns` shell for its organization tree and content area, and lazy-loads its Position, User, and Property tab content. Other UI modules can control the built-in Position and Property tabs through `getRegisterComponents`: register a `hide` action against `system/Department:department-tabs` with target `position` or `property`; omit that action to keep the tab visible.
+The Department page uses the shared `EqualHeightColumns` shell for its organization tree and content area, and lazy-loads its User and Property tab content. The Position tab is hidden by the page itself. Other UI modules can control the Property tab through `getRegisterComponents`: register a `hide` action against `system/Department:department-tabs` with target `property`; omit that action to keep the tab visible.
 
 ```ts
 const getRegisterComponents = () => [
   {
     targetPage: 'system/Department',
     targetModule: 'department-tabs',
-    target: 'position', // Use "property" for the Property tab.
+    target: 'property',
     mode: 'hide',
-    code: 'hide-department-position',
+    code: 'hide-department-property',
   },
 ]
 ```
 
-`getRegisterComponents` is evaluated during application startup. To show the tab, conditionally omit its `hide` action; runtime changes after startup require reloading the application registry.
+`getRegisterComponents` is evaluated during application startup. To show the Property tab, conditionally omit its `hide` action; runtime changes after startup require reloading the application registry. Position entries contributed by the registry are filtered from this page.
 
 Scope is limited to `views/system/Department/index.vue` and the existing shared layout and component registry contracts. It does not change Department APIs, permissions, routes, or the community-edition User-only fallback. Verification covers the two-column slot mapping, lazy component loading, registry-driven tab filtering, active-tab fallback, and the touched Vue file line count.
 
 Verification: the edited Department SFC passes a local script/template syntax compilation and remains below 300 lines. Build and TypeScript checks were not run for the layout follow-up by request.
 
-## Department User Position Empty-State Filter
+## 组织与用户页面职位内容屏蔽计划
 
-The Organization Management User tab maps the Position condition to the backend `UserDimensionTerm` contract in `views/system/Department/user/index.vue`:
+状态：已按“不删除代码，只做代码屏蔽”保留原实现，并完成可执行验证。
 
-- `为空` (`isnull`) uses `id$in-dimension$position$not$any`, generating `NOT EXISTS` for a Position-dimension binding.
-- `不为空` (`notnull`) uses `id$in-dimension$position$any`, generating `EXISTS` for a Position-dimension binding.
-- Exact and multi-value matching retain `id$in-dimension$position`; `not` and `nin` retain the `$not` relation variant for selected-position exclusion.
+目标：组织管理与用户管理菜单页面不再展示职位相关页签、字段、表格列和筛选项；组织管理右侧用户表改为展示及筛选角色；用户管理新增用户时不再出现“蓝色标签由职位关联不可编辑”的提示或相应的角色禁用规则。
 
-`ConditionFilter` supplies the required non-empty placeholder for null-state terms; the `$any` query extension deliberately ignores that value. Scope is limited to the runtime UI adapter and does not change the user API, data model, permissions, routes, or other Department tabs.
+影响范围与 owning module：仅 `runtime-ui/modules/authentication-manager-ui` 的 `views/system/Department/index.vue`、`views/system/Department/user/index.vue`、`views/system/Department/util.ts`、`views/system/User/index.vue`、`views/system/User/components/EditUserDialog.vue`、组织页复用的 `views/system/Department/positions/Detail/AddUserDialog.vue` 及本文档。独立的职位管理菜单、职位详情、后端接口与职位绑定数据不在本次修改范围内；不改 `ui/` 或其他运行时模块。
+
+实施步骤：
+
+1. 保留组织管理页的职位组件、页签配置和筛选传递代码，通过条件或注释屏蔽职位入口，默认选中用户页签。
+2. 将组织右侧用户表的职位列与职位条件替换为角色列与角色条件，沿用用户详情中的 `roleList` 和现有角色查询接口；保留当前组织用户查询的成员范围，避免隐藏职位入口时改变已有用户是否出现在表格中。
+3. 用户管理表格的职位列及筛选通过注释屏蔽并保留原实现；两个菜单页面的新增用户弹窗隐藏职位选择，其中职位详情自己的新增用户入口仍保留职位选择。
+4. 用户管理弹窗保留职位输入、联动函数、查询和关联提示的原实现，以注释屏蔽职位联动导致的角色禁用和蓝色标签提示。编辑已有用户时仍回传原有职位 ID，避免后端全量绑定逻辑把隐藏的职位关系清空；角色选择继续遵守管理员、项目所有者等既有只读限制。
+5. 同步更新本节、组织页签扩展和用户页签筛选说明；保留的职位子页代码不再通过组织管理页签进入。
+
+风险 / 待确认：后端开启职位自动关联角色时，用户从角色选择中移除的职位继承角色仍可能因保留原职位绑定而再次出现；本次仅取消前端“不可编辑”规则，不调整后端授权模型。角色列以用户详情返回的角色为准。
+
+实现入口：`Department/index.vue` 屏蔽职位页签并默认选中用户；`Department/util.ts` 与 `Department/user/index.vue` 使用 `roleList` 列及 `id$in-dimension$role` 筛选，原职位列和筛选代码保留并注释；`User/index.vue` 注释屏蔽职位列及筛选分支；`User/components/EditUserDialog.vue` 注释屏蔽职位输入和职位联动的禁用、提示、查询，但编辑时继续提交详情中的职位 ID；组织页复用的 `Department/positions/Detail/AddUserDialog.vue` 只在职位详情入口展示职位选择和关联提示。
+
+验证结果：上一轮本地 `http://localhost:9200/#/system/ou/department` 只显示用户页签，用户表显示角色列及角色筛选，筛选候选项可正常加载；该页新增弹窗没有职位字段或职位关联提示。`http://localhost:9200/#/system/ou/user` 的表格及筛选没有职位项，新增弹窗没有职位字段或蓝色标签提示。本次改为注释或条件屏蔽后，复核原职位列、表单、联动函数、查询和路由处理仍保留，页面屏蔽逻辑继续有效；模块生产构建通过（10,832 个模块，35.74 秒），`git diff --check` 通过。构建仍有既有的 Rollup output option、CSS 注释和大包提示。模块没有 lint 脚本；`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 仍因工作区的 612 项现有诊断退出，目标文件诊断已按原代码位置复核。页面验证只打开、关闭弹窗，未提交用户数据；编辑时保留职位 ID 与职位详情弹窗保留职位选择通过代码路径检查，仍需在有相应测试数据时做提交回归。
+
+## Department User Role Filter
+
+The Organization Management User tab maps the Role condition to the backend `UserDimensionTerm` contract in `views/system/Department/user/index.vue`:
+
+- `为空` (`isnull`) uses `id$in-dimension$role$not$any`, generating `NOT EXISTS` for a Role-dimension binding.
+- `不为空` (`notnull`) uses `id$in-dimension$role$any`, generating `EXISTS` for a Role-dimension binding.
+- Exact and multi-value matching use `id$in-dimension$role`; `not` and `nin` use the `$not` relation variant for selected-role exclusion.
+
+`ConditionFilter` supplies the required non-empty placeholder for null-state terms; the `$any` query extension deliberately ignores that value. The user table retains the existing organization membership query, including users associated through a Position. Scope is limited to the runtime UI adapter and does not change the user API, data model or backend binding rules.
 
 ## Department Position Role Filter
 
-The Department Position tab keeps selected-role filtering on the existing `id$position-role$position` contract. For `为空` and `不为空`, the runtime UI removes only the role-null condition from the request, loads all position details for the selected organization, filters their returned `roles` arrays, and restores normal pagination. The user API, role model, position API, and other position pages remain unchanged.
+The retained Department Position subpage code keeps selected-role filtering on the existing `id$position-role$position` contract, although Organization Management no longer displays its Position tab. For `为空` and `不为空`, the runtime UI removes only the role-null condition from the request, loads all position details for the selected organization, filters their returned `roles` arrays, and restores normal pagination. The user API, role model, position API, and other position pages remain unchanged.
 
 ## Department Position Parent Filter Label
 

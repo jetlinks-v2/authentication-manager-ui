@@ -1,8 +1,9 @@
 import { TreeType } from "./typings"
 import i18n from "@jetlinks-web-core/locales"
-import { queryPageNoPage } from '@authentication-manager-ui/api/system/positions'
-import {getUserList_api} from "@authentication-manager-ui/api/system/user";
-import { isNoCommunity } from "@jetlinks-web-core/utils/utils";
+// 职位列已屏蔽，保留原查询依赖。
+// import { queryPageNoPage } from '@authentication-manager-ui/api/system/positions'
+import {getUserList_api, queryRole_api} from "@authentication-manager-ui/api/system/user";
+// import { isNoCommunity } from "@jetlinks-web-core/utils/utils";
 
 export const ArrayToTree = (list: any[]): any[] => {
     const treeList: any[] = []
@@ -92,6 +93,27 @@ export const useColumns = (departmentId: string) => {
           },
       },
       {
+          title: i18n.global.t('User.index.673867-13'),
+          dataIndex: 'roleList',
+          key: 'roleList',
+          ellipsis: true,
+          scopedSlots: true,
+          search: {
+              type: 'select',
+              options() {
+                  return queryRole_api({
+                      paging: false,
+                      sorts: [
+                          {name: 'createTime', order: 'desc'},
+                          {name: 'id', order: 'desc'},
+                      ],
+                  }).then(resp => resp.success
+                      ? resp.result.map((item: {id: string; name: string}) => ({label: item.name, value: item.id}))
+                      : [])
+              },
+          },
+      },
+      {
           title: i18n.global.t('Department.util.780026-4'),
           dataIndex: 'status',
           key: 'status',
@@ -119,6 +141,7 @@ export const useColumns = (departmentId: string) => {
           width: 100
       },
     ]
+    /* 职位列及筛选已屏蔽，保留原实现。
     if(isNoCommunity) {
       arr.splice(2,0,{
         title: i18n.global.t('Department.util.780026-9'),
@@ -146,6 +169,7 @@ export const useColumns = (departmentId: string) => {
         },
       })
     }
+    */
     return arr
 }
 

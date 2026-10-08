@@ -88,6 +88,7 @@
               <j-ellipsis>{{ slotProps.username }}</j-ellipsis>
             </span>
           </template>
+          <!-- 职位列已屏蔽，保留原渲染。
           <template #positions="slotProps">
             <j-ellipsis>
               {{
@@ -97,6 +98,7 @@
               }}
             </j-ellipsis>
           </template>
+          -->
           <template #status="slotProps">
             <j-badge-status
                 :status="slotProps.status"
@@ -206,9 +208,10 @@ import {
 } from '@authentication-manager-ui/api/system/user';
 import {downloadFileByUrl, onlyMessage} from '@jetlinks-web/utils';
 import {useI18n} from 'vue-i18n';
-import i18n from "@jetlinks-web-core/locales";
-import {queryPageNoPage} from "@authentication-manager-ui/api/system/positions";
-import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
+// 职位列已屏蔽，保留原查询依赖。
+// import i18n from "@jetlinks-web-core/locales";
+// import {queryPageNoPage} from "@authentication-manager-ui/api/system/positions";
+// import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
 import type {ConditionFilterChangePayload} from '@jetlinks-web-core/components/ConditionFilter';
 import {transformConditionTerms} from '@authentication-manager-ui/views/system/conditionFilterUtils';
 
@@ -331,6 +334,7 @@ const columns = [
   },
 ];
 
+/* 职位列及筛选已屏蔽，保留原配置。
 if (isNoCommunity) {
   columns.splice(4, 0, {
     title: i18n.global.t('Department.util.780026-9'),
@@ -359,6 +363,7 @@ if (isNoCommunity) {
     scopedSlots: true,
   } as any)
 }
+*/
 const queryParams = ref({});
 
 const tableRef = ref<Record<string, any>>({}); // 表格实例
@@ -440,7 +445,7 @@ const handleParams = ({filter}: ConditionFilterChangePayload) => {
         };
       }
 
-      if (term.column === 'roleList' || term.column === 'positions') {
+      if (term.column === 'roleList' /* || term.column === 'positions' */) {
         // 角色和职位通过关联列查询，排除条件由列名的 $not 后缀表达。
         const {termType, ...rest} = term;
         const relation = term.column === 'roleList' ? 'role' : 'position';
