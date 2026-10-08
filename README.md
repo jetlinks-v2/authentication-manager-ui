@@ -174,6 +174,8 @@ Verification: the edited Department SFC passes a local script/template syntax co
 
 验证结果：上一轮本地 `http://localhost:9200/#/system/ou/department` 只显示用户页签，用户表显示角色列及角色筛选，筛选候选项可正常加载；该页新增弹窗没有职位字段或职位关联提示。`http://localhost:9200/#/system/ou/user` 的表格及筛选没有职位项，新增弹窗没有职位字段或蓝色标签提示。本次改为注释或条件屏蔽后，复核原职位列、表单、联动函数、查询和路由处理仍保留，页面屏蔽逻辑继续有效；模块生产构建通过（10,832 个模块，35.74 秒），`git diff --check` 通过。构建仍有既有的 Rollup output option、CSS 注释和大包提示。模块没有 lint 脚本；`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 仍因工作区的 612 项现有诊断退出，目标文件诊断已按原代码位置复核。页面验证只打开、关闭弹窗，未提交用户数据；编辑时保留职位 ID 与职位详情弹窗保留职位选择通过代码路径检查，仍需在有相应测试数据时做提交回归。
 
+交付入口：实现提交 `99303a2`；[PR #102](https://github.com/jetlinks-v2/authentication-manager-ui/pull/102) 从 `codex/2.12-uat-next-hide-position` 申请合入 `2.12-uat-next`。
+
 ## Department User Role Filter
 
 The Organization Management User tab maps the Role condition to the backend `UserDimensionTerm` contract in `views/system/Department/user/index.vue`:
