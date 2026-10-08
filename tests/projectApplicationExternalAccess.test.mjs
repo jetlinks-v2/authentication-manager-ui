@@ -124,6 +124,13 @@ test('opens the template redirect location after membership validation', async (
   assert.deepEqual(calls[3], ['navigate', 'https://training.example/ui/?page=dashboard#home'])
 })
 
+test('opens backend-generated third-party parameters and fragment without rewriting the location', async () => {
+  const location = 'https://training.example/ui/?page=dashboard&test_key=abc%40123&test_user_id=user%2F001&test_username=%E8%80%81%E5%91%A8%20%26%20dev%2Bops#home'
+  const { calls, guard } = createFixture({ redirect: async () => ({ result: { location } }) })
+  assert.equal(await guard.openApplication(application), true)
+  assert.deepEqual(calls.at(-1), ['navigate', location])
+})
+
 test('closes the reserved window when redirect loading fails', async () => {
   const { calls, guard } = createFixture({ redirect: async () => { throw new Error('unauthorized') } })
   await assert.rejects(guard.openApplication(application), /unauthorized/)
