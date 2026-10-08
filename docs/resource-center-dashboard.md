@@ -20,6 +20,10 @@
 
 ## 正式页面入口
 
+横向溢出处理：`views/resources/Dashboard/index.vue` 的 `.dashboard-grid` 设置 `overflow-x: clip`、`overflow-y: visible`，在画布边界裁切公共网格用于对齐卡片的负边距区域，由页面外层继续处理纵向滚动。
+
+验证：现有 `localhost:9200/p_hw2nx5/#/resources/dashboard` 页面热更新后，2560px 视口下 `documentElement.clientWidth` 与 `scrollWidth` 均为 2560px，网格计算样式为 `clip / visible`，无临时行内样式。实际通过卡片顶部手柄拖动设备分布到右栏、通过右下角手柄调整大小，内容超出视口时可纵向滚动完整查看，未出现横向滚动条；测试后已恢复并核对原始布局缓存。Vue SFC 与 CSS 语法解析、`git diff --check` 通过，页面共 82 行。窄视口窗口缩放尚未覆盖；本次仅修改局部 CSS，按性能约束未运行全量 lint、typecheck 或 build。开发环境热更新生效，生产环境需重新发布 runtime-ui，无后端重启要求。
+
 画布卡片横向、纵向间距均通过 `canvas.gridLayout.marginHorizontal/marginVertical` 设置为 18px，与概览页一致；复用底座公开配置，不修改公共默认值。浏览器实测资源中心与概览页的横向、纵向卡片边界间距均为 18px，diff 空白检查通过；本次仅调整布局配置，未运行构建或完整类型检查。
 
 接入现有菜单 `resources/Dashboard`、路径 `/resources/dashboard`。页面位于 `views/resources/Dashboard/index.vue`，由模块已有 `getModuleRoutesMap` 自动发现，不增加兼容路由或修改已下发菜单。页面交互使用 `editable=false`、`layoutEditable=true`、`storageKey=resource-center-dashboard`：允许调整已有组件的位置和大小，布局保存在当前浏览器 localStorage，不显示画布设置、组件编辑、添加或删除入口。保留组件自身的时间/类型筛选、重试和快捷跳转，继续遵守 SaaS/私有化可见规则。外层页面负责滚动，画布不增加内层滚动条。

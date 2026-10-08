@@ -73,5 +73,10 @@ const { catalog, dashboard, loading, errors, reload } = useResourceDashboard(ref
   overflow: visible;
 }
 .resource-dashboard :deep(.dashboard-card-content) { scrollbar-gutter: auto; }
-.resource-dashboard :deep(.dashboard-grid) { min-height: 0; }
+.resource-dashboard :deep(.dashboard-grid) {
+  min-height: 0;
+  /* 网格负边距用于卡片对齐，横向越界在画布边界裁切，纵向由外层页面滚动。 */
+  overflow-x: clip;
+  overflow-y: visible;
+}
 </style>
