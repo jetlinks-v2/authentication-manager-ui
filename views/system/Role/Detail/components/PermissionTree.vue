@@ -62,7 +62,8 @@ const buildFullGrantTree = (
 
   menu.granted = !!source.granted
   menu.buttons = (source.buttons || []).map(button => ({ ...button, granted: !!button.granted }))
-  menu.assetAccesses = grantedMenu?.assetAccesses || source.assetAccesses
+  // 未授权节点仅用于声明 owner 删除范围，不能携带历史数据权限触发越权校验。
+  menu.assetAccesses = menu.granted ? grantedMenu?.assetAccesses || [] : []
   menu.children = source.children?.length
     ? buildFullGrantTree(source.children, grantedMenus)
     : null
