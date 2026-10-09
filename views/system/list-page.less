@@ -8,7 +8,8 @@
 
 .authentication-system-list-page__filter {
   width: min(34rem, 46vw);
-  min-width: 20rem;
+  max-width: min(34rem, 46vw);
+  min-width: 0;
 }
 
 .authentication-system-list-page__header .cloud-page-header__actions {
@@ -19,6 +20,30 @@
   flex: none;
 }
 
+.jtable-body-header:has(.authentication-system-list-page__filter) {
+  .jtable-body-header-left {
+    flex: none;
+  }
+
+  .jtable-body-header-right {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: flex-end;
+
+    > .ant-flex {
+      flex: 1 1 0;
+      min-width: 0;
+      justify-content: flex-end;
+    }
+  }
+
+  .authentication-system-list-page__filter {
+    flex: 0 1 auto;
+    width: max-content;
+    max-width: 100%;
+  }
+}
+
 @media (max-width: 73.75rem) {
   .authentication-system-list-page__header .cloud-page-header__actions {
     width: 100%;
@@ -26,9 +51,10 @@
     flex-wrap: wrap;
   }
 
-  .authentication-system-list-page__filter {
+  .authentication-system-list-page__header .authentication-system-list-page__filter {
     flex: 1 1 20rem;
     width: auto;
+    max-width: 100%;
     min-width: 0;
   }
 }
