@@ -56,6 +56,8 @@ export interface ApiGroup {
 
 export interface ApiSpec {
   id: string
+  permissionId?: string
+  actions?: string[]
   method?: string
   path?: string
   summary?: string

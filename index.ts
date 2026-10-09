@@ -86,6 +86,22 @@ const getExtraRoutesMap = () => {
         name: i18n.global.t('ProjectApplication.route.detail')
       }
     ],
+    'application-center/ThirdPartyApplication': [
+      {
+        code: 'Detail',
+        url: '/Detail/:id',
+        name: i18n.global.t('ThirdPartyApplication.detail'),
+        component: () => import('./views/application-center/ThirdPartyApplication/Detail/index.vue')
+      }
+    ],
+    'application-center/ApiGroup': [
+      {
+        code: 'Save',
+        url: '/Save',
+        name: i18n.global.t('ApiGroupManagement.route.save'),
+        component: () => import('./views/application-center/ApiGroup/Save/index.vue')
+      }
+    ],
     'application-center/Template': [
       {
         code: 'Save',
