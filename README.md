@@ -564,3 +564,15 @@ Verification result:
 ## 资源中心仪表盘组件
 
 `visDashboard/ResourceCenter` 提供九个单风格组件，通过新的 `DashBoardCanvas` 自动发现与组装；目录、默认业务配置、真实接口口径及临时浏览器注入方式见 [资源中心仪表盘说明](docs/resource-center-dashboard.md)。正式入口为 `/resources/dashboard`，页面落在 `views/resources/Dashboard/index.vue`，绑定现有菜单 `resources/Dashboard`；允许拖拽和缩放已有组件，仍不允许编辑、添加或删除组件，布局以 `resource-center-dashboard` 为 key 保存在浏览器 localStorage，保留筛选和快捷跳转。本组不修改项目概览六组件，不接入旧 dashboard，不新增菜单。数据采集和物联网卡仅私有化运行时展示。
+
+## 日志查询与详情
+
+`views/system/Log/useLogQuery.ts` 为访问日志和系统日志初始化浏览器本地今日范围，按 `timestamp btw` 查询、`timestamp desc` 排序。清空筛选恢复今日；链路 ID 使用 `traceId`，默认精确匹配。系统日志显示 `timestamp`，历史数据缺失时回退 `createTime`。
+
+访问日志以“来源 / 请求 / 动作”三列展示 HTTP 方法、路径、状态码、请求时间、耗时、用户和调用位置。多来源 IP 仅展示第一个非空地址，悬停显示完整值；HTTP `httpMethod` 与 Java `method` 明确区分。系统日志以“时间 / 日志内容 / 来源”展示毫秒时间、日志级别、消息、异常摘要、服务及代码位置；服务名仅展示，Logger、级别、消息、类/方法、线程和异常可筛选。
+
+两类日志使用统一表格、`ConditionFilter` 和 `JlDrawerShell`。点击行打开右侧无遮罩抽屉，点击其他行更新详情，行外点击或 Escape 关闭；拖选文本与快捷操作不触发查看。详情使用统一折叠面板、字段表和 `CodeBlock`，异常栈保留原始换行并支持横向滚动。访问详情优先展示常用请求头，可展开全部；参数支持结构化与原始视图。
+
+URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显示。抽屉用户名与 Trace ID 提供同值搜索；快捷搜索追加条件，仅对完全重复的条件去重，保留日期、其他条件及嵌套条件组。用户名仍转换为 `context` 的 `json_value` 条件。默认条件首次回传与查询调度由共享 `ConditionFilter` 负责。`api/log.ts` 接收表格可选 `{ signal }` 并传给共享请求层，加载范围和请求取消由共享组件统一实现。
+
+实现入口：`views/system/Log/Access/`、`System/`、`components/`、`logFilter.ts`、`logPresentation.ts`、`useLogInspector.ts`、`useLogDetailState.ts`；回归入口为 `tests/accessLogPresentation.test.mjs` 和 `tests/systemLogPresentation.test.mjs`。
