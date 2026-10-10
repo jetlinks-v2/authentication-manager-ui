@@ -40,7 +40,7 @@ export const useDirectApplications = () => {
       await createDirectApplication(form)
       if (disposed) return false
       createOpen.value = false
-      onlyMessage(t('ApiApplication.message.created'))
+      onlyMessage(t('ThirdPartyApplication.created'))
       return true
     } catch (cause) { if (!disposed) createError.value = applicationError(cause, t); return false }
     finally { if (!disposed) saving.value = false }

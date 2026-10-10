@@ -2119,13 +2119,13 @@
       },
       {
         "code": "application-center/ThirdPartyApplication",
-        "name": "第三方应用",
+        "name": "开放平台",
         "owner": "iot",
         "i18nMessages": {
           "name": {
-            "zh_CN": "第三方应用",
-            "en_US": "Third-party applications",
-            "en": "Third-party applications"
+            "zh_CN": "开放平台",
+            "en_US": "Open Platform",
+            "en": "Open Platform"
           }
         },
         "id": "72e0c36789d44b0baac063cc70b42d18",

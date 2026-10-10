@@ -7,11 +7,11 @@
       </div>
       <ConditionFilter :columns="filterColumns" target="third-party-direct" @change="search" />
       <a-alert v-if="error" type="error" show-icon :message="error" class="page-alert" />
-      <j-pro-table ref="tableRef" mode="TABLE" :columns="columns" :request="query" :params="filters" :scroll="{ x: 800 }">
-        <template #name="row"><a-button type="link" @click="openDetail(row)">{{ row.name }}</a-button></template>
+      <j-pro-table class="pro-table__no-padding" ref="tableRef" mode="TABLE" :columns="columns" :request="query" :params="filters" :scroll="{ x: 800 }">
+        <template #name="row"><a-button class="table-link" type="link" @click="openDetail(row)">{{ row.name }}</a-button></template>
         <template #state="row"><a-badge :status="apiState(row) === 'enabled' ? 'success' : 'default'" :text="$t('ApiApplication.status.' + apiState(row))" /></template>
         <template #createTime="row">{{ formatTime(row.createTime) }}</template>
-        <template #action="row"><a-button type="link" @click="openDetail(row)">{{ $t('ThirdPartyApplication.detail') }}</a-button></template>
+        <template #action="row"><a-button class="table-link" type="link" @click="openDetail(row)">{{ $t('ThirdPartyApplication.detail') }}</a-button></template>
       </j-pro-table>
     </div>
     <a-modal v-model:open="createOpen" :title="$t('ThirdPartyApplication.direct.create')" :confirm-loading="saving"
@@ -54,8 +54,9 @@ const search = ({ filter }: ConditionFilterChangePayload) => { filters.value = {
 const save = async () => { if (await create()) tableRef.value?.reload() }
 </script>
 <style scoped>
-.direct-page { padding: var(--space-4); min-height: 100%; background: var(--bg); }
+.direct-page { box-sizing: border-box; min-width: 0; padding: var(--space-4); min-height: 100%; background: var(--bg); }
 .page-head { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 16px; align-items: center; }
 h1 { margin: 0; font-size: var(--fs-20); }p { color: var(--ink-4); margin: 4px 0 0; }.page-alert { margin: 16px 0; }
+.table-link { padding-inline: 0; }
 @media(max-width: 720px) { .page-head { flex-direction: column; align-items: flex-start; } }
 </style>
