@@ -32,24 +32,12 @@
             <a-form-item :label="$t('ApiGroupManagement.description')">
               <a-textarea v-model:value="draft.description" :disabled="!editable" :auto-size="{ minRows: 2, maxRows: 4 }" />
             </a-form-item>
-            <a-row :gutter="24">
-              <a-col :xs="24" :md="12">
-                <a-form-item :label="$t('ApiGroupManagement.accessSupport')">
-                  <a-select v-model:value="draft.accessSupport" :options="accessOptions" :disabled="!editable" :placeholder="$t('ApiGroupManagement.accessPlaceholder')" />
-                  <div class="field-hint">{{ $t('ApiGroupManagement.accessHint') }}</div>
-                </a-form-item>
-              </a-col>
-              <a-col :xs="24" :md="12">
-                <a-form-item :label="$t('ApiGroupManagement.assetType')" :required="draft.accessSupport === 'support'">
-                  <a-select :value="draft.assetType" @update:value="setAssetType" :options="assetOptions" :disabled="!editable || !!assetError" allow-clear show-search option-filter-prop="label" :placeholder="$t('ApiGroupManagement.assetTypePlaceholder')" />
-                  <div class="field-hint">{{ $t('ApiGroupManagement.assetTypeHint') }}</div>
-                </a-form-item>
-              </a-col>
-            </a-row>
-            <a-alert v-if="assetError" type="warning" show-icon :message="assetError" class="page-alert" />
-            <a-alert v-else-if="assetMissing" type="warning" show-icon :message="$t('ApiGroupManagement.assetTypeMissing', { type: draft.assetType })" class="page-alert" />
-            <a-alert v-if="linkedAssetTypes.length > 1" type="warning" show-icon :message="$t('ApiGroupManagement.mixedAssetTypes', { types: linkedAssetTypes.join(', ') })" class="page-alert" />
-            <p v-else-if="linkedAssetTypes.length" class="field-hint">{{ $t('ApiGroupManagement.detectedAssetTypes', { types: linkedAssetTypes.join(', ') }) }}</p>
+            <div class="asset-summary">
+              <span>{{ $t('ApiGroupManagement.assetTypes') }}</span>
+              <a-space v-if="linkedAssetTypes.length" wrap><a-tag v-for="type in linkedAssetTypes" :key="type">{{ type }}</a-tag></a-space>
+              <span v-else class="field-hint">{{ $t('ApiGroupManagement.noLinkedAssets') }}</span>
+              <a-tooltip :title="$t('ApiGroupManagement.automaticAssetsHint')"><AIcon type="InfoCircleOutlined" /></a-tooltip>
+            </div>
           </a-card>
           <a-card :title="$t('ApiGroupManagement.operation.sectionTitle')" class="editor-section">
             <a-alert v-if="!canSelectSpecs" type="warning" show-icon :message="$t('ApiGroupManagement.noSpecQueryPermission')" class="page-alert" />
@@ -69,15 +57,16 @@ import { useApiGroupEditor } from '../useApiGroupEditor'
 import OperationsEditor from '../components/OperationsEditor.vue'
 import SpecPicker from '../components/SpecPicker.vue'
 const { t: $t } = useI18n()
-const { groupMenu, id, draft, loading, saving, ready, error, assetError, specError, canSave, editable, canSelectSpecs,
-  assetOptions, accessOptions, statusOptions, assetMissing, unavailable, linkedAssetTypes, specs, operationContext, picker,
-  addOperation, updateOperation, removeOperation, setAssetType, selectSpecs, closePicker, acceptSelection, save, back } = useApiGroupEditor()
+const { groupMenu, id, draft, loading, saving, ready, error, specError, canSave, editable, canSelectSpecs,
+  statusOptions, unavailable, linkedAssetTypes, specs, operationContext, picker,
+  addOperation, updateOperation, removeOperation, selectSpecs, closePicker, acceptSelection, save, back } = useApiGroupEditor()
 </script>
 <style scoped>
 .api-group-editor { padding: var(--space-4); min-height: 100%; background: var(--bg); }
 .page-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; }
 h1 { margin: 4px 0; font-size: var(--fs-20); }.back-button { padding-left: 0; }
 p, .group-id { margin: 4px 0 0; color: var(--ink-4); }.editor-section + .editor-section { margin-top: 20px; }
+.asset-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--ink-4); }
 .field-hint { margin-top: 4px; color: var(--ink-4); font-size: var(--fs-12); }.page-alert { margin-bottom: 16px; }
 @media(max-width: 720px) { .page-head { align-items: flex-start; } }
 </style>

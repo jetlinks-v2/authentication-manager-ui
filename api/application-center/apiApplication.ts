@@ -50,7 +50,7 @@ export interface ApiGroup {
   description?: string
   status?: string | EnumValue
   accessSupport?: string | EnumValue
-  assetType?: string
+  assetTypes: string[]
   operations?: ApiGroupOperation[]
 }
 
@@ -64,6 +64,7 @@ export interface ApiSpec {
   description?: string
   appId?: string
   operationId?: string
+  assetType?: string
 }
 
 export interface ApiGroupGrant {

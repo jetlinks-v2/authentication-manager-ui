@@ -13,16 +13,14 @@ export const copyOperations = (operations: ManagedApiOperation[] = []) => operat
   id: operation.id, name: operation.name, description: operation.description,
   apiSpecIds: [...(operation.apiSpecIds || [])], options: copyOptions(operation.options),
 }))
-export const newGroupDraft = (): ApiGroupWrite => ({ name: '', description: '', status: 'enabled', accessSupport: 'unsupported', assetType: null, operations: [] })
+export const newGroupDraft = (): ApiGroupWrite => ({ name: '', description: '', status: 'enabled', operations: [] })
 export const groupDraft = (group: ManagedApiGroup): ApiGroupWrite => ({
   name: group.name, description: group.description, status: groupValue(group.status)!,
-  accessSupport: groupValue(group.accessSupport) ?? null, assetType: group.assetType,
   operations: copyOperations(group.operations || []), options: copyOptions(group.options),
 })
 // 显式白名单：编辑保存不提交详情内 apiDetail、只读审计字段或接口文档。
 export const groupPayload = (draft: ApiGroupWrite, stableIds: ReadonlySet<string>): ApiGroupWrite => ({
   name: draft.name.trim(), description: draft.description, status: draft.status,
-  accessSupport: draft.accessSupport, assetType: draft.assetType,
   operations: copyOperations(draft.operations).map(operation => ({ ...operation, id: stableIds.has(operation.id) ? operation.id : operation.id.trim(), apiSpecIds: [...new Set(operation.apiSpecIds)] })),
   options: copyOptions(draft.options),
 })

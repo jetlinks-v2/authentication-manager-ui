@@ -17,7 +17,7 @@ export interface ManagedApiGroup {
   description?: string | null
   status: GroupEnum<GroupStatus>
   accessSupport?: GroupEnum<GroupAccessSupport> | null
-  assetType?: string | null
+  assetTypes: string[]
   operations?: ManagedApiOperation[] | null
   options?: Record<string, unknown> | null
 }
@@ -25,8 +25,6 @@ export interface ApiGroupWrite {
   name: string
   description?: string | null
   status: GroupStatus
-  accessSupport?: GroupAccessSupport | null
-  assetType?: string | null
   operations: ManagedApiOperation[]
   options?: Record<string, unknown> | null
 }

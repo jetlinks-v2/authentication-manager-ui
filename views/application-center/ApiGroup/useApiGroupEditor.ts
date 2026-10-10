@@ -4,9 +4,8 @@ import { useI18n } from 'vue-i18n'
 import { Modal } from 'ant-design-vue'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
-import { getAssetTypes } from '@authentication-manager-ui/api/application-center/applicationTemplate'
-import { createManagedGroup, getManagedGroup, groupBody, queryLinkedSpecs, updateManagedGroup } from '@authentication-manager-ui/api/application-center/apiGroupManagement'
-import type { ApiGroupWrite, GroupAccessSupport, ManagedApiGroup, ManagedApiOperation, RawOpenApiSpec, RuntimeAssetType } from '@authentication-manager-ui/api/application-center/apiGroupManagement'
+import { createManagedGroup, getManagedGroup, queryLinkedSpecs, updateManagedGroup } from '@authentication-manager-ui/api/application-center/apiGroupManagement'
+import type { ApiGroupWrite, ManagedApiGroup, ManagedApiOperation, RawOpenApiSpec } from '@authentication-manager-ui/api/application-center/apiGroupManagement'
 import { groupDraft, groupError, groupPayload, groupValue, newGroupDraft, operationsChanged, validSpecPermission } from './groupUtils'
 import { groupMenu, useGroupPermissions } from './useGroupPermissions'
 import type { SpecSelection } from './useSpecPicker'
@@ -26,12 +25,10 @@ export const useApiGroupEditor = () => {
   const draft = ref<ApiGroupWrite>(newGroupDraft())
   const rows = ref<OperationEditorContext['rows']>([])
   const specs = ref<Record<string, RawOpenApiSpec>>({})
-  const assetTypes = ref<RuntimeAssetType[]>([])
   const loading = ref(false)
   const saving = ref(false)
   const ready = ref(false)
   const error = ref('')
-  const assetError = ref('')
   const specError = ref('')
   const pickerIndex = ref<number>()
   let generation = 0
@@ -42,24 +39,18 @@ export const useApiGroupEditor = () => {
   const stableIds = computed(() => new Set((original.value?.operations || []).map(operation => operation.id)))
   const linkedIds = computed(() => [...new Set(draft.value.operations.flatMap(operation => operation.apiSpecIds))])
   const unavailable = computed(() => linkedIds.value.filter(specId => !validSpecPermission(specs.value[specId])))
-  const linkedAssetTypes = computed(() => [...new Set(linkedIds.value.flatMap(specId => specs.value[specId]?.assetType ? [specs.value[specId].assetType!] : []))])
-  const assetOptions = computed(() => assetTypes.value.map(type => ({ value: type.id, label: type.i18nName || type.name || type.id })))
-  const assetMissing = computed(() => !!draft.value.assetType && !assetTypes.value.some(type => type.id === draft.value.assetType))
-  const accessOptions = computed(() => (['support', 'unsupported', 'indirect'] as GroupAccessSupport[]).map(value => ({ value, label: t('ApiGroupManagement.access.' + value) })))
+  const linkedAssetTypes = computed(() => {
+    const savedIds = new Set(original.value?.operations?.flatMap(operation => operation.apiSpecIds || []) || [])
+    // 未调整关联时使用服务端权威归属；仅修改名称或无接口查询权限，不应把资产显示为空。
+    if (original.value && savedIds.size === linkedIds.value.length && linkedIds.value.every(specId => savedIds.has(specId))) return original.value.assetTypes
+    return [...new Set(linkedIds.value.flatMap(specId => validSpecPermission(specs.value[specId]) && specs.value[specId].assetType ? [specs.value[specId].assetType!] : []))].sort()
+  })
   const statusOptions = computed(() => ['enabled', 'disabled'].map(value => ({ value, label: t('ApiGroupManagement.state.' + value) })))
   const operationContext = computed<OperationEditorContext>(() => ({ rows: rows.value, readonly: !editable.value, canSelectSpecs: permissions.canSelectSpecs.value }))
   const picker = computed(() => ({ open: pickerIndex.value !== undefined,
     selectedIds: pickerIndex.value === undefined ? [] : draft.value.operations[pickerIndex.value]?.apiSpecIds || [],
     knownSpecs: Object.values(specs.value),
   }))
-  const loadAssets = async (current: number) => {
-    try {
-      const response = await getAssetTypes()
-      const types = groupBody<RuntimeAssetType[]>(response)
-      if (!Array.isArray(types) || types.some(type => !type.id)) throw new Error('ApiGroupManagement.invalidResponse')
-      if (current === generation) assetTypes.value = types
-    } catch (cause) { if (current === generation) assetError.value = t('ApiGroupManagement.assetLoadFailed') + ' ' + groupError(cause, t) }
-  }
   const loadSpecs = async (current: number) => {
     const ids = linkedIds.value
     if (!ids.length || !permissions.canSelectSpecs.value) return
@@ -71,19 +62,19 @@ export const useApiGroupEditor = () => {
   }
   const load = async () => {
     const current = ++generation
-    loading.value = true; ready.value = false; saving.value = false; error.value = ''; assetError.value = ''; specError.value = ''
-    original.value = undefined; draft.value = newGroupDraft(); rows.value = []; specs.value = {}; assetTypes.value = []; pickerIndex.value = undefined
+    loading.value = true; ready.value = false; saving.value = false; error.value = ''; specError.value = ''
+    original.value = undefined; draft.value = newGroupDraft(); rows.value = []; specs.value = {}; pickerIndex.value = undefined
     try {
       if (id.value) {
         if (!permissions.canQuery.value) throw new Error('ApiGroupManagement.noQueryPermission')
         const group = await getManagedGroup(id.value)
         if (current !== generation) return
-        if (!group?.id || group.id !== id.value || !['enabled', 'disabled'].includes(groupValue(group.status) || '')) throw new Error('ApiGroupManagement.invalidResponse')
+        if (!group?.id || group.id !== id.value || !Array.isArray(group.assetTypes) || !['enabled', 'disabled'].includes(groupValue(group.status) || '')) throw new Error('ApiGroupManagement.invalidResponse')
         original.value = group; draft.value = groupDraft(group)
         rows.value = draft.value.operations.map(() => ({ key: nextKey++, locked: true }))
       } else if (!permissions.canCreate.value) throw new Error('ApiGroupManagement.noSavePermission')
       ready.value = true
-      await Promise.all([loadAssets(current), loadSpecs(current)])
+      await loadSpecs(current)
     } catch (cause) { if (current === generation) error.value = groupError(cause, t) }
     finally { if (current === generation) loading.value = false }
   }
@@ -103,7 +94,6 @@ export const useApiGroupEditor = () => {
     if (!editable.value) return
     draft.value.operations.splice(index, 1); rows.value.splice(index, 1)
   }
-  const setAssetType = (value?: string | null) => { if (editable.value) draft.value.assetType = value ?? null }
   const selectSpecs = (index: number) => { if (editable.value && permissions.canSelectSpecs.value) pickerIndex.value = index }
   const closePicker = () => { pickerIndex.value = undefined }
   const acceptSelection = (selection: SpecSelection) => {
@@ -118,7 +108,6 @@ export const useApiGroupEditor = () => {
     if (!draft.value.name?.trim()) return t('ApiGroupManagement.nameRequired')
     if (draft.value.name.trim().length > 64) return t('ApiGroupManagement.nameTooLong')
     if (!['enabled', 'disabled'].includes(draft.value.status)) return t('ApiGroupManagement.statusRequired')
-    if (draft.value.accessSupport && !['support', 'unsupported', 'indirect'].includes(draft.value.accessSupport)) return t('ApiGroupManagement.accessInvalid')
     const used = new Set<string>()
     for (const [index, operation] of draft.value.operations.entries()) {
       const operationId = operation.id.trim()
@@ -129,12 +118,6 @@ export const useApiGroupEditor = () => {
       if (!operation.apiSpecIds.length) return label + ': ' + t('ApiGroupManagement.operation.specsRequired')
       const retainedIds = original.value?.operations?.find(saved => saved.id === operation.id)?.apiSpecIds || []
       if (operation.apiSpecIds.some(specId => !retainedIds.includes(specId) && !validSpecPermission(specs.value[specId]))) return label + ': ' + t('ApiGroupManagement.spec.invalidSelection')
-    }
-    if (linkedAssetTypes.value.length > 1) return t('ApiGroupManagement.mixedAssetTypes', { types: linkedAssetTypes.value.join(', ') })
-    if (draft.value.accessSupport === 'support') {
-      if (assetError.value) return t('ApiGroupManagement.assetDirectoryRequired')
-      if (!draft.value.assetType || assetMissing.value) return t('ApiGroupManagement.assetTypeRequired')
-      if (linkedAssetTypes.value.length === 1 && linkedAssetTypes.value[0] !== draft.value.assetType) return t('ApiGroupManagement.assetTypeMismatch', { types: linkedAssetTypes.value[0] })
     }
     return ''
   }
@@ -167,8 +150,6 @@ export const useApiGroupEditor = () => {
     const affectsGrants = original.value && (
       operationsChanged(original.value, payload)
       || (groupValue(original.value.status) === 'enabled' && payload.status === 'disabled')
-      || groupValue(original.value.accessSupport) !== payload.accessSupport
-      || original.value.assetType !== payload.assetType
     )
     saving.value = true
     if (affectsGrants) Modal.confirm({ title: t('ApiGroupManagement.impactTitle'), content: t('ApiGroupManagement.saveImpactConfirm'),
@@ -178,7 +159,7 @@ export const useApiGroupEditor = () => {
     else void persist(current, groupId, payload)
   }
   const back = () => menu.jumpPage(groupMenu, {})
-  return { ...permissions, groupMenu, id, draft, loading, saving, ready, error, assetError, specError, canSave, editable,
-    assetOptions, accessOptions, statusOptions, assetMissing, unavailable, linkedAssetTypes, specs, operationContext, picker,
-    addOperation, updateOperation, removeOperation, setAssetType, selectSpecs, closePicker, acceptSelection, save, back }
+  return { ...permissions, groupMenu, id, draft, loading, saving, ready, error, specError, canSave, editable,
+    statusOptions, unavailable, linkedAssetTypes, specs, operationContext, picker,
+    addOperation, updateOperation, removeOperation, selectSpecs, closePicker, acceptSelection, save, back }
 }

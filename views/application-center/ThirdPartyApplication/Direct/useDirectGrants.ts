@@ -6,6 +6,7 @@ import type { ApiGroup, ApiGroupGrant, ApiGroupOperation } from '@authentication
 import { applicationError, responseBody } from '../applicationUtils'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { groupMenu, useGroupPermissions } from '../../ApiGroup/useGroupPermissions'
+import { selectedGroupOperations, updateGroupGrantOperations } from '../../ApiApplication/groupGrantUtils'
 
 const grantableOperation = (operation: ApiGroupOperation) => !!operation.apiSpecIds?.length
   && operation.apiSpecIds.every(id => operation.apiDetail?.some(spec => spec.id === id
@@ -34,9 +35,9 @@ export const useDirectGrants = (applicationId: () => string) => {
       if (current !== generation) return
       const groupList = responseBody(catalog)
       const grantList = responseBody(grants)
-      if (!Array.isArray(groupList) || !Array.isArray(grantList)) throw new Error('ThirdPartyApplication.project.invalidResponse')
+      if (!Array.isArray(groupList) || !groupList.every(group => Array.isArray(group.assetTypes)) || !Array.isArray(grantList)) throw new Error('ThirdPartyApplication.project.invalidResponse')
       groups.value = groupList; original.value = grantList
-      selected.value = Object.fromEntries(grantList.map(grant => [grant.groupId, [...(grant.operationIds || [])]]))
+      selected.value = selectedGroupOperations(grantList)
       loaded.value = true
     } catch (cause) { if (current === generation) error.value = applicationError(cause, t) }
     finally { if (current === generation) loading.value = false }
@@ -46,7 +47,7 @@ export const useDirectGrants = (applicationId: () => string) => {
     const group = groups.value.find(item => item.id === groupId)
     if (!group) return
     const available = new Set(operations(group).filter(item => !item.disabled).map(item => item.id))
-    const retained = original.value.find(item => item.groupId === groupId)?.operationIds || []
+    const retained = original.value.filter(item => item.groupId === groupId).flatMap(item => item.operationIds || [])
     if (ids.some(id => !available.has(id) && !retained.includes(id))) {
       error.value = t('ThirdPartyApplication.direct.invalidOperation'); return
     }
@@ -70,16 +71,18 @@ export const useDirectGrants = (applicationId: () => string) => {
     for (const groupId of changed.value) {
       const ids = selected.value[groupId] || []
       if (!ids.length) continue
-      const previous = original.value.find(grant => grant.groupId === groupId)
-      result.push({ ...previous, targetType: 'api-client', targetId: applicationId(), groupId, operationIds: ids })
+      const previous = original.value.filter(grant => grant.groupId === groupId)
+      if (previous.length) result.push(...updateGroupGrantOperations(previous, ids))
+      else result.push({ targetType: 'api-client', targetId: applicationId(), groupId, operationIds: ids })
     }
     return result
   })
   const hiddenGrants = computed(() => original.value.some(grant => !groups.value.some(group => group.id === grant.groupId)))
-  const assetScoped = (group: ApiGroup) => (typeof group.accessSupport === 'object' ? group.accessSupport?.value : group.accessSupport) === 'support'
+  const assetScoped = (group: ApiGroup) => !!group.assetTypes.length
   const hasAssetScope = (groupId: string) => {
-    const accesses = original.value.find(grant => grant.groupId === groupId)?.assetAccesses
-    return !!accesses && Object.keys(accesses).length > 0
+    const types = groups.value.find(group => group.id === groupId)?.assetTypes || []
+    return types.every(type => original.value.some(grant => grant.groupId === groupId
+      && grant.assetAccesses?.assetType === type && Array.isArray(grant.assetAccesses.accesses) && grant.assetAccesses.accesses.length > 0))
   }
   const save = async (revokeAll = false) => {
     if (saving.value || !loaded.value || loading.value) return

@@ -9,7 +9,7 @@
       <template v-else>
         <ConditionFilter :columns="columns" target="api-group-management" @change="handleSearch" />
         <a-alert v-if="error" type="error" show-icon :message="error" class="page-alert" />
-        <j-pro-table ref="tableRef" mode="TABLE" :columns="columns" :request="requestPage" :params="params" :scroll="{ x: 1200 }">
+        <j-pro-table class="pro-table__no-padding" ref="tableRef" mode="TABLE" :columns="columns" :request="requestPage" :params="params" :scroll="{ x: 1200 }">
           <template #name="row"><a-button type="link" @click="open(row)">{{ row.name }}</a-button></template>
           <template #id="row"><a-typography-text copyable :content="row.id">{{ row.id }}</a-typography-text></template>
           <template #status="row"><a-badge :status="groupValue(row.status) === 'enabled' ? 'success' : 'default'" :text="groupText(row.status, $t, 'ApiGroupManagement.state.')" /></template>

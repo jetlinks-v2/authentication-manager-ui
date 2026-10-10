@@ -26,14 +26,13 @@ export const useSpecPicker = (source: () => PickerSource) => {
     }
   }, { immediate: true })
   const columns = computed(() => [
-    { title: t('ApiGroupManagement.spec.method'), key: 'method', dataIndex: 'method', width: 90 },
-    { title: t('ApiGroupManagement.spec.path'), key: 'path', dataIndex: 'path', width: 250, search: { type: 'string', defaultTermType: 'like' } },
-    { title: t('ApiGroupManagement.spec.summary'), key: 'summary', dataIndex: 'summary', ellipsis: true, width: 200, search: { type: 'string', defaultTermType: 'like' } },
-    { title: t('ApiGroupManagement.spec.appId'), key: 'appId', dataIndex: 'appId', width: 140, search: { type: 'string', defaultTermType: 'eq' } },
-    { title: t('ApiGroupManagement.spec.permissionId'), key: 'permissionId', dataIndex: 'permissionId', width: 150, search: { type: 'string', defaultTermType: 'like' } },
-    { title: t('ApiGroupManagement.spec.actions'), key: 'actions', dataIndex: 'actions', scopedSlots: true, width: 150 },
-    { title: t('ApiGroupManagement.spec.assetType'), key: 'assetType', dataIndex: 'assetType', width: 120 },
-    { title: t('ApiGroupManagement.spec.grantable'), key: 'grantable', dataIndex: 'grantable', scopedSlots: true, width: 100 },
+    { title: t('ApiGroupManagement.spec.summary'), key: 'summary', dataIndex: 'summary', scopedSlots: true, ellipsis: true, width: 220, search: { type: 'string', defaultTermType: 'like' } },
+    { title: t('ApiGroupManagement.spec.method'), key: 'method', dataIndex: 'method', scopedSlots: true, width: 90 },
+    { title: t('ApiGroupManagement.spec.path'), key: 'path', dataIndex: 'path', scopedSlots: true, ellipsis: true, width: 300, search: { type: 'string', defaultTermType: 'like' } },
+    { title: t('ApiGroupManagement.spec.appId'), key: 'appId', dataIndex: 'appId', ellipsis: true, width: 150, search: { type: 'string', defaultTermType: 'eq' } },
+    { title: t('ApiGroupManagement.spec.assetType'), key: 'assetType', dataIndex: 'assetType', width: 110 },
+    { title: t('ApiGroupManagement.spec.grantable'), key: 'grantable', dataIndex: 'grantable', scopedSlots: true, width: 110 },
+    { title: t('ApiGroupManagement.spec.details'), key: 'details', dataIndex: 'details', scopedSlots: true, width: 70 },
   ])
   const requestPage = async (query: QueryPayload) => {
     const current = generation
