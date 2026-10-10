@@ -43,7 +43,7 @@
     </a-spin>
     <template #foot>
       <a-button @click="emit('update:open', false)">{{ $t('ApiApplication.actions.cancel') }}</a-button>
-      <a-button type="primary" :loading="saving" :disabled="loading" @click="save">
+      <a-button type="primary" :loading="saving" :disabled="!loaded || loading" @click="save">
         {{ $t('ApiApplication.actions.save') }}
       </a-button>
     </template>
@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { onBeforeUnmount, ref, watch } from 'vue'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n'
 import {
@@ -60,15 +60,20 @@ import {
   saveApiGrants,
 } from '@authentication-manager-ui/api/application-center/apiApplication'
 import type { ApiApplication, ApiGroup, ApiGroupGrant } from '../types'
+import { newBusinessApplicationGrants, selectedGroupOperations, updateGroupGrantOperations } from '../groupGrantUtils'
 
 const props = defineProps<{ open: boolean; application?: ApiApplication }>()
 const emit = defineEmits<{ (event: 'update:open', value: boolean): void; (event: 'saved'): void }>()
 const { t: $t } = useI18n()
 const groups = ref<ApiGroup[]>([])
+const originalGrants = ref<ApiGroupGrant[]>([])
 const selectedByGroup = ref<Record<string, string[]>>({})
 const activeKeys = ref<string[]>([])
 const loading = ref(false)
 const saving = ref(false)
+const loaded = ref(false)
+let generation = 0
+onBeforeUnmount(() => { generation++ })
 
 const operationIds = (group: ApiGroup) => (group.operations || []).map(item => item.id)
 const selectedCount = (group: ApiGroup) => (selectedByGroup.value[group.id] || []).length
@@ -76,54 +81,60 @@ const isGroupSelected = (group: ApiGroup) => selectedCount(group) === operationI
 const isGroupIndeterminate = (group: ApiGroup) => selectedCount(group) > 0 && !isGroupSelected(group)
 
 const load = async () => {
-  if (!props.application?.id) return
+  const current = ++generation
+  const applicationId = props.application?.id
+  loaded.value = false; loading.value = false; saving.value = false
+  groups.value = []; originalGrants.value = []; selectedByGroup.value = {}
+  if (!props.open || !applicationId) return
   loading.value = true
   try {
     const [groupsResponse, grantsResponse] = await Promise.all([
-      queryApiGroups({ paging: false }),
-      queryApiGrants(props.application.id),
+      queryApiGroups({ paging: false }), queryApiGrants(applicationId),
     ])
+    if (current !== generation) return
     groups.value = (groupsResponse as any).result || groupsResponse || []
     const grants = (grantsResponse as any).result || grantsResponse || [] as ApiGroupGrant[]
-    const map: Record<string, string[]> = {}
-    ;(grants as ApiGroupGrant[]).forEach(grant => { map[grant.groupId] = grant.operationIds || [] })
-    selectedByGroup.value = map
+    originalGrants.value = grants as ApiGroupGrant[]
+    selectedByGroup.value = selectedGroupOperations(originalGrants.value)
+    loaded.value = true
   } finally {
-    loading.value = false
+    if (current === generation) loading.value = false
   }
 }
 
-watch(() => [props.open, props.application?.id], ([open]) => { if (open) void load() }, { immediate: true })
+watch(() => [props.open, props.application?.id], () => { void load() }, { immediate: true })
 
 const toggleGroup = (group: ApiGroup) => {
+  if (!loaded.value || loading.value || saving.value) return
   selectedByGroup.value[group.id] = isGroupSelected(group) ? [] : operationIds(group)
 }
 
 const updateGroup = (group: ApiGroup, values: string[]) => {
+  if (!loaded.value || loading.value || saving.value) return
   selectedByGroup.value[group.id] = values
 }
 
 const save = async () => {
-  if (!props.application?.id) return
+  const applicationId = props.application?.id
+  if (!applicationId || !loaded.value || loading.value || saving.value) return
+  const current = generation
   saving.value = true
   try {
-    const grants: ApiGroupGrant[] = groups.value
-      .map(group => ({
-        targetType: 'api-client',
-        targetId: props.application?.id,
-        groupId: group.id,
-        operationIds: selectedByGroup.value[group.id] || [],
-        ...(group.accessSupport && String((group.accessSupport as any).value || group.accessSupport) === 'support'
-          ? { assetAccesses: { assetType: group.assetType || 'device', accesses: [{ supportId: 'business_application' }] } }
-          : {}),
-      }))
-      .filter(grant => grant.operationIds?.length)
-    await saveApiGrants(props.application.id, grants)
+    const grants: ApiGroupGrant[] = originalGrants.value.filter(grant => !groups.value.some(group => group.id === grant.groupId))
+    for (const group of groups.value) {
+      const ids = selectedByGroup.value[group.id] || []
+      if (!ids.length) continue
+      const previous = originalGrants.value.filter(grant => grant.groupId === group.id)
+      grants.push(...(previous.length ? updateGroupGrantOperations(previous, ids)
+        : newBusinessApplicationGrants(group, applicationId, ids)))
+    }
+    await saveApiGrants(applicationId, grants)
+    if (current !== generation) return
     onlyMessage($t('ApiApplication.message.permissionSaved'))
     emit('saved')
     emit('update:open', false)
   } finally {
-    saving.value = false
+    if (current === generation) saving.value = false
   }
 }
 </script>

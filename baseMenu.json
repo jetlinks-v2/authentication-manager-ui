@@ -2118,6 +2118,28 @@
         ]
       },
       {
+        "code": "application-center/ThirdPartyApplication",
+        "name": "开放平台",
+        "owner": "iot",
+        "i18nMessages": {
+          "name": {
+            "zh_CN": "开放平台",
+            "en_US": "Open Platform",
+            "en": "Open Platform"
+          }
+        },
+        "id": "72e0c36789d44b0baac063cc70b42d18",
+        "url": "/open/third-party-application",
+        "icon": "icon-APIyingyong",
+        "sortIndex": 3,
+        "showPage": ["application"],
+        "permissions": [
+          { "permission": "application", "actions": ["query", "save", "delete"] },
+          { "permission": "api_group", "actions": ["query", "grant", "grant_query"] }
+        ],
+        "assetTypes": ["application"]
+      },
+      {
         "code": "application-center/ApiApplication",
         "name": "API 应用",
         "owner": "iot",
@@ -2212,6 +2234,146 @@
                   }
               }
           }
+      },
+      {
+        "code": "application-center/ApiGroup",
+        "name": "接口分组管理",
+        "owner": "iot",
+        "i18nMessages": {
+          "name": {
+            "zh_CN": "接口分组管理",
+            "en_US": "API Groups",
+            "en": "API Groups"
+          }
+        },
+        "id": "api-group-management",
+        "url": "/open/api-group",
+        "icon": "icon-APIyingyong",
+        "sortIndex": 6,
+        "showPage": [
+          "api_group"
+        ],
+        "permissions": [
+          {
+            "permission": "api_group",
+            "actions": [
+              "query"
+            ]
+          }
+        ],
+        "buttons": [
+          {
+            "id": "view",
+            "name": "查看",
+            "i18nMessages": {
+              "zh_CN": "查看",
+              "en_US": "View",
+              "en": "View"
+            },
+            "permissions": [
+              {
+                "permission": "api_group",
+                "actions": [
+                  "query"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "add",
+            "name": "新增",
+            "i18nMessages": {
+              "zh_CN": "新增",
+              "en_US": "Add",
+              "en": "Add"
+            },
+            "permissions": [
+              {
+                "permission": "api_group",
+                "actions": [
+                  "query",
+                  "save"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "update",
+            "name": "编辑",
+            "i18nMessages": {
+              "zh_CN": "编辑",
+              "en_US": "Edit",
+              "en": "Edit"
+            },
+            "permissions": [
+              {
+                "permission": "api_group",
+                "actions": [
+                  "query",
+                  "save"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "action",
+            "name": "启用/禁用",
+            "i18nMessages": {
+              "zh_CN": "启用/禁用",
+              "en_US": "Enable / Disable",
+              "en": "Enable / Disable"
+            },
+            "permissions": [
+              {
+                "permission": "api_group",
+                "actions": [
+                  "query",
+                  "save"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "delete",
+            "name": "删除",
+            "i18nMessages": {
+              "zh_CN": "删除",
+              "en_US": "Delete",
+              "en": "Delete"
+            },
+            "permissions": [
+              {
+                "permission": "api_group",
+                "actions": [
+                  "query",
+                  "delete"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "selectApi",
+            "name": "选择接口",
+            "i18nMessages": {
+              "zh_CN": "选择接口",
+              "en_US": "Select APIs",
+              "en": "Select APIs"
+            },
+            "permissions": [
+              {
+                "permission": "api_spec",
+                "actions": [
+                  "query"
+                ]
+              }
+            ]
+          }
+        ],
+        "accessSupport": {
+          "text": "不支持",
+          "value": "unsupported"
+        },
+        "supportDataAccess": false
       },
       {
         "code": "application-center/MobileApplication",
