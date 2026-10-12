@@ -16,7 +16,7 @@
       :columns="columns" :request="requestPage" :params="filters" :scroll="{ x: 1350 }">
       <template #name="row"><a-button type="link" @click="openDetail(row)">{{ row.name }}</a-button></template>
       <template #scopes="row">{{ row.scopes?.length || 0 }}</template>
-      <template #eventTypes="row">{{ scopeEventCount(row.scopes) }}</template>
+      <template #eventTypes="row">{{ scopeSummary(row.scopes) }}</template>
       <template #channelProvider="row">{{ channelName(row.channelProvider) }}</template>
       <template #executionState="row"><a-tag :color="executionColor(row.executionState)">{{ executionLabel(row.executionState) }}</a-tag></template>
       <template #state="row"><a-badge :status="row.state === 'enabled' ? 'success' : 'default'"
@@ -43,7 +43,7 @@
     </j-pro-table>
   </div>
 
-  <SubscriptionEditor v-model:open="editorOpen" :subscription="editing" :events="events" :channels="channels"
+  <SubscriptionEditor v-model:open="editorOpen" :subscription="editing" :providers="providers" :channels="channels"
     :catalog-loading="catalogLoading" :catalog-error="catalogError" :saving="saving" :validation="validation" :operation-error="operationError"
     @change="clearFeedback" @validate="check($event)" @save="save($event)" />
   <a-modal v-model:open="detailOpen" :title="$t('ApiApplication.subscription.detail')" :footer="null" :width="680">
@@ -58,7 +58,7 @@
           <a-descriptions-item :label="$t('ThirdPartyApplication.subscription.scopes')">
             <div v-for="(scope, index) in selected.scopes" :key="index" class="detail-scope">
               <strong>{{ $t('ThirdPartyApplication.subscription.scopeIndex', { index: index + 1 }) }}</strong>
-              <a-space wrap><a-tag v-for="id in scope.eventTypes" :key="id">{{ eventName(id) }}</a-tag><span v-if="!scope.eventTypes.length">-</span></a-space>
+              <span>{{ eventSummary(scope.eventTypes) }}</span>
               <div v-if="Object.keys(scope.configuration).length">
                 <a-typography-text type="secondary">{{ $t('ThirdPartyApplication.subscription.sourceConfiguration') }}</a-typography-text>
                 <pre class="configuration-json">{{ JSON.stringify(scope.configuration, null, 2) }}</pre>
@@ -67,6 +67,9 @@
             <span v-if="!selected.scopes.length">-</span>
           </a-descriptions-item>
           <a-descriptions-item :label="$t('ApiApplication.subscription.channel')">{{ channelName(selected.channelProvider) }}</a-descriptions-item>
+          <a-descriptions-item v-if="selected.channelProvider === 'http-hook'" :label="$t('ThirdPartyApplication.subscription.signature')">
+            {{ $t('ThirdPartyApplication.subscription.signingHint') }}
+          </a-descriptions-item>
           <a-descriptions-item :label="$t('ThirdPartyApplication.subscription.channelConfiguration')">
             <pre class="configuration-json">{{ JSON.stringify(selected.channelConfiguration, null, 2) }}</pre>
           </a-descriptions-item>
@@ -83,16 +86,15 @@
 import { useI18n } from 'vue-i18n'
 import type { ApiApplication } from '@authentication-manager-ui/api/application-center/apiApplication'
 import { useSubscriptionPanel } from '../useSubscriptionPanel'
-import { scopeEventCount } from '../subscriptionForm'
 import { executionColor } from '../subscriptionState'
 import { formatTime } from '../integrationUtils'
 import SubscriptionEditor from './SubscriptionEditor.vue'
 import SubscriptionValidation from './SubscriptionValidation.vue'
 const props = defineProps<{ application: ApiApplication }>()
 const { t: $t } = useI18n()
-const { events, channels, catalogLoading, catalogError, listError, operationError, saving, validation, clearFeedback,
+const { providers, channels, catalogLoading, catalogError, listError, operationError, saving, validation, clearFeedback,
   tableRef, filters, editorOpen, detailOpen, detailLoading, editing, selected, applicationEnabled,
-  filterColumns, columns, refresh, requestPage, handleSearch, eventName, channelName, executionLabel,
+  filterColumns, columns, refresh, requestPage, handleSearch, eventSummary, scopeSummary, channelName, executionLabel,
   openEditor, openDetail, save, check, toggle, remove } = useSubscriptionPanel(() => props.application)
 </script>
 

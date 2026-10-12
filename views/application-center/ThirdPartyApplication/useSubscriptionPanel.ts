@@ -5,12 +5,15 @@ import type { ApiApplication, QueryPayload } from '@authentication-manager-ui/ap
 import type { ApplicationSubscription, SubscriptionConfiguration } from '@authentication-manager-ui/api/application-center/applicationSubscription'
 import { apiState } from './applicationUtils'
 import { channelLabel } from './subscriptionForm'
+import { eventGroupSummary } from './subscriptionEvents'
 import { executionStateKey } from './subscriptionState'
 import { useSubscriptions } from './useSubscriptions'
 
 export const useSubscriptionPanel = (application: () => ApiApplication) => {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const api = useSubscriptions()
+  const eventSummary = (ids: string[] = []) => eventGroupSummary(ids, api.providers.value, t)
+  const scopeSummary = (scopes: ApplicationSubscription['scopes'] = []) => eventSummary(scopes.flatMap(scope => scope.eventTypes))
   const tableRef = ref<{ reload: () => void }>()
   const filters = ref<{ terms: Array<Record<string, unknown>> }>({ terms: [] })
   const editorOpen = ref(false)
@@ -39,7 +42,7 @@ export const useSubscriptionPanel = (application: () => ApiApplication) => {
   const columns = computed(() => [
     { title: t('ApiApplication.subscription.name'), dataIndex: 'name', key: 'name', scopedSlots: true, width: 210 },
     { title: t('ThirdPartyApplication.subscription.scopes'), key: 'scopes', scopedSlots: true, width: 110 },
-    { title: t('ApiApplication.subscription.events'), key: 'eventTypes', scopedSlots: true, width: 95 },
+    { title: t('ThirdPartyApplication.subscription.eventCategories'), key: 'eventTypes', scopedSlots: true, width: 210 },
     { title: t('ApiApplication.subscription.channel'), dataIndex: 'channelProvider', key: 'channelProvider', scopedSlots: true, width: 150 },
     { title: t('ApiApplication.subscription.executionState'), key: 'executionState', scopedSlots: true, width: 145 },
     { title: t('ApiApplication.subscription.state'), dataIndex: 'state', key: 'state', scopedSlots: true, width: 100 },
@@ -47,7 +50,6 @@ export const useSubscriptionPanel = (application: () => ApiApplication) => {
     { title: t('ApiApplication.subscription.createTime'), dataIndex: 'createTime', key: 'createTime', scopedSlots: true, width: 170 },
     { title: t('ApiApplication.subscription.actions'), key: 'action', scopedSlots: true, fixed: 'right', width: 260 },
   ])
-  const eventName = (id: string) => api.events.value.find(item => item.id === id)?.name || id
   const channelName = (id?: string) => channelLabel(id, t)
   const executionLabel = (state?: string) => t(executionStateKey(state))
   const openEditor = (row?: ApplicationSubscription) => {
@@ -77,6 +79,8 @@ export const useSubscriptionPanel = (application: () => ApiApplication) => {
     filters.value = { terms: [] }
     void api.loadCatalog(id)
   }, { immediate: true })
+  // 后端目录文案随请求语言返回；切换语言只刷新目录，不重置正在编辑的草稿。
+  watch(locale, () => { void api.loadCatalog(application().id) })
   return { ...api, tableRef, filters, editorOpen, detailOpen, detailLoading, editing, selected, applicationEnabled,
-    filterColumns, columns, refresh, requestPage, handleSearch, eventName, channelName, executionLabel, openEditor, openDetail, save, check, toggle, remove }
+    filterColumns, columns, refresh, requestPage, handleSearch, eventSummary, scopeSummary, channelName, executionLabel, openEditor, openDetail, save, check, toggle, remove }
 }

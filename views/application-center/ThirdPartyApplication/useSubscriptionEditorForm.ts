@@ -1,12 +1,13 @@
 import { computed, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { ApplicationSubscription, SubscriptionChannel, SubscriptionConfiguration, SubscriptionEvent, SubscriptionScope } from '@authentication-manager-ui/api/application-center/applicationSubscription'
+import type { ApplicationSubscription, SubscriptionChannel, SubscriptionConfiguration, SubscriptionEventProvider, SubscriptionScope } from '@authentication-manager-ui/api/application-center/applicationSubscription'
 import { channelLabel, copyConfiguration, copyScopes, subscriptionPayload } from './subscriptionForm'
+import { groupSelection, selectEventGroup, unavailableEventIds } from './subscriptionEvents'
 
 interface EditorSource {
   open: boolean
   subscription?: ApplicationSubscription
-  events: SubscriptionEvent[]
+  providers: SubscriptionEventProvider[]
   channels: SubscriptionChannel[]
 }
 export interface HeaderRow { name: string; value: string }
@@ -38,12 +39,10 @@ export const useSubscriptionEditorForm = (source: () => EditorSource, changed: (
       label: form.channelProvider + ' · ' + t('ApiApplication.subscription.unavailable') })
     return options
   })
-  const eventOptions = (scope: SubscriptionScope) => {
-    const options = source().events.map(event => ({ value: event.id, label: event.name || event.id, disabled: false }))
-    for (const id of scope.eventTypes) if (!options.some(option => option.value === id)) options.push({
-      value: id, label: id + ' · ' + t('ApiApplication.subscription.unavailable'), disabled: false,
-    })
-    return options
+  const eventGroups = computed(() => source().providers)
+  const unavailableEvents = (scope: SubscriptionScope) => unavailableEventIds(scope.eventTypes, source().providers)
+  const removeUnavailableEvent = (scope: SubscriptionScope, id: string) => {
+    scope.eventTypes = scope.eventTypes.filter(value => value !== id)
   }
   const addScope = () => { form.scopes.push({ eventTypes: [], configuration: {} }) }
   const removeScope = (index: number) => { form.scopes.splice(index, 1) }
@@ -71,5 +70,5 @@ export const useSubscriptionEditorForm = (source: () => EditorSource, changed: (
         .map(header => [header.name.trim(), header.value])),
     } : form.channelConfiguration,
   })
-  return { form, http, formError, payload, eventOptions, channelOptions, channelAvailable, addScope, removeScope, changeChannel }
+  return { form, http, formError, payload, eventGroups, groupSelection, selectEventGroup, unavailableEvents, removeUnavailableEvent, channelOptions, channelAvailable, addScope, removeScope, changeChannel }
 }

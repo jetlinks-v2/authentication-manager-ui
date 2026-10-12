@@ -51,6 +51,12 @@ export interface SubscriptionEvent {
   schema?: Record<string, unknown>
 }
 
+export interface SubscriptionEventProvider {
+  id: string
+  name: string
+  events: SubscriptionEvent[]
+}
+
 export interface SubscriptionMetadataProperty {
   id: string
   name?: string
@@ -84,6 +90,6 @@ export const deleteSubscription = (applicationId: string, id: string) =>
 export const validateSubscription = (applicationId: string, data: SubscriptionConfiguration) =>
   api.post<SubscriptionValidation>(`${root(applicationId)}/_validate`, data)
 export const querySubscriptionEvents = (applicationId: string) =>
-  api.get<SubscriptionEvent[]>(`${root(applicationId)}/events`)
+  api.get<SubscriptionEventProvider[]>(`${root(applicationId)}/events`)
 export const querySubscriptionChannels = (applicationId: string) =>
   api.get<SubscriptionChannel[]>(`${root(applicationId)}/channels`)

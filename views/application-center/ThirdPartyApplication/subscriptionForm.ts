@@ -10,6 +10,5 @@ export const subscriptionPayload = (value: SubscriptionConfiguration): Subscript
   scopes: copyScopes(value.scopes).map(scope => ({ ...scope, eventTypes: [...new Set(scope.eventTypes)] })),
   channelProvider: value.channelProvider, channelConfiguration: copyConfiguration(value.channelConfiguration),
 })
-export const scopeEventCount = (scopes: SubscriptionScope[] = []) => new Set(scopes.flatMap(scope => scope.eventTypes)).size
 export const channelLabel = (id?: string, t?: (key: string) => string) => id === 'http-hook' && t
   ? t('ThirdPartyApplication.subscription.httpHook') : id || '-'

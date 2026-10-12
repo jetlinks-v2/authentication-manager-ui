@@ -564,3 +564,131 @@ Verification result:
 ## 资源中心仪表盘组件
 
 `visDashboard/ResourceCenter` 提供九个单风格组件，通过新的 `DashBoardCanvas` 自动发现与组装；目录、默认业务配置、真实接口口径及临时浏览器注入方式见 [资源中心仪表盘说明](docs/resource-center-dashboard.md)。正式入口为 `/resources/dashboard`，页面落在 `views/resources/Dashboard/index.vue`，绑定现有菜单 `resources/Dashboard`；允许拖拽和缩放已有组件，仍不允许编辑、添加或删除组件，布局以 `resource-center-dashboard` 为 key 保存在浏览器 localStorage，保留筛选和快捷跳转。本组不修改项目概览六组件，不接入旧 dashboard，不新增菜单。数据采集和物联网卡仅私有化运行时展示。
+
+## 第三方应用运行时入口
+
+`baseMenu.json` 的 `application-center/ThirdPartyApplication` 是独立菜单，页面位于 `views/application-center/ThirdPartyApplication/index.vue`，当前开放平台菜单统一展示当前运行时的 API 应用，详情 ID 为 applicationId；直接登录与 SaaS 跳转只沿用既有请求上下文，不因登录来源改查控制面的项目接入关系。原 `ApiApplication` 页面的 internal-standalone/apiServer 模型保持不变。
+
+菜单 `application-center/ThirdPartyApplication` 和列表标题统一显示为“开放平台”（英文 Open Platform）；本模块通过已有 `getMenuFilters` 入口按精确 code 同步 `name/i18nName`，已保存菜单无需为本次改名重新初始化。菜单 ID、路由和权限不变，`system/Apply` 的“第三方应用”名称不调整。同一入口的新增按钮、列表名称、详情/返回、编辑表单、操作提示和成功消息按应用对象命名（如新增应用、应用名称、应用详情和返回应用列表），中英文同步；真实 API 应用 ID、OAuth2 技术字段及接口数据模型保持不变。列表复用 `pro-table__no-padding` 去掉表格外层内边距，并移除行链接的水平 padding，使筛选栏、表格和分页外沿一致，表头与单元格文字对齐。本次仅完成源码、JSON 和差异核对，页面仍由用户人工验收。
+
+菜单种子通过 `showPage: ["application"]` 匹配应用管理权限；侧栏从服务端 `/menu/user-own/tree` 读取已保存菜单，修改本地种子不会自动更新现有环境。已有环境应由菜单管理员按既有流程单独增加并授权该入口，不执行全量菜单初始化。通用接口授权使用 `api_group` 查询、授权权限，菜单种子已声明；SaaS 项目数据授权不使用 API Group 代替业务 scope，控制面操作的项目管理员身份仍由后端校验。
+
+### 项目第三方接入前端纠偏（2026-09-24，历史页面说明）
+
+已获用户授权，依据《第三方应用项目前端对接执行说明》的更新契约实施。范围仅本前端模块的第三方应用页面、局部 API、原菜单入口及中英文文案；不改 ui/、后端、公共请求封装，不迁移 test 等旧记录，不执行真实业务写入。
+
+实施步骤与落点：
+
+1. `api/application-center/thirdPartyIntegration.ts` 对接项目关系列表、available-applications、connect、authorization、state 五类控制面接口。使用既有控制面认证上下文，不改 baseURL 或全局代理。
+2. `useProjectContext.ts` 从项目存储 id 读取项目 ID，不将 URL projectCode 当项目 ID。列表搜索、详情路由主键均基于接入关系；`index.ts` 保留显式详情组件映射。
+3. `Detail/AuthorizationPanel.vue` 展示获批 scope 和资源类型、回显现有授权，携带真实 authorizationRevision 保存。停用关系不可编辑授权；冲突显示错误并保留草稿，不自动重提。`selected` 使用真实资源 ID；`all_current` 提交空 ID 数组，空资源授权不解释为全量授权。已移除本页面旧 API Group 授权面板及无引用的资产 support 查询封装。
+4. 首次接入后分别展示关系状态与 API 应用状态。管理员显式点击“启用 API 访问”并填写原因，再通过关系 state 接口启用；成功后读取实际 API 应用状态，不自动签发凭据。停用、移除同样填写原因，不直接删除 API 应用。
+5. `Detail/useThirdPartyDetail.ts` 核对项目、runtimeId 与 runtimeApplicationId，关联运行时不匹配、上下文缺失或应用读取失败时阻断凭据及订阅面板。`CredentialPanel.vue` 继续支持 OAuth2 元数据、启用、查看、隐藏、轮换及撤销。明文密钥不持久化，切换面板/项目后清除；已撤销凭据不展示旧 Client ID/密钥提示。异步返回不得恢复卸载页面的密钥或追加订阅刷新请求。
+6. SaaS 项目详情按“基本信息 / 数据访问授权 / 服务端接入与凭据 / 数据订阅”组织。订阅继续采用内嵌列表与单层编辑抽屉，不新增投递执行能力，订阅前端现已按新对接说明展示 notRunning/starting/running/failed，未知状态不推断为已运行或投递成功。中英文文案同步补齐。
+
+剩余边界与人工验收：
+
+- `useResourceOptions.ts` 的指定资源选择目前仅支持 device，复用本模块现有 `/device/instance/_query`，支持名称查询、分页及已选 ID 回显。其他获批资源类型的 selected 查询契约未确认，界面明确提示不可查询，不猜测接口；已有 ID 保留回显，用户可显式选择 all_current 或删除该授权项。此部分不是全部资源类型选择器已完成。
+- 控制面接口与运行时接口沿用现有请求入口。需在用户现有部署确认路由、控制面登录态、项目存储 id/runtime/token 及关联运行时可达性；源码契约匹配不代表环境已部署或页面验收通过。
+- 原普通 API 应用（例如 test）不会自动迁入新列表；没有真实接入关系时显示空列表，不补造数据。
+- 已完成源码调用链检查，中英文 JSON 与菜单 JSON 可解析，新增 91 对项目接入文案键一致、静态文案引用无缺失，本功能 Vue 文件均不超过 300 行，git diff --check 无差异格式错误；依照用户要求未运行 lint/typecheck/build、测试、浏览器或服务操作。真实项目接入、授权冲突、启停、凭据生命周期和订阅需用户在现有环境人工验收。无新增 commit / PR。
+
+### 登录来源分流优化（历史行为，已由 2026-10-09 订阅主链替代）
+
+用户已确认仅优化前端，不处理后端源码或部署。按现有部署模式、登录来源标记及项目运行入口选择流程：直接登录进入通用 api-application 管理；SaaS 项目入口保留项目关系与控制面校验，缺上下文不得回退通用接口。保留独立菜单，详情延续 Tab 布局，列表和详情分别按对象类型装载，凭据及订阅组件复用。
+
+实施步骤：隔离入口与详情 ID 语义；补通用应用创建、接口组授权和生命周期；保持项目流程不变；按新契约更新订阅运行状态、父应用状态提示与国际化。仅做源码、JSON、差异检查，不构建、测试、操作浏览器或真实业务数据。
+
+实施完成与边界：
+
+- `useApplicationEntry.ts` 复用部署模式、getProjectRuntimeConfig/isProjectRuntime，并核对 SaaS 跳转已有 pFrom/pCode 来源标记。普通登录会清除 pFrom；不能仅因 URL 或缓存含 projectCode 就要求项目关系。私有化直接登录忽略旧项目缓存；无 SaaS 来源的直接登录使用通用流程及既有请求认证上下文。SaaS 来源与当前项目编码不匹配、项目会话缺失时只报错，不回退通用接口。业务应用 scope 不作为平台管理入口。详情导航写入 entry，入口不匹配时阻断并提供返回列表。
+- `index.vue` / `Detail/index.vue` 仅按入口装载独立页面；原项目页面保留在 `ProjectList.vue` / `Detail/ProjectDetail.vue`。直接入口为 `Direct/List.vue`、`Direct/Detail.vue`，通用应用创建使用 api-application、空 integrationModes、disabled 状态和空 grants。保存后查列表，不猜测返回 ID。
+- 通用详情支持基本信息编辑、API 应用启停及删除、OAuth2 凭据和事件订阅；不调用控制面的 connect/state，也不复用 apiServer 或 SaaS scope。通用 API Group 授权支持操作选择和显式撤销全部；全量保存保留未编辑、目录暂不可见的授权与现有资产范围，不自动补 business_application 范围。新增资产范围编辑尚未接入，不宣称设备资产授权已完整完成。
+- 订阅 state 与 executionState 分开展示；父应用停用时允许存草稿，禁用订阅启用操作；目录失败不阻止保存已有草稿，切换渠道仍清空旧配置。http-hook 提示、应用身份目录语义及 Token scope 与后台订阅的区别均有中英文文案。未新增投递日志、统计、重试、补发或生产调用。
+- 已做局部引用和国际化键的静态核对，中英文及菜单 JSON 可解析，Vue 文件均不超过 300 行，git diff --check 无差异格式错误。未做构建、类型检查、lint、测试或浏览器验收。待人工分别验收直接登录与 SaaS 跳转、会话缺失阻断、详情 ID、通用接口授权、OAuth2 凭据及订阅四态。本轮不核验后端分支或部署、不提交推送。
+
+### 订阅新契约前端改造（2026-10-09）
+
+依据桌面《第三方订阅后端需求与开发交接》第7、8节及当前认证源码，纠正前端将 SaaS 登录来源等同于订阅项目准入的实现。用户已确认实施，以下为本轮实际行为及验证边界；前两节记录的登录来源分流不再作用于订阅菜单。
+
+- 目标与归属：仅本模块第三方订阅入口、订阅 API 类型、表单/详情/hook 及中英文文案。订阅以当前运行时的 API applicationId 为父对象，沿用既有请求地址、认证与资产上下文；可选 SaaS 授权由后端实际装配的 ApplicationAuthorizationCustomizer 校验，不由 pFrom/pCode、构建类型或 projectId 猜测。
+- 已完成：①订阅入口解除强制项目接入关系分流与前置审核/准入检查，不新增 capability 探测或失败回退；②请求改为 name/description/scopes/channelProvider/channelConfiguration，范围逐项使用 eventTypes/configuration，按真实数据深复制回显；③渠道仅从后端 id 目录选择，为已提供的 http-hook 实现 endpoint/method/headers 表单，不继续读取 name/configMetadata；④列表及详情改读 scopes，保留四态运行状态，目录/校验/保存/启用失败留在页面且不丢草稿；⑤同步中英文与本说明。
+- 不做：不修改后端、公共请求/登录代码或服务配置，不开发 SaaS 登记、安装、获批目录、首次接入、SSO 或能力查询接口；已有相关代码和其他未提交改动保留。不新增告警、Kafka、投递历史/统计、自动重试或真实业务写入。
+- 风险：当前后端未提供 SaaS 装配能力查询契约，前端不能猜测模块是否引入；以现有通用订阅接口及后端权限结果为准。设备范围 configuration 当前为 {}，不臆造其他事件源字段或任意 Topic/脚本，既有非空配置原样保留。不把旧 eventTypes 契约作为兼容提交路径。
+- 验证：已静态核对入口到 API 的调用链、请求五字段和 scopes 内字段、局部文件引用；中英文与菜单 JSON 可解析，文案引用无缺失，本功能 Vue 文件均不超过 300 行。git diff --check 未发现差异格式错误；新功能未跟踪文件另已检查局部引用与空白格式。按用户规则未运行构建、类型检查、lint、测试或浏览器，未启停服务；无 SaaS 与有 SaaS 授权扩展的真实部署均待人工验收。
+
+关键落点与剩余边界：
+
+- `index.vue`、`Detail/index.vue` 只加载当前运行时的通用列表/详情，`useApplicationEntry.ts` 只生成非敏感运行上下文 key，用于切换环境时卸载旧面板，不检查 pFrom/pCode、项目 ID、控制面 Token 或业务应用 scope。标准请求保留当前 Token、租户和资产上下文，不覆盖/绕过后端可选授权。既有 `ProjectList.vue`、`Detail/ProjectDetail.vue` 及其项目接入代码均保留，但不自动成为订阅入口的前置流程。
+- `applicationSubscription.ts` 使用 scopes 数组及仅含 id 的渠道 DTO；`subscriptionForm.ts` 显式构造五字段并深复制配置，不提交顶层 eventTypes、单个 scope、服务端 ID/state/审计字段。旧 eventTypes 未作为兼容读取或提交路径。
+- `useSubscriptionEditorForm.ts` 与 `SubscriptionEditor.vue` 支持多个范围；当前设备源配置为 {}，已有非空配置保留并在详情只读展示。其他事件源参数没有元数据编辑契约，不新增任意 JSON/Topic/脚本输入；未来渠道没有已确认的表单时明确提示，已有配置原样保留。
+- `HttpHookFields.vue` 使用 Ant Design Vue 输入接收地址、POST/PUT/PATCH 和字符串请求头。切换渠道清空旧配置；请求头重名先提示，避免转换成对象时静默覆盖。端点安全、敏感请求头、事件权限及可选 SaaS 条件由服务端真实校验，不添加请求超时、重试或生产密钥默认值。
+- `useSubscriptions.ts` 展示接口错误，不自动重试；`useSubscriptionPanel.ts` 统一页面编排；`SubscriptionValidation.vue` 复用展示 field/code/message。两个目录独立请求，失败明确提示；停用父应用可保留草稿，启用订阅仍须服务端完整校验。运行四态不是第三方接收成功，不增加投递历史/统计界面。
+- 新增资产范围编辑仍是此前未完成项，不因本轮订阅契约修改而宣称已完成。没有提交或推送本轮代码。
+
+### 人工接口分组管理前端实施（2026-10-09）
+
+依据桌面《接口分组管理前端开发交接》及当前认证模块 ApiGroupController/ApiGroupEntity/ApiGroupOperationInfo/OpenApiSpecEntity 的只读核对。本轮属于单模块多文件功能开发（M），菜单落点与以下计划已获用户确认，前端功能已按该边界实现。
+
+- 目标与归属：只在 runtime-ui/modules/authentication-manager-ui 新增人工 API Group 查询、新增、编辑、启停、删除，维护 Operation 和真实接口关联；保留现有第三方应用授权、订阅及所有用户修改。
+- 已确认菜单：在当前“开放与集成”（application-center，owner=iot）下新增“接口分组管理”，code=application-center/ApiGroup，url=/open/api-group，showPage=[api_group]；菜单/按钮沿用运行时现有权限约定，query/save/delete 对应 api_group，接口选择需 api_spec:query。只维护本地种子，不全量初始化服务端菜单。
+- 页面方案：采用标准查询表格与独立新建/编辑页，避免多层抽屉；复用 ConditionFilter、j-pro-table、Ant Design Vue 和现有权限按钮。列表展示稳定分组 ID、名称、枚举状态、描述、操作数量；编辑页维护基础信息、组内稳定 Operation ID、说明及关联接口，使用分页接口选择面板保留跨页选择和原关联回显。
+- 步骤：①新增局部 typed API，对接 detail/_query、group 标准 CRUD、spec 分页查询/按真实 ID 批量回显；②实现分组管理与编辑回显，显式构造实体写入字段，保留分组/操作 options，排除 apiDetail、文档和审计字段；③实现接口多选及 appId/path/summary/permissionId 条件，展示 method/path/summary/来源服务/permissionId/actions，不把接口服务 ID 当第三方应用 ID；④关联接口自动汇总只读 assetTypes，不再配置 accessSupport/assetType；允许混合资产且不自动扩大已有数据范围；⑤增加菜单、按钮权限、子路由和中英文文案，原位更新本说明。
+- 不做：不改 ui/、公共组件或新增模块依赖；后端仅调整已确认的自动资产归属，不自动生成分组或创建示例，不调用 /{appId}/_save 建绑定，不默认授权应用，不修改应用专属 assetAccesses、OAuth2 和订阅逻辑，不提交推送、改 gitlink 或操作服务。
+- 风险/处理：原接口目录空或读取失败只展示真实错误；没有有效 permissionId/actions 的接口不可新选，旧不可见关联保留并明确提示。修改/删除操作、改关联、禁用/删除分组前提示影响已有应用权限，不自行撤销或迁移授权；资产归属来自接口元数据，不再调用资产目录构建手动配置，不通过任选类型或隐式降级绕过权限边界。编辑失败保留草稿。
+- 验证：源码调用链、字段与枚举、跨页选择状态、JSON/i18n 和 git diff --check。按用户规则不运行构建、类型检查、lint、测试、浏览器或服务操作；真实 CRUD、权限可见性、菜单发布、保存后应用授权目录与订阅联调由用户在现有环境人工验收。
+
+实施落点与当前结果：
+
+- `api/application-center/apiGroupManagement.ts` 封装分组标准 CRUD、分页元数据查询和指定 ID 回显；新增消费真实返回实体 ID，更新校验 Boolean 结果，不调用应用绑定接口。
+- `views/application-center/ApiGroup/index.vue` 为列表；`Save/index.vue` 为独立新建/编辑/只读详情。`useApiGroupEditor.ts` 编排草稿、自动资产归属、关联回显及确认保存；`OperationsEditor.vue` 展示稳定操作 ID 和真实关联；`SpecPicker.vue` / `useSpecPicker.ts` 维护跨页选择。已有操作 ID 不可修改，分组/操作 options 原样保留，保存显式排除详情、文档及审计字段。
+- 分组启停、删除与影响已有授权的编辑均有确认；空操作不能保存，元数据不可见的原关联保留并提示。资产属性只读展示，后端按关联接口自动汇总多资产类型；已有 AssetAccesses 与多条授权记录保留，不任意选取类型或隐式降级。
+- `baseMenu.json` 新增“开放与集成 → 接口分组管理”，`index.ts` 注册 Save 子路由，按钮分别映射分组 query/save/delete 及接口 api_spec:query；`locales/lang/zh.json` 与 `en.json` 各提供 106 条分组管理对应文案。未修改现有授权、OAuth2、订阅或 SaaS 可选校验逻辑。
+- 已做源码请求/保存字段及本地导入路径核对、菜单与语言 JSON 解析、中英文键对齐检查；本轮 Vue 文件均小于 300 行。未执行构建、类型检查、lint、测试或浏览器操作，也未启停服务、自动发布菜单或操作业务数据。真实 CRUD、授权可见性和页面交互仍待用户在现有环境人工验收；源码检查不等于运行验收。
+- 现有环境由菜单管理员单独增加/发布新入口并配置按钮权限；本地菜单种子不会自动覆盖已保存菜单，不应全量重置菜单。未提交、推送或生成 PR。
+
+### 接口分组到应用授权链路核对（2026-10-09）
+
+用户授权使用临时凭证进行当前运行环境只读联调，凭证不写入文件或输出。保持后端代码、配置及运行服务不动，不执行真实业务写入、浏览器、构建或测试。前端修正仅限本模块：①接口选择区区分原始目录为空与筛选无结果，禁止空选择确认；②应用列表与详情的 provider 判断保持一致，不因 integrationModes 非空拒绝详情；③应用上下文键复用当前请求 API 地址；④授权目录只新增选择启用且接口权限关联完整的操作，保留已有不可见授权及 assetAccesses，并提供分组管理入口。接口目录的数据供给缺口不能用 Swagger 假 ID、自动建组或前端自动授权掩盖。完成后原位记录只读结果及尚未验收的保存、OAuth2 换令牌与事件投递环节。
+
+- 打开应用的 ReferenceError 已修正：useApplicationEntry.ts 的导入与调用统一为 getRequestBaseApi，复用当前实际请求地址；同时补齐上轮中断新增的 6 组中英文文案。用户已反馈接口目录恢复，先前空目录读数仅是修复前记录，不作为当前运行状态。此次只做源码/引用、语言 JSON 和差异检查，未执行浏览器、构建、类型检查或测试，保存授权与实际事件投递仍待联调。
+- 分组编辑页的关联接口使用可检索的紧凑表格，表体限高 300px；选择器主表限高 320px，已选明细可展开并限高 240px，弹窗整体限高。仅约束展示与滚动，不截断或改变关联数据；页面效果由用户在现有环境人工验证。
+
+### 接口分组配置精简与资产自动归属
+
+- 已确认范围：用户同意前端简化及接口分组后端资产自动汇总；仅 authentication-manager 与运行时 authentication-manager-ui，不改运营端、公共组件、依赖或服务配置，不提交推送。
+- 系统根据关联接口的有效 permission/actions 与 assetType 实时推导只读 assetTypes；分组不再提交人工 accessSupport/assetType，允许混合资产。资产归属不等于授予数据范围；原始授权记录与 assetAccesses 保留，不新增或扩大应用数据范围。
+- 同一分组已有多个资产授权记录时，前端合并操作选中态并逐条保留数据范围；原有 API 应用自动构造业务应用范围的入口按真实 assetTypes 展开，不使用默认 device，不拆分分组、不改变分组和操作 ID。
+- 列表复用 pro-table__no-padding 对齐；操作编辑以折叠区块和接口紧凑表格呈现，显示名称、方法、路径、来源服务，支持本地检索；技术 ID 和权限映射放次级信息。选择器主表及已选区域限高，已选明细可展开检索。
+- 后端测试目标：空关联、单/多资产、去重、无有效权限映射、元数据变更后的实时读取；多资产范围合并、跨分组不串权、停用组不生效及原合并优先级。使用现有 Java21/Maven 配置运行直接相关测试和增量覆盖率；前端仅源码、引用、JSON/i18n 与差异检查，用户现有环境人工验收，不自动构建、浏览器或服务操作。
+
+实施入口：`ApiGroup/index.vue`、`Save/index.vue`、`components/LinkedSpecs.vue`、`SpecDetails.vue`；原始接口 ID 和不可见关联保留，操作 ID 不变；`ApiApplication/groupGrantUtils.ts` 合并多条授权的选中操作并保留每条数据范围。Direct 授权与原 API 应用授权入口同步读取新的 assetTypes，不再写死 device。仅完成源码、引用、语言 JSON/键对齐与差异检查，未运行前端构建、类型检查、lint、测试或浏览器验收。前端需与本轮后端代码一同加载后人工验证；不提交或推送。
+### 订阅配置不解析应用运行身份
+
+- “数据订阅”的目录、列表、详情、配置保存与配置校验不解析目标应用运行身份；读取当前管理用户的真实事件目录，父应用停用时仍可配置。启用与后台运行继续按应用授权和数据权限限制，不将管理目录可见性视为应用已获授权。
+- 后端入口为 authentication-manager 的 `ApplicationEventSubscriptionService`；前端沿用现有请求与错误处理，仅同步 `locales/lang/zh.json` 和 `en.json` 中运行说明及已启用编辑说明，不改全局登录拦截或 SaaS 项目判断。
+- 后端 16 项相关集成回归通过，含管理流程不调用应用身份解析的明确断言；前端仅完成 JSON/文案/差异检查，未自动构建或浏览器验收。需运行后端加载变更后人工复查；未启停服务或提交推送。
+
+前端代码已于 2026-10-10 提交并推送：`0c5c5f06581b7190cf5714a5cf969678a161fae7`，分支 `codex/third-party-api-group-20261009`，沿用草稿 PR #104（https://github.com/jetlinks-v2/authentication-manager-ui/pull/104），目标分支已按用户要求调整为 `2.20`（不是 `2.12-uat-next`）。复用已有检查，不重复执行测试/构建；本地任务说明未提交，无强推、PR 评论或自动合并。认证后端在本次交付期间另有操作同步了远端 3 个提交并暂存 25 个文件，本聊天不干预其暂存区；若需本聊天继续交付后端，先确认范围及单一提交所有者。未从任何分支排除或丢弃代码。
+
+## 日志查询与详情
+
+`views/system/Log/useLogQuery.ts` 为访问日志和系统日志初始化浏览器本地今日范围，按 `timestamp btw` 查询、`timestamp desc` 排序。清空筛选恢复今日；链路 ID 使用 `traceId`，默认精确匹配。系统日志显示 `timestamp`，历史数据缺失时回退 `createTime`。
+
+访问日志以“来源 / 请求 / 动作”三列展示 HTTP 方法、路径、状态码、请求时间、耗时、用户和调用位置。多来源 IP 仅展示第一个非空地址，悬停显示完整值；HTTP `httpMethod` 与 Java `method` 明确区分。系统日志以“时间 / 日志内容 / 来源”展示毫秒时间、日志级别、消息、异常摘要、服务及代码位置；服务名仅展示，Logger、级别、消息、类/方法、线程和异常可筛选。
+
+两类日志使用统一表格、`ConditionFilter` 和 `JlDrawerShell`。点击行打开右侧无遮罩抽屉，点击其他行更新详情，行外点击或 Escape 关闭；拖选文本与快捷操作不触发查看。详情使用统一折叠面板、字段表和 `CodeBlock`，异常栈保留原始换行并支持横向滚动。访问详情优先展示常用请求头，可展开全部；参数支持结构化与原始视图。
+
+URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显示。抽屉用户名与 Trace ID 提供同值搜索；快捷搜索追加条件，仅对完全重复的条件去重，保留日期、其他条件及嵌套条件组。用户名仍转换为 `context` 的 `json_value` 条件。默认条件首次回传与查询调度由共享 `ConditionFilter` 负责。`api/log.ts` 接收表格可选 `{ signal }` 并传给共享请求层，加载范围和请求取消由共享组件统一实现。
+
+实现入口：`views/system/Log/Access/`、`System/`、`components/`、`logFilter.ts`、`logPresentation.ts`、`useLogInspector.ts`、`useLogDetailState.ts`；回归入口为 `tests/accessLogPresentation.test.mjs` 和 `tests/systemLogPresentation.test.mjs`。
+
+
+### 第三方订阅强制签名与 Provider 目录
+
+- 仅现有第三方订阅抽屉、列表/详情摘要及凭据生命周期提示，不修改运营端 ui、菜单或应用模型。
+- 目录返回 Provider 的 id/name/events，名称由后端国际化；前端不维护类别 ID 或业务名称映射。选择 Provider 展开其当前具体事件 ID，保存仍为 eventTypes 与 configuration，保留多范围、半选、不可用项；语言切换只刷新目录，不重置草稿，新增事件不自动扩大旧订阅。
+- API HTTP 强制使用当前 Client ID / Client Secret，前端不读取或提交明文 Secret；业务同步仍用独立通知密钥。HMAC 验签不是正文加密，签名值不是 Secret；接收端预存密钥、按原始字节验签并处理时效/幂等，生产使用 HTTPS，凭据重置后同步更新接收端。
+- 2.20 配套：前端 PR #104 保持目标 2.20；后端当前工作树采用 auth #359 bcc628ee、components #1607 3d59410a，并依赖 hsweb #371 的三状态及缓存实现。前后端 Provider 契约必须配套，更新后端不等于浏览器加载了新模块。
+- 此前旧 Vite 源码将 Provider 当成单个事件，导致旧下拉框、空 schema 和保存失败；获准重启开发服务后只核对过返回源码，未把它当作交互验收。本轮不重复重启服务，不通过放宽后端校验接受错误事件 ID。
+- 本轮前端 Provider 选择、关联展示、国际化和现有文档修改随 PR #104 交付；复用源码与差异检查，未运行构建、类型检查、lint、测试或浏览器。两类勾选、半选回显、多范围/草稿、语言切换、说明弹窗和错误反馈仍由用户在现有环境人工验收。

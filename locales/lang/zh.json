@@ -1670,8 +1670,8 @@
   "ThirdPartyApplication.credential.reveal": "查看密钥",
   "ThirdPartyApplication.credential.rotate": "轮换密钥",
   "ThirdPartyApplication.credential.revoke": "撤销凭据",
-  "ThirdPartyApplication.credential.rotateConfirm": "轮换后旧密钥立即失效，确定继续？",
-  "ThirdPartyApplication.credential.revokeConfirm": "撤销后此凭据不能再申请 Token，确定继续？",
+  "ThirdPartyApplication.credential.rotateConfirm": "轮换后旧密钥立即失效，后续订阅消息将使用新 Client Secret 签名，请同步更新接收端。确定继续？",
+  "ThirdPartyApplication.credential.revokeConfirm": "撤销后此凭据不能再申请 Token，使用此凭据签名的订阅消息也将停止发送。确定继续？",
   "ThirdPartyApplication.credential.secretNotice": "请立即保存密钥；切换页面后将不再展示。",
   "ThirdPartyApplication.credential.hide": "隐藏密钥",
   "ThirdPartyApplication.credential.saved": "凭据操作成功",
@@ -2357,7 +2357,7 @@
   "ThirdPartyApplication.subscription.scopes": "订阅范围",
   "ThirdPartyApplication.subscription.scopeIndex": "订阅范围 {index}",
   "ThirdPartyApplication.subscription.addScope": "新增订阅范围",
-  "ThirdPartyApplication.subscription.scopeHint": "每个范围分别选择事件，事件源配置与投递配置相互独立。设备实体事件无需额外的事件源参数。",
+  "ThirdPartyApplication.subscription.scopeHint": "勾选类别包含该类别当前可选的全部事件；半选表示已有部分事件。未调整的类别与事件源配置保持不变。",
   "ThirdPartyApplication.subscription.sourceConfiguration": "事件源配置",
   "ThirdPartyApplication.subscription.sourceConfigurationPreserved": "此范围已有事件源配置，修改事件选择时将原样保留。",
   "ThirdPartyApplication.subscription.channelConfiguration": "投递配置",
@@ -2482,5 +2482,9 @@
   "ApiGroupManagement.spec.searchSelected": "搜索已选接口名称、路径或来源服务",
   "ApiGroupManagement.spec.visibleCount": "显示 {visible} / {total} 个接口",
   "ApiGroupManagement.spec.noMatches": "暂无匹配接口",
-  "ApiGroupManagement.spec.remove": "移除"
+  "ApiGroupManagement.spec.remove": "移除",
+  "ThirdPartyApplication.subscription.eventGuide": "查看事件说明",
+  "ThirdPartyApplication.subscription.eventCategories": "事件类别",
+  "ThirdPartyApplication.subscription.signature": "消息签名",
+  "ThirdPartyApplication.subscription.signingHint": "消息使用本应用当前 Client Secret 签名，重置凭据后请同步更新接收端。"
 }

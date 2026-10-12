@@ -7,7 +7,7 @@ import {
   updateSubscription, validateSubscription,
 } from '@authentication-manager-ui/api/application-center/applicationSubscription'
 import type { QueryPayload } from '@authentication-manager-ui/api/application-center/apiApplication'
-import type { ApplicationSubscription, SubscriptionChannel, SubscriptionConfiguration, SubscriptionEvent, SubscriptionValidation } from '@authentication-manager-ui/api/application-center/applicationSubscription'
+import type { ApplicationSubscription, SubscriptionChannel, SubscriptionConfiguration, SubscriptionEventProvider, SubscriptionValidation } from '@authentication-manager-ui/api/application-center/applicationSubscription'
 import { applicationError, responseBody } from './applicationUtils'
 import { subscriptionPayload } from './subscriptionForm'
 
@@ -16,7 +16,7 @@ export const useSubscriptions = () => {
   let disposed = false
   let catalogRequest = 0
   onBeforeUnmount(() => { disposed = true; catalogRequest++ })
-  const events = ref<SubscriptionEvent[]>([])
+  const providers = ref<SubscriptionEventProvider[]>([])
   const channels = ref<SubscriptionChannel[]>([])
   const catalogLoading = ref(false)
   const catalogError = ref('')
@@ -27,15 +27,15 @@ export const useSubscriptions = () => {
   const clearFeedback = () => { operationError.value = ''; validation.value = undefined }
   const loadCatalog = async (applicationId: string) => {
     const current = ++catalogRequest
-    catalogLoading.value = true; catalogError.value = ''; events.value = []; channels.value = []
+    catalogLoading.value = true; catalogError.value = ''; providers.value = []; channels.value = []
     const [eventResponse, channelResponse] = await Promise.allSettled([
       querySubscriptionEvents(applicationId), querySubscriptionChannels(applicationId),
     ])
     if (disposed || current !== catalogRequest) return
     const errors: string[] = []
     if (eventResponse.status === 'fulfilled') {
-      const value = responseBody<SubscriptionEvent[]>(eventResponse.value)
-      if (Array.isArray(value)) events.value = value
+      const value = responseBody<SubscriptionEventProvider[]>(eventResponse.value)
+      if (Array.isArray(value)) providers.value = value
       else errors.push(t('ThirdPartyApplication.subscription.invalidResponse'))
     } else errors.push(applicationError(eventResponse.reason, t))
     if (channelResponse.status === 'fulfilled') {
@@ -88,6 +88,6 @@ export const useSubscriptions = () => {
       return disposed ? undefined : responseBody<ApplicationSubscription>(response)
     } catch (cause) { if (!disposed) operationError.value = applicationError(cause, t) }
   }
-  return { events, channels, catalogLoading, catalogError, listError, operationError, saving, validation,
+  return { providers, channels, catalogLoading, catalogError, listError, operationError, saving, validation,
     clearFeedback, loadCatalog, query, check, save, changeState, remove, detail }
 }

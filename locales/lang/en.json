@@ -1670,8 +1670,8 @@
   "ThirdPartyApplication.credential.reveal": "Reveal secret",
   "ThirdPartyApplication.credential.rotate": "Rotate secret",
   "ThirdPartyApplication.credential.revoke": "Revoke credential",
-  "ThirdPartyApplication.credential.rotateConfirm": "The old secret will stop working immediately. Continue?",
-  "ThirdPartyApplication.credential.revokeConfirm": "This credential will no longer obtain tokens. Continue?",
+  "ThirdPartyApplication.credential.rotateConfirm": "The old secret will stop working immediately. Subsequent subscription messages use the new Client Secret; update your receiver. Continue?",
+  "ThirdPartyApplication.credential.revokeConfirm": "This credential will no longer obtain tokens or sign outgoing subscription messages. Continue?",
   "ThirdPartyApplication.credential.secretNotice": "Save the secret now. It will be hidden when you leave this view.",
   "ThirdPartyApplication.credential.hide": "Hide secret",
   "ThirdPartyApplication.credential.saved": "Credential updated",
@@ -2357,7 +2357,7 @@
   "ThirdPartyApplication.subscription.scopes": "Subscription scopes",
   "ThirdPartyApplication.subscription.scopeIndex": "Subscription scope {index}",
   "ThirdPartyApplication.subscription.addScope": "Add subscription scope",
-  "ThirdPartyApplication.subscription.scopeHint": "Each scope selects events independently. Event source configuration is separate from delivery configuration. Device entity events need no additional source parameters.",
+  "ThirdPartyApplication.subscription.scopeHint": "Selecting a category includes all its currently available events. An indeterminate checkbox indicates a partial selection. Untouched selections and source configuration are preserved.",
   "ThirdPartyApplication.subscription.sourceConfiguration": "Event source configuration",
   "ThirdPartyApplication.subscription.sourceConfigurationPreserved": "This scope has source configuration. It is preserved when you change the selected events.",
   "ThirdPartyApplication.subscription.channelConfiguration": "Delivery configuration",
@@ -2482,5 +2482,9 @@
   "ApiGroupManagement.spec.searchSelected": "Search selected APIs by name, path, or source service",
   "ApiGroupManagement.spec.visibleCount": "Showing {visible} of {total} APIs",
   "ApiGroupManagement.spec.noMatches": "No matching APIs",
-  "ApiGroupManagement.spec.remove": "Remove"
+  "ApiGroupManagement.spec.remove": "Remove",
+  "ThirdPartyApplication.subscription.eventGuide": "View event reference",
+  "ThirdPartyApplication.subscription.eventCategories": "Event categories",
+  "ThirdPartyApplication.subscription.signature": "Message signature",
+  "ThirdPartyApplication.subscription.signingHint": "Messages are signed with this application's current Client Secret. Update your receiver after rotating the credential."
 }

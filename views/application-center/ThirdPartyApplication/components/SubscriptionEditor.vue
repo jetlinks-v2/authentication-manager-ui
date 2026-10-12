@@ -18,20 +18,29 @@
               <strong>{{ $t('ThirdPartyApplication.subscription.scopeIndex', { index: index + 1 }) }}</strong>
               <a-button type="text" danger :disabled="saving" @click="removeScope(index)">{{ $t('ApiApplication.actions.delete') }}</a-button>
             </div>
-            <a-select v-model:value="scope.eventTypes" mode="multiple" show-search allow-clear option-filter-prop="label"
-              :disabled="saving" :options="eventOptions(scope)" class="event-select"
-              :placeholder="$t(events.length ? 'ApiApplication.subscription.selectEvents' : 'ApiApplication.subscription.noEvents')" />
-            <div class="event-previews">
-              <a-button v-for="id in scope.eventTypes" :key="id" type="link" size="small" :disabled="!events.some(item => item.id === id)"
-                @click="preview = events.find(item => item.id === id)">{{ events.find(item => item.id === id)?.name || id }} · {{ $t('ApiApplication.subscription.schema') }}</a-button>
+            <div class="event-groups">
+              <div v-for="group in eventGroups" :key="group.id" class="event-group">
+                <a-checkbox :checked="groupSelection(scope, group).checked" :indeterminate="groupSelection(scope, group).indeterminate"
+                  :disabled="saving || !group.events.length" @change="event => selectEventGroup(scope, group, event.target.checked === true)">
+                  {{ group.name }}
+                </a-checkbox>
+                <p class="field-note">{{ group.events.map(event => event.name).join(' / ') }}</p>
+              </div>
             </div>
+            <a-space v-if="unavailableEvents(scope).length" wrap class="unavailable-events">
+              <a-tag v-for="id in unavailableEvents(scope)" :key="id" color="warning" :closable="!saving"
+                @close="removeUnavailableEvent(scope, id)">{{ id }} · {{ $t('ApiApplication.subscription.unavailable') }}</a-tag>
+            </a-space>
+            <a-button type="link" size="small" :disabled="!providers.length" @click="previewOpen = true">
+              {{ $t('ThirdPartyApplication.subscription.eventGuide') }}
+            </a-button>
             <a-typography-text v-if="Object.keys(scope.configuration).length" type="secondary">
               {{ $t('ThirdPartyApplication.subscription.sourceConfigurationPreserved') }}
             </a-typography-text>
           </div>
           <a-button :disabled="saving" @click="addScope">{{ $t('ThirdPartyApplication.subscription.addScope') }}</a-button>
           <p class="field-note">{{ $t('ThirdPartyApplication.subscription.scopeHint') }}</p>
-          <p v-if="!events.length" class="field-note">{{ $t('ApiApplication.subscription.noEventsHint') }}</p>
+          <p v-if="!providers.length" class="field-note">{{ $t('ApiApplication.subscription.noEventsHint') }}</p>
         </a-form-item>
         <a-form-item :label="$t('ApiApplication.subscription.channel')">
           <a-select :value="form.channelProvider" allow-clear :disabled="saving" :options="channelOptions"
@@ -39,6 +48,7 @@
             @update:value="changeChannel" />
           <div v-if="!channels.length" class="field-note">{{ $t('ApiApplication.subscription.noChannelsHint') }}</div>
         </a-form-item>
+        <p v-if="form.channelProvider === 'http-hook'" class="field-note">{{ $t('ThirdPartyApplication.subscription.signingHint') }}</p>
         <HttpHookFields v-if="form.channelProvider === 'http-hook'" :model-value="http" :disabled="saving"
           @update:model-value="Object.assign(http, $event)" />
         <a-alert v-else-if="form.channelProvider && channelAvailable" type="warning" show-icon class="editor-alert"
@@ -59,23 +69,32 @@
       </div>
     </template>
   </a-drawer>
-  <a-modal :open="!!preview" :title="preview?.name" :footer="null" :width="680" @cancel="preview = undefined">
-    <p>{{ preview?.description }}</p>
-    <a-typography-text type="secondary">{{ preview?.id }} · v{{ preview?.version || '-' }}</a-typography-text>
-    <pre class="event-schema">{{ JSON.stringify(preview?.schema || {}, null, 2) }}</pre>
+  <a-modal v-model:open="previewOpen" :title="$t('ThirdPartyApplication.subscription.eventGuide')" :footer="null" :width="680">
+    <a-tabs>
+      <a-tab-pane v-for="group in eventGroups" :key="group.id" :tab="group.name">
+        <a-empty v-if="!group.events.length" :description="$t('ApiApplication.subscription.noEvents')" />
+        <a-collapse v-else accordion>
+          <a-collapse-panel v-for="event in group.events" :key="event.id" :header="event.name || event.id">
+            <p v-if="event.description">{{ event.description }}</p>
+            <a-typography-text type="secondary">{{ event.id }} · v{{ event.version || '-' }}</a-typography-text>
+            <pre class="event-schema">{{ JSON.stringify(event.schema || {}, null, 2) }}</pre>
+          </a-collapse-panel>
+        </a-collapse>
+      </a-tab-pane>
+    </a-tabs>
   </a-modal>
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { ApplicationSubscription, SubscriptionChannel, SubscriptionConfiguration, SubscriptionEvent, SubscriptionValidation as Validation } from '@authentication-manager-ui/api/application-center/applicationSubscription'
+import type { ApplicationSubscription, SubscriptionChannel, SubscriptionConfiguration, SubscriptionEventProvider, SubscriptionValidation as Validation } from '@authentication-manager-ui/api/application-center/applicationSubscription'
 import { useSubscriptionEditorForm } from '../useSubscriptionEditorForm'
 import HttpHookFields from './HttpHookFields.vue'
 import SubscriptionValidation from './SubscriptionValidation.vue'
 const props = defineProps<{
   open: boolean
   subscription?: ApplicationSubscription
-  events: SubscriptionEvent[]
+  providers: SubscriptionEventProvider[]
   channels: SubscriptionChannel[]
   catalogLoading: boolean
   catalogError: string
@@ -89,13 +108,13 @@ const emit = defineEmits<{
   (event: 'change'): void
 }>()
 const { t: $t } = useI18n()
-const preview = ref<SubscriptionEvent>()
-const { form, http, formError, payload, eventOptions, channelOptions, channelAvailable, addScope, removeScope, changeChannel } =
+const previewOpen = ref(false)
+const { form, http, formError, payload, eventGroups, groupSelection, selectEventGroup, unavailableEvents, removeUnavailableEvent, channelOptions, channelAvailable, addScope, removeScope, changeChannel } =
   useSubscriptionEditorForm(() => props, () => emit('change'))
 </script>
 <style scoped>
 .editor-alert { margin-bottom: 16px; }.scope-card { padding: 12px; border: 1px solid var(--line); border-radius: var(--r-2); margin-bottom: 12px; }
-.scope-head { display: flex; align-items: center; justify-content: space-between; }.event-select { width: 100%; }.event-previews { display: flex; flex-wrap: wrap; gap: 4px; }
+.scope-head { display: flex; align-items: center; justify-content: space-between; }.event-groups { display: grid; gap: var(--space-3); margin: var(--space-3) 0; }.event-group .field-note { margin: 4px 0 0 24px; }.unavailable-events { margin-bottom: var(--space-2); }
 .event-schema { max-height: 360px; overflow: auto; padding: 12px; background: var(--bg); white-space: pre-wrap; word-break: break-word; }
 .field-note, .editor-footer span { color: var(--ink-4); font-size: var(--fs-12); }.editor-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 </style>
