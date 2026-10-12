@@ -1,372 +1,57 @@
 <template>
     <j-page-container>
         <full-page hasPadding>
-            <div style="height: 100%; display: flex;flex-direction: column">
-                <div style="min-height: 0; flex: 1">
-                <j-pro-table
-                    ref="tableRef"
-                    mode="TABLE"
-                    class="pro-table__no-padding"
-                    :columns="columns"
-                    :request="queryAccess"
-                    :defaultParams="{
-                        sorts: [{ name: 'responseTime', order: 'desc' }],
-                    }"
-                    :params="params"
-                >
-                    <template #headerLeftRender>
-                        <div class="log-table-toolbar">
-                            <h2 class="log-table-title">
-                                {{ $t('Log.index.407378-0') }}
-                            </h2>
-                        </div>
-                    </template>
-                    <template #headerRightRender>
-                        <a-flex :gap="16">
-                            <ConditionFilter
-                                class="authentication-system-list-page__filter"
-                                :columns="columns"
-                                target="search-access"
-                                @change="handleSearch"
-                            />
-                        </a-flex>
-                    </template>
-                    <template #requestTime="slotProps">
-                    {{
-                        dayjs(slotProps.requestTime).format('YYYY-MM-DD HH:mm:ss')
-                    }}
-                    </template>
-                    <template #description="slotProps">
-                    {{ slotProps.action }}
-                    </template>
-                    <template #responseTime="slotProps">
-                    <a-tag color="purple">
-                        {{ slotProps.responseTime - slotProps.requestTime }} ms
-                    </a-tag>
-                    </template>
-                    <template #responseStatus="slotProps">
-                    <a-tag :color="getResponseStatusColor(slotProps.responseStatus)">
-                        {{ slotProps.responseStatus ?? '-' }}
-                    </a-tag>
-                    </template>
-                    <template #username="slotProps">
-
-                    <!-- <j-tag color="geekblue"> -->
-                    <div class="userName">
-                        <j-ellipsis style="max-width: 6.25rem;">
-                        {{ slotProps.context.username }}
-                        </j-ellipsis>
-                        <!-- </j-tag> -->
-                    </div>
-                    </template>
-                    <template #action="slotProps">
-                    <a-space :size="16">
-                        <template
-                            v-for="i in getActions(slotProps)"
-                            :key="i.key"
-                        >
-                        <j-permission-button
-                            :tooltip="{
-                                            ...i.tooltip,
-                                        }"
-                            @click="i.onClick"
-                            type="link"
-                            style="padding: 0 0.3125rem"
-                        >
-                            <template #icon
-                            ><AIcon :type="i.icon"
-                            /></template>
-                        </j-permission-button>
-                        </template>
-                    </a-space>
-                    </template>
-                </j-pro-table>
-                </div>
-            </div>
-            <a-modal :width="1100" v-model:open="visible" :title="$t('Access.index.480752-0')">
-                <a-descriptions :labelStyle="{width: '12.5rem'}" :data="descriptionsData" title="" bordered :column="2">
-                    <a-descriptions-item label="URL">
-                        {{ descriptionsData?.url }}
-                    </a-descriptions-item>
-                    <a-descriptions-item :label="$t('Access.index.480752-1')">
-                        {{ descriptionsData?.httpMethod }}
-                    </a-descriptions-item>
-                    <a-descriptions-item :label="$t('Access.index.480752-2')">
-                        {{ descriptionsData?.action }}
-                    </a-descriptions-item>
-                    <a-descriptions-item :label="$t('Access.index.480752-3')">
-                        {{ descriptionsData?.target }}
-                    </a-descriptions-item>
-                    <a-descriptions-item :label="$t('Access.index.480752-4')">
-                        {{ descriptionsData?.method }}
-                    </a-descriptions-item>
-                    <a-descriptions-item label="IP">
-                        {{ descriptionsData?.ip }}
-                    </a-descriptions-item>
-                    <a-descriptions-item :label="$t('Access.index.480752-5')">
-                        {{
-                        dayjs(descriptionsData?.requestTime).format(
-                                'YYYY-MM-DD HH:mm:ss',
-                            )
-                        }}
-                    </a-descriptions-item>
-                    <a-descriptions-item :label="$t('Access.index.480752-6')">
-                        {{
-                            descriptionsData?.responseTime -
-                            descriptionsData?.requestTime +
-                            'ms'
-                        }}
-                    </a-descriptions-item>
-                    <a-descriptions-item :label="$t('Access.index.responseStatus')">
-                        {{ descriptionsData?.responseStatus ?? '-' }}
-                    </a-descriptions-item>
-                    <a-descriptions-item :label="$t('Access.index.480752-7')" :span="2">
-                        {{ descriptionsData?.httpHeaders }}
-                    </a-descriptions-item>
-                    <a-descriptions-item :label="$t('Access.index.480752-8')" :span="2">
-                        {{ descriptionsData?.parameters }}
-                    </a-descriptions-item>
-                    <a-descriptions-item :label="$t('Access.index.480752-9')" :span="2">
-                        {{ descriptionsData.exception }}
-                    </a-descriptions-item>
-                </a-descriptions>
-                <template #footer>
-                    <a-button type="primary" @click="handleOk">{{ $t('Access.index.480752-10') }}</a-button>
+            <div class="access-log-layout">
+            <j-pro-table
+                mode="TABLE" class="pro-table__no-padding access-log-table"
+                :columns="columns" :request="queryAccess" :defaultParams="defaultParams" :params="params"
+                :custom-row="customRow" :row-class-name="rowClassName" :scroll="{ x: 960 }"
+            >
+                <template #headerLeftRender>
+                    <h2 class="log-table-title">{{ $t('Log.index.407378-0') }}</h2>
                 </template>
-            </a-modal>
+                <template #headerRightRender>
+                    <ConditionFilter
+                        v-model="filterTerms"
+                        class="authentication-system-list-page__filter" :columns="columns"
+                        target="search-access" @change="handleSearch"
+                    />
+                </template>
+                <template #source="record">
+                    <AccessLogCell :record="record" kind="source" />
+                </template>
+                <template #request="record">
+                    <AccessLogCell :record="record" kind="request" @view="handleRecordClick(record, $event)" @search="searchSameValue" />
+                </template>
+                <template #operation="record">
+                    <AccessLogCell :record="record" kind="operation" />
+                </template>
+            </j-pro-table>
+            </div>
+            <AccessLogDetail v-model:open="open" :record="selected" @search="searchSameValue" />
         </full-page>
     </j-page-container>
 </template>
 <script lang="ts" setup name="AccessLog">
-import type { ActionsType } from '../typings';
-import type { ConditionFilterChangePayload } from '@jetlinks-web-core/components/ConditionFilter';
-import { queryAccess } from '@authentication-manager-ui/api/log';
-import dayjs from 'dayjs';
 import { useI18n } from 'vue-i18n';
-import PageHeader from '@jetlinks-web-core/components/PageHeader';
-
+import { queryAccess } from '@authentication-manager-ui/api/log';
+import { useAccessLog } from './useAccessLog';
+import AccessLogCell from './components/AccessLogCell.vue';
+import AccessLogDetail from './components/AccessLogDetail.vue';
 const { t: $t } = useI18n();
-const tableRef = ref<Record<string, any>>({});
-const params = ref<Record<string, any>>({});
-const responseStatusOptions = [200, 400, 401, 403, 404, 500, 502, 503].map((code) => ({
-    label: String(code),
-    value: code,
-}));
-
-const columns = [
-    {
-        title: 'IP',
-        dataIndex: 'ip',
-        key: 'ip',
-        search: {
-            type: 'string',
-        },
-        scopedSlots: true,
-        width: 150,
-        fixed: 'left',
-    },
-    {
-        title: $t('Access.index.480752-11'),
-        dataIndex: 'url',
-        key: 'url',
-        search: {
-            type: 'string',
-        },
-        ellipsis: true,
-    },
-    {
-        title: $t('Access.index.480752-12'),
-        dataIndex: 'description',
-        key: 'description',
-        scopedSlots: true,
-        search: {
-            type: 'string',
-            rename: 'action',
-        },
-        ellipsis: true,
-    },
-    {
-        title: $t('Access.index.480752-1'),
-        dataIndex: 'httpMethod',
-        key: 'httpMethod',
-        search: {
-            type: 'select',
-            options: [
-                {
-                    label: 'POST',
-                    value: 'POST',
-                },
-                {
-                    label: 'GET',
-                    value: 'GET',
-                },
-                {
-                    label: 'PATCH',
-                    value: 'PATCH',
-                },
-                {
-                    label: 'DELETE',
-                    value: 'DELETE',
-                },
-                {
-                    label: 'PUT',
-                    value: 'PUT',
-                },
-            ],
-        },
-        scopedSlots: true,
-        width: 100,
-    },
-    {
-        title: $t('Access.index.responseStatus'),
-        dataIndex: 'responseStatus',
-        key: 'responseStatus',
-        search: {
-            type: 'select',
-            options: responseStatusOptions,
-        },
-        scopedSlots: true,
-        width: 120,
-    },
-    {
-        title: $t('Access.index.480752-5'),
-        dataIndex: 'requestTime',
-        key: 'requestTime',
-        scopedSlots: true,
-        search: {
-            type: 'date',
-        },
-        width: 200,
-    },
-    {
-        title: $t('Access.index.480752-6'),
-        dataIndex: 'responseTime',
-        key: 'responseTime',
-        scopedSlots: true,
-        width: 100,
-    },
-    {
-        title: $t('Access.index.480752-13'),
-        dataIndex: 'username',
-        key: 'username',
-        search: {
-            type: 'string',
-            rename: 'context.username',
-            handleTerms: (term) => ({
-                ...term,
-                column: 'context',
-                termType: 'json_value',
-                value: {
-                    path: 'username',
-                    termType: term.termType,
-                    value: term.value,
-                },
-            }),
-        },
-        width: 150,
-        scopedSlots: true,
-    },
-    {
-        title: $t('Access.index.480752-14'),
-        key: 'action',
-        fixed: 'right',
-        width: 100,
-        scopedSlots: true,
-    },
-];
-
-const descriptionsData = ref<any>({
-    url: '',
-    httpMethod: '',
-    action: '',
-    target: '',
-    method: '',
-    responseStatus: 0,
-    ip: '',
-    requestTime: 0,
-    responseTime: 0,
-    httpHeaders: '',
-    parameters: '',
-    exception: '',
-});
-const visible = ref<boolean>(false);
-
-const handleOk = (e: MouseEvent) => {
-    visible.value = false;
-};
-
-const getActions = (data: Partial<Record<string, any>>): ActionsType[] => {
-    if (!data) {
-        return [];
-    }
-    return [
-        {
-            key: 'eye',
-            text: $t('Access.index.480752-15'),
-            tooltip: {
-                title: $t('Access.index.480752-15'),
-            },
-            icon: 'EyeOutlined',
-            onClick: () => {
-                descriptionsData.value = data;
-                visible.value = true;
-            },
-        },
-    ];
-};
-
-const getResponseStatusColor = (status?: number) => {
-    if (!status) {
-        return 'default';
-    }
-    if (status >= 500) {
-        return 'error';
-    }
-    if (status >= 400) {
-        return 'warning';
-    }
-    if (status >= 300) {
-        return 'processing';
-    }
-    return 'success';
-};
-
-/**
- * 搜索
- */
-const handleSearch = ({ filter }: ConditionFilterChangePayload) => {
-    params.value = filter;
-};
+const { columns, params, defaultParams, filterTerms, open, selected, handleRecordClick,
+    customRow, rowClassName, handleSearch, searchSameValue } = useAccessLog();
 </script>
-<style scoped lang="less">
-.userName{
-    color: #1677FF;
-    background: #f0f5ff;
-    list-style: none;
-    font-feature-settings: 'tnum';
-    display: inline-block;
-    height: auto;
-    margin-right: 0.5rem;
-    padding: 0 0.4375rem;
-    font-size: var(--fs-12);
-    line-height: 1.25rem;
-    border: 1px solid #d9d9d9;
-    border-radius: 0.125rem;
-    opacity: 1;
-}
-.log-table-toolbar {
-    display: flex;
-    flex: 1;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 16px;
-}
+<style scoped>
+.access-log-layout { height: 100%; min-height: 0; display: flex; flex-direction: column; }
+.access-log-table { flex: 1; min-height: 0; }
 .log-table-title {
     margin: 0;
-    color: rgba(0, 0, 0, 0.85);
+    color: var(--ink-1);
     font-size: var(--fs-18);
     font-weight: 600;
-    line-height: 32px;
+    line-height: 2rem;
     white-space: nowrap;
 }
+.access-log-table :deep(.access-log-row) { cursor: pointer; }
 </style>

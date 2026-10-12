@@ -1,288 +1,43 @@
 <template>
     <j-page-container>
-
         <full-page hasPadding>
-            <div style="height: 100%; display: flex;flex-direction: column">
-                <div style="min-height: 0; flex: 1">
+            <div class="system-log-layout">
                 <j-pro-table
-                    ref="tableRef"
-                    mode="TABLE"
-                    class="pro-table__no-padding"
-                    :columns="columns"
-                    :request="querySystem"
-                    :defaultParams="{
-                        sorts: [{ name: 'createTime', order: 'desc' }],
-                    }"
-                    :params="params"
+                    mode="TABLE" class="pro-table__no-padding system-log-table"
+                    :columns="columns" :request="querySystem" :defaultParams="defaultParams" :params="params"
+                    :custom-row="customRow" :row-class-name="rowClassName" :scroll="{ x: 880 }"
                 >
                     <template #headerLeftRender>
-                        <div class="log-table-toolbar">
-                            <h2 class="log-table-title">
-                                {{ $t('Log.index.407378-1') }}
-                            </h2>
-                        </div>
+                        <h2 class="log-table-title">{{ $t('Log.index.407378-1') }}</h2>
                     </template>
                     <template #headerRightRender>
-                        <a-flex :gap="16">
-                            <ConditionFilter
-                                class="authentication-system-list-page__filter"
-                                :columns="columns"
-                                target="search-system"
-                                @change="handleSearch"
-                            />
-                        </a-flex>
+                        <ConditionFilter
+                            class="authentication-system-list-page__filter" :columns="columns"
+                            target="search-system" @change="handleSearch"
+                        />
                     </template>
-                    <template #level="slotProps">
-                    <a-tag
-                        :color="
-                                slotProps.level === 'WARN'
-                                    ? 'orange'
-                                    : slotProps.level === 'ERROR'
-                                    ? 'red'
-                                    : slotProps.level === 'DEBUG'
-                                    ? 'blue'
-                                    : 'green'
-                            "
-                    >
-                        {{ slotProps.level }}
-                    </a-tag>
-                    </template>
-                    <template #createTime="slotProps">
-                    {{ dayjs(slotProps.createTime).format('YYYY-MM-DD HH:mm:ss') }}
-                    </template>
-                    <template #server="slotProps">
-                    {{ slotProps.context.server }}
-                    </template>
-
-                    <template #action="slotProps">
-                    <a-space :size="16">
-                        <template
-                            v-for="i in getActions(slotProps)"
-                            :key="i.key"
-                        >
-                        <j-permission-button
-                            :tooltip="{
-                                            ...i.tooltip,
-                                        }"
-                            @click="i.onClick"
-                            type="link"
-                            style="padding: 0 0.3125rem"
-                        >
-                            <template #icon
-                            ><AIcon :type="i.icon"
-                            /></template>
-                        </j-permission-button>
-                        </template>
-                    </a-space>
-                    </template>
+                    <template #time="record"><SystemLogCell :record="record" kind="time" /></template>
+                    <template #log="record"><SystemLogCell :record="record" kind="log" @view="handleRecordClick(record, $event)" /></template>
+                    <template #source="record"><SystemLogCell :record="record" kind="source" /></template>
                 </j-pro-table>
-                </div>
             </div>
-            <a-modal :width="1100" v-model:open="visible" :title="$t('System.index.112006-0')">
-                <div>
-                    <span class="mr-10">[{{ descriptionsData?.threadName }}]</span>
-                    <span class="mr-10">{{
-                        dayjs(descriptionsData?.createTime).format(
-                            'YYYY-MM-DD HH:mm:ss',
-                        )
-                    }}</span>
-                    <span>{{ descriptionsData?.className }}</span>
-                </div>
-                <div class="mb-10">
-                    <a-tag
-                        :color="
-                            descriptionsData?.level === 'WARN'
-                                ? 'orange'
-                                : descriptionsData?.level === 'ERROR'
-                                ? 'red'
-                                : descriptionsData?.level === 'DEBUG'
-                                ? 'blue'
-                                : 'green'
-                        "
-                    >
-                        {{ descriptionsData?.level }}
-                    </a-tag>
-                    <span>{{ descriptionsData?.message }}</span>
-                </div>
-            <div class="warn-content">
-                {{ descriptionsData.exceptionStack }}
-            </div>
-                <template #footer>
-                    <a-button type="primary" @click="handleOk">{{ $t('System.index.112006-1') }}</a-button>
-                </template>
-            </a-modal>
+            <SystemLogDetail v-model:open="open" :record="selected" />
         </full-page>
     </j-page-container>
 </template>
 <script lang="ts" setup name="SystemLog">
-import type { ActionsType } from '../typings';
-import type { SystemLogItem } from '../typings';
-import type { ConditionFilterChangePayload } from '@jetlinks-web-core/components/ConditionFilter';
-import { querySystem } from '@authentication-manager-ui/api/log';
-import dayjs from 'dayjs';
 import { useI18n } from 'vue-i18n';
-import PageHeader from '@jetlinks-web-core/components/PageHeader';
-
+import { querySystem } from '@authentication-manager-ui/api/log';
+import { useSystemLog } from './useSystemLog';
+import SystemLogCell from './components/SystemLogCell.vue';
+import SystemLogDetail from './components/SystemLogDetail.vue';
 const { t: $t } = useI18n();
-
-const tableRef = ref<Record<string, any>>({});
-const params = ref<Record<string, any>>({});
-
-const columns = [
-    {
-        title: $t('System.index.112006-2'),
-        dataIndex: 'name',
-        key: 'name',
-        search: {
-            type: 'string',
-        },
-        scopedSlots: true,
-        width: 400,
-        fixed: 'left',
-        ellipsis: true,
-    },
-    {
-        title: $t('System.index.112006-3'),
-        dataIndex: 'level',
-        key: 'level',
-        search: {
-            type: 'select',
-            options: [
-                {
-                    label: 'ERROR',
-                    value: 'ERROR',
-                },
-                {
-                    label: 'INFO',
-                    value: 'INFO',
-                },
-                {
-                    label: 'DEBUG',
-                    value: 'DEBUG',
-                },
-                {
-                    label: 'WARN',
-                    value: 'WARN',
-                },
-            ],
-        },
-        scopedSlots: true,
-        width: 100,
-    },
-    {
-        title: $t('System.index.112006-4'),
-        dataIndex: 'message',
-        key: 'message',
-        search: {
-            type: 'string',
-        },
-        scopedSlots: true,
-        ellipsis: true,
-    },
-    {
-        title: $t('System.index.112006-5'),
-        dataIndex: 'server',
-        key: 'server',
-        scopedSlots: true,
-        search: {
-            type: 'string',
-            rename: 'context.server',
-        },
-        width: 200,
-        ellipsis: true,
-    },
-    {
-        title: $t('System.index.112006-6'),
-        dataIndex: 'createTime',
-        key: 'createTime',
-        search: {
-            type: 'date',
-        },
-        scopedSlots: true,
-        width: 200,
-    },
-    {
-        title: $t('System.index.112006-7'),
-        key: 'action',
-        fixed: 'right',
-        width: 100,
-        scopedSlots: true,
-    },
-];
-
-const descriptionsData = ref<SystemLogItem>({
-    id: '',
-    threadName: '',
-    createTime: 0,
-    className: '',
-    level: '',
-    message: '',
-    exceptionStack: '',
-    context: '',
-    lineNumber: 0,
-    methodName: '',
-    name: '',
-    threadId: '',
-});
-const visible = ref<boolean>(false);
-
-const handleOk = (e: MouseEvent) => {
-    visible.value = false;
-};
-
-const getActions = (data: Partial<Record<string, any>>): ActionsType[] => {
-    if (!data) {
-        return [];
-    }
-    return [
-        {
-            key: 'eye',
-            text: $t('System.index.112006-8'),
-            tooltip: {
-                title: $t('System.index.112006-8'),
-            },
-            icon: 'EyeOutlined',
-            onClick: () => {
-                descriptionsData.value = data;
-                visible.value = true;
-            },
-        },
-    ];
-};
-
-/**
- * 搜索
- */
-const handleSearch = ({ filter }: ConditionFilterChangePayload) => {
-    params.value = filter;
-};
+const { columns, params, defaultParams, open, selected, handleRecordClick,
+    customRow, rowClassName, handleSearch } = useSystemLog();
 </script>
-
-<style scoped lang="less">
-.mr-10 {
-    margin-right: 0.625rem;
-}
-.mb-10 {
-    margin-bottom: 0.625rem;
-}
-.warn-content {
-  border: 1px solid #d9d9d9;
-  padding: 0.75rem;
-  border-radius: 0.125rem;
-}
-.log-table-toolbar {
-  display: flex;
-  flex: 1;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 16px;
-}
-.log-table-title {
-  margin: 0;
-  color: rgba(0, 0, 0, 0.85);
-  font-size: var(--fs-18);
-  font-weight: 600;
-  line-height: 32px;
-  white-space: nowrap;
-}
+<style scoped>
+.system-log-layout { height: 100%; min-height: 0; display: flex; flex-direction: column; }
+.system-log-table { flex: 1; min-height: 0; }
+.log-table-title { margin: 0; color: var(--ink-1); font-size: var(--fs-18); font-weight: 600; line-height: 2rem; white-space: nowrap; }
+.system-log-table :deep(.system-log-row) { cursor: pointer; }
 </style>

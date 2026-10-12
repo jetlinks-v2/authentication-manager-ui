@@ -3,26 +3,31 @@ import type { TooltipProps } from 'ant-design-vue';
 import type { PopconfirmProps } from 'ant-design-vue/es/popconfirm';
 export type AccessLogItem = {
   id: string;
-  context: any;
+  context: Record<string, unknown>;
   describe: string;
   exception: string;
-  httpHeaders: any;
+  httpHeaders: Record<string, unknown>;
   httpMethod: string;
   responseStatus: number;
   ip: string;
   method: string;
-  parameters: any;
+  parameters: unknown;
   requestTime: number;
   responseTime: number;
   target: string;
   url: string;
   action: string;
+  timestamp?: number;
+  traceId?: string;
+  spanId?: string;
+  creatorId?: string;
+  ipRegion?: string;
 };
 
 export type SystemLogItem = {
   id: string;
   className: string;
-  context: any;
+  context: Record<string, unknown>;
   createTime: number;
   exceptionStack: string;
   level: string;
@@ -32,6 +37,9 @@ export type SystemLogItem = {
   name: string;
   threadId: string;
   threadName: string;
+  timestamp?: number;
+  traceId?: string;
+  spanId?: string;
 };
 
 export interface ActionsType {
