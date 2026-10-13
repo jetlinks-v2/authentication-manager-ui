@@ -412,7 +412,7 @@ Verification result:
 - `views/application-center/ProjectApplication/Detail/useApplicationCallbackConnection.ts` 隔离迟到响应、限制 dirty 配置测试、分阶段展示结果，并在认证地址/客户端标识变化且沿用密钥时确认。
 - `views/application-center/ProjectApplication/Detail/useApplicationCallbackOperations.ts` 使用现有应用菜单 save 映射的按钮权限；实例 read/save 资产权限仍由各专用接口强制校验。对账仅提示已受理；重投传当前行原始 attempt，false 不提示成功或自动再投，true 后刷新任务和记录。
 - 源码检查：中英文 JSON 可解析，新增 97 组文案键成对，固定引用和本次新增相对导入无缺失；本次触及的 8 个 Vue 文件均不超过 300 行（最大为 ApplicationSettings.vue 的 279 行）。git diff --check 通过。未执行 lint、类型检查、构建、测试、浏览器或任何服务操作；仍需现有环境人工验证两类创建、配置保留、密钥语义、权限、连接测试、对账、死信重投和实例切换。
-- 交付：仍在既有 PR #104 的分支继续；本次不改 PR 标题/正文、不回复或合并 PR。实现 commit 在提交后补入本节。
+- 交付：实现提交 `b2619d4c6371d982fbf2a14de5d8d3fb139ffe4c`；继续使用分支 `codex/third-party-api-group-20261009` 和 [PR #104](https://github.com/jetlinks-v2/authentication-manager-ui/pull/104)。本次不改 PR 标题/正文、不回复或合并 PR；仅同步已有 README，未新增开发文档。
 
 ### Video Gateway Binding Interaction Plan
 
