@@ -353,6 +353,67 @@ Verification result:
 - The programmatic Vite production build for `authentication-manager-ui` passes with 9938 transformed modules. The legacy CLI wrapper still fails before compilation because Vite 7 rejects the forwarded `--module-name` option; the documented programmatic entry avoids that existing tooling incompatibility.
 - Full workspace `vue-tsc` remains nonzero on existing shared-core diagnostics, while a focused diagnostic scan reports no error in the touched ProjectApplication or business-application API paths. `git diff --check` passes for the touched files.
 
+### 应用管理类型分流与第三方实例配置计划
+
+状态：用户已确认类型分流方案；前端实现完成，已完成源码、引用、国际化与差异检查，页面和接口联调待人工验收。
+
+目标：优化同一个“应用管理”模块，显式选择“业务应用 / 第三方应用”。原业务应用沿用既有创建与配置流程；第三方应用的创建和详情维护采用新的实例出站认证与回调配置逻辑，而不是只给原详情追加几个 Tab。
+
+契约来源：`D:/Project-all/idea/jetlinks/cloud/jetlinks-ultimate/modules/authentication-manager/docs/guides/第三方应用出站认证与实例回调前端开发文档.md`。第三方实例仍关联 `provider=third-party` 的模板，连接配置保存于实例 `configuration.callback`；不新增后端应用类型字段，不建立另一套应用或无模板创建接口。
+
+真实落点：本次 owning module 为 `runtime-ui/modules/authentication-manager-ui`；统一入口、创建和详情分别为 `views/application-center/ProjectApplication/index.vue`、`Create/index.vue`、`Detail/index.vue`，共用 `/business-application`。现有“开放平台”入口 `ThirdPartyApplication/Direct` 使用 `/api-application`，不承载本次逻辑。沿用当前分支 `codex/third-party-api-group-20261009`；远端 `refs/pull/104/head` 与本次起始 HEAD `6a44878` 一致。
+
+#### 推荐交互方案：统一应用入口，按类型分流创建与对象详情配置
+
+业务任务：管理员在同一模块创建、维护平台业务应用或外部第三方应用；创建时明确选类型，详情按真实模板 provider 加载对应配置，不能让两类应用互用配置字段。
+
+```text
+应用管理（原入口与列表保持）
+└ 新增应用
+  ├ 类型：[业务应用] [第三方应用]
+  ├ 共用：图标 / 名称 / 描述 / 对应类型的模板
+  ├ 业务应用：原创建与运行时配置流程
+  └ 第三方应用：新的连接与 OAuth2 配置（实例回调按契约可选）
+应用详情（保留共用身份摘要、成员与角色管理）
+├ 业务应用：原设置与管理功能
+└ 第三方应用：第三方配置 / 公开快照 / 回调运维
+                             └ 成员 / 角色（只读分页）
+                                           └ 任务 / 投递记录
+```
+
+- 类型选择放在现有创建入口，按 provider 筛选对应模板；切换类型清除不适用的模板及第三方配置草稿，不丢失共用基本信息。详情类型从已加载模板判断，沿用当前模板不可变的后端契约，不新增类型迁移功能。
+- 业务应用不出现 OAuth2、回调测试、公开快照或回调运维；第三方配置由共用基础信息与独立连接区域组成，不复制业务应用的运行时专属设置。
+- 密度：一个区域一个主要内容锚点；连接字段按地址、认证分区，每分区不超过八个字段；任务与记录显示关键状态、事件 ID、次数和时间，不增加统计卡、首屏说明横幅或重复摘要。
+- 编辑梯度：第三方连接在创建/详情中使用同一局部表单能力；详情按分区编辑保存，移除连接、对账和重投使用确认提示，不新增全字段编辑弹窗。
+- 核心组件：复用现有创建容器、模板选择器、`FullPage`、Ant Design Vue Radio/Tabs/Form/Input/Select/Table、模块权限按钮、状态徽标、空态和请求封装，实际使用前核验本地契约。API 放在 `api/application-center`，状态及编排放在局部 composable/service，展示组件不直接请求接口。
+- 筛选：快照和回调查询仅使用各自公开白名单字段，优先核验并复用 `ConditionFilter`，不新增 registrationId 编辑入口。
+- 状态锚点：应用类型、连接与密钥配置状态、测试 token/callback 分阶段结果、任务五态；不以裸文字或单侧彩色边线替代状态识别。
+- 不借鉴：开放平台 API 应用凭据、模板 HMAC 订阅、其他前端同名页面及后台统计套壳。独立第三方应用菜单和另建配置向导会割裂统一入口，不采用；不重构公共组件或无关详情布局。
+
+#### 实施步骤与边界
+
+1. 在现有创建入口增加类型选择，复用模板 provider 和选择器完成分流；保持业务应用提交结构。第三方创建使用同一个 `/business-application` 接口，以对应模板创建，可携带合法 `configuration.callback`，不提交前端类型草稿字段。
+2. 增加类型化回调 API、认证目录、成员/角色公开快照，以及测试、对账、任务、记录和重投请求。沿用公共客户端真实响应包装；连接测试只设置局部至少 65 秒超时，不修改全局配置。
+3. 实现创建和详情复用的第三方连接表单。密钥仅在临时输入中保存；首次配置回调必须提供密钥，修改时留空保持同类型旧密钥。详情保存前读取最新完整 configuration，仅替换 callback，以 PATCH 实体数组保存；移除连接保留其他配置，确认清除密钥、取消未完成任务，不伪造 callback.enabled。
+4. 详情按类型装载配置区域：业务应用保留原逻辑；第三方接入新配置、公开快照与回调运维，同时保留成员绑定和角色/授权能力。dirty 草稿不直接测试；切换实例时清空密钥和结果并隔离迟到响应；对账成功只提示“已受理”，dead 重投传当前行原始 attempt，false 提示刷新，不自动再投。
+5. 补齐中英文文案、权限、加载/错误/空态，检查所有本模块配置保存入口不会丢失 callback 等其他字段；完成源码与差异检查后按中文 Conventional Commit 提交至现有 PR 分支。
+
+不做：修改 `ui/`、后端、模板通知/HMAC、公共组件/配置、菜单路由；新增模块依赖；独立应用体系、旧/新第三方配置双轨兼容或类型迁移；浏览器直连第三方、自动刷新 token、轮询、重试或兜底；提交聚合仓库及 runtime-ui 根目录既有改动；新建 PR、强推、自动回复或合并 PR。
+
+已确认范围与风险：类型选择位于创建流程，按模板 provider 分流，第三方创建可配置实例连接。后端仍需部署实例回调接口并满足 application.api、Key Ring、模板/实例启用条件；记录查询依赖时序服务，接口不存在或服务错误不能当作空数据。发现需改公共契约时另行确认。
+
+验证方式：仅检查相关源码、引用、接口字段、国际化 JSON 和 `git diff --check`；不自动运行 lint、类型检查、构建、测试、浏览器或服务操作。两种类型的创建与切换、原业务应用回归、密钥保存、连接测试、真实回调、权限与实例切换由用户在现有环境人工验收。未运行编译或类型检查，因此不宣称 Vue/TypeScript 编译通过；实现结果只回填本节，不新建任务文档。
+
+#### 实施结果与验证
+
+- 创建入口已增加业务/第三方选择和模板过滤；第三方只提交自身 callback 配置，不注入业务应用的布局、域名、时区和语言默认字段。业务应用仍使用原运行时配置模型。详情首个 Tab 对第三方显示“第三方配置”，保留共用基本信息，新增连接区域；另外提供公开快照和回调运维 Tab。
+- 共用表单位于 `views/application-center/ProjectApplication/components/ApplicationConnectionForm.vue`；草稿和认证目录由 `views/application-center/ProjectApplication/useApplicationConnectionForm.ts` 管理。连接保存前读取最新完整 configuration，第三方基本信息与启停不提交 configuration，避免与独立连接保存互相覆盖。创建和修改后重新读取脱敏详情，密钥输入清空，留空不提交密钥。
+- `api/application-center/businessApplicationCallback.ts` 封装实例接口、PATCH 实体数组及测试局部 65 秒超时；快照、任务和记录使用服务端分页、公开字段和毫秒时间显示。角色状态按真实字符串显示，不假定固定枚举。不存在 callback.enabled、事件正文/认证头展示、自动轮询或自动重投。
+- `views/application-center/ProjectApplication/Detail/useApplicationCallbackConnection.ts` 隔离迟到响应、限制 dirty 配置测试、分阶段展示结果，并在认证地址/客户端标识变化且沿用密钥时确认。
+- `views/application-center/ProjectApplication/Detail/useApplicationCallbackOperations.ts` 使用现有应用菜单 save 映射的按钮权限；实例 read/save 资产权限仍由各专用接口强制校验。对账仅提示已受理；重投传当前行原始 attempt，false 不提示成功或自动再投，true 后刷新任务和记录。
+- 源码检查：中英文 JSON 可解析，新增 97 组文案键成对，固定引用和本次新增相对导入无缺失；本次触及的 8 个 Vue 文件均不超过 300 行（最大为 ApplicationSettings.vue 的 279 行）。git diff --check 通过。未执行 lint、类型检查、构建、测试、浏览器或任何服务操作；仍需现有环境人工验证两类创建、配置保留、密钥语义、权限、连接测试、对账、死信重投和实例切换。
+- 交付：仍在既有 PR #104 的分支继续；本次不改 PR 标题/正文、不回复或合并 PR。实现 commit 在提交后补入本节。
+
 ### Video Gateway Binding Interaction Plan
 
 Status: multi-gateway selection implemented and statically verified. Build and `tsc` were skipped by request.

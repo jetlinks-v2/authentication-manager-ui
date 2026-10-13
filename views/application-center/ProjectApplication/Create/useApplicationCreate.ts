@@ -4,7 +4,8 @@ import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { useProjectApplication } from '../useProjectApplication'
-import type { ProjectApplication, ProjectApplicationDraft } from '../types'
+import type { ApplicationKind, ProjectApplication, ProjectApplicationDraft } from '../types'
+import { useApplicationConnectionForm } from '../useApplicationConnectionForm'
 
 interface ApplicationCreateOptions {
   open: () => boolean
@@ -22,6 +23,7 @@ export const useApplicationCreate = (options: ApplicationCreateOptions) => {
   const submitting = ref(false)
   const templatesLoading = ref(false)
   const form = reactive<ProjectApplicationDraft>({ name: '', description: '', templateId: '' })
+  const applicationKind = ref<ApplicationKind>('business')
   const iconTypes = ['image/jpeg', 'image/png']
   const iconUploadBorderStyle = {
     border: '1px dashed var(--line-strong)',
@@ -42,9 +44,22 @@ export const useApplicationCreate = (options: ApplicationCreateOptions) => {
     },
   })
 
+  const connection = useApplicationConnectionForm(
+    () => dialogOpen.value && applicationKind.value === 'third-party',
+    () => true,
+  )
+  const visibleTemplates = computed(() => store.templates.filter(item =>
+    applicationKind.value === 'third-party' ? item.provider === 'third-party' : item.provider !== 'third-party',
+  ))
+  watch(applicationKind, () => {
+    form.templateId = ''
+    connection.reset()
+    formRef.value?.clearValidate('templateId')
+  })
   const canSubmit = computed(() => {
-    const template = store.templates.find(item => item.id === form.templateId)
-    return !!form.name.trim() && !!template && !template.disabled
+    const template = visibleTemplates.value.find(item => item.id === form.templateId)
+    const connectionReady = !connection.draft.enabled || (!connection.loading.value && connection.supported.value && !connection.error.value)
+    return !!form.name.trim() && !!template && !template.disabled && connectionReady
   })
 
   const rules = computed(() => ({
@@ -57,6 +72,8 @@ export const useApplicationCreate = (options: ApplicationCreateOptions) => {
 
   /** 每次打开弹窗时重置草稿和校验结果。 */
   const resetForm = async () => {
+    applicationKind.value = 'business'
+    connection.reset()
     form.name = ''
     form.description = ''
     form.templateId = ''
@@ -78,7 +95,7 @@ export const useApplicationCreate = (options: ApplicationCreateOptions) => {
   }
 
   watch(dialogOpen, open => {
-    if (!open) return
+    if (!open) { connection.reset(); return }
     void resetForm()
     void loadTemplates()
   }, { immediate: true })
@@ -97,13 +114,16 @@ export const useApplicationCreate = (options: ApplicationCreateOptions) => {
       return
     }
 
+    if (applicationKind.value === 'third-party' && !connection.validate()) return
     submitting.value = true
     try {
       const application = await store.createApplication({
         ...form,
         name: form.name.trim(),
         description: form.description.trim(),
+        callback: applicationKind.value === 'third-party' ? connection.payload() : undefined,
       })
+      connection.clearSecret()
       onlyMessage($t('ProjectApplication.create.success', { name: application.name }))
       options.onCreated(application)
       if (options.embedded()) dialogOpen.value = false
@@ -115,6 +135,9 @@ export const useApplicationCreate = (options: ApplicationCreateOptions) => {
 
   return {
     store,
+    applicationKind,
+    visibleTemplates,
+    connection,
     formRef,
     submitting,
     templatesLoading,

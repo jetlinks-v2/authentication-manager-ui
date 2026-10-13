@@ -14,6 +14,12 @@
     @cancel="closeDialog"
   >
     <a-form ref="formRef" :model="form" :rules="rules" layout="vertical">
+      <a-form-item :label="$t('ApplicationConnection.applicationKind')">
+        <a-radio-group v-model:value="applicationKind" button-style="solid" :disabled="submitting">
+          <a-radio-button value="business">{{ $t('ApplicationConnection.businessApplication') }}</a-radio-button>
+          <a-radio-button value="third-party">{{ $t('ApplicationConnection.thirdPartyApplication') }}</a-radio-button>
+        </a-radio-group>
+      </a-form-item>
       <a-form-item :label="$t('ProjectApplication.create.icon')">
         <div class="icon-upload-row">
           <div class="icon-upload">
@@ -50,15 +56,24 @@
 
       <a-form-item :label="$t('ProjectApplication.create.template')" name="templateId">
         <a-spin :spinning="templatesLoading">
-          <TemplateSelector v-model="form.templateId" :templates="store.templates" />
+          <TemplateSelector v-model="form.templateId" :templates="visibleTemplates" />
+          <a-empty v-if="!templatesLoading && !visibleTemplates.length" :description="$t('ApplicationConnection.noTemplates')" />
         </a-spin>
       </a-form-item>
+      <ApplicationConnectionForm
+        v-if="applicationKind === 'third-party'"
+        v-model="connection.draft"
+        :view="connection.view.value"
+        :disabled="submitting"
+        @reload="connection.loadTypes"
+      />
     </a-form>
   </a-modal>
 </template>
 
 <script setup lang="ts" name="ProjectApplicationCreate">
 import TemplateSelector from './TemplateSelector.vue'
+import ApplicationConnectionForm from '../components/ApplicationConnectionForm.vue'
 import { useApplicationCreate } from './useApplicationCreate'
 import type { ProjectApplication } from '../types'
 
@@ -72,7 +87,9 @@ const emits = defineEmits<{
 }>()
 
 const {
-  store,
+  applicationKind,
+  visibleTemplates,
+  connection,
   formRef,
   submitting,
   templatesLoading,

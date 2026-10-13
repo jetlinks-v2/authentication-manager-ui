@@ -132,7 +132,9 @@ export const useProjectApplication = () => {
       icon: draft.icon,
       description: draft.description,
       // 创建时形成模板配置快照，模板后续变更不反向影响已有应用。
-      configuration: buildInitialApplicationConfiguration(template),
+      configuration: template?.provider === 'third-party'
+        ? (draft.callback ? { callback: draft.callback } : {})
+        : buildInitialApplicationConfiguration(template),
       state: 'enabled',
     })
     const result = resultOf<unknown>(response)
@@ -141,7 +143,8 @@ export const useProjectApplication = () => {
       if (created) return created
     }
     if (typeof result === 'object' && result !== null && 'id' in result) {
-      return upsertApplication(result as BusinessApplicationEntity)
+      const created = await loadApplication(String(result.id))
+      if (created) return created
     }
 
     await loadApplications({ terms: [] })
@@ -153,8 +156,10 @@ export const useProjectApplication = () => {
   const updateApplication = async (id: string, patch: Partial<ProjectApplication>) => {
     const current = applications.find(item => item.id === id) || await loadApplication(id)
     if (!current) return undefined
-    const raw = applicationEntities.get(id)
-    const next = { ...current, ...patch }
+    // 保存前读取最新事实；业务应用仍基于完整配置更新自身负责的运行时字段。
+    const raw = resultOf<BusinessApplicationEntity>(await getBusinessApplication(id))
+    const latest = normalizeApplication(raw, templates.find(item => item.id === raw.templateId))
+    const next = { ...latest, ...patch }
 
     // templateId is immutable and must never re-enter update payloads.
     await updateBusinessApplication(id, {
@@ -163,7 +168,8 @@ export const useProjectApplication = () => {
       icon: next.icon,
       description: next.description,
       state: next.status,
-      configuration: buildApplicationConfiguration(raw?.configuration, next),
+      // 第三方基本信息与启停不提交 configuration，避免与独立连接保存互相覆盖。
+      ...(latest.provider === 'third-party' ? {} : { configuration: buildApplicationConfiguration(raw.configuration, next) }),
     })
     return loadApplication(id)
   }

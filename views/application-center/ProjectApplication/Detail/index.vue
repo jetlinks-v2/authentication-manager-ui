@@ -20,35 +20,48 @@
         />
 
         <FullPage hasPadding>
-	        <a-tabs v-model:active-key="activeTab" class="detail-tabs">
-		        <a-tab-pane key="settings" :tab="$t('ProjectApplication.detail.tab.settings')">
-			        <ApplicationSettings
-				        ref="settingsRef"
-				        v-model:editing="settingsEditing"
-				        :data="{ application, template }"
-				        :saving="settingsSaving"
-				        @save="updateSettings"
-			        />
-		        </a-tab-pane>
-		        <a-tab-pane key="users" :tab="$t('ProjectApplication.detail.tab.users')">
-			        <UserManagement
-				        :data="{ users: detail.users, roles: detail.roles }"
-				        @add="addUsers"
-				        @unbind="unbindUser"
-				        @update="updateUser"
-			        />
-		        </a-tab-pane>
-		        <a-tab-pane key="roles" :tab="$t('ProjectApplication.detail.tab.roles')">
-			        <RoleManagement
-				        :roles="detail.roles"
-				        :users="detail.users"
-				        :template-id="application.templateId"
-				        :is-external="application.provider === 'third-party'"
-				        @save-role="saveRole"
-				        @delete-role="removeRole"
-			        />
-		        </a-tab-pane>
-	        </a-tabs>
+          <a-tabs v-model:active-key="activeTab" class="detail-tabs">
+            <a-tab-pane key="settings" :tab="$t(application.provider === 'third-party' ? 'ApplicationConnection.settings' : 'ProjectApplication.detail.tab.settings')">
+              <ApplicationSettings
+                ref="settingsRef"
+                v-model:editing="settingsEditing"
+                :data="{ application, template }"
+                :saving="settingsSaving"
+                @save="updateSettings"
+              />
+              <ApplicationCallbackConnection
+                v-if="application.provider === 'third-party'"
+                :key="application.id"
+                :application-id="application.id"
+                :active="activeTab === 'settings'"
+                :available="callbackAvailable"
+              />
+            </a-tab-pane>
+            <a-tab-pane key="users" :tab="$t('ProjectApplication.detail.tab.users')">
+              <UserManagement
+                :data="{ users: detail.users, roles: detail.roles }"
+                @add="addUsers"
+                @unbind="unbindUser"
+                @update="updateUser"
+              />
+            </a-tab-pane>
+            <a-tab-pane key="roles" :tab="$t('ProjectApplication.detail.tab.roles')">
+              <RoleManagement
+                :roles="detail.roles"
+                :users="detail.users"
+                :template-id="application.templateId"
+                :is-external="application.provider === 'third-party'"
+                @save-role="saveRole"
+                @delete-role="removeRole"
+              />
+            </a-tab-pane>
+            <a-tab-pane v-if="application.provider === 'third-party'" key="snapshots" :tab="$t('ApplicationConnection.snapshots')">
+              <ApplicationCallbackSnapshots :key="application.id" :application-id="application.id" :active="activeTab === 'snapshots'" />
+            </a-tab-pane>
+            <a-tab-pane v-if="application.provider === 'third-party'" key="callbacks" :tab="$t('ApplicationConnection.operations')">
+              <ApplicationCallbackOperations :key="application.id" :application-id="application.id" :active="activeTab === 'callbacks'" :available="callbackAvailable" />
+            </a-tab-pane>
+          </a-tabs>
         </FullPage>
       </template>
 
@@ -73,6 +86,9 @@ import ApplicationSummary from './components/ApplicationSummary.vue'
 import ApplicationSettings from './components/ApplicationSettings.vue'
 import RoleManagement from './components/RoleManagement.vue'
 import UserManagement from './components/UserManagement.vue'
+import ApplicationCallbackConnection from './components/ApplicationCallbackConnection.vue'
+import ApplicationCallbackSnapshots from './components/ApplicationCallbackSnapshots.vue'
+import ApplicationCallbackOperations from './components/ApplicationCallbackOperations.vue'
 import { useApplicationOpenGuard } from '../useApplicationOpenGuard'
 import { useProjectApplication } from '../useProjectApplication'
 import type {
@@ -96,6 +112,8 @@ const applicationId = computed(() => String(route.params.id || ''))
 const application = computed(() => store.applications.find((item) => item.id === applicationId.value))
 const detail = computed(() => store.details[applicationId.value])
 const template = computed(() => store.templates.find((item) => item.id === application.value?.templateId))
+const callbackAvailable = computed(() => application.value?.status === 'enabled' && template.value?.status === 'enabled' && !!application.value?.callback)
+let detailLoadVersion = 0
 const {
   openingApplicationIds,
   openApplication: openGuardedApplication,
@@ -105,17 +123,19 @@ const {
   },
 })
 watch(applicationId, async id => {
+  const version = ++detailLoadVersion
   if (!id) return
   activeTab.value = 'settings'
   settingsEditing.value = false
   loading.value = true
   try {
     await Promise.all([store.loadTemplates(), store.loadApplication(id)])
+    if (version !== detailLoadVersion) return
     await store.loadDetail(id)
   } catch {
     // The shared request layer reports the backend error.
   } finally {
-    loading.value = false
+    if (version === detailLoadVersion) loading.value = false
   }
 }, { immediate: true })
 

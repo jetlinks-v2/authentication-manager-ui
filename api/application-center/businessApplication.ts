@@ -1,6 +1,7 @@
 import { request } from '@jetlinks-web/core'
 import type { AxiosResponseRewrite } from '@jetlinks-web/types'
 import type { BasicLayoutVariant } from '@jetlinks-web-core/layout/runtime/layoutVariant'
+import type { ApplicationCallbackConfiguration } from './businessApplicationCallback'
 
 type RequestConfig = Record<string, unknown>
 
@@ -21,6 +22,7 @@ export interface EnumValue {
 }
 
 export interface BusinessApplicationConfiguration {
+  callback?: ApplicationCallbackConfiguration
   defaultLanguage?: string
   customDomain?: string
   timezone?: string
