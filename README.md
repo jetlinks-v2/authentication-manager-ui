@@ -404,8 +404,11 @@ Verification result:
 
 验证方式：仅检查相关源码、引用、接口字段、国际化 JSON 和 `git diff --check`；不自动运行 lint、类型检查、构建、测试、浏览器或服务操作。两种类型的创建与切换、原业务应用回归、密钥保存、连接测试、真实回调、权限与实例切换由用户在现有环境人工验收。未运行编译或类型检查，因此不宣称 Vue/TypeScript 编译通过；实现结果只回填本节，不新建任务文档。
 
+模板创建入口补充：`views/application-center/Template/components/ApplicationTemplateCreateDialog.vue` 已增加业务应用（`official`）/第三方应用（`third-party`）选择，默认业务应用；第三方创建必须提供绝对 HTTP(S) 跳转地址，通过 `configuration.redirectUri` 提交，不发送业务布局参数。业务应用沿用原布局参数，不发送第三方配置。复用既有标签、地址校验和创建 API，将弹窗状态与提交逻辑放入 `views/application-center/Template/useApplicationTemplateCreate.ts`；创建后沿用列表刷新和详情跳转，新增第三方实例时可选择该类型模板。不改变已有模板类型，不增加菜单或模板通知能力。
+
 #### 实施结果与验证
 
+- 模板入口补充已做源码核对：18 个文案键在中英文 JSON 中均存在，相关导入完整；创建弹窗 64 行、hook 115 行，弹窗不直接请求 API。业务/第三方提交分支与后端 provider 及跳转地址契约一致；`git diff --check` 通过。未运行 lint、类型检查、构建、测试或浏览器。待人工验证：两类模板创建、第三方跳转地址必填与有效性校验、类型切换，以及创建后第三方实例模板选择。
 - 创建入口已增加业务/第三方选择和模板过滤；第三方只提交自身 callback 配置，不注入业务应用的布局、域名、时区和语言默认字段。业务应用仍使用原运行时配置模型。详情首个 Tab 对第三方显示“第三方配置”，保留共用基本信息，新增连接区域；另外提供公开快照和回调运维 Tab。
 - 共用表单位于 `views/application-center/ProjectApplication/components/ApplicationConnectionForm.vue`；草稿和认证目录由 `views/application-center/ProjectApplication/useApplicationConnectionForm.ts` 管理。连接保存前读取最新完整 configuration，第三方基本信息与启停不提交 configuration，避免与独立连接保存互相覆盖。创建和修改后重新读取脱敏详情，密钥输入清空，留空不提交密钥。
 - `api/application-center/businessApplicationCallback.ts` 封装实例接口、PATCH 实体数组及测试局部 65 秒超时；快照、任务和记录使用服务端分页、公开字段和毫秒时间显示。角色状态按真实字符串显示，不假定固定枚举。不存在 callback.enabled、事件正文/认证头展示、自动轮询或自动重投。

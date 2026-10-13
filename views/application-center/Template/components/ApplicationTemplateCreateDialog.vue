@@ -9,6 +9,12 @@
     @cancel="dialogOpen = false"
   >
     <a-form ref="formRef" layout="vertical" :model="formData" :rules="rules">
+      <a-form-item :label="$t('ApplicationConnection.applicationKind')" name="provider">
+        <a-radio-group v-model:value="formData.provider" button-style="solid" :disabled="loading">
+          <a-radio-button value="official">{{ $t('ApplicationConnection.businessApplication') }}</a-radio-button>
+          <a-radio-button value="third-party">{{ $t('ApplicationConnection.thirdPartyApplication') }}</a-radio-button>
+        </a-radio-group>
+      </a-form-item>
       <a-form-item :label="$t('ApplicationTemplate.field.name')" name="name">
         <I18nTextField
           v-model:value="formData.name"
@@ -27,83 +33,32 @@
           :placeholder="$t('ApplicationTemplate.field.codePlaceholder')"
         />
       </a-form-item>
+      <a-form-item v-if="thirdParty" :label="$t('ApplicationTemplate.parameters.redirectUri')" name="redirectUri">
+        <a-input
+          v-model:value="formData.redirectUri"
+          :disabled="loading"
+          :placeholder="$t('ApplicationTemplate.parameters.redirectUriPlaceholder')"
+        />
+      </a-form-item>
     </a-form>
   </a-modal>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref, watch } from 'vue'
-import type { FormInstance } from 'ant-design-vue'
-import type { RuleObject } from 'ant-design-vue/es/form/interface'
 import { useI18n } from 'vue-i18n'
-import { onlyMessage } from '@jetlinks-web/utils'
 import { I18nTextField } from '@jetlinks-web-core/components'
-import { createApplicationTemplate } from '@authentication-manager-ui/api/application-center/applicationTemplate'
+import { useApplicationTemplateCreate } from '../useApplicationTemplateCreate'
 
-const props = defineProps({
-  open: { type: Boolean, default: false },
-})
-
+const props = defineProps({ open: { type: Boolean, default: false } })
 const emit = defineEmits<{
   (event: 'update:open', value: boolean): void
   (event: 'created', id: string): void
 }>()
 
 const { t: $t } = useI18n()
-const formRef = ref<FormInstance>()
-const loading = ref(false)
-const dialogOpen = computed({
-  get: () => props.open,
-  set: (value: boolean) => emit('update:open', value),
+const { dialogOpen, formRef, formData, thirdParty, rules, loading, handleOk } = useApplicationTemplateCreate({
+  open: () => props.open,
+  onOpenChange: value => emit('update:open', value),
+  onCreated: id => emit('created', id),
 })
-const formData = reactive({ name: '', code: '', i18nMessages: {} as Record<string, Record<string, string>> })
-const rules: Record<string, RuleObject[]> = {
-  name: [
-    { required: true, message: $t('ApplicationTemplate.message.nameRequired'), trigger: 'blur' },
-    { max: 64, message: $t('ApplicationTemplate.message.nameMaxLength'), trigger: 'blur' },
-  ],
-  code: [
-    { required: true, message: $t('ApplicationTemplate.message.codeRequired'), trigger: 'blur' },
-    { max: 64, message: $t('ApplicationTemplate.message.codeMaxLength'), trigger: 'blur' },
-    { pattern: /^[a-zA-Z0-9_-]+$/, message: $t('ApplicationTemplate.message.codeFormat'), trigger: 'blur' },
-  ],
-}
-
-const resetForm = () => {
-  formData.name = ''
-  formData.code = ''
-  formData.i18nMessages = {}
-}
-
-watch(() => props.open, async value => {
-  if (value) {
-    resetForm()
-    await nextTick()
-    formRef.value?.clearValidate?.()
-    return
-  }
-  formRef.value?.resetFields?.()
-  resetForm()
-}, { immediate: true })
-
-const handleOk = async () => {
-  await formRef.value?.validate?.()
-  loading.value = true
-  try {
-    const response = await createApplicationTemplate({
-      name: formData.name,
-      code: formData.code,
-      i18nMessages: formData.i18nMessages,
-      layoutVariant: 'application',
-      state: 'enabled',
-    })
-    const saved = response?.result ?? response
-    const id = typeof saved === 'string' ? saved : saved?.id
-    onlyMessage($t('ApplicationTemplate.message.success'))
-    dialogOpen.value = false
-    if (id) emit('created', id)
-  } finally {
-    loading.value = false
-  }
-}
 </script>
