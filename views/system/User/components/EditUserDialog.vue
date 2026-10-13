@@ -138,8 +138,8 @@
                         name="password"
                         :label="$t('components.EditUserDialog.939453-19')"
                         :rules="[
-                            { required: true, message: '' },
                             {
+																required: true,
                                 validator: form.rules.checkPassword,
                                 trigger: 'change',
                             },
@@ -158,8 +158,8 @@
                         name="confirmPassword"
                         :label="$t('components.EditUserDialog.939453-21')"
                         :rules="[
-                            { required: true, message: '' },
                             {
+																required: true,
                                 validator: form.rules.checkAgainPassword,
                                 trigger: 'blur',
                             },

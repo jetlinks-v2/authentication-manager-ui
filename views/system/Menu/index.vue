@@ -39,7 +39,7 @@
                 </j-permission-button>
                 <a-button
                   v-if="admin"
-                  @click="router.push('/system/Menu/Setting')"
+                  @click="menuStore.jumpPage('system/Menu/Setting')"
                 >{{ $t('Menu.index.599742-17') }}</a-button>
               </a-flex>
             </template>
@@ -109,7 +109,6 @@ const { t: $t } = useI18n();
 const permission = 'system/Menu'
 
 const menuStore = useMenuStore()
-const router = useRouter();
 
 const userInfoStore = useUserStore();
 const { userInfo } = storeToRefs(userInfoStore);
