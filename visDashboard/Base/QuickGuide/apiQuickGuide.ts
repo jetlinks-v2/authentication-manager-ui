@@ -7,7 +7,7 @@ const collectSpaceIds = (rows: Record<string, unknown>[]): string[] => rows.flat
   ...collectSpaceIds(Array.isArray(row.children) ? row.children.map(recordOf) : []),
 ]).filter(Boolean)
 
-/** 步骤 3 需要已有空间且至少一条设备绑定；默认空空间树不算完成。 */
+/** 空间步骤需要已有空间且至少一条设备绑定；默认空空间树不算完成。 */
 export async function loadQuickGuideRows(): Promise<HomeRow[]> {
   const tree = rowsOf(await request.post('/space/_query/tree', { paging: false }, { hiddenError: true }))
   const spaceIds = [...new Set(collectSpaceIds(tree))]
