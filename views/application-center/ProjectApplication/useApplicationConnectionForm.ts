@@ -15,7 +15,9 @@ export const useApplicationConnectionForm = (active: () => boolean, allowToggle:
   const error = ref('')
   const validationError = ref('')
   let sequence = 0
-  const supported = computed(() => draft.authenticationType === 'oauth2' && authenticationTypes.value.some(item => item.type === 'oauth2'))
+  // 目录刷新时不能沿用上次结果提交，失败后也不得绕过后端策略目录。
+  const supported = computed(() => !loading.value && !error.value
+    && draft.authenticationType === 'oauth2' && authenticationTypes.value.some(item => item.type === 'oauth2'))
   const dirty = computed(() => Object.keys(draft).some(key => {
     const field = key as keyof typeof draft
     return draft[field] !== baseline.value[field]
@@ -28,7 +30,7 @@ export const useApplicationConnectionForm = (active: () => boolean, allowToggle:
   }
   const clearSecret = () => { draft.clientSecret = '' }
   const loadTypes = async () => {
-    if (!active()) return
+    if (!active() || !draft.enabled) return
     const current = ++sequence
     loading.value = true
     error.value = ''
@@ -36,12 +38,13 @@ export const useApplicationConnectionForm = (active: () => boolean, allowToggle:
       const result = resultOf<CallbackAuthenticationType[]>(await getCallbackAuthenticationTypes())
       if (current === sequence) authenticationTypes.value = result
     } catch {
-      if (current === sequence) error.value = t('ApplicationConnection.loadFailed')
+      if (current === sequence) error.value = t('ApplicationConnection.authenticationTypesLoadFailed')
     } finally {
       if (current === sequence) loading.value = false
     }
   }
-  watch(active, enabled => {
+  // 回调是可选配置；仅在实际启用时读取认证目录，关闭后使旧请求结果失效。
+  watch(() => active() && draft.enabled, enabled => {
     ++sequence
     loading.value = false
     if (enabled) void loadTypes()

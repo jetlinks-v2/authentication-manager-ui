@@ -2566,6 +2566,7 @@
   "ApplicationConnection.saved": "连接配置已保存",
   "ApplicationConnection.removed": "连接配置已移除，未完成的回调任务将取消",
   "ApplicationConnection.loadFailed": "无法读取连接配置或认证方式，请刷新后重试",
+  "ApplicationConnection.authenticationTypesLoadFailed": "认证方式加载失败，请检查访问权限、认证服务是否包含实例回调功能、application.api 开关及网关路由",
   "ApplicationConnection.saveFailed": "连接配置未完成保存或刷新，请刷新后检查当前配置",
   "ApplicationConnection.testFailed": "连接测试未完成，请检查实例状态和连接配置后重试",
   "ApplicationConnection.unsupportedType": "当前页面仅支持 OAuth2 客户端凭据认证，其他认证方式不可编辑",

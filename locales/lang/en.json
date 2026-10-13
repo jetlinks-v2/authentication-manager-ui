@@ -2566,6 +2566,7 @@
   "ApplicationConnection.saved": "Connection configuration saved",
   "ApplicationConnection.removed": "Connection removed. Unfinished callback tasks will be cancelled.",
   "ApplicationConnection.loadFailed": "Unable to load the connection configuration or authentication types. Refresh to try again.",
+  "ApplicationConnection.authenticationTypesLoadFailed": "Unable to load authentication types. Check permissions, instance callback support in the authentication service, the application.api feature flag, and gateway routing.",
   "ApplicationConnection.saveFailed": "Could not finish saving or refreshing the connection. Refresh to check the current configuration.",
   "ApplicationConnection.testFailed": "Connection test did not complete. Check the instance state and connection configuration.",
   "ApplicationConnection.unsupportedType": "This page only supports OAuth2 client credentials. Other authentication types are read-only.",

@@ -410,11 +410,11 @@ Verification result:
 
 - 模板入口补充已做源码核对：18 个文案键在中英文 JSON 中均存在，相关导入完整；创建弹窗 64 行、hook 115 行，弹窗不直接请求 API。业务/第三方提交分支与后端 provider 及跳转地址契约一致；`git diff --check` 通过。未运行 lint、类型检查、构建、测试或浏览器。待人工验证：两类模板创建、第三方跳转地址必填与有效性校验、类型切换，以及创建后第三方实例模板选择。
 - 创建入口已增加业务/第三方选择和模板过滤；第三方只提交自身 callback 配置，不注入业务应用的布局、域名、时区和语言默认字段。业务应用仍使用原运行时配置模型。详情首个 Tab 对第三方显示“第三方配置”，保留共用基本信息，新增连接区域；另外提供公开快照和回调运维 Tab。
-- 共用表单位于 `views/application-center/ProjectApplication/components/ApplicationConnectionForm.vue`；草稿和认证目录由 `views/application-center/ProjectApplication/useApplicationConnectionForm.ts` 管理。连接保存前读取最新完整 configuration，第三方基本信息与启停不提交 configuration，避免与独立连接保存互相覆盖。创建和修改后重新读取脱敏详情，密钥输入清空，留空不提交密钥。
+- 共用表单位于 `views/application-center/ProjectApplication/components/ApplicationConnectionForm.vue`；草稿和认证目录由 `views/application-center/ProjectApplication/useApplicationConnectionForm.ts` 管理。认证目录只在当前第三方连接配置已启用时加载：打开创建窗口、切换第三方类型但未开启连接不会请求，详情回填已保存 callback 后才加载；关闭配置或离开页面使旧目录请求失效并清空密钥。目录刷新中或失败时禁用 OAuth2 字段编辑与连接提交，不沿用旧目录提交；错误提示检查权限、认证服务制品是否包含实例回调功能、application.api 开关及网关路由，不替换接口或硬编码目录。连接保存前读取最新完整 configuration，第三方基本信息与启停不提交 configuration，避免与独立连接保存互相覆盖。创建和修改后重新读取脱敏详情，密钥输入清空，留空不提交密钥。
 - `api/application-center/businessApplicationCallback.ts` 封装实例接口、PATCH 实体数组及测试局部 65 秒超时；快照、任务和记录使用服务端分页、公开字段和毫秒时间显示。角色状态按真实字符串显示，不假定固定枚举。不存在 callback.enabled、事件正文/认证头展示、自动轮询或自动重投。
 - `views/application-center/ProjectApplication/Detail/useApplicationCallbackConnection.ts` 隔离迟到响应、限制 dirty 配置测试、分阶段展示结果，并在认证地址/客户端标识变化且沿用密钥时确认。
 - `views/application-center/ProjectApplication/Detail/useApplicationCallbackOperations.ts` 使用现有应用菜单 save 映射的按钮权限；实例 read/save 资产权限仍由各专用接口强制校验。对账仅提示已受理；重投传当前行原始 attempt，false 不提示成功或自动再投，true 后刷新任务和记录。
-- 源码检查：中英文 JSON 可解析，新增 97 组文案键成对，固定引用和本次新增相对导入无缺失；本次触及的 8 个 Vue 文件均不超过 300 行（最大为 ApplicationSettings.vue 的 279 行）。git diff --check 通过。未执行 lint、类型检查、构建、测试、浏览器或任何服务操作；仍需现有环境人工验证两类创建、配置保留、密钥语义、权限、连接测试、对账、死信重投和实例切换。
+- 源码检查：中英文 JSON 可解析，原实现新增 97 组文案键成对，认证目录优化新增 1 组错误提示中英文成对；已核对创建与详情沿用 supported/validate 禁用连接提交，未配置回调不依赖目录读取。固定引用和本次新增相对导入无缺失；本次触及的 8 个 Vue 文件均不超过 300 行（最大为 ApplicationSettings.vue 的 279 行）。git diff --check 通过。未执行 lint、类型检查、构建、测试、浏览器或任何服务操作；仍需现有环境人工验证两类创建、配置保留、密钥语义、权限、连接测试、对账、死信重投和实例切换。
 - 交付：实现提交 `b2619d4c6371d982fbf2a14de5d8d3fb139ffe4c`；继续使用分支 `codex/third-party-api-group-20261009` 和 [PR #104](https://github.com/jetlinks-v2/authentication-manager-ui/pull/104)。本次不改 PR 标题/正文、不回复或合并 PR；仅同步已有 README，未新增开发文档。
 
 ### Video Gateway Binding Interaction Plan
