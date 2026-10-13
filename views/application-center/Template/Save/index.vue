@@ -101,6 +101,7 @@ const parameters = useApplicationTemplateParameters(
     redirectUriRequired: $t('ApplicationTemplate.parameters.redirectUriRequired'),
     redirectUriInvalid: $t('ApplicationTemplate.parameters.redirectUriInvalid'),
     invalidParameter: $t('ApplicationTemplate.parameters.invalidParameter'),
+    invalidNotification: $t('ApplicationTemplate.parameters.invalidNotification'),
   },
 )
 

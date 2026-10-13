@@ -133,7 +133,7 @@ export const useProjectApplication = () => {
       description: draft.description,
       // 创建时形成模板配置快照，模板后续变更不反向影响已有应用。
       configuration: template?.provider === 'third-party'
-        ? (draft.callback ? { callback: draft.callback } : {})
+        ? {}
         : buildInitialApplicationConfiguration(template),
       state: 'enabled',
     })
@@ -168,7 +168,7 @@ export const useProjectApplication = () => {
       icon: next.icon,
       description: next.description,
       state: next.status,
-      // 第三方基本信息与启停不提交 configuration，避免与独立连接保存互相覆盖。
+      // 第三方跳转和通知由模板管理，实例基本信息与启停不重写配置。
       ...(latest.provider === 'third-party' ? {} : { configuration: buildApplicationConfiguration(raw.configuration, next) }),
     })
     return loadApplication(id)

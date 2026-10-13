@@ -16,6 +16,11 @@ export type I18nMessages = Record<string, Record<string, string>>
 
 export interface ApplicationTemplateConfiguration extends Record<string, unknown> {
   redirectUri?: string
+  notification?: {
+    address: string
+    keyId: string
+    publicKey: string
+  }
 }
 
 export interface BusinessApplicationTemplate {

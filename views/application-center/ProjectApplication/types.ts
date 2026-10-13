@@ -1,6 +1,5 @@
 import type { ConditionFilterChangePayload } from '@jetlinks-web-core/components/ConditionFilter'
 import type { BasicLayoutVariant } from '@jetlinks-web-core/layout/runtime/layoutVariant'
-import type { ApplicationCallbackConfiguration } from '@authentication-manager-ui/api/application-center/businessApplicationCallback'
 
 export type ApplicationKind = 'business' | 'third-party'
 
@@ -25,7 +24,6 @@ export interface ApplicationTemplate {
 }
 
 export interface ProjectApplication {
-  callback?: ApplicationCallbackConfiguration
   id: string
   name: string
   description: string
@@ -41,7 +39,6 @@ export interface ProjectApplication {
 }
 
 export interface ProjectApplicationDraft {
-  callback?: ApplicationCallbackConfiguration
   name: string
   description: string
   templateId: string

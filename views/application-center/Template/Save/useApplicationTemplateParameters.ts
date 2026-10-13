@@ -1,4 +1,4 @@
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import type {
   ApplicationTemplateConfiguration,
   BusinessApplicationTemplate,
@@ -10,6 +10,7 @@ interface ParameterMessages {
   redirectUriRequired: string
   redirectUriInvalid: string
   invalidParameter: string
+  invalidNotification: string
 }
 
 /** 模板维护的单个跳转参数草稿：名称、值来源，以及固定值或用户字段。 */
@@ -42,13 +43,14 @@ const toDefinition = (draft: ApplicationTemplateParameterDraft) => ({
   configuration: draft.provider === 'user' ? { field: draft.value } : { value: draft.value },
 })
 
-/** 编辑第三方模板地址与跳转参数，其余 Configuration 原样保存，不拼接或解析参数值。 */
+/** 复用第三方 Provider 的跳转参数与签名通知配置，其余模板配置保持不变。 */
 export const useApplicationTemplateParameters = (
   getDetail: () => BusinessApplicationTemplate,
   persist: (configuration: ApplicationTemplateConfiguration) => Promise<boolean>,
   messages: ParameterMessages,
 ) => {
   const redirectUri = ref('')
+  const notification = reactive({ enabled: false, address: '', keyId: '', publicKey: '' })
   const parameters = ref<ApplicationTemplateParameterDraft[]>([])
   const saving = ref(false)
   const error = ref('')
@@ -56,6 +58,11 @@ export const useApplicationTemplateParameters = (
 
   const reset = () => {
     redirectUri.value = String(getDetail().configuration?.redirectUri || '').trim()
+    const savedNotification = getDetail().configuration?.notification
+    notification.enabled = !!savedNotification
+    notification.address = savedNotification?.address || ''
+    notification.keyId = savedNotification?.keyId || ''
+    notification.publicKey = savedNotification?.publicKey || ''
     const declared = getDetail().configuration?.externalParameters
     parameters.value = Array.isArray(declared)
       ? declared
@@ -113,13 +120,29 @@ export const useApplicationTemplateParameters = (
       error.value = messages.invalidParameter
       return false
     }
+    const notificationAddress = notification.address.trim()
+    if (notification.enabled && (!isHttpExternalApplicationUrl(notificationAddress)
+      || !notification.keyId.trim() || !notification.publicKey.trim())) {
+      error.value = messages.invalidNotification
+      return false
+    }
+    const configuration: ApplicationTemplateConfiguration = {
+      ...getDetail().configuration,
+      redirectUri: address,
+      externalParameters: parameters.value.map(toDefinition),
+    }
+    if (notification.enabled) {
+      configuration.notification = {
+        address: notificationAddress,
+        keyId: notification.keyId.trim(),
+        publicKey: notification.publicKey.trim(),
+      }
+    } else {
+      delete configuration.notification
+    }
     saving.value = true
     try {
-      return await persist({
-        ...getDetail().configuration,
-        redirectUri: address,
-        externalParameters: parameters.value.map(toDefinition),
-      })
+      return await persist(configuration)
     } catch {
       error.value = messages.saveFailed
       return false
@@ -132,6 +155,7 @@ export const useApplicationTemplateParameters = (
 
   return {
     redirectUri,
+    notification,
     parameters,
     supported,
     saving,

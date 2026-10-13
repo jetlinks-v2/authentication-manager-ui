@@ -9,10 +9,10 @@
     @cancel="dialogOpen = false"
   >
     <a-form ref="formRef" layout="vertical" :model="formData" :rules="rules">
-      <a-form-item :label="$t('ApplicationConnection.applicationKind')" name="provider">
+      <a-form-item :label="$t('ProjectApplication.create.applicationKind')" name="provider">
         <a-radio-group v-model:value="formData.provider" button-style="solid" :disabled="loading">
-          <a-radio-button value="official">{{ $t('ApplicationConnection.businessApplication') }}</a-radio-button>
-          <a-radio-button value="third-party">{{ $t('ApplicationConnection.thirdPartyApplication') }}</a-radio-button>
+          <a-radio-button value="official">{{ $t('ProjectApplication.create.businessApplication') }}</a-radio-button>
+          <a-radio-button value="third-party">{{ $t('ProjectApplication.create.thirdPartyApplication') }}</a-radio-button>
         </a-radio-group>
       </a-form-item>
       <a-form-item :label="$t('ApplicationTemplate.field.name')" name="name">

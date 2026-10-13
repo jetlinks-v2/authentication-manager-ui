@@ -33,6 +33,21 @@
           {{ $t('ApplicationTemplate.parameters.add') }}
         </a-button>
       </div>
+      <a-form-item :label="$t('ApplicationTemplate.parameters.notificationEnabled')">
+        <a-switch v-model:checked="state.notification.enabled" />
+      </a-form-item>
+      <template v-if="state.notification.enabled">
+        <a-alert type="info" show-icon :message="$t('ApplicationTemplate.parameters.notificationTip')" />
+        <a-form-item :label="$t('ApplicationTemplate.parameters.notificationAddress')" required>
+          <a-input v-model:value="state.notification.address" />
+        </a-form-item>
+        <a-form-item :label="$t('ApplicationTemplate.parameters.notificationKeyId')" required>
+          <a-input v-model:value="state.notification.keyId" />
+        </a-form-item>
+        <a-form-item :label="$t('ApplicationTemplate.parameters.notificationPublicKey')" required>
+          <a-textarea v-model:value="state.notification.publicKey" :rows="5" />
+        </a-form-item>
+      </template>
     </a-form>
     <a-space v-if="canUpdate">
       <a-button :disabled="state.saving.value" @click="state.reset">{{ $t('ApplicationTemplate.parameters.reset') }}</a-button>
