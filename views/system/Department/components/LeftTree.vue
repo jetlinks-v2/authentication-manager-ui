@@ -211,38 +211,32 @@ const getTree = (cb?: Function) => {
       loading.value = false
     })
 }
-// 搜索
+// 按名称筛选组织，并保留和展开命中节点的完整父级路径。
 const onSearch = debounce(() => {
   const key = searchValue.value
   const treeArray = new Map()
   if (key) {
-    const searchTree: string[] = []
+    const parentKeys = new Set<string>()
     treeMap.forEach((item) => {
       if (item.name.includes(key)) {
-        searchTree.push(item.parentId)
         treeArray.set(item.id, item)
+        expandParentNodes(item.id).forEach((parentId) => {
+          const parent = treeMap.get(parentId)
+          if (parent) {
+            treeArray.set(parentId, parent)
+            parentKeys.add(parentId)
+          }
+        })
       }
     })
-    dig(searchTree)
     treeData.value = ArrayToTree(cloneDeep([...treeArray.values()]))
+    expandedKeys.value = [...parentKeys]
   } else {
     getTree()
     treeData.value = ArrayToTree(cloneDeep([...treeMap.values()]))
     expandedKeys.value = []
   }
   selectedKeys.value = treeData.value.map(i => i.id).slice(0, 1)
-
-  function dig(_data: any[]): any {
-    const pIds: string[] = []
-    if (!_data.length) return
-    _data.forEach((item) => {
-      if (treeMap.has(item)) {
-        const _item = treeMap.get(item)
-        pIds.push(_item.parentId)
-        treeArray.set(item, _item)
-      }
-    })
-  }
 }, 500)
 
 // 将树形数组转化为map形式，以便筛选时操作

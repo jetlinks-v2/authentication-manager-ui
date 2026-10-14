@@ -1,49 +1,62 @@
 <template>
   <div class="quick-guide-view">
     <template v-for="(step, index) in steps" :key="step.key">
-      <div
+      <a-button
         class="step-card"
-        :class="{ 'is-disabled': step.disabled, 'is-complete': step.status === 'complete' }"
-        :title="step.disabled ? t('packages.ProjectHome.unavailable') : (step.title + ' - ' + step.description + ' · ' + step.statusText)"
-        @click="!step.disabled && $emit('action', step)"
+        :class="{ 'is-complete': step.status === 'complete' }"
+        :data-step="step.key"
+        :disabled="step.disabled"
+        :title="step.disabled ? t('packages.ProjectHome.unavailable') : `${step.description} · ${step.statusText}`"
+        :aria-label="`${index + 1}. ${step.title}，${step.statusText}`"
+        @click="$emit('action', step)"
       >
-        <div class="step-card-header">
-          <span class="step-badge" :class="{ 'is-complete': step.status === 'complete', 'is-unknown': step.status === 'unknown' }">
-            <CheckOutlined v-if="step.status === 'complete'" />
-            <LoadingOutlined v-else-if="step.status === 'loading'" spin />
-            <QuestionOutlined v-else-if="step.status === 'unknown'" />
-            <template v-else>{{ index + 1 }}</template>
+        <span class="step-illustration" aria-hidden="true">
+          <img :src="illustrations" alt="" />
+        </span>
+        <span class="step-copy">
+          <span class="step-card-header">
+            <span class="step-badge">{{ index + 1 }}</span>
+            <strong class="step-title">{{ step.title }}</strong>
           </span>
-          <strong class="step-title">{{ step.title }}</strong>
-          <span v-if="step.status === 'complete'" class="step-status">{{ step.statusText }}</span>
-        </div>
-        <div class="step-card-desc">{{ step.description }}</div>
-        <div class="step-card-action">
-          <a-button
-            type="link"
-            class="action-btn"
-            :disabled="step.disabled"
-            @click.stop="!step.disabled && $emit('action', step)"
-          >
-            {{ step.actionText }} <RightOutlined class="action-arrow" />
-          </a-button>
-        </div>
-      </div>
-      <div v-if="index < steps.length - 1" class="step-separator">
-        <RightOutlined />
-      </div>
+          <span class="step-card-desc">{{ step.description }}</span>
+          <span v-if="step.status === 'loading' || step.status === 'unknown'" class="step-state" aria-live="polite">
+            <LoadingOutlined v-if="step.status === 'loading'" spin />
+            <QuestionCircleOutlined v-else />
+            {{ step.statusText }}
+          </span>
+          <span v-else class="step-card-action">
+            {{ step.status === 'complete' ? step.statusText : step.actionText }}
+            <img v-if="step.status === 'complete'" :src="completed" alt="" />
+            <img v-else :src="actionArrow" alt="" />
+          </span>
+        </span>
+        <img v-if="step.status === 'complete'" class="step-corner" :src="completedCorner" alt="" />
+      </a-button>
+      <!-- 仅连接已完成的相邻步骤，通向未完成或状态未知的步骤时保持灰色。 -->
+      <img
+        v-if="index < steps.length - 1"
+        class="step-separator"
+        :src="step.status === 'complete' && steps[index + 1]?.status === 'complete' ? arrowComplete : arrowPending"
+        alt=""
+      />
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { CheckOutlined, LoadingOutlined, QuestionOutlined, RightOutlined } from '@ant-design/icons-vue'
+import { LoadingOutlined, QuestionCircleOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
 import type { HomeTarget } from '../../shared/types'
 import type { GuideStatus } from '../quickGuideStatus'
+import illustrations from '../assets/quick-guide-illustrations.png'
+import completed from '../assets/completed.svg'
+import completedCorner from '../assets/completed-corner.svg'
+import arrowComplete from '../assets/arrow-complete.svg'
+import arrowPending from '../assets/arrow-pending.svg'
+import actionArrow from '../assets/action-arrow.svg'
 
 export interface GuideStep {
-  key: string
+  key: 'gateway' | 'space' | 'device' | 'algorithm'
   title: string
   description: string
   actionText: string
@@ -53,180 +66,133 @@ export interface GuideStep {
   disabled?: boolean
 }
 
-defineProps<{
-  steps: GuideStep[]
-}>()
-
-defineEmits<{
-  action: [step: GuideStep]
-}>()
-
+defineProps<{ steps: GuideStep[] }>()
+defineEmits<{ action: [step: GuideStep] }>()
 const { t } = useI18n()
 </script>
 
 <style scoped lang="less">
 .quick-guide-view {
   display: flex;
-  align-items: stretch;
-  gap: 8px;
+  align-items: flex-start;
+  gap: var(--space-4, 16px);
   height: 100%;
   min-height: 0;
-  box-sizing: border-box;
 }
 
 .step-card {
-  flex: 1;
-  min-width: 0;
-  background: #fff;
-  border: 1px solid #edf0f5;
-  border-radius: 6px;
-  padding: 8px 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  box-sizing: border-box;
-  cursor: pointer;
-  transition: all .2s ease;
-
-  &:hover:not(.is-disabled) {
-    border-color: #91caff;
-    box-shadow: 0 2px 8px rgba(22, 119, 255, 0.08);
-
-    .action-btn {
-      color: #0958d9;
-    }
-  }
-
-  &.is-disabled {
-    cursor: not-allowed;
-    background: #fbfbfb;
-    border-color: #f0f0f0;
-
-    .step-badge {
-      background: #f0f2f5;
-      border-color: #d9d9d9;
-      color: #bfbfbf;
-    }
-
-    .step-title {
-      color: #8c8c8c;
-    }
-
-    .step-card-desc {
-      color: #bfbfbf;
-    }
-
-    .action-btn {
-      color: rgba(0, 0, 0, 0.25);
-      cursor: not-allowed;
-      pointer-events: none;
-    }
-  }
-}
-
-.step-card-header {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 13px;
+  flex: 1;
+  min-width: 0;
+  height: 96px;
+  padding: 12px 16px 8px;
+  overflow: hidden;
+  border: 1px solid var(--guide-border);
+  border-radius: var(--r-3, 8px);
+  background: #fff;
+  box-shadow: none;
+  color: var(--guide-title);
+  text-align: left;
+  white-space: normal;
+  transition: border-color .2s ease, box-shadow .2s ease;
+
+  &.is-complete {
+    border-color: #a0c2f7;
+    background: linear-gradient(90deg, #fff, #e3eeff);
+    .step-badge { background: var(--guide-accent); }
+  }
+
+  &:hover:not(:disabled), &:focus-visible:not(:disabled) {
+    border-color: var(--guide-accent);
+    color: var(--guide-title);
+  }
+
+  &:focus-visible { box-shadow: var(--ring-focus); }
+  &:disabled { opacity: .6; }
 }
 
+.step-illustration {
+  position: relative;
+  flex: 0 0 72px;
+  width: 72px;
+  height: 72px;
+  overflow: hidden;
+  border-radius: var(--r-3, 8px);
+
+  // 保留 Figma 的原始组合图及每张插图的裁切位置；排序按业务 key，不按序号。
+  img { position: absolute; max-width: none; }
+}
+[data-step="gateway"] .step-illustration img { width: 406.09%; height: 270.18%; left: -91.94%; top: -26.65%; }
+[data-step="device"] .step-illustration img { width: 407.47%; height: 270.18%; left: -219.88%; top: -26.65%; }
+[data-step="space"] .step-illustration img { width: 408.2%; height: 274.47%; left: -92.61%; top: -146.12%; }
+[data-step="algorithm"] .step-illustration img { width: 412.83%; height: 274.47%; left: -224.09%; top: -146.12%; }
+
+.step-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+}
+.step-card-header { display: flex; align-items: center; gap: 9px; }
 .step-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  border: 1px solid #91caff;
-  background: #e6f4ff;
-  color: #1677ff;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.step-badge.is-complete { background: #1677ff; border-color: #1677ff; color: #fff; }
-.step-badge.is-unknown { background: #f2f3f5; border-color: #d9dce3; color: #86909c; }
-.step-status { color: #1677ff; font-size: 11px; white-space: nowrap; }
-
-.step-title {
-  font-size: 13px;
-  line-height: 20px;
+  background: #b4becf;
+  color: #fff;
+  font-size: var(--fs-16, 16px);
   font-weight: 500;
-  color: #1f2937;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 22px;
 }
-
-.step-card-desc {
-  font-size: 12px;
-  line-height: 18px;
-  color: #667085;
-  margin: 4px 0 6px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.step-card-action {
-  margin-top: auto;
-}
-
-.action-btn {
-  padding: 0;
-  height: auto;
-  font-size: 12px;
-  font-weight: 500;
-  color: #1677ff;
+.step-title { font-size: var(--fs-16, 16px); line-height: 22px; font-weight: 500; }
+.step-title, .step-card-desc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.step-card-desc { color: var(--guide-description); font-size: var(--fs-14, 14px); line-height: 20px; }
+.step-card-action, .step-state {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  line-height: 16px;
+  font-size: var(--fs-14, 14px);
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+}
+.step-card-action { color: var(--guide-accent); }
+.step-state { color: var(--guide-secondary); }
+.step-card-action img, .step-separator, .step-corner { flex-shrink: 0; display: block; }
+.step-corner { position: absolute; top: 1px; right: 1px; }
+.step-separator { margin-top: 40px; }
+
+@container project-home (max-width: 1600px) {
+  .quick-guide-view { gap: var(--space-2, 8px); }
 }
 
-.action-arrow {
-  font-size: 10px;
+@container project-home (max-width: 1200px) {
+  .quick-guide-view { overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: thin; }
+  .step-card { flex: 0 0 340px; scroll-snap-align: start; }
 }
 
-.step-separator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #d0d5dd;
-  font-size: 11px;
-  flex-shrink: 0;
-  user-select: none;
-}
-
-@container business-component-shell (max-width: 900px) {
-  .quick-guide-view {
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
-    scrollbar-width: thin;
-  }
-  .step-card {
-    flex: 0 0 220px;
-    scroll-snap-align: start;
-  }
+@container project-home (max-width: 1200px) and (min-height: 260px) {
+  .quick-guide-view { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: center; overflow: auto; }
   .step-separator { display: none; }
 }
 
-@container business-component-shell (max-width: 900px) and (min-height: 240px) {
-  .quick-guide-view {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(2, minmax(0, 1fr));
-    overflow: visible;
-  }
-  .step-card { min-width: 0; }
+@container project-home (max-width: 600px) and (min-height: 420px) {
+  .quick-guide-view { grid-template-columns: minmax(0, 1fr); }
 }
 
-@container business-component-shell (max-width: 400px) and (min-height: 400px) {
-  .quick-guide-view {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: repeat(4, minmax(0, 1fr));
-  }
+@container project-home (max-height: 140px) {
+  .step-card { flex: 1 0 150px; height: 36px; padding: 6px 10px; }
+  .step-illustration, .step-card-desc, .step-card-action, .step-state, .step-corner, .step-separator { display: none; }
+  .step-title { font-size: var(--fs-14, 14px); }
+  .quick-guide-view { overflow-x: auto; }
 }
 </style>

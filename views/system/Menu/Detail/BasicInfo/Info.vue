@@ -62,16 +62,12 @@
                 name="code"
                 :rules="[
                   {
-                    required: true,
-                    message: $t('BasicInfo.Info.607342-8'),
-                    trigger: 'change',
-                  },
-                  {
                     max: 64,
                     message: $t('BasicInfo.Info.607342-6'),
                     trigger: 'change',
                   },
                   {
+										required: true,
                     validator: checkCode,
                     trigger: 'blur',
                   },
@@ -184,7 +180,7 @@ const confirm = (url: string) => {
 
 const checkCode = async (_rule: any, value: string): Promise<any> => {
   if (!value) {
-    return Promise.reject('')
+    return Promise.reject($t('BasicInfo.Info.607342-8'))
   } else if (value.length > 64) {
     return Promise.reject($t('BasicInfo.Info.607342-6'))
   } else if (

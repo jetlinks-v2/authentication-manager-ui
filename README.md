@@ -18,6 +18,14 @@
 
 验证：本地 `http://localhost:9200/#/system/ou/department` 的父节点显示 `icon-zuzhiguanli`、叶子节点显示 `icon-zuzhi`，展开父节点后子节点图标仍按其子级判断；随后恢复原有折叠与选中状态。`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过（10,799 个模块，27.51 秒），`git diff --check` 通过；构建仅有既有的 Rollup output option、CSS 注释与大包提示。未触发编辑、删除或导入等写入操作。
 
+## 组织树搜索结果展开
+
+目标与范围：`views/system/Department/components/LeftTree.vue` 搜索组织名称时，保留命中节点的完整父级路径并自动展开，使深层组织直接可见；仅涉及运行时 `authentication-manager-ui` 的树搜索，不修改接口、权限、节点操作、路由或运营端前端。
+
+实施：复用现有 `expandParentNodes` 补齐全部祖先，并将父级 ID 去重后同步到 `expandedKeys`；移除仅补回直接父级的 `dig`。清空搜索沿用原有全量刷新与展开重置，搜索后仍可手动折叠节点。
+
+验证：在 `http://192.168.35.97:9201/#/system/ou/department` 搜索“三级”，直接显示展开的“一级组织 → 二级组织 → 三级组织”；搜索“组织”同时显示两个顶层组织及命中的子级；无匹配显示空态，清空恢复全量折叠树，手动折叠二级组织可隐藏三级节点。`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过（11,521 个模块，57.77 秒），`git diff --check` 通过。模块未配置 lint 脚本；`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 修改前后均有 605 项既有诊断，忽略本组件行号偏移后输出完全一致，无新增诊断。全量类型检查仍未通过，剩余风险为既有类型问题；清理后需重跑同一命令。本次不修改组织数据，未创建四级及更深的节点进行页面验证。
+
 ## 组织树底部操作菜单
 
 目标与范围：仅调整 `views/system/Department/components/LeftTree.vue` 的顶层操作布局。参考 `modules/jetlinks-space-ui/views/space/AreaManagement/components/AreaTreePanel.vue` 的底部点击式菜单：移除标题栏的批量导入图标，点击底部“新增”按钮后显示“批量导入”和“新增”。沿用现有弹窗、文案和新增权限；不改树节点操作、接口、树数据、搜索或其他前端模块。
@@ -223,6 +231,10 @@ Verification:
 1. 四页分别在 `headerLeftRender` 渲染现有 i18n 标题，`headerRightRender` 渲染搜索与已有顶部操作。
 2. 权限管理保留新增与批量导入/导出；菜单管理保留新增与管理员菜单配置；公告管理保留新增；用户管理保留新增与导入/导出，均与搜索同行右对齐。
 3. 沿用网络组件的标题层级和间距，只添加页面内必要的响应式样式；不添加无业务契约的操作或统计信息。
+
+菜单配置跳转：`views/system/Menu/index.vue` 的管理员菜单配置按钮使用 `menuStore.jumpPage('system/Menu/Setting')`，通过菜单映射解析目标路由并携带运行时项目上下文；已移除不再使用的 `useRouter` 实例。管理员可见性与目标页面保持原约定。
+
+跳转调整验证：页面 Vue SFC 模板/脚本编译、`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`（55.12 秒）与 `git diff --check` 通过。模块未配置 lint 脚本；`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 报告 605 项工作区类型诊断，本页 3 项均位于与 HEAD 一致的子菜单排序代码，改动位置无诊断。未进行登录态点击验证，菜单配置页面在项目运行时的实际导航仍需页面回归确认。
 
 风险与验证：现有文档中的 “System Management List Layout” 描述已由本次实际页面实现校正：四页均按标题左置、工具右置的表格插槽布局呈现。筛选参数、菜单树展开、各权限按钮及用户导入导出行为保持原实现；`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 和目标文件 `git diff --check` 均通过。构建仍报告工作区既有的 Rollup `input` 配置、CSS `//` 注释及大包提示。
 
