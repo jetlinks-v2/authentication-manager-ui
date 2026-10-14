@@ -21,8 +21,8 @@ test('api-client grants keep the preserved / required distinction', () => {
     { type: 'warning', message: 'ThirdPartyApplication.direct.assetScopeRequired' })
 })
 
-test('template grants always explain the instance / creator data scope', () => {
-  const hint = { type: 'info', message: 'ApplicationTemplate.grants.assetScopeByCreator' }
+test('template grants explain initialized permissions and existing data scope', () => {
+  const hint = { type: 'info', message: 'ApplicationTemplate.grants.assetScope' }
   assert.deepEqual(groupAssetHint(group, [], true), hint)
   assert.deepEqual(groupAssetHint(group, [scoped('device'), scoped('product')], true), hint)
 })

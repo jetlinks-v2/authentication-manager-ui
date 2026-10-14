@@ -1569,7 +1569,7 @@
   "ApplicationTemplate.detail.document": "文档",
   "ApplicationTemplate.detail.config": "配置",
   "ApplicationTemplate.detail.grants": "接口授权",
-  "ApplicationTemplate.grants.assetScopeByCreator": "本组涉及资产权限。模板只配置接口操作：应用以应用身份访问时，实例已配置数据范围的资产类型按实例，未配置的（如用户、角色）按应用创建人的数据范围；登录用户访问时按该用户自身的数据范围。",
+  "ApplicationTemplate.grants.assetScope": "本组涉及资产权限。模板配置接口操作上限：用户访问时取用户与应用有效功能权限的交集，后台访问不继承创建人权限；数据访问沿平台现有资产权限处理，并受应用及租户范围约束。",
   "ApplicationTemplate.document.placeholder": "记录模版适用场景、默认能力和使用说明",
   "ApplicationTemplate.document.empty": "暂未填写模版文档",
   "ApplicationTemplate.config.title": "菜单与资产权限",
