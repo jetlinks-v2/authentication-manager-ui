@@ -4,6 +4,8 @@
 
 ## 用户表格行操作
 
+交付入口：代码提交 `6cc39dc3174ee51afbef68291efbcb1109914823`；[PR #109：完善角色分组权限与列表操作](https://github.com/jetlinks-v2/authentication-manager-ui/pull/109)，目标分支 `2.20`。
+
 目标与范围：`views/system/User/index.vue` 的操作列复用运行时 core 的 `TableActions` / `TableActionsItem`，编辑、重置密码行内显示，启用/禁用和删除收进更多面板并显示文字；操作列宽为 100，移除页面显式的横向 scroll 配置。保留现有权限、状态判断、确认弹窗及业务回调；不修改接口、共享组件或运营端页面。
 
 实施：用全局注册的子项包裹原有权限按钮并标记常用项，面板操作复用既有翻译键。四个按钮的权限、回调、确认配置、禁用条件和 Tooltip 与改动前一致，已通过模板 AST 比对。
