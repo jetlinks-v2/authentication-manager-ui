@@ -15,7 +15,6 @@
                             { name: 'username', order: 'asc', value: 'admin' },
                         ],
                     }"
-            :scroll="{ x: 'max-content' }"
         >
           <template #headerLeftRender>
               <div class="user-list-toolbar">
@@ -110,68 +109,79 @@
             ></j-badge-status>
           </template>
           <template #action="slotProps">
-            <a-space :size="16">
-              <j-permission-button
-                  :hasPermission="`${permission}:update`"
-                  type="link"
-                  :tooltip="{
-                                    title: $t('User.index.673867-3'),
-                                }"
-                  @click="table.openDialog('edit', slotProps)"
-              >
-                <AIcon type="EditOutlined"/>
-              </j-permission-button>
-              <j-permission-button
-                  :hasPermission="`${permission}:action`"
-                  type="link"
-                  :tooltip="{
-                                    title: `${
-                                        slotProps.status ? $t('User.index.673867-2') : $t('User.index.673867-4')
-                                    }`,
-                                }"
-                  :popConfirm="{
-                                    title: $t('User.index.673867-5', [slotProps.status ? $t('User.index.673867-2') : $t('User.index.673867-4')]),
-                                    onConfirm: () =>
-                                        table.changeStatus(slotProps),
-                                }"
-              >
-                <AIcon
-                    :type="
-                                        slotProps.status
-                                            ? 'StopOutlined'
-                                            : 'PlayCircleOutlined'
-                                    "
-                />
-              </j-permission-button>
-              <j-permission-button
-                  :hasPermission="`${permission}:update`"
-                  type="link"
-                  :tooltip="{
-                                    title: $t('User.index.673867-6'),
-                                }"
-                  @click="table.openDialog('reset', slotProps)"
-              >
-                <AIcon type="icon-zhongzhimima"/>
-              </j-permission-button>
-              <j-permission-button
-                  type="link"
-                  :hasPermission="`${permission}:delete`"
-                  danger
-                  :tooltip="{
-                                    title: slotProps.status
-                                        ? $t('User.index.673867-7')
-                                        : $t('User.index.673867-8'),
-                                }"
-                  :popConfirm="{
-                                    title: $t('User.index.673867-9'),
-                                    onConfirm: () =>
-                                        table.clickDel(slotProps.id),
-                                }"
-                  :disabled="!!slotProps.status"
-              >
-                <AIcon type="DeleteOutlined"/>
-              </j-permission-button>
-            </a-space>
+            <TableActions>
+              <TableActionsItem common>
+                <j-permission-button
+                    :hasPermission="`${permission}:update`"
+                    type="link"
+                    :tooltip="{
+                                      title: $t('User.index.673867-3'),
+                                  }"
+                    size="small"
+                    @click="table.openDialog('edit', slotProps)"
+                >
+                  <AIcon type="EditOutlined"/>
+                </j-permission-button>
+              </TableActionsItem>
+              <TableActionsItem>
+                <j-permission-button
+                    :hasPermission="`${permission}:action`"
+                    type="link"
+                    :tooltip="{
+                                      title: `${
+                                          slotProps.status ? $t('User.index.673867-2') : $t('User.index.673867-4')
+                                      }`,
+                                  }"
+                    :popConfirm="{
+                                      title: $t('User.index.673867-5', [slotProps.status ? $t('User.index.673867-2') : $t('User.index.673867-4')]),
+                                      onConfirm: () =>
+                                          table.changeStatus(slotProps),
+                                  }"
+                >
+                  <AIcon
+                      :type="
+                                          slotProps.status
+                                              ? 'StopOutlined'
+                                              : 'PlayCircleOutlined'
+                                      "
+                  />
+                  {{ slotProps.status ? $t('User.index.673867-2') : $t('User.index.673867-4') }}
+                </j-permission-button>
+              </TableActionsItem>
+              <TableActionsItem common>
+                <j-permission-button
+                    :hasPermission="`${permission}:update`"
+                    type="link"
+                    :tooltip="{
+                                      title: $t('User.index.673867-6'),
+                                  }"
+                    @click="table.openDialog('reset', slotProps)"
+                >
+                  <AIcon type="icon-zhongzhimima"/>
+                </j-permission-button>
+              </TableActionsItem>
+              <TableActionsItem>
+                <j-permission-button
+                    type="link"
+                    :hasPermission="`${permission}:delete`"
+                    danger
+                    :tooltip="{
+                                      title: slotProps.status
+                                          ? $t('User.index.673867-7')
+                                          : $t('User.index.673867-8'),
+                                  }"
+                    :popConfirm="{
+                                      title: $t('User.index.673867-9'),
+                                      onConfirm: () =>
+                                          table.clickDel(slotProps.id),
+                                  }"
+                    :disabled="!!slotProps.status"
+                >
+                  <AIcon type="DeleteOutlined"/>
+	                {{$t('User.index.673867-8')}}
+                </j-permission-button>
+              </TableActionsItem>
+            </TableActions>
           </template>
         </j-pro-table>
       
@@ -329,7 +339,7 @@ const columns = [
     dataIndex: 'action',
     key: 'action',
     fixed: 'right',
-    width: 180,
+    width: 100,
     scopedSlots: true,
   },
 ];

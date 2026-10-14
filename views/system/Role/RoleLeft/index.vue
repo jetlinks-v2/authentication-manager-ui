@@ -34,19 +34,19 @@
 						<template v-if="!item?.children">
 							<div class="itemText">
 								<AIcon class="treeItem__icon" type="icon-moren" />
-								<j-ellipsis style="width: calc(100%-6.25rem)">{{ item.i18nName || item.name }}</j-ellipsis>
+								<j-ellipsis style="flex: 1; min-width: 0">{{ item.i18nName || item.name }}</j-ellipsis>
 							</div>
-							<div v-if="item.id !== 'default_group' && isAdmin" @click="(e) => e.stopPropagation()">
+							<div v-if="item.id !== 'default_group' && isAdmin" class="treeItem__actions" @click="(e) => e.stopPropagation()">
 								<j-permission-button :disabled="item.id === 'default_group'" :popConfirm="{
                                     title: $t('RoleLeft.index.507330-2'),
                                     onConfirm: () => deleteGroup(item.id, item.isNew),
-                                }" type="text">
-									{{ $t('RoleLeft.index.507330-3') }}
+                                }" type="link" :tooltip="{title: $t('RoleLeft.index.507330-3')}" danger size="small">
+									<AIcon type="DeleteOutlined"/>
 								</j-permission-button>
 <!--                hasPermission="system/Role:groupDelete"-->
 								<j-permission-button :disabled="item.id === 'default_group'"
-																		 type="text" @click="editGroup(item.data)">
-									{{ $t('RoleLeft.index.507330-4') }}
+																		 type="link" @click="editGroup(item.data)" :tooltip="{title: $t('RoleLeft.index.507330-4')}" size="small">
+									<AIcon type="EditOutlined"/>
 <!--                   hasPermission="system/Role:groupUpdate"-->
 								</j-permission-button>
 							</div>
@@ -224,12 +224,23 @@ onMounted(() => {
 	display: flex;
 	justify-content: space-between;
 
+	&__actions {
+		display: none;
+		flex-shrink: 0;
+		align-items: center;
+	}
+
+	&:hover .treeItem__actions {
+		display: flex;
+	}
+
 	.itemText {
 		display: flex;
+		flex: 1;
+		min-width: 0;
 		align-items: center;
 		gap: var(--space-1);
 		line-height: 2rem;
-		max-width: 40%
 	}
 }
 

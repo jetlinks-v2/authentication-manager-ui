@@ -2078,6 +2078,10 @@
               {
                 "permission": "menu",
                 "actions": ["grant"]
+              },
+              {
+                "permission": "role-group",
+                "actions": ["save", "delete"]
               }
             ]
           },
@@ -2114,7 +2118,8 @@
           "business_application",
           "user",
           "role",
-          "device"
+          "device",
+          "roleGroup"
         ]
       },
       {
