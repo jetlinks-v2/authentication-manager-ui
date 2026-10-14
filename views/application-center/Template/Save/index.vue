@@ -42,6 +42,9 @@
               @save="menuConfig.save"
             />
           </a-tab-pane>
+          <a-tab-pane v-if="parameters.supported.value" key="grants" :tab="$t('ApplicationTemplate.detail.grants')">
+            <GrantPanel v-if="activeTab === 'grants'" :target-id="templateId" :target-type="TEMPLATE_GRANT_TARGET" />
+          </a-tab-pane>
         </a-tabs>
       </a-spin>
     </FullPage>
@@ -54,6 +57,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@jetlinks-web-core/store'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
+import { TEMPLATE_GRANT_TARGET } from '@authentication-manager-ui/api/application-center/apiApplication'
 import ConfigPane from './ConfigPane.vue'
 import DocumentPane from './DocumentPane.vue'
 import TemplateSummary from './TemplateSummary.vue'
@@ -62,6 +66,7 @@ import { useApplicationTemplateMenuConfig } from './useApplicationTemplateMenuCo
 import { useApplicationTemplateParameters } from './useApplicationTemplateParameters'
 
 const ExternalParameterConfig = defineAsyncComponent(() => import('./ExternalParameterConfig.vue'))
+const GrantPanel = defineAsyncComponent(() => import('../../ThirdPartyApplication/Direct/GrantPanel.vue'))
 
 const { t: $t } = useI18n()
 const route = useRoute()

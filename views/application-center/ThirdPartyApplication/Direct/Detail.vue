@@ -32,7 +32,7 @@
               <a-button type="primary" :loading="saving" :disabled="!form.name.trim()" @click="save">{{ $t('ApiApplication.actions.save') }}</a-button>
             </a-form>
           </div>
-          <GrantPanel v-else-if="activeTab === 'grants'" :key="application.id" :application-id="application.id" />
+          <GrantPanel v-else-if="activeTab === 'grants'" :key="application.id" :target-id="application.id" />
           <div v-else-if="activeTab === 'oauth'">
             <a-alert type="info" show-icon class="detail-alert" :message="$t('ThirdPartyApplication.direct.oauthHint')" />
             <CredentialPanel :key="application.id" :application-id="application.id" :active="true" />

@@ -141,11 +141,15 @@ export const queryBusinessApplications = (data: QueryPayload = { paging: false }
 export const queryApiGroups = (data: QueryPayload = { paging: false }) =>
   apiRequest.post<ApiGroup[]>('/open/api/group/detail/_query/no-paging?specification=true', data)
 
-export const queryApiGrants = (appId: string) =>
-  apiRequest.post<ApiGroupGrant[]>(`/open/api/group/api-client/${encodeURIComponent(appId)}/grant/_query`)
+// 接口分组授权对象类型：API 应用与业务应用模板。
+export const API_CLIENT_TARGET = 'api-client'
+export const TEMPLATE_GRANT_TARGET = 'business_application_template'
 
-export const saveApiGrants = (appId: string, grants: ApiGroupGrant[]) =>
-  apiRequest.put<void>(`/open/api/group/api-client/${encodeURIComponent(appId)}/_grant`, grants)
+export const queryApiGrants = (targetId: string, targetType: string = API_CLIENT_TARGET) =>
+  apiRequest.post<ApiGroupGrant[]>(`/open/api/group/${encodeURIComponent(targetType)}/${encodeURIComponent(targetId)}/grant/_query`)
+
+export const saveApiGrants = (targetId: string, grants: ApiGroupGrant[], targetType: string = API_CLIENT_TARGET) =>
+  apiRequest.put<void>(`/open/api/group/${encodeURIComponent(targetType)}/${encodeURIComponent(targetId)}/_grant`, grants)
 
 export const queryAccessLogs = (data: QueryPayload) =>
   apiRequest.post<Pager<AccessLog>>('/logger/access/_query', data)

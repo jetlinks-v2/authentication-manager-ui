@@ -34,8 +34,7 @@
               {{ operation.name || operation.id }}<small v-if="operation.description">{{ operation.description }}</small>
             </a-checkbox>
           </a-checkbox-group>
-          <a-alert v-if="assetScoped(group)" :type="hasAssetScope(group.id) ? 'info' : 'warning'" show-icon class="grant-alert"
-            :message="$t(hasAssetScope(group.id) ? 'ThirdPartyApplication.direct.assetScopePreserved' : 'ThirdPartyApplication.direct.assetScopeRequired')" />
+          <a-alert v-if="assetHint(group)" :type="assetHint(group)?.type" show-icon class="grant-alert" :message="$t(assetHint(group)?.message || '')" />
         </a-collapse-panel>
       </a-collapse>
     </a-spin>
@@ -44,10 +43,11 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { useDirectGrants } from './useDirectGrants'
-const props = defineProps<{ applicationId: string }>()
+// targetType 缺省时由 useDirectGrants 按 API 应用（api-client）处理。
+const props = defineProps<{ targetId: string; targetType?: string }>()
 const { t: $t } = useI18n()
 const { groups, original, selected, changed, loading, saving, loaded, error, hiddenGrants,
-  update, selectAll, operations, assetScoped, hasAssetScope, canManageGroups, openGroupManager, save, load } = useDirectGrants(() => props.applicationId)
+  update, selectAll, operations, assetHint, canManageGroups, openGroupManager, save, load } = useDirectGrants(() => props.targetId, props.targetType)
 </script>
 <style scoped>
 .grant-head { display: flex; gap: 16px; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; }

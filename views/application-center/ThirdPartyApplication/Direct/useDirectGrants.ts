@@ -1,18 +1,18 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
-import { queryApiGrants, queryApiGroups, saveApiGrants } from '@authentication-manager-ui/api/application-center/apiApplication'
+import { API_CLIENT_TARGET, TEMPLATE_GRANT_TARGET, queryApiGrants, queryApiGroups, saveApiGrants } from '@authentication-manager-ui/api/application-center/apiApplication'
 import type { ApiGroup, ApiGroupGrant, ApiGroupOperation } from '@authentication-manager-ui/api/application-center/apiApplication'
 import { applicationError, responseBody } from '../applicationUtils'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { groupMenu, useGroupPermissions } from '../../ApiGroup/useGroupPermissions'
-import { selectedGroupOperations, updateGroupGrantOperations } from '../../ApiApplication/groupGrantUtils'
+import { groupAssetHint, selectedGroupOperations, updateGroupGrantOperations } from '../../ApiApplication/groupGrantUtils'
 
 const grantableOperation = (operation: ApiGroupOperation) => !!operation.apiSpecIds?.length
   && operation.apiSpecIds.every(id => operation.apiDetail?.some(spec => spec.id === id
     && !!spec.permissionId?.trim() && !!spec.actions?.length && spec.actions.every(action => !!action.trim())))
 
-export const useDirectGrants = (applicationId: () => string) => {
+export const useDirectGrants = (targetId: () => string, targetType: string = API_CLIENT_TARGET) => {
   const { t } = useI18n()
   const menu = useMenuStore()
   const { canQuery: canManageGroups } = useGroupPermissions()
@@ -31,7 +31,7 @@ export const useDirectGrants = (applicationId: () => string) => {
     loading.value = true; loaded.value = false; error.value = ''; changed.value = []
     groups.value = []; original.value = []; selected.value = {}
     try {
-      const [catalog, grants] = await Promise.all([queryApiGroups({ paging: false, terms: [{ column: 'status', termType: 'eq', value: 'enabled' }] }), queryApiGrants(applicationId())])
+      const [catalog, grants] = await Promise.all([queryApiGroups({ paging: false, terms: [{ column: 'status', termType: 'eq', value: 'enabled' }] }), queryApiGrants(targetId(), targetType)])
       if (current !== generation) return
       const groupList = responseBody(catalog)
       const grantList = responseBody(grants)
@@ -73,23 +73,18 @@ export const useDirectGrants = (applicationId: () => string) => {
       if (!ids.length) continue
       const previous = original.value.filter(grant => grant.groupId === groupId)
       if (previous.length) result.push(...updateGroupGrantOperations(previous, ids))
-      else result.push({ targetType: 'api-client', targetId: applicationId(), groupId, operationIds: ids })
+      else result.push({ targetType, targetId: targetId(), groupId, operationIds: ids })
     }
     return result
   })
   const hiddenGrants = computed(() => original.value.some(grant => !groups.value.some(group => group.id === grant.groupId)))
-  const assetScoped = (group: ApiGroup) => !!group.assetTypes.length
-  const hasAssetScope = (groupId: string) => {
-    const types = groups.value.find(group => group.id === groupId)?.assetTypes || []
-    return types.every(type => original.value.some(grant => grant.groupId === groupId
-      && grant.assetAccesses?.assetType === type && Array.isArray(grant.assetAccesses.accesses) && grant.assetAccesses.accesses.length > 0))
-  }
+  const assetHint = (group: ApiGroup) => groupAssetHint(group, original.value, targetType === TEMPLATE_GRANT_TARGET)
   const save = async (revokeAll = false) => {
     if (saving.value || !loaded.value || loading.value) return
     const current = generation
     saving.value = true; error.value = ''
     try {
-      await saveApiGrants(applicationId(), revokeAll ? [] : payload.value)
+      await saveApiGrants(targetId(), revokeAll ? [] : payload.value, targetType)
       if (current !== generation) return
       onlyMessage(t('ApiApplication.message.permissionSaved'))
       saving.value = false
@@ -97,7 +92,7 @@ export const useDirectGrants = (applicationId: () => string) => {
     } catch (cause) { if (current === generation) error.value = applicationError(cause, t) }
     finally { if (current === generation) saving.value = false }
   }
-  watch(applicationId, load, { immediate: true })
+  watch(targetId, load, { immediate: true })
   return { groups, original, selected, changed, loading, saving, loaded, error, hiddenGrants, payload,
-    update, selectAll, operations, assetScoped, hasAssetScope, canManageGroups, openGroupManager, save, load }
+    update, selectAll, operations, assetHint, canManageGroups, openGroupManager, save, load }
 }

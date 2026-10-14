@@ -1568,6 +1568,8 @@
   "ApplicationTemplate.detail.back": "Back to Application Templates",
   "ApplicationTemplate.detail.document": "Document",
   "ApplicationTemplate.detail.config": "Configuration",
+  "ApplicationTemplate.detail.grants": "API Authorization",
+  "ApplicationTemplate.grants.assetScopeByCreator": "This group involves asset permissions. Templates configure API operations only: when the application accesses as itself, asset types with a data scope configured on the instance follow the instance, while unconfigured ones (such as users and roles) follow the application creator's data scope; when a signed-in user accesses, that user's own data scope applies.",
   "ApplicationTemplate.document.placeholder": "Describe the scenario, default capabilities, and usage notes for this template",
   "ApplicationTemplate.document.empty": "No template document has been added",
   "ApplicationTemplate.config.title": "Menus and Asset Permissions",

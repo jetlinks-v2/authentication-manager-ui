@@ -21,3 +21,15 @@ export const newBusinessApplicationGrants = (group: ApiGroup, targetId: string, 
     assetAccesses: { assetType, accesses: [{ supportId: 'business_application' }] },
   })) : [base]
 }
+
+export interface GroupAssetHint { type: 'info' | 'warning'; message: string }
+
+// 涉及资产的分组提示（message 为 i18n key）。模板授权不配置资产范围，统一按实例/创建人范围说明。
+export const groupAssetHint = (group: ApiGroup, grants: ApiGroupGrant[], byCreator = false): GroupAssetHint | undefined => {
+  if (!group.assetTypes.length) return undefined
+  if (byCreator) return { type: 'info', message: 'ApplicationTemplate.grants.assetScopeByCreator' }
+  const scoped = group.assetTypes.every(type => grants.some(grant => grant.groupId === group.id
+    && grant.assetAccesses?.assetType === type && Array.isArray(grant.assetAccesses.accesses) && grant.assetAccesses.accesses.length > 0))
+  return scoped ? { type: 'info', message: 'ThirdPartyApplication.direct.assetScopePreserved' }
+    : { type: 'warning', message: 'ThirdPartyApplication.direct.assetScopeRequired' }
+}
