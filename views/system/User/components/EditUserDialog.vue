@@ -83,7 +83,23 @@
                       <form-item-role :extraData="detail.roleList" :extraProps="{multiple: true}" :disabledData="disabledData.roles" v-model:value="form.data.roleIdList" :disabled="isRoleReadonly" />
                       <div v-if="isNoCommunity" class="tip"><AIcon style="margin-right: 0.25rem" type="ExclamationCircleOutlined" />{{$t('components.EditUserDialog.939453-33')}}</div>
                       -->
-                      <form-item-role :extraData="detail.roleList" :extraProps="{multiple: true}" v-model:value="form.data.roleIdList" :disabled="isRoleReadonly" />
+                      <a-spin :spinning="applicationRoleSelectionLoading">
+                        <ApplicationRoleSelector
+                          :extraData="detail.roleList"
+                          :applicationRoleIds="applicationRoleIds"
+                          :roleGroups="roleGroups"
+                          v-model:value="form.data.roleIdList"
+                          :disabled="isRoleReadonly || applicationRoleSelectionLoading || applicationRoleSelectionUnavailable"
+                          @created="loadApplicationRoleSelection"
+                        />
+                      </a-spin>
+                      <div class="tip">
+                        <AIcon style="margin-right: 0.25rem" type="ExclamationCircleOutlined" />
+                        {{ $t('components.EditUserDialog.939453-38') }}
+                      </div>
+                      <div v-if="applicationRoleSelectionUnavailable" class="tip tip-error">
+                        {{ $t('components.EditUserDialog.939453-39') }}
+                      </div>
                     </a-form-item>
                 </a-col>
                 <a-col :span="12" v-if="hasDepartmentMenu">
@@ -197,6 +213,8 @@ import { useI18n } from 'vue-i18n';
 // import {queryPositionDetailNoPage} from "@authentication-manager-ui/api/system/positions";
 // import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
 import { useMenuStore } from '@jetlinks-web-core/store';  
+import { useApplicationRoleSelection } from '../useApplicationRoleSelection'
+import ApplicationRoleSelector from './ApplicationRoleSelector.vue'
 
 const { t: $t } = useI18n();
 
@@ -211,6 +229,13 @@ const loading = ref(false);
 // const positionsMap = new Map()
 const menuStore = useMenuStore();
 const hasDepartmentMenu = menuStore.hasMenu('system/Department');
+const {
+  applicationRoleIds,
+  roleGroups,
+  loading: applicationRoleSelectionLoading,
+  unavailable: applicationRoleSelectionUnavailable,
+  load: loadApplicationRoleSelection,
+} = useApplicationRoleSelection()
 
 /* 职位关联禁用状态已屏蔽，保留原实现。
 const disabledData = reactive<{
@@ -438,6 +463,11 @@ onMounted(async () => {
   }
   */
   form.init();
+  try {
+    await loadApplicationRoleSelection()
+  } catch {
+    // 限制数据加载失败时锁定角色选择，避免用户误把应用角色从系统入口分配出去。
+  }
 })
 
 watch(
@@ -503,5 +533,9 @@ type optionType = {
 .tip {
   color: rgba(0,0,0,.65);
   margin-top: 0.25rem;
+}
+
+.tip-error {
+  color: var(--danger, #ff4d4f);
 }
 </style>

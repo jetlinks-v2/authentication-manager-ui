@@ -104,7 +104,13 @@ const { jumpPage } = useMenuStore()
 const modalType = ref('add')
 const current = ref()
 const isSave = !!useRoute().query.save
-const queryParams = ref<any>({ terms: [] })
+// 应用角色必须在应用详情中按模板上限授权，系统角色管理仅维护独立角色。
+const regularRoleTerm = {
+  column: 'applicationId',
+  termType: 'isnull',
+  value: 1,
+}
+const queryParams = ref<any>({ terms: [regularRoleTerm] })
 // 表格
 const tableRef = ref<Record<string, any>>()
 const dialogVisible = ref(isSave)
@@ -243,6 +249,7 @@ const onCopySave = (id: string) => {
 const handelSearch = (search: any) => {
   queryParams.value.terms = props.groupId
     ? [
+        regularRoleTerm,
         {
           value: props.groupId,
           termType: 'eq',
@@ -250,7 +257,7 @@ const handelSearch = (search: any) => {
         },
         ...search.terms,
       ]
-    : [...search.terms]
+    : [regularRoleTerm, ...search.terms]
 }
 
 watch(
@@ -259,6 +266,7 @@ watch(
     queryParams.value = value
       ? {
           terms: [
+            regularRoleTerm,
             {
               value: props.groupId,
               termType: 'eq',
@@ -267,7 +275,7 @@ watch(
           ],
         }
       : {
-          terms: [],
+          terms: [regularRoleTerm],
         }
   },
 )

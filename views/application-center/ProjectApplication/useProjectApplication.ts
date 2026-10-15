@@ -10,18 +10,17 @@ import {
   type BusinessApplicationEntity,
   type BusinessApplicationRoleEntity,
   type BusinessApplicationTemplateEntity,
-  type MenuView,
   type UserDetailEntity,
 } from '@authentication-manager-ui/api/application-center/businessApplication'
 import {
   buildApplicationTerms,
-  flattenMenuNames,
   listOf,
   normalizeApplication,
   normalizeRole,
   normalizeTemplate,
   normalizeUser,
   resultOf,
+  templateMenuNames,
 } from './applicationModel'
 import {
   buildApplicationConfiguration,
@@ -113,7 +112,7 @@ export const useProjectApplication = () => {
   const loadTemplateMenus = async (templateId: string) => {
     if (Object.prototype.hasOwnProperty.call(templateMenus, templateId)) return templateMenus[templateId]
     const response = await getBusinessApplicationTemplateMenus(templateId)
-    const names = flattenMenuNames(listOf<MenuView>(response))
+    const names = templateMenuNames(response)
     templateMenus[templateId] = names
     return names
   }

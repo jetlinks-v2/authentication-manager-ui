@@ -211,3 +211,9 @@ export const flattenMenuNames = (menus: MenuView[] = []) => {
   visit(menus)
   return [...new Set(result)]
 }
+
+/** 从模板菜单授权详情中提取用于创建预览的菜单名称。 */
+export const templateMenuNames = (response: unknown) => {
+  const detail = resultOf<{ menus?: MenuView[] }>(response)
+  return flattenMenuNames(Array.isArray(detail?.menus) ? detail.menus : [])
+}
