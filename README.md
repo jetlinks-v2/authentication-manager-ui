@@ -2,6 +2,24 @@
 
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.
 
+## 用户表格行操作
+
+交付入口：代码提交 `6cc39dc3174ee51afbef68291efbcb1109914823`；[PR #109：完善角色分组权限与列表操作](https://github.com/jetlinks-v2/authentication-manager-ui/pull/109)，目标分支 `2.20`。
+
+目标与范围：`views/system/User/index.vue` 的操作列复用运行时 core 的 `TableActions` / `TableActionsItem`，编辑、重置密码行内显示，启用/禁用和删除收进更多面板并显示文字；操作列宽为 100，移除页面显式的横向 scroll 配置。保留现有权限、状态判断、确认弹窗及业务回调；不修改接口、共享组件或运营端页面。
+
+实施：用全局注册的子项包裹原有权限按钮并标记常用项，面板操作复用既有翻译键。四个按钮的权限、回调、确认配置、禁用条件和 Tooltip 与改动前一致，已通过模板 AST 比对。
+
+验证：与 `2.20` 模板 AST 对照确认四个按钮的权限、禁用条件、Tooltip、确认配置与回调保持一致，并核对编辑/重置密码为常用项；脚本、模板和 scoped LESS 编译通过。`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 生产构建通过（11,758 个模块，39.79 秒），`git diff --check` 通过。模块和工作区未配置 lint 脚本；在 `runtime-ui` 执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 仍有 605 项诊断，将 4 个改动 Vue 文件与 `baseMenu.json` 替换为 `2.20` 基线内容后，忽略行号位移的完整诊断一致，无新增类型错误。整体类型检查仍未通过，清理既有错误后需重跑同一命令；登录后的更多面板、键盘操作、状态确认与启用用户禁止删除的真实交互尚待验证。
+
+## 角色表格行操作
+
+目标与范围：`views/system/Role/RoleRight/index.vue` 的操作列复用运行时 core 的 `TableActions` / `TableActionsItem`，前两个按钮“编辑”和“权限配置”常驻，“复制”和“删除”收进更多面板并展示既有操作文字。保留权限、禁用状态、回调和删除确认；不修改操作定义、接口、共享组件或其他页面。
+
+实施：循环项使用权限 key 与图标组成的唯一稳定 key，区分两个同为 `update` 权限的操作；按索引标记前两项为常用项，间距交由共享组件处理，仅更多面板展示操作文字。业务处理逻辑与样式保持原样，操作列宽调整为 120。
+
+验证：模板 AST 核对按钮权限、禁用与确认回调，且 `getActions` 操作定义与 `2.20` 基线保持一致；循环 key 区分两个 update 操作，脚本、模板及 scoped LESS 编译通过。模块生产构建通过（11,758 个模块，39.79 秒），`git diff --check` 通过。模块未配置 lint 脚本；完整类型检查仍有与基线一致的 605 项诊断，无新增错误，待清理既有类型问题后重跑上述模块检查命令。登录后的更多面板、复制弹窗及删除确认交互尚待验证。
+
 ## 角色分组树节点图标
 
 目标与范围：仅调整 `views/system/Role/RoleLeft/index.vue` 的角色分组树标题，父节点使用现有图标 `icon-jiaose`，叶子节点（包括编辑中）使用 `icon-moren`。不改树数据、接口、权限、选中/展开、编辑/删除或其他前端工作区。
@@ -9,6 +27,10 @@
 实施：在现有标题插槽添加图标并保持文字、操作入口与行内编辑布局；使用运行时已有的 `AIcon` 和图标资源，不新增组件或图标文件。风险是图标与树线、标题及行内输入框的间距；验证以本地角色管理页面可见的父/叶节点图标、交互检查、模块构建和 diff 检查为准。
 
 验证：本地 `http://localhost:9200/#/system/ou/role` 的父节点和叶子节点分别显示 `icon-jiaose`、`icon-moren`，点击“默认”后叶节点正常选中，再切回“全局角色”正常选中；`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过（10,799 个模块，38.33 秒），`git diff --check` 通过。构建仅保留现有的 Rollup output option、CSS 注释与大包提示；未触发节点编辑/删除的后端写入验证。
+
+节点操作显示：`views/system/Role/RoleLeft/index.vue` 的编辑、删除入口改为带 Tooltip 的小尺寸图标按钮，操作容器默认 `display: none`，鼠标悬浮当前节点时切换为 `display: flex`。名称使用剩余宽度并允许在操作出现时收缩；保留管理员可见性、默认分组限制、点击隔离与原有回调。登录后仍需复核长名称在悬浮前后的布局以及图标按钮的点击交互。
+
+验证：模板 AST 与 `2.20` 对照确认管理员/默认分组保护、点击隔离、禁用与删除确认回调保持一致，脚本未变；当前模板和 scoped LESS 编译通过。模块生产构建通过（11,758 个模块，39.79 秒），`git diff --check` 通过。完整类型检查仍有 605 项基线一致诊断，本组件无诊断；模块未配置 lint 脚本。长名称悬浮前后布局和编辑/删除的实际页面交互待登录后验证。
 
 ## 组织树节点图标
 
@@ -185,6 +207,8 @@ Verification: the edited Department SFC passes a local script/template syntax co
 交付入口：实现提交 `99303a2`；[PR #102](https://github.com/jetlinks-v2/authentication-manager-ui/pull/102) 从 `codex/2.12-uat-next-hide-position` 申请合入 `2.12-uat-next`。
 
 ## Department User Role Filter
+
+组织成员列表 `views/system/Department/user/index.vue` 的角色单元格直接展示 `formatRoleNames` 及既有空值文案，移除内层 `j-ellipsis` 包装；脚本和角色名称表达式与基线一致，查询与角色筛选规则保持原样，组件编译检查通过。
 
 The Organization Management User tab maps the Role condition to the backend `UserDimensionTerm` contract in `views/system/Department/user/index.vue`:
 
@@ -466,6 +490,8 @@ Owning module: `ui/modules/authentication-manager-ui`. The application menu Scop
 - Menu data access: `application-center/ProjectApplication` exposes `business_application`, `user`, `role`, and `device` as assignable asset types. Application templates and `assets-bind` remain functional permissions rather than asset types.
 
 ### Application Menu Scope
+
+应用角色分组权限：`baseMenu.json` 为 `application-center/ProjectApplication` 的 `manage-role` 按钮补充 `role-group` 的 `save`、`delete` 动作，并在该菜单的 `assetTypes` 中加入 `roleGroup`，使应用角色管理具备角色分组写入权限和对应的数据权限配置入口。其他已有菜单权限与资产类型保持原样；实际服务端鉴权及资产范围仍需使用真实账号联调。 菜单 JSON 与权限增量契约校验通过，确认除这两处新增配置外，其他菜单字段与 `2.20` 一致；应用权限范围与组织职位相关的 8 项既有回归通过。
 
 External applications (`configuration.openMode=external`) use the third-party entry instead of Runtime startup context: the application-center list, detail and home cards request `POST /business-application/{id}/external-url` with the existing project authentication, then navigate directly to the returned URL. Backend PR #365 validates application access, resolves the latest template parameters through parameter Providers and combines them with the configured entry URL; the broader third-party application Provider architecture is tracked in PR #359. The application settings page reads and saves `externalUrl` through the standard application CRUD API. The Header switcher remains on the shared Runtime application path. The following Runtime startup rules apply only to internal applications opened from the application center.
 

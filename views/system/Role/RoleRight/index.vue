@@ -35,8 +35,13 @@
               </a-flex>
           </template>
         <template #action="slotProps">
-          <a-space>
-            <template v-for="i in getActions(slotProps, 'table')" :key="i.key">
+          <TableActions>
+            <TableActionsItem
+              v-for="(i, index) in getActions(slotProps, 'table')"
+              :key="`${i.key}-${i.icon}`"
+              :common="index < 2"
+              v-slot="{ placement }"
+            >
               <j-permission-button
                 :disabled="i.disabled"
                 :popConfirm="i.popConfirm"
@@ -45,16 +50,17 @@
                 }"
                 @click="i.onClick"
                 type="link"
-                style="padding: 0 0.3125rem"
+                size="small"
                 :danger="i.key === 'delete'"
                 :hasPermission="'system/Role:' + i.key"
               >
                 <template #icon>
                   <AIcon :type="i.icon" />
                 </template>
+                <template v-if="placement === 'more'">{{ i.text }}</template>
               </j-permission-button>
-            </template>
-          </a-space>
+            </TableActionsItem>
+          </TableActions>
         </template>
       </j-pro-table>
     </div>
@@ -140,7 +146,7 @@ const columns = [
     title: $t('RoleRight.index.470525-4'),
     dataIndex: 'action',
     key: 'action',
-    width: 180,
+    width: 120,
     fixed: 'right',
     scopedSlots: true,
   },

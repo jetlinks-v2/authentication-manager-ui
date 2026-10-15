@@ -66,9 +66,7 @@
         </template>
         -->
         <template #roleList="slotProps">
-          <j-ellipsis>
-            {{ formatRoleNames(slotProps.roleList) || $t('comm.table.empty') }}
-          </j-ellipsis>
+	        {{ formatRoleNames(slotProps.roleList) || $t('comm.table.empty') }}
         </template>
         <template #status="slotProps">
           <j-badge-status
