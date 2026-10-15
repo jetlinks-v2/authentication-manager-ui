@@ -702,6 +702,8 @@
   "components.EditUserDialog.939453-32": "请选择职位",
   "components.EditUserDialog.939453-33": "蓝色标签由职位关联不可编辑",
   "components.EditUserDialog.939453-37": "编号",
+  "components.EditUserDialog.939453-38": "应用角色只能在所属应用中分配",
+  "components.EditUserDialog.939453-39": "角色限制加载失败，暂不能修改角色，请稍后重试",
   "components.EditUserDialog.939453-36": "请输入编号",
   "Apply.index.483342-0": "新增",
   "Apply.index.483342-1": "应用管理将多个应用系统的登录简化为一次登录，实现多处访问、集中管控的业务场景。",
