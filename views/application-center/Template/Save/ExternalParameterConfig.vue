@@ -6,7 +6,7 @@
     </header>
     <a-alert v-if="state.error.value" type="error" :message="state.error.value" show-icon />
     <a-form layout="vertical" :disabled="!canUpdate || state.saving.value">
-      <a-form-item :label="$t('ApplicationTemplate.parameters.platformId')">
+      <a-form-item :label="$t('ApplicationTemplate.parameters.platformId')" :extra="$t('ApplicationTemplate.parameters.platformIdTip')">
         <a-input v-model:value="state.platformId.value" :maxlength="128" :placeholder="$t('ApplicationTemplate.parameters.platformIdPlaceholder')" />
       </a-form-item>
       <a-form-item :label="$t('ApplicationTemplate.parameters.redirectUri')" required>

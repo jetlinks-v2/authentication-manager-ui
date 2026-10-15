@@ -193,6 +193,10 @@ export const getCurrentUserAuthorization = () =>
 export const getBusinessApplication = (id: string) =>
   apiRequest.get<BusinessApplicationEntity>(`/business-application/${id}`)
 
+/** 可靠受理当前接入信息的重新投递，不轮换凭据。 */
+export const syncBusinessApplicationCredential = (id: string) =>
+  apiRequest.post<void>(`/business-application/${encodeURIComponent(id)}/credential/_sync`)
+
 /** 获取模板定义的第三方跳转地址，不使用应用实例打开配置。 */
 export const getBusinessApplicationRedirect = (id: string) =>
   apiRequest.get<{ location: string }>(
