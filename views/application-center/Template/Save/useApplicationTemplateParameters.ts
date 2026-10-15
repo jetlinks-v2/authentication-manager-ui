@@ -9,6 +9,7 @@ interface ParameterMessages {
   saveFailed: string
   redirectUriRequired: string
   redirectUriInvalid: string
+  platformIdInvalid: string
   invalidParameter: string
 }
 
@@ -49,6 +50,7 @@ export const useApplicationTemplateParameters = (
   messages: ParameterMessages,
 ) => {
   const redirectUri = ref('')
+  const platformId = ref('')
   const parameters = ref<ApplicationTemplateParameterDraft[]>([])
   const saving = ref(false)
   const error = ref('')
@@ -56,6 +58,7 @@ export const useApplicationTemplateParameters = (
 
   const reset = () => {
     redirectUri.value = String(getDetail().configuration?.redirectUri || '').trim()
+    platformId.value = String(getDetail().configuration?.platformId || '').trim()
     const declared = getDetail().configuration?.externalParameters
     parameters.value = Array.isArray(declared)
       ? declared
@@ -89,7 +92,7 @@ export const useApplicationTemplateParameters = (
     const names = new Set<string>()
     return parameters.value.every(parameter => {
       const name = parameter.name.trim()
-      if (!name || names.has(name)) {
+      if (!name || ['code', 'platformId', 'applicationId'].includes(name) || names.has(name)) {
         return false
       }
       names.add(name)
@@ -100,6 +103,11 @@ export const useApplicationTemplateParameters = (
 
   const save = async () => {
     error.value = ''
+    const identity = platformId.value.trim()
+    if (identity && !/^[\x21-\x7e]{1,128}$/.test(identity)) {
+      error.value = messages.platformIdInvalid
+      return false
+    }
     const address = redirectUri.value.trim()
     if (!address) {
       error.value = messages.redirectUriRequired
@@ -115,11 +123,15 @@ export const useApplicationTemplateParameters = (
     }
     saving.value = true
     try {
-      return await persist({
+      const configuration: ApplicationTemplateConfiguration = {
         ...getDetail().configuration,
         redirectUri: address,
         externalParameters: parameters.value.map(toDefinition),
-      })
+      }
+      // 留空保留后端“默认模板 ID”规则，不把默认值固化到模板。
+      if (identity) configuration.platformId = identity
+      else delete configuration.platformId
+      return await persist(configuration)
     } catch {
       error.value = messages.saveFailed
       return false
@@ -132,6 +144,7 @@ export const useApplicationTemplateParameters = (
 
   return {
     redirectUri,
+    platformId,
     parameters,
     supported,
     saving,
