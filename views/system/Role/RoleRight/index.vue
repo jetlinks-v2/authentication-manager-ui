@@ -35,8 +35,13 @@
               </a-flex>
           </template>
         <template #action="slotProps">
-          <a-space>
-            <template v-for="i in getActions(slotProps, 'table')" :key="i.key">
+          <TableActions>
+            <TableActionsItem
+              v-for="(i, index) in getActions(slotProps, 'table')"
+              :key="`${i.key}-${i.icon}`"
+              :common="index < 2"
+              v-slot="{ placement }"
+            >
               <j-permission-button
                 :disabled="i.disabled"
                 :popConfirm="i.popConfirm"
@@ -45,16 +50,17 @@
                 }"
                 @click="i.onClick"
                 type="link"
-                style="padding: 0 0.3125rem"
+                size="small"
                 :danger="i.key === 'delete'"
                 :hasPermission="'system/Role:' + i.key"
               >
                 <template #icon>
                   <AIcon :type="i.icon" />
                 </template>
+                <template v-if="placement === 'more'">{{ i.text }}</template>
               </j-permission-button>
-            </template>
-          </a-space>
+            </TableActionsItem>
+          </TableActions>
         </template>
       </j-pro-table>
     </div>
@@ -98,7 +104,13 @@ const { jumpPage } = useMenuStore()
 const modalType = ref('add')
 const current = ref()
 const isSave = !!useRoute().query.save
-const queryParams = ref<any>({ terms: [] })
+// 应用角色必须在应用详情中按模板上限授权，系统角色管理仅维护独立角色。
+const regularRoleTerm = {
+  column: 'applicationId',
+  termType: 'isnull',
+  value: 1,
+}
+const queryParams = ref<any>({ terms: [regularRoleTerm] })
 // 表格
 const tableRef = ref<Record<string, any>>()
 const dialogVisible = ref(isSave)
@@ -140,7 +152,7 @@ const columns = [
     title: $t('RoleRight.index.470525-4'),
     dataIndex: 'action',
     key: 'action',
-    width: 180,
+    width: 120,
     fixed: 'right',
     scopedSlots: true,
   },
@@ -237,6 +249,7 @@ const onCopySave = (id: string) => {
 const handelSearch = (search: any) => {
   queryParams.value.terms = props.groupId
     ? [
+        regularRoleTerm,
         {
           value: props.groupId,
           termType: 'eq',
@@ -244,7 +257,7 @@ const handelSearch = (search: any) => {
         },
         ...search.terms,
       ]
-    : [...search.terms]
+    : [regularRoleTerm, ...search.terms]
 }
 
 watch(
@@ -253,6 +266,7 @@ watch(
     queryParams.value = value
       ? {
           terms: [
+            regularRoleTerm,
             {
               value: props.groupId,
               termType: 'eq',
@@ -261,7 +275,7 @@ watch(
           ],
         }
       : {
-          terms: [],
+          terms: [regularRoleTerm],
         }
   },
 )

@@ -13,7 +13,7 @@
             style="padding: 1rem 0 0"
             :columns="columns"
             modeValue="CARD"
-            :request="queryThirdPartyApplications"
+            :request="getApplyList_api"
             :defaultParams="{
                         sorts: [{ name: 'createTime', order: 'desc' }],
                     }"
@@ -311,21 +311,6 @@ const columns = [
   },
 ];
 const queryParams = ref({});
-
-const queryThirdPartyApplications = (params: Record<string, any>) =>
-    getApplyList_api({
-      ...params,
-      terms: [
-        ...(Array.isArray(params?.terms)
-            ? params.terms.filter((term: any) => term?.column !== 'provider')
-            : []),
-        {
-          column: 'provider',
-          termType: 'eq',
-          value: 'third-party',
-        },
-      ],
-    });
 
 const tableRef = ref();
 const current = ref<any>({});

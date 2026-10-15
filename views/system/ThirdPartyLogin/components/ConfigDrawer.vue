@@ -132,7 +132,6 @@ const emit = defineEmits<{
 
 const formRef = ref<FormInstance>()
 const draft = reactive<LoginConfigDraft>(createDraft('wechat'))
-const initialSnapshot = ref('')
 const iconUploading = ref(false)
 const requiredRules = computed(() => [{ required: true, whitespace: true, message: t('ThirdPartyLogin.required') }])
 const usernamePrefixRules = computed(() => [{
@@ -152,7 +151,6 @@ const callbackUrl = computed(() => props.editing?.id && props.callbackBasePath
 watch(() => props.open, async (open) => {
   if (!open) return
   Object.assign(draft, createDraft(props.method), props.editing || {})
-  initialSnapshot.value = JSON.stringify(draft)
   await nextTick()
   formRef.value?.clearValidate()
 })
@@ -166,8 +164,6 @@ watch(() => draft.method, (method, previous) => {
 })
 
 function handleOpenChange(open: boolean) {
-  if (!open && JSON.stringify(draft) !== initialSnapshot.value
-    && !window.confirm(t('ThirdPartyLogin.unsavedChangesConfirm'))) return
   emit('update:open', open)
   if (!open) Object.assign(draft, createDraft('wechat'))
 }

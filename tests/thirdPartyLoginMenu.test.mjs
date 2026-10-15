@@ -54,13 +54,11 @@ test('application form keeps the configuration area wider than the help panel', 
   assert.match(applySavePage, /<Does\s+:type="rightType"/)
 })
 
-test('third-party application list always queries the third-party provider', () => {
-  assert.match(applyPage, /:request="queryThirdPartyApplications"/)
-  assert.match(
-    applyPage,
-    /queryThirdPartyApplications[\s\S]*?getApplyList_api\(\{[\s\S]*?terms:[\s\S]*?column:\s*'provider',[\s\S]*?termType:\s*'eq',[\s\S]*?value:\s*'third-party'/,
-  )
-  assert.match(applyPage, /filter\(\(term:\s*any\)\s*=>\s*term\?\.column\s*!==\s*'provider'\)/)
+test('application list passes search and pagination to the general query without a forced provider', () => {
+  assert.match(applyPage, /:request="getApplyList_api"/)
+  assert.match(applyPage, /:params="queryParams"/)
+  assert.doesNotMatch(applyPage, /queryThirdPartyApplications/)
+  assert.doesNotMatch(applyPage, /column:\s*'provider'/)
 })
 
 test('editing an existing application still restores its persisted provider', () => {

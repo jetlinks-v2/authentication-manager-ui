@@ -1705,7 +1705,8 @@
               "text": "支持",
               "value": "support"
             },
-            "supportDataAccess": false
+            "supportDataAccess": true,
+            "assetType": "systemBulletin"
           }
         ]
       }
@@ -1816,6 +1817,49 @@
                   "value": "unsupported"
                 },
                 "assetAccesses": []
+              },
+              {
+                "id": "fa61f5e5c86d445c890e2b3a7b9ca8f7",
+                "code": "system/Log/Runtime",
+                "name": "运行日志",
+                "i18nMessages": {
+                  "name": {
+                    "zh_CN": "运行日志",
+                    "en_US": "Runtime logs",
+                    "en": "Runtime logs"
+                  }
+                },
+                "owner": "iot",
+                "sortIndex": 3,
+                "level": 3,
+                "url": "/infrastructure/logs/runtime",
+                "icon": "icon-yuandian",
+                "showPage": [
+                  "system-logger"
+                ],
+                "permissions": [
+                  {
+                    "permission": "system-logger",
+                    "actions": [
+                      "query"
+                    ]
+                  }
+                ],
+                "buttons": [
+                  {
+                    "id": "export",
+                    "name": "导出",
+                    "permissions": [
+                      {
+                        "permission": "system-logger",
+                        "actions": [
+                          "export"
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "supportDataAccess": false
               }
             ]
           },
@@ -2078,6 +2122,10 @@
               {
                 "permission": "menu",
                 "actions": ["grant"]
+              },
+              {
+                "permission": "role-group",
+                "actions": ["save", "delete"]
               }
             ]
           },
@@ -2114,7 +2162,8 @@
           "business_application",
           "user",
           "role",
-          "device"
+          "device",
+          "roleGroup"
         ]
       },
       {
