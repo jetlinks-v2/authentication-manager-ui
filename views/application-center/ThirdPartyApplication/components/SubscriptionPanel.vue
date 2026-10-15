@@ -12,7 +12,7 @@
     <a-alert v-if="catalogError" type="error" show-icon :message="$t('ApiApplication.subscription.catalogError')" :description="catalogError" class="subscription-alert" />
     <a-alert v-if="listError" type="error" show-icon :message="$t('ApiApplication.subscription.loadError')" :description="listError" class="subscription-alert" />
     <a-alert v-if="operationError && !editorOpen && !detailOpen" type="error" show-icon :message="operationError" class="subscription-alert" />
-    <j-pro-table v-if="application" :key="application.id" ref="tableRef" mode="TABLE"
+    <j-pro-table class="pro-table__no-padding" v-if="application" :key="application.id" ref="tableRef" mode="TABLE"
       :columns="columns" :request="requestPage" :params="filters" :scroll="{ x: 1350 }">
       <template #name="row"><a-button type="link" @click="openDetail(row)">{{ row.name }}</a-button></template>
       <template #scopes="row">{{ row.scopes?.length || 0 }}</template>

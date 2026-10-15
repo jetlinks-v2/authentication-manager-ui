@@ -596,6 +596,8 @@ Verification result:
 
 菜单 `application-center/ThirdPartyApplication` 和列表标题统一显示为“开放平台”（英文 Open Platform）；本模块通过已有 `getMenuFilters` 入口按精确 code 同步 `name/i18nName`，已保存菜单无需为本次改名重新初始化。菜单 ID、路由和权限不变，`system/Apply` 的“第三方应用”名称不调整。同一入口的新增按钮、列表名称、详情/返回、编辑表单、操作提示和成功消息按应用对象命名（如新增应用、应用名称、应用详情和返回应用列表），中英文同步；真实 API 应用 ID、OAuth2 技术字段及接口数据模型保持不变。列表复用 `pro-table__no-padding` 去掉表格外层内边距，并移除行链接的水平 padding，使筛选栏、表格和分页外沿一致，表头与单元格文字对齐。本次仅完成源码、JSON 和差异核对，页面仍由用户人工验收。
 
+开放平台沿用平台的应用资产数据权限：菜单声明 `accessSupport: support`、`supportDataAccess: true`，单资产关联使用 `assetType: "application"`。修正范围仅为本模块 `baseMenu.json` 的开放平台节点：菜单编辑页 `views/system/Menu/Detail/BasicInfo/Permission.vue` 的下拉框绑定 `assetType`，原种子的 `assetTypes: ["application"]` 虽能被后端识别，却不能在该下拉框回显；改用与角色、用户菜单一致的单资产字段，不双写两套字段、不修改公共组件或其他多资产菜单。后端已有应用资产注册、实体资产注解及 `AssetsHolderCrudController`，不在前端添加创建人过滤。已保存菜单可在菜单管理中将“数据权限控制”设为“支持”并选择“应用”后保存，再按平台已有角色/组织授权流程设置范围；仅更新菜单种子不会修改数据库中的菜单及已有授权，不执行全量初始化。本次仅做源码与差异检查，未运行前端构建、测试或浏览器验收，初始化后的回显与真实权限过滤仍待人工确认。
+
 菜单种子通过 `showPage: ["application"]` 匹配应用管理权限；侧栏从服务端 `/menu/user-own/tree` 读取已保存菜单，修改本地种子不会自动更新现有环境。已有环境应由菜单管理员按既有流程单独增加并授权该入口，不执行全量菜单初始化。通用接口授权使用 `api_group` 查询、授权权限，菜单种子已声明；SaaS 项目数据授权不使用 API Group 代替业务 scope，控制面操作的项目管理员身份仍由后端校验。
 
 ### 项目第三方接入前端纠偏（2026-09-24，历史页面说明）
@@ -711,7 +713,7 @@ URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显�
 
 ### 第三方订阅强制签名与 Provider 目录
 
-- 仅现有第三方订阅抽屉、列表/详情摘要及凭据生命周期提示，不修改运营端 ui、菜单或应用模型。
+- 仅现有第三方订阅抽屉、列表/详情摘要及凭据生命周期提示，不修改运营端 ui、菜单或应用模型。 订阅列表在 `components/SubscriptionPanel.vue` 复用 `pro-table__no-padding` 去掉表格额外内边距，使左右边缘与上方筛选栏、操作按钮对齐；仅做源码与差异检查，页面效果待人工确认。
 - 目录返回 Provider 的 id/name/events，名称由后端国际化；前端不维护类别 ID 或业务名称映射。选择 Provider 展开其当前具体事件 ID，保存仍为 eventTypes 与 configuration，保留多范围、半选、不可用项；语言切换只刷新目录，不重置草稿，新增事件不自动扩大旧订阅。
 - API HTTP 强制使用当前 Client ID / Client Secret，前端不读取或提交明文 Secret；业务同步仍用独立通知密钥。HMAC 验签不是正文加密，签名值不是 Secret；接收端预存密钥、按原始字节验签并处理时效/幂等，生产使用 HTTPS，凭据重置后同步更新接收端。
 - 2.20 配套：前端 PR #104 保持目标 2.20；后端当前工作树采用 auth #359 bcc628ee、components #1607 3d59410a，并依赖 hsweb #371 的三状态及缓存实现。前后端 Provider 契约必须配套，更新后端不等于浏览器加载了新模块。

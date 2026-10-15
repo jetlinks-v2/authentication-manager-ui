@@ -2137,7 +2137,12 @@
           { "permission": "application", "actions": ["query", "save", "delete"] },
           { "permission": "api_group", "actions": ["query", "grant", "grant_query"] }
         ],
-        "assetTypes": ["application"]
+        "accessSupport": {
+          "text": "支持",
+          "value": "support"
+        },
+        "supportDataAccess": true,
+        "assetType": "application"
       },
       {
         "code": "application-center/ApiApplication",
