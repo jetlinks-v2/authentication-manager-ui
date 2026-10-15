@@ -1705,7 +1705,8 @@
               "text": "支持",
               "value": "support"
             },
-            "supportDataAccess": false
+            "supportDataAccess": true,
+            "assetType": "systemBulletin"
           }
         ]
       }

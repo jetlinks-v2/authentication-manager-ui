@@ -107,6 +107,14 @@ System bulletin pages, API contracts, types, notification detail rendering, and 
 
 The announcement editor loads its supported types from `POST /system/bulletin/type` through `getAnnouncementTypes`; it does not call the legacy `/dictionary/s_bulletin_type/items` dictionary endpoint.
 
+### Bulletin Tenant Data Access
+
+Announcement management must declare `systemBulletin` as its menu asset type and enable data access, so service grants can apply the existing `tenant` (所在租户) policy. The repair pairs this menu declaration with the notify-manager bulletin entity's support for the framework-managed `tenantId` extension; management queries continue to use the existing AssetsHolder boundary. Verify that saving a tenant grant includes `systemBulletin`, and that project A can read its bulletin while project B cannot.
+
+Existing deployments must synchronize the updated menu metadata, save the service's tenant data-access grant again, and use service configuration's “同步到订阅” action to refresh the affected projects' existing subscription snapshots. Saving the service grant alone does not update existing project policies. Historical bulletins without `tenant_id` need an explicitly verified project assignment before backfill; the publisher alone cannot establish ownership when an account belongs to multiple projects.
+
+Validation: the menu grant regression and related bulletin tests pass (9 tests), the module production build passes, and the backend bulletin suite passes (21 tests). A local probe using the real tenant listener, entity asset supplier and tenant holder allows project A to read its bulletin and denies project B. Live management-list queries against deployed project sessions remain to be verified after the menu and subscription updates; the module has no lint script, and the workspace typecheck remains blocked by unrelated existing diagnostics.
+
 ### Bulletin Type Icons And Realtime Tip
 
 Goal: give the six built-in bulletin types one icon vocabulary, and stop a realtime bulletin from auto-opening the detail dialog.
