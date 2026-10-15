@@ -9,6 +9,7 @@ interface ParameterMessages {
   saveFailed: string
   redirectUriRequired: string
   redirectUriInvalid: string
+  platformIdInvalid: string
   invalidParameter: string
   invalidNotification: string
 }
@@ -51,6 +52,7 @@ export const useApplicationTemplateParameters = (
 ) => {
   const redirectUri = ref('')
   const notification = reactive({ enabled: false, address: '', keyId: '', publicKey: '' })
+  const platformId = ref('')
   const parameters = ref<ApplicationTemplateParameterDraft[]>([])
   const saving = ref(false)
   const error = ref('')
@@ -63,6 +65,7 @@ export const useApplicationTemplateParameters = (
     notification.address = savedNotification?.address || ''
     notification.keyId = savedNotification?.keyId || ''
     notification.publicKey = savedNotification?.publicKey || ''
+    platformId.value = String(getDetail().configuration?.platformId || '').trim()
     const declared = getDetail().configuration?.externalParameters
     parameters.value = Array.isArray(declared)
       ? declared
@@ -96,7 +99,7 @@ export const useApplicationTemplateParameters = (
     const names = new Set<string>()
     return parameters.value.every(parameter => {
       const name = parameter.name.trim()
-      if (!name || names.has(name)) {
+      if (!name || ['code', 'platformId', 'applicationId'].includes(name) || names.has(name)) {
         return false
       }
       names.add(name)
@@ -107,6 +110,11 @@ export const useApplicationTemplateParameters = (
 
   const save = async () => {
     error.value = ''
+    const identity = platformId.value.trim()
+    if (identity && !/^[\x21-\x7e]{1,128}$/.test(identity)) {
+      error.value = messages.platformIdInvalid
+      return false
+    }
     const address = redirectUri.value.trim()
     if (!address) {
       error.value = messages.redirectUriRequired
@@ -140,6 +148,9 @@ export const useApplicationTemplateParameters = (
     } else {
       delete configuration.notification
     }
+    // 留空保留后端“默认模板 ID”规则，不把默认值固化到模板。
+    if (identity) configuration.platformId = identity
+    else delete configuration.platformId
     saving.value = true
     try {
       return await persist(configuration)
@@ -156,6 +167,7 @@ export const useApplicationTemplateParameters = (
   return {
     redirectUri,
     notification,
+    platformId,
     parameters,
     supported,
     saving,

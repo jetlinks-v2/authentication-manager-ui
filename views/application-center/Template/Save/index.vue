@@ -105,6 +105,7 @@ const parameters = useApplicationTemplateParameters(
     saveFailed: $t('ApplicationTemplate.parameters.saveFailed'),
     redirectUriRequired: $t('ApplicationTemplate.parameters.redirectUriRequired'),
     redirectUriInvalid: $t('ApplicationTemplate.parameters.redirectUriInvalid'),
+    platformIdInvalid: $t('ApplicationTemplate.parameters.platformIdInvalid'),
     invalidParameter: $t('ApplicationTemplate.parameters.invalidParameter'),
     invalidNotification: $t('ApplicationTemplate.parameters.invalidNotification'),
   },

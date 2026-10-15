@@ -16,6 +16,8 @@ const { useApplicationTemplateParameters, ref, nextTick } = await import(`data:t
 const messages = {
   saveFailed: 'save failed', redirectUriRequired: 'redirect required', redirectUriInvalid: 'invalid redirect',
   invalidParameter: 'invalid parameter',
+  platformIdInvalid: 'invalid platform',
+  invalidNotification: 'invalid notification',
 }
 
 function fixture(configuration = {}) {
@@ -56,6 +58,59 @@ test('saves the edited parameters with the address and preserves all other Confi
   })
   assert.equal(state.redirectUri.value, 'https://training.example/new?page=dashboard#home')
   assert.equal('loadProviders' in state, false)
+})
+
+test('platform ID stays optional, trims explicit values and resets with configuration', async () => {
+  const { state, writes, detail } = fixture({ platformId: 'region-a' })
+  assert.equal(state.platformId.value, 'region-a')
+  state.platformId.value = ' region-b '
+  assert.equal(await state.save(), true)
+  assert.equal(writes.at(-1).platformId, 'region-b')
+  detail.value = { ...detail.value, configuration: { ...detail.value.configuration, platformId: 'region-c' } }
+  await nextTick()
+  assert.equal(state.platformId.value, 'region-c')
+  state.platformId.value = 'draft'
+  state.reset()
+  assert.equal(state.platformId.value, 'region-c')
+  state.platformId.value = '   '
+  assert.equal(await state.save(), true)
+  assert.equal('platformId' in writes.at(-1), false)
+  for (const value of ['region a', '区域', 'a\nb', 'a'.repeat(129)]) {
+    state.platformId.value = value
+    assert.equal(await state.save(), false)
+    assert.equal(state.error.value, messages.platformIdInvalid)
+  }
+})
+
+test('platform routing query names cannot be overridden by external parameters', async () => {
+  const { state, writes } = fixture()
+  state.addParameter()
+  for (const name of ['code', 'platformId', 'applicationId']) {
+    state.parameters.value[0].name = name
+    assert.equal(await state.save(), false)
+    assert.equal(state.error.value, messages.invalidParameter)
+  }
+  assert.deepEqual(writes, [])
+})
+
+test('platform identity and the existing notification form save without overwriting each other', async () => {
+  const notification = { address: 'https://receiver.example/hook', keyId: 'receiver-key', publicKey: 'receiver-public-key' }
+  const { state, writes } = fixture({ platformId: 'region-a', notification })
+  state.platformId.value = 'region-b'
+  state.notification.address = ' https://receiver.example/new '
+  assert.equal(await state.save(), true)
+  assert.equal(writes.at(-1).platformId, 'region-b')
+  assert.deepEqual(writes.at(-1).notification, { ...notification, address: 'https://receiver.example/new' })
+  assert.equal(writes.at(-1).retained, 'value')
+  state.notification.publicKey = ''
+  assert.equal(await state.save(), false)
+  assert.equal(state.error.value, messages.invalidNotification)
+  assert.equal(writes.length, 1)
+  state.notification.enabled = false
+  state.platformId.value = 'region-c'
+  assert.equal(await state.save(), true)
+  assert.equal('notification' in writes.at(-1), false)
+  assert.equal(writes.at(-1).platformId, 'region-c')
 })
 
 test('reset discards the address and parameter drafts', () => {
