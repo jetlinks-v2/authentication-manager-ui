@@ -1,416 +1,116 @@
-import { cloneDeep } from 'lodash-es';
-import type {
-    AntTreeNodeDropEvent,
-    TreeProps,
-    TreeDataItem,
-} from 'ant-design-vue/es/tree';
-import {messageSubscribe, USER_CENTER_MENU_CODE} from "@jetlinks-web-core/utils/consts";
+import { cloneDeep } from 'lodash-es'
+import type { MenuButton, MenuDefinition, MenuPermission } from '@authentication-manager-ui/api/system/menu'
+import { messageSubscribe, USER_CENTER_MENU_CODE } from '@jetlinks-web-core/utils/consts'
 
-/**
- * 根据权限过滤菜单
- */
-export const filterMenu = (permissions: string[], menus: any[]) => {
-    return menus.filter((item) => {
-        let isShow = false;
-        if (item.showPage && item.showPage.length) {
-            isShow = item.showPage.every((pItem: any) => {
-                return permissions.includes(pItem);
-            });
-        }
-        if (item.children) {
-            item.children = filterMenu(permissions, item.children);
-        }
-        return isShow || !!item.children?.length;
-    });
-};
+export const MENU_OWNERS = ['iot', 'app'] as const
+export type MenuOwner = typeof MENU_OWNERS[number]
+export interface MenuRecord extends MenuDefinition { id: string }
+export interface MenuNode extends MenuRecord { key: string; owner: MenuOwner; children?: MenuNode[] }
+export type MenuDrafts = Record<MenuOwner, MenuNode[]>
+export type MenuPayloads = Record<MenuOwner, MenuRecord[]>
+export const isMenuOwner = (owner: string): owner is MenuOwner => owner === 'iot' || owner === 'app'
+const normalizeOwner = (owner?: string | null) => owner || 'iot'
 
-/**
- * 合并数组(合并菜单)
- * @param oldData Array 默认菜单
- * @param newData Array 当前系统菜单
- * @returns Array 合并后的菜单
- */
-export const mergeArr = (oldData: Array<any>, newData: Array<any>) => {
-    const mergedData = [];
+/** 只补齐缺失的 ID、父级与 owner，不根据父节点覆盖子节点归属。 */
+export const flattenMenus = (menus: MenuDefinition[], parentId: string | null = null): MenuRecord[] =>
+  menus.flatMap(menu => {
+    const { children, key: _key, ...item } = cloneDeep(menu)
+    const id = item.id || item.code
+    return [{ ...item, id, parentId: item.parentId === undefined ? parentId : item.parentId,
+      owner: normalizeOwner(item.owner) }, ...flattenMenus(children || [], id)]
+  })
 
-    const { checkedKeys } = initData(cloneDeep(newData));
-    const filterCodeSet = new Set(checkedKeys); //记录系统选中
-    const mergeItem: any = (oldItem: any, newItem: any) => {
-        if (!oldItem) {
-            return newItem;
-        }
+/** 保持配置页已有的 showPage 全部满足规则，未开放的新菜单不作为候选。 */
+export const filterMenuDefinitions = (menus: MenuDefinition[], permissions: Set<string>): MenuDefinition[] =>
+  menus.flatMap(menu => {
+    const children = filterMenuDefinitions(menu.children || [], permissions)
+    const allowed = !!menu.showPage?.length && menu.showPage.every(permission => permissions.has(permission))
+    return allowed || children.length ? [{ ...cloneDeep(menu), children }] : []
+  })
 
-        if(oldItem && newItem){
-            oldItem.sortIndex = newItem?.sortIndex
-        }
-
-        if (!oldItem.children && newItem.children) {
-            oldItem.children = newItem.children;
-            return oldItem;
-        }
-
-        // if (oldItem.children && !newItem.children) {
-        //     return oldItem;
-        // }
-
-        if (oldItem.children && newItem.children) {
-            const mergedChildren = [];
-            const newChildren = [...newItem.children];
-            for (const oldChild of oldItem.children) {
-                const index = newChildren.findIndex(
-                    (child) => child.code === oldChild.code,
-                );
-                if (index !== -1) {
-                    mergedChildren.push(mergeItem(oldChild, newChildren[index]));
-                    newChildren.splice(index, 1);
-                } else {
-                    //防止重复code，系统已经选中的code不能再从old中添加
-                    if (!filterCodeSet.has(oldChild.code)) {
-                        mergedChildren.push(oldChild);
-                    }
-                }
-            }
-
-            return {
-                ...oldItem,
-                children: mergedChildren.concat(newChildren),
-            };
-        }
-
-        return oldItem
-    };
-
-    for (const newItem of newData) {
-        const oldItem = oldData.find((item) => item.code === newItem.code);
-        mergedData.push(mergeItem(oldItem, newItem));
-    }
-    for (const oldItem of oldData) {
-        if (!filterCodeSet.has(oldItem.code)) {
-            const newItem = newData.find((item) => item.code === oldItem.code);
-            if (!newItem) {
-                //防止重复code，系统已经选中的code不能再从old中添加
-                if (!filterCodeSet.has(oldItem.code)) {
-                    if (oldItem.children) {
-                        oldItem.children = oldItem.children.filter(
-                            (i: any) => !filterCodeSet.has(i.code),
-                        );
-                    }
-                }
-
-                mergedData.push(oldItem);
-            }
-        }
-    }
-
-    return mergedData
-};
-
-/**
- * 初始化菜单
- * @param value 默认菜单以及查询系统菜单 baseMenu systemMenu
- * @returns 系统选中的keys
- */
-export const initData = (Menu: any) => {
-    const checkedKeys: any = [];
-    const getMap = (arr: any) => {
-        arr.forEach((item: any) => {
-            item.title = item.code;
-            item.key = item.code; // treeData需要唯一key
-            checkedKeys.push(item.code);
-            if (item?.children) {
-                getMap(item?.children);
-            }
-        });
-    };
-    getMap(Menu);
-    return { checkedKeys };
-};
-
-/**通过options判断选中菜单 */
-export const inItSelected = (Menu:any) =>{
-    const checkedKeys: any = [];
-    const getMap = (arr: any) => {
-        arr.forEach((item: any) => {
-            item.title = item.code;
-            item.key = item.code; // treeData需要唯一key
-            item?.options?.show === false ?  '' : checkedKeys.push(item.code);
-            if (item.children) {
-                getMap(item?.children);
-            }
-        });
-    };
-    getMap(Menu);
-    return { checkedKeys };
+/** 按 ID 重建同 owner 的展示树，跨 owner 节点提升展示但保留真实 parentId。 */
+const buildTrees = (menus: MenuRecord[]): MenuDrafts => {
+  const drafts: MenuDrafts = { iot: [], app: [] }
+  const nodes = new Map<string, MenuNode>()
+  for (const menu of menus) {
+    const owner = normalizeOwner(menu.owner)
+    if (isMenuOwner(owner)) nodes.set(menu.id, { ...cloneDeep(menu), key: menu.id, owner, children: [] })
+  }
+  for (const node of nodes.values()) {
+    const parent = node.parentId ? nodes.get(node.parentId) : undefined
+    if (parent && parent.owner === node.owner) parent.children!.push(node)
+    else drafts[node.owner].push(node)
+  }
+  const sort = (tree: MenuNode[]) => {
+    tree.sort((left, right) => (left.sortIndex || 0) - (right.sortIndex || 0))
+    tree.forEach(node => sort(node.children || []))
+  }
+  MENU_OWNERS.forEach(owner => sort(drafts[owner]))
+  return drafts
 }
 
-/**
- * 查找父级、子级code
- * @param data 当前完整的菜单
- * @param code 当前点击的code
- * @returns result = {
-        parents: [], //当前code的全部父级code
-        children: [],//当前code的全部子级code
-    };
- */
-
-export const findAllParentsAndChildren = (data: any, code: any) => {
-    const result = {
-        parents: [],
-        children: [],
-    };
-
-    function findParentsAndChildrenRecursive(node: any) {
-        if (node.code === code) {
-            if (node.children) {
-                result.children = node.children.flatMap((child: any) => {
-                    if (child.children) {
-                        return [
-                            child.code,
-                            ...findChildrenRecursive(child.children),
-                        ];
-                    }
-                    return [child.code];
-                });
-            }
-            return true;
-        }
-
-        if (node.children) {
-            for (let child of node.children) {
-                if (findParentsAndChildrenRecursive(child)) {
-                    result.parents.push(node.code);
-                    return true;
-                }
-            }
-        }
-        return false;
+/** 本地配置决定归属，服务端决定已有菜单的显示、层级和排序。 */
+export const createMenuDrafts = (base: MenuDefinition[], saved: MenuDefinition[], definitions = base) => {
+  const configured = new Map(flattenMenus(definitions).map(menu => [menu.id, menu]))
+  const merged = new Map<string, MenuRecord>()
+  for (const menu of flattenMenus(base)) {
+    merged.set(menu.id, { ...menu, options: { ...menu.options, show: false } })
+  }
+  for (const menu of flattenMenus(saved)) {
+    const local = configured.get(menu.id)
+    merged.set(menu.id, { ...local, ...menu, owner: local?.owner ?? menu.owner,
+      options: { ...local?.options, ...menu.options, show: menu.options?.show !== false } })
+  }
+  const hiddenCodes = new Set([USER_CENTER_MENU_CODE, messageSubscribe])
+  const isHidden = (menu: MenuRecord): boolean => {
+    const visited = new Set<string>()
+    let current: MenuRecord | undefined = menu
+    while (current && !visited.has(current.id)) {
+      if (hiddenCodes.has(current.code)) return true
+      visited.add(current.id)
+      current = current.parentId ? merged.get(current.parentId) : undefined
     }
-
-    function findChildrenRecursive(children: any) {
-        return children.flatMap((child: any) => {
-            if (child.children) {
-                return [child.code, ...findChildrenRecursive(child.children)];
-            }
-            return [child.code];
-        });
-    }
-
-    for (let node of data) {
-        if (findParentsAndChildrenRecursive(node)) {
-            break;
-        }
-    }
-
-    return result;
-};
-/**
- * 选择功能
- * @param selecteds onSelect事件默认参数
- * @param e onSelect事件默认参数
- * @returns 处理后的keys
- */
-export const select = (selecteds: Array<string>, e: any, treeData: any) => {
-    const { node, selected } = e;
-    const { parents, children } = findAllParentsAndChildren(
-        treeData,
-        node.code,
-    );
-    const Keys = new Set(selecteds);
-    const selectedAllKeys = selected
-        ? [...[...parents, ...children]]
-        : [...children];
-    selectedAllKeys.forEach((item: string) => {
-        Keys[selected ? 'add' : 'delete'](item);
-    });
-    return [...Keys];
-};
-
-/**
- * 拖拽功能
- * @param info  drop事件默认参数
- * @param treeData 当前treeData值
- * @returns 拖拽后treeData值
- */
-export const drop = (info: AntTreeNodeDropEvent, treeData: any) => {
-    const dropKey = info.node.key;
-    const dragKey = info.dragNode.key;
-    const dropPos = info.node.pos.split('-');
-    const dropPosition =
-        info.dropPosition - Number(dropPos[dropPos.length - 1]);
-    const loop = (
-        data: TreeProps['treeData'],
-        key: string | number,
-        callback: any,
-    ) => {
-        data.forEach((item, index) => {
-            if (item.code === key) {
-                return callback(item, index, data);
-            }
-            if (item.children) {
-                return loop(item.children, key, callback);
-            }
-        });
-    };
-    const data = [...treeData];
-
-    let dragObj: TreeDataItem;
-    loop(
-        data,
-        dragKey,
-        (item: TreeDataItem, index: number, arr: TreeProps['treeData']) => {
-            arr.splice(index, 1);
-            dragObj = item;
-        },
-    );
-    if (!info.dropToGap) {
-        loop(data, dropKey, (item: TreeDataItem) => {
-            item.children = item.children || [];
-            item.children.unshift(dragObj);
-        });
-    } else if (
-        (info.node.children || []).length > 0 && // Has children
-        info.node.expanded && // Is expanded
-        dropPosition === 1 // On the bottom gap
-    ) {
-        loop(data, dropKey, (item: TreeDataItem) => {
-            item.children = item.children || [];
-            item.children.unshift(dragObj);
-        });
-    } else {
-        let ar: TreeProps['treeData'] = [];
-        let i = 0;
-        loop(
-            data,
-            dropKey,
-            (
-                _item: TreeDataItem,
-                index: number,
-                arr: TreeProps['treeData'],
-            ) => {
-                ar = arr;
-                i = index;
-            },
-        );
-        if (dropPosition === -1) {
-            ar.splice(i, 0, dragObj);
-        } else {
-            ar.splice(i + 1, 0, dragObj);
-        }
-    }
-    return data;
-};
-
-// 查找最深层级
-export const getMaxDepth = (data: any) => {
-    let maxDepth = 0;
-    data.forEach((node: any) => {
-        const depth = getNodeDepth(node);
-        if (depth > maxDepth) {
-            maxDepth = depth;
-        }
-    });
-    return maxDepth;
-};
-export const getNodeDepth = (node: any) => {
-    let depth = 1;
-    if (node.children) {
-        node.children.forEach((child: any) => {
-            const childDepth = getNodeDepth(child) + 1;
-            if (childDepth > depth) {
-                depth = childDepth;
-            }
-        });
-    }
-    return depth;
-};
-
-
-export const handleSorts = (node: any[]) => {
-    if (!node) return []
-    return node.map((item, index) => {
-        if (item.index !== index) {
-            item.sortIndex = index + 1
-            if (item.children) {
-                item.children = handleSorts(item.children).sort((a, b) => a.sortIndex - b.sortIndex)
-            }
-        }
-        return item
-    })
+    return false
+  }
+  const supported = [...merged.values()].filter(menu => isMenuOwner(normalizeOwner(menu.owner)))
+  return { drafts: buildTrees(supported.filter(menu => !isHidden(menu))),
+    preserved: supported.filter(isHidden) }
 }
 
-export const handleSortsArr = (node: any[]) => {
-    if (!node) return []
-    return node.sort((a, b) => a.sortIndex - b.sortIndex).map((item) => {
-        if (item.children) {
-            item.children = handleSortsArr(item.children)
-        }
-        return item
-    })
+/** 全量保存必须包含未勾选项及隐藏系统菜单；平铺后每份载荷只含一个 owner。 */
+export const buildMenuPayloads = (drafts: MenuDrafts, preserved: MenuRecord[]): MenuPayloads => {
+  const payloads: MenuPayloads = { iot: [], app: [] }
+  const records = [...flattenMenus(drafts.iot), ...flattenMenus(drafts.app), ...cloneDeep(preserved)]
+  for (const menu of records) {
+    const owner = normalizeOwner(menu.owner)
+    if (isMenuOwner(owner)) payloads[owner].push({ ...menu, owner })
+  }
+  return payloads
 }
 
-export const handleMergeTree = (treeA: any[], treeB: any[]) => {
-    const map = new Map();
-
-    // 收集treeB中顶层菜单的code（这些是被拖拽到外层的菜单）
-    const topLevelCodesInTreeB = new Set();
-    for (const node of treeB) {
-        if (node && node.code) {
-            topLevelCodesInTreeB.add(node.code);
-        }
-    }
-
-    // 从treeA中移除与treeB顶层菜单code重复的菜单项（包括子菜单中的）
-    function removeConflictingCodes(nodes: any[]): any[] {
-        return nodes.filter(node => {
-            if (!node || typeof node !== 'object') return true;
-
-            // 如果当前节点的code在treeB的顶层出现，则移除
-            if (node.code && topLevelCodesInTreeB.has(node.code)) {
-                return false;
-            }
-
-            // 递归处理子菜单
-            if (node.children && Array.isArray(node.children)) {
-                node.children = removeConflictingCodes(node.children);
-            }
-
-            return true;
-        });
-    }
-
-    // 遍历并构建 Map（以 id 为 key）
-    function addNodes(nodes: any[]) {
-        for (const node of nodes) {
-            if (!node || typeof node !== 'object') continue;
-
-            const existing = map.get(node.id);
-            if (existing) {
-                // 合并当前节点的 children
-                const childrenA = existing.children || [];
-                const childrenB = node.children || [];
-                existing.children = handleMergeTree(childrenA, childrenB);
-            } else {
-                // 深拷贝新节点并加入 Map
-                map.set(node.id, {
-                    ...node,
-                    children: node.children ? handleMergeTree(node.children, []) : []
-                });
-            }
-        }
-    }
-
-    // 先处理treeA，移除与treeB顶层冲突的菜单项
-    const cleanedTreeA = removeConflictingCodes(cloneDeep(treeA));
-
-    // 添加清理后的treeA
-    addNodes(cleanedTreeA);
-
-    // 添加treeB（包含外层菜单）
-    addNodes(treeB);
-
-    return Array.from(map.values());
+const mergePermissions = (current: MenuPermission[] = [], configured: MenuPermission[] = []) => {
+  const merged = new Map(current.map(permission => [permission.permission, cloneDeep(permission)]))
+  for (const permission of configured) {
+    const existing = merged.get(permission.permission)
+    merged.set(permission.permission, { ...permission, ...existing,
+      actions: [...new Set([...(existing?.actions || []), ...(permission.actions || [])])] })
+  }
+  return [...merged.values()]
 }
 
-export const handleMenuFilterMessage = (menus: any[] = []) => {
-    return menus.filter(item => ![USER_CENTER_MENU_CODE, messageSubscribe].includes(item.code))
+/** 按按钮 ID 和权限标识补充定义，保留草稿的显示状态、顺序、层级和 owner。 */
+export const synchronizeMenuDefinitions = (drafts: MenuDrafts, base: MenuDefinition[]): MenuDrafts => {
+  const definitions = new Map(flattenMenus(base).map(menu => [menu.id, menu]))
+  const sync = (tree: MenuNode[]): MenuNode[] => tree.map(menu => {
+    const local = definitions.get(menu.id)
+    const buttons = new Map<string, MenuButton>((menu.buttons || []).map(button => [button.id, cloneDeep(button)]))
+    for (const button of local?.buttons || []) {
+      const existing = buttons.get(button.id)
+      buttons.set(button.id, { ...button, ...existing,
+        permissions: mergePermissions(existing?.permissions, button.permissions) })
+    }
+    return { ...cloneDeep(menu), buttons: [...buttons.values()],
+      permissions: mergePermissions(menu.permissions, local?.permissions), children: sync(menu.children || []) }
+  })
+  return { iot: sync(drafts.iot), app: sync(drafts.app) }
 }
