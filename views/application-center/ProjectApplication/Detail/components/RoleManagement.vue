@@ -1,6 +1,6 @@
 <template>
   <div class="role-workspace">
-    <div v-if="roles.length" class="role-layout">
+    <div v-if="roles.length" class="role-layout" :class="{ 'role-layout--external': isExternal }">
       <aside class="role-sidebar">
         <header class="sidebar-heading">
           <strong>{{ $t('ProjectApplication.role.list') }}</strong>
@@ -39,7 +39,7 @@
         </div>
       </aside>
 
-      <main v-if="activeRole" class="permission-panel">
+      <main v-if="activeRole && !isExternal" class="permission-panel">
         <div class="permission-heading">
           <div class="permission-title">
             <h3>{{ activeRole.name }}</h3>
@@ -165,7 +165,7 @@ const loadAssetTypes = async (): Promise<AssetTypeName[]> => {
 
 const loadPermissions = async () => {
   const sequence = ++loadSequence
-  if (!activeRoleId.value || !props.templateId) {
+  if (props.isExternal || !activeRoleId.value || !props.templateId) {
     clearPermissions()
     return
   }
@@ -216,7 +216,7 @@ watch([
 ], loadPermissions, { immediate: true, deep: true })
 
 const savePermissions = async () => {
-  if (!initialized.value || !activeRoleId.value) return
+  if (props.isExternal || !initialized.value || !activeRoleId.value) return
   savingPermissions.value = true
   try {
     await saveRolePermission(activeRoleId.value, editor.getSnapshot())
@@ -248,6 +248,7 @@ const confirmRole = async () => {
 <style scoped>
 .role-workspace { padding-top: var(--space-2); }
 .role-layout { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: var(--space-3); min-height: 35.5rem; align-items: stretch; }
+.role-layout--external { grid-template-columns: minmax(0, 1fr); min-height: 0; }
 .role-sidebar,
 .permission-panel { min-width: 0; border: 1px solid var(--line); border-radius: var(--r-3); background: var(--bg); overflow: hidden; }
 .role-sidebar { display: flex; min-height: 0; flex-direction: column; }

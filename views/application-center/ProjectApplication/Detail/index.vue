@@ -6,6 +6,7 @@
         <ApplicationSummary
           :data="{ application, template }"
           :deleting="deleting"
+          :syncing-credential="syncingCredential"
           :settings-editing="settingsEditing"
           :settings-saving="settingsSaving"
           :show-settings-actions="activeTab === 'settings'"
@@ -17,38 +18,39 @@
           @save-settings="saveSettings"
           @toggle-status="toggleStatus"
           @open="openApplication"
+          @sync-credential="syncCredential"
         />
 
         <FullPage hasPadding>
-	        <a-tabs v-model:active-key="activeTab" class="detail-tabs">
-		        <a-tab-pane key="settings" :tab="$t('ProjectApplication.detail.tab.settings')">
-			        <ApplicationSettings
-				        ref="settingsRef"
-				        v-model:editing="settingsEditing"
-				        :data="{ application, template }"
-				        :saving="settingsSaving"
-				        @save="updateSettings"
-			        />
-		        </a-tab-pane>
-		        <a-tab-pane key="users" :tab="$t('ProjectApplication.detail.tab.users')">
-			        <UserManagement
-				        :data="{ users: detail.users, roles: detail.roles }"
-				        @add="addUsers"
-				        @unbind="unbindUser"
-				        @update="updateUser"
-			        />
-		        </a-tab-pane>
-		        <a-tab-pane key="roles" :tab="$t('ProjectApplication.detail.tab.roles')">
-			        <RoleManagement
-				        :roles="detail.roles"
-				        :users="detail.users"
-				        :template-id="application.templateId"
-				        :is-external="application.provider === 'third-party'"
-				        @save-role="saveRole"
-				        @delete-role="removeRole"
-			        />
-		        </a-tab-pane>
-	        </a-tabs>
+          <a-tabs v-model:active-key="activeTab" class="detail-tabs">
+            <a-tab-pane key="settings" :tab="$t('ProjectApplication.detail.tab.settings')">
+              <ApplicationSettings
+                ref="settingsRef"
+                v-model:editing="settingsEditing"
+                :data="{ application, template }"
+                :saving="settingsSaving"
+                @save="updateSettings"
+              />
+            </a-tab-pane>
+            <a-tab-pane key="users" :tab="$t('ProjectApplication.detail.tab.users')">
+              <UserManagement
+                :data="{ users: detail.users, roles: detail.roles }"
+                @add="addUsers"
+                @unbind="unbindUser"
+                @update="updateUser"
+              />
+            </a-tab-pane>
+            <a-tab-pane key="roles" :tab="$t('ProjectApplication.detail.tab.roles')">
+              <RoleManagement
+                :roles="detail.roles"
+                :users="detail.users"
+                :template-id="application.templateId"
+                :is-external="application.provider === 'third-party'"
+                @save-role="saveRole"
+                @delete-role="removeRole"
+              />
+            </a-tab-pane>
+          </a-tabs>
         </FullPage>
       </template>
 
@@ -69,6 +71,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
+import { syncBusinessApplicationCredential } from '@authentication-manager-ui/api/application-center/businessApplication'
 import ApplicationSummary from './components/ApplicationSummary.vue'
 import ApplicationSettings from './components/ApplicationSettings.vue'
 import RoleManagement from './components/RoleManagement.vue'
@@ -91,11 +94,13 @@ const settingsEditing = ref(false)
 const settingsSaving = ref(false)
 const settingsRef = ref<InstanceType<typeof ApplicationSettings>>()
 const deleting = ref(false)
+const syncingCredential = ref(false)
 
 const applicationId = computed(() => String(route.params.id || ''))
 const application = computed(() => store.applications.find((item) => item.id === applicationId.value))
 const detail = computed(() => store.details[applicationId.value])
 const template = computed(() => store.templates.find((item) => item.id === application.value?.templateId))
+let detailLoadVersion = 0
 const {
   openingApplicationIds,
   openApplication: openGuardedApplication,
@@ -105,17 +110,19 @@ const {
   },
 })
 watch(applicationId, async id => {
+  const version = ++detailLoadVersion
   if (!id) return
   activeTab.value = 'settings'
   settingsEditing.value = false
   loading.value = true
   try {
     await Promise.all([store.loadTemplates(), store.loadApplication(id)])
+    if (version !== detailLoadVersion) return
     await store.loadDetail(id)
   } catch {
     // The shared request layer reports the backend error.
   } finally {
-    loading.value = false
+    if (version === detailLoadVersion) loading.value = false
   }
 }, { immediate: true })
 
@@ -137,6 +144,19 @@ const toggleStatus = async () => {
 const openApplication = () => {
   if (!application.value) return
   void openGuardedApplication(application.value)
+}
+
+const syncCredential = async () => {
+  if (!application.value || syncingCredential.value || deleting.value) return
+  syncingCredential.value = true
+  try {
+    await syncBusinessApplicationCredential(application.value.id)
+    onlyMessage($t('ProjectApplication.detail.credentialSyncSubmitted'))
+  } catch {
+    // The shared request layer reports the backend error.
+  } finally {
+    syncingCredential.value = false
+  }
 }
 
 const deleteApplication = async () => {

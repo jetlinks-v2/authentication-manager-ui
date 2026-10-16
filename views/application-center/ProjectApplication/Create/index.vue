@@ -14,6 +14,12 @@
     @cancel="closeDialog"
   >
     <a-form ref="formRef" :model="form" :rules="rules" layout="vertical">
+      <a-form-item :label="$t('ProjectApplication.create.applicationKind')">
+        <a-radio-group v-model:value="applicationKind" button-style="solid" :disabled="submitting">
+          <a-radio-button value="business">{{ $t('ProjectApplication.create.businessApplication') }}</a-radio-button>
+          <a-radio-button value="third-party">{{ $t('ProjectApplication.create.thirdPartyApplication') }}</a-radio-button>
+        </a-radio-group>
+      </a-form-item>
       <a-form-item :label="$t('ProjectApplication.create.icon')">
         <div class="icon-upload-row">
           <div class="icon-upload">
@@ -50,7 +56,8 @@
 
       <a-form-item :label="$t('ProjectApplication.create.template')" name="templateId">
         <a-spin :spinning="templatesLoading">
-          <TemplateSelector v-model="form.templateId" :templates="store.templates" />
+          <TemplateSelector v-model="form.templateId" :templates="visibleTemplates" />
+          <a-empty v-if="!templatesLoading && !visibleTemplates.length" :description="$t('ProjectApplication.create.noTemplates')" />
         </a-spin>
       </a-form-item>
     </a-form>
@@ -72,7 +79,8 @@ const emits = defineEmits<{
 }>()
 
 const {
-  store,
+  applicationKind,
+  visibleTemplates,
   formRef,
   submitting,
   templatesLoading,
