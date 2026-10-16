@@ -1,3 +1,4 @@
+import { cloneDeep, isEqual } from 'lodash-es'
 import type { ApiGroupWrite, GroupEnum, ManagedApiGroup, ManagedApiOperation, RawOpenApiSpec } from '@authentication-manager-ui/api/application-center/apiGroupManagement'
 export const groupValue = <T extends string>(value?: GroupEnum<T> | null): T | undefined => typeof value === 'object' ? value?.value : value
 export const groupText = <T extends string>(value: GroupEnum<T> | null | undefined, t: (key: string) => string, prefix: string) =>
@@ -8,7 +9,7 @@ export const groupError = (cause: unknown, t: (key: string) => string) => {
   return message.startsWith('ApiGroupManagement.') ? t(message) : message || t('ApiGroupManagement.requestError')
 }
 export const validSpecPermission = (spec?: RawOpenApiSpec) => !!spec?.permissionId?.trim() && !!spec.actions?.length && spec.actions.every(action => !!action.trim())
-const copyOptions = (value?: Record<string, unknown> | null) => value == null ? value : JSON.parse(JSON.stringify(value)) as Record<string, unknown>
+const copyOptions = (value?: Record<string, unknown> | null) => cloneDeep(value)
 export const copyOperations = (operations: ManagedApiOperation[] = []) => operations.map(operation => ({
   id: operation.id, name: operation.name, description: operation.description,
   apiSpecIds: [...(operation.apiSpecIds || [])], options: copyOptions(operation.options),
@@ -28,5 +29,5 @@ export const operationsChanged = (original: ManagedApiGroup, draft: ApiGroupWrit
   const comparable = (operations: ManagedApiOperation[]) => operations.map(operation => ({ ...operation,
     apiSpecIds: [...operation.apiSpecIds].sort(),
   })).sort((a, b) => a.id.localeCompare(b.id))
-  return JSON.stringify(comparable(copyOperations(original.operations || []))) !== JSON.stringify(comparable(copyOperations(draft.operations)))
+  return !isEqual(comparable(copyOperations(original.operations || [])), comparable(copyOperations(draft.operations)))
 }

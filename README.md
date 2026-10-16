@@ -703,7 +703,7 @@ Verification result:
 实施落点与当前结果：
 
 - `api/application-center/apiGroupManagement.ts` 封装分组标准 CRUD、分页元数据查询和指定 ID 回显；新增消费真实返回实体 ID，更新校验 Boolean 结果，不调用应用绑定接口。
-- `views/application-center/ApiGroup/index.vue` 为列表；`Save/index.vue` 为独立新建/编辑/只读详情。`useApiGroupEditor.ts` 编排草稿、自动资产归属、关联回显及确认保存；`OperationsEditor.vue` 展示稳定操作 ID 和真实关联；`SpecPicker.vue` / `useSpecPicker.ts` 维护跨页选择。已有操作 ID 不可修改，分组/操作 options 原样保留，保存显式排除详情、文档及审计字段。
+- `views/application-center/ApiGroup/index.vue` 为列表；`Save/index.vue` 为独立新建/编辑/只读详情。`useApiGroupEditor.ts` 编排草稿、自动资产归属、关联回显及确认保存；`OperationsEditor.vue` 展示稳定操作 ID 和真实关联；`SpecPicker.vue` / `useSpecPicker.ts` 维护跨页选择。已有操作 ID 不可修改，分组/操作 options 原样保留，保存显式排除详情、文档及审计字段。分组 options 与订阅 configuration 的草稿复制复用 `lodash-es` 的 `cloneDeep`，分组操作比较使用 `isEqual`，不通过 JSON 往返拷贝或字符串比较；保持原操作/接口 ID 排序规则及嵌套编辑隔离。本次仅源码与差异检查，未执行前端测试、构建或浏览器验收。
 - 分组启停、删除与影响已有授权的编辑均有确认；空操作不能保存，元数据不可见的原关联保留并提示。资产属性只读展示，后端按关联接口自动汇总多资产类型；已有 AssetAccesses 与多条授权记录保留，不任意选取类型或隐式降级。
 - `baseMenu.json` 新增“开放与集成 → 接口分组管理”，`index.ts` 注册 Save 子路由，按钮分别映射分组 query/save/delete 及接口 api_spec:query；`locales/lang/zh.json` 与 `en.json` 各提供 106 条分组管理对应文案。未修改现有授权、OAuth2、订阅或 SaaS 可选校验逻辑。
 - 已做源码请求/保存字段及本地导入路径核对、菜单与语言 JSON 解析、中英文键对齐检查；本轮 Vue 文件均小于 300 行。未执行构建、类型检查、lint、测试或浏览器操作，也未启停服务、自动发布菜单或操作业务数据。真实 CRUD、授权可见性和页面交互仍待用户在现有环境人工验收；源码检查不等于运行验收。
