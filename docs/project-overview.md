@@ -2,6 +2,14 @@
 
 # 项目概览
 
+## 数据大屏入口定位作品类型
+
+目标与范围：概览“大屏可视化 → 数据大屏”进入作品列表后选中“大屏”类型；归属本模块共享导航目标与 `visualization-manager-ui/views/project/hooks/useVizScreenBoard.ts` 的入口参数处理。沿用现有菜单权限和 `kind=screen` 参数，不触发创建操作。
+
+实施：`HOME_TARGETS.screen` 携带 `kind=screen`，作品列表在处理创建动作前独立应用该类型。普通查看保留类型参数以支持刷新回显；创建入口仍消费 `action=create` 对应的一次性参数，不重复打开弹窗。
+
+验证：本地 `localhost:9200` 实际从概览点击“数据大屏”，进入 `/resources/visualization/project?kind=screen` 后“大屏”Tab 的 `aria-selected=true`，刷新后仍选中且无创建弹窗；资源中心“创建数据大屏”入口仍选中大屏类型并打开原有创建弹窗，一次性参数正常消费，测试已取消，未创建业务记录。既有 `node --test tests/videoNavigationTarget.test.mjs` 4/4 通过，两处修改的 TypeScript 语法检查和两个子仓库 `git diff --check` 通过。按性能约束未执行全量 lint/typecheck/build。无需重启后端，正式环境需发布更新后的 runtime-ui 静态资源。
+
 ## 仪表盘圆角
 
 概览卡片外壳（`visDashboard/Base/shared/HomeWidget.vue`、`QuickGuide/ProjectHomeQuickGuide.vue`）和 core 画布的拖拽条、拖动/缩放裁切统一读取 `--r-3`（8px），避免边缘缝隙。定向 SFC/样式解析与 diff 检查通过；概览页 DevTools 确认拖拽条上角计算值为 8px。实际拖动/缩放视觉验收待完成；按性能约束未运行全量构建。无需重启后端，生产环境需重新发布 runtime-ui。
