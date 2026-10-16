@@ -20,6 +20,12 @@
 
 ## 正式页面入口
 
+### 私有化默认布局
+
+调整入口为 `views/resources/Dashboard/useResourceDashboard.ts` 的 `privateLayout`，按已确认的 24 列布局设置：物联网卡为 `x=18,y=4,w=6,h=18`；算法覆盖统计与消息趋势位于 `y=13`，各占 9 列、9 行；设备分布位于 `x=0,y=22,w=9,h=9`，网关状态指标位于 `x=9,y=22,w=15,h=9`。顶部四个指标和快速开始、数据采集沿用同一份确认坐标。仅更新私有化默认布局，SaaS 布局与既有个人缓存恢复规则沿用原实现；已有 `resource-center-dashboard-v5` 个人布局继续优先读取。
+
+验证：实际默认配置组装和网格归一化后的全部 11 项坐标与确认数据逐项一致，24 列边界及无重叠检查通过，SaaS 布局和已有缓存迁移函数与修改前一致；TypeScript 语法与 `git diff --check` 通过。按本机性能约束未运行完整 lint/typecheck/build，真实仪表盘效果待前端更新后复核；需要完整检查时执行 `pnpm -C runtime-ui exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json`、`pnpm -C runtime-ui build`。无需重启后端。
+
 横向溢出处理：`views/resources/Dashboard/index.vue` 的 `.dashboard-grid` 设置 `overflow-x: clip`、`overflow-y: visible`，在画布边界裁切公共网格用于对齐卡片的负边距区域，由页面外层继续处理纵向滚动。
 
 验证：现有 `localhost:9200/p_hw2nx5/#/resources/dashboard` 页面热更新后，2560px 视口下 `documentElement.clientWidth` 与 `scrollWidth` 均为 2560px，网格计算样式为 `clip / visible`，无临时行内样式。实际通过卡片顶部手柄拖动设备分布到右栏、通过右下角手柄调整大小，内容超出视口时可纵向滚动完整查看，未出现横向滚动条；测试后已恢复并核对原始布局缓存。Vue SFC 与 CSS 语法解析、`git diff --check` 通过，页面共 82 行。窄视口窗口缩放尚未覆盖；本次仅修改局部 CSS，按性能约束未运行全量 lint、typecheck 或 build。开发环境热更新生效，生产环境需重新发布 runtime-ui，无后端重启要求。

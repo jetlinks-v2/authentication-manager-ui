@@ -11,12 +11,12 @@ const previousLayoutStorageKey = 'resource-center-dashboard-v4'
 const base = [
   ['EdgeNodes',0,0,3,4],['IotDevices',3,0,3,4],['VideoDevices',6,0,3,4],['Visualization',9,0,3,4],
 ] as const
-// 私有化使用24列布局；网关状态指标压缩为7行，减少概览页纵向占用。
+// 私有化使用24列布局；网关状态指标位于右下方，横跨15列。
 const privateLayout = [
   ['EdgeNodes', 0, 0, 6, 4], ['IotDevices', 6, 0, 6, 4], ['VideoDevices', 12, 0, 6, 4], ['Visualization', 18, 0, 6, 4],
-  ['QuickStart', 0, 4, 12, 9], ['Collection', 12, 4, 6, 9], ['NetworkCards', 18, 4, 6, 27],
-  ['AlgorithmCoverage', 0, 13, 9, 9], ['VideoPlaybackTrend', 9, 13, 9, 7],
-  ['DeviceDistribution', 0, 22, 9, 9], ['MessageTrend', 9, 22, 9, 9],
+  ['QuickStart', 0, 4, 12, 9], ['Collection', 12, 4, 6, 9], ['NetworkCards', 18, 4, 6, 18],
+  ['AlgorithmCoverage', 0, 13, 9, 9], ['VideoPlaybackTrend', 9, 22, 15, 9],
+  ['DeviceDistribution', 0, 22, 9, 9], ['MessageTrend', 9, 13, 9, 9],
 ] as const
 // SaaS 窄栏下组件内部改为上下布局，因此保留14行，仍比原18行更紧凑。
 const saasLayout = [
