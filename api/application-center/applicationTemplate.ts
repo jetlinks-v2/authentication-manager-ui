@@ -163,11 +163,5 @@ const notificationSignatureUrl = (id: string) =>
 export const getTemplateNotificationSignature = (id: string) =>
   request.get<TemplateNotificationSignatureStatus>(notificationSignatureUrl(id))
 
-export const generateTemplateNotificationSignature = (id: string) =>
-  request.post<TemplateNotificationSignatureSecret>(`${notificationSignatureUrl(id)}/_generate`)
-
 export const revealTemplateNotificationSignature = (id: string) =>
   request.post<TemplateNotificationSignatureSecret>(`${notificationSignatureUrl(id)}/_reveal`)
-
-export const rotateTemplateNotificationSignature = (id: string) =>
-  request.post<TemplateNotificationSignatureSecret>(`${notificationSignatureUrl(id)}/_rotate`)

@@ -113,9 +113,7 @@ const parameters = useApplicationTemplateParameters(
     platformIdInvalid: $t('ApplicationTemplate.parameters.platformIdInvalid'),
     invalidParameter: $t('ApplicationTemplate.parameters.invalidParameter'),
     invalidNotification: $t('ApplicationTemplate.parameters.invalidNotification'),
-    signatureRequired: $t('ApplicationTemplate.signature.required'),
   },
-  () => notificationSignature.status.value.configured,
 )
 
 const resetDocument = () => {

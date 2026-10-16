@@ -403,12 +403,12 @@ Verification result:
 
 - 创建第三方实例时仅选择 provider=third-party 的模板及填写基本信息，不配置出站 OAuth2、通知 Token 或实例 callback。
 - 模板配置复用 redirectUri、externalParameters 和 notification.address/keyId/publicKey。平台生成 Code 并拼接跳转参数；第三方通过平台现有 /oauth2/token 和 /authorize/context 获取委托身份。
-- notification 的 RSA keyId/publicKey 仅用于加密交付应用凭据；HTTP 通知 HMAC keyId/Secret 改为在模板页独立生成、显式查看或重置，不再逐模板配置平台 YAML。专用接口为 `/business-application-template/{id}/notification-signature` 及 `/_generate`、`/_reveal`、`/_rotate`，查询仅返回状态，敏感操作沿用模板保存权限。凭据操作立即保存，与普通表单草稿无关；启用通知须先生成凭据。重置影响该模板下所有应用及重试，接收方须同步更新；关闭通知只移除 notification，保留独立凭据和其他配置。
+- notification 的 RSA keyId/publicKey 仅用于应用凭据加密交付；HMAC keyId/Secret 由现有平台／模板密钥按独立通知用途派生。页面只保留 `/notification-signature` 状态查询与 `/_reveal` 受控查看，删除生成／重置及保存前置校验；平台／模板版本变化后重新交付，实例访问凭据轮换不改变模板通知签名。
 - 实例详情保留基本信息、用户和角色。第三方角色只维护基本资料及成员关联，不加载菜单授权区域；普通业务应用的菜单权限编辑保持原行为。
 - 成员、角色及关联查询复用 /user/detail/business_application/{id}/_query、带 applicationId 条件的 /role/_query 和 /business-application/{id}/user-roles/_query。通知使用 application.user.bound/unbound 与 application.sync.changed 的 members/roles 提示，不消费独立 Callback 快照协议。
 - 可靠任务、记录与重投沿用已有模板 /business-application-template/{templateId}/delivery 契约及模板权限，不新增实例运维 API，也不以接口失败后的另一套路径兜底。
 
-主要实现入口为 ProjectApplication/Create、ProjectApplication/Detail 及 Template/Save。模板配置状态由 useApplicationTemplateParameters 管理，独立签名凭据由 useTemplateNotificationSignature 管理，ExternalParameterConfig 负责展示。Secret 仅在显式操作的弹窗中出现，关闭、切换模板或离开页面即清理，不写 configuration 或浏览器持久化存储。后端以共享数据库每次取钥支持集群，不依赖本地缓存。此次签名配置改动只完成源码/差异检查，按用户约定未运行前端测试、lint、类型检查、构建或浏览器；生成/查看/重置、只读权限和离开页面清理仍待现有环境人工验收。Python 联调示例仅保留在本地，不随产品仓库交付。
+主要实现入口为 ProjectApplication/Create、ProjectApplication/Detail 及 Template/Save。普通配置由 useApplicationTemplateParameters 管理，当前派生签名的查看由 useTemplateNotificationSignature 管理，ExternalParameterConfig 展示。Secret 只保留在弹窗短期内存，关闭、切换模板或离开页面即清理。后端复用已有模板快照缓存及失效机制。本轮仅源码与差异检查，未运行前端测试、lint、类型检查、构建或浏览器；当前凭据查看、权限控制和离开页面清理待人工验收。Python 示例保留本地，不随产品仓库交付。
 
 ### Video Gateway Binding Interaction Plan
 
@@ -748,9 +748,9 @@ URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显�
 
 ### 第三方订阅强制签名与 Provider 目录
 
-- 仅现有第三方订阅抽屉、列表/详情摘要及凭据生命周期提示，不修改运营端 ui、菜单或应用模型。 订阅列表在 `components/SubscriptionPanel.vue` 复用 `pro-table__no-padding` 去掉表格额外内边距，使左右边缘与上方筛选栏、操作按钮对齐；仅做源码与差异检查，页面效果待人工确认。
+- 仅现有第三方订阅抽屉、列表/详情摘要及凭据生命周期提示，不修改运营端 ui、菜单或应用模型。 订阅列表在 `components/SubscriptionPanel.vue` 复用 `pro-table__no-padding` 去掉表格额外内边距，使左右边缘与上方筛选栏、操作按钮对齐。移除订阅面板顶部的运行身份说明及父应用未启用提示，保留请求错误提示和父应用未启用时的订阅启用限制；仅做源码与差异检查，页面效果待人工确认。
 - 目录返回 Provider 的 id/name/events，名称由后端国际化；前端不维护类别 ID 或业务名称映射。选择 Provider 展开其当前具体事件 ID，保存仍为 eventTypes 与 configuration，保留多范围、半选、不可用项；语言切换只刷新目录，不重置草稿，新增事件不自动扩大旧订阅。
-- API HTTP 强制使用当前 Client ID / Client Secret，前端不读取或提交明文 Secret；业务同步仍用独立通知密钥。HMAC 验签不是正文加密，签名值不是 Secret；接收端预存密钥、按原始字节验签并处理时效/幂等，生产使用 HTTPS，凭据重置后同步更新接收端。
+- API HTTP 强制使用当前 Client ID / Client Secret，前端不读取或提交明文 Secret；业务同步使用模板派生通知密钥。HMAC 验签不是正文加密，签名值不是 Secret；接收端预存密钥、按原始字节验签并处理时效/幂等，生产使用 HTTPS，凭据重置后同步更新接收端。
 - 2.20 配套：前端 PR #104 保持目标 2.20；后端当前工作树采用 auth #359 bcc628ee、components #1607 3d59410a，并依赖 hsweb #371 的三状态及缓存实现。前后端 Provider 契约必须配套，更新后端不等于浏览器加载了新模块。
 - 此前旧 Vite 源码将 Provider 当成单个事件，导致旧下拉框、空 schema 和保存失败；获准重启开发服务后只核对过返回源码，未把它当作交互验收。本轮不重复重启服务，不通过放宽后端校验接受错误事件 ID。
 - 本轮前端 Provider 选择、关联展示、国际化和现有文档修改随 PR #104 交付；复用源码与差异检查，未运行构建、类型检查、lint、测试或浏览器。两类勾选、半选回显、多范围/草稿、语言切换、说明弹窗和错误反馈仍由用户在现有环境人工验收。

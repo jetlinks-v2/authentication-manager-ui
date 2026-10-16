@@ -1,7 +1,5 @@
 <template>
   <div class="subscription-panel">
-    <a-alert type="info" show-icon :message="$t('ThirdPartyApplication.subscription.runtimeHint')" class="subscription-alert" />
-    <a-alert v-if="!applicationEnabled" type="warning" show-icon :message="$t('ThirdPartyApplication.subscription.applicationDisabled')" class="subscription-alert" />
     <div class="subscription-toolbar">
       <ConditionFilter :columns="filterColumns" :target="`api-subscriptions-${application?.id}`" @change="handleSearch" />
       <a-space><a-button :loading="catalogLoading" @click="refresh">{{ $t('ThirdPartyApplication.project.refresh') }}</a-button>

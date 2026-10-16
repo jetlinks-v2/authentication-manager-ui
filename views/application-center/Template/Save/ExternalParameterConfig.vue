@@ -63,15 +63,9 @@
           <a-form-item v-if="signature.status.value.configured" :label="$t('ApplicationTemplate.signature.keyId')">
             <a-typography-text copyable :content="signature.status.value.keyId || ''">{{ signature.status.value.keyId }}</a-typography-text>
           </a-form-item>
-          <a-space v-if="canUpdate">
-            <a-button v-if="!signature.status.value.configured" :loading="signature.saving.value" :disabled="signature.loading.value" @click="signature.generate">
-              {{ $t('ApplicationTemplate.signature.generate') }}
-            </a-button>
-            <template v-else>
-              <a-button :loading="signature.saving.value" :disabled="signature.loading.value" @click="signature.reveal">{{ $t('ApplicationTemplate.signature.reveal') }}</a-button>
-              <a-button danger :disabled="signature.loading.value || signature.saving.value" @click="signature.rotate">{{ $t('ApplicationTemplate.signature.rotate') }}</a-button>
-            </template>
-          </a-space>
+          <a-button v-if="canUpdate && signature.status.value.configured" :loading="signature.saving.value" :disabled="signature.loading.value" @click="signature.reveal">
+            {{ $t('ApplicationTemplate.signature.reveal') }}
+          </a-button>
           <a-button v-if="signature.error.value" type="link" :disabled="signature.saving.value" @click="signature.load">{{ $t('ApplicationTemplate.signature.refresh') }}</a-button>
         </a-spin>
       </template>

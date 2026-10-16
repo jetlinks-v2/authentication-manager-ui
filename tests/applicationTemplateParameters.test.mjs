@@ -18,17 +18,16 @@ const messages = {
   invalidParameter: 'invalid parameter',
   platformIdInvalid: 'invalid platform',
   invalidNotification: 'invalid notification',
-  signatureRequired: 'signature required',
 }
 
-function fixture(configuration = {}, hasSignature = () => true) {
+function fixture(configuration = {}) {
   const detail = ref({ id: 'template', provider: 'third-party', configuration: { retained: 'value', redirectUri: 'https://training.example/ui/', ...configuration } })
   const writes = []
   const state = useApplicationTemplateParameters(() => detail.value, async value => {
     writes.push(value)
     detail.value = { ...detail.value, configuration: value }
     return true
-  }, messages, hasSignature)
+  }, messages)
   return { state, writes, detail }
 }
 
@@ -220,7 +219,7 @@ test('validates HTTP(S) addresses before saving, preserving query and fragment',
 })
 
 test('reports save failure without discarding the address draft', async () => {
-  const state = useApplicationTemplateParameters(() => ({ provider: 'third-party', configuration: { redirectUri: 'https://training.example/' } }), async () => { throw new Error('offline') }, messages, () => true)
+  const state = useApplicationTemplateParameters(() => ({ provider: 'third-party', configuration: { redirectUri: 'https://training.example/' } }), async () => { throw new Error('offline') }, messages)
   state.redirectUri.value = 'https://training.example/new'
   assert.equal(await state.save(), false)
   assert.equal(state.error.value, messages.saveFailed)
@@ -236,10 +235,11 @@ test('template form keeps the built-in fixed/user sources without a provider met
   assert.doesNotMatch(api, /parameter-providers|getApplicationParameterProviders/)
 })
 
-test('requires independently saved signing credentials before enabling notifications', async () => {
-  const { state, writes } = fixture({}, () => false)
-  state.notification.enabled = true
-  assert.equal(await state.save(), false)
-  assert.equal(state.error.value, messages.signatureRequired)
-  assert.equal(writes.length, 0)
+test('notification configuration saves without a separate signing key generation step', async () => {
+  const { state, writes } = fixture()
+  Object.assign(state.notification, { enabled: true, address: 'https://receiver.example/hook',
+    keyId: 'receiver-rsa-key', publicKey: 'receiver-public-key' })
+  assert.equal(await state.save(), true)
+  assert.equal(state.error.value, '')
+  assert.equal(writes.length, 1)
 })
