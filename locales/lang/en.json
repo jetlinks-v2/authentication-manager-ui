@@ -2199,6 +2199,8 @@
   "tenantDomain.state.failed": "Configuration failed",
   "tenantDomain.state.deleting": "Deleting",
   "runtimeLog": {
+    "wrap": "Wrap lines",
+    "noEvents": "No live logs yet. Start a subscription or wait for new events.",
     "title": "Runtime logs",
     "description": "View file logs and live events from available nodes.",
     "refreshResources": "Refresh resources",

@@ -22,7 +22,7 @@ export type { RuntimeLiveLogEntry } from './runtimeLogEvent'
 
 type StreamState = 'stopped' | 'waiting' | 'receiving' | 'complete' | 'error'
 
-/** 管理文件日志读取和 Java 实时订阅，切换资源与离开页面时隔离旧请求并释放订阅。 */
+/** 管理文件日志读取和 Java 实时订阅，切换资源、页签或离开页面时隔离旧请求并释放订阅。 */
 export const useRuntimeLog = () => {
   const { t } = useI18n()
   const nodes = ref<RuntimeLogNode[]>([])

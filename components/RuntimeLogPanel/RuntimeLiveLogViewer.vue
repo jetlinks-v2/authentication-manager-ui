@@ -2,15 +2,16 @@
   <div class="live-log">
     <a-space class="live-log__actions" wrap>
       <span>{{ $t('runtimeLog.eventCount', { count: entries.length }) }}</span>
-      <a-switch :checked="following" @change="toggleFollow" />
+      <a-switch size="small" :checked="following" :aria-label="$t('runtimeLog.follow')" @change="toggleFollow" />
       <span>{{ $t('runtimeLog.follow') }}</span>
       <a-button v-if="!following" size="small" @click="backToBottom">
         {{ $t('runtimeLog.backToBottom', { count: pending }) }}
       </a-button>
     </a-space>
     <a-alert v-if="trimmed" type="info" show-icon :message="$t('runtimeLog.bufferTrimmed')" />
-    <div ref="viewer" class="live-log__content" tabindex="0" :aria-label="$t('runtimeLog.content')" @scroll="onScroll">
+    <div ref="viewer" class="live-log__content" :class="{ 'live-log__content--wrap': wrapLines }" tabindex="0" :aria-label="$t('runtimeLog.content')" @scroll="onScroll">
       <pre v-for="entry in entries" :key="entry.id" :data-entry="entry.id">{{ entry.text }}</pre>
+      <a-empty v-if="!entries.length" :description="$t('runtimeLog.noEvents')" />
     </div>
   </div>
 </template>
@@ -19,7 +20,7 @@
 import { nextTick, onMounted, ref, watch } from 'vue'
 import type { RuntimeLiveLogEntry } from './runtimeLogEvent'
 
-const props = defineProps<{ entries: RuntimeLiveLogEntry[] }>()
+const props = defineProps<{ entries: RuntimeLiveLogEntry[]; wrapLines?: boolean }>()
 const viewer = ref<HTMLElement>()
 const following = ref(true)
 const pending = ref(0)
@@ -75,11 +76,14 @@ onMounted(backToBottom)
 </script>
 
 <style scoped lang="less">
-.live-log { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.live-log__actions { color: rgba(0, 0, 0, .65); font-size: 12px; }
+.live-log { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; }
+.live-log__actions { flex: none; padding: 10px 16px; border-bottom: 1px solid #253142; color: #9caec4; font-size: 12px; }
 .live-log__content {
-  height: 480px; max-height: 65vh; overflow: auto; overflow-anchor: none;
-  padding: 16px; background: #141414; color: #e8e8e8; border-radius: 6px;
+  flex: 1; min-height: 0; overflow: auto; overflow-anchor: none;
+  padding: 18px 20px; color: #ced8e5; scrollbar-width: thin; scrollbar-color: #465366 transparent;
 }
-.live-log__content pre { margin: 0 0 8px; font: 13px/1.7 Consolas, monospace; white-space: pre; tab-size: 4; }
+.live-log__content pre { margin: 0 0 12px; font: 13px/1.85 'Cascadia Code', Consolas, 'SFMono-Regular', monospace; white-space: pre; tab-size: 4; }
+.live-log__content--wrap pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.live-log__content :deep(.ant-empty) { display: grid; height: 100%; align-content: center; justify-content: center; margin: 0; }
+.live-log__content :deep(.ant-empty-description) { color: #8b9bb0; }
 </style>

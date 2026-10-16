@@ -32,7 +32,7 @@ export const HOME_TARGETS: Record<string, HomeTarget> = {
   usage: { menus: ['system/ProjectUsage', 'system/Operations/Quota'] },
   collector: { menus: ['data-collect'] },
   card: { menus: ['iot-card/CardManagement'] },
-  screen: { menus: ['visualization/project'] },
+  screen: { menus: ['visualization/project'], query: { kind: 'screen' } },
   template: { menus: ['visualization/resource/template'] },
   image: { menus: ['visualization/resource/image'] },
   component: { menus: ['visualization/resource/component'] },

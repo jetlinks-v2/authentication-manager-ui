@@ -1,5 +1,5 @@
 <template>
-  <main class="resource-dashboard">
+  <main ref="host" class="resource-dashboard">
     <div v-if="loading" class="resource-dashboard-state"><a-spin /></div>
     <a-result v-else-if="errors.length" status="error" :title="t('resourceDashboard.loadError')">
       <template #extra>
@@ -8,11 +8,12 @@
     </a-result>
     <DashBoardCanvas
       v-else
+      :key="storageKey"
       :model-value="dashboard"
       :catalog="catalog"
       :editable="false"
       :layout-editable="true"
-      storage-key="resource-center-dashboard-v5"
+      :storage-key="storageKey"
       :preview-mode="false"
     />
   </main>
@@ -21,14 +22,17 @@
 <script setup lang="ts" name="ResourceCenterDashboard">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useElementSize } from '@vueuse/core'
 import { DashBoardCanvas } from '@jetlinks-web-core/components/DashBoardCanvas'
 import { useResourceDashboard } from './useResourceDashboard'
 import { provideVideoSummary } from '../../../visDashboard/ResourceCenter/hooks/videoSummaryContext'
 
 provideVideoSummary()
 const { t } = useI18n()
-// 正式页面只查询真实数据，布局与组件配置固定，交互边界与项目概览一致。
-const { catalog, dashboard, loading, errors, reload } = useResourceDashboard(ref(false))
+const host = ref<HTMLElement>()
+const { width } = useElementSize(host)
+// 可用能力与画布宽度共同决定默认布局，个人拖拽结果仍由原画布恢复。
+const { catalog, dashboard, storageKey, loading, errors, reload } = useResourceDashboard(ref(false), width)
 </script>
 
 <style scoped>
