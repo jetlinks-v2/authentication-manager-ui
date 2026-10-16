@@ -18,16 +18,17 @@ const messages = {
   invalidParameter: 'invalid parameter',
   platformIdInvalid: 'invalid platform',
   invalidNotification: 'invalid notification',
+  signatureRequired: 'signature required',
 }
 
-function fixture(configuration = {}) {
+function fixture(configuration = {}, hasSignature = () => true) {
   const detail = ref({ id: 'template', provider: 'third-party', configuration: { retained: 'value', redirectUri: 'https://training.example/ui/', ...configuration } })
   const writes = []
   const state = useApplicationTemplateParameters(() => detail.value, async value => {
     writes.push(value)
     detail.value = { ...detail.value, configuration: value }
     return true
-  }, messages)
+  }, messages, hasSignature)
   return { state, writes, detail }
 }
 
@@ -219,7 +220,7 @@ test('validates HTTP(S) addresses before saving, preserving query and fragment',
 })
 
 test('reports save failure without discarding the address draft', async () => {
-  const state = useApplicationTemplateParameters(() => ({ provider: 'third-party', configuration: { redirectUri: 'https://training.example/' } }), async () => { throw new Error('offline') }, messages)
+  const state = useApplicationTemplateParameters(() => ({ provider: 'third-party', configuration: { redirectUri: 'https://training.example/' } }), async () => { throw new Error('offline') }, messages, () => true)
   state.redirectUri.value = 'https://training.example/new'
   assert.equal(await state.save(), false)
   assert.equal(state.error.value, messages.saveFailed)
@@ -233,4 +234,12 @@ test('template form keeps the built-in fixed/user sources without a provider met
   assert.match(form, /sourceFixed/)
   assert.match(form, /sourceUser/)
   assert.doesNotMatch(api, /parameter-providers|getApplicationParameterProviders/)
+})
+
+test('requires independently saved signing credentials before enabling notifications', async () => {
+  const { state, writes } = fixture({}, () => false)
+  state.notification.enabled = true
+  assert.equal(await state.save(), false)
+  assert.equal(state.error.value, messages.signatureRequired)
+  assert.equal(writes.length, 0)
 })

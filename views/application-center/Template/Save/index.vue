@@ -27,7 +27,7 @@
             />
           </a-tab-pane>
           <a-tab-pane key="config" :tab="$t('ApplicationTemplate.detail.config')">
-            <ExternalParameterConfig v-if="parameters.supported.value" :state="parameters" :can-update="canUpdate && !!detailState.detail.value.id" />
+            <ExternalParameterConfig v-if="parameters.supported.value" :state="parameters" :signature="notificationSignature" :can-update="canUpdate && !!detailState.detail.value.id" />
             <ConfigPane
               :can-update="canUpdate"
               :scope-strategy-options="menuConfig.scopeStrategyOptions.value"
@@ -64,6 +64,7 @@ import TemplateSummary from './TemplateSummary.vue'
 import { useApplicationTemplateDetail } from './useApplicationTemplateDetail'
 import { useApplicationTemplateMenuConfig } from './useApplicationTemplateMenuConfig'
 import { useApplicationTemplateParameters } from './useApplicationTemplateParameters'
+import { useTemplateNotificationSignature } from './useTemplateNotificationSignature'
 
 const ExternalParameterConfig = defineAsyncComponent(() => import('./ExternalParameterConfig.vue'))
 const GrantPanel = defineAsyncComponent(() => import('../../ThirdPartyApplication/Direct/GrantPanel.vue'))
@@ -98,6 +99,10 @@ const menuConfig = useApplicationTemplateMenuConfig(
     missingMenus: count => $t('ApplicationTemplate.config.missingMenus', { count }),
   },
 )
+const notificationSignature = useTemplateNotificationSignature(
+  () => detailState.detail.value.provider === 'third-party' && detailState.detail.value.id === templateId.value
+    ? templateId.value : '',
+)
 const parameters = useApplicationTemplateParameters(
   () => detailState.detail.value,
   detailState.updateConfiguration,
@@ -108,7 +113,9 @@ const parameters = useApplicationTemplateParameters(
     platformIdInvalid: $t('ApplicationTemplate.parameters.platformIdInvalid'),
     invalidParameter: $t('ApplicationTemplate.parameters.invalidParameter'),
     invalidNotification: $t('ApplicationTemplate.parameters.invalidNotification'),
+    signatureRequired: $t('ApplicationTemplate.signature.required'),
   },
+  () => notificationSignature.status.value.configured,
 )
 
 const resetDocument = () => {

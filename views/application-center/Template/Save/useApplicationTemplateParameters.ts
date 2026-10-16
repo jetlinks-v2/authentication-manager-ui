@@ -12,6 +12,7 @@ interface ParameterMessages {
   platformIdInvalid: string
   invalidParameter: string
   invalidNotification: string
+  signatureRequired: string
 }
 
 /** 模板维护的单个跳转参数草稿：名称、值来源，以及固定值或用户字段。 */
@@ -49,6 +50,7 @@ export const useApplicationTemplateParameters = (
   getDetail: () => BusinessApplicationTemplate,
   persist: (configuration: ApplicationTemplateConfiguration) => Promise<boolean>,
   messages: ParameterMessages,
+  hasNotificationSignature: () => boolean,
 ) => {
   const redirectUri = ref('')
   const notification = reactive({ enabled: false, address: '', keyId: '', publicKey: '' })
@@ -126,6 +128,10 @@ export const useApplicationTemplateParameters = (
     }
     if (!parametersValid()) {
       error.value = messages.invalidParameter
+      return false
+    }
+    if (notification.enabled && !hasNotificationSignature()) {
+      error.value = messages.signatureRequired
       return false
     }
     const notificationAddress = notification.address.trim()

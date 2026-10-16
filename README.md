@@ -403,12 +403,12 @@ Verification result:
 
 - 创建第三方实例时仅选择 provider=third-party 的模板及填写基本信息，不配置出站 OAuth2、通知 Token 或实例 callback。
 - 模板配置复用 redirectUri、externalParameters 和 notification.address/keyId/publicKey。平台生成 Code 并拼接跳转参数；第三方通过平台现有 /oauth2/token 和 /authorize/context 获取委托身份。
-- notification 的 RSA keyId/publicKey 用于加密交付应用凭据，与部署配置中的 HTTP 通知 HMAC keyId/secret 分开管理。模板参数编辑沿用原有 CRUD，关闭通知时仅移除 notification 字段，其他配置保持不变。
+- notification 的 RSA keyId/publicKey 仅用于加密交付应用凭据；HTTP 通知 HMAC keyId/Secret 改为在模板页独立生成、显式查看或重置，不再逐模板配置平台 YAML。专用接口为 `/business-application-template/{id}/notification-signature` 及 `/_generate`、`/_reveal`、`/_rotate`，查询仅返回状态，敏感操作沿用模板保存权限。凭据操作立即保存，与普通表单草稿无关；启用通知须先生成凭据。重置影响该模板下所有应用及重试，接收方须同步更新；关闭通知只移除 notification，保留独立凭据和其他配置。
 - 实例详情保留基本信息、用户和角色。第三方角色只维护基本资料及成员关联，不加载菜单授权区域；普通业务应用的菜单权限编辑保持原行为。
 - 成员、角色及关联查询复用 /user/detail/business_application/{id}/_query、带 applicationId 条件的 /role/_query 和 /business-application/{id}/user-roles/_query。通知使用 application.user.bound/unbound 与 application.sync.changed 的 members/roles 提示，不消费独立 Callback 快照协议。
 - 可靠任务、记录与重投沿用已有模板 /business-application-template/{templateId}/delivery 契约及模板权限，不新增实例运维 API，也不以接口失败后的另一套路径兜底。
 
-主要实现入口为 ProjectApplication/Create、ProjectApplication/Detail 及 Template/Save。模板配置状态由 useApplicationTemplateParameters 管理，ExternalParameterConfig 负责已有表单的展示。Python 联调示例仅保留在本地，不随产品仓库交付。
+主要实现入口为 ProjectApplication/Create、ProjectApplication/Detail 及 Template/Save。模板配置状态由 useApplicationTemplateParameters 管理，独立签名凭据由 useTemplateNotificationSignature 管理，ExternalParameterConfig 负责展示。Secret 仅在显式操作的弹窗中出现，关闭、切换模板或离开页面即清理，不写 configuration 或浏览器持久化存储。后端以共享数据库每次取钥支持集群，不依赖本地缓存。此次签名配置改动只完成源码/差异检查，按用户约定未运行前端测试、lint、类型检查、构建或浏览器；生成/查看/重置、只读权限和离开页面清理仍待现有环境人工验收。Python 联调示例仅保留在本地，不随产品仓库交付。
 
 ### Video Gateway Binding Interaction Plan
 

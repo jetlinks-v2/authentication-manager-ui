@@ -44,14 +44,49 @@
         <a-form-item :label="$t('ApplicationTemplate.parameters.notificationAddress')" required>
           <a-input v-model:value="state.notification.address" />
         </a-form-item>
+        <h3>{{ $t('ApplicationTemplate.signature.encryptionTitle') }}</h3>
         <a-form-item :label="$t('ApplicationTemplate.parameters.notificationKeyId')" required>
           <a-input v-model:value="state.notification.keyId" />
         </a-form-item>
         <a-form-item :label="$t('ApplicationTemplate.parameters.notificationPublicKey')" required>
           <a-textarea v-model:value="state.notification.publicKey" :rows="5" />
         </a-form-item>
+        <h3>{{ $t('ApplicationTemplate.signature.title') }}</h3>
+        <p>{{ $t('ApplicationTemplate.signature.tip') }}</p>
+        <a-alert v-if="signature.error.value" type="error" show-icon :message="signature.error.value" />
+        <a-spin :spinning="signature.loading.value">
+          <a-form-item :label="$t('ApplicationTemplate.signature.status')">
+            <a-tag :color="signature.status.value.configured ? 'success' : 'default'">
+              {{ $t(signature.status.value.configured ? 'ApplicationTemplate.signature.configured' : 'ApplicationTemplate.signature.notConfigured') }}
+            </a-tag>
+          </a-form-item>
+          <a-form-item v-if="signature.status.value.configured" :label="$t('ApplicationTemplate.signature.keyId')">
+            <a-typography-text copyable :content="signature.status.value.keyId || ''">{{ signature.status.value.keyId }}</a-typography-text>
+          </a-form-item>
+          <a-space v-if="canUpdate">
+            <a-button v-if="!signature.status.value.configured" :loading="signature.saving.value" :disabled="signature.loading.value" @click="signature.generate">
+              {{ $t('ApplicationTemplate.signature.generate') }}
+            </a-button>
+            <template v-else>
+              <a-button :loading="signature.saving.value" :disabled="signature.loading.value" @click="signature.reveal">{{ $t('ApplicationTemplate.signature.reveal') }}</a-button>
+              <a-button danger :disabled="signature.loading.value || signature.saving.value" @click="signature.rotate">{{ $t('ApplicationTemplate.signature.rotate') }}</a-button>
+            </template>
+          </a-space>
+          <a-button v-if="signature.error.value" type="link" :disabled="signature.saving.value" @click="signature.load">{{ $t('ApplicationTemplate.signature.refresh') }}</a-button>
+        </a-spin>
       </template>
     </a-form>
+    <a-modal :open="signature.visible.value" :title="$t('ApplicationTemplate.signature.title')" :footer="null" destroy-on-close @cancel="signature.close">
+      <a-alert type="warning" show-icon :message="$t('ApplicationTemplate.signature.secretTip')" />
+      <a-descriptions v-if="signature.secret.value" :column="1" bordered class="external-parameters__secret">
+        <a-descriptions-item :label="$t('ApplicationTemplate.signature.keyId')">
+          <a-typography-text copyable :content="signature.secret.value.keyId">{{ signature.secret.value.keyId }}</a-typography-text>
+        </a-descriptions-item>
+        <a-descriptions-item label="Secret">
+          <a-typography-text copyable :content="signature.secret.value.secret">{{ signature.secret.value.secret }}</a-typography-text>
+        </a-descriptions-item>
+      </a-descriptions>
+    </a-modal>
     <a-space v-if="canUpdate">
       <a-button :disabled="state.saving.value" @click="state.reset">{{ $t('ApplicationTemplate.parameters.reset') }}</a-button>
       <a-button type="primary" :loading="state.saving.value" @click="state.save">
@@ -66,10 +101,12 @@ import type { PropType } from 'vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { useApplicationTemplateParameters } from './useApplicationTemplateParameters'
+import type { useTemplateNotificationSignature } from './useTemplateNotificationSignature'
 
 defineProps({
   canUpdate: { type: Boolean, default: false },
   state: { type: Object as PropType<ReturnType<typeof useApplicationTemplateParameters>>, required: true },
+  signature: { type: Object as PropType<ReturnType<typeof useTemplateNotificationSignature>>, required: true },
 })
 const { t: $t } = useI18n()
 
@@ -88,6 +125,7 @@ const fieldOptions = computed(() => [
 .external-parameters { display: flex; flex-direction: column; gap: var(--space-4); margin-bottom: var(--space-6); }
 .external-parameters h2 { margin: 0; color: var(--ink-1); font-size: var(--fs-16); }
 .external-parameters p { margin: var(--space-1) 0 0; color: var(--ink-3); line-height: 1.6; }
+.external-parameters__secret { margin-top: var(--space-4); overflow-wrap: anywhere; }
 .external-parameters__declared { display: flex; flex-direction: column; gap: var(--space-2); }
 .external-parameters__declared h3 { margin: 0; color: var(--ink-1); font-size: var(--fs-14); }
 .external-parameters__row { display: grid; grid-template-columns: minmax(0, 1fr) 8rem minmax(0, 1fr) auto; gap: var(--space-2); align-items: center; }

@@ -145,3 +145,29 @@ export type {
   GrantableAssetType,
   MenuPermissionNode,
 }
+
+/** 通知签名凭据不属于模板 configuration，仅显式管理操作返回 Secret。 */
+export interface TemplateNotificationSignatureStatus {
+  configured: boolean
+  keyId: string | null
+}
+
+export interface TemplateNotificationSignatureSecret {
+  keyId: string
+  secret: string
+}
+
+const notificationSignatureUrl = (id: string) =>
+  `/business-application-template/${encode(id)}/notification-signature`
+
+export const getTemplateNotificationSignature = (id: string) =>
+  request.get<TemplateNotificationSignatureStatus>(notificationSignatureUrl(id))
+
+export const generateTemplateNotificationSignature = (id: string) =>
+  request.post<TemplateNotificationSignatureSecret>(`${notificationSignatureUrl(id)}/_generate`)
+
+export const revealTemplateNotificationSignature = (id: string) =>
+  request.post<TemplateNotificationSignatureSecret>(`${notificationSignatureUrl(id)}/_reveal`)
+
+export const rotateTemplateNotificationSignature = (id: string) =>
+  request.post<TemplateNotificationSignatureSecret>(`${notificationSignatureUrl(id)}/_rotate`)
