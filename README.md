@@ -549,6 +549,16 @@ Unsupported prototype surfaces were removed: fake quotas and metrics, channel-le
 
 Every created or substantially edited Vue file remains at or below 300 lines.
 
+### 应用模板数据权限候选一致性
+
+- 从项目进入 runtime-ui 时，应用模板的数据权限候选以当前项目菜单为上限，首次配置、保存回显及重新打开保持一致。模板接口补齐的候选不会额外引入「全部数据」；项目菜单本身允许 `all` 时仍正常提供该选项。
+- 实现归属：`runtime-ui/modules/authentication-manager-ui/views/application-center/Template/Save/useApplicationTemplateMenuConfig.ts`。模板菜单在进入 `normalizeGrantedMenus` 前复用 `menu-config.shared.ts` 的 `filterGrantedMenuAssetAccessesByMenuScope`，已选资产权限在进入编辑器前复用 `filterAssetAccessPoliciesByMenuScope`，防止公共编辑器合并回显时扩大项目候选。公共权限编辑器、应用角色、后端接口、菜单定义及运营端 `ui/` 未改动。
+- 历史模板若已选择当前项目菜单不支持的范围，编辑器回退到当前合法的默认选项，在用户下次保存时持久化；读取模板不自动写回。`options.scopeStrategy` 从原始策略独立回显，因此过滤越界选项不会重置数据范围策略。
+- 回归：在本模块执行 `node --test tests/applicationTemplateMenuConfig.test.mjs tests/applicationRolePermissionScope.test.mjs tests/applicationTemplateMenuPreview.test.mjs`，8 项通过。新增用例使用真实 Vue 状态、权限编辑器与模板 hook，仅替换接口及消息边界，覆盖新模板保存与重载、历史越界值回退、范围策略保留、多资产候选隔离，以及项目允许 `all` 的反例；修改前已复现保存后追加 `all` 的断言失败。
+- 构建：在 `runtime-ui/jetlinks-web-core` 执行 `node --max_old_space_size=8192 --max-semi-space-size=64 -e "process.argv.push('--module-name','authentication-manager-ui'); import('vite').then(({ build }) => build({ build: { outDir: '/tmp/jetlinks-app-template-permission-build' } }))"` 通过，转换 11,783 个模块，耗时 1 分 17 秒；仍有模块插件加载、浏览器映射数据、CSS 注释和大包提示。`git diff --check` 通过，工作区和目标模块没有 lint 脚本。
+- 浏览器：当前项目模板完成真实「保存配置 → 刷新 → 重新打开配置」验证，14 类资产保存前后均无「全部数据」，候选及「所在租户」选中值一致。新模板的创建流程、历史越界值和其他允许 `all` 的项目通过聚焦回归覆盖，未新增实际业务数据进行验收。
+- 类型限制：在 `runtime-ui` 执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 仍有 599 项工作区诊断，修改的 `useApplicationTemplateMenuConfig.ts` 无诊断；例如未修改的 `menu-config.shared.ts:200` 存在泛型 `permissions` 属性错误。需处理工作区类型问题后重跑该命令；整站生产构建未执行。
+
 ### Verification
 
 - Device/camera binding verification confirms that opening either picker never references `/assets/bindings/device`; confirming a selection submits one `/assets/bind/device` object with `assetIdList` and the `read`, `save`, `delete`, and `share` permissions.

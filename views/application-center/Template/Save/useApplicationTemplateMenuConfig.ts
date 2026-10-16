@@ -2,7 +2,6 @@ import { ref } from 'vue'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useMenuAssetPermissionEditor } from '@jetlinks-web-core/hooks'
 import type {
-  AssetAccessPolicy,
   AssetTypeName,
   MenuPermissionNode,
 } from '@jetlinks-web-core/hooks'
@@ -21,6 +20,8 @@ import {
   buildTemplateAssetAccesses,
   DEFAULT_SCOPE_STRATEGY,
   filterApplicationMenuInterfacePermissions,
+  filterAssetAccessPoliciesByMenuScope,
+  filterGrantedMenuAssetAccessesByMenuScope,
   findMissingMenuIds,
   normalizeAssetTypeNames,
   normalizeCandidateMenus,
@@ -123,8 +124,9 @@ export const useApplicationTemplateMenuConfig = (
       const savedMenus = filterApplicationMenuInterfacePermissions(
         Array.isArray(detail.menus) ? detail.menus : [],
       )
+      // 模板回显包含完整候选，先按项目菜单裁剪，避免保存后增加项目范围外的数据权限。
       grantedMenus.value = normalizeGrantedMenus(
-        savedMenus,
+        filterGrantedMenuAssetAccessesByMenuScope(savedMenus, sourceMenus),
         sourceMenus,
       )
       savedAssetAccesses.value = Array.isArray(detail.assetAccesses) ? detail.assetAccesses : []
@@ -134,7 +136,7 @@ export const useApplicationTemplateMenuConfig = (
       editor.reset({
         menus: sourceMenus,
         grantedMenus: grantedMenus.value,
-        assetAccesses: savedAssetAccesses.value as AssetAccessPolicy[],
+        assetAccesses: filterAssetAccessPoliciesByMenuScope(savedAssetAccesses.value, sourceMenus),
         assetTypes: normalizeAssetTypeNames(assetTypesResponse) as AssetTypeName[],
         grantableAssets: grantableAssets.length ? grantableAssets : undefined,
       })
