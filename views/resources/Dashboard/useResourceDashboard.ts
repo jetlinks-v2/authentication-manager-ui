@@ -1,35 +1,24 @@
-import { computed, ref, type Ref } from 'vue'
+import { computed, ref, watch, type Ref } from 'vue'
 import { isSaaS } from '@jetlinks-web-core/utils/consts'
 import { dashboardSources } from '@jetlinks-web-core/components/DashBoardCanvas/dashboard-sources'
 import { useDashboardCatalog } from '@jetlinks-web-core/components/DashBoardCanvas/discovery'
 import type { DashboardValue } from '@jetlinks-web-core/components/DashBoardCanvas'
 import { kinds,typeOf,type ResourceKind } from '../../../visDashboard/ResourceCenter/shared'
+import { provideResourceCapabilities, useResourceCapabilities } from '../../../visDashboard/ResourceCenter/hooks/useResourceCapabilities'
+import { buildPrivateResourceLayout, resourceLayoutMode, saasResourceLayout } from './resourceDashboardLayout'
+import { migrateResourceLayout, resourceLayoutStorageKey } from './resourceLayoutStorage'
 
 const thumbnails = import.meta.glob('../../../visDashboard/ResourceCenter/*/thumbnail.svg', { eager: true,query: '?url',import: 'default' }) as Record<string,string>
-const layoutStorageKey = 'resource-center-dashboard-v5'
-const previousLayoutStorageKey = 'resource-center-dashboard-v4'
-const base = [
-  ['EdgeNodes',0,0,3,4],['IotDevices',3,0,3,4],['VideoDevices',6,0,3,4],['Visualization',9,0,3,4],
-] as const
-// 私有化使用24列布局；网关状态指标位于右下方，横跨15列。
-const privateLayout = [
-  ['EdgeNodes', 0, 0, 6, 4], ['IotDevices', 6, 0, 6, 4], ['VideoDevices', 12, 0, 6, 4], ['Visualization', 18, 0, 6, 4],
-  ['QuickStart', 0, 4, 12, 9], ['Collection', 12, 4, 6, 9], ['NetworkCards', 18, 4, 6, 18],
-  ['AlgorithmCoverage', 0, 13, 9, 9], ['VideoPlaybackTrend', 9, 22, 15, 9],
-  ['DeviceDistribution', 0, 22, 9, 9], ['MessageTrend', 9, 13, 9, 9],
-] as const
-// SaaS 窄栏下组件内部改为上下布局，因此保留14行，仍比原18行更紧凑。
-const saasLayout = [
-  ...base,
-  ['QuickStart', 0, 4, 6, 9], ['MessageTrend', 6, 4, 6, 9],
-  ['AlgorithmCoverage', 0, 13, 6, 9], ['VideoPlaybackTrend', 6, 13, 6, 14],
-  ['DeviceDistribution', 0, 22, 6, 9],
-] as const
 
 /** 资源中心页面的组件发现范围与默认布局。 */
-export function useResourceDashboard(preview: Ref<boolean> = ref(false)) {
-  migrateCompactGatewayLayout()
-  const allowed = computed(() => kinds.filter(kind => preview.value || !isSaaS || !['Collection','NetworkCards'].includes(kind)))
+export function useResourceDashboard(preview: Ref<boolean> = ref(false), width: Ref<number> = ref(0)) {
+  const capabilities = useResourceCapabilities(preview)
+  provideResourceCapabilities(capabilities)
+  const privateMode = computed(() => preview.value || !isSaaS)
+  const allowed = computed(() => kinds.filter(kind => (
+    kind === 'Collection' ? capabilities.capabilities.value.collection
+      : kind === 'NetworkCards' ? capabilities.capabilities.value.networkCards : true
+  )))
   const discovery = useDashboardCatalog(dashboardSources,computed(() => ({
     modules: ['authentication-manager-ui'],directories: ['visDashboard'],
     groups: ['authentication-manager-ui/visDashboard/ResourceCenter'],
@@ -42,26 +31,43 @@ export function useResourceDashboard(preview: Ref<boolean> = ref(false)) {
     })) }))
   const dashboard = computed<DashboardValue>(() => ({
     canvas: { backgroundColor: 'transparent', gridLayout: { colNum: preview.value || !isSaaS ? 24 : 12, rowHeight: 16, marginHorizontal: 18, marginVertical: 18 } },
-    components: (preview.value || !isSaaS ? privateLayout : saasLayout).flatMap(([kind,x,y,w,h]) => {
+    components: (privateMode.value
+      ? buildPrivateResourceLayout(allowed.value, width.value, 4 + Number(capabilities.capabilities.value.collection) + Number(capabilities.capabilities.value.networkCards))
+      : saasResourceLayout).flatMap(([kind,x,y,w,h]) => {
       const type = typeOf(kind),definition = catalog.value.components[type]
       if (!definition) return []
       return [{ ...definition.defaultConfig,id: type,type,componentProps: { ...definition.defaultConfig.componentProps,
         gridItem: { ...definition.defaultGridItem,x,y,w,h } } }]
     }),
   }))
-  return { ...discovery,catalog,dashboard }
-}
+  const profile = computed(() => ({
+    scope: capabilities.scope.value,
+    saas: !privateMode.value,
+    mode: privateMode.value ? resourceLayoutMode(width.value) : 'wide' as const,
+    capabilities: capabilities.capabilities.value,
+    widgets: allowed.value,
+  }))
+  const storageKey = computed(() => preview.value ? undefined : resourceLayoutStorageKey(profile.value))
+  const errors = computed(() => [...capabilities.errors.value, ...discovery.errors.value])
+  const layoutReady = ref(false)
 
-/** 保留用户其余组件的位置，仅在首次升级时压缩旧版网关指标高度。 */
-function migrateCompactGatewayLayout() {
-  if (typeof localStorage === 'undefined' || localStorage.getItem(layoutStorageKey)) return
-  try {
-    const saved = JSON.parse(localStorage.getItem(previousLayoutStorageKey) || 'null')
-    if (!Array.isArray(saved)) return
-    const height = isSaaS ? 14 : 7
-    const next = saved.map(item => item?.i === 'resourceCenterVideoPlaybackTrend'
-      ? { ...item, h: Math.min(Number(item.h) || height, height) }
-      : item)
-    localStorage.setItem(layoutStorageKey, JSON.stringify(next))
-  } catch { /* 无效或不可用的本地布局由画布回退到默认配置。 */ }
+  // 完整组件集合和作用域确定后先迁移缓存，再挂载画布，避免中间态删除个人布局。
+  watch([storageKey, dashboard, capabilities.loading, discovery.loading, errors], () => {
+    layoutReady.value = false
+    if (capabilities.loading.value || discovery.loading.value || errors.value.length) return
+    if (!allowed.value.every(kind => !!catalog.value.components[typeOf(kind)])) return
+    try {
+      if (storageKey.value && typeof localStorage !== 'undefined') {
+        migrateResourceLayout(localStorage, storageKey.value, dashboard.value.components.map(item => item.id), profile.value)
+      }
+    } catch { /* 本地存储不可用时使用当前能力组合的默认坐标。 */ }
+    layoutReady.value = true
+  }, { immediate: true, deep: true, flush: 'sync' })
+
+  const loading = computed(() => capabilities.loading.value || discovery.loading.value || (!layoutReady.value && !errors.value.length))
+  async function reload() {
+    await capabilities.reload()
+    await discovery.reload()
+  }
+  return { ...discovery, catalog, dashboard, storageKey, loading, errors, reload }
 }

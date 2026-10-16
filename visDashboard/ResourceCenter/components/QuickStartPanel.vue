@@ -1,5 +1,5 @@
 <template>
-  <div class="actions" :class="{ 'actions-4': actions.length <= 4, 'actions-more': actions.length > 4 }">
+  <div class="actions" :style="gridStyle">
     <a-button
       v-for="item in actions"
       :key="item.key"
@@ -21,6 +21,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { RightOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
 import iconEdge from '../assets/quick-start-edge.png'
@@ -30,10 +31,14 @@ import iconScreen from '../assets/quick-start-screen.png'
 import iconCollector from '../assets/quick-start-collector.svg'
 import iconCard from '../assets/quick-start-card.svg'
 
-defineProps<{ actions: { key: string; icon: string; disabled: boolean }[] }>()
+const props = defineProps<{ actions: { key: string; icon: string; disabled: boolean }[] }>()
 defineEmits<{ open: [key: string] }>()
 
 const { t } = useI18n()
+const gridStyle = computed(() => ({
+  '--resource-action-rows': Math.max(1, Math.ceil(props.actions.length / 2)),
+  '--resource-action-narrow-rows': Math.max(1, props.actions.length),
+}))
 
 const iconMap: Record<string, string> = {
   edge: iconEdge,
@@ -49,16 +54,12 @@ const iconMap: Record<string, string> = {
 .actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(var(--resource-action-rows), minmax(0, 1fr));
   gap: 10px 12px;
   height: 100%;
   min-height: 0;
 }
-.actions.actions-4 {
-  grid-template-rows: repeat(2, minmax(0, 1fr));
-}
-.actions.actions-more {
-  grid-template-rows: repeat(3, minmax(0, 1fr));
-}
+.action:last-child:nth-child(odd) { grid-column: 1 / -1; }
 .action {
   display: flex;
   align-items: center;
@@ -155,13 +156,8 @@ const iconMap: Record<string, string> = {
 @container resource-widget (max-width: 480px) {
   .actions {
     grid-template-columns: 1fr;
+    grid-template-rows: repeat(var(--resource-action-narrow-rows), minmax(0, 1fr));
     gap: 8px;
-  }
-  .actions.actions-4 {
-    grid-template-rows: repeat(4, minmax(0, 1fr));
-  }
-  .actions.actions-more {
-    grid-template-rows: repeat(6, minmax(0, 1fr));
   }
   .action {
     padding: 6px 10px;

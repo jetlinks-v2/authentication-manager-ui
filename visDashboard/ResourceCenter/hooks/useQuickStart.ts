@@ -1,7 +1,8 @@
-import { computed, type Ref } from 'vue'
+import { computed, inject, type Ref } from 'vue'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { isSaaS } from '@jetlinks-web-core/utils/consts'
 import { HOME_TARGETS } from '../../Base/shared/navigation'
+import { resourceCapabilitiesKey } from './useResourceCapabilities'
 
 type QuickStartAction = {
   key: string
@@ -25,13 +26,23 @@ const actions: QuickStartAction[] = [
 /** 只使用当前菜单编码；无访问权限显示禁用，设计预览不触发业务跳转。 */
 export function useQuickStart(isEdit: Ref<boolean>, isPreview?: Ref<boolean>) {
   const menu = useMenuStore()
+  const resourceCapabilities = inject(resourceCapabilitiesKey, undefined)
   const preview = computed(() => isEdit.value || Boolean(isPreview?.value))
   const resolveMenu = (action: QuickStartAction) => {
     if (menu.getMenu(action.menu)) return action.menu
     if (action.fallbackMenu && menu.getMenu(action.fallbackMenu)) return action.fallbackMenu
     return undefined
   }
-  const visibleActions = computed(() => actions.filter(action => !action.privateOnly || !isSaaS).map(action => ({
+  const visibleActions = computed(() => actions.filter(action => {
+    if (!action.privateOnly) return true
+    if (preview.value) return true
+    if (isSaaS) return false
+    // 正式资源中心与卡片使用同一能力结果；设计器及其他宿主保留原有可见规则。
+    if (!resourceCapabilities) return true
+    return action.key === 'collector'
+      ? resourceCapabilities.capabilities.value.collection
+      : resourceCapabilities.capabilities.value.networkCards
+  }).map(action => ({
     ...action,
     disabled: !preview.value && !resolveMenu(action),
   })))
