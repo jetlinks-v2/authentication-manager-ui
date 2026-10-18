@@ -270,6 +270,22 @@ Verification:
 
 风险与验证：现有文档中的 “System Management List Layout” 描述已由本次实际页面实现校正：四页均按标题左置、工具右置的表格插槽布局呈现。筛选参数、菜单树展开、各权限按钮及用户导入导出行为保持原实现；`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 和目标文件 `git diff --check` 均通过。构建仍报告工作区既有的 Rollup `input` 配置、CSS `//` 注释及大包提示。
 
+## 菜单配置的 owner 边界
+
+当前行为：`views/system/Menu/Setting/` 将菜单配置拆成项目菜单（`iot`）与应用菜单（`app`）两个 Tab，默认进入项目菜单。仅涉及运行端本模块；后端、初始化流程和运营端保持原实现。
+
+实现入口：页面 `index.vue` 负责 Tab、菜单树及反馈，`useMenuSetting.ts` 维护两个 Tab 的独立草稿与交互生命周期，`menuSettingService.ts` 编排查询与按 owner 保存，`utils.ts`、`menuTree.ts` 负责纯数据转换。查询通过 `api/system/menu.ts#getMenuDefinitions` 调用现有 `/menu/_query/no-paging`，同时读取 `iot`、`app` 和空 owner，避免树查询在缺少跨 owner 祖先时丢节点；本地模块定义直接按 ID 合并，避免同 code、不同 ID 的候选串选或丢失。
+
+保存与同步统一展开节点后按 owner 分别调用 `/menu/{owner}/_all`，每份载荷只含对应 owner 的平铺节点并保留 `parentId`，防止接口递归覆盖不同 owner 的子菜单。本地定义的 owner 不随勾选、拖拽或提交改变；空 owner 兼容为 `iot`。已有菜单保留勾选和排序，新候选默认未选中；个人中心、消息订阅及其子菜单等未展示的系统定义随对应 owner 保留提交。权限同步按菜单和按钮 ID 补充权限动作，并保留当前草稿的选择、层级和排序。
+
+失败与兼容：所有 owner 请求成功后才提示成功并刷新，部分失败保留草稿并提示失败 owner；接口之间没有整体事务，不执行自动回滚。本次不迁移历史 `cloud` 数据，遗留前端 `cloud` 定义由配置维护者改为 `iot`。
+
+验证：模块内执行 `node --test tests/menuSettingOwners.test.mjs tests/thirdPartyLoginMenu.test.mjs tests/applicationTemplateMenuPreview.test.mjs`，22 项全部通过，其中 15 项 owner 配置回归覆盖分栏、ID 隔离、新菜单选中/取消选中的保存回显、跨 owner 父子引用、隐藏系统菜单保留与个人中心去重、拖拽层级/环、权限同步及部分失败重试。隔离浏览器使用真实页面、Vue 和 Ant Design Vue，替换请求为测试数据，验证默认项目 Tab、应用 Tab、新页面默认未选中、选中后跨 Tab 保留草稿，以及部分保存失败时保留草稿和确认框、显示失败 owner；未写入真实后端。
+
+在 `runtime-ui` 执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过（11,141 个模块，18.13 秒），保留既有构建配置、CSS 注释及大包提示；`node ../ui/scripts/check-ui-style.mjs --files modules/authentication-manager-ui/views/system/Menu/Setting/index.vue` 和模块 `git diff --check` 通过。页面为 94 行，新增 hook、service 和纯转换文件均低于 300 行。模块未配置 lint 脚本；`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 仍有 590 项既有诊断（修改前 599 项，忽略行号变化无新增诊断，配置页及新增逻辑均无诊断），完整类型检查尚未通过。
+
+剩余验证：尚未执行真实后端写入、登录态拖拽及刷新回显联调。可在 `runtime-ui` 执行 `pnpm -F jetlinks-web-core dev --port 9201` 后，以管理员登录目标环境验证两份 owner 载荷的持久化结果；修复工作区既有类型问题后重跑上述类型检查命令。本次不自动修复数据库中的历史归属或跨 owner 的原始父子配置。
+
 ## System Basis Navigation Layout
 
 The system basis form stores the selected menu layout in `front.layout`. The selector supports `side`, `mix`, and `top` with CSS-only layout previews. During application startup or page refresh, `jetlinks-web-core/src/store/system.ts` validates the configured value and applies it to the shared shell layout; missing or invalid legacy values fall back to `side`.
@@ -562,6 +578,16 @@ The related shared code is limited to:
 Unsupported prototype surfaces were removed: fake quotas and metrics, channel-level camera asset binding, direct-device switching, and the device/video tabs from the application detail workspace. No `/project-application*`, `project_application`, or `X-Project-Application-Id` compatibility contract is used; the internal route and source folder name remain unchanged to avoid breaking existing bookmarks and menu codes.
 
 Every created or substantially edited Vue file remains at or below 300 lines.
+
+### 应用模板数据权限候选一致性
+
+- 从项目进入 runtime-ui 时，应用模板的数据权限候选以当前项目菜单为上限，首次配置、保存回显及重新打开保持一致。模板接口补齐的候选不会额外引入「全部数据」；项目菜单本身允许 `all` 时仍正常提供该选项。
+- 实现归属：`runtime-ui/modules/authentication-manager-ui/views/application-center/Template/Save/useApplicationTemplateMenuConfig.ts`。模板菜单在进入 `normalizeGrantedMenus` 前复用 `menu-config.shared.ts` 的 `filterGrantedMenuAssetAccessesByMenuScope`，已选资产权限在进入编辑器前复用 `filterAssetAccessPoliciesByMenuScope`，防止公共编辑器合并回显时扩大项目候选。公共权限编辑器、应用角色、后端接口、菜单定义及运营端 `ui/` 未改动。
+- 历史模板若已选择当前项目菜单不支持的范围，编辑器回退到当前合法的默认选项，在用户下次保存时持久化；读取模板不自动写回。`options.scopeStrategy` 从原始策略独立回显，因此过滤越界选项不会重置数据范围策略。
+- 回归：在本模块执行 `node --test tests/applicationTemplateMenuConfig.test.mjs tests/applicationRolePermissionScope.test.mjs tests/applicationTemplateMenuPreview.test.mjs`，8 项通过。新增用例使用真实 Vue 状态、权限编辑器与模板 hook，仅替换接口及消息边界，覆盖新模板保存与重载、历史越界值回退、范围策略保留、多资产候选隔离，以及项目允许 `all` 的反例；修改前已复现保存后追加 `all` 的断言失败。
+- 构建：在 `runtime-ui/jetlinks-web-core` 执行 `node --max_old_space_size=8192 --max-semi-space-size=64 -e "process.argv.push('--module-name','authentication-manager-ui'); import('vite').then(({ build }) => build({ build: { outDir: '/tmp/jetlinks-app-template-permission-build' } }))"` 通过，转换 11,783 个模块，耗时 1 分 17 秒；仍有模块插件加载、浏览器映射数据、CSS 注释和大包提示。`git diff --check` 通过，工作区和目标模块没有 lint 脚本。
+- 浏览器：当前项目模板完成真实「保存配置 → 刷新 → 重新打开配置」验证，14 类资产保存前后均无「全部数据」，候选及「所在租户」选中值一致。新模板的创建流程、历史越界值和其他允许 `all` 的项目通过聚焦回归覆盖，未新增实际业务数据进行验收。
+- 类型限制：在 `runtime-ui` 执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 仍有 599 项工作区诊断，修改的 `useApplicationTemplateMenuConfig.ts` 无诊断；例如未修改的 `menu-config.shared.ts:200` 存在泛型 `permissions` 属性错误。需处理工作区类型问题后重跑该命令；整站生产构建未执行。
 
 ### Verification
 

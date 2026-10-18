@@ -1,4 +1,49 @@
 import { request } from '@jetlinks-web/core'
+import type { AxiosResponseRewrite } from '@jetlinks-web/types'
+
+const menuRequest = request as {
+  post<T>(url: string, data: unknown): Promise<AxiosResponseRewrite<T>>
+}
+
+/** 菜单定义保留服务端扩展字段，owner 只由本地菜单配置确定。 */
+export interface MenuDefinition {
+  id?: string
+  key?: string
+  code: string
+  name?: string
+  i18nName?: string
+  owner?: string | null
+  parentId?: string | null
+  sortIndex?: number
+  options?: { show?: boolean; [key: string]: unknown }
+  showPage?: string[]
+  permissions?: MenuPermission[]
+  buttons?: MenuButton[]
+  children?: MenuDefinition[] | null
+}
+
+export interface MenuPermission {
+  permission: string
+  actions?: string[]
+  [key: string]: unknown
+}
+
+export interface MenuButton {
+  id: string
+  permissions?: MenuPermission[]
+  [key: string]: unknown
+}
+
+/** 查询平铺定义，避免按 owner 过滤后丢失跨 owner 父级下的节点。 */
+export const getMenuDefinitions = () => menuRequest.post<MenuDefinition[]>('/menu/_query/no-paging', {
+  paging: false,
+  sorts: [{ name: 'sortIndex', order: 'asc' }],
+  terms: [{ terms: [
+    { column: 'owner', termType: 'in', value: ['iot', 'app'] },
+    { column: 'owner', termType: 'isnull', value: '1', type: 'or' },
+    { column: 'owner', termType: 'eq', value: '', type: 'or' },
+  ] }],
+})
 
 /**
  * 获取当前用户可访问菜单
