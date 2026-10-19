@@ -27,7 +27,7 @@
             />
           </a-tab-pane>
           <a-tab-pane key="config" :tab="$t('ApplicationTemplate.detail.config')">
-            <ExternalParameterConfig v-if="parameters.supported.value" :state="parameters" :can-update="canUpdate && !!detailState.detail.value.id" />
+            <ExternalParameterConfig v-if="parameters.supported.value" :state="parameters" :signature="notificationSignature" :can-update="canUpdate && !!detailState.detail.value.id" />
             <ConfigPane
               :can-update="canUpdate"
               :scope-strategy-options="menuConfig.scopeStrategyOptions.value"
@@ -42,6 +42,9 @@
               @save="menuConfig.save"
             />
           </a-tab-pane>
+          <a-tab-pane v-if="parameters.supported.value" key="grants" :tab="$t('ApplicationTemplate.detail.grants')">
+            <GrantPanel v-if="activeTab === 'grants'" :target-id="templateId" :target-type="TEMPLATE_GRANT_TARGET" />
+          </a-tab-pane>
         </a-tabs>
       </a-spin>
     </FullPage>
@@ -54,14 +57,17 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@jetlinks-web-core/store'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
+import { TEMPLATE_GRANT_TARGET } from '@authentication-manager-ui/api/application-center/apiApplication'
 import ConfigPane from './ConfigPane.vue'
 import DocumentPane from './DocumentPane.vue'
 import TemplateSummary from './TemplateSummary.vue'
 import { useApplicationTemplateDetail } from './useApplicationTemplateDetail'
 import { useApplicationTemplateMenuConfig } from './useApplicationTemplateMenuConfig'
 import { useApplicationTemplateParameters } from './useApplicationTemplateParameters'
+import { useTemplateNotificationSignature } from './useTemplateNotificationSignature'
 
 const ExternalParameterConfig = defineAsyncComponent(() => import('./ExternalParameterConfig.vue'))
+const GrantPanel = defineAsyncComponent(() => import('../../ThirdPartyApplication/Direct/GrantPanel.vue'))
 
 const { t: $t } = useI18n()
 const route = useRoute()
@@ -93,6 +99,10 @@ const menuConfig = useApplicationTemplateMenuConfig(
     missingMenus: count => $t('ApplicationTemplate.config.missingMenus', { count }),
   },
 )
+const notificationSignature = useTemplateNotificationSignature(
+  () => detailState.detail.value.provider === 'third-party' && detailState.detail.value.id === templateId.value
+    ? templateId.value : '',
+)
 const parameters = useApplicationTemplateParameters(
   () => detailState.detail.value,
   detailState.updateConfiguration,
@@ -100,7 +110,9 @@ const parameters = useApplicationTemplateParameters(
     saveFailed: $t('ApplicationTemplate.parameters.saveFailed'),
     redirectUriRequired: $t('ApplicationTemplate.parameters.redirectUriRequired'),
     redirectUriInvalid: $t('ApplicationTemplate.parameters.redirectUriInvalid'),
+    platformIdInvalid: $t('ApplicationTemplate.parameters.platformIdInvalid'),
     invalidParameter: $t('ApplicationTemplate.parameters.invalidParameter'),
+    invalidNotification: $t('ApplicationTemplate.parameters.invalidNotification'),
   },
 )
 

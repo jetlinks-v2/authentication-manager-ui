@@ -16,6 +16,12 @@ export type I18nMessages = Record<string, Record<string, string>>
 
 export interface ApplicationTemplateConfiguration extends Record<string, unknown> {
   redirectUri?: string
+  platformId?: string
+  notification?: {
+    address: string
+    keyId: string
+    publicKey: string
+  }
 }
 
 export interface BusinessApplicationTemplate {
@@ -139,3 +145,23 @@ export type {
   GrantableAssetType,
   MenuPermissionNode,
 }
+
+/** 通知签名凭据不属于模板 configuration，仅显式管理操作返回 Secret。 */
+export interface TemplateNotificationSignatureStatus {
+  configured: boolean
+  keyId: string | null
+}
+
+export interface TemplateNotificationSignatureSecret {
+  keyId: string
+  secret: string
+}
+
+const notificationSignatureUrl = (id: string) =>
+  `/business-application-template/${encode(id)}/notification-signature`
+
+export const getTemplateNotificationSignature = (id: string) =>
+  request.get<TemplateNotificationSignatureStatus>(notificationSignatureUrl(id))
+
+export const revealTemplateNotificationSignature = (id: string) =>
+  request.post<TemplateNotificationSignatureSecret>(`${notificationSignatureUrl(id)}/_reveal`)

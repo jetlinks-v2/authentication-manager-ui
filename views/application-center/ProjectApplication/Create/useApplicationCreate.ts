@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { useProjectApplication } from '../useProjectApplication'
-import type { ProjectApplication, ProjectApplicationDraft } from '../types'
+import type { ApplicationKind, ProjectApplication, ProjectApplicationDraft } from '../types'
 
 interface ApplicationCreateOptions {
   open: () => boolean
@@ -22,6 +22,7 @@ export const useApplicationCreate = (options: ApplicationCreateOptions) => {
   const submitting = ref(false)
   const templatesLoading = ref(false)
   const form = reactive<ProjectApplicationDraft>({ name: '', description: '', templateId: '' })
+  const applicationKind = ref<ApplicationKind>('business')
   const iconTypes = ['image/jpeg', 'image/png']
   const iconUploadBorderStyle = {
     border: '1px dashed var(--line-strong)',
@@ -42,8 +43,15 @@ export const useApplicationCreate = (options: ApplicationCreateOptions) => {
     },
   })
 
+  const visibleTemplates = computed(() => store.templates.filter(item =>
+    applicationKind.value === 'third-party' ? item.provider === 'third-party' : item.provider !== 'third-party',
+  ))
+  watch(applicationKind, () => {
+    form.templateId = ''
+    formRef.value?.clearValidate('templateId')
+  })
   const canSubmit = computed(() => {
-    const template = store.templates.find(item => item.id === form.templateId)
+    const template = visibleTemplates.value.find(item => item.id === form.templateId)
     return !!form.name.trim() && !!template && !template.disabled
   })
 
@@ -57,6 +65,7 @@ export const useApplicationCreate = (options: ApplicationCreateOptions) => {
 
   /** 每次打开弹窗时重置草稿和校验结果。 */
   const resetForm = async () => {
+    applicationKind.value = 'business'
     form.name = ''
     form.description = ''
     form.templateId = ''
@@ -115,6 +124,8 @@ export const useApplicationCreate = (options: ApplicationCreateOptions) => {
 
   return {
     store,
+    applicationKind,
+    visibleTemplates,
     formRef,
     submitting,
     templatesLoading,

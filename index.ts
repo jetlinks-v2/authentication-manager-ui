@@ -3,6 +3,7 @@ import i18n from "@jetlinks-web-core/locales";
 const routerModules = import.meta.glob('./views/**/index.vue')
 import { getModuleRoutesMap } from '@jetlinks-web/utils'
 import { moduleRegistry } from '@jetlinks-web-core/utils/module-registry'
+import type { MenuFilterDefinition, MenuItem } from '@jetlinks-web-core/types/module'
 import registerSetting from './register'
 import { name } from './package.json'
 import './views/system/list-page.less'
@@ -86,6 +87,22 @@ const getExtraRoutesMap = () => {
         name: i18n.global.t('ProjectApplication.route.detail')
       }
     ],
+    'application-center/ThirdPartyApplication': [
+      {
+        code: 'Detail',
+        url: '/Detail/:id',
+        name: i18n.global.t('ThirdPartyApplication.detail'),
+        component: () => import('./views/application-center/ThirdPartyApplication/Detail/index.vue')
+      }
+    ],
+    'application-center/ApiGroup': [
+      {
+        code: 'Save',
+        url: '/Save',
+        name: i18n.global.t('ApiGroupManagement.route.save'),
+        component: () => import('./views/application-center/ApiGroup/Save/index.vue')
+      }
+    ],
     'application-center/Template': [
       {
         code: 'Save',
@@ -95,6 +112,20 @@ const getExtraRoutesMap = () => {
     ]
   }
 }
+
+// 只统一本模块入口的显示名称，不改服务端菜单的归属、路由、按钮或权限。
+const getMenuFilters = (): MenuFilterDefinition[] => [{
+  code: 'third-party-subscription-title',
+  filter: (menus) => {
+    const title = i18n.global.t('ThirdPartyApplication.title')
+    const renameMenu = (items: MenuItem[]): MenuItem[] => items.map(item => ({
+      ...item,
+      ...(item.code === 'application-center/ThirdPartyApplication' ? { name: title, i18nName: title } : {}),
+      ...(item.children ? { children: renameMenu(item.children) } : {}),
+    }))
+    return renameMenu(menus)
+  },
+}]
 
 const getComponents = () => ({})
 
@@ -116,6 +147,7 @@ const getContentPanelOverrides = () => ({
 export default {
   getAsyncRoutesMap: () => getModuleRoutesMap(routerModules),
   getExtraRoutesMap,
+  getMenuFilters,
   getComponents,
   getContentPanelOverrides,
   getRegisterComponents,
