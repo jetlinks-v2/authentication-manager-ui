@@ -1,5 +1,19 @@
 # 资源中心仪表盘组件
 
+## BUG-41641：算法覆盖统计范围（已实施，本地定向验证通过）
+
+目标与范围：仅调整 `authentication-manager-ui` 资源中心算法卡的取数与刷新。复现环境的全部视频通道为 15 路，设备算法配置支持的网关通道为 12 路，已覆盖 1 路；未配置应为 11 路。视频卡继续统计全部视频通道。
+
+统计规则与实现：
+
+1. `visDashboard/ResourceCenter/services/metrics.ts` 通过现有 `POST /media/channel/_query/no-paging` 查询 `provider = agent-media-device-gateway`，与设备算法配置范围一致，按 `(deviceId, channelId)` 去重。
+2. 继续使用 `GET /ai/edge/task/coverage/scene/_count` 的去重覆盖数，计算“网关通道总数 − 已覆盖通道数”；各算法的通道数存在交集，不相加。任一统计查询失败进入已有错误态，不回退为零。
+3. `hooks/useResourceWidget.ts` 将算法卡接入现有独立刷新流程，保留预览隔离、迟到响应废弃和卸载清理；`hooks/videoSummaryContext.ts` 仅服务视频卡。
+
+验证结果：`node modules/authentication-manager-ui/scripts/verify-resource-dashboard.cjs` 通过，覆盖 12 路网关加 3 路 GB28181、跨设备同通道 ID、重复通道记录、同通道多个算法、零数据、全部覆盖、三项接口失败及重试；实际 Hook 验证算法卡独立加载、视频卡总数仍为 15、迟到响应废弃、预览隔离和作用域销毁。`node --test modules/authentication-manager-ui/tests/algorithmCoverageEndpoint.test.mjs` 2/2 通过，覆盖既有边缘覆盖接口与数量解析。测试使用隔离响应，effectScope 执行组件生命周期 API 产生 Vue 警告，未验证 KeepAlive 的真实激活/停用。
+
+验证与发布边界：按本机性能约束未运行全量 lint/typecheck/build；模块与工作区未配置 lint 脚本。完整类型检查和生产构建待执行 `pnpm -C runtime-ui exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json`、`pnpm -C runtime-ui build:standalone`。9000 环境尚未更新前端，发布后的真实页面待复验。本次不修改后端接口、业务数据、页面布局或其他前端模块；需要发布 runtime-ui 静态资源，无后端服务重启要求。代码未提交或推送。
+
 ## BUG-41667：私有化可选模块与自动布局（已实施、本地复验通过）
 
 目标：依据当前私有化部署的可用模块和账号权限，展示数据采集、物联网卡及对应快捷入口；任意组件被条件过滤后，由同行其余卡片补齐可用空间。任务级别 M，沿用已确认的画布方案。
@@ -131,7 +145,7 @@ const { catalog, dashboard, loading, errors } = useResourceDashboard(preview)
 | 数据采集 | channel/collector `_count`；异常为 runningState != running | 当前 SaaS 代理四个请求均 404，运行态已隐藏；需私有化环境继续实测 |
 | 物联网卡 | `/dashboard/_multi`，flow/networkCardFlow/trend 与 rank；MB 展示时转换；排行为本月 | 两个请求 200，暂无流量记录；非空映射和排序通过隔离数据测试 |
 | 设备分布 | 区域树使用 `/space/_query/tree`；边缘节点和物联设备复用设备列表的 `/device/group/device/_summary/_batch` 聚合；视频设备保留空间绑定明细统计 | localhost 边缘节点总数 6；视频设备沿用原绑定口径 |
-| 算法覆盖统计 | `GET /ai/edge/task/coverage/scene/_counts` 与 `_count`；展示各算法通道数，并计算未配置通道 | 后端待部署，已完成前端契约对接与容错 |
+| 算法覆盖统计 | `GET /ai/edge/task/coverage/scene/_counts` 与 `_count`；`POST /media/channel/_query/no-paging` 按网关 provider 查询并去重，减去覆盖数得到未配置通道 | BUG-41641 已完成定向验证；9000 环境待发布前端后复验 |
 | 快速开始 | 通过当前 menu store 的叶子菜单编码导航 | 边缘网关、物联设备、视频设备、大屏页面均实测跳转；私有化入口待对应环境验收 |
 
 边缘节点和物联设备分布与设备列表区域侧栏使用同一口径：展示一级区域，每个一级区域包含自身和全部子区域，并追加未绑定区域；产品范围与对应数量卡一致。视频设备保留原有直属空间绑定统计，在同一空间内按边缘节点、设备和通道组合去重；同一通道绑定多个空间时仍分别计入对应空间。展示超限合并为其他。
@@ -197,7 +211,7 @@ const { catalog, dashboard, loading, errors } = useResourceDashboard(preview)
      - 右栏（宽 6 列，x=6）：设备上报消息趋势（y=4, h=6，与快速开始同高）、视频播放趋势（y=10, h=16，贯穿右侧下半部）。
      - 双栏底边完美对齐于 y=26。
 3. **接口口径与待解决问题**：
-   - 算法覆盖统计按最新后端契约对接 `GET /ai/edge/task/coverage/scene/_counts` 与 `_count`：提取场景与算法名称、通道数，结合视频设备总数动态展示未配置通道；视频播放趋势目前仍等待对应接口。
+   - 算法覆盖统计使用 `GET /ai/edge/task/coverage/scene/_counts` 与 `_count`：提取场景与算法名称、通道数，按设备算法配置范围内的网关通道去重总数减去覆盖数，展示未配置通道（见 BUG-41641）；视频播放趋势后续已由网关状态指标替代。
 4. **验证结果**：
    - `node modules/authentication-manager-ui/scripts/verify-overview-components.cjs` 通过（50 个 Vue SFC，0 错误）。
    - `node modules/authentication-manager-ui/scripts/verify-resource-dashboard.cjs` 通过（全项断言与新增组件验证通过）。

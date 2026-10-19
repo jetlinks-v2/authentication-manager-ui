@@ -43,18 +43,24 @@ export function loadCollection() {
     collector: () => count('collector'), collectorError: () => count('collector', true) })
 }
 
-/** 算法覆盖统计按场景查询：GET /ai/edge/task/coverage/scene/_counts */
-export async function loadAlgorithmCoverage(videoTotal = 0): Promise<AlgorithmCoverageItem[]> {
-  const [countsSettled, countSettled] = await Promise.allSettled([
+/** 算法卡与设备算法配置使用同一网关通道范围，查询失败时不生成未配置数量。 */
+export async function loadAlgorithmCoverage(): Promise<AlgorithmCoverageItem[]> {
+  const [countsResponse, coveredCount, channelsResponse] = await Promise.all([
     request.get('/ai/edge/task/coverage/scene/_counts', {}, { hiddenError: true }),
     loadCoverageChannelCount(),
+    request.post('/media/channel/_query/no-paging', {
+      paging: false,
+      terms: [{ column: 'provider', termType: 'eq', value: 'agent-media-device-gateway' }],
+    }, { hiddenError: true }),
   ])
 
-  if (countsSettled.status === 'rejected') {
-    throw countsSettled.reason
-  }
+  const channels = new Set(rowsOf(channelsResponse).map(row => {
+    const deviceId = textOf(row.deviceId), channelId = textOf(row.channelId)
+    if (!deviceId || !channelId) throw new Error('Incomplete algorithm channel')
+    return JSON.stringify([deviceId, channelId])
+  }))
 
-  const rows = rowsOf(countsSettled.value)
+  const rows = rowsOf(countsResponse)
   const items: AlgorithmCoverageItem[] = rows.map((row, index) => {
     const sceneId = textOf(row.sceneId)
     const sceneName = textOf(row.sceneName)
@@ -93,20 +99,16 @@ export async function loadAlgorithmCoverage(videoTotal = 0): Promise<AlgorithmCo
     }
   })
 
-  if (videoTotal > 0) {
-    // 分算法数量存在通道交集，不能以最大值或求和替代去重覆盖总数。
-    if (countSettled.status === 'rejected') throw countSettled.reason
-    const coveredCount = countSettled.value
-    const unconfiguredCount = Math.max(0, videoTotal - coveredCount)
-    if (unconfiguredCount > 0) {
-      items.push({
-        id: 'unconfigured',
-        name: i18n.global.t('resourceDashboard.algorithm.unconfigured'),
-        title: i18n.global.t('resourceDashboard.algorithm.unconfigured'),
-        value: unconfiguredCount,
-        unconfigured: true,
-      })
-    }
+  // 分算法数量存在通道交集，不能以最大值或求和替代去重覆盖总数。
+  const unconfiguredCount = Math.max(0, channels.size - coveredCount)
+  if (unconfiguredCount > 0) {
+    items.push({
+      id: 'unconfigured',
+      name: i18n.global.t('resourceDashboard.algorithm.unconfigured'),
+      title: i18n.global.t('resourceDashboard.algorithm.unconfigured'),
+      value: unconfiguredCount,
+      unconfigured: true,
+    })
   }
 
   return items
