@@ -1,11 +1,12 @@
 <template>
     <j-page-container>
         <FullPage transparentBackground :fixed="false">
-            
+
                 <EqualHeightColumns
                     class="save-layout"
                     left-width="1fr"
                     right-width="18.75rem"
+                    :collapsible="false"
                 >
                     <template #left>
                         <div class="save-layout__form">
@@ -18,7 +19,7 @@
                         <Does :type="rightType" />
                     </template>
                 </EqualHeightColumns>
-            
+
         </FullPage>
     </j-page-container>
 </template>
