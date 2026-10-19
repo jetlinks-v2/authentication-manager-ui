@@ -34,6 +34,16 @@
     </div>
 
     <div class="summary-actions">
+      <j-permission-button
+        v-if="data.application.provider === 'third-party'"
+        hasPermission="application-center/ProjectApplication:update"
+        :disabled="deleting || syncingCredential"
+        :loading="syncingCredential"
+        @click="emits('sync-credential')"
+      >
+        <template #icon><AIcon type="SyncOutlined" /></template>
+        {{ $t('ProjectApplication.detail.syncCredential') }}
+      </j-permission-button>
       <div v-if="showSettingsActions" class="summary-settings-actions">
         <a-space v-if="settingsEditing">
           <a-button :disabled="settingsSaving || deleting" @click="emits('cancel-settings')">
@@ -93,6 +103,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  syncingCredential: {
+    type: Boolean,
+    default: false,
+  },
   settingsEditing: {
     type: Boolean,
     default: false,
@@ -119,6 +133,7 @@ const emits = defineEmits<{
   'toggle-status': []
   'save-settings': []
   open: []
+  'sync-credential': []
 }>()
 const { t: $t } = useI18n()
 

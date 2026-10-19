@@ -65,7 +65,7 @@
           <div class="setting-value">{{ template.redirectUri || '--' }}</div>
         </div>
 
-        <div class="setting-row">
+        <div v-if="template.provider !== 'third-party'" class="setting-row">
           <div class="setting-label">{{ $t('ProjectApplication.settings.language') }}</div>
           <a-select
             v-if="editingModel"
@@ -202,7 +202,7 @@ const saveSettings = async () => {
     icon: draft.icon,
     name: draft.name.trim(),
     description: draft.description.trim(),
-    defaultLanguage: draft.defaultLanguage,
+    ...(template.value.provider !== 'third-party' ? { defaultLanguage: draft.defaultLanguage } : {}),
   })
 }
 

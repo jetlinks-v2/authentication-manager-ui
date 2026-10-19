@@ -1,4 +1,5 @@
 import { computed, ref } from 'vue'
+import { newBusinessApplicationGrants } from './groupGrantUtils'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n'
 import {
@@ -47,20 +48,7 @@ export const makeApiApplication = (form: ApiApplicationForm, groups: ApiGroup[])
   const secureKey = randomKey(32)
   const grants = groups
     .filter(group => enumValue(group.status) !== 'disabled')
-    .map(group => ({
-      targetType: 'api-client',
-      targetId: id,
-      groupId: group.id,
-      operationIds: (group.operations || []).map(operation => operation.id),
-      ...(group.accessSupport && enumValue(group.accessSupport) === 'support'
-        ? {
-            assetAccesses: {
-              assetType: group.assetType || 'device',
-              accesses: [{ supportId: 'business_application' }],
-            },
-          }
-        : {}),
-    }))
+    .flatMap(group => newBusinessApplicationGrants(group, id, (group.operations || []).map(operation => operation.id)))
 
   return {
     application: {
