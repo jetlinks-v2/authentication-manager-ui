@@ -1606,6 +1606,7 @@
   "ApplicationTemplate.parameters.name": "参数名",
   "ApplicationTemplate.parameters.provider": "值来源",
   "ApplicationTemplate.parameters.redirectUri": "跳转地址",
+  "ProjectApplication.settings.redirectUriHint": "留空使用模板默认跳转地址，填写后仅对当前应用生效。",
   "ApplicationTemplate.parameters.platformId": "平台标识",
   "ApplicationTemplate.parameters.platformIdPlaceholder": "留空使用模板 ID；不同区域有相同应用 ID 时请分别配置",
   "ApplicationTemplate.parameters.platformIdTip": "平台标识用于识别通知来源，已有应用后不可更改；填写或清空与模板 ID 等价的值不受影响。",

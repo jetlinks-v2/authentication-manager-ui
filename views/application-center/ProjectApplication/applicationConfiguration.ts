@@ -3,13 +3,13 @@ import type { ApplicationTemplate, ProjectApplication } from './types'
 type ApplicationConfiguration = Record<string, unknown>
 type ApplicationConfigurationFields = Pick<
   ProjectApplication,
-  'defaultLanguage' | 'timezone' | 'domain'
+  'defaultLanguage' | 'timezone' | 'domain' | 'provider' | 'redirectUri'
 >
 
 export const normalizeExternalApplicationUrl = (value: unknown) =>
   typeof value === 'string' ? value.trim() : ''
 
-/** 应用实例只保存运行时设置，第三方跳转地址始终从模板读取。 */
+/** 初始配置不复制模板跳转地址，实例覆盖值仅在编辑时保存。 */
 export const buildInitialApplicationConfiguration = (template?: ApplicationTemplate) => {
   return {
     layoutVariant: template?.layoutVariant || 'application',
@@ -25,7 +25,8 @@ export const isHttpExternalApplicationUrl = (value: unknown): value is string =>
   const url = normalizeExternalApplicationUrl(value)
   if (!/^https?:\/\//i.test(url)) return false
   try {
-    return ['http:', 'https:'].includes(new URL(url).protocol)
+    const address = new URL(url)
+    return ['http:', 'https:'].includes(address.protocol) && !!address.hostname && !address.username && !address.password
   } catch {
     return false
   }
@@ -36,6 +37,9 @@ export const buildApplicationConfiguration = (
   current: ApplicationConfiguration | undefined,
   application: ApplicationConfigurationFields,
 ) => {
+  if (application.provider === 'third-party') {
+    return { ...current, redirectUri: normalizeExternalApplicationUrl(application.redirectUri) }
+  }
   return {
     ...current,
     defaultLanguage: application.defaultLanguage,

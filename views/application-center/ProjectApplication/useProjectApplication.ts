@@ -167,8 +167,9 @@ export const useProjectApplication = () => {
       icon: next.icon,
       description: next.description,
       state: next.status,
-      // 第三方跳转和通知由模板管理，实例基本信息与启停不重写配置。
-      ...(latest.provider === 'third-party' ? {} : { configuration: buildApplicationConfiguration(raw.configuration, next) }),
+      // 第三方只有显式编辑跳转地址时才更新配置，基本信息与启停保留最新事实。
+      ...(latest.provider !== 'third-party' || patch.redirectUri !== undefined
+        ? { configuration: buildApplicationConfiguration(raw.configuration, next) } : {}),
     })
     return loadApplication(id)
   }

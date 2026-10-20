@@ -62,7 +62,10 @@
 
         <div v-if="template.provider === 'third-party'" class="setting-row">
           <div class="setting-label">{{ $t('ApplicationTemplate.parameters.redirectUri') }}</div>
-          <div class="setting-value">{{ template.redirectUri || '--' }}</div>
+          <a-form-item v-if="editingModel" class="setting-form-item" name="redirectUri" :extra="$t('ProjectApplication.settings.redirectUriHint')">
+            <a-input v-model:value="draft.redirectUri" class="setting-control" allow-clear :placeholder="$t('ApplicationTemplate.parameters.redirectUriPlaceholder')" />
+          </a-form-item>
+          <div v-else class="setting-value">{{ application.redirectUri || template.redirectUri || '--' }}</div>
         </div>
 
         <div v-if="template.provider !== 'third-party'" class="setting-row">
@@ -100,6 +103,7 @@ import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { createApplicationAccessDisplayUrl } from '@jetlinks-web-core/utils/application-access'
 import type { ApplicationTemplate, ProjectApplication } from '../../types'
+import { isHttpExternalApplicationUrl } from '../../applicationConfiguration'
 
 interface SettingsData {
   application: ProjectApplication
@@ -111,6 +115,7 @@ interface SettingsDraft {
   name: string
   description: string
   defaultLanguage: string
+  redirectUri: string
 }
 
 const props = defineProps({
@@ -130,6 +135,7 @@ const draft = reactive<SettingsDraft>({
   name: '',
   description: '',
   defaultLanguage: 'zh-CN',
+  redirectUri: '',
 })
 const iconTypes = ['image/jpeg', 'image/png']
 const iconUploadBorderStyle = {
@@ -163,11 +169,17 @@ const domainDisplayValue = computed(() => template.value.provider === 'third-par
   ? `${window.location.origin}/${encodeURIComponent(application.value.id)}/`
   : application.value.domain || fallbackDomainUrl.value)
 const visibleIcon = computed(() => application.value.icon || template.value.icon)
+const redirectUri = computed(() => application.value.redirectUri || template.value.redirectUri || '')
 const rules = computed(() => ({
   name: [
     { required: true, message: $t('ProjectApplication.create.nameRequired') },
     { max: 30, message: $t('ProjectApplication.create.nameLength') },
   ],
+  redirectUri: [{ validator: async (_rule: unknown, value: string) => {
+    if (value?.trim() && !isHttpExternalApplicationUrl(value)) {
+      throw new Error($t('ApplicationTemplate.parameters.redirectUriInvalid'))
+    }
+  }, trigger: 'blur' as const }],
 }))
 
 const resetDraft = () => {
@@ -175,6 +187,7 @@ const resetDraft = () => {
   draft.name = application.value.name
   draft.description = application.value.description || template.value.description
   draft.defaultLanguage = application.value.defaultLanguage
+  draft.redirectUri = redirectUri.value
   formRef.value?.clearValidate()
 }
 
@@ -203,6 +216,9 @@ const saveSettings = async () => {
     name: draft.name.trim(),
     description: draft.description.trim(),
     ...(template.value.provider !== 'third-party' ? { defaultLanguage: draft.defaultLanguage } : {}),
+    // 未改地址时保留继承关系，避免将模板默认值固化为实例覆盖。
+    ...(template.value.provider === 'third-party' && draft.redirectUri.trim() !== redirectUri.value
+      ? { redirectUri: draft.redirectUri.trim() } : {}),
   })
 }
 

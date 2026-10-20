@@ -415,9 +415,18 @@ Verification result:
 
 ### 应用管理类型分流与第三方标准接入
 
+第三方应用创建时直接继承模板跳转地址；仅在详情“编辑”中提供可选跳转地址，保存到 `configuration.redirectUri`，留空继承模板，不复制模板默认值。
+编辑输入框直接回显当前生效地址（实例优先，否则模板）；未修改地址时保存不写入实例覆盖值，清空后保存恢复继承。
+前端负责回显和 HTTP/HTTPS 校验；authentication-manager 后端统一解析实例优先、模板回退，并保持跳转、授权码及 OAuth 回调绑定一致。
+实例编辑保留其他配置，基本信息与启停操作不覆盖实例地址；不修改训练平台。
+
+第三方打开接口的请求配置：`getBusinessApplicationRedirect` 将 `applicationScope: false`、`tenantDomain: false`
+放在 `request.get` 的第三个参数，仅该身份授权请求不继承来源页面的应用、租户选择，保留原项目登录凭证。
+后端仍校验目标应用启用状态、最新成员关系及 Token 固有权限限制。第二个参数是查询参数，误放会形成
+`_redirect?applicationScope=false`，不能关闭范围；仅关闭应用范围时，项目页面附带的租户范围仍会令签发 Code 返回 403。
 应用管理使用同一创建入口，通过模板 provider 区分普通业务应用与第三方应用，不新增后端应用类型或无模板创建接口。实际前端模块为 runtime-ui/modules/authentication-manager-ui；开放平台 API 应用仍使用独立 /api-application 模型。
 
-- 创建第三方实例时仅选择 provider=third-party 的模板及填写基本信息，不配置出站 OAuth2、通知 Token 或实例 callback。
+- 创建第三方实例时选择 provider=third-party 的模板、填写基本信息，跳转地址直接继承模板；创建后可在详情“编辑”中单独修改。
 - 模板配置复用 redirectUri、externalParameters 和 notification.address/keyId/publicKey。平台生成 Code 并拼接跳转参数；第三方通过平台现有 /oauth2/token 和 /authorize/context 获取委托身份。
 - notification 的 RSA keyId/publicKey 仅用于应用凭据加密交付；HMAC keyId/Secret 由现有平台／模板密钥按独立通知用途派生。页面只保留 `/notification-signature` 状态查询与 `/_reveal` 受控查看，删除生成／重置及保存前置校验；平台／模板版本变化后重新交付，实例访问凭据轮换不改变模板通知签名。
 - 实例详情保留基本信息、用户和角色。第三方角色只维护基本资料及成员关联，不加载菜单授权区域；普通业务应用的菜单权限编辑保持原行为。
