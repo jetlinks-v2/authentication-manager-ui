@@ -10,7 +10,7 @@
   <div v-else class="flow-panel">
   <div class="flow-metrics"><div v-for="item in data.metrics" :key="item.key" :class="{ primary: item.key === 'month' }"><span>{{ t(`resourceDashboard.${item.key}`) }}</span><strong>{{ item.failed ? '—' : formatFlow(item.value).value }} <small v-if="!item.failed">{{ formatFlow(item.value).unit }}</small></strong></div></div>
   <h4 :title="t('resourceDashboard.thisMonth')">{{ t('resourceDashboard.ranking') }}</h4>
-  <a-empty v-if="data.rankingFailed || !data.ranking.length" :description="t(data.rankingFailed ? 'resourceDashboard.loadError' : 'resourceDashboard.noFlow')" />
+  <CloudEmpty v-if="data.rankingFailed || !data.ranking.length" :description="t(data.rankingFailed ? 'resourceDashboard.loadError' : 'resourceDashboard.noFlow')" />
   <ol v-else>
     <li v-for="(item,index) in data.ranking.slice(0,limit)" :key="item.id">
       <span class="rank" :class="`rank-${index + 1}`">{{ index + 1 }}</span>
@@ -23,6 +23,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import { useI18n } from 'vue-i18n'
 import { computed } from 'vue'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'

@@ -4,10 +4,11 @@
   </HomeWidget>
   <a-modal :open="!!selected" :title="selected?.label" :footer="null" :width="754" @cancel="selected = undefined" destroy-on-close>
     <component v-if="selected && detailComponent" :is="detailComponent" :data="selected.notification" />
-    <a-empty v-else :description="$t('Announcement.notification.unavailable')" />
+    <CloudEmpty v-else :description="$t('Announcement.notification.unavailable')" />
   </a-modal>
 </template>
 <script setup lang="ts">
+import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import { ref, type Component } from 'vue'
 import { moduleRegistry } from '@jetlinks-web-core/utils/module-registry'
 import HomeWidget from '../shared/HomeWidget.vue'

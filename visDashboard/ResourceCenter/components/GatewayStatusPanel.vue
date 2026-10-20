@@ -73,7 +73,6 @@ header :deep(.ant-segmented-item-selected) { color: #1677ff; box-shadow: 0 1px 3
 .state { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
 .state :deep(.resource-empty) { height: auto; }
 .gateway-empty { flex: 1; }
-.gateway-empty :deep(.empty-icon) { color: #c3c9d2; }
 .gateway-empty :deep(.empty-title) { color: #606b7a; font-weight: 400; }
 .gateway-empty :deep(.empty-desc) { color: #8693a5; }
 .panels { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(220px, 2fr) minmax(0, 3fr); gap: 20px; padding-top: 8px; }

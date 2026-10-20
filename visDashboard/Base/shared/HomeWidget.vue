@@ -10,12 +10,12 @@
       </slot>
     </template>
     <div v-if="loading && !rows.length" class="home-state"><a-spin /></div>
-    <div v-else-if="error" class="home-state"><a-empty :description="t('packages.ProjectHome.loadError')"><a-button @click="retry">{{ t('packages.ProjectHome.alarmRetry') }}</a-button></a-empty></div>
+    <div v-else-if="error" class="home-state"><CloudEmpty :description="t('packages.ProjectHome.loadError')"><a-button @click="retry">{{ t('packages.ProjectHome.alarmRetry') }}</a-button></CloudEmpty></div>
     <slot v-else-if="!rows.length" name="empty" :can-open="canOpen" :open="open">
       <div class="home-state">
-        <a-empty :description="emptyDescription">
+        <CloudEmpty :description="emptyDescription">
           <a-button v-if="!hideMore && moreTarget && canOpen(moreTarget)" size="small" @click="open(moreTarget)">{{ moreText }}</a-button>
-        </a-empty>
+        </CloudEmpty>
       </div>
     </slot>
     <template v-else>
@@ -27,6 +27,7 @@
   </a-card>
 </template>
 <script setup lang="ts">
+import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import { computed } from 'vue'
 import { theme } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'

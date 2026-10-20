@@ -1,19 +1,19 @@
 <template>
-  <div class="resource-empty">
-    <div class="empty-icon">
-      <slot name="icon">
-        <AIcon v-if="icon" :type="icon" />
-      </slot>
-    </div>
-    <div class="empty-title">{{ title }}</div>
-    <div v-if="description" class="empty-desc">{{ description }}</div>
+  <CloudEmpty class="resource-empty">
+    <template #description>
+      <div class="empty-title">{{ title }}</div>
+      <div v-if="description" class="empty-desc">{{ description }}</div>
+    </template>
     <a-button v-if="actionText" type="primary" class="empty-action" @click="$emit('action')">
       {{ actionText }}
     </a-button>
-  </div>
+  </CloudEmpty>
 </template>
 
 <script setup lang="ts">
+import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
+
+// 保留既有空态的文案与动作契约，插图统一交由平台 CloudEmpty 渲染。
 defineProps<{
   icon?: string
   title: string
@@ -39,15 +39,7 @@ defineEmits<{
   box-sizing: border-box;
 }
 
-.empty-icon {
-  font-size: 36px;
-  line-height: 1;
-  color: #8c8c8c;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+.resource-empty :deep(.ant-empty) { margin: 0; }
 
 .empty-title {
   font-size: 14px;
@@ -62,7 +54,7 @@ defineEmits<{
   line-height: 18px;
   color: #8c8c8c;
   max-width: 280px;
-  margin-bottom: 16px;
+  margin-inline: auto;
 }
 
 .empty-action {
