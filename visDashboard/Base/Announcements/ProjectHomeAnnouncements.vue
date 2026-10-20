@@ -4,7 +4,7 @@
   </HomeWidget>
   <a-modal :open="!!selected" :title="selected?.label" :footer="null" :width="754" @cancel="selected = undefined" destroy-on-close>
     <component v-if="selected && detailComponent" :is="detailComponent" :data="selected.notification" />
-    <a-empty v-else :description="$t('Announcement.notification.unavailable')" />
+    <CloudEmpty v-else :description="$t('Announcement.notification.unavailable')" />
   </a-modal>
 </template>
 <script setup lang="ts">

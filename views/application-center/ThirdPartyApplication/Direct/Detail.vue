@@ -39,7 +39,7 @@
           </div>
           <SubscriptionPanel v-else-if="activeTab === 'subscriptions'" :key="application.id" :application="application" />
         </div>
-        <a-empty v-else-if="!loading" :description="$t('ThirdPartyApplication.direct.notFound')"><a-button @click="load">{{ $t('ThirdPartyApplication.project.refresh') }}</a-button></a-empty>
+        <CloudEmpty v-else-if="!loading" :description="$t('ThirdPartyApplication.direct.notFound')"><a-button @click="load">{{ $t('ThirdPartyApplication.project.refresh') }}</a-button></CloudEmpty>
       </a-spin>
     </div>
   </j-page-container>

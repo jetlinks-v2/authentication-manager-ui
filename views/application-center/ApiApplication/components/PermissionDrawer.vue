@@ -13,7 +13,7 @@
       :message="$t('ApiApplication.permission.description')"
     />
     <a-spin :spinning="loading">
-      <a-empty v-if="!groups.length" :description="$t('ApiApplication.permission.empty')" />
+      <CloudEmpty v-if="!groups.length" :description="$t('ApiApplication.permission.empty')" />
       <a-collapse v-else v-model:active-key="activeKeys" accordion>
         <a-collapse-panel v-for="group in groups" :key="group.id">
           <template #header>

@@ -9,7 +9,7 @@
           <span>{{ t('packages.ProjectHome.loadError') }}</span>
           <a-button size="small" @click="load()">{{ t('packages.ProjectHome.alarmRetry') }}</a-button>
         </div>
-        <a-empty v-else-if="!rows.length" :description="t('packages.ProjectHome.alarmEmpty')" />
+        <CloudEmpty v-else-if="!rows.length" :description="t('packages.ProjectHome.alarmEmpty')" />
         <template v-else>
           <button v-for="item in rows" :key="item.id" class="alarm-list-row" @click="select(item)">
             <span class="alarm-list-time">{{ item.shortTime }}</span>

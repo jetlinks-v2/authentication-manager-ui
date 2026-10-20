@@ -66,7 +66,7 @@ test('the actual Ant Design form submits current log filters without a form mode
   const app = renderer.createApp(api.Panel, { embedded: true })
   app.component('a-form', api.Form)
   // 只替换展示控件；表单的 submit/finish 分发保留真实组件实现。
-  for (const name of ['a-form-item', 'a-select', 'a-input-number', 'a-input', 'a-button', 'a-tooltip', 'a-space', 'a-spin', 'a-empty', 'a-alert', 'a-tag', 'j-permission-button', 'AIcon']) {
+  for (const name of ['a-form-item', 'a-select', 'a-input-number', 'a-input', 'a-button', 'a-tooltip', 'a-space', 'a-spin', 'CloudEmpty', 'a-alert', 'a-tag', 'j-permission-button', 'AIcon']) {
     app.component(name, { setup: (_, { attrs, slots }) => () => api.h(name, attrs, slots.default?.()) })
   }
   app.config.globalProperties.$t = key => key

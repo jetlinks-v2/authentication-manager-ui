@@ -8,9 +8,9 @@
         {{ t('resourceDashboard.algorithmConfig') }} <RightOutlined class="action-arrow" />
       </a-button>
     </header>
-    <div v-if="unavailable" class="state"><a-empty :description="t('resourceDashboard.privateOnly')" /></div>
+    <div v-if="unavailable" class="state"><CloudEmpty :description="t('resourceDashboard.privateOnly')" /></div>
     <div v-else-if="loading" class="state"><a-spin /></div>
-    <div v-else-if="error" class="state"><a-empty :description="t('resourceDashboard.loadError')" /><a-button size="small" @click="refresh">{{ t('resourceDashboard.retry') }}</a-button></div>
+    <div v-else-if="error" class="state"><CloudEmpty :description="t('resourceDashboard.loadError')" /><a-button size="small" @click="refresh">{{ t('resourceDashboard.retry') }}</a-button></div>
     <div v-else class="content" :class="{ 'chart-content': ['DeviceDistribution','MessageTrend'].includes(kind) }">
       <QuickStartPanel v-if="kind === 'QuickStart'" :actions="actions" @open="open" />
       <AlgorithmCoveragePanel v-else-if="kind === 'AlgorithmCoverage'" :items="data.algorithms || []" />

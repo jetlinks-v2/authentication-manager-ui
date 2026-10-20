@@ -9,7 +9,7 @@
           :options="applications.map(app => ({ value: app.appId, label: app.name }))" />
       </a-form-item>
     </a-form>
-    <a-empty v-if="!applications.length" :description="$t('ThirdPartyApplication.project.noAvailableApplications')" />
+    <CloudEmpty v-if="!applications.length" :description="$t('ThirdPartyApplication.project.noAvailableApplications')" />
     <template v-if="profile">
       <a-alert type="info" show-icon :message="$t('ThirdPartyApplication.project.connectHint')" class="form-alert" />
       <AuthorizationFields :model-value="draft" :profile="profile" :disabled="saving" :runtime-ready="runtimeReady"

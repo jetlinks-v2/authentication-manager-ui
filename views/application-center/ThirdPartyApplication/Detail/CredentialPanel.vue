@@ -1,7 +1,7 @@
 <template>
   <a-spin :spinning="loading">
     <a-alert v-if="error" type="error" show-icon :message="$t('ThirdPartyApplication.credential.loadError')" />
-    <a-empty v-else-if="!providers.length" :description="$t('ThirdPartyApplication.credential.empty')" />
+    <CloudEmpty v-else-if="!providers.length" :description="$t('ThirdPartyApplication.credential.empty')" />
     <div v-for="provider in providers" :key="provider.type" class="credential-card">
       <div class="section-head">
         <div><h3>{{ provider.type }}</h3><p>{{ $t('ThirdPartyApplication.credential.description') }}</p></div>

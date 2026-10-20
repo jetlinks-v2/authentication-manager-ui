@@ -14,7 +14,7 @@
       </a-form-item>
       <div class="external-parameters__declared">
         <h3>{{ $t('ApplicationTemplate.parameters.listTitle') }}</h3>
-        <a-empty v-if="!state.parameters.value.length" :description="$t('ApplicationTemplate.parameters.empty')" />
+        <CloudEmpty v-if="!state.parameters.value.length" :description="$t('ApplicationTemplate.parameters.empty')" />
         <div v-for="(parameter, index) in state.parameters.value" :key="index" class="external-parameters__row">
           <a-input v-model:value="parameter.name" :placeholder="$t('ApplicationTemplate.parameters.name')" />
           <a-select
