@@ -36,7 +36,6 @@ export interface ProjectApplication {
   timezone: string
   domain: string
   provider?: string
-  redirectUri?: string
 }
 
 export interface ProjectApplicationDraft {

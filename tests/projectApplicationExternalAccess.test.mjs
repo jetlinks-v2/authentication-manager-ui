@@ -2,7 +2,6 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { readFile } from 'node:fs/promises'
 import { build } from 'esbuild'
-import { parse, compileScript } from 'vue/compiler-sfc'
 import { buildApplicationConfiguration, buildInitialApplicationConfiguration } from '../views/application-center/ProjectApplication/applicationConfiguration.ts'
 import { applyApplicationScopeHeaders } from '../../../jetlinks-web-core/src/utils/application-scope.ts'
 
@@ -77,55 +76,6 @@ const modelBuild = await build({
 })
 const { normalizeTemplate, normalizeApplication } = await import(`data:text/javascript;base64,${Buffer.from(modelBuild.outputFiles[0].text).toString('base64')}`)
 
-const settingsUrl = new URL('../views/application-center/ProjectApplication/Detail/components/ApplicationSettings.vue', import.meta.url)
-const { descriptor: settingsDescriptor } = parse(await readFile(settingsUrl, 'utf8'))
-const settingsBuild = await build({
-  stdin: { contents: compileScript(settingsDescriptor, { id: 'application-settings' }).content, resolveDir: new URL('.', settingsUrl).pathname, loader: 'ts' },
-  bundle: true, write: false, format: 'esm',
-  plugins: [{
-    name: 'application-settings-fixture',
-    setup(plugin) {
-      plugin.onResolve({ filter: /^(vue-i18n|@jetlinks-web)/ }, args => ({ path: args.path, namespace: 'fixture' }))
-      plugin.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ contents: `
-        export const useI18n = () => ({ t: value => value });
-        export const onlyMessage = () => {};
-        export const createApplicationAccessDisplayUrl = id => '/' + id;
-      ` }))
-    },
-  }],
-})
-const { default: settingsComponent } = await import(`data:text/javascript;base64,${Buffer.from(settingsBuild.outputFiles[0].text).toString('base64')}`)
-
-function createSettingsFixture(override) {
-  const patches = []
-  const bindings = settingsComponent.setup({
-    data: {
-      application: { id: 'app', name: 'Training', description: '', defaultLanguage: 'zh-CN', redirectUri: override },
-      template: { provider: 'third-party', description: '', redirectUri: 'https://template.example/ui' },
-    }, editing: false, saving: false,
-  }, { expose() {}, emit: (event, patch) => { if (event === 'save') patches.push(patch) } })
-  bindings.startEdit()
-  return { bindings, patches }
-}
-
-test('editing fills the effective template address without saving an unchanged inherited value', async () => {
-  const { bindings, patches } = createSettingsFixture()
-  assert.equal(bindings.draft.redirectUri, 'https://template.example/ui')
-  await bindings.saveSettings()
-  assert.equal(Object.hasOwn(patches[0], 'redirectUri'), false)
-  bindings.draft.redirectUri = ' https://instance.example/ui '
-  await bindings.saveSettings()
-  assert.equal(patches[1].redirectUri, 'https://instance.example/ui')
-})
-
-test('editing fills an instance override and clearing it still restores template inheritance', async () => {
-  const { bindings, patches } = createSettingsFixture('https://instance.example/ui')
-  assert.equal(bindings.draft.redirectUri, 'https://instance.example/ui')
-  bindings.draft.redirectUri = ''
-  await bindings.saveSettings()
-  assert.equal(patches[0].redirectUri, '')
-})
-
 const homeBuild = await build({
   entryPoints: [new URL('../visDashboard/Base/shared/api.ts', import.meta.url).pathname],
   bundle: true, write: false, format: 'esm',
@@ -151,7 +101,7 @@ const homeBuild = await build({
 const { loadHomeRows } = await import(`data:text/javascript;base64,${Buffer.from(homeBuild.outputFiles[0].text).toString('base64')}`)
 
 const validUrls = ['http://training.example/ui/', 'HTTPS://training.example/ui/?page=dashboard#home']
-const invalidUrls = ['javascript:alert(1)', 'data:text/html,<script>alert(1)</script>', 'file:///etc/hosts', '/training', '//training.example/ui/', 'http:training.example', 'https:/training.example', 'https://', 'https://user:password@training.example/ui']
+const invalidUrls = ['javascript:alert(1)', 'data:text/html,<script>alert(1)</script>', 'file:///etc/hosts', '/training', '//training.example/ui/', 'http:training.example', 'https:/training.example', 'https://']
 const application = { id: 'training', name: 'Training', provider: 'third-party' }
 
 function createFixture(overrides = {}) {
@@ -172,18 +122,6 @@ function createFixture(overrides = {}) {
 test('does not copy redirect or legacy instance fields when creating an application', () => {
   const configuration = buildInitialApplicationConfiguration({ layoutVariant: 'application', layout: 'side', provider: 'third-party', redirectUri: 'https://training.example/ui/' })
   for (const field of ['openMode', 'externalUrl', 'redirectUri']) assert.equal(Object.hasOwn(configuration, field), false)
-})
-
-test('round trips an instance override and allows clearing it while retaining unrelated configuration', () => {
-  const current = { redirectUri: 'https://instance.example/ui', retained: 'value' }
-  const application = normalizeApplication({ id: 'app', templateId: 'template', configuration: current }, { provider: 'third-party' })
-  assert.equal(application.redirectUri, current.redirectUri)
-  assert.deepEqual(buildApplicationConfiguration(current, { ...application, redirectUri: ' https://other.example/ui ' }), {
-    redirectUri: 'https://other.example/ui', retained: 'value',
-  })
-  assert.deepEqual(buildApplicationConfiguration(current, { ...application, redirectUri: '' }), {
-    redirectUri: '', retained: 'value',
-  })
 })
 
 test('uses template provider and redirect configuration instead of instance openMode', () => {

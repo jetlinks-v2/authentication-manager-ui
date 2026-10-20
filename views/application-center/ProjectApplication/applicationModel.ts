@@ -82,7 +82,6 @@ export const normalizeApplication = (entity: BusinessApplicationEntity, template
     timezone: String(entity.configuration?.timezone || 'Asia/Shanghai'),
     domain: String(entity.configuration?.customDomain || ''),
     provider: template?.provider,
-    redirectUri: textOf(entity.configuration?.redirectUri).trim(),
   }
 }
 

@@ -1606,7 +1606,6 @@
   "ApplicationTemplate.parameters.name": "Parameter Name",
   "ApplicationTemplate.parameters.provider": "Value Source",
   "ApplicationTemplate.parameters.redirectUri": "Redirect URL",
-  "ProjectApplication.settings.redirectUriHint": "Leave blank to use the template default. A custom URL applies only to this application.",
   "ApplicationTemplate.parameters.platformId": "Platform ID",
   "ApplicationTemplate.parameters.platformIdPlaceholder": "Defaults to template ID; use different values if regions share application IDs",
   "ApplicationTemplate.parameters.platformIdTip": "Identifies the notification source. It cannot change once applications exist; values equivalent to the default template ID remain editable.",
