@@ -30,7 +30,7 @@
               <a-button type="link" danger @click="openAction(record, 'removed')">{{ $t('ThirdPartyApplication.project.action.removed') }}</a-button>
             </a-space>
           </template>
-          <template #emptyText><a-empty :description="$t(error ? 'ThirdPartyApplication.project.listUnavailable' : 'ThirdPartyApplication.project.empty')" /></template>
+          <template #emptyText><CloudEmpty :description="$t(error ? 'ThirdPartyApplication.project.listUnavailable' : 'ThirdPartyApplication.project.empty')" /></template>
         </a-table>
       </template>
     </div>

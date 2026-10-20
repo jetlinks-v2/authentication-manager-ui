@@ -3,7 +3,7 @@
     <div class="vision-alarm-snapshot">
       <a-image v-if="alarm.imageUrl && !imageFailed" :src="alarm.imageUrl" :alt="alarm.title"
         :preview="false" width="100%" height="100%" @error="imageFailed = true" />
-      <a-empty v-else :description="t(imageFailed ? 'packages.ProjectHome.alarmSnapshotError' : 'packages.ProjectHome.alarmNoSnapshot')" />
+      <CloudEmpty v-else :description="t(imageFailed ? 'packages.ProjectHome.alarmSnapshotError' : 'packages.ProjectHome.alarmNoSnapshot')" />
     </div>
     <a-alert :message="alarm.recognition || t('packages.ProjectHome.alarmNoRecognition')" type="warning" />
     <a-descriptions :column="1" size="small" class="vision-alarm-facts">

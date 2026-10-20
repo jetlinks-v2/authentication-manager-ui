@@ -4,7 +4,7 @@
       <a-checkbox-group :value="modelValue.grantedScopes" :disabled="disabled || !profile" @change="changeScopes" class="scope-options">
         <a-checkbox v-for="scope in scopeOptions" :key="scope" :value="scope">{{ scopeLabel(scope, $t) }}</a-checkbox>
       </a-checkbox-group>
-      <a-empty v-if="!scopeOptions.length" :description="$t('ThirdPartyApplication.project.approvalUnavailable')" />
+      <CloudEmpty v-if="!scopeOptions.length" :description="$t('ThirdPartyApplication.project.approvalUnavailable')" />
     </a-form-item>
     <a-form-item :label="$t('ThirdPartyApplication.project.resourceGrants')">
       <ResourceGrantEditor v-for="(grant, index) in modelValue.resourceGrants" :key="index" :model-value="grant"

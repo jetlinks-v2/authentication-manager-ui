@@ -57,7 +57,7 @@
       <a-form-item :label="$t('ProjectApplication.create.template')" name="templateId">
         <a-spin :spinning="templatesLoading">
           <TemplateSelector v-model="form.templateId" :templates="visibleTemplates" />
-          <a-empty v-if="!templatesLoading && !visibleTemplates.length" :description="$t('ProjectApplication.create.noTemplates')" />
+          <CloudEmpty v-if="!templatesLoading && !visibleTemplates.length" :description="$t('ProjectApplication.create.noTemplates')" />
         </a-spin>
       </a-form-item>
     </a-form>

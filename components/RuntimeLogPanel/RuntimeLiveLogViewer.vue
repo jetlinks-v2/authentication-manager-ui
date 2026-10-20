@@ -11,7 +11,7 @@
     <a-alert v-if="trimmed" type="info" show-icon :message="$t('runtimeLog.bufferTrimmed')" />
     <div ref="viewer" class="live-log__content" :class="{ 'live-log__content--wrap': wrapLines }" tabindex="0" :aria-label="$t('runtimeLog.content')" @scroll="onScroll">
       <pre v-for="entry in entries" :key="entry.id" :data-entry="entry.id">{{ entry.text }}</pre>
-      <a-empty v-if="!entries.length" :description="$t('runtimeLog.noEvents')" />
+      <CloudEmpty v-if="!entries.length" :description="$t('runtimeLog.noEvents')" />
     </div>
   </div>
 </template>

@@ -4,7 +4,7 @@
       <p>{{ $t('ApiGroupManagement.operation.hint') }}</p>
       <a-button v-if="!context.readonly" @click="emit('add')"><AIcon type="PlusOutlined" />{{ $t('ApiGroupManagement.operation.add') }}</a-button>
     </div>
-    <a-empty v-if="!operations.length" :description="$t('ApiGroupManagement.operation.empty')" />
+    <CloudEmpty v-if="!operations.length" :description="$t('ApiGroupManagement.operation.empty')" />
     <a-collapse v-else v-model:activeKey="expanded">
       <a-collapse-panel v-for="(operation, index) in operations" :key="context.rows[index].key">
         <template #header>
@@ -35,7 +35,7 @@
           <a-button v-if="!context.readonly" :disabled="!context.canSelectSpecs" @click="emit('select', index)">{{ $t('ApiGroupManagement.selectSpecs') }}</a-button>
         </div>
         <LinkedSpecs v-if="operation.apiSpecIds.length" :ids="operation.apiSpecIds" :specs="specs" />
-        <a-empty v-else :description="$t('ApiGroupManagement.operation.specsRequired')" />
+        <CloudEmpty v-else :description="$t('ApiGroupManagement.operation.specsRequired')" />
       </a-collapse-panel>
     </a-collapse>
   </div>
