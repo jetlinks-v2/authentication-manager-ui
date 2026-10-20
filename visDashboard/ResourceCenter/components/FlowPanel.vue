@@ -23,6 +23,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import { useI18n } from 'vue-i18n'
 import { computed } from 'vue'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'

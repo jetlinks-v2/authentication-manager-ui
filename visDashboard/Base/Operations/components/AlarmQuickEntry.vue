@@ -6,8 +6,9 @@
         <div class="alarm-list-heading">{{ title }} · {{ t('packages.ProjectHome.alarmPendingCount', { count: total }) }}</div>
         <a-spin v-if="loading" class="alarm-list-state" />
         <div v-else-if="error" class="alarm-list-state">
-          <span>{{ t('packages.ProjectHome.loadError') }}</span>
-          <a-button size="small" @click="load()">{{ t('packages.ProjectHome.alarmRetry') }}</a-button>
+          <CloudEmpty :description="t('packages.ProjectHome.loadError')">
+            <a-button size="small" @click="load()">{{ t('packages.ProjectHome.alarmRetry') }}</a-button>
+          </CloudEmpty>
         </div>
         <CloudEmpty v-else-if="!rows.length" :description="t('packages.ProjectHome.alarmEmpty')" />
         <template v-else>
@@ -46,6 +47,7 @@
     @close="close" @retry="selected && select(selected)" @submit="submit" />
 </template>
 <script setup lang="ts">
+import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import { useI18n } from 'vue-i18n'
 import { AlertOutlined, WarningOutlined } from '@ant-design/icons-vue'
 import { ALARM_PAGE_SIZE, type AlarmCategory } from '../alarmService'

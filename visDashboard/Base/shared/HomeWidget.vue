@@ -27,6 +27,7 @@
   </a-card>
 </template>
 <script setup lang="ts">
+import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import { computed } from 'vue'
 import { theme } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'

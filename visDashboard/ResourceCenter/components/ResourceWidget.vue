@@ -22,6 +22,7 @@
   </section>
 </template>
 <script setup lang="ts">
+import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import { computed, defineAsyncComponent, toRef } from 'vue'
 import { RightOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'

@@ -6,6 +6,7 @@ const esbuild = require(path.join(root,'node_modules/esbuild'));
 const group = path.join(root,'modules/authentication-manager-ui/visDashboard/ResourceCenter');
 const groupImport = group.replace(/\\/g, '/');
 let calls=[];
+global.__resourceVideoSummaryCalls=0;
 global.__resourceRequest={
   post:async(...args)=>{calls.push(args);throw new Error('Unexpected request '+args[0])},
   get:async(...args)=>{calls.push(args);throw new Error('Unexpected get '+args[0])}
@@ -15,8 +16,10 @@ global.__resourceRequest={
  build.onResolve({filter:/^@jetlinks-web\/core$/},()=>({path:'request',namespace:'test'}));
  build.onResolve({filter:/^@jetlinks-web-core\/utils\/consts$/},()=>({path:'platform',namespace:'test'}));
  build.onResolve({filter:/^@jetlinks-web-core\/locales$/},()=>({path:'locale',namespace:'test'}));
+ build.onResolve({filter:/^@jetlinks-web-core\/utils\/project-runtime$/},()=>({path:'project-runtime',namespace:'test'}));
+ build.onResolve({filter:/^vue-router$/},()=>({path:'router',namespace:'test'}));
  build.onResolve({filter:/api\/overview$/},()=>({path:'overview',namespace:'test'}));
- build.onLoad({filter:/.*/,namespace:'test'},args=>({contents:args.path==='platform'?'export const isSaaS=false':args.path==='locale'?'export default {global:{t:key=>key}}':args.path==='request'?'export const request=global.__resourceRequest':`export const buildOverviewDeviceTerms=kind=>[{column:'product',value:kind}]; export const queryOverviewGatewaySummary=async()=>({total:5,online:3});export const queryOverviewIotDeviceSummary=queryOverviewGatewaySummary;export const queryOverviewChannelSummary=queryOverviewGatewaySummary;`}));
+ build.onLoad({filter:/.*/,namespace:'test'},args=>({contents:args.path==='platform'?'export const isSaaS=false':args.path==='locale'?'export default {global:{t:key=>key}}':args.path==='request'?'export const request=global.__resourceRequest':args.path==='project-runtime'?"export const getProjectCodeFromLocation=()=>''":args.path==='router'?'export const useRoute=()=>({params:{},query:{}})':`export const buildOverviewDeviceTerms=kind=>[{column:'product',value:kind}]; export const queryOverviewGatewaySummary=async()=>({total:5,online:3});export const queryOverviewIotDeviceSummary=queryOverviewGatewaySummary;export const queryOverviewChannelSummary=async()=>{global.__resourceVideoSummaryCalls++;return {total:15,online:13}};`}));
  }}]});
  const mod=new Module(path.join(root,'resource-check.cjs'));mod.paths=Module._nodeModulePaths(root);mod._compile(result.outputFiles[0].text,path.join(root,'resource-check.cjs'));
  const api=mod.exports;
@@ -61,22 +64,81 @@ global.__resourceRequest={
  edit.value=true;await nextTick();assert.equal(pending.length,2);assert.equal(widget.data.value.series.length,24);
  edit.value=false;await nextTick();assert.equal(pending.length,3);scope.stop();
  pending[2]({status:200,result:[{data:{timeString:'2026-09-10',value:99}}]});await new Promise(resolve => setTimeout(resolve, 20));assert.notEqual(widget.data.value.series[0]?.value,99);
+ const gatewayChannels=Array.from({length:12},(_,index)=>({deviceId:`gateway-${Math.floor(index/6)}`,channelId:`camera-${index%6}`,provider:'agent-media-device-gateway'}));
+ const gbChannels=Array.from({length:3},(_,index)=>({deviceId:'gb-device',channelId:`gb-camera-${index}`,provider:'gb28181-2016'}));
+ let channelRows=[...gatewayChannels,...gbChannels,gatewayChannels[0]];
+ let coverageRows=[{sceneId:'demoData',sceneName:'消防通道检测',taskTarget:{value:'SmokingBehaviorDetection',text:'抽烟行为检测'},gatewayCount:1,channelCount:1}];
+ let coveredCount=1,algorithmFailure='';
+ global.__resourceRequest.post=async(path,payload)=>{
+   calls.push([path,payload]);
+   assert.equal(path,'/media/channel/_query/no-paging');
+   assert.deepEqual(payload,{paging:false,terms:[{column:'provider',termType:'eq',value:'agent-media-device-gateway'}]});
+   if(algorithmFailure===path)throw Error('algorithm query failed');
+   return {success:true,result:channelRows.filter(row=>row.provider===payload.terms[0].value)};
+ };
+ const loadAlgorithmChannels=global.__resourceRequest.post;
  global.__resourceRequest.get=async(path)=>{
    calls.push([path]);
-   if(path==='/ai/edge/task/coverage/scene/_counts')return {status:200,result:[
-     {sceneId:'demoData',sceneName:'消防通道检测',taskTarget:{value:'SmokingBehaviorDetection',text:'抽烟行为检测'},gatewayCount:1,channelCount:1}
-   ]};
-   if(path==='/ai/edge/task/coverage/scene/_count')return {status:200,result:{channelCount:1}};
+   if(algorithmFailure===path)throw Error('algorithm query failed');
+   if(path==='/ai/edge/task/coverage/scene/_counts')return {success:true,result:coverageRows};
+   if(path==='/ai/edge/task/coverage/scene/_count')return {success:true,result:{channelCount:coveredCount}};
    throw Error(path);
  };
+ const algorithmInfo=ref({componentProps:{resourceCenterAlgorithmCoverage:{refreshSeconds:0}}});
  const algoScope=effectScope();let algoWidget;
- algoScope.run(()=>{algoWidget=api.useResourceWidget('AlgorithmCoverage',ref({}),ref(false))});
+ algoScope.run(()=>{algoWidget=api.useResourceWidget('AlgorithmCoverage',algorithmInfo,ref(false))});
  await new Promise(resolve => setTimeout(resolve, 20));
+ assert.equal(global.__resourceVideoSummaryCalls,0);
  assert.equal(algoWidget.data.value.algorithms.length,2);
  assert.equal(algoWidget.data.value.algorithms[0].name,'抽烟行为检测');
  assert.equal(algoWidget.data.value.algorithms[0].value,1);
- assert.equal(algoWidget.data.value.algorithms.find(x=>x.id==='unconfigured').value,4);
+ assert.equal(algoWidget.data.value.algorithms.find(x=>x.id==='unconfigured').value,11);
+ coverageRows.push({...coverageRows[0],sceneId:'another-scene'});
+ assert.equal((await api.loadAlgorithmCoverage()).find(x=>x.id==='unconfigured').value,11);
+ coveredCount=12;
+ assert.equal((await api.loadAlgorithmCoverage()).some(x=>x.id==='unconfigured'),false);
+ coverageRows=[];coveredCount=0;
+ assert.equal((await api.loadAlgorithmCoverage()).find(x=>x.id==='unconfigured').value,12);
+ channelRows=[];
+ assert.deepEqual(await api.loadAlgorithmCoverage(),[]);
+ for(const endpoint of ['/media/channel/_query/no-paging','/ai/edge/task/coverage/scene/_count','/ai/edge/task/coverage/scene/_counts']){
+   algorithmFailure=endpoint;
+   await assert.rejects(api.loadAlgorithmCoverage(),/algorithm query failed/);
+ }
+ await algoWidget.refresh();
+ assert.equal(algoWidget.error.value,true);
+ assert.equal(algoWidget.loading.value,false);
+ assert.deepEqual(algoWidget.data.value.algorithms,[]);
+ algorithmFailure='';channelRows=gatewayChannels;coveredCount=1;
+ await algoWidget.refresh();
+ assert.equal(algoWidget.error.value,false);
+ assert.equal(algoWidget.data.value.algorithms.find(x=>x.id==='unconfigured').value,11);
  algoScope.stop();
+ const videoScope=effectScope();let videoWidget;
+ videoScope.run(()=>{videoWidget=api.useResourceWidget('VideoDevices',ref({componentProps:{resourceCenterVideoDevices:{refreshSeconds:0}}}),ref(false))});
+ await new Promise(resolve => setTimeout(resolve, 20));
+ assert.equal(videoWidget.data.value.metrics.find(x=>x.key==='total').value,15);
+ assert.equal(global.__resourceVideoSummaryCalls,1);
+ videoScope.stop();
+ const algorithmPending=[];
+ global.__resourceRequest.post=()=>new Promise(resolve=>algorithmPending.push(resolve));
+ const staleAlgoScope=effectScope(),algoEdit=ref(false);let staleAlgoWidget;
+ staleAlgoScope.run(()=>{staleAlgoWidget=api.useResourceWidget('AlgorithmCoverage',algorithmInfo,algoEdit)});
+ const algorithmRefresh=staleAlgoWidget.refresh();
+ assert.equal(algorithmPending.length,2);
+ algorithmPending[1]({success:true,result:gatewayChannels});await algorithmRefresh;
+ algorithmPending[0]({success:true,result:[]});await new Promise(resolve=>setTimeout(resolve,20));
+ assert.equal(staleAlgoWidget.data.value.algorithms.find(x=>x.id==='unconfigured').value,11);
+ const callsBeforePreview=calls.length;
+ algoEdit.value=true;await nextTick();
+ assert.equal(calls.length,callsBeforePreview);
+ assert.equal(algorithmPending.length,2);
+ algoEdit.value=false;await nextTick();
+ assert.equal(algorithmPending.length,3);
+ staleAlgoScope.stop();
+ algorithmPending[2]({success:true,result:gatewayChannels});await new Promise(resolve=>setTimeout(resolve,20));
+ assert.deepEqual(staleAlgoWidget.data.value.algorithms,[]);
+ global.__resourceRequest.post=loadAlgorithmChannels;
  // 网关状态已替代视频播放趋势，独立验证见 verify-gateway-status.cjs。
- console.log('PASS: lifecycle stale responses, unmount cleanup, preview request isolation; distribution deduplication, device scopes, tree flattening, invalid metrics, five natural-day ranges, config bounds, partial errors, trend ordering, flow sums/ranking and independent failure; algorithm coverage');
+ console.log('PASS: lifecycle stale responses, unmount cleanup, preview request isolation; distribution deduplication, device scopes, tree flattening, invalid metrics, five natural-day ranges, config bounds, partial errors, trend ordering, flow sums/ranking and independent failure; algorithm coverage 12 gateway + 3 GB channels / 1 covered = 11 unconfigured, channel deduplication, overlapping algorithms, zero/all-covered counts, query failure and retry, independent video total 15, algorithm stale responses and preview cleanup');
 })().catch(error=>{console.error(error);process.exitCode=1});

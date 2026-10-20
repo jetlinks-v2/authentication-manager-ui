@@ -23,15 +23,16 @@ export function useResourceWidget(kind: ResourceKind, info: Ref<ResourceInfo | u
   const active = ref(true)
   const route = useRoute()
   const scope = () => JSON.stringify([getProjectCodeFromLocation(), route.params.projectId, route.query.projectId])
-  const videoPolling = inject(videoSummaryKey, undefined) ?? createVideoSummaryPolling()
-  const usesVideoSummary = kind === 'VideoDevices' || kind === 'AlgorithmCoverage'
+  const videoPolling = kind === 'VideoDevices'
+    ? inject(videoSummaryKey, undefined) ?? createVideoSummaryPolling()
+    : undefined
   let unsubscribe = () => {}
   watch(() => config.value.deviceType, value => { deviceType.value = value }, { immediate: true })
   watch(() => config.value.timeRange, value => { timeRange.value = value }, { immediate: true })
 
   /** 自动刷新在上次请求结束后安排，避免慢请求叠加；手动重试独立推进版本。 */
   async function refresh() {
-    if (usesVideoSummary && !isPreview.value) {
+    if (videoPolling && !isPreview.value) {
       videoPolling.refresh(['DeviceAccess'], scope())
       return
     }
@@ -45,6 +46,7 @@ export function useResourceWidget(kind: ResourceKind, info: Ref<ResourceInfo | u
       const result = emptyData()
       if (['EdgeNodes', 'IotDevices', 'VideoDevices'].includes(kind)) result.metrics = await loadSummary(kind)
       else if (kind === 'Visualization') result.metrics = await loadVisualization()
+      else if (kind === 'AlgorithmCoverage') result.algorithms = await loadAlgorithmCoverage()
       else if (kind === 'Collection') {
         try {
           result.metrics = await loadCollection()
@@ -72,24 +74,14 @@ export function useResourceWidget(kind: ResourceKind, info: Ref<ResourceInfo | u
     unsubscribe(); ++epoch; clearTimeout(timer)
     data.value = emptyData()
     if (!active.value) return
-    if (usesVideoSummary && !isPreview.value) {
+    if (videoPolling && !isPreview.value) {
       loading.value = true; error.value = false
       unsubscribe = videoPolling.subscribe('DeviceAccess', config.value.refreshSeconds, (rows, failed) => {
-        const current = ++epoch
         const summary = rows?.[0]
         if (failed || !summary) { error.value = true; loading.value = false; data.value = emptyData(); return }
         const total = summary.value ?? 0, online = summary.online ?? 0
-        if (kind === 'VideoDevices') {
-          data.value = { ...emptyData(), metrics: [{ key: 'total', value: total }, { key: 'online', value: online }, { key: 'offline', value: Math.max(0, total - online) }] }
-          error.value = false; loading.value = false
-        } else {
-          loading.value = true; error.value = false
-          void loadAlgorithmCoverage(total).then(algorithms => {
-            if (current === epoch) data.value = { ...emptyData(), algorithms }
-          }).catch(() => {
-            if (current === epoch) { error.value = true; data.value = emptyData() }
-          }).finally(() => { if (current === epoch) loading.value = false })
-        }
+        data.value = { ...emptyData(), metrics: [{ key: 'total', value: total }, { key: 'online', value: online }, { key: 'offline', value: Math.max(0, total - online) }] }
+        error.value = false; loading.value = false
       }, scope())
       return
     }
