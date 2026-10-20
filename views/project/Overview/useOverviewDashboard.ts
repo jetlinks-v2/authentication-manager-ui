@@ -4,6 +4,7 @@ import { dashboardSources } from '@jetlinks-web-core/components/DashBoardCanvas/
 import { useDashboardCatalog } from '@jetlinks-web-core/components/DashBoardCanvas/discovery'
 import { readDashboardLayout } from '@jetlinks-web-core/components/DashBoardCanvas/utils/layoutStorage'
 import type { DashboardValue } from '@jetlinks-web-core/components/DashBoardCanvas'
+import { useDashboardModules } from '../../../visDashboard/useDashboardModules'
 import {
   ProjectHomeQuickGuide,
   ProjectHomeQuickGuideConfig,
@@ -79,7 +80,10 @@ function migrateQuickGuideLayout() {
 }
 
 export function useOverviewDashboard(showQuickGuide: Ref<boolean>) {
-  migrateQuickGuideLayout()
+  const modules = useDashboardModules()
+  if (isSaaS) migrateQuickGuideLayout()
+  // 私有化按模型能力隔离新尺寸；旧布局保留，不覆盖过滤后的默认排布。
+  const storageKey = computed(() => isSaaS ? 'project-overview' : `project-overview-private-v2:${modules.value.model ? 'model' : 'basic'}`)
   const { catalog, loading, errors, reload } = useDashboardCatalog(dashboardSources, {
     modules: ['authentication-manager-ui'], directories: ['visDashboard'],
     groups: ['authentication-manager-ui/visDashboard/Base'],
@@ -170,9 +174,10 @@ export function useOverviewDashboard(showQuickGuide: Ref<boolean>) {
         ...(feature === 'QuickGuide' ? { visible: showQuickGuide.value } : {}),
         ...(!isSaaS && feature === 'Announcements' ? { visible: false } : {}),
         componentProps: { ...definition.defaultConfig.componentProps,
-          gridItem: { ...definition.defaultGridItem, ...definition.defaultConfig.componentProps.gridItem, x, y, w, h } } }]
+          gridItem: { ...definition.defaultGridItem, ...definition.defaultConfig.componentProps.gridItem, x, y, w,
+            h: !modules.value.model && feature === 'Visualization' ? 12 : h } } }]
     }),
   }))
 
-  return { catalog: fullCatalog, loading, errors, reload, dashboard, legacyLayoutKeys }
+  return { catalog: fullCatalog, loading, errors, reload, dashboard, storageKey, legacyLayoutKeys: isSaaS ? legacyLayoutKeys : [] }
 }

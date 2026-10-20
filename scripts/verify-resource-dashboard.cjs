@@ -7,19 +7,24 @@ const group = path.join(root,'modules/authentication-manager-ui/visDashboard/Res
 const groupImport = group.replace(/\\/g, '/');
 let calls=[];
 global.__resourceVideoSummaryCalls=0;
+global.__overviewGatewayCalls=0;
+global.__resourceModules=new Set(['edge-master-ui','visualization-model-ui']);
+global.__resourceModuleListeners=new Set();
+global.__resourceModuleRegistry={hasModule:id=>global.__resourceModules.has(id),onChange:listener=>{global.__resourceModuleListeners.add(listener);return()=>global.__resourceModuleListeners.delete(listener)}};
 global.__resourceRequest={
   post:async(...args)=>{calls.push(args);throw new Error('Unexpected request '+args[0])},
   get:async(...args)=>{calls.push(args);throw new Error('Unexpected get '+args[0])}
 };
 (async()=>{
- const result=await esbuild.build({stdin:{contents:`export * from '${groupImport}/services/distribution.ts';export * from '${groupImport}/services/trends.ts';export * from '${groupImport}/services/metrics.ts';export * from '${groupImport}/shared.ts';export * from '${groupImport}/hooks/useResourceWidget.ts';`,resolveDir:root},bundle:true,write:false,format:'cjs',platform:'node',packages:'external',plugins:[{name:'test-boundaries',setup(build){
+ const result=await esbuild.build({stdin:{contents:`export * from '${groupImport}/services/distribution.ts';export * from '${groupImport}/services/trends.ts';export * from '${groupImport}/services/metrics.ts';export * from '${groupImport}/shared.ts';export {loadResourceRows,loadHealthRows} from '${groupImport}/../Base/shared/apiResources.ts';export * from '${groupImport}/hooks/useResourceWidget.ts';`,resolveDir:root},bundle:true,write:false,format:'cjs',platform:'node',packages:'external',define:{'import.meta.env.VITE_APP_ENVIRONMENT':'""'},plugins:[{name:'test-boundaries',setup(build){
  build.onResolve({filter:/^@jetlinks-web\/core$/},()=>({path:'request',namespace:'test'}));
  build.onResolve({filter:/^@jetlinks-web-core\/utils\/consts$/},()=>({path:'platform',namespace:'test'}));
  build.onResolve({filter:/^@jetlinks-web-core\/locales$/},()=>({path:'locale',namespace:'test'}));
  build.onResolve({filter:/^@jetlinks-web-core\/utils\/project-runtime$/},()=>({path:'project-runtime',namespace:'test'}));
+ build.onResolve({filter:/^@jetlinks-web-core\/utils\/module-registry$/},()=>({path:'modules',namespace:'test'}));
  build.onResolve({filter:/^vue-router$/},()=>({path:'router',namespace:'test'}));
  build.onResolve({filter:/api\/overview$/},()=>({path:'overview',namespace:'test'}));
- build.onLoad({filter:/.*/,namespace:'test'},args=>({contents:args.path==='platform'?'export const isSaaS=false':args.path==='locale'?'export default {global:{t:key=>key}}':args.path==='request'?'export const request=global.__resourceRequest':args.path==='project-runtime'?"export const getProjectCodeFromLocation=()=>''":args.path==='router'?'export const useRoute=()=>({params:{},query:{}})':`export const buildOverviewDeviceTerms=kind=>[{column:'product',value:kind}]; export const queryOverviewGatewaySummary=async()=>({total:5,online:3});export const queryOverviewIotDeviceSummary=queryOverviewGatewaySummary;export const queryOverviewChannelSummary=async()=>{global.__resourceVideoSummaryCalls++;return {total:15,online:13}};`}));
+ build.onLoad({filter:/.*/,namespace:'test'},args=>({contents:args.path==='modules'?'export const moduleRegistry=global.__resourceModuleRegistry':args.path==='platform'?'export const isSaaS=false':args.path==='locale'?'export default {global:{t:key=>key}}':args.path==='request'?'export const request=global.__resourceRequest':args.path==='project-runtime'?"export const getProjectCodeFromLocation=()=>''":args.path==='router'?'export const useRoute=()=>({params:{},query:{}})':`export const buildOverviewDeviceTerms=kind=>[{column:'product',value:kind}]; export const queryOverviewGatewaySummary=async()=>{global.__overviewGatewayCalls++;return {total:5,online:3}};export const queryOverviewIotDeviceSummary=async()=>({total:5,online:3});export const queryOverviewChannelSummary=async()=>{global.__resourceVideoSummaryCalls++;return {total:15,online:13}};`}));
  }}]});
  const mod=new Module(path.join(root,'resource-check.cjs'));mod.paths=Module._nodeModulePaths(root);mod._compile(result.outputFiles[0].text,path.join(root,'resource-check.cjs'));
  const api=mod.exports;
@@ -140,5 +145,38 @@ global.__resourceRequest={
  assert.deepEqual(staleAlgoWidget.data.value.algorithms,[]);
  global.__resourceRequest.post=loadAlgorithmChannels;
  // 网关状态已替代视频播放趋势，独立验证见 verify-gateway-status.cjs。
+ // 可选模块在请求前过滤；旧分布配置先回退，再进入真实服务链。
+ global.__resourceModules.delete('visualization-model-ui');
+ calls=[];
+ global.__resourceRequest.post=async(...args)=>{calls.push(args);return {success:true,result:{total:0,data:[]}}};
+ const withoutModel=await api.loadResourceRows(row=>row.group==='visualization');
+ assert.equal(withoutModel.length,4);assert.ok(!withoutModel.some(row=>row.id==='model'));
+ assert.ok(!calls.some(([,body])=>JSON.stringify(body).includes('visResource:model')));
+ global.__resourceModules.add('visualization-model-ui');
+ calls=[];
+ const model=await api.loadResourceRows(row=>row.id==='model');
+ assert.equal(model.length,1);assert.equal(model[0].value,0);assert.equal(calls.length,1);
+ global.__resourceModules.delete('edge-master-ui');
+ global.__overviewGatewayCalls=0;
+ assert.deepEqual((await api.loadHealthRows()).map(row=>row.id),['devices','video']);
+ assert.equal(global.__overviewGatewayCalls,0);
+ global.__resourceModules.add('edge-master-ui');
+ assert.deepEqual((await api.loadHealthRows()).map(row=>row.id),['gateway','devices','video']);
+ assert.equal(global.__overviewGatewayCalls,1);
+ global.__resourceModules.delete('edge-master-ui');
+ const missingScope=effectScope();let missingEdge,distribution;
+ calls=[];
+ global.__resourceRequest.post=async(...args)=>{calls.push(args);return {success:true,result:[]}};
+ missingScope.run(()=>{
+   missingEdge=api.useResourceWidget('EdgeNodes',ref({componentProps:{resourceCenterEdgeNodes:{refreshSeconds:0}}}),ref(false));
+   distribution=api.useResourceWidget('DeviceDistribution',ref({componentProps:{resourceCenterDeviceDistribution:{deviceType:'edge',refreshSeconds:0}}}),ref(false));
+ });
+ await nextTick();await new Promise(setImmediate);
+ assert.equal(missingEdge.unavailable.value,true);
+ assert.deepEqual(distribution.deviceKinds.value,['iot','video']);assert.equal(distribution.deviceType.value,'iot');
+ assert.ok(!calls.some(([,body])=>JSON.stringify(body).includes('"value":"edge"')));
+ missingScope.stop();
+ assert.equal(global.__resourceModuleListeners.size,0);
+ console.log('PASS: overview health skips gateway queries without edge and restores installed gateway metrics; missing model skips its count query; zero-valued installed model remains visible; missing edge blocks its widget and replaces saved edge distribution type before requests');
  console.log('PASS: lifecycle stale responses, unmount cleanup, preview request isolation; distribution deduplication, device scopes, tree flattening, invalid metrics, five natural-day ranges, config bounds, partial errors, trend ordering, flow sums/ranking and independent failure; algorithm coverage 12 gateway + 3 GB channels / 1 covered = 11 unconfigured, channel deduplication, overlapping algorithms, zero/all-covered counts, query failure and retry, independent video total 15, algorithm stale responses and preview cleanup');
 })().catch(error=>{console.error(error);process.exitCode=1});

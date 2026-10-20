@@ -8,6 +8,7 @@ import { loadSummary, loadVisualization, loadCollection, loadAlgorithmCoverage }
 import { loadMessageTrend, loadNetworkCards } from '../services/trends'
 import { loadDistribution } from '../services/distribution'
 import { previewData } from '../services/preview'
+import { useDashboardModules } from '../../useDashboardModules'
 
 /** 每个组件持有独立取数生命周期；配置/筛选变化立即清空旧数据并废弃迟到响应。 */
 export function useResourceWidget(kind: ResourceKind, info: Ref<ResourceInfo | undefined>, isEdit: Ref<boolean>) {
@@ -17,7 +18,11 @@ export function useResourceWidget(kind: ResourceKind, info: Ref<ResourceInfo | u
   const data = shallowRef(emptyData())
   const loading = ref(false), error = ref(false)
   const isPreview = computed(() => isEdit.value || Boolean(info.value?.componentProps?.preview))
-  const unavailable = computed(() => !isPreview.value && isSaaS && ['Collection', 'NetworkCards'].includes(kind))
+  const modules = useDashboardModules(isPreview)
+  const deviceKinds = computed<DeviceKind[]>(() => modules.value.edge ? ['edge', 'iot', 'video'] : ['iot', 'video'])
+  const unavailable = computed(() => !isPreview.value && (
+    (isSaaS && ['Collection', 'NetworkCards'].includes(kind)) || (kind === 'EdgeNodes' && !modules.value.edge)
+  ))
   let epoch = 0
   let timer: ReturnType<typeof setTimeout> | undefined
   const active = ref(true)
@@ -27,7 +32,13 @@ export function useResourceWidget(kind: ResourceKind, info: Ref<ResourceInfo | u
     ? inject(videoSummaryKey, undefined) ?? createVideoSummaryPolling()
     : undefined
   let unsubscribe = () => {}
-  watch(() => config.value.deviceType, value => { deviceType.value = value }, { immediate: true })
+  // 先修正旧配置中的 edge，再运行统计 watcher，避免隐藏 Tab 后仍发出一次边缘查询。
+  watch(() => config.value.deviceType, value => {
+    deviceType.value = deviceKinds.value.includes(value) ? value : 'iot'
+  }, { immediate: true, flush: 'sync' })
+  watch(deviceKinds, available => {
+    if (!available.includes(deviceType.value)) deviceType.value = 'iot'
+  }, { flush: 'sync' })
   watch(() => config.value.timeRange, value => { timeRange.value = value }, { immediate: true })
 
   /** 自动刷新在上次请求结束后安排，避免慢请求叠加；手动重试独立推进版本。 */
@@ -70,7 +81,7 @@ export function useResourceWidget(kind: ResourceKind, info: Ref<ResourceInfo | u
       }
     }
   }
-  watch([deviceType, timeRange, () => config.value.refreshSeconds, isPreview, unavailable, active, scope], () => {
+  watch([deviceType, timeRange, () => config.value.refreshSeconds, isPreview, unavailable, modules, active, scope], () => {
     unsubscribe(); ++epoch; clearTimeout(timer)
     data.value = emptyData()
     if (!active.value) return
@@ -90,5 +101,5 @@ export function useResourceWidget(kind: ResourceKind, info: Ref<ResourceInfo | u
   onActivated(() => { active.value = true })
   onDeactivated(() => { active.value = false; ++epoch; unsubscribe(); clearTimeout(timer) })
   onScopeDispose(() => { ++epoch; unsubscribe(); clearTimeout(timer) })
-  return { config, deviceType, timeRange, data, loading, error, unavailable, refresh }
+  return { config, deviceType, deviceKinds, timeRange, data, loading, error, unavailable, refresh }
 }

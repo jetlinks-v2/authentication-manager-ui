@@ -1,20 +1,10 @@
 <template>
   <section class="resource-card visualization-card">
     <h3 class="resource-card-title">{{ t('packages.ProjectHome.group_visualization') }}</h3>
-    <div class="resource-card-content visualization-grid">
-      <div class="visualization-col">
+    <div class="resource-card-content visualization-grid" :class="{ 'is-private': !isSaaS }">
+      <div v-for="(group, index) in groups" :key="group[0]?.id || index" class="visualization-col">
         <ResourceItem
-          v-for="row in assetRows"
-          :key="row.id"
-          :row="row"
-          :show-icon="showIcon"
-          :can-open="canOpen"
-          @navigate="$emit('navigate', $event)"
-        />
-      </div>
-      <div class="visualization-col">
-        <ResourceItem
-          v-for="row in screenRows"
+          v-for="row in group"
           :key="row.id"
           :row="row"
           :show-icon="showIcon"
@@ -31,6 +21,8 @@ import { computed, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ResourceItem from './ResourceItem.vue'
 import type { HomeRow, HomeTarget } from '../../shared/types'
+import { isSaaS } from '@jetlinks-web-core/utils/consts'
+import { visualizationGroups } from '../../shared/resources'
 
 const props = defineProps({
   rows: { type: Array as PropType<HomeRow[]>, default: () => [] },
@@ -42,8 +34,7 @@ defineEmits<{ navigate: [target?: HomeTarget] }>()
 
 const { t } = useI18n()
 
-const assetRows = computed(() => props.rows.filter(r => r.group === 'visualization' && r.subgroup === 'assets'))
-const screenRows = computed(() => props.rows.filter(r => r.group === 'visualization' && r.subgroup === 'screens'))
+const groups = computed(() => visualizationGroups(props.rows))
 </script>
 
 <style scoped lang="less">
@@ -76,15 +67,27 @@ const screenRows = computed(() => props.rows.filter(r => r.group === 'visualizat
 .visualization-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--space-4);
   flex: 1;
 }
 
 .visualization-col {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  justify-content: flex-start;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.visualization-grid.is-private {
+  grid-auto-rows: minmax(min-content, 1fr);
+}
+.visualization-grid.is-private > .visualization-col:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+.visualization-grid.is-private .visualization-col > :deep(*) {
+  flex: 1;
+}
+.visualization-grid.is-private :deep(.resource-item-btn) {
+  height: 100%;
 }
 
 @media (max-width: 640px) {

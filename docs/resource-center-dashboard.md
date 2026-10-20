@@ -20,7 +20,50 @@
 
 实现入口：`visDashboard/ResourceCenter/services/capabilities.ts` 与 `hooks/useResourceCapabilities.ts` 负责可选模块的后端能力、前端路由及当前菜单权限交集；`views/resources/Dashboard/useResourceDashboard.ts` 统一生成可见组件集合并共享给快速开始；同目录 `resourceDashboardLayout.ts` 接收最终可见集合，生成默认坐标，`resourceLayoutStorage.ts` 隔离缓存并迁移同集合的旧布局。`index.vue` 测量实际画布宽度，并等待能力、组件发现和迁移就绪后挂载现有 `DashBoardCanvas`。core 画布的布局编辑及存储实现保持复用。
 
-### 已选方案：保留现有画布，过滤后自动生成默认布局
+### 私有化付费模块与横向均分扩展（已实施）
+
+目标与归属：本次为 M 级前端改造，方案已确认。代码归属 `runtime-ui/modules/authentication-manager-ui` 的概览、资源中心组装及相关 `visDashboard` hooks / services / 展示组件。私有化缺少可选模块时，资源项、统计卡、Tab、快捷入口及其请求一致过滤，同行剩余卡片等宽撑满。
+
+#### 模块规则与实现入口
+
+- `visDashboard/useDashboardModules.ts` 按使用时机读取 core `moduleRegistry`，并在作用域内订阅注册变化；不在文件顶层缓存未完成的注册状态。3D 使用 `visualization-model-ui`，边缘网关使用 `edge-master-ui`。网关与物联设备共享 `iot-user-device-list`，所以不能仅看该菜单存在。
+- 概览在 `Base/shared/apiResources.ts` 发请求前调用 `resources.ts` 的资源准入规则，缺少 3D 时不查询模型；`useHomeRuntime.ts` 切换订阅范围并过滤迟到结果。可视化运行组件与旧 Resources 分组使用同一 `visualizationGroups`：私有化按实际资源项均分网格，SaaS 保留原有素材 / 作品两列。缺少模型时，概览可视化默认高度由14行缩至12行，内部四项等宽排列；资源中心可视化统计同样不查询或显示模型指标。
+- `ResourceCenter/hooks/useResourceCapabilities.ts` 集中持有已有采集 / 物联网卡能力结果及模块状态；`useResourceDashboard.ts` 据此移除 `EdgeNodes` 和 `VideoPlaybackTrend`（实际为网关状态），组件发现、实例和布局共同消费最终可见集合。
+- `useResourceWidget.ts` 过滤设备分布 edge 类型，配置中的 edge 在统计 watcher 执行前回退到 iot；`useGatewayStatus.ts` 在模块不可用时停止状态、历史及轮换流程并废弃迟到响应。
+- 概览边缘节点已补齐：复用同一模块准入规则，在 `loadHealthRows` 发请求前过滤 gateway；`useHomeRuntime` 的订阅范围同时包含边缘状态，过滤设备与接入、运维健康信息及快捷操作，并废弃旧范围响应。剩余设备卡纵向填满、健康卡按实际数量均分、六个快捷入口排为三列两行；SaaS 原有显示规则及设计预览保留。
+- `ResourceCenter/services/quickStart.ts` 为展示和布局提供同一入口集合；边缘、采集、物联网卡入口随其模块 / 能力隐藏。`useQuickStart.ts` 优先复用页面注入，独立宿主则使用同一能力检查；错误可重试，不能因没有页面注入而显示全部入口。基础入口数量不再固定为4，高度按最终3–6项计算。
+- 数据采集与物联网卡的后端能力、前端路由、账号菜单交集沿用下方 v6 规则；零数据、403、超时、服务错误不作为未购买依据。设计预览保持独立，SaaS 的模块显示规则与默认布局保留。
+
+#### 已选方案与布局
+
+沿用现有“监控感知页”，面向私有化资源管理员，以真实资源状态为首屏视觉锚点。保留局部时间 / 类型筛选、菜单跳转及画布直接拖动 / 缩放，复用 `DashBoardCanvas`、`HomeWidget`、`ResourceWidget`、`QuickStartPanel`、现有图表和 Ant Design 控件。没有新增搜索表单、编辑弹窗、装饰 KPI 或说明 banner；不采用 CSS Grid 替换外层画布，因为画布已承载个人坐标和缩放。
+
+`views/resources/Dashboard/resourceDashboardLayout.ts` 在组装之前过滤组件，再对每排可见项累计取整均分24列，单项占满，空行移除；各行总宽严格闭合。取消跨行侧卡和固定2:1、3:5比例。宽屏分组为：指标带；快速开始 / 数据采集；算法覆盖 / 消息趋势 / 物联网卡；设备分布 / 网关状态。物联网卡与可伸展图表同行，避免把快速开始和采集统计拉高。中、窄屏按实际画布宽度重新分组，断点仍为560px、1000px；快速开始高度按宽度和真实入口数计算。
+
+缺少 3D、边缘、采集和物联网卡时：
+
+```text
+[     物联设备     ][     视频通道     ][     可视化      ]
+[                 快速开始：实际可用入口                 ]
+[          算法覆盖统计          ][       消息趋势       ]
+[                       设备分布                         ]
+```
+
+缓存：私有化资源中心改为 `resource-center-dashboard-v7:<scope>:private:<mode>:<widgets>`，概览使用 `project-overview-private-v2:model/basic`。首次采用新的均分默认布局，不迁入旧固定比例坐标；所有历史记录保留。新策略内个人拖动 / 缩放仍优先恢复，不同模块组合、宽度档位分别保存；SaaS 的 v6 key 与旧缓存迁移保留。
+
+#### 验证与发布边界
+
+- 基线 `node --test tests/resourceDashboardAvailability.test.mjs tests/videoNavigationTarget.test.mjs` 为22/22。扩展后的四个定向测试文件覆盖模块注册 / 移除、独立快捷组件、无模块请求隔离、迟到响应、SaaS 兼容、历史趋势及轮换；布局覆盖全部11项的2048种保留集合，在360/640/900/1600px实际网格约束下验证等宽、闭合、无重叠、空行上移。
+- `scripts/verify-resource-dashboard.cjs` 覆盖模型请求前过滤、已安装但数量为零仍展示、旧 edge 分布类型回退及原有统计契约；`scripts/verify-gateway-status.cjs` 补齐注册中心测试边界，并将已过时的“补齐96桶”断言与现有 `gatewayStatusHistory.test.mjs` 的实际稀疏桶契约对齐，未修改历史服务实现。
+- 真实 `localhost:9200` 登录态页面：2169px视口覆盖边缘 / 采集 / 物联网卡8种组合；1100px、660px各覆盖全部可用和全部缺失，实际画布分别为1891px、825px、385px。12个用例均同行等宽且闭合、无重叠、无文档横向溢出，快捷按钮完整显示，无新增 JavaScript 异常。全部缺失为7张卡、3个入口，隐藏模块对应统计请求为0。
+- 概览缺少3D时从5项资源变为4项，四个资源卡宽高一致并填满各自网格单元，行距与主题 token 一致、无内容溢出，外层高度458px→390px；模型请求为0，恢复注册后回到5项。SaaS 的原两列资源分组另有定向断言。
+- 概览边缘节点补齐复验：2169px、1280px两档分别验证“设备与接入”3→2项、“快速操作”7→6项、“运维与监控”健康卡3→2项，三处边缘内容同步隐藏；设备卡填满、快捷入口三列两行、健康卡同行等宽，均无页面横向溢出。精确匹配 gateway 条件的 `/device/instance/_count` 请求在隐藏时为0，恢复注册后为2，页面同时恢复原有3 / 7 / 3项。测试后已恢复边缘注册状态与2169×940尺寸。
+- 个人布局恢复：临时将快速开始记录为10列，刷新后实际宽度937px→777px，证明新 key 下的个人尺寸优先；随后恢复原缓存及937px默认宽度。旧资源中心和概览布局记录逐项核对未变，测试结束已恢复模块、真实能力响应、浏览器2169×940尺寸及原布局。
+- 当前后台实际包含这些模块；缺失组合通过浏览器注册状态与能力响应模拟验证，未卸载后台模块、调整购买信息或写入业务数据。真实缺少模块的客户部署仍需在发布后验收。
+- 最终 `node --test tests/resourceDashboardAvailability.test.mjs tests/videoNavigationTarget.test.mjs tests/gatewayStatusHistory.test.mjs tests/gatewayRotation.test.mjs` 为38/38通过；两个 service / Hook 验证脚本通过，`verify-overview-components.cjs` 的63个 SFC与相对引用检查通过。本次7个修改的 Vue 文件已通过脚本、模板、Less / CSS解析且均不超过300行，14个修改 / 新增 TypeScript 文件语法检查及 `git diff --check` 通过。隔离 Hook 验证中的 effectScope 生命周期提示和既有 Node 模块类型提示保留，不将这些脚本当作完整 KeepAlive 验收。按性能约束未运行全量 lint、typecheck 或构建；当前工作区与模块未配置 lint / 样式门禁脚本，完整检查入口为 `pnpm -C runtime-ui exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json`、`pnpm -C runtime-ui build:standalone`。
+- 需要发布更新后的 runtime-ui 静态资源，无后端服务重启要求；未提交或推送。
+
+### v6 实现记录：保留现有画布，过滤后自动生成默认布局
 
 - 业务任务与方案：沿用现有监控感知页，快速查看资源状态、趋势和分布并跳转到功能入口；不改变页面的业务入口和卡片风格。
 - 主要筛选：保留各卡片现有时间范围、设备类型等局部筛选；本页不新增主搜索表单。
@@ -89,7 +132,7 @@
 
 ### 私有化默认布局
 
-当前入口为 `views/resources/Dashboard/resourceDashboardLayout.ts`。完整宽屏的 24 列布局保留确认坐标：物联网卡为 `x=18,y=4,w=6,h=18`；算法覆盖统计与消息趋势位于 `y=13`，各占 9 列、9 行；设备分布位于 `x=0,y=22,w=9,h=9`，网关状态指标位于 `x=9,y=22,w=15,h=9`。组件过滤、响应式模板和 v6 个人缓存迁移遵循上方 BUG-41667 规则，旧 v5 仅在匹配集合时复制，不直接清空。
+以下为旧 v6 坐标记录，当前私有化均分策略与 v7 缓存见上方扩展规则。实现入口为 `views/resources/Dashboard/resourceDashboardLayout.ts`。旧完整宽屏24列坐标为：物联网卡为 `x=18,y=4,w=6,h=18`；算法覆盖统计与消息趋势位于 `y=13`，各占 9 列、9 行；设备分布位于 `x=0,y=22,w=9,h=9`，网关状态指标位于 `x=9,y=22,w=15,h=9`。组件过滤、响应式模板和 v6 个人缓存迁移遵循上方 BUG-41667 规则，旧 v5 仅在匹配集合时复制，不直接清空。
 
 验证：实际默认配置组装和网格归一化后的全部 11 项坐标与确认数据逐项一致，24 列边界及无重叠检查通过，SaaS 布局和已有缓存迁移函数与修改前一致；TypeScript 语法与 `git diff --check` 通过。按本机性能约束未运行完整 lint/typecheck/build，真实仪表盘效果待前端更新后复核；需要完整检查时执行 `pnpm -C runtime-ui exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json`、`pnpm -C runtime-ui build`。无需重启后端。
 

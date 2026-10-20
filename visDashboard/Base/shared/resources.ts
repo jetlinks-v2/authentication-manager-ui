@@ -1,6 +1,23 @@
 import { isSaaS } from '@jetlinks-web-core/utils/consts'
 import type { HomeRow } from './types'
 import { HOME_TARGETS } from './navigation'
+import { getDashboardModules } from '../../useDashboardModules'
+
+/** 资源项、健康统计与快捷操作共用模块准入；业务零值仍按原有空态展示。 */
+export const resourceRowAvailable = (row: Pick<HomeRow, 'id'>) => {
+  if (row.id === 'model') return getDashboardModules().model
+  if (row.id === 'gateway') return getDashboardModules().edge
+  return true
+}
+
+/** 私有化按实际项交错均分网格；SaaS 保留素材、作品两列分组。 */
+export function visualizationGroups(rows: HomeRow[]): HomeRow[][] {
+  const assets = rows.filter(row => row.subgroup === 'assets')
+  const screens = rows.filter(row => row.subgroup === 'screens')
+  if (isSaaS) return [assets, screens]
+  return Array.from({ length: Math.max(assets.length, screens.length) }, (_, index) => [assets[index], screens[index]])
+    .flat().filter((row): row is HomeRow => Boolean(row)).map(row => [row])
+}
 export const RESOURCE_ROWS: HomeRow[] = [
   { id: 'devices', group: 'access', subgroup: 'devices', value: 24 },
   { id: 'video', group: 'access', subgroup: 'devices', value: 18 },

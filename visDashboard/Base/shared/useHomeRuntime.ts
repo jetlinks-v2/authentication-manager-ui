@@ -5,16 +5,19 @@ import { loadHomeRows } from './api'
 import { createHomePolling } from './homePolling'
 import { homePollingKey } from './homePollingContext'
 import { QUICK_ACTIONS } from './navigation'
-import { RESOURCE_ROWS } from './resources'
+import { RESOURCE_ROWS, resourceRowAvailable } from './resources'
+import { useDashboardModules } from '../../useDashboardModules'
 import type { HomeFeature, HomeRow } from './types'
 
 /** 卡片订阅所需数据；运维与设备卡片共享健康统计，离页停止订阅。 */
 export function useHomeRuntime(feature: HomeFeature, isEdit: Ref<boolean>, refreshTime: Ref<number>, refreshKey: Ref<number> = ref(0), sharedPolling?: ReturnType<typeof createHomePolling>) {
   const polling = sharedPolling ?? inject(homePollingKey, undefined) ?? createHomePolling(loadHomeRows)
   const route = useRoute()
+  const modules = useDashboardModules(isEdit)
   const rows = ref<HomeRow[]>([]), loading = ref(false), error = ref(false)
   const active = ref(true)
-  const scope = () => JSON.stringify([getProjectCodeFromLocation(), route.params.projectId, route.query.projectId])
+  // 模块变化切换订阅范围，旧响应和缓存不得重新带回已隐藏的模型或边缘节点。
+  const scope = () => JSON.stringify([getProjectCodeFromLocation(), route.params.projectId, route.query.projectId, modules.value.model, modules.value.edge])
   const keys: HomeFeature[] = feature === 'Operations' ? ['DeviceAccess', 'Operations']
     : feature === 'Resources' ? ['DeviceAccess', 'Collection', 'Visualization', 'AiCenter', 'RuleEngine'] : [feature]
   let stop = () => {}
@@ -23,7 +26,8 @@ export function useHomeRuntime(feature: HomeFeature, isEdit: Ref<boolean>, refre
     rows.value = []; error.value = false; loading.value = false
     if (!active.value) return
     if (feature === 'QuickActions') {
-      rows.value = QUICK_ACTIONS.map(({ id, target }) => ({ id, labelKey: `action_${id}`, descriptionKey: `action_${id}Desc`, icon: id, target }))
+      rows.value = QUICK_ACTIONS.filter(row => isEdit.value || resourceRowAvailable(row))
+        .map(({ id, target }) => ({ id, labelKey: `action_${id}`, descriptionKey: `action_${id}Desc`, icon: id, target }))
       return
     }
     if (isEdit.value) return
@@ -38,7 +42,7 @@ export function useHomeRuntime(feature: HomeFeature, isEdit: Ref<boolean>, refre
         ? RESOURCE_ROWS.flatMap(template => {
           const value = combined.find(row => row.id === template.id)
           return value ? [{ ...template, ...value, group: template.group, subgroup: template.subgroup }] : []
-        }) : combined
+        }).filter(resourceRowAvailable) : combined.filter(resourceRowAvailable)
       loading.value = results.size < keys.length
       error.value = !loading.value && (failures.size > 0 || (rows.value.length > 0 && rows.value.every(row => row.failed)))
     }, scope()))

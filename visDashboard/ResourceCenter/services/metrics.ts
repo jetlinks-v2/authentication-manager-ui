@@ -4,6 +4,7 @@ import { queryOverviewGatewaySummary, queryOverviewIotDeviceSummary, queryOvervi
 import { countOf, rowsOf, textOf } from '../../Base/shared/apiResult'
 import type { Metric, ResourceKind, AlgorithmCoverageItem } from '../shared'
 import { loadCoverageChannelCount } from '../../Base/shared/apiAlgorithms'
+import { getDashboardModules } from '../../useDashboardModules'
 
 /** 多指标分别返回失败状态；一个查询失败不会隐藏同卡已成功的指标。 */
 export async function settleMetrics(loaders: Record<string, () => Promise<number>>): Promise<Metric[]> {
@@ -29,7 +30,7 @@ export function loadVisualization() {
     screen: () => count('/visualization/project/_query', [{ column: 'projectType', value: 'bigScreen' }]),
     image: () => count('/visualization/resource/latest/_query', [{ column: 'searchCode', termType: 'in', value: 'visResource:image' }]),
     component: () => count('/visualization/resource/latest/_query', [{ column: 'searchCode', termType: 'in', value: 'visResource:component' }]),
-    model: () => count('/visualization/resource/latest/_query', [{ column: 'searchCode', termType: 'in', value: 'visResource:model' }]),
+    ...(getDashboardModules().model ? { model: () => count('/visualization/resource/latest/_query', [{ column: 'searchCode', termType: 'in', value: 'visResource:model' }]) } : {}),
     template: () => count('/visualization/template/_query', [{ column: 'searchCode', value: 'visTemplate:visProject:bigScreen' }]),
   })
 }

@@ -1,5 +1,5 @@
 <template>
-  <div class="home-content home-operations" :class="{ 'home-operations--cards': chart.displayStyle === 'cards' }">
+  <div class="home-content home-operations" :class="{ 'home-operations--cards': chart.displayStyle === 'cards' }" :style="healthGridStyle">
     <section v-for="group in groups" :key="group" class="home-operation-group" :class="`home-operation-group--${group}`">
       <h4 class="home-operation-group-title">{{ t(`packages.ProjectHome.group_${group}`) }}</h4>
       <div class="home-operation-items" :class="`items--${group}`">
@@ -77,6 +77,14 @@ const groups = computed(() => {
   return allGroups.sort((a, b) => (a === 'health' ? -1 : 1))
 })
 
+const healthGridStyle = computed(() => {
+  const count = props.rows.filter(row => row.group === 'health').length
+  return {
+    '--home-health-columns': Math.max(1, Math.min(3, count)),
+    '--home-health-compact-columns': Math.max(1, Math.min(2, count)),
+  }
+})
+
 const getGroupRows = (group: string) => {
   const filtered = props.rows.filter(item => item.group === group)
   if (group === 'alarms') {
@@ -111,7 +119,7 @@ const getGroupRows = (group: string) => {
   gap: 10px;
 
   &.items--health {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--home-health-columns), minmax(0, 1fr));
   }
 
   &.items--alarms {
@@ -234,7 +242,7 @@ const getGroupRows = (group: string) => {
   .home-operations .home-operation-group-title { margin-bottom: 6px; }
 
   .home-operation-items.items--health {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--home-health-compact-columns), minmax(0, 1fr));
   }
 
   .home-operations:not(.home-operations--cards) .home-operation-group--alarms .home-operation-items.items--alarms {
