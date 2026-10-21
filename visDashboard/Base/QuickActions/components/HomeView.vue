@@ -1,5 +1,5 @@
 <template>
-  <div class="home-content home-actions" :class="{ 'home-actions--grid': chart.displayStyle === 'grid' }">
+  <div class="home-content home-actions" :class="{ 'home-actions--grid': chart.displayStyle === 'grid', 'home-actions--six': rows.length === 6 }">
     <button
       v-for="row in rows"
       :key="row.id"
@@ -71,6 +71,7 @@ const getToneClass = (id: string) => {
 .home-action-copy :deep(.home-action-description) { width: 100%; min-width: 0; max-width: 100%; display: -webkit-box; -webkit-box-orient: vertical; white-space: normal; overflow: hidden; color: var(--business-component-muted); font-size: 12px; line-height: 18px; }
 .home-actions { grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: none; grid-auto-rows: minmax(76px, 1fr); gap: 10px; align-content: start; }
 .home-action { grid-column: span 3; }
+.home-actions--six .home-action { grid-column: span 4; }
 @container project-home (min-width: 721px) {
   .home-action:nth-child(5):nth-last-child(3),
   .home-action:nth-child(5):nth-last-child(3) ~ .home-action { grid-column: span 4; }
@@ -84,6 +85,7 @@ const getToneClass = (id: string) => {
   }
   .home-actions:not(.home-actions--grid) .home-action { grid-column: auto; padding: 8px 10px; }
   .home-actions:not(.home-actions--grid) .home-action:nth-child(7):last-child { grid-column: 2; }
+  .home-actions--six:not(.home-actions--grid) { grid-template-rows: repeat(2, minmax(0, 1fr)); }
 }
 @container project-home (max-width: 480px) {
   .home-actions:not(.home-actions--grid) .home-action { gap: 6px; padding: 6px 8px; }

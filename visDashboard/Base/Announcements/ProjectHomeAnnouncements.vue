@@ -8,6 +8,7 @@
   </a-modal>
 </template>
 <script setup lang="ts">
+import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import { ref, type Component } from 'vue'
 import { moduleRegistry } from '@jetlinks-web-core/utils/module-registry'
 import HomeWidget from '../shared/HomeWidget.vue'

@@ -10,19 +10,20 @@
       />
     </template>
     <template #empty>
-      <div class="home-app-empty">
-        <div class="empty-icon"><AppstoreOutlined /></div>
-        <div class="empty-title">{{ t('packages.ProjectHome.ApplicationsEmpty') }}</div>
-        <div class="empty-desc">{{ t('packages.ProjectHome.ApplicationsEmptyDesc') }}</div>
+      <CloudEmpty class="home-app-empty">
+        <template #description>
+          <div class="empty-title">{{ t('packages.ProjectHome.ApplicationsEmpty') }}</div>
+          <div class="empty-desc">{{ t('packages.ProjectHome.ApplicationsEmptyDesc') }}</div>
+        </template>
         <a-button type="primary" class="empty-btn" @click="handleCreateApp">
           {{ t('packages.ProjectHome.ApplicationsCreate') }}
         </a-button>
-      </div>
+      </CloudEmpty>
     </template>
   </HomeWidget>
 </template>
 <script setup lang="ts">
-import { AppstoreOutlined } from '@ant-design/icons-vue'
+import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import { useI18n } from 'vue-i18n'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import HomeWidget from '../shared/HomeWidget.vue'
@@ -82,12 +83,7 @@ function handleCreateApp() {
   padding: 4px 8px;
   box-sizing: border-box;
 }
-.empty-icon {
-  font-size: 28px;
-  line-height: 1;
-  color: #9ca3af;
-  margin-bottom: 6px;
-}
+.home-app-empty :deep(.ant-empty) { margin: 0; }
 .empty-title {
   font-size: 13px;
   line-height: 18px;
@@ -100,7 +96,7 @@ function handleCreateApp() {
   line-height: 16px;
   color: #6b7280;
   max-width: 240px;
-  margin-bottom: 10px;
+  margin-inline: auto;
 }
 .empty-btn {
   border-radius: 6px;

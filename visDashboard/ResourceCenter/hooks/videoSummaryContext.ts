@@ -4,7 +4,7 @@ import { queryOverviewChannelSummary } from '../../../api/overview'
 
 export const videoSummaryKey: InjectionKey<ReturnType<typeof createHomePolling>> = Symbol('resourceVideoSummary')
 
-/** 视频卡和算法覆盖共用当前画布的视频汇总，沿用已验证的订阅调度器。 */
+/** 视频卡复用概览通道汇总及现有订阅调度器。 */
 export function createVideoSummaryPolling() {
   return createHomePolling(async () => {
     const summary = await queryOverviewChannelSummary()

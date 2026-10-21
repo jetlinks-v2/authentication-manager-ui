@@ -7,6 +7,7 @@ const esbuild = require(path.join(root, 'node_modules/esbuild'))
 const vue = require(path.join(root, 'node_modules/vue'))
 const group = path.join(root, 'modules/authentication-manager-ui/visDashboard/ResourceCenter').replaceAll('\\', '/')
 global.__gatewayRequest = {}
+global.__gatewayModules = new Set(['edge-master-ui', 'visualization-model-ui'])
 global.__gatewayRoute = vue.reactive({ params: {}, query: {} })
 global.__gatewayPage = async () => ({ data: [], total: 0 })
 const tick = async () => { await vue.nextTick(); await new Promise(resolve => setTimeout(resolve, 10)) }
@@ -16,8 +17,10 @@ const tick = async () => { await vue.nextTick(); await new Promise(resolve => se
     stdin: { contents: `export * from '${group}/services/gatewayStatus.ts'; export * from '${group}/hooks/useGatewayStatus.ts'`, resolveDir: root },
     bundle: true, write: false, platform: 'node', format: 'cjs', packages: 'external',
     plugins: [{ name: 'boundaries', setup(build) {
-      build.onResolve({ filter: /^@jetlinks-web\/core$|^@jetlinks-web-core\/utils\/project-runtime$|^vue-router$|^vue-i18n$|api\/overview$/ }, args => ({ path: args.path, namespace: 'mock' }))
+      build.onResolve({ filter: /^@jetlinks-web\/core$|^@jetlinks-web-core\/utils\/(project-runtime|module-registry|consts)$|^vue-router$|^vue-i18n$|api\/overview$/ }, args => ({ path: args.path, namespace: 'mock' }))
       build.onLoad({ filter: /.*/, namespace: 'mock' }, args => ({ contents:
+        args.path.endsWith('/module-registry') ? 'export const moduleRegistry={hasModule:id=>global.__gatewayModules.has(id),onChange:()=>()=>{}}' :
+        args.path.endsWith('/consts') ? 'export const isSaaS=false' :
         args.path === '@jetlinks-web/core' ? 'export const request = global.__gatewayRequest' :
         args.path === 'vue-router' ? 'export const useRoute = () => global.__gatewayRoute' :
         args.path === 'vue-i18n' ? 'export const useI18n = () => ({t: key => key})' :
@@ -66,8 +69,9 @@ const tick = async () => { await vue.nextTick(); await new Promise(resolve => se
     return {result:[{timestamp:'2026-09-21 11:45:00',queuePending:9},{timestamp:'2026-09-21 11:15:00',queuePending:0},{timestamp:'2026-09-21 11:30:00',queuePending:null},{timestamp:'invalid',queuePending:100}]}
   }
   const points=await api.loadGatewayHistory('a','queue',now)
-  assert.equal(points.length,96);assert.deepEqual(points.slice(-3).map(x=>x.value),[0,null,9])
-  assert.ok(points[0].value===null);assert.deepEqual(api.normalizeGatewayHistory({result:[]},'queuePending',now-86400000,now),[])
+  // 与 gatewayStatusHistory.test.mjs 相同：保留实际桶，不补造整天96条快照。
+  assert.equal(points.length,3);assert.deepEqual(points.map(x=>x.value),[0,null,9])
+  assert.deepEqual(api.normalizeGatewayHistory({result:[]},'queuePending',now-86400000,now),[])
   let calls=0
   global.__gatewayPage=async()=>{calls++;return {data:[gateway],total:1}}
   const scope=vue.effectScope(),preview=vue.ref(true);let widget

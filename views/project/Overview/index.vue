@@ -6,11 +6,12 @@
     </a-result>
     <DashBoardCanvas
       v-else
+      :key="storageKey"
       :model-value="dashboard"
       :catalog="catalog"
       :editable="false"
       :layout-editable="true"
-      storage-key="project-overview"
+      :storage-key="storageKey"
       :legacy-storage-keys="legacyLayoutKeys"
       :preview-mode="false"
     />
@@ -26,7 +27,7 @@ import { useQuickGuideSteps } from '../../../visDashboard/Base/QuickGuide/useQui
 const polling = provideHomePolling()
 const { t } = useI18n()
 const { showGuide } = useQuickGuideSteps(() => false, polling)
-const { catalog, loading, errors, reload, dashboard, legacyLayoutKeys } = useOverviewDashboard(showGuide)
+const { catalog, loading, errors, reload, dashboard, storageKey, legacyLayoutKeys } = useOverviewDashboard(showGuide)
 </script>
 <style scoped>
 .project-overview {

@@ -6,9 +6,11 @@ import { isSaaS } from '@jetlinks-web-core/utils/consts'
 import { getProjectCodeFromLocation } from '@jetlinks-web-core/utils/project-runtime'
 import { getBaseApi } from '@jetlinks-web-core/utils/request-context'
 import { loadResourceCapabilities, type ResourceCapabilities } from '../services/capabilities'
+import { useDashboardModules } from '../../useDashboardModules'
 
 export interface ResourceCapabilitiesContext {
   capabilities: Ref<ResourceCapabilities>
+  modules: ReturnType<typeof useDashboardModules>
   loading: Ref<boolean>
   errors: Ref<Error[]>
   scope: Readonly<Ref<string>>
@@ -20,6 +22,7 @@ const noOptionalResources = (): ResourceCapabilities => ({ collection: false, ne
 
 /** 正式页面集中检查可选模块；账号、菜单或运行范围变化后立即撤销旧结果并丢弃迟到响应。 */
 export function useResourceCapabilities(preview: Ref<boolean>): ResourceCapabilitiesContext {
+  const modules = useDashboardModules(preview)
   const menu = useMenuStore()
   const user = useUserStore()
   const capabilities = shallowRef<ResourceCapabilities>(noOptionalResources())
@@ -66,7 +69,7 @@ export function useResourceCapabilities(preview: Ref<boolean>): ResourceCapabili
 
   watch([scope, () => menu.initialized, () => menu.menusMap, preview], () => { void reload() }, { immediate: true })
   onScopeDispose(() => { ++epoch })
-  return { capabilities, loading, errors, scope, reload }
+  return { capabilities, modules, loading, errors, scope, reload }
 }
 
 /** 卡片内快捷操作复用页面能力结果，不再各自发起重复能力查询。 */

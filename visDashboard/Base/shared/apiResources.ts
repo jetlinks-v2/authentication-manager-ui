@@ -2,7 +2,7 @@ import { loadAlgorithmMetrics } from './apiAlgorithms'
 import { request } from '@jetlinks-web/core'
 import * as overviewApis from '../../../api/overview'
 import { countOf } from './apiResult'
-import { RESOURCE_ROWS } from './resources'
+import { RESOURCE_ROWS, resourceRowAvailable } from './resources'
 import { HOME_TARGETS } from './navigation'
 import { ALARM_TARGETS, buildPendingAlarmTerms, type AlarmCategory } from './alarmQuery'
 import type { HomeRow } from './types'
@@ -20,7 +20,8 @@ export const loadHealthRows = async (): Promise<HomeRow[]> => {
     ['devices', apis.queryOverviewIotDeviceSummary],
     ['video', apis.queryOverviewChannelSummary],
   ] as const
-  return Promise.all(entries.map(async ([id, load]) => {
+  // 设备与接入、运维健康共用此加载器，隐藏边缘模块时两处都不发起网关统计。
+  return Promise.all(entries.filter(([id]) => resourceRowAvailable({ id })).map(async ([id, load]) => {
     try {
       if (!load) throw new Error('Missing project overview capability')
       const data = await load()
@@ -31,7 +32,7 @@ export const loadHealthRows = async (): Promise<HomeRow[]> => {
 }
 export const loadResourceRows = async (select: (row: HomeRow) => boolean = () => true): Promise<HomeRow[]> => {
   // 先选择指标再发请求，卡片不加载其他业务的数据，也不等待无关接口。
-  const selectedRows = RESOURCE_ROWS.filter(select)
+  const selectedRows = RESOURCE_ROWS.filter(resourceRowAvailable).filter(select)
   const healthRequest = selectedRows.some(row => ['gateway', 'devices', 'video'].includes(row.id)) ? loadHealthRows() : Promise.resolve([])
   const algorithmRequest = selectedRows.some(row => ['algorithm', 'coverage'].includes(row.id)) ? loadAlgorithmMetrics() : Promise.resolve(undefined)
   const loaders: Record<string, () => Promise<number>> = {

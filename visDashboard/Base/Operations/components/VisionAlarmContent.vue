@@ -13,6 +13,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { QuickAlarm } from '../alarmService'

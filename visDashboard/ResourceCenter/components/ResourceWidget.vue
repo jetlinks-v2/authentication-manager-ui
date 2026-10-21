@@ -22,6 +22,7 @@
   </section>
 </template>
 <script setup lang="ts">
+import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import { computed, defineAsyncComponent, toRef } from 'vue'
 import { RightOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
@@ -39,13 +40,19 @@ const TrendPanel = defineAsyncComponent(() => import('./TrendPanel.vue'))
 const props = defineProps<{ kind: ResourceKind; info?: ResourceInfo; isEdit: boolean }>()
 const { t } = useI18n()
 const menuStore = useMenuStore()
-const { config, deviceType, timeRange, data, loading, error, unavailable, refresh } = useResourceWidget(props.kind, toRef(props, 'info'), toRef(props, 'isEdit'))
+const widget = useResourceWidget(props.kind, toRef(props, 'info'), toRef(props, 'isEdit'))
+const { config, deviceType, deviceKinds, timeRange, data, unavailable } = widget
 const isPreview = computed(() => props.isEdit || Boolean(props.info?.componentProps?.preview))
-const { actions, open } = useQuickStart(toRef(props, 'isEdit'), isPreview)
+const quickStart = props.kind === 'QuickStart' ? useQuickStart(toRef(props, 'isEdit'), isPreview) : undefined
+const actions = computed(() => quickStart?.actions.value ?? [])
+const loading = computed(() => quickStart?.loading.value ?? widget.loading.value)
+const error = computed(() => quickStart ? quickStart.errors.value.length > 0 : widget.error.value)
+const open = (key: string) => quickStart?.open(key)
+const refresh = () => quickStart ? quickStart.reload() : widget.refresh()
 const title = computed(() => config.value.title || t(`resourceDashboard.${props.kind}`))
 const isMetricCard = computed(() => ['EdgeNodes', 'IotDevices', 'VideoDevices', 'Visualization'].includes(props.kind))
 
-const deviceOptions = computed(() => ['edge', 'iot', 'video'].map(value => ({ value, label: t(`resourceDashboard.${value}`) })))
+const deviceOptions = computed(() => deviceKinds.value.map(value => ({ value, label: t(`resourceDashboard.${value}`) })))
 const timeOptions = computed(() => ['today', 'yesterday', '3d', '7d', '30d'].map(value => ({ value, label: t(`resourceDashboard.range.${value}`) })))
 
 function openAlgorithmConfig() {

@@ -10,7 +10,7 @@ const runtimeRoot = path.resolve(here, '../../..')
 const require = createRequire(import.meta.url)
 const esbuild = require(path.join(runtimeRoot, 'node_modules/esbuild'))
 const navigationSource = await readFile(new URL('../visDashboard/Base/shared/navigation.ts', import.meta.url), 'utf8')
-const quickStartSource = await readFile(new URL('../visDashboard/ResourceCenter/hooks/useQuickStart.ts', import.meta.url), 'utf8')
+const quickStartSource = await readFile(new URL('../visDashboard/ResourceCenter/services/quickStart.ts', import.meta.url), 'utf8')
 const coveragePanelSource = await readFile(new URL('../visDashboard/ResourceCenter/components/AlgorithmCoveragePanel.vue', import.meta.url), 'utf8')
 
 async function loadNavigation(privateDeployment) {

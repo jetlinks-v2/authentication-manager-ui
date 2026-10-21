@@ -1,61 +1,29 @@
 import { computed, inject, type Ref } from 'vue'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { isSaaS } from '@jetlinks-web-core/utils/consts'
-import { HOME_TARGETS } from '../../Base/shared/navigation'
-import { resourceCapabilitiesKey } from './useResourceCapabilities'
-
-type QuickStartAction = {
-  key: string
-  icon: string
-  menu: string
-  fallbackMenu?: string
-  params?: Record<string, string>
-  query?: Record<string, string>
-  privateOnly?: boolean
-}
-
-const actions: QuickStartAction[] = [
-  { key: 'edge', icon: 'ApiOutlined', menu: 'iot-user-device-list', query: { type: 'gateway' } },
-  { key: 'iot', icon: 'DatabaseOutlined', menu: HOME_TARGETS.addDevice.menus[0], query: HOME_TARGETS.addDevice.query },
-  { key: 'video', icon: 'VideoCameraAddOutlined', menu: HOME_TARGETS.addVideo.menus[0], query: HOME_TARGETS.addVideo.query },
-  { key: 'screen', icon: 'DashboardOutlined', menu: 'visualization/project', query: { action: 'create', kind: 'screen' } },
-  { key: 'collector', icon: 'FundOutlined', menu: 'data-collect', privateOnly: true },
-  { key: 'card', icon: 'WifiOutlined', menu: 'iot-card/CardManagement', privateOnly: true },
-]
+import { getQuickStartActions } from '../services/quickStart'
+import { resourceCapabilitiesKey, useResourceCapabilities } from './useResourceCapabilities'
 
 /** 只使用当前菜单编码；无访问权限显示禁用，设计预览不触发业务跳转。 */
 export function useQuickStart(isEdit: Ref<boolean>, isPreview?: Ref<boolean>) {
   const menu = useMenuStore()
-  const resourceCapabilities = inject(resourceCapabilitiesKey, undefined)
   const preview = computed(() => isEdit.value || Boolean(isPreview?.value))
-  const resolveMenu = (action: QuickStartAction) => {
-    if (menu.getMenu(action.menu)) return action.menu
-    if (action.fallbackMenu && menu.getMenu(action.fallbackMenu)) return action.fallbackMenu
-    return undefined
-  }
-  const visibleActions = computed(() => actions.filter(action => {
-    if (!action.privateOnly) return true
-    if (preview.value) return true
-    if (isSaaS) return false
-    // 正式资源中心与卡片使用同一能力结果；设计器及其他宿主保留原有可见规则。
-    if (!resourceCapabilities) return true
-    return action.key === 'collector'
-      ? resourceCapabilities.capabilities.value.collection
-      : resourceCapabilities.capabilities.value.networkCards
-  }).map(action => ({
+  // 正式页面复用一次检查；独立组件也检查能力，不能因缺少页面注入而展示全部入口。
+  const resourceCapabilities = inject(resourceCapabilitiesKey, undefined) ?? useResourceCapabilities(preview)
+  const visibleActions = computed(() => getQuickStartActions({
+    ...resourceCapabilities.capabilities.value, edge: resourceCapabilities.modules.value.edge,
+  }, isSaaS, preview.value).map(action => ({
     ...action,
-    disabled: !preview.value && !resolveMenu(action),
+    disabled: !preview.value && !menu.getMenu(action.menu),
   })))
   /** 独立路由新增页直接直达，弹层类新增跳转到列表并携带创建动作。 */
   function open(key: string) {
     const action = visibleActions.value.find(item => item.key === key)
     if (preview.value || !action) return
-    const targetMenu = resolveMenu(action)
-    if (!targetMenu) return
-    menu.jumpPage(targetMenu, {
-      params: targetMenu === action.menu ? action.params : undefined,
+    if (!menu.getMenu(action.menu)) return
+    menu.jumpPage(action.menu, {
       query: action.query,
     })
   }
-  return { actions: visibleActions, open }
+  return { actions: visibleActions, open, ...resourceCapabilities }
 }
