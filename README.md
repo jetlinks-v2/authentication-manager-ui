@@ -779,6 +779,7 @@ URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显�
 
 ### 第三方订阅强制签名与 Provider 目录
 
+- 订阅列表提供“重置重试次数”，对接现有 `POST /application/{applicationId}/subscriptions/{subscriptionId}/_retry-failed`。确认后按后端默认范围重新排队最近 12 小时已终止的失败任务，重置本轮重试次数，保留累计投递次数与审计记录；反馈实际重新排队数量，不表示已经投递成功。仅应用和订阅均启用时可操作，权限及配置由后端校验。实现位于 `applicationSubscription.ts`、`useSubscriptions.ts`、`useSubscriptionPanel.ts` 和 `SubscriptionPanel.vue`，不改后端协议。本次仅源码与差异检查，未构建、类型检查或页面验收，需人工验证确认、重复点击防护、失败提示及零/非零数量反馈。
 - 仅现有第三方订阅抽屉、列表/详情摘要及凭据生命周期提示，不修改运营端 ui、菜单或应用模型。 订阅列表在 `components/SubscriptionPanel.vue` 复用 `pro-table__no-padding` 去掉表格额外内边距，使左右边缘与上方筛选栏、操作按钮对齐。移除订阅面板顶部的运行身份说明及父应用未启用提示，保留请求错误提示和父应用未启用时的订阅启用限制；仅做源码与差异检查，页面效果待人工确认。
 - 目录返回 Provider 的 id/name/events，名称由后端国际化；前端不维护类别 ID 或业务名称映射。选择 Provider 展开其当前具体事件 ID，保存仍为 eventTypes 与 configuration，保留多范围、半选、不可用项；语言切换只刷新目录，不重置草稿，新增事件不自动扩大旧订阅。
 - API HTTP 强制使用当前 Client ID / Client Secret，前端不读取或提交明文 Secret；业务同步使用模板派生通知密钥。HMAC 验签不是正文加密，签名值不是 Secret；接收端预存密钥、按原始字节验签并处理时效/幂等，生产使用 HTTPS，凭据重置后同步更新接收端。

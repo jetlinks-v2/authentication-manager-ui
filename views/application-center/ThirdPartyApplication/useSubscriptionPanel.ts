@@ -48,7 +48,7 @@ export const useSubscriptionPanel = (application: () => ApiApplication) => {
     { title: t('ApiApplication.subscription.state'), dataIndex: 'state', key: 'state', scopedSlots: true, width: 100 },
     { title: t('ApiApplication.subscription.validation'), key: 'validation', scopedSlots: true, width: 110 },
     { title: t('ApiApplication.subscription.createTime'), dataIndex: 'createTime', key: 'createTime', scopedSlots: true, width: 170 },
-    { title: t('ApiApplication.subscription.actions'), key: 'action', scopedSlots: true, fixed: 'right', width: 260 },
+    { title: t('ApiApplication.subscription.actions'), key: 'action', scopedSlots: true, fixed: 'right', width: 370 },
   ])
   const channelName = (id?: string) => channelLabel(id, t)
   const executionLabel = (state?: string) => t(executionStateKey(state))
@@ -72,6 +72,10 @@ export const useSubscriptionPanel = (application: () => ApiApplication) => {
     if (row.state !== 'enabled' && !applicationEnabled.value) return
     if (await api.changeState(application().id, row)) reload()
   }
+  const retryFailed = async (row: ApplicationSubscription) => {
+    if (!applicationEnabled.value || row.state !== 'enabled') return
+    if (await api.retryFailed(application().id, row.id)) reload()
+  }
   const remove = async (row: ApplicationSubscription) => {
     if (await api.remove(application().id, row.id)) reload()
   }
@@ -82,5 +86,5 @@ export const useSubscriptionPanel = (application: () => ApiApplication) => {
   // 后端目录文案随请求语言返回；切换语言只刷新目录，不重置正在编辑的草稿。
   watch(locale, () => { void api.loadCatalog(application().id) })
   return { ...api, tableRef, filters, editorOpen, detailOpen, detailLoading, editing, selected, applicationEnabled,
-    filterColumns, columns, refresh, requestPage, handleSearch, eventSummary, scopeSummary, channelName, executionLabel, openEditor, openDetail, save, check, toggle, remove }
+    filterColumns, columns, refresh, requestPage, handleSearch, eventSummary, scopeSummary, channelName, executionLabel, openEditor, openDetail, save, check, toggle, retryFailed, remove }
 }

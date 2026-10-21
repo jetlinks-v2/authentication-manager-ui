@@ -33,6 +33,12 @@
               {{ $t(row.state === 'enabled' ? 'ApiApplication.actions.disable' : 'ApiApplication.actions.enable') }}
             </a-button>
           </a-popconfirm>
+          <a-popconfirm :title="$t('ApiApplication.subscription.retryConfirm')"
+            :disabled="saving || !applicationEnabled || row.state !== 'enabled'" @confirm="retryFailed(row)">
+            <a-button type="link" size="small" :disabled="saving || !applicationEnabled || row.state !== 'enabled'">
+              {{ $t('ApiApplication.subscription.retry') }}
+            </a-button>
+          </a-popconfirm>
           <a-popconfirm :title="$t('ApiApplication.subscription.deleteConfirm')" @confirm="remove(row)">
             <a-button type="link" size="small" danger :disabled="saving">{{ $t('ApiApplication.actions.delete') }}</a-button>
           </a-popconfirm>
@@ -93,7 +99,7 @@ const { t: $t } = useI18n()
 const { providers, channels, catalogLoading, catalogError, listError, operationError, saving, validation, clearFeedback,
   tableRef, filters, editorOpen, detailOpen, detailLoading, editing, selected, applicationEnabled,
   filterColumns, columns, refresh, requestPage, handleSearch, eventSummary, scopeSummary, channelName, executionLabel,
-  openEditor, openDetail, save, check, toggle, remove } = useSubscriptionPanel(() => props.application)
+  openEditor, openDetail, save, check, toggle, retryFailed, remove } = useSubscriptionPanel(() => props.application)
 </script>
 
 <style scoped>

@@ -85,6 +85,8 @@ export const enableSubscription = (applicationId: string, id: string) =>
   api.post<number>(`${item(applicationId, id)}/_enable`)
 export const disableSubscription = (applicationId: string, id: string) =>
   api.post<number>(`${item(applicationId, id)}/_disable`)
+export const retryFailedSubscription = (applicationId: string, id: string) =>
+  api.post<number>(`${item(applicationId, id)}/_retry-failed`)
 export const deleteSubscription = (applicationId: string, id: string) =>
   api.remove<number>(item(applicationId, id))
 export const validateSubscription = (applicationId: string, data: SubscriptionConfiguration) =>

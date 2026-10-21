@@ -4,7 +4,7 @@ import { onlyMessage } from '@jetlinks-web/utils'
 import {
   createSubscription, deleteSubscription, disableSubscription, enableSubscription,
   getSubscription, querySubscriptionChannels, querySubscriptionEvents, querySubscriptions,
-  updateSubscription, validateSubscription,
+  retryFailedSubscription, updateSubscription, validateSubscription,
 } from '@authentication-manager-ui/api/application-center/applicationSubscription'
 import type { QueryPayload } from '@authentication-manager-ui/api/application-center/apiApplication'
 import type { ApplicationSubscription, SubscriptionChannel, SubscriptionConfiguration, SubscriptionEventProvider, SubscriptionValidation } from '@authentication-manager-ui/api/application-center/applicationSubscription'
@@ -61,13 +61,13 @@ export const useSubscriptions = () => {
     } catch (cause) { if (!disposed) operationError.value = applicationError(cause, t) }
     finally { if (!disposed) saving.value = false }
   }
-  const run = async (request: () => Promise<unknown>, message: string) => {
+  const run = async <T>(request: () => Promise<T>, message: string | ((response: T) => string)) => {
     if (saving.value || disposed) return false
     saving.value = true; clearFeedback()
     try {
-      await request()
+      const response = await request()
       if (disposed) return false
-      onlyMessage(t(message))
+      onlyMessage(typeof message === 'function' ? message(response) : t(message))
       return true
     } catch (cause) { if (!disposed) operationError.value = applicationError(cause, t); return false }
     finally { if (!disposed) saving.value = false }
@@ -80,6 +80,8 @@ export const useSubscriptions = () => {
   const changeState = (applicationId: string, subscription: ApplicationSubscription) => run(() =>
     subscription.state === 'enabled' ? disableSubscription(applicationId, subscription.id) : enableSubscription(applicationId, subscription.id),
     'ApiApplication.subscription.stateUpdated')
+  const retryFailed = (applicationId: string, id: string) => run(() => retryFailedSubscription(applicationId, id),
+    response => t('ApiApplication.subscription.retryQueued', { count: responseBody<number>(response) }))
   const remove = (applicationId: string, id: string) => run(() => deleteSubscription(applicationId, id), 'ApiApplication.subscription.deleted')
   const detail = async (applicationId: string, id: string) => {
     operationError.value = ''
@@ -89,5 +91,5 @@ export const useSubscriptions = () => {
     } catch (cause) { if (!disposed) operationError.value = applicationError(cause, t) }
   }
   return { providers, channels, catalogLoading, catalogError, listError, operationError, saving, validation,
-    clearFeedback, loadCatalog, query, check, save, changeState, remove, detail }
+    clearFeedback, loadCatalog, query, check, save, changeState, retryFailed, remove, detail }
 }
