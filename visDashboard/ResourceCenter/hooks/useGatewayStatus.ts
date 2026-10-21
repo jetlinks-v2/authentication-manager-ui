@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import dayjs from 'dayjs'
 import { useDocumentVisibility } from '@vueuse/core'
 import { useGatewayRotation } from './useGatewayRotation'
+import { useDashboardModules } from '../../useDashboardModules'
 import { getProjectCodeFromLocation } from '@jetlinks-web-core/utils/project-runtime'
 import { settingsOf, type ResourceInfo } from '../shared'
 import { gatewayMetrics, loadGatewayStatuses, loadGatewayHistory, type GatewayStatus, type GatewayMetric, type GatewayPoint } from '../services/gatewayStatus'
@@ -21,6 +22,7 @@ export function useGatewayStatus(info: Ref<ResourceInfo | undefined>, isEdit: Re
   const trendLoading = ref(false), trendError = ref(false)
   const active = ref(true)
   const preview = computed(() => isEdit.value || Boolean(info.value?.componentProps?.preview))
+  const modules = useDashboardModules(preview)
   const config = computed(() => settingsOf('VideoPlaybackTrend', info.value))
   const title = computed(() => config.value.title && !['视频播放趋势', 'Video playback trend'].includes(config.value.title)
     ? config.value.title : t('resourceDashboard.gatewayStatus.title'))
@@ -42,7 +44,7 @@ export function useGatewayStatus(info: Ref<ResourceInfo | undefined>, isEdit: Re
   const rotation = useGatewayRotation({
     ids: computed(() => rows.value.map(item => item.id)),
     selectedId,
-    enabled: computed(() => active.value && !preview.value && visibility.value === 'visible'
+    enabled: computed(() => modules.value.edge && active.value && !preview.value && visibility.value === 'visible'
       && !loading.value && !error.value && !trendLoading.value),
   })
   const trendTitle = computed(() => t('resourceDashboard.gatewayStatus.trendTitle', {
@@ -58,7 +60,7 @@ export function useGatewayStatus(info: Ref<ResourceInfo | undefined>, isEdit: Re
   let timer: ReturnType<typeof setTimeout> | undefined
 
   async function refresh() {
-    if (!active.value) return
+    if (!active.value || !modules.value.edge) return
     const current = ++generation
     clearTimeout(timer)
     loading.value = !gateways.value.length
@@ -81,7 +83,7 @@ export function useGatewayStatus(info: Ref<ResourceInfo | undefined>, isEdit: Re
     points.value = []; trendError.value = false; trendLoading.value = false
     const gateway = selected.value
     const property = gateway?.metrics[metric.value]?.property
-    if (!active.value || !gateway || !property) return
+    if (!active.value || !modules.value.edge || !gateway || !property) return
     trendLoading.value = true
     try {
       const end = Date.now(), value = gateway.metrics[metric.value]!.value
@@ -97,10 +99,11 @@ export function useGatewayStatus(info: Ref<ResourceInfo | undefined>, isEdit: Re
     if (!value.some(item => item.id === selectedId.value)) selectedId.value = value[0]?.id || ''
   }, { immediate: true })
   watch([selected, metric, active], refreshTrend)
-  watch([preview, active, metric, () => config.value.refreshSeconds,
+  watch([preview, modules, active, metric, () => config.value.refreshSeconds,
     () => JSON.stringify([getProjectCodeFromLocation(), route.params.projectId, route.query.projectId])], () => {
     ++generation; ++trendGeneration; clearTimeout(timer)
     gateways.value = []; points.value = []; unit.value = ''
+    loading.value = false; trendLoading.value = false
     if (active.value) void refresh()
   }, { immediate: true, flush: 'sync' })
   onActivated(() => { active.value = true })

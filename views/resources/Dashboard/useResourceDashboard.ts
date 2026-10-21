@@ -7,6 +7,7 @@ import { kinds,typeOf,type ResourceKind } from '../../../visDashboard/ResourceCe
 import { provideResourceCapabilities, useResourceCapabilities } from '../../../visDashboard/ResourceCenter/hooks/useResourceCapabilities'
 import { buildPrivateResourceLayout, resourceLayoutMode, saasResourceLayout } from './resourceDashboardLayout'
 import { migrateResourceLayout, resourceLayoutStorageKey } from './resourceLayoutStorage'
+import { getQuickStartActions } from '../../../visDashboard/ResourceCenter/services/quickStart'
 
 const thumbnails = import.meta.glob('../../../visDashboard/ResourceCenter/*/thumbnail.svg', { eager: true,query: '?url',import: 'default' }) as Record<string,string>
 
@@ -17,8 +18,12 @@ export function useResourceDashboard(preview: Ref<boolean> = ref(false), width: 
   const privateMode = computed(() => preview.value || !isSaaS)
   const allowed = computed(() => kinds.filter(kind => (
     kind === 'Collection' ? capabilities.capabilities.value.collection
-      : kind === 'NetworkCards' ? capabilities.capabilities.value.networkCards : true
+      : kind === 'NetworkCards' ? capabilities.capabilities.value.networkCards
+        : ['EdgeNodes', 'VideoPlaybackTrend'].includes(kind) ? capabilities.modules.value.edge : true
   )))
+  const actionCount = computed(() => getQuickStartActions({
+    ...capabilities.capabilities.value, edge: capabilities.modules.value.edge,
+  }, isSaaS, preview.value).length)
   const discovery = useDashboardCatalog(dashboardSources,computed(() => ({
     modules: ['authentication-manager-ui'],directories: ['visDashboard'],
     groups: ['authentication-manager-ui/visDashboard/ResourceCenter'],
@@ -32,7 +37,7 @@ export function useResourceDashboard(preview: Ref<boolean> = ref(false), width: 
   const dashboard = computed<DashboardValue>(() => ({
     canvas: { backgroundColor: 'transparent', gridLayout: { colNum: preview.value || !isSaaS ? 24 : 12, rowHeight: 16, marginHorizontal: 18, marginVertical: 18 } },
     components: (privateMode.value
-      ? buildPrivateResourceLayout(allowed.value, width.value, 4 + Number(capabilities.capabilities.value.collection) + Number(capabilities.capabilities.value.networkCards))
+      ? buildPrivateResourceLayout(allowed.value, width.value, actionCount.value)
       : saasResourceLayout).flatMap(([kind,x,y,w,h]) => {
       const type = typeOf(kind),definition = catalog.value.components[type]
       if (!definition) return []
