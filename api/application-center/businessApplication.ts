@@ -197,11 +197,12 @@ export const getBusinessApplication = (id: string) =>
 export const syncBusinessApplicationCredential = (id: string) =>
   apiRequest.post<void>(`/business-application/${encodeURIComponent(id)}/credential/_sync`)
 
-/** 获取模板定义的第三方跳转地址，不使用应用实例打开配置。 */
+/** 使用当前登录身份授权目标应用，不继承来源页面的租户和应用范围；准入由后端校验目标应用成员关系。 */
 export const getBusinessApplicationRedirect = (id: string) =>
   apiRequest.get<{ location: string }>(
     `/business-application/${encodeURIComponent(id)}/_redirect`,
-    { applicationScope: false },
+    undefined,
+    { applicationScope: false, tenantDomain: false },
   )
 
 export const createBusinessApplication = (data: Partial<BusinessApplicationEntity>) =>

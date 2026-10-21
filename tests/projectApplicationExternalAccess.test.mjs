@@ -3,6 +3,42 @@ import test from 'node:test'
 import { readFile } from 'node:fs/promises'
 import { build } from 'esbuild'
 import { buildApplicationConfiguration, buildInitialApplicationConfiguration } from '../views/application-center/ProjectApplication/applicationConfiguration.ts'
+import { applyApplicationScopeHeaders } from '../../../jetlinks-web-core/src/utils/application-scope.ts'
+
+const redirectApiBuild = await build({
+  entryPoints: [new URL('../api/application-center/businessApplication.ts', import.meta.url).pathname],
+  bundle: true, write: false, format: 'esm',
+  plugins: [{
+    name: 'redirect-request-fixture',
+    setup(plugin) {
+      plugin.onResolve({ filter: /^@jetlinks-web\/core$/ }, args => ({ path: args.path, namespace: 'request' }))
+      plugin.onLoad({ filter: /.*/, namespace: 'request' }, () => ({
+        contents: 'export const request = { get: (...args) => globalThis.redirectRequest(...args) }',
+      }))
+    },
+  }],
+})
+const { getBusinessApplicationRedirect } = await import(`data:text/javascript;base64,${Buffer.from(redirectApiBuild.outputFiles[0].text).toString('base64')}`)
+
+test('redirect uses the same login identity without inherited page scopes or query options', async () => {
+  let captured
+  globalThis.redirectRequest = async (url, params, options = {}) => {
+    const headers = { 'x-asset-scope': 'business_application:current-app', 'X-Access-Token': 'session' }
+    applyApplicationScopeHeaders(headers, options.applicationScope, 'current-app')
+    captured = { url, params, headers, options }
+    return { result: { location: 'https://training.example/ui/?code=one-time-code' } }
+  }
+  try {
+    await getBusinessApplicationRedirect('training/app')
+    assert.equal(captured.url, '/business-application/training%2Fapp/_redirect')
+    assert.equal(captured.params, undefined)
+    assert.equal(captured.options.tenantDomain, false)
+    assert.equal(captured.options.projectContext, undefined)
+    assert.deepEqual(captured.headers, { 'X-Access-Token': 'session' })
+  } finally {
+    delete globalThis.redirectRequest
+  }
+})
 
 const { outputFiles } = await build({
   entryPoints: [new URL('../views/application-center/ProjectApplication/useApplicationOpenGuard.ts', import.meta.url).pathname],
