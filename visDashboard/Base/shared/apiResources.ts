@@ -39,7 +39,7 @@ export const loadResourceRows = async (select: (row: HomeRow) => boolean = () =>
     collector: async () => countOf(await request.post('/data-collect/collector/_count', {}, { hiddenError: true })),
     card: () => pageCount('/network/card/detail/_query'),
     screen: () => pageCount('/visualization/project/_query', [{ column: 'projectType', termType: 'eq', value: 'bigScreen' }]),
-    template: () => pageCount('/visualization/template/_query', [{ column: 'searchCode', termType: 'eq', value: 'visTemplate:visProject:bigScreen' }]),
+    template: () => pageCount('/visualization/template/dimension/_query', [{ column: 'searchCode', termType: 'eq', value: 'visTemplate:visProject:bigScreen' }]),
     ...Object.fromEntries(['image', 'component', 'model'].map(type => [type, () => pageCount('/visualization/resource/latest/_query', [{ column: 'searchCode', termType: 'in', value: `visResource:${type}` }])])),
     agent: () => pageCount('/ai/agent/detail/_query'),
     scene: () => pageCount('/scene/_query'),

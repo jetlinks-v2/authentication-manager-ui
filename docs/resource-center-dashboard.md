@@ -152,6 +152,12 @@ SaaS 布局将设备分布置于快速开始下方（x=0、y=13、w=6、h=16）�
 
 接入验证：浏览器直接访问并刷新 `/resources/dashboard`、从概览点击顶部资源中心菜单均正常进入，无临时注入容器。当前 SaaS 环境正式渲染 7 个组件，私有化专属的采集与物联网卡不实例化；配置/添加/看板设置入口和拖动手柄数量均为 0，类型与时间切换正常。画布两层容器 overflowY 均为 visible，由页面外层滚动。新增页面 53 行，SFC 脚本/模板/样式编译通过；以模块 tsconfig 为基础、仅 include 此页面与 core env/auto-imports 的定向 `vue-tsc --noEmit` 通过（0 条诊断）。本次页面装配不执行全项目 build/lint。
 
+### 模板数量查询口径
+
+概览与资源中心的模板统计统一使用 `POST /visualization/template/dimension/_query`，保留 `searchCode=visTemplate:visProject:bigScreen`、`pageIndex=0`、`pageSize=1`，数量读取 `result.total`。实现入口为 `visDashboard/Base/shared/apiResources.ts` 与 `visDashboard/ResourceCenter/services/metrics.ts`。`searchCode` 属于分类绑定表，普通模板 `/_query` 不支持该列；严格模式会拒绝此条件，非严格模式会忽略它。
+
+验证：在 runtime-ui 执行 `node modules/authentication-manager-ui/scripts/verify-resource-dashboard.cjs` 通过，两处 TypeScript 语法检查及 `git diff --check` 通过；差异核对仅改变接口地址，保留请求条件和总数解析。验证脚本使用模拟请求并保留隔离 Hook 的 Vue 生命周期提示。登录后已在 `http://localhost:9200/#/overview` 确认“大屏模板”正常显示为 3 个；资源中心页面未单独复验。模块与工作区未配置 lint 脚本；按本机性能约束未执行完整类型检查和构建，需要时在 runtime-ui 执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json`、`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`。发布时更新 runtime-ui 静态资源，无需重启后端。
+
 ## 实施与验证
 
 1. 核验概览统计 API、采集统计、物联网卡流量和空间绑定契约。

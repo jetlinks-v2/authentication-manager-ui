@@ -31,7 +31,7 @@ export function loadVisualization() {
     image: () => count('/visualization/resource/latest/_query', [{ column: 'searchCode', termType: 'in', value: 'visResource:image' }]),
     component: () => count('/visualization/resource/latest/_query', [{ column: 'searchCode', termType: 'in', value: 'visResource:component' }]),
     ...(getDashboardModules().model ? { model: () => count('/visualization/resource/latest/_query', [{ column: 'searchCode', termType: 'in', value: 'visResource:model' }]) } : {}),
-    template: () => count('/visualization/template/_query', [{ column: 'searchCode', value: 'visTemplate:visProject:bigScreen' }]),
+    template: () => count('/visualization/template/dimension/_query', [{ column: 'searchCode', value: 'visTemplate:visProject:bigScreen' }]),
   })
 }
 
