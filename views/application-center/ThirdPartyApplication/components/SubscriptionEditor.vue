@@ -72,7 +72,7 @@
   <a-modal v-model:open="previewOpen" :title="$t('ThirdPartyApplication.subscription.eventGuide')" :footer="null" :width="680">
     <a-tabs>
       <a-tab-pane v-for="group in eventGroups" :key="group.id" :tab="group.name">
-        <a-empty v-if="!group.events.length" :description="$t('ApiApplication.subscription.noEvents')" />
+        <CloudEmpty v-if="!group.events.length" :description="$t('ApiApplication.subscription.noEvents')" />
         <a-collapse v-else accordion>
           <a-collapse-panel v-for="event in group.events" :key="event.id" :header="event.name || event.id">
             <p v-if="event.description">{{ event.description }}</p>

@@ -16,9 +16,9 @@
     <a-alert v-if="error" type="error" show-icon :message="error" class="grant-alert" />
     <a-alert v-if="hiddenGrants" type="warning" show-icon :message="$t('ThirdPartyApplication.direct.hiddenGrants')" class="grant-alert" />
     <a-spin :spinning="loading">
-      <a-empty v-if="loaded && !groups.length" :description="$t('ThirdPartyApplication.direct.noGroups')">
+      <CloudEmpty v-if="loaded && !groups.length" :description="$t('ThirdPartyApplication.direct.noGroups')">
         <a-button v-if="canManageGroups" @click="openGroupManager">{{ $t('ThirdPartyApplication.direct.manageGroups') }}</a-button>
-      </a-empty>
+      </CloudEmpty>
       <a-collapse v-else>
         <a-collapse-panel v-for="group in groups" :key="group.id">
           <template #header><span>{{ group.name || group.id }}</span><a-tag class="scope-tag">{{ group.id }}</a-tag></template>
@@ -26,7 +26,7 @@
             <a-button type="link" :disabled="saving || !operations(group).some(item => !item.disabled)" @click="selectAll(group)">{{ $t('ThirdPartyApplication.direct.selectAll') }}</a-button>
             <a-button type="link" :disabled="saving" @click="update(group.id, [])">{{ $t('ThirdPartyApplication.direct.clearGroup') }}</a-button>
           </a-space>
-          <a-empty v-if="!operations(group).length" :description="$t('ThirdPartyApplication.direct.groupWithoutOperations')" />
+          <CloudEmpty v-if="!operations(group).length" :description="$t('ThirdPartyApplication.direct.groupWithoutOperations')" />
           <a-alert v-else-if="operations(group).some(item => item.disabled)" type="warning" show-icon class="grant-alert"
             :message="$t('ThirdPartyApplication.direct.unavailableOperations')" />
           <a-checkbox-group :value="selected[group.id] || []" :disabled="saving" class="operation-list" @change="values => update(group.id, values as string[])">

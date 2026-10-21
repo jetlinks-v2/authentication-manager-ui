@@ -415,6 +415,11 @@ Verification result:
 
 ### 应用管理类型分流与第三方标准接入
 
+第三方打开接口的请求配置：`getBusinessApplicationRedirect` 将 `applicationScope: false`、`tenantDomain: false`
+放在 `request.get` 的第三个参数，仅该身份授权请求不继承来源页面的应用、租户选择，保留原项目登录凭证。
+后端仍校验目标应用启用状态、最新成员关系及 Token 固有权限限制。第二个参数是查询参数，误放会形成
+`_redirect?applicationScope=false`，不能关闭范围；仅关闭应用范围时，项目页面附带的租户范围仍会令签发 Code 返回 403。
+
 应用管理使用同一创建入口，通过模板 provider 区分普通业务应用与第三方应用，不新增后端应用类型或无模板创建接口。实际前端模块为 runtime-ui/modules/authentication-manager-ui；开放平台 API 应用仍使用独立 /api-application 模型。
 
 - 创建第三方实例时仅选择 provider=third-party 的模板及填写基本信息，不配置出站 OAuth2、通知 Token 或实例 callback。

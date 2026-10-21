@@ -59,14 +59,14 @@
                   <CredentialPanel v-if="activeTab === 'oauth'" :key="runtimeApplicationId" :application-id="runtimeApplicationId" :active="true" class="tab-content" />
                   <SubscriptionPanel v-else :key="runtimeApplicationId" :application="application" class="tab-content" />
                 </template>
-                <a-empty v-else :description="$t('ThirdPartyApplication.project.runtimeUnavailable')" />
+                <CloudEmpty v-else :description="$t('ThirdPartyApplication.project.runtimeUnavailable')" />
               </a-spin>
             </template>
           </div>
         </template>
-        <a-empty v-else-if="!loading" :description="$t('ThirdPartyApplication.project.notFound')">
+        <CloudEmpty v-else-if="!loading" :description="$t('ThirdPartyApplication.project.notFound')">
           <a-button @click="back">{{ $t('ThirdPartyApplication.back') }}</a-button>
-        </a-empty>
+        </CloudEmpty>
       </a-spin>
     </div>
     <IntegrationStateModal :action="action" @close="action = undefined" @saved="stateSaved" />

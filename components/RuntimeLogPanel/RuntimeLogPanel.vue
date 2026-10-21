@@ -94,7 +94,7 @@
           <pre v-if="canRead && hasRead && lines.length" ref="contentRef" class="runtime-log-page__content"
             tabindex="0" :aria-label="$t('runtimeLog.content')">{{ text }}</pre>
           <div v-else class="runtime-log-page__empty">
-            <a-empty :description="!resource ? loading ? $t('runtimeLog.loading') : $t('runtimeLog.noResources')
+            <CloudEmpty :description="!resource ? loading ? $t('runtimeLog.loading') : $t('runtimeLog.noResources')
               : canRead ? reading ? $t('runtimeLog.reading') : hasRead ? $t('runtimeLog.noMatches') : $t('runtimeLog.queryHint')
               : resource.compressed ? $t('runtimeLog.archiveOnly') : $t('runtimeLog.noRead')" />
           </div>

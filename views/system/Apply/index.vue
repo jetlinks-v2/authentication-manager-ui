@@ -1,7 +1,7 @@
 <template>
   <j-page-container>
     <FullPage hasPadding transparentBackground>
-      
+
         <div class="apply-container">
         <ConditionFilter
           :columns="columns"
@@ -171,8 +171,8 @@
           </template>
           <template #status="slotProps">
             <JBadgeStatus
-                :status="slotProps.state.value"
-                :text="slotProps.state.text"
+                :status="slotProps.state?.value"
+                :text="slotProps.state?.text"
                 :statusNames="{
                                 enabled: 'processing',
                                 disabled: 'error',
@@ -199,9 +199,9 @@
             </a-space>
           </template>
         </j-pro-table>
-	       
+
         </div>
-      
+
     </FullPage>
     <div class="dialogs">
       <OfficialAccountMenuDrawer
@@ -336,7 +336,7 @@ const table = {
     else menuStory.jumpPage('system/Apply/Save', {});
   },
   changeStatus: (row: any) => {
-    const state = row.state.value === 'enabled' ? 'disabled' : 'enabled';
+    const state = row.state?.value === 'enabled' ? 'disabled' : 'enabled';
     const response = changeApplyStatus_api(row.id, {state});
     response.then((resp: any) => {
       if (resp.status === 200) {
@@ -361,7 +361,8 @@ const table = {
       type: 'card' | 'table',
   ) => {
     if (!data) return [];
-    const disabled = data.state.value === 'enabled';
+    // 部分应用未返回 state，仅明确为 enabled 时按已启用处理。
+    const disabled = data.state?.value === 'enabled';
 
     const result = [
       {

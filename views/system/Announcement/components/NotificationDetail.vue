@@ -1,7 +1,7 @@
 <template>
   <a-spin :spinning="loading">
     <div class="announcement-notification-scroll">
-      <a-empty
+      <CloudEmpty
         v-if="unavailable"
         :description="$t('Announcement.notification.unavailable')"
       />
