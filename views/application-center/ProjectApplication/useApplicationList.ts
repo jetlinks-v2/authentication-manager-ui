@@ -7,6 +7,9 @@ import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { useApplicationOpenGuard } from './useApplicationOpenGuard'
 import { useProjectApplication } from './useProjectApplication'
 import type { ProjectApplication } from './types'
+import { createAssetOwnershipField } from '@jetlinks-web-core/components/AssetOwnershipCondition'
+import { useUserStore } from '@jetlinks-web-core/store/user'
+import { createOwnershipCreatorSelector } from './ownershipSelectors'
 
 /** 编排应用列表、筛选和创建后的刷新，复用现有应用服务及访问检查。 */
 export const useApplicationList = () => {
@@ -15,6 +18,7 @@ export const useApplicationList = () => {
   const router = useRouter()
   const menuStore = useMenuStore()
   const store = useProjectApplication()
+  const userStore = useUserStore()
   const loading = ref(false)
   const loadFailed = ref(false)
   const createOpen = ref(false)
@@ -31,6 +35,10 @@ export const useApplicationList = () => {
     { label: $t('ProjectApplication.common.disabled'), value: 'disabled' },
   ])
   const filterFields = computed<ConditionFilterField[]>(() => [
+    createAssetOwnershipField({
+      assetType: 'business_application', column: 'id', userId: userStore.userInfo.id,
+      createCreatorSelector: createOwnershipCreatorSelector,
+    }),
     {
       title: $t('ProjectApplication.create.name'),
       dataIndex: 'name',

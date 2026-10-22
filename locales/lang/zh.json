@@ -1,4 +1,8 @@
 {
+  "ProjectApplication.ownershipTree.search": "搜索组织名称",
+  "ProjectApplication.ownershipTree.empty": "没有匹配的组织",
+  "ProjectApplication.ownershipTree.hint": "勾选组织后，可通过“包含下级”查询其下级组织的数据",
+  "ProjectApplication.ownershipTree.apply": "确定",
   "AccountBinding.wechat": "绑定微信",
   "AccountBinding.dingtalk": "绑定钉钉",
   "AccountBinding.bound": "已绑定",
