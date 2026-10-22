@@ -22,12 +22,13 @@
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'user'">
-          <a-space><a-avatar>{{ record.name.slice(0, 1) }}</a-avatar><strong>{{ record.name }}</strong></a-space>
+          <a-space><a-avatar>{{ (record.name || '').slice(0, 1) }}</a-avatar><strong>{{ record.name || $t('comm.table.empty') }}</strong></a-space>
         </template>
         <template v-else-if="column.key === 'role'">
           <a-select
             allow-clear
-            :value="record.roleId"
+            :value="record.roleId || undefined"
+            :placeholder="$t('comm.table.empty')"
             :disabled="record.username === 'admin'"
             class="role-select"
             :options="roleOptions"
@@ -50,6 +51,9 @@
               </a-button>
             </a-popconfirm>
           </a-space>
+        </template>
+        <template v-else-if="column.dataIndex">
+          {{ record[String(column.dataIndex)] || $t('comm.table.empty') }}
         </template>
       </template>
     </a-table>

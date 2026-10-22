@@ -425,6 +425,10 @@ Verification result: both Vue SFC script/template/scoped-style compilations pass
 
 Follow-up verification for member unbinding: locale JSON parsing and scoped `git diff --check` pass; static scans confirm the member table no longer renders the `职位` column or user enable/disable row action, and the only member-removal request added under ProjectApplication is `/business-application/{applicationId}/users/_unbind` with no `/saas` path in the touched files. `UserManagement.vue` is 134 lines and detail `index.vue` is 230 lines. Build and `tsc` were not run per the task constraint; SFC parser verification is pending because the current install does not resolve `@vue/compiler-sfc` from this module.
 
+运行时应用详情的成员表格（`runtime-ui/modules/authentication-manager-ui`）：`UserManagement.vue` 的姓名、账号、组织、手机号、邮箱及未分配角色统一使用 core 的 `comm.table.empty`（未配置 / Not Configured）。角色空值只在选择框展示层转为 `undefined` 以启用 placeholder，提交仍使用原有角色 ID 和清空规则。
+
+验证：真实 Vue SFC 搭配 Ant Design Vue Table/Select 及 core 中英文资源的 8 组 SSR 场景通过，覆盖空字符串、null、undefined、已有值、数据不被展示文案污染和管理员角色禁用；改动前源码可复现空角色 placeholder 断言失败。`node --test tests/applicationRolePermissionScope.test.mjs tests/projectApplicationExternalAccess.test.mjs` 共 19 项通过，模块 Vite 生产构建通过（30.57 秒）。在 `runtime-ui` 执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false`，修改前后均为 614 条既有诊断，无新增；未配置独立 lint 脚本，`git diff --check` 通过。登录后的真实应用详情及英文长文案布局仍待通过 `pnpm dev` 复核。
+
 ### Project Application Detail Action Plan
 
 Status: implemented and statically verified.
