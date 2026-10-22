@@ -1,7 +1,18 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
-import {
+import { build } from 'esbuild'
+import { coreI18nPlugin } from '../../../jetlinks-web-core/tests/helpers/coreI18nPlugin.mjs'
+
+const { outputFiles } = await build({
+  entryPoints: [new URL('../views/system/ThirdPartyLogin/model.ts', import.meta.url).pathname],
+  bundle: true,
+  write: false,
+  platform: 'node',
+  format: 'esm',
+  plugins: [coreI18nPlugin()],
+})
+const {
   createDraft,
   filterConfigs,
   fromApplication,
@@ -9,7 +20,7 @@ import {
   isSupportedApplication,
   loginMethods,
   toApplicationPayload,
-} from '../views/system/ThirdPartyLogin/model.ts'
+} = await import(`data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString('base64')}`)
 
 test('only exposes login methods backed by existing providers', () => {
   assert.deepEqual(loginMethods, ['wechat', 'dingtalk', 'oauth2'])

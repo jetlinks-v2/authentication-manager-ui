@@ -51,7 +51,7 @@
             />
           </a-form-item>
           <div v-else class="setting-value setting-description">
-            {{ application.description || template.description || '--' }}
+            {{ application.description || template.description || $t('comm.table.empty') }}
           </div>
         </div>
 
@@ -62,7 +62,7 @@
 
         <div v-if="template.provider === 'third-party'" class="setting-row">
           <div class="setting-label">{{ $t('ApplicationTemplate.parameters.redirectUri') }}</div>
-          <div class="setting-value">{{ template.redirectUri || '--' }}</div>
+          <div class="setting-value">{{ template.redirectUri || $t('comm.table.empty') }}</div>
         </div>
 
         <div v-if="template.provider !== 'third-party'" class="setting-row">

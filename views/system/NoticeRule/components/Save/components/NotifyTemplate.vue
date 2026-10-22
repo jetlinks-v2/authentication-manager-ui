@@ -1,4 +1,14 @@
 <template>
+
+    <DefineEmptyCreate>
+      <j-permission-button
+          @click="onAdd"
+          type="primary"
+          :hasPermission="['notice/Template:add']"
+      >
+          {{ $t('components.NotifyTemplate.016284-0') }}
+      </j-permission-button>
+    </DefineEmptyCreate>
     <div class="header">
         <ConditionFilter
             :columns="columns"
@@ -7,13 +17,7 @@
             @change="({filter}) => handleSearch(filter)"
             style="padding: 0"
         />
-        <j-permission-button
-            @click="onAdd"
-            type="primary"
-            :hasPermission="['notice/Template:add']"
-        >
-            {{ $t('components.NotifyTemplate.016284-0') }}
-        </j-permission-button>
+        <EmptyCreateButton />
     </div>
     <div class="alert">
         <AIcon type="InfoCircleOutlined" />
@@ -37,6 +41,11 @@
                 onChange: onSelectChange,
             }"
         >
+          <template #emptyText>
+            <CloudEmpty :search="params?.terms" :search-name="$t('EmptyCreate.names.notification_templates')">
+              <EmptyCreateButton />
+            </CloudEmpty>
+          </template>
             <template #card="slotProps">
                 <CardBox
                     :showStatus="false"
@@ -92,6 +101,8 @@
 </template>
 
 <script lang="ts" setup>
+import { createReusableTemplate } from '@vueuse/core'
+
 import TemplateApi from '@authentication-manager-ui/api/notice/template';
 import { MSG_TYPE, NOTICE_METHOD } from './const';
 import { noticeType, _variableMap } from '../../../data';
@@ -231,6 +242,8 @@ watch(
         immediate: true,
     },
 );
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style lang="less" scoped>

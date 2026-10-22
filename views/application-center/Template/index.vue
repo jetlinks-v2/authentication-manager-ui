@@ -1,5 +1,16 @@
 <template>
-  <j-page-container>
+
+  <DefineEmptyCreate>
+    <j-permission-button
+     :hasPermission="`${permission}:add`"
+     type="primary"
+     @click="table.openCreateDialog()"
+    >
+     <AIcon type="PlusOutlined" />
+     {{ $t('ApplicationTemplate.list.add') }}
+    </j-permission-button>
+  </DefineEmptyCreate>
+  <j-page-container v-bind="$attrs">
     <FullPage class="application-template-page__content" transparentBackground>
       
         <div class="application-template-page">
@@ -15,6 +26,11 @@
 		            class="pro-table__no-padding"
 		            :scroll="{ y: 'calc(100% - 3.75rem)' }"
 		          >
+		            <template #emptyText>
+		              <CloudEmpty :search="queryParams?.terms" :search-name="$t('EmptyCreate.names.application_templates')">
+		                <EmptyCreateButton />
+		              </CloudEmpty>
+		            </template>
 		            <template #headerLeftRender>
 		              <div class="application-template-page__toolbar">
 		                <h2 class="application-template-page__title">
@@ -29,14 +45,7 @@
 					            :columns="columns"
 					            @change="table.handleSearch"
 				            />
-				            <j-permission-button
-					            :hasPermission="`${permission}:add`"
-					            type="primary"
-					            @click="table.openCreateDialog()"
-				            >
-					            <AIcon type="PlusOutlined" />
-					            {{ $t('ApplicationTemplate.list.add') }}
-				            </j-permission-button>
+				            <EmptyCreateButton />
 		              </a-flex>
 		            </template>
 		
@@ -93,6 +102,8 @@
 </template>
 
 <script setup lang="ts" name="ApplicationTemplateManage">
+import { createReusableTemplate } from '@vueuse/core'
+
 import ConditionFilter from '@jetlinks-web-core/components/ConditionFilter'
 import ApplicationTemplateCreateDialog from './components/ApplicationTemplateCreateDialog.vue'
 import { useApplicationTemplateList } from './useApplicationTemplateList'
@@ -109,6 +120,8 @@ const {
   normalizeState,
   table,
 } = useApplicationTemplateList()
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style lang="less" scoped>

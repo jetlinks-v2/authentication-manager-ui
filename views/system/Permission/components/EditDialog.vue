@@ -1,5 +1,15 @@
 <template>
-  <a-modal
+
+  <DefineEmptyCreate>
+    <a-button
+      type="dashed"
+      style="width: 100%; margin-top: 0.3125rem"
+      @click="clickAdd"
+    >
+      <AIcon type="PlusOutlined" /> {{ $t('components.EditDialog.859823-7') }}
+    </a-button>
+  </DefineEmptyCreate>
+  <a-modal v-bind="$attrs"
     open
     :title="dialogTitle"
     :width="1000"
@@ -49,6 +59,11 @@
         class="m-table"
         :scroll="{ y: 300 }"
       >
+        <template #emptyText>
+          <CloudEmpty :search-name="$t('ThirdPartyLogin.actions')">
+            <EmptyCreateButton />
+          </CloudEmpty>
+        </template>
         <template #bodyCell="{ column, record, index }">
           <template v-if="column.key === 'index'">
             {{ `#${index + 1}.` }}
@@ -83,17 +98,13 @@
         </template>
       </a-table>
     </a-form>
-    <a-button
-      type="dashed"
-      style="width: 100%; margin-top: 0.3125rem"
-      @click="clickAdd"
-    >
-      <AIcon type="PlusOutlined" /> {{ $t('components.EditDialog.859823-7') }}
-    </a-button>
+    <EmptyCreateButton />
   </a-modal>
 </template>
 
 <script setup lang="ts" name="EditDialog">
+import { createReusableTemplate } from '@vueuse/core'
+
 import {
   checkId_api,
   editPermission_api,
@@ -184,6 +195,8 @@ watchEffect(() => {
     ? [...props.data.actions]
     : [...defaultAction]
 })
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style lang="less" scoped>

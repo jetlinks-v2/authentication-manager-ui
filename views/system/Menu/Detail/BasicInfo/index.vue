@@ -82,18 +82,22 @@ const handleSave = async (params: any) => {
       menuStore.jumpPage('system/Menu/Detail', {
         params: { id: resp.result.id },
       })
+    } else {
+      // 刷新父级详情，避免随后编辑按钮时携带保存前的旧资产字段。
+      emits('refresh')
     }
   }
 }
 
+/** 合并基础信息与已校验的权限字段，权限表单对新旧资产字段拥有最终解释权。 */
 const onSave = async () => {
   const info = await basicFormRef.value?.onSave()
   const permission = await permissionFormRef.value?.onSave()
   const accessSupportValue = permission.accessSupport
   const params = {
     ...props.value,
-    ...permission,
     ...info,
+    ...permission,
     accessSupport: {
       value: accessSupportValue,
       label:
@@ -105,7 +109,7 @@ const onSave = async () => {
     },
     owner: props.value.owner || OWNER_KEY,
   }
-  handleSave(params)
+  await handleSave(params)
 }
 </script>
 

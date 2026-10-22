@@ -1,3 +1,4 @@
+import globalI18n from '@jetlinks-web-core/locales'
 import { request } from '@jetlinks-web/core'
 
 type JsonRecord = Record<string, unknown>
@@ -275,7 +276,7 @@ export const queryOverviewGatewayPage = async (pageSize = 4, pageIndex = 0): Pro
       const state = row.connectionStatus ?? row.status ?? row.state
       return {
         id,
-        name: textOf(row.name, id, '--'),
+        name: textOf(row.name, id, globalI18n.global.t('comm.table.empty')),
         productId: textOf(row.productId) || undefined,
         online: enumValueOf(state) === 'online',
       }

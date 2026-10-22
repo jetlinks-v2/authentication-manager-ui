@@ -12,6 +12,33 @@ Organizations use `OwnershipOrganizationTree.vue` and `useOwnershipOrganizationT
 
 Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/186) and the backend Context from [Components #1655](https://github.com/jetlinks-v2/jetlinks-components/pull/1655) / [Tenant #48](https://github.com/jetlinks-v2/jetlinks-tenant/pull/48). Regression command: `node --test tests/assetOwnershipCreator.test.mjs tests/assetOwnershipOrganizationTree.test.mjs`; coverage includes lazy registration, user query mapping, the actual setup-name transform, tag overflow and local filtering of over 20,000 nodes. Full type checking retains existing errors; final visual verification remains pending because the browser connection times out.
 
+## 菜单多资产表单兼容
+
+状态：已实施，专项回归与模块构建通过；登录环境验收待执行。
+
+目标与范围：运营端 `ui/modules/authentication-manager-ui` 的菜单新增、编辑表单支持选择多个资产类型。沿用现有详情页和 Ant Design Vue 表单；资产目录仍来自 `/asset/types`，菜单仍通过现有 `/menu` 接口保存。
+
+字段与兼容规则：
+
+- 表单字段、校验路径及提交主字段统一为 `assetTypes: string[]`。读取时与后端 `MenuEntity#getEffectiveAssetTypes` 保持一致：非空 `assetTypes` 优先，否则将旧 `assetType` 转为单元素数组；去重并保留目录中暂不可见的已有资产 ID，不合并两套字段以免恢复已取消项。
+- 保存单个资产时同步 `assetType`，保留旧字段读取方的单资产兼容性；保存多个资产时显式提交 `assetType: ""`，避免旧值残留及隐式退化为某一个资产。切换为不支持或间接控制时提交 `assetTypes: []`、`assetType: ""`，继续沿用关联菜单的现有规则。
+- `accessSupport` 回显兼容字符串及枚举对象；切换模式或切换菜单时重置本表单的资产/关联菜单状态，避免上一份草稿残留。
+
+实施入口：`api/system/menu.ts` 声明新旧资产字段和资产目录返回类型；`views/system/Menu/Detail/BasicInfo/permissionForm.ts` 集中处理回显、草稿隔离与提交兼容；`Permission.vue` 使用现有 `a-select mode="multiple"`，按数组校验至少一项。`BasicInfo/index.vue` 合并载荷时优先采用权限表单结果，更新成功后刷新父级详情，避免随后编辑按钮时重新提交旧资产字段；更新失败保留草稿。中英文沿用现有翻译键提示可多选，本次两个 Vue 文件均未超过 300 行。
+
+范围之外：不修改 `runtime-ui/`、公共权限组件、后端权限判定或数据库结构，不批量迁移菜单种子、已保存菜单和已有授权数据，不执行菜单初始化。
+
+兼容边界：多选无法用旧标量字段完整表达，因此多选时清空旧字段，完整资产集合由当前已支持多资产的后端读取。现有仅含旧字段的数据无需预先迁移；真实保存后的回显及权限效果仍需登录环境验证。
+
+验证结果：
+
+- 模块目录执行 `node --test tests/menuAssetTypes.test.mjs`，10 项全部通过。使用真实 Vue SFC 的 setup/template、状态和保存编排，替换目录/保存 I/O 与渲染控件，并使用 Ant Design Vue 所依赖的 `async-validator` 校验模板规则；覆盖旧标量、非空数组优先、去重及不可见 ID 保留、空/标量输入拒绝、模式切换、菜单切换、POST/PATCH 字段、新旧字段冲突、成功刷新及失败保留草稿/重试。
+- 在 `ui/` 执行 `pnpm check:ui-style -- --files modules/authentication-manager-ui/views/system/Menu/Detail/BasicInfo/Permission.vue modules/authentication-manager-ui/views/system/Menu/Detail/BasicInfo/index.vue`、`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`，均通过；生产构建转换 10,741 个模块，用时 18.83 秒，仍有现有 Rollup 输出选项、CSS 注释与大包提示。中英文 JSON 可解析且仅修改资产选择提示，`git diff --check` 通过。模块及工作区未配置 lint 脚本。
+- `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 未通过，共 628 项工作区诊断；本次变更行和资产目录调用方没有诊断。`api/system/menu.ts` 的剩余诊断位于与 HEAD 一致、未改动的 `getOwnMenuThree` 泛型调用，完整类型检查仍需清理既有问题后重跑同一命令。
+- 相邻回归 `node --test tests/menuSettingOwners.test.mjs tests/thirdPartyLoginMenu.test.mjs tests/applicationTemplateMenuPreview.test.mjs` 为 21/22 通过；唯一失败是 `thirdPartyLoginMenu.test.mjs` 仍期望开放平台父节点为 `application-center`，而当前 `baseMenu.json` 为 `platform/settings`，两份文件与 HEAD 均一致，本轮未调整菜单结构。
+
+待验证：登录环境中打开旧菜单、选择两项后保存重开、删到一项、切换支持/间接/不支持，以及保存后的真实授权效果。本轮自动化测试没有写入真实菜单或授权数据；源码与虚拟组件回归不替代真实接口验收。
+
 ## 用户表格行操作
 
 交付入口：代码提交 `6cc39dc3174ee51afbef68291efbcb1109914823`；[PR #109：完善角色分组权限与列表操作](https://github.com/jetlinks-v2/authentication-manager-ui/pull/109)，目标分支 `2.20`。
@@ -672,7 +699,7 @@ Verification result:
 
 菜单 `application-center/ThirdPartyApplication` 和列表标题统一显示为“开放平台”（英文 Open Platform）；本模块通过已有 `getMenuFilters` 入口按精确 code 同步 `name/i18nName`，已保存菜单无需为本次改名重新初始化。菜单 ID、路由和权限不变，`system/Apply` 的“第三方应用”名称不调整。同一入口的新增按钮、列表名称、详情/返回、编辑表单、操作提示和成功消息按应用对象命名（如新增应用、应用名称、应用详情和返回应用列表），中英文同步；真实 API 应用 ID、OAuth2 技术字段及接口数据模型保持不变。列表复用 `pro-table__no-padding` 去掉表格外层内边距，并移除行链接的水平 padding，使筛选栏、表格和分页外沿一致，表头与单元格文字对齐。本次仅完成源码、JSON 和差异核对，页面仍由用户人工验收。
 
-开放平台沿用平台的应用资产数据权限：菜单声明 `accessSupport: support`、`supportDataAccess: true`，单资产关联使用 `assetType: "application"`。修正范围仅为本模块 `baseMenu.json` 的开放平台节点：菜单编辑页 `views/system/Menu/Detail/BasicInfo/Permission.vue` 的下拉框绑定 `assetType`，原种子的 `assetTypes: ["application"]` 虽能被后端识别，却不能在该下拉框回显；改用与角色、用户菜单一致的单资产字段，不双写两套字段、不修改公共组件或其他多资产菜单。后端已有应用资产注册、实体资产注解及 `AssetsHolderCrudController`，不在前端添加创建人过滤。已保存菜单可在菜单管理中将“数据权限控制”设为“支持”并选择“应用”后保存，再按平台已有角色/组织授权流程设置范围；仅更新菜单种子不会修改数据库中的菜单及已有授权，不执行全量初始化。本次仅做源码与差异检查，未运行前端构建、测试或浏览器验收，初始化后的回显与真实权限过滤仍待人工确认。
+开放平台沿用平台的应用资产数据权限：菜单声明 `accessSupport: support`、`supportDataAccess: true`，现有种子中的单资产字段 `assetType: "application"` 继续兼容。菜单编辑页 `views/system/Menu/Detail/BasicInfo/Permission.vue` 当前统一绑定 `assetTypes` 多选数组，旧字段转换为 `["application"]` 回显；新数组优先，单选保存时同步旧字段，多选时显式清空旧字段，详见本文“菜单多资产表单兼容”。后端已有应用资产注册、实体资产注解及 `AssetsHolderCrudController`，不在前端添加创建人过滤。已保存菜单可在菜单管理中将“数据权限控制”设为“支持”并选择“应用”后保存，再按平台已有角色/组织授权流程设置范围；仅更新菜单种子不会修改数据库中的菜单及已有授权，不执行全量初始化。表单专项回归与模块构建结果见上方说明；初始化后的回显与真实权限过滤仍待登录环境确认。
 
 菜单种子通过 `showPage: ["application"]` 匹配应用管理权限；侧栏从服务端 `/menu/user-own/tree` 读取已保存菜单，修改本地种子不会自动更新现有环境。已有环境应由菜单管理员按既有流程单独增加并授权该入口，不执行全量菜单初始化。通用接口授权使用 `api_group` 查询、授权权限，菜单种子已声明；SaaS 项目数据授权不使用 API Group 代替业务 scope，控制面操作的项目管理员身份仍由后端校验。
 

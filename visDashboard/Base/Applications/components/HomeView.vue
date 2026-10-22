@@ -22,7 +22,7 @@
             <j-ellipsis v-if="chart.showDescription" class="home-muted home-description">{{ row.description || t('packages.ProjectHome.appNoDescription') }}</j-ellipsis>
             <span class="home-app-meta">
               <span v-if="row.application">{{ row.application.statusText || t(row.application.status === 'disabled' ? 'packages.ProjectHome.appDisabled' : 'packages.ProjectHome.appEnabled') }}</span>
-              <time v-if="chart.showDate && row.date && row.date !== '--'">{{ t('packages.ProjectHome.appCreated', { date: row.date.slice(0, 10) }) }}</time>
+              <time v-if="chart.showDate && row.date && Number.isFinite(Date.parse(row.date))">{{ t('packages.ProjectHome.appCreated', { date: row.date.slice(0, 10) }) }}</time>
             </span>
           </span>
           <RightOutlined class="home-app-arrow" />

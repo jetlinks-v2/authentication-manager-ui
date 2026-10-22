@@ -1,10 +1,16 @@
 <template>
-  <div>
+
+  <DefineEmptyCreate>
+    <template v-if="!context.readonly"><a-button v-if="!context.readonly" @click="emit('add')"><AIcon type="PlusOutlined" />{{ $t('ApiGroupManagement.operation.add') }}</a-button></template>
+  </DefineEmptyCreate>
+  <div v-bind="$attrs">
     <div class="section-head">
       <p>{{ $t('ApiGroupManagement.operation.hint') }}</p>
-      <a-button v-if="!context.readonly" @click="emit('add')"><AIcon type="PlusOutlined" />{{ $t('ApiGroupManagement.operation.add') }}</a-button>
+      <EmptyCreateButton v-if="!context.readonly" />
     </div>
-    <CloudEmpty v-if="!operations.length" :description="$t('ApiGroupManagement.operation.empty')" />
+    <CloudEmpty v-if="!operations.length" :description="$t('ApiGroupManagement.operation.empty')" :search-name="$t('ThirdPartyLogin.actions')">
+      <EmptyCreateButton />
+    </CloudEmpty>
     <a-collapse v-else v-model:activeKey="expanded">
       <a-collapse-panel v-for="(operation, index) in operations" :key="context.rows[index].key">
         <template #header>
@@ -41,6 +47,8 @@
   </div>
 </template>
 <script setup lang="ts">
+import { createReusableTemplate } from '@vueuse/core'
+
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ManagedApiOperation, RawOpenApiSpec } from '@authentication-manager-ui/api/application-center/apiGroupManagement'
@@ -57,6 +65,8 @@ const expanded = ref<number[]>([])
 watch(() => props.context.rows.map(row => row.key), (keys, previous = []) => {
   expanded.value = previous.length ? [...expanded.value.filter(key => keys.includes(key)), ...keys.filter(key => !previous.includes(key))] : keys.slice(0, 1)
 }, { immediate: true })
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 <style scoped>
 .section-head, .spec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
