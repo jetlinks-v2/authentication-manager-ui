@@ -20,7 +20,7 @@
   <div v-else class="metric-card">
     <div class="card-main">
       <div class="card-info">
-        <span class="card-title">{{ title || t(`resourceDashboard.${kind}`) }}</span>
+        <span class="card-title"><JEllipsis>{{ title || t(`resourceDashboard.${kind}`) }}</JEllipsis></span>
         <div class="value-row">
           <strong class="total-value">{{ value(kind === 'Visualization' ? 'screen' : 'total') }}</strong>
           <span class="unit">个</span>
@@ -42,6 +42,7 @@
 </template>
 
 <script setup lang="ts">
+import { Ellipsis as JEllipsis } from '@jetlinks-web/components'
 import { computed } from 'vue'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { useI18n } from 'vue-i18n'
@@ -120,9 +121,6 @@ function getDotColor(key: string, index: number) {
   font-size: 14px;
   color: #86909C;
   line-height: 20px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .value-row {
   display: flex;

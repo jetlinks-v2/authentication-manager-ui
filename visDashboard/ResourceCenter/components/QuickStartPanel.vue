@@ -12,8 +12,8 @@
         <span v-else class="icon" :class="item.key"><AIcon :type="item.icon" /></span>
       </div>
       <div class="copy">
-        <span class="title">{{ t(`resourceDashboard.action.${item.key}`) }}</span>
-        <small class="desc">{{ t(`resourceDashboard.actionDescription.${item.key}`) }}</small>
+        <span class="title"><JEllipsis>{{ t(`resourceDashboard.action.${item.key}`) }}</JEllipsis></span>
+        <small class="desc"><JEllipsis>{{ t(`resourceDashboard.actionDescription.${item.key}`) }}</JEllipsis></small>
       </div>
       <RightOutlined class="arrow" />
     </a-button>
@@ -21,6 +21,7 @@
 </template>
 
 <script setup lang="ts">
+import { Ellipsis as JEllipsis } from '@jetlinks-web/components'
 import { computed } from 'vue'
 import { RightOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
@@ -132,9 +133,6 @@ const iconMap: Record<string, string> = {
   font-weight: 500;
   line-height: 20px;
   color: #1D2129;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   transition: color 0.2s;
 }
 .desc {
@@ -142,9 +140,6 @@ const iconMap: Record<string, string> = {
   font-size: 12px;
   line-height: 16px;
   margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .arrow {
   flex-shrink: 0;

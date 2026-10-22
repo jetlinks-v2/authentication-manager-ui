@@ -21,9 +21,9 @@
           <div ref="rankingList" class="ranking-list">
             <button v-for="item in rows" :key="item.id" type="button" class="ranking-row"
               :class="{ selected: selectedId === item.id }" :aria-pressed="selectedId === item.id"
-              :title="`${item.name} ${item.text}`" @click="selectedId = item.id">
+              @click="selectedId = item.id">
               <span class="rank">{{ item.rank }}</span>
-              <span class="name">{{ item.name }}</span>
+              <span class="name"><JEllipsis :tooltip="{ title: `${item.name} ${item.text}` }">{{ item.name }}</JEllipsis></span>
               <span class="track"><span :style="{ width: `${item.width}%`, background: item.color }" /></span>
               <span class="value" :style="{ color: item.color }">{{ item.text }}</span>
             </button>
@@ -39,10 +39,10 @@
           <ResourceEmpty v-else-if="!hasHistory" icon="LineChartOutlined" :title="t('resourceDashboard.gatewayStatus.noHistory')" />
           <template v-else>
             <div class="trend-heading" :aria-label="trendTitle">
-              <div class="trend-name" :title="trendSummary.name">{{ trendSummary.name }}</div>
+              <div class="trend-name"><JEllipsis>{{ trendSummary.name }}</JEllipsis></div>
               <div class="trend-description">{{ trendSummary.description }}</div>
             </div>
-            <div class="chart"><Echarts :option="option" :library="[LineChart, GridComponent, TooltipComponent]" /></div>
+            <div class="chart"><Echarts :option="chartOption" :library="[LineChart, GridComponent, TooltipComponent]" /></div>
           </template>
         </div>
       </div>
@@ -50,7 +50,9 @@
   </section>
 </template>
 <script setup lang="ts">
-import { toRef } from 'vue'
+import { theme } from 'ant-design-vue'
+import { Ellipsis as JEllipsis } from '@jetlinks-web/components'
+import { computed, toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { LineChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
@@ -60,9 +62,19 @@ import { useGatewayStatus } from '../hooks/useGatewayStatus'
 import type { ResourceInfo } from '../shared'
 const props = defineProps<{ info?: ResourceInfo; isEdit: boolean }>()
 const { t } = useI18n()
+const { token } = theme.useToken()
 const { title, metric, tabs, rankingTitle, rows, selectedId, trendTitle, trendSummary, option,
   loading, error, hasHistory, trendLoading, trendError, refresh, refreshTrend, rotation } = useGatewayStatus(toRef(props, 'info'), toRef(props, 'isEdit'))
 const { rankingList } = rotation
+// 图表与文字提示使用同一平台色板，长名称可在卡片外完整换行。
+const chartOption = computed(() => ({
+  ...option.value,
+  tooltip: { ...option.value.tooltip, renderMode: 'html', appendTo: 'body',
+    backgroundColor: token.value.colorBgSpotlight, borderWidth: 0, borderRadius: token.value.borderRadius,
+    textStyle: { color: token.value.colorTextLightSolid, fontSize: token.value.fontSize },
+    extraCssText: 'max-width: min(360px, calc(100vw - 32px)); white-space: normal; overflow-wrap: anywhere;',
+  },
+}))
 </script>
 <style scoped>
 .gateway-status { width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: 16px; background: var(--ant-color-bg-container, #fff); border: 1px solid #eceff3; border-radius: var(--r-3, 8px); color: #1d2129; container: gateway-status / inline-size; }
@@ -88,12 +100,12 @@ header :deep(.ant-segmented-item-selected) { color: #1677ff; box-shadow: 0 1px 3
 .ranking-row:focus-visible { outline: 2px solid #1677ff; outline-offset: -2px; }
 .rank { grid-column: 1; grid-row: 1; color: #86909c; font-size: 12px; font-variant-numeric: tabular-nums; text-align: center; }
 .ranking-row.selected .rank { color: #1677ff; }
-.name { grid-column: 2; grid-row: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.name { grid-column: 2; grid-row: 1; min-width: 0; }
 .track { grid-column: 2 / 4; grid-row: 2; height: 4px; background: #edf0f4; border-radius: 2px; overflow: hidden; }
 .track > span { display: block; height: 100%; border-radius: inherit; }
 .value { grid-column: 3; grid-row: 1; font-size: 13px; font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; }
 .trend-heading { flex-shrink: 0; padding: 0 0 16px; }
-.trend-name { color: #344054; font-size: 14px; font-weight: 500; line-height: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trend-name { color: #344054; font-size: 14px; font-weight: 500; line-height: 22px; min-width: 0; }
 .trend-description { color: #86909c; font-size: 12px; line-height: 20px; margin-top: 4px; }
 .chart { flex: 1; width: 100%; min-height: 0; max-height: 260px; }
 @container gateway-status (max-width: 620px) {

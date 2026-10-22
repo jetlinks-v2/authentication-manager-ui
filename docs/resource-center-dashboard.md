@@ -158,6 +158,12 @@ SaaS 布局将设备分布置于快速开始下方（x=0、y=13、w=6、h=16）�
 
 验证：在 runtime-ui 执行 `node modules/authentication-manager-ui/scripts/verify-resource-dashboard.cjs` 通过，两处 TypeScript 语法检查及 `git diff --check` 通过；差异核对仅改变接口地址，保留请求条件和总数解析。验证脚本使用模拟请求并保留隔离 Hook 的 Vue 生命周期提示。登录后已在 `http://localhost:9200/#/overview` 确认“大屏模板”正常显示为 3 个；资源中心页面未单独复验。模块与工作区未配置 lint 脚本；按本机性能约束未执行完整类型检查和构建，需要时在 runtime-ui 执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json`、`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`。发布时更新 runtime-ui 静态资源，无需重启后端。
 
+### 截断名称的完整内容提示
+
+实现：普通文本复用共享包的 Ellipsis，仅在实际省略时显示完整内容；清除同一文本的原生 title，保持单行对齐、原有文字与点击行为。范围为 ResourceCenter 的 AlgorithmCoveragePanel、DistributionPanel、FlowPanel、GatewayStatusPanel、QuickStartPanel 和 MetricPanel；算法名称列随卡片宽度伸缩并限制上限，原有补充标题继续作为完整提示内容。网关选择、快捷跳转、统计接口、数值和个人布局保持原契约。按本次补充要求，DistributionPanel、TrendPanel 与 GatewayStatusPanel 的图表提示统一使用平台 Tooltip 色板；提示弹出到卡片外并允许长名称换行，背景与文字提示一致。
+
+验证：浏览器隔离预览挂载实际展示 SFC、共享 Ellipsis 与 ECharts，菜单与网关数据使用替身，覆盖两个模块的 11 个展示场景；320/520/960px 三档及放宽后重新悬停均通过，名称不越出卡片，短名称无提示，完整名称和数量保留。网关文字点击选择、趋势标题及两个快速开始回调正常，目标文本没有重复原生 title。文字和图表提示实测均为平台色板的深色背景/白字，图表提示挂载到 body 并换行。本模块 7 个 SFC 的脚本/模板/样式、verify-resource-dashboard.cjs 与 git diff --check 通过。未在真实部署页面复验；按性能约束未执行完整 lint/typecheck/build，需要时在 runtime-ui 执行 pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json 和 pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui。需发布 runtime-ui 前端静态资源，无后端重启要求。
+
 ## 实施与验证
 
 1. 核验概览统计 API、采集统计、物联网卡流量和空间绑定契约。

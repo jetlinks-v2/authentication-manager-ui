@@ -15,7 +15,7 @@
     <li v-for="(item,index) in data.ranking.slice(0,limit)" :key="item.id">
       <span class="rank" :class="`rank-${index + 1}`">{{ index + 1 }}</span>
       <div class="rank-body">
-        <div class="rank-line"><span class="card" :title="item.name">{{ item.name }}</span><span>{{ formatFlow(item.value).value }} <small>{{ formatFlow(item.value).unit }}</small></span></div>
+        <div class="rank-line"><span class="card"><JEllipsis>{{ item.name }}</JEllipsis></span><span>{{ formatFlow(item.value).value }} <small>{{ formatFlow(item.value).unit }}</small></span></div>
         <a-progress :percent="maximum > 0 ? item.value / maximum * 100 : 0" :show-info="false" :stroke-width="5" stroke-color="#1677ff" trail-color="#f0f1f3" />
       </div>
     </li>
@@ -23,6 +23,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { Ellipsis as JEllipsis } from '@jetlinks-web/components'
 import { useI18n } from 'vue-i18n'
 import { computed } from 'vue'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
@@ -69,5 +70,5 @@ li { display: flex;flex-shrink: 0;align-items: center;gap: 10px;font-size: 12px;
 .rank-1 { background: #ff4d4f;color: #fff; }.rank-2 { background: #fa8c16;color: #fff; }.rank-3 { background: #1677ff;color: #fff; }
 .rank-body { flex: 1;min-width: 0; }.rank-line { display: flex;align-items: baseline;gap: 12px; }
 .rank-body :deep(.ant-progress.ant-progress-line) { display: flex;align-items: center;height: 5px;margin: 4px 0 0;line-height: 5px;font-size: 0; }
-.card { flex: 1;overflow: hidden;text-overflow: ellipsis;white-space: nowrap; }
+.card { flex: 1;min-width: 0; }
 </style>
