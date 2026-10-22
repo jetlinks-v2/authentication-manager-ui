@@ -62,8 +62,8 @@
                   <I18nInputTrigger @configure="openI18nDialog('description')" />
                 </span>
               </span>
-              <span v-else class="template-summary__value" :title="displayDescription || '--'">
-                {{ displayDescription || '--' }}
+              <span v-else class="template-summary__value" :title="displayDescription || $t('comm.table.empty')">
+                {{ displayDescription || $t('comm.table.empty') }}
               </span>
             </span>
             <span class="template-summary__meta-item template-summary__url-item">
@@ -77,17 +77,17 @@
                   @change="$emit('update-template-url', $event)"
                 />
               </span>
-              <span v-else class="template-summary__value" :title="detail.templateUrl || '--'">
-                {{ detail.templateUrl || '--' }}
+              <span v-else class="template-summary__value" :title="detail.templateUrl || $t('comm.table.empty')">
+                {{ detail.templateUrl || $t('comm.table.empty') }}
               </span>
             </span>
             <span class="template-summary__meta-item">
               <strong>ID</strong>
-              <span class="template-summary__value" :title="detail.id || '--'">{{ detail.id || '--' }}</span>
+              <span class="template-summary__value" :title="detail.id || $t('comm.table.empty')">{{ detail.id || $t('comm.table.empty') }}</span>
             </span>
             <span class="template-summary__meta-item">
               <strong>{{ $t('ApplicationTemplate.field.code') }}</strong>
-              <span class="template-summary__value" :title="detail.code || '--'">{{ detail.code || '--' }}</span>
+              <span class="template-summary__value" :title="detail.code || $t('comm.table.empty')">{{ detail.code || $t('comm.table.empty') }}</span>
             </span>
           </div>
         </div>

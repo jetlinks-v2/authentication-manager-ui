@@ -1,3 +1,4 @@
+import globalI18n from '@jetlinks-web-core/locales'
 import dayjs from 'dayjs'
 import {
   queryBusinessApplications,
@@ -14,7 +15,7 @@ import { loadQuickGuideRows } from '../QuickGuide/apiQuickGuide'
 import type { HomeFeature, HomeRow } from './types'
 
 const formatTime = (value?: number | string) => {
-  if (!value) return '--'
+  if (!value) return globalI18n.global.t('comm.table.empty-2')
   const d = dayjs(value)
   return d.isValid() ? d.format('YYYY-MM-DD HH:mm:ss') : String(value)
 }
