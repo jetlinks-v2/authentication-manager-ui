@@ -62,7 +62,7 @@
 			</a-tree>
 				<CloudEmpty v-else style="margin-top: 6.25rem;"/>
 			</div>
-			<j-permission-button v-if="isAdmin" class="left-contain__create" block @click="addGroup">
+			<j-permission-button class="left-contain__create" block @click="addGroup">
 				<template #icon><AIcon type="PlusOutlined" /></template>
 				{{ $t('RoleLeft.index.507330-1') }}
 			</j-permission-button>

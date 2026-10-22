@@ -9,7 +9,7 @@
   />
   <div v-else class="algo-coverage-panel">
     <div v-for="item in items" :key="item.id" class="algo-row" :class="{ unconfigured: item.unconfigured }">
-      <span class="algo-name" :title="item.title || item.name">{{ item.name }}</span>
+      <span class="algo-name"><JEllipsis :tooltip="{ title: item.title || item.name }">{{ item.name }}</JEllipsis></span>
       <div class="algo-bar-track">
         <div
           class="algo-bar-fill"
@@ -24,6 +24,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { Ellipsis as JEllipsis } from '@jetlinks-web/components'
 import { computed } from 'vue'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { useI18n } from 'vue-i18n'
@@ -65,12 +66,9 @@ const maximum = computed(() => Math.max(1, ...props.items.map(item => item.value
   flex-shrink: 0;
 }
 .algo-name {
-  width: 76px;
-  flex-shrink: 0;
+  flex: 0 1 clamp(96px, 24%, 192px);
+  min-width: 0;
   color: #4b5563;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .algo-bar-track {
   flex: 1;

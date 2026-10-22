@@ -1,5 +1,18 @@
 <template>
-  <div class="product-container">
+
+  <DefineEmptyCreate>
+    <j-permission-button
+        v-if="parentId"
+        class="authentication-system-list-page__primary-action"
+        :hasPermission="`${permission}:assert`"
+        type="primary"
+        @click="dialogs.addShow = true"
+    >
+        <AIcon type="PlusOutlined"/>
+        {{ $t('product.index.083446-0') }}
+    </j-permission-button>
+  </DefineEmptyCreate>
+  <div v-bind="$attrs" class="product-container">
     <FullPage :extraHeight="24">
       <j-pro-table
           ref="tableRef"
@@ -17,6 +30,11 @@
           }"
           :columns="columns"
       >
+        <template #emptyText>
+          <CloudEmpty :search="queryParams?.terms" :search-name="$t('Department.index.945805-0')">
+            <EmptyCreateButton />
+          </CloudEmpty>
+        </template>
         <template #headerLeftRender>
             <a-flex gap="small">
 
@@ -28,16 +46,7 @@
                     @change="({filter})=>queryParams = {...filter}"
                     ref="searchRef"
                 />
-                <j-permission-button
-                    v-if="parentId"
-                    class="authentication-system-list-page__primary-action"
-                    :hasPermission="`${permission}:assert`"
-                    type="primary"
-                    @click="dialogs.addShow = true"
-                >
-                    <AIcon type="PlusOutlined"/>
-                    {{ $t('product.index.083446-0') }}
-                </j-permission-button>
+                <EmptyCreateButton v-if="parentId" />
               <a-dropdown v-if="parentId" trigger="hover">
                   <a-button>{{ $t('product.index.083446-1') }}</a-button>
                   <template #overlay>
@@ -275,6 +284,10 @@
 </template>
 
 <script setup lang="ts" name="product">
+import type { ConditionTerm } from '@jetlinks-web-core/components/ConditionFilter'
+
+import { createReusableTemplate } from '@vueuse/core'
+
 import Assign from '../property/components/Assign.vue';
 import EditPermissionDialog from '../components/EditPermissionDialog.vue';
 import NextDialog from '../components/NextDialog.vue';
@@ -375,7 +388,7 @@ const columns = [
     scopedSlots: true,
   },
 ];
-const queryParams = ref({});
+const queryParams = ref<{ terms?: ConditionTerm[] }>({});
 const menuStore = useMenuStore();
 const batchImportVisible = ref(false);
 const tableRef = ref();
@@ -716,6 +729,8 @@ const nextConfirm = () => {
   departmentStore.setProductId(Temporary.value);
   emits('openDeviceBind', Temporary.value)
 }
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style lang="less" scoped>

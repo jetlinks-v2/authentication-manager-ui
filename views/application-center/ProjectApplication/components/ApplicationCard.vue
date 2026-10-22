@@ -102,7 +102,7 @@ const avatar = computed<CardAvatarData>(() => {
 })
 
 const description = computed(() =>
-  props.item.application.description || props.item.template.description || '--')
+  props.item.application.description || props.item.template.description || $t('comm.table.empty'))
 
 const statusActionText = computed(() => $t(props.item.application.status === 'enabled'
   ? 'ProjectApplication.common.disable'

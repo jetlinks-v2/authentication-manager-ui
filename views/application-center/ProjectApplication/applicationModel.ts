@@ -1,3 +1,4 @@
+import globalI18n from '@jetlinks-web-core/locales'
 import dayjs from 'dayjs'
 import { normalizeBasicLayoutVariant } from '@jetlinks-web-core/layout/runtime/layoutVariant'
 import type {
@@ -77,7 +78,7 @@ export const normalizeApplication = (entity: BusinessApplicationEntity, template
     description: entity.description || '',
     status,
     statusText: enumText(entity.state, status),
-    createdAt: entity.createTime ? dayjs(entity.createTime).format('YYYY-MM-DD HH:mm') : '--',
+    createdAt: entity.createTime ? dayjs(entity.createTime).format('YYYY-MM-DD HH:mm') : globalI18n.global.t('comm.table.empty-2'),
     defaultLanguage: String(entity.configuration?.defaultLanguage || 'zh-CN'),
     timezone: String(entity.configuration?.timezone || 'Asia/Shanghai'),
     domain: String(entity.configuration?.customDomain || ''),
@@ -145,27 +146,27 @@ export const normalizeDevice = (
   groups: ApplicationResourceGroup[] = [],
 ): ApplicationResource => {
   const status = enumValue(entity.state, 'offline')
-  const product = entity.productName || entity.productId || entity.classifiedName || '--'
+  const product = entity.productName || entity.productId || entity.classifiedName || globalI18n.global.t('comm.table.empty')
   const groupId = entity.groupId || ''
   const inferredGroups = groupId || entity.groupName
-    ? [{ id: groupId || entity.groupName || '--', name: entity.groupName || groupId || '--' }]
+    ? [{ id: groupId || entity.groupName || '', name: entity.groupName || groupId || globalI18n.global.t('comm.table.empty') }]
     : []
   const resourceGroups = groups.length ? groups : inferredGroups
-  const group = resourceGroups.map(item => item.name).filter(Boolean).join('、') || '--'
-  const gateway = entity.parentName || entity.accessName || entity.parentId || entity.accessProvider || '--'
+  const group = resourceGroups.map(item => item.name).filter(Boolean).join('、') || globalI18n.global.t('comm.table.empty')
+  const gateway = entity.parentName || entity.accessName || entity.parentId || entity.accessProvider || globalI18n.global.t('comm.table.empty')
   return {
     id: entity.id,
     name: entity.name || entity.id,
     serial: entity.id,
     product,
-    productId: entity.productId || product,
+    productId: entity.productId || entity.productName || entity.classifiedName || '',
     category: product,
-    groupId: resourceGroups[0]?.id || group,
+    groupId: resourceGroups[0]?.id || '',
     status,
     statusText: enumText(entity.state, status),
     group,
     gateway,
-    gatewayId: entity.parentId || entity.accessId || gateway,
+    gatewayId: entity.parentId || entity.accessId || entity.parentName || entity.accessName || entity.accessProvider || '',
     groups: resourceGroups,
   }
 }
@@ -184,14 +185,14 @@ export const normalizeCamera = (entity: MediaChannelEntity): ApplicationCameraRe
     channelId: entity.channelId || id,
     name: entity.name || entity.channelId || id,
     serial: entity.channelId || id,
-    product: entity.provider || entity.deviceName || '--',
-    productId: entity.provider || entity.deviceId || '--',
-    category: entity.deviceName || entity.provider || '--',
-    groupId: entity.deviceId || entity.provider || '--',
-    group: entity.deviceName || entity.provider || '--',
-    gateway: entity.deviceName || entity.deviceId || entity.provider || '--',
-    gatewayId: entity.deviceId || entity.deviceName || entity.provider || '--',
-    area: textOf(others.areaName) || entity.address || entity.civilCode || '--',
+    product: entity.provider || entity.deviceName || globalI18n.global.t('comm.table.empty'),
+    productId: entity.provider || entity.deviceId || '',
+    category: entity.deviceName || entity.provider || globalI18n.global.t('comm.table.empty'),
+    groupId: entity.deviceId || entity.provider || '',
+    group: entity.deviceName || entity.provider || globalI18n.global.t('comm.table.empty'),
+    gateway: entity.deviceName || entity.deviceId || entity.provider || globalI18n.global.t('comm.table.empty'),
+    gatewayId: entity.deviceId || entity.deviceName || entity.provider || '',
+    area: textOf(others.areaName) || entity.address || entity.civilCode || globalI18n.global.t('comm.table.empty'),
     status,
     statusText: enumText(entity.status || entity.state, status),
     supportsPtz: features.includes('ptz') || ['1', '2', '4', 'ball', 'hemisphere', 'remoteControl'].includes(ptzType),

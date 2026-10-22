@@ -1,5 +1,11 @@
 <template>
-  <section class="external-parameters">
+
+  <DefineEmptyCreate>
+    <a-button v-if="canUpdate" @click="state.addParameter">
+      {{ $t('ApplicationTemplate.parameters.add') }}
+    </a-button>
+  </DefineEmptyCreate>
+  <section v-bind="$attrs" class="external-parameters">
     <header>
       <h2>{{ $t('ApplicationTemplate.parameters.title') }}</h2>
       <p>{{ $t('ApplicationTemplate.parameters.tip') }}</p>
@@ -14,7 +20,9 @@
       </a-form-item>
       <div class="external-parameters__declared">
         <h3>{{ $t('ApplicationTemplate.parameters.listTitle') }}</h3>
-        <CloudEmpty v-if="!state.parameters.value.length" :description="$t('ApplicationTemplate.parameters.empty')" />
+        <CloudEmpty v-if="!state.parameters.value.length" :description="$t('ApplicationTemplate.parameters.empty')" :search-name="$t('components.EditForm.949962-12')">
+          <EmptyCreateButton />
+        </CloudEmpty>
         <div v-for="(parameter, index) in state.parameters.value" :key="index" class="external-parameters__row">
           <a-input v-model:value="parameter.name" :placeholder="$t('ApplicationTemplate.parameters.name')" />
           <a-select
@@ -32,9 +40,7 @@
             {{ $t('ApplicationTemplate.parameters.remove') }}
           </a-button>
         </div>
-        <a-button v-if="canUpdate" @click="state.addParameter">
-          {{ $t('ApplicationTemplate.parameters.add') }}
-        </a-button>
+        <EmptyCreateButton v-if="canUpdate" />
       </div>
       <a-form-item :label="$t('ApplicationTemplate.parameters.notificationEnabled')">
         <a-switch v-model:checked="state.notification.enabled" />
@@ -91,6 +97,8 @@
 </template>
 
 <script setup lang="ts">
+import { createReusableTemplate } from '@vueuse/core'
+
 import type { PropType } from 'vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -113,6 +121,8 @@ const fieldOptions = computed(() => [
   { value: 'id', label: $t('ApplicationTemplate.parameters.fieldId') },
   { value: 'username', label: $t('ApplicationTemplate.parameters.fieldUsername') },
 ])
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style scoped>

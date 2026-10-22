@@ -1,4 +1,11 @@
 `<template>
+
+  <DefineEmptyCreate>
+    <a-button type="primary" @click="addUserDialogVisible = true">
+      <AIcon type="PlusOutlined"/>
+      新增用户
+    </a-button>
+  </DefineEmptyCreate>
   <div class="role-user-container">
     <ConditionFilter
       :columns="columns"
@@ -27,12 +34,14 @@
               sorts: [{ name: 'createTime', order: 'desc' }],
           }"
       >
+        <template #emptyText>
+          <CloudEmpty :search="queryParams?.terms" :search-name="$t('Department.index.945805-2')">
+            <EmptyCreateButton />
+          </CloudEmpty>
+        </template>
         <template #headerLeftRender>
           <a-space>
-            <a-button type="primary" @click="addUserDialogVisible = true">
-              <AIcon type="PlusOutlined"/>
-              新增用户
-            </a-button>
+            <EmptyCreateButton />
             <a-button @click="dialogVisible = true">
               <AIcon type="LinkOutlined" />
               绑定用户
@@ -97,6 +106,10 @@
 </template>
 
 <script setup lang="ts" name="PositionsUser">
+import type { ConditionTerm } from '@jetlinks-web-core/components/ConditionFilter'
+
+import { createReusableTemplate } from '@vueuse/core'
+
 import { getUser, unbindUser } from '@authentication-manager-ui/api/system/positions'
 import BindUserDialog from './BindUserDialog.vue'
 import AddUserDialog from './AddUserDialog.vue'
@@ -168,7 +181,7 @@ const columns = [
     scopedSlots: true,
   },
 ]
-const queryParams = ref({})
+const queryParams = ref<{ terms?: ConditionTerm[] }>({})
 
 const tableRef = ref<Record<string, any>>({})
 const selectedRowKeys = ref<string[]>([])
@@ -236,6 +249,8 @@ const onSelectAll = (selected: boolean, _: any, keys: any[]) => {
   });
   selectedRowKeys.value = [..._set]
 };
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style lang="less" scoped>

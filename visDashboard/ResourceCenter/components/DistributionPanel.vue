@@ -19,7 +19,7 @@
       <div v-for="(item, index) in displayed" :key="item.id" class="legend-row">
         <div class="legend-left">
           <i class="legend-dot" :style="{ background: colors[index % colors.length] }" />
-          <span class="legend-name" :title="item.name">{{ item.name }}</span>
+          <span class="legend-name"><JEllipsis>{{ item.name }}</JEllipsis></span>
         </div>
         <span class="legend-value">{{ item.value.toLocaleString() }}</span>
       </div>
@@ -28,6 +28,8 @@
 </template>
 
 <script setup lang="ts">
+import { theme } from 'ant-design-vue'
+import { Ellipsis as JEllipsis } from '@jetlinks-web/components'
 import { computed } from 'vue'
 import { PieChart } from 'echarts/charts'
 import Echarts from '@jetlinks-web-core/components/Echarts'
@@ -38,6 +40,7 @@ import ResourceEmpty from './ResourceEmpty.vue'
 
 const props = defineProps<{ items: Datum[]; deviceType: DeviceKind; limit: number }>()
 const { t } = useI18n()
+const { token } = theme.useToken()
 const menuStore = useMenuStore()
 
 const colors = ['#1E72F0', '#FF7D00', '#30C7D8', '#7980D4', '#86909C', '#52C41A', '#EB2F96', '#FA8C16']
@@ -72,7 +75,11 @@ const displayed = computed(() => {
 
 const option = computed(() => ({
   color: colors,
-  tooltip: { trigger: 'item', renderMode: 'richText' },
+  tooltip: { trigger: 'item', renderMode: 'html', appendTo: 'body',
+    backgroundColor: token.value.colorBgSpotlight, borderWidth: 0, borderRadius: token.value.borderRadius,
+    textStyle: { color: token.value.colorTextLightSolid, fontSize: token.value.fontSize },
+    extraCssText: 'max-width: min(360px, calc(100vw - 32px)); white-space: normal; overflow-wrap: anywhere;',
+  },
   series: [{
     type: 'pie',
     radius: ['68%', '90%'],
@@ -171,9 +178,7 @@ const option = computed(() => ({
 }
 .legend-name {
   flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
   color: #1D2129;
 }
 .legend-value {

@@ -378,6 +378,20 @@ onUnmounted(() => {
     min-height: 0;
     overflow: auto;
   }
+
+  .tree:has(.cloud-empty) {
+    display: flex;
+    flex-direction: column;
+
+    :deep(.ant-spin-nested-loading),
+    :deep(.ant-spin-container) {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      flex-direction: column;
+      justify-content: safe center;
+    }
+  }
 }
 .department-tree-item-content {
   display: flex;

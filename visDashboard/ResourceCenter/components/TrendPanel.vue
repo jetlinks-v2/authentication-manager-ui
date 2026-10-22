@@ -13,6 +13,7 @@
 </template>
 
 <script setup lang="ts">
+import { theme } from 'ant-design-vue'
 import { computed } from 'vue'
 import { LineChart } from 'echarts/charts'
 import { GridComponent } from 'echarts/components'
@@ -23,6 +24,7 @@ import ResourceEmpty from './ResourceEmpty.vue'
 
 const props = defineProps<{ series: { time: string; value: number }[] }>()
 const { t } = useI18n()
+const { token } = theme.useToken()
 const menuStore = useMenuStore()
 
 function handleAddDevice() {
@@ -35,11 +37,10 @@ function handleAddDevice() {
 const option = computed(() => ({
   tooltip: {
     trigger: 'axis',
-    backgroundColor: 'rgba(29, 33, 41, 0.9)',
-    borderColor: 'transparent',
-    borderRadius: 4,
-    textStyle: { color: '#fff', fontSize: 12 },
-    renderMode: 'richText'
+    renderMode: 'html', appendTo: 'body',
+    backgroundColor: token.value.colorBgSpotlight, borderWidth: 0, borderRadius: token.value.borderRadius,
+    textStyle: { color: token.value.colorTextLightSolid, fontSize: token.value.fontSize },
+    extraCssText: 'max-width: min(360px, calc(100vw - 32px)); white-space: normal; overflow-wrap: anywhere;'
   },
   grid: {
     top: 46,

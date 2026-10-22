@@ -1,5 +1,16 @@
 <template>
-  <div class="api-test-container">
+
+  <DefineEmptyCreate>
+    <a-button
+      type="dashed"
+      @click="requestBody.addRow"
+      style="width: 100%; text-align: center; margin-top: 0.3125rem"
+    >
+      <AIcon type="PlusOutlined"/>
+      {{ $t('components.ApiTest.726024-4') }}
+    </a-button>
+  </DefineEmptyCreate>
+  <div v-bind="$attrs" class="api-test-container">
     <div class="top">
       <h5>{{ props.selectApi.summary }}</h5>
       <div class="input">
@@ -20,6 +31,11 @@
               size="small"
               bordered
             >
+              <template #emptyText>
+                <CloudEmpty :search-name="$t('components.EditForm.949962-12')">
+                  <EmptyCreateButton />
+                </CloudEmpty>
+              </template>
               <template #bodyCell="{ column, record, index }">
                 <template v-if="column.key === 'name'">
                   <a-form-item
@@ -68,14 +84,7 @@
               </template>
             </a-table>
           </a-form>
-          <a-button
-            type="dashed"
-            @click="requestBody.addRow"
-            style="width: 100%; text-align: center; margin-top: 0.3125rem"
-          >
-            <AIcon type="PlusOutlined"/>
-            {{ $t('components.ApiTest.726024-4') }}
-          </a-button>
+          <EmptyCreateButton />
         </div>
         <a-select v-model:value="bodyType" @change="handleChangeBodyType">
           <a-select-option value="json">Json</a-select-option>
@@ -114,6 +123,8 @@
 </template>
 
 <script setup lang="ts">
+import { createReusableTemplate } from '@vueuse/core'
+
 import {JsonViewer} from 'vue3-json-viewer';
 import 'vue3-json-viewer/dist/index.css';
 import type {apiDetailsType} from '../typing';
@@ -269,6 +280,8 @@ type requestObj = {
   name: string;
   value: string;
 };
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style lang="less" scoped>

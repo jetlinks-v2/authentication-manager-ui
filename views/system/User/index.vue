@@ -1,4 +1,17 @@
 <template>
+
+  <DefineEmptyCreate>
+    <j-permission-button
+        class="authentication-system-list-page__primary-action"
+        :hasPermission="`${permission}:add`"
+        type="primary"
+        @click="table.openDialog('add')"
+        @save="table.refresh()"
+    >
+        <AIcon type="PlusOutlined"/>
+        {{ $t('User.index.673867-0') }}
+    </j-permission-button>
+  </DefineEmptyCreate>
   <j-page-container>
     <FullPage hasPadding transparentBackground>
 
@@ -16,6 +29,11 @@
                         ],
                     }"
         >
+          <template #emptyText>
+            <CloudEmpty :search="queryParams?.terms" :search-name="$t('Department.index.945805-2')">
+              <EmptyCreateButton />
+            </CloudEmpty>
+          </template>
           <template #headerLeftRender>
               <div class="user-list-toolbar">
                 <h2 class="user-list-title">{{ $t('SystemList.userManagement') }}</h2>
@@ -30,16 +48,7 @@
                       @change="handleParams"
                   />
               <RegistryComponent code="addTool" is="a-space">
-                  <j-permission-button
-                      class="authentication-system-list-page__primary-action"
-                      :hasPermission="`${permission}:add`"
-                      type="primary"
-                      @click="table.openDialog('add')"
-                      @save="table.refresh()"
-                  >
-                      <AIcon type="PlusOutlined"/>
-                      {{ $t('User.index.673867-0') }}
-                  </j-permission-button>
+                  <EmptyCreateButton />
                 <a-dropdown key="batch">
                   <a-button>
                     {{ $t('User.index.673867-19') }}
@@ -205,6 +214,10 @@
 </template>
 
 <script setup lang="ts" name="UserMange">
+import type { ConditionQueryTerm } from '@authentication-manager-ui/views/system/conditionFilterUtils'
+
+import { createReusableTemplate } from '@vueuse/core'
+
 import EditUserDialog from './components/EditUserDialog.vue';
 import {
   getUserType_api,
@@ -374,7 +387,7 @@ if (isNoCommunity) {
   } as any)
 }
 */
-const queryParams = ref({});
+const queryParams = ref<{ terms?: ConditionQueryTerm[] }>({});
 
 const tableRef = ref<Record<string, any>>({}); // 表格实例
 const table = {
@@ -499,6 +512,8 @@ onMounted(() => {
     }
   })
 })
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style lang="less" scoped>
