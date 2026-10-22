@@ -1,4 +1,8 @@
 {
+  "ProjectApplication.ownershipTree.search": "Search organizations",
+  "ProjectApplication.ownershipTree.empty": "No matching organizations",
+  "ProjectApplication.ownershipTree.hint": "Select organizations and enable Include descendants to include their suborganizations",
+  "ProjectApplication.ownershipTree.apply": "Apply",
   "AccountBinding.wechat": "Bind WeChat",
   "AccountBinding.dingtalk": "Bind DingTalk",
   "AccountBinding.bound": "Bound",

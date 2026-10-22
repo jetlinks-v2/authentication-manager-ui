@@ -2,6 +2,16 @@
 
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.
 
+## Application ownership filter
+
+Delivery: [PR #119](https://github.com/jetlinks-v2/authentication-manager-ui/pull/119), targeting `2.20`.
+
+The application list uses `createAssetOwnershipField` for `business_application`. `register.ts` registers organization and tenant capabilities from `ProjectApplication/ownershipSelectors.ts`; creator selectors search users by name or username and resolve selected IDs. Labels display name and username with the suffix after the last `@` removed. Context determines directory availability; the initial page load does not query Context or directories. Tenant targets accept IDs without a directory request.
+
+Organizations use `OwnershipOrganizationTree.vue` and `useOwnershipOrganizationTree.ts`: independent checkbox selection, path labels, default root and selected-ancestor expansion, debounced local search and virtual rows. Clearing search restores expansion; stale responses cannot replace current selections. “Include descendants” submits the backend closure condition. Selected tags occupy at most two rows beside that control; `useSelectedTagOverflow.ts` reserves space for `+N`, whose popover shows all selections in the editor's stacking context.
+
+Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/186) and the backend Context from [Components #1655](https://github.com/jetlinks-v2/jetlinks-components/pull/1655) / [Tenant #48](https://github.com/jetlinks-v2/jetlinks-tenant/pull/48). Regression command: `node --test tests/assetOwnershipCreator.test.mjs tests/assetOwnershipOrganizationTree.test.mjs`; coverage includes lazy registration, user query mapping, the actual setup-name transform, tag overflow and local filtering of over 20,000 nodes. Full type checking retains existing errors; final visual verification remains pending because the browser connection times out.
+
 ## 菜单多资产表单兼容
 
 状态：已实施，专项回归与模块构建通过；登录环境验收待执行。
