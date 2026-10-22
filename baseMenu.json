@@ -82,7 +82,20 @@
             "componentCode": "resources/Dashboard"
           }
         },
-        "permissions": [],
+        "permissions": [
+          {
+            "permission": "geo-manager",
+            "actions": [
+              "find-geo"
+            ]
+          },
+          {
+            "permission": "device-instance",
+            "actions": [
+              "query"
+            ]
+          }
+        ],
         "buttons": [],
         "showPage": ["menu"]
       }

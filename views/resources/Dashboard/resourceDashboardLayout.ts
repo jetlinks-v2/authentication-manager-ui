@@ -3,6 +3,8 @@ import type { ResourceKind } from '../../../visDashboard/ResourceCenter/shared'
 export type ResourceLayoutItem = readonly [ResourceKind, number, number, number, number]
 export type ResourceLayoutMode = 'wide' | 'medium' | 'compact'
 
+export const resourceDeviceMapType = 'deviceMapCard'
+
 export const saasResourceLayout: readonly ResourceLayoutItem[] = [
   ['EdgeNodes', 0, 0, 3, 4], ['IotDevices', 3, 0, 3, 4], ['VideoDevices', 6, 0, 3, 4], ['Visualization', 9, 0, 3, 4],
   ['QuickStart', 0, 4, 6, 9], ['MessageTrend', 6, 4, 6, 9],

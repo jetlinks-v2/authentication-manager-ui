@@ -1,5 +1,37 @@
 # 资源中心仪表盘组件
 
+## 资源中心接入设备地图（已实施，真实点位待接口访问恢复后复验）
+
+目标与范围：在运行时 `/resources/dashboard` 增加现有设备地图，供资源管理员查看设备位置、聚合点及设备详情。任务级别 M，owning module 为 `runtime-ui/modules/authentication-manager-ui`；通过现有画布组件发现机制复用 `runtime-ui/modules/device-manager-ui/visDashboard/DeviceManagement/DeviceMapCard`，保留 `deviceMapCard` 类型及其取数、刷新、聚合和详情交互。
+
+实现入口：
+
+1. 在 `views/resources/Dashboard/useResourceDashboard.ts` 的发现范围中精确加入设备地图入口，沿用 `DashBoardCanvas` 的懒加载和错误重试。组件只在来源可用时装配，不新增页面或运行组件。
+2. 在原有组件下方追加一块整行地图，适配私有化 24 列和 SaaS 12 列画布；默认 16 行、最少 14 行，覆盖地图现有 320px 正文、标题和内边距，继续支持拖动和缩放。`resourceDashboardLayout.ts` 提供稳定组件身份；`index.vue` 仅补充该卡片的局部圆角与裁切，页面共 90 行。
+3. 在 `views/resources/Dashboard/resourceLayoutStorage.ts` 补充新增地图的缓存兼容：保留同账号、项目、部署、宽度档位与原组件集合的个人坐标，将地图追加到已存布局底部，保留原缓存；新布局继续由画布保存。
+4. `tests/resourceDashboardDeviceMap.test.mjs` 使用真实组件注册入口、discovery 与画布状态实现验证本次装配和缓存行为；测试中的 Vue 运行视图及账号能力为隔离替身，不将它们作为真实点位渲染证据。
+
+边界：仅在运行时 `authentication-manager-ui` 接入设备地图并配置该页面所需的查询权限；不修改运营端 `ui/`、后端接口、路由、地图组件内部交互或现有资源卡的业务规则，不增加新依赖。
+
+布局与兼容：地图默认放在页面底部并占满一行，私有化与 SaaS 运行时均接入。底图沿用现有高德 Key 和版本支持检查；缺少配置、无坐标及接口失败使用地图现有状态。缓存键在组件集合中增加 `deviceMapCard`，仅从同范围、不含地图的旧键复制完整且有效的坐标并追加地图；新布局优先、迁移幂等，原记录保留。SaaS 继续沿用既有 v5/v4 历史迁移规则。
+
+验证结果（以下命令在各自模块目录执行）：
+
+- `node --test tests/resourceDashboardDeviceMap.test.mjs`：10/10 通过，覆盖私有化/SaaS、360/640/900/1600px 布局、精确入口过滤、来源缺失、加载失败重试、等待完整目录、预览无缓存写入、真实画布状态的拖动/缩放保存恢复、旧坐标迁移、非法记录拒绝、账号隔离及 SaaS v5 兼容。
+- `node --test tests/resourceDashboardAvailability.test.mjs tests/videoNavigationTarget.test.mjs tests/gatewayStatusHistory.test.mjs tests/gatewayRotation.test.mjs`：38/38 通过。设备模块的 `node --test tests/deviceMapCluster.test.mjs tests/dashboardRuntime.test.mjs tests/deviceLocationGeoContract.test.mjs`：14/14 通过。复用这些未被后续局部 CSS 变更影响的验证证据，共 62 项通过；既有隔离 Hook 生命周期提示和 Node 模块/MockTimers 提示保留。
+- `index.vue` 的脚本、模板及 scoped CSS 编译通过，`git diff --check` 通过。对本次三个 Dashboard TypeScript 入口执行定向 `vue-tsc --noEmit`，共享依赖产生 211 项诊断，本次修改的三个文件无诊断；不能据此宣称完整类型检查通过。运行时工作区及模块未提供 lint 或样式门禁脚本，未执行完整生产构建。清理共享类型问题后可在 `runtime-ui/` 执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 与 `pnpm build`。
+- Chrome 的 `http://localhost:9200/#/resources/dashboard` 已实际渲染底部整行地图卡片，圆角及高度正常；位置流 `/geo/object/device/_search/geo.json` 返回 403 Forbidden，点击重试后仍失败，组件展示现有错误态。真实点位、底图、聚合与详情尚未在该环境验收；浏览器拖动/缩放受开发页刷新影响未形成有效证据，布局保存恢复由真实画布状态定向测试覆盖。需要接口访问恢复后再复验这些交互，不能以隔离测试代替真实接口验收。
+
+### 设备地图查询权限补齐
+
+已确认缺口：`baseMenu.json` 中 `resources/Dashboard` 的 `permissions` 为空。设备位置流要求 `geo-manager:find-geo`；点击点位后的状态与详情查询要求 `device-instance:query`。
+
+实施（S 级，用户已授权缺失时补齐）：已仅给该菜单补充上述两项查询权限，保留菜单 ID、owner、按钮、路由及现有资产范围；不新增设备编辑、删除或控制权限。既有菜单同步流程会将本地定义合并到已保存菜单，保留已有权限、自定义字段和显示状态。已运行环境需在“菜单管理 → 菜单配置 → 同步系统菜单权限”同步定义，再刷新登录态并复验位置流；前端源码更新本身不会改写服务端已保存的菜单或角色授权。
+
+验证：`node --test tests/menuSettingOwners.test.mjs` 15/15 通过。额外通过 esbuild 加载实际 `baseMenu.ts`、`baseMenu.json` 和菜单同步工具，确认导出恰好包含这两项查询权限；模拟旧服务端菜单同步后，自定义权限、资产范围、名称、父级、排序、隐藏状态均保留，重复同步幂等，原草稿未被修改。JSON 解析和 `git diff --check` 通过。本轮未同步服务端菜单或复测位置接口，403 是否消失仍待真实环境验证。本次仅修改 JSON 权限声明，不涉及 TypeScript/Vue 实现，未重跑受共享依赖错误阻断的全量类型检查或生产构建；模块与工作区无 lint 脚本。
+
+发布边界：本次修改运行时资源中心装配、缓存兼容、局部样式、定向测试与页面查询权限声明，不修改设备地图内部实现及后端权限校验。生产环境需要重新构建发布 runtime-ui 静态资源并同步对应菜单权限。代码与本文一并提交到 `authentication-manager-ui` 当前 `2.20` 分支，具体提交见该分支 Git 记录；未推送远端。提交时复用上方仍有效的 62 项地图/资源中心测试、15 项菜单配置回归与实际菜单权限合并检查结果，不重复运行测试或构建。
+
 ## BUG-41641：算法覆盖统计范围（已实施，本地定向验证通过）
 
 目标与范围：仅调整 `authentication-manager-ui` 资源中心算法卡的取数与刷新。复现环境的全部视频通道为 15 路，设备算法配置支持的网关通道为 12 路，已覆盖 1 路；未配置应为 11 路。视频卡继续统计全部视频通道。

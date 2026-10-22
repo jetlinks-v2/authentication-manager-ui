@@ -44,6 +44,10 @@ const { catalog, dashboard, storageKey, loading, errors, reload } = useResourceD
   box-sizing: border-box;
 }
 .resource-dashboard-state { min-height: 30rem; display: grid; place-items: center; }
+.resource-dashboard :deep(.device-map-card) {
+  border-radius: var(--r-3, 8px);
+  overflow: hidden;
+}
 
 /* 无侧栏时对齐顶部菜单起始位置，并在 2K/4K 大屏保持自适应留白 */
 .basic-layout-page:not(:has(.ant-layout-sider)):not(:has(.project-secondary-menu .ant-tabs-left)) .resource-dashboard {
