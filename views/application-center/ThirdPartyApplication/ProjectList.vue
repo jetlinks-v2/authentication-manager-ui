@@ -1,13 +1,17 @@
 <template>
-  <j-page-container>
+
+  <DefineEmptyCreate>
+    <a-button type="primary" :disabled="!!contextError || loading || !!error || !!catalogError || !connectOptions.length" @click="connectOpen = true">
+      <template #icon><AIcon type="PlusOutlined" /></template>{{ $t('ThirdPartyApplication.project.connect') }}
+    </a-button>
+  </DefineEmptyCreate>
+  <j-page-container v-bind="$attrs">
     <div class="third-party-page">
       <div class="page-head">
         <div><h1>{{ $t('ThirdPartyApplication.title') }}</h1><p>{{ $t('ThirdPartyApplication.project.subtitle') }}</p></div>
         <a-space>
           <a-button :loading="loading" @click="load">{{ $t('ThirdPartyApplication.project.refresh') }}</a-button>
-          <a-button type="primary" :disabled="!!contextError || loading || !!error || !!catalogError || !connectOptions.length" @click="connectOpen = true">
-            <template #icon><AIcon type="PlusOutlined" /></template>{{ $t('ThirdPartyApplication.project.connect') }}
-          </a-button>
+          <EmptyCreateButton />
         </a-space>
       </div>
       <a-alert v-if="contextError" type="warning" show-icon :message="$t(contextError)" class="page-alert" />
@@ -30,7 +34,9 @@
               <a-button type="link" danger @click="openAction(record, 'removed')">{{ $t('ThirdPartyApplication.project.action.removed') }}</a-button>
             </a-space>
           </template>
-          <template #emptyText><CloudEmpty :description="$t(error ? 'ThirdPartyApplication.project.listUnavailable' : 'ThirdPartyApplication.project.empty')" /></template>
+          <template #emptyText><CloudEmpty :description="$t(error ? 'ThirdPartyApplication.project.listUnavailable' : 'ThirdPartyApplication.project.empty')" :search="!error && search" :search-name="$t('components.EditForm.949962-3')">
+            <template v-if="!error"><EmptyCreateButton /></template>
+          </CloudEmpty></template>
         </a-table>
       </template>
     </div>
@@ -39,6 +45,8 @@
   </j-page-container>
 </template>
 <script setup lang="ts" name="ProjectThirdPartyApplications">
+import { createReusableTemplate } from '@vueuse/core'
+
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useThirdPartyApplications } from './useThirdPartyApplications'
@@ -56,6 +64,8 @@ const columns = computed(() => [
   { title: $t('ApiApplication.columns.createTime'), key: 'createTime', width: 175 },
   { title: $t('ApiApplication.columns.action'), key: 'action', width: 200 },
 ])
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 <style scoped>
 .third-party-page { min-height: 100%; padding: var(--space-4); background: var(--bg); }

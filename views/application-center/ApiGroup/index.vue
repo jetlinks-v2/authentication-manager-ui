@@ -1,15 +1,24 @@
 <template>
-  <j-page-container>
+
+  <DefineEmptyCreate>
+    <j-permission-button :hasPermission="groupMenu + ':add'" type="primary" @click="create"><AIcon type="PlusOutlined" />{{ $t('ApiGroupManagement.create') }}</j-permission-button>
+  </DefineEmptyCreate>
+  <j-page-container v-bind="$attrs">
     <div class="api-group-list">
       <div class="page-head">
         <div><h1>{{ $t('ApiGroupManagement.title') }}</h1><p>{{ $t('ApiGroupManagement.subtitle') }}</p></div>
-        <j-permission-button :hasPermission="groupMenu + ':add'" type="primary" @click="create"><AIcon type="PlusOutlined" />{{ $t('ApiGroupManagement.create') }}</j-permission-button>
+        <EmptyCreateButton />
       </div>
       <a-alert v-if="!canQuery" type="warning" show-icon :message="$t('ApiGroupManagement.noQueryPermission')" />
       <template v-else>
         <ConditionFilter :columns="columns" target="api-group-management" @change="handleSearch" />
         <a-alert v-if="error" type="error" show-icon :message="error" class="page-alert" />
         <j-pro-table class="pro-table__no-padding" ref="tableRef" mode="TABLE" :columns="columns" :request="requestPage" :params="params" :scroll="{ x: 1200 }">
+          <template #emptyText>
+            <CloudEmpty :search="params.terms" :search-name="$t('components.AddDialog.956922-6')">
+              <EmptyCreateButton />
+            </CloudEmpty>
+          </template>
           <template #name="row"><a-button type="link" @click="open(row)">{{ row.name }}</a-button></template>
           <template #id="row"><a-typography-text copyable :content="row.id">{{ row.id }}</a-typography-text></template>
           <template #status="row"><a-badge :status="groupValue(row.status) === 'enabled' ? 'success' : 'default'" :text="groupText(row.status, $t, 'ApiGroupManagement.state.')" /></template>
@@ -33,12 +42,16 @@
   </j-page-container>
 </template>
 <script setup lang="ts" name="ApiGroupManagement">
+import { createReusableTemplate } from '@vueuse/core'
+
 import { useI18n } from 'vue-i18n'
 import { useApiGroupList } from './useApiGroupList'
 import { groupText, groupValue } from './groupUtils'
 const { t: $t } = useI18n()
 const { groupMenu, canQuery, canUpdate, tableRef, params, columns, error, busyId,
   requestPage, handleSearch, create, open, toggle, remove } = useApiGroupList()
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 <style scoped>
 .api-group-list { padding: var(--space-4); min-height: 100%; background: var(--bg); }

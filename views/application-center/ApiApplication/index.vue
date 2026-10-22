@@ -1,15 +1,19 @@
 <template>
-  <j-page-container>
+
+  <DefineEmptyCreate>
+    <a-button type="primary" @click="createOpen = true">
+      <template #icon><AIcon type="PlusOutlined" /></template>
+      {{ $t('ApiApplication.actions.create') }}
+    </a-button>
+  </DefineEmptyCreate>
+  <j-page-container v-bind="$attrs">
     <div class="api-application-page">
       <div class="page-head">
         <div>
           <h1>{{ $t('ApiApplication.title') }}</h1>
           <p>{{ $t('ApiApplication.subtitle') }}</p>
         </div>
-        <a-button type="primary" @click="createOpen = true">
-          <template #icon><AIcon type="PlusOutlined" /></template>
-          {{ $t('ApiApplication.actions.create') }}
-        </a-button>
+        <EmptyCreateButton />
       </div>
       <ConditionFilter :columns="filterColumns" target="api-applications" @change="handleSearch" />
       <a-alert v-if="error" type="error" show-icon :message="$t('ApiApplication.loadFailed')" class="error-alert" />
@@ -22,6 +26,11 @@
         :default-params="{ sorts: [{ name: 'createTime', order: 'desc' }] }"
         :scroll="{ x: 1080 }"
       >
+        <template #emptyText>
+          <CloudEmpty :search="queryParams.terms" :search-name="$t('ApiApplication.title')">
+            <EmptyCreateButton />
+          </CloudEmpty>
+        </template>
         <template #name="slotProps">
           <div class="app-name"><span class="app-icon"><AIcon type="ApiOutlined" /></span><div><strong>{{ slotProps.name }}</strong><small>{{ slotProps.description || '-' }}</small></div></div>
         </template>
@@ -69,6 +78,8 @@
 </template>
 
 <script setup lang="ts" name="ApiApplication">
+import { createReusableTemplate } from '@vueuse/core'
+
 import { ref } from 'vue'
 import dayjs from 'dayjs'
 import { useI18n } from 'vue-i18n'
@@ -173,6 +184,8 @@ const deleteApplication = async (application: ApiApplication) => {
   await remove(application)
   reload()
 }
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style scoped>

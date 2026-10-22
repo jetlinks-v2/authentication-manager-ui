@@ -2620,5 +2620,11 @@
       "complete": "已完成",
       "error": "连接异常"
     }
-  }
+  },
+  "EmptyCreate.names.application_templates": "应用模版",
+  "EmptyCreate.names.buttons": "按钮",
+  "EmptyCreate.names.dictionary_entries": "字典项",
+  "EmptyCreate.names.notification_templates": "通知模版",
+  "EmptyCreate.names.dictionaries": "字典",
+  "EmptyCreate.names.regions": "区域"
 }

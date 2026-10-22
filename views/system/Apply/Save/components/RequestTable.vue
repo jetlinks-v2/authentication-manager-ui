@@ -1,5 +1,11 @@
 <template>
-    <div class="request-table-container">
+
+    <DefineEmptyCreate>
+      <a-button type="dashed" @click="addRow" class="add-btn">
+          <AIcon type="PlusOutlined" />{{ $t('components.RequestTable.621762-1') }}
+      </a-button>
+    </DefineEmptyCreate>
+    <div v-bind="$attrs" class="request-table-container">
         <a-form ref="formRef" :model="formData" layout="vertical">
             <a-table
                 :columns="columns"
@@ -8,6 +14,11 @@
                 size="small"
                 bordered
             >
+              <template #emptyText>
+                <CloudEmpty :search-name="$t('Access.index.480752-8')">
+                  <EmptyCreateButton />
+                </CloudEmpty>
+              </template>
                 <template #bodyCell="{ column, record, index }">
                     <template v-if="column.dataIndex === 'label'">
                         <a-form-item
@@ -84,13 +95,13 @@
             :total="props.value.length"
         />
 
-        <a-button type="dashed" @click="addRow" class="add-btn">
-            <AIcon type="PlusOutlined" />{{ $t('components.RequestTable.621762-1') }}
-        </a-button>
+        <EmptyCreateButton />
     </div>
 </template>
 
 <script setup lang="ts">
+import { createReusableTemplate } from '@vueuse/core'
+
 import type { optionsType } from '../typing';
 import { useI18n } from 'vue-i18n';
 
@@ -188,6 +199,8 @@ function addRow() {
 
     emits('update:value', [...props.value, newRow]);
 }
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style lang="less" scoped>

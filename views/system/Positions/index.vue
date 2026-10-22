@@ -1,4 +1,6 @@
 <script setup name="Positions">
+import { createReusableTemplate } from '@vueuse/core'
+
 import { useI18n } from 'vue-i18n';
 import { useColumns } from './data';
 import {useMenuStore} from "@jetlinks-web-core/store";
@@ -66,10 +68,23 @@ const onSearch = ({filter}) => {
   }
 }
 
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <template>
-  <j-page-container>
+
+  <DefineEmptyCreate>
+    <j-permission-button
+      class="authentication-system-list-page__primary-action"
+      :hasPermission="`${permission}:add`"
+      type="primary"
+      @click="onAdd"
+    >
+      <AIcon type="PlusOutlined" />{{ $t('User.index.673867-0') }}
+    </j-permission-button>
+  </DefineEmptyCreate>
+  <j-page-container v-bind="$attrs">
     <FullPage transparentBackground>
       
         <PageHeader class="authentication-system-list-page__header" :title="$t('SystemList.positions')">
@@ -80,14 +95,7 @@ const onSearch = ({filter}) => {
               target="system-position"
               @change="onSearch"
             />
-            <j-permission-button
-              class="authentication-system-list-page__primary-action"
-              :hasPermission="`${permission}:add`"
-              type="primary"
-              @click="onAdd"
-            >
-              <AIcon type="PlusOutlined" />{{ $t('User.index.673867-0') }}
-            </j-permission-button>
+            <EmptyCreateButton />
           </template>
         </PageHeader>
         <full-page>
@@ -104,6 +112,11 @@ const onSearch = ({filter}) => {
             }"
             :scroll="{ y: 'calc(100% - 3.75rem)' }"
           >
+            <template #emptyText>
+              <CloudEmpty :search="params?.terms" :search-name="$t('Department.util.780026-9')">
+                <EmptyCreateButton />
+              </CloudEmpty>
+            </template>
             <template #roles="record">
               <j-ellipsis>
                 {{ record.roles?.map(item => item.name).join(',') || '' }}

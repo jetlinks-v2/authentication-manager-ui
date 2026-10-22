@@ -52,9 +52,8 @@
             type="page"
             :description="$t(hasFilters
               ? 'ProjectApplication.list.empty'
-              : 'ProjectApplication.list.noApplications')"
-          >
-            <a-button type="primary" @click="createOpen = true">
+              : 'ProjectApplication.list.noApplications')" :search="hasFilters" :search-name="$t('components.EditForm.949962-3')">
+            <a-button v-if="!hasFilters" type="primary" @click="createOpen = true">
               {{ $t('ProjectApplication.list.create') }}
             </a-button>
           </CloudEmpty>

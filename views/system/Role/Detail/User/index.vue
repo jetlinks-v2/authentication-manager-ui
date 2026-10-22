@@ -1,4 +1,14 @@
 <template>
+
+  <DefineEmptyCreate>
+    <a-button
+        class="authentication-system-list-page__primary-action"
+        type="primary"
+        @click="dialogVisible = true"
+    >
+      <AIcon type="PlusOutlined" />{{ $t('User.index.667995-0') }}
+    </a-button>
+  </DefineEmptyCreate>
   <div class="role-user-container">
 
     <div style="min-height: 0; flex: 1">
@@ -19,6 +29,11 @@
                         sorts: [{ name: 'createTime', order: 'desc' }],
                     }"
       >
+        <template #emptyText>
+          <CloudEmpty :search="queryParams?.terms" :search-name="$t('Department.index.945805-2')">
+            <EmptyCreateButton />
+          </CloudEmpty>
+        </template>
         <template #status="slotProps">
           <j-badge-status
               :status="slotProps.status"
@@ -37,13 +52,7 @@
                 target="system-role-user"
                 @change="({filter})=> queryParams = {...filter}"
             />
-            <a-button
-                class="authentication-system-list-page__primary-action"
-                type="primary"
-                @click="dialogVisible = true"
-            >
-              <AIcon type="PlusOutlined" />{{ $t('User.index.667995-0') }}
-            </a-button>
+            <EmptyCreateButton />
             <j-permission-button
                 :popConfirm="{
               title: $t('User.index.667995-1'),
@@ -81,6 +90,10 @@
 </template>
 
 <script setup lang="ts" name="RoleUser">
+import type { ConditionTerm } from '@jetlinks-web-core/components/ConditionFilter'
+
+import { createReusableTemplate } from '@vueuse/core'
+
 import AddUserDialog from '../components/AddUserDialog.vue'
 import { getUserByRole_api, unbindUser_api } from '@authentication-manager-ui/api/system/role'
 import { onlyMessage } from '@jetlinks-web/utils'
@@ -146,7 +159,7 @@ const columns = [
     scopedSlots: true,
   },
 ]
-const queryParams = ref({})
+const queryParams = ref<{ terms?: ConditionTerm[] }>({})
 
 const tableRef = ref<Record<string, any>>({})
 const selectedRowKeys = ref<string[]>([])
@@ -218,6 +231,8 @@ const onSelectAll = (selected: boolean, _: any, keys: any[]) => {
   });
   selectedRowKeys.value = [..._set]
 };
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style lang="less" scoped>

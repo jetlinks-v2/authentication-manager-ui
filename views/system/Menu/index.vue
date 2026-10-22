@@ -1,5 +1,16 @@
  <template>
-  <j-page-container>
+
+  <DefineEmptyCreate>
+    <j-permission-button
+      class="authentication-system-list-page__primary-action"
+      type="primary"
+      :hasPermission="`${permission}:add`"
+      @click="toDetails({})"
+    >
+      <AIcon type="PlusOutlined" />{{ $t('Menu.index.599742-0') }}
+    </j-permission-button>
+  </DefineEmptyCreate>
+  <j-page-container v-bind="$attrs">
     <div class="menu-container">
       <FullPage :fixed="false" transparentBackground>
         
@@ -15,6 +26,11 @@
             noPagination
             v-model:expandedRowKeys="expandedRowKeys"
           >
+            <template #emptyText>
+              <CloudEmpty :search="queryParams.terms" :search-name="$t('ProjectApplication.role.menu')">
+                <EmptyCreateButton />
+              </CloudEmpty>
+            </template>
             <template #headerLeftRender>
               <div class="menu-list-toolbar">
                 <h2 class="menu-list-title">{{ $t('SystemList.menuManagement') }}</h2>
@@ -29,14 +45,7 @@
                   target="category"
                   @change="handleSearch"
                 />
-                <j-permission-button
-                  class="authentication-system-list-page__primary-action"
-                  type="primary"
-                  :hasPermission="`${permission}:add`"
-                  @click="toDetails({})"
-                >
-                  <AIcon type="PlusOutlined" />{{ $t('Menu.index.599742-0') }}
-                </j-permission-button>
+                <EmptyCreateButton />
                 <a-button
                   v-if="admin"
                   @click="menuStore.jumpPage('system/Menu/Setting')"
@@ -96,6 +105,8 @@
 </template>
 
 <script setup lang="ts" name="Menu">
+import { createReusableTemplate } from '@vueuse/core'
+
 import { getMenuTree, delMenu } from '@authentication-manager-ui/api/system/menu'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { onlyMessage } from '@jetlinks-web/utils'
@@ -312,6 +323,8 @@ const clickDel = (row: any) => {
     }
   })
 }
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style scoped lang="less">

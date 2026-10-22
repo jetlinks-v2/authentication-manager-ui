@@ -95,8 +95,7 @@
                   v-else-if="!loading"
                   type="page"
                   :description="$t(records.length && (filterTerms.length || selectedMethod !== 'all')
-                    ? 'ThirdPartyLogin.emptyFiltered' : 'ThirdPartyLogin.empty')"
-                >
+                    ? 'ThirdPartyLogin.emptyFiltered' : 'ThirdPartyLogin.empty')" :search="filterTerms.length > 0 || selectedMethod !== 'all'" :search-name="$t('ApplicationTemplate.detail.config')">
                   <a-button v-if="!records.length" type="primary" @click="openCreate">
                     {{ $t('ThirdPartyLogin.addFirst') }}
                   </a-button>
