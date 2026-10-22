@@ -1,4 +1,10 @@
 <template>
+
+    <DefineEmptyCreate>
+      <j-permission-button type="primary" @click="add" hasPermission="system/Dictionary:add">
+          {{ $t('Right.index.572408-3') }}
+      </j-permission-button>
+    </DefineEmptyCreate>
     <div class="des">
         <div class="des_head">
             <div>{{ $t('Right.index.572408-0') }}<span>{{ data.id }}</span></div>
@@ -10,12 +16,15 @@
             <JProTable style="padding: 1rem 0 0" :scroll="{ y: 'calc(100vh - 23rem)' }" :columns="columns"
                        mode="TABLE"
                         :request="queryItem" :params="params" ref="tableRef">
+              <template #emptyText>
+                <CloudEmpty :search="params?.terms" :search-name="$t('EmptyCreate.names.dictionary_entries')">
+                  <EmptyCreateButton />
+                </CloudEmpty>
+              </template>
                 <template #headerLeftRender>
                     <a-flex gap="small">
                         <ConditionFilter :columns="columns" noMargin @change="({filter}) => handleSearch(filter)" target="system_dictionary" />
-                    <j-permission-button type="primary" @click="add" hasPermission="system/Dictionary:add">
-                        {{ $t('Right.index.572408-3') }}
-                    </j-permission-button>
+                    <EmptyCreateButton />
                     </a-flex>
                 </template>
                 <template #action="slotProps">
@@ -41,6 +50,8 @@
 </template>
 
 <script lang="ts" setup name="DictionaryItem">
+import { createReusableTemplate } from '@vueuse/core'
+
 import dayjs from 'dayjs';
 import { queryDicItem, deleteDicItem, queryDicItemNoPage } from '@authentication-manager-ui/api/system/dictionary'
 import Save from './Save/index.vue'
@@ -222,6 +233,8 @@ const queryItem = async (_params: any) => {
 watch(() => props?.data?.id, () => {
     tableRef.value.reload()
 })
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 <style lang="less" scoped>
 .des {

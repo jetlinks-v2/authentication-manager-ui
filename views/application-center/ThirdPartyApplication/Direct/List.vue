@@ -1,13 +1,22 @@
 <template>
-  <j-page-container>
+
+  <DefineEmptyCreate>
+    <a-button type="primary" @click="openCreate"><template #icon><AIcon type="PlusOutlined" /></template>{{ $t('ThirdPartyApplication.direct.create') }}</a-button>
+  </DefineEmptyCreate>
+  <j-page-container v-bind="$attrs">
     <div class="direct-page">
       <div class="page-head">
         <div><h1>{{ $t('ThirdPartyApplication.title') }}</h1><p>{{ $t('ThirdPartyApplication.direct.subtitle') }}</p></div>
-        <a-button type="primary" @click="openCreate"><template #icon><AIcon type="PlusOutlined" /></template>{{ $t('ThirdPartyApplication.direct.create') }}</a-button>
+        <EmptyCreateButton />
       </div>
       <ConditionFilter :columns="filterColumns" target="third-party-direct" @change="search" />
       <a-alert v-if="error" type="error" show-icon :message="error" class="page-alert" />
       <j-pro-table class="pro-table__no-padding" ref="tableRef" mode="TABLE" :columns="columns" :request="query" :params="filters" :scroll="{ x: 800 }">
+        <template #emptyText>
+          <CloudEmpty :search="filters.terms" :search-name="$t('components.EditForm.949962-3')">
+            <EmptyCreateButton />
+          </CloudEmpty>
+        </template>
         <template #name="row"><a-button class="table-link" type="link" @click="openDetail(row)">{{ row.name }}</a-button></template>
         <template #state="row"><a-badge :status="apiState(row) === 'enabled' ? 'success' : 'default'" :text="$t('ApiApplication.status.' + apiState(row))" /></template>
         <template #createTime="row">{{ formatTime(row.createTime) }}</template>
@@ -27,6 +36,8 @@
   </j-page-container>
 </template>
 <script setup lang="ts" name="DirectThirdPartyApplications">
+import { createReusableTemplate } from '@vueuse/core'
+
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ConditionFilterChangePayload, ConditionFilterField } from '@jetlinks-web-core/components/ConditionFilter'
@@ -52,6 +63,8 @@ const columns = computed(() => [
 ])
 const search = ({ filter }: ConditionFilterChangePayload) => { filters.value = { terms: filter.terms as Array<Record<string, unknown>> }; tableRef.value?.reload() }
 const save = async () => { if (await create()) tableRef.value?.reload() }
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 <style scoped>
 .direct-page { box-sizing: border-box; min-width: 0; padding: var(--space-4); min-height: 100%; background: var(--bg); }

@@ -1,5 +1,16 @@
 <template>
-  <div class="role-container">
+
+  <DefineEmptyCreate>
+    <j-permission-button
+        class="authentication-system-list-page__primary-action"
+        type="primary"
+        :hasPermission="`${permission}:add`"
+        @click="addRole"
+    >
+        <AIcon type="PlusOutlined" />{{ $t('RoleRight.index.470525-0') }}
+    </j-permission-button>
+  </DefineEmptyCreate>
+  <div v-bind="$attrs" class="role-container">
     <div class="role-table">
       <j-pro-table
         ref="tableRef"
@@ -15,6 +26,11 @@
           ]
         }"
       >
+        <template #emptyText>
+          <CloudEmpty :search="emptyCreateSearch" :search-name="$t('User.index.673867-13')">
+            <EmptyCreateButton />
+          </CloudEmpty>
+        </template>
           <template #headerLeftRender>
               <a-flex gap="small">
                   <ConditionFilter
@@ -24,14 +40,7 @@
                       target="system-role"
                       @change="({filter}) => handelSearch(filter)"
                   />
-                  <j-permission-button
-                      class="authentication-system-list-page__primary-action"
-                      type="primary"
-                      :hasPermission="`${permission}:add`"
-                      @click="addRole"
-                  >
-                      <AIcon type="PlusOutlined" />{{ $t('RoleRight.index.470525-0') }}
-                  </j-permission-button>
+                  <EmptyCreateButton />
               </a-flex>
           </template>
         <template #action="slotProps">
@@ -84,6 +93,8 @@
 </template>
 
 <script setup lang="ts" name="RoleRight">
+import { createReusableTemplate } from '@vueuse/core'
+
 import AddDialog from './components/AddDialog.vue'
 import Copy from './components/Copy.vue'
 import { getRoleList_api, delRole_api } from '@authentication-manager-ui/api/system/role'
@@ -91,6 +102,9 @@ import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n';
 import PageHeader from '@jetlinks-web-core/components/PageHeader';
+import { ref as emptyCreateSearchRef } from 'vue'
+const emptyCreateSearch = emptyCreateSearchRef(false)
+
 
 const { t: $t } = useI18n();
 const props = defineProps({
@@ -247,6 +261,8 @@ const onCopySave = (id: string) => {
   })
 }
 const handelSearch = (search: any) => {
+  emptyCreateSearch.value = Boolean(search.terms?.length)
+
   queryParams.value.terms = props.groupId
     ? [
         regularRoleTerm,
@@ -263,7 +279,8 @@ const handelSearch = (search: any) => {
 watch(
   () => props.groupId,
   (value) => {
-    queryParams.value = value
+    emptyCreateSearch.value = false
+        queryParams.value = value
       ? {
           terms: [
             regularRoleTerm,
@@ -279,6 +296,8 @@ watch(
         }
   },
 )
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style lang="less" scoped>

@@ -1,4 +1,6 @@
 <script setup name="Positions">
+import { createReusableTemplate } from '@vueuse/core'
+
 import {useI18n} from 'vue-i18n';
 import {queryPage, del, queryPositionDetailNoPage} from '@authentication-manager-ui/api/system/positions';
 import BindModal from './Bind.vue'
@@ -313,9 +315,24 @@ watch(
       searchRef.value?.reset?.()
     },
 )
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <template>
+
+  <DefineEmptyCreate>
+    <j-permission-button
+      v-if="parentId"
+      class="authentication-system-list-page__primary-action"
+      hasPermission="system/Department:bind-position"
+      type="primary"
+      @click="handleAdd"
+    >
+      <AIcon type="PlusOutlined"/>
+      {{ $t('position.index.252066-2') }}
+    </j-permission-button>
+  </DefineEmptyCreate>
   <div class="authentication-system-list-page" style="overflow-y: auto;" :key="parentId">
     <j-pro-table
       ref="tableRef"
@@ -329,6 +346,11 @@ watch(
       mode="TABLE"
       :scroll="{y: 'calc(100vh - 28.125rem)'}"
     >
+      <template #emptyText>
+        <CloudEmpty :search="queryParams?.terms" :search-name="$t('Department.util.780026-9')">
+          <EmptyCreateButton />
+        </CloudEmpty>
+      </template>
       <template #headerLeftRender>
         <a-flex gap="small">
           <ConditionFilter
@@ -339,16 +361,7 @@ watch(
             @change="({filter}) => handleParams(filter)"
             ref="searchRef"
           />
-          <j-permission-button
-            v-if="parentId"
-            class="authentication-system-list-page__primary-action"
-            hasPermission="system/Department:bind-position"
-            type="primary"
-            @click="handleAdd"
-          >
-            <AIcon type="PlusOutlined"/>
-            {{ $t('position.index.252066-2') }}
-          </j-permission-button>
+          <EmptyCreateButton v-if="parentId" />
         </a-flex>
       </template>
       <template #roles="slotProps">

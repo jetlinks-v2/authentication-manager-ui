@@ -1,5 +1,17 @@
 <template>
-  <j-page-container>
+
+  <DefineEmptyCreate>
+    <j-permission-button
+        class="authentication-system-list-page__primary-action"
+        type="primary"
+        :hasPermission="`${permission}:add`"
+        @click="openDialog()"
+    >
+        <AIcon type="PlusOutlined"/>
+        {{ $t('Permission.index.473829-0') }}
+    </j-permission-button>
+  </DefineEmptyCreate>
+  <j-page-container v-bind="$attrs">
     <FullPage hasPadding transparentBackground>
       
         <j-pro-table
@@ -14,6 +26,11 @@
             sorts: [{ name: 'id', order: 'asc' }],
           }"
         >
+          <template #emptyText>
+            <CloudEmpty :search="params?.terms" :search-name="$t('BasicInfo.Permission.040830-8')">
+              <EmptyCreateButton />
+            </CloudEmpty>
+          </template>
           <template #headerLeftRender>
               <div class="permission-list-toolbar">
                 <h2 class="permission-list-title">{{ $t('SystemList.permissionManagement') }}</h2>
@@ -27,15 +44,7 @@
                       target="system-permission"
                       @change="({filter}) => handleSearch(filter)"
                   />
-                  <j-permission-button
-                      class="authentication-system-list-page__primary-action"
-                      type="primary"
-                      :hasPermission="`${permission}:add`"
-                      @click="openDialog()"
-                  >
-                      <AIcon type="PlusOutlined"/>
-                      {{ $t('Permission.index.473829-0') }}
-                  </j-permission-button>
+                  <EmptyCreateButton />
                 <a-dropdown trigger="hover">
                   <a-button>{{ $t('Permission.index.473829-1') }}</a-button>
                   <template #overlay>
@@ -140,6 +149,8 @@
 </template>
 
 <script setup lang="ts" name="Permission">
+import { createReusableTemplate } from '@vueuse/core'
+
 import EditDialog from './components/EditDialog.vue'
 import {
   getPermission_api,
@@ -245,6 +256,8 @@ const onSave = () => {
 const triggerUpload = () =>{
   uploadRef.value.click()
 }
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style scoped lang="less">

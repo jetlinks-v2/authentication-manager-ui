@@ -1,5 +1,16 @@
 <template>
-  <j-page-container>
+
+  <DefineEmptyCreate>
+    <j-permission-button
+        :hasPermission="`${permission}:add`"
+        type="primary"
+        @click="() => table.toAdd()"
+    >
+      <AIcon type="PlusOutlined"/>
+      {{ $t('Apply.index.483342-0') }}
+    </j-permission-button>
+  </DefineEmptyCreate>
+  <j-page-container v-bind="$attrs">
     <FullPage hasPadding transparentBackground>
       
         <div class="apply-container">
@@ -20,16 +31,14 @@
             :params="queryParams"
             :gridColumn="3"
         >
+          <template #emptyText>
+            <CloudEmpty :search="queryParams?.terms" :search-name="$t('components.EditForm.949962-3')">
+              <EmptyCreateButton />
+            </CloudEmpty>
+          </template>
           <template #headerLeftRender>
             <div style="display: flex; align-items: center">
-              <j-permission-button
-                  :hasPermission="`${permission}:add`"
-                  type="primary"
-                  @click="() => table.toAdd()"
-              >
-                <AIcon type="PlusOutlined"/>
-                {{ $t('Apply.index.483342-0') }}
-              </j-permission-button>
+              <EmptyCreateButton />
               <p style="margin: 0 0 0 1.875rem; color: #0000008c">
                 <j-ellipsis>
                   <AIcon
@@ -234,6 +243,10 @@
 </template>
 
 <script setup lang="ts" name="Apply">
+import type { ConditionTerm } from '@jetlinks-web-core/components/ConditionFilter'
+
+import { createReusableTemplate } from '@vueuse/core'
+
 import OfficialAccountMenuDrawer from './componenets/OfficialAccountMenuDrawer.vue';
 import MenuDialog from './componenets/MenuDialog.vue';
 import ThirdMenu from './componenets/ThirdMenu.vue';
@@ -310,7 +323,7 @@ const columns = [
     fixed: 'right',
   },
 ];
-const queryParams = ref({});
+const queryParams = ref<{ terms?: ConditionTerm[] }>({});
 
 const tableRef = ref();
 const current = ref<any>({});
@@ -513,6 +526,8 @@ onMounted(() => {
     }
   });
 });
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style lang="less" scoped>

@@ -2620,5 +2620,11 @@
       "complete": "Complete",
       "error": "Connection error"
     }
-  }
+  },
+  "EmptyCreate.names.application_templates": "application templates",
+  "EmptyCreate.names.buttons": "buttons",
+  "EmptyCreate.names.dictionary_entries": "dictionary entries",
+  "EmptyCreate.names.notification_templates": "notification templates",
+  "EmptyCreate.names.dictionaries": "dictionaries",
+  "EmptyCreate.names.regions": "regions"
 }
