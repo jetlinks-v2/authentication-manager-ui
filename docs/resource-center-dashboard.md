@@ -314,6 +314,8 @@ const { catalog, dashboard, loading, errors } = useResourceDashboard(preview)
 
 ## 组件空状态（空页面展示）实施
 
+尺寸适配：本组空态和错误态统一通过 `components/ResourceEmpty.vue` 复用平台 `CloudEmpty`，按容器实际高度缩小或隐藏装饰插图，并将原有重试按钮放入同一状态容器。范围覆盖 `ResourceWidget.vue`、`GatewayStatusPanel.vue` 及 `FlowPanel.vue` 的独立排行空态；保留全部状态文案、跳转及重试回调。验证：真实 `ResourceEmpty` 浏览器隔离预览覆盖 11 类组件错误态及分布、采集、消息趋势、网关嵌套趋势、流量排行、窄卡片共 17 个状态样例，118–260px 卡片和 220px 窄卡片的插图、文案、按钮均无裁切或内部溢出；重试插槽按钮及默认引导按钮的点击回调正常。4 个修改的 Vue SFC 脚本、模板和样式检查、`verify-resource-dashboard.cjs`、`git diff --check` 通过。未在测试环境真实业务页复验；按性能约束未执行完整 lint/typecheck/build，完整检查入口为在 runtime-ui 执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 与 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`。发布需更新 runtime-ui 静态资源，无后端重启要求。
+
 1. **功能实现**：
    - **统一空状态组件（ResourceEmpty）**：
      - `visDashboard/ResourceCenter/components/ResourceEmpty.vue`，支持自定义图标/插槽、标题、说明文案、主按钮文本及点击事件回调。

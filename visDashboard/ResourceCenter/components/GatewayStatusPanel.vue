@@ -8,8 +8,9 @@
     </header>
     <div v-if="loading" class="state"><a-spin /></div>
     <div v-else-if="error" class="state">
-      <ResourceEmpty icon="DisconnectOutlined" :title="t('resourceDashboard.loadError')" />
-      <a-button size="small" @click="refresh">{{ t('resourceDashboard.retry') }}</a-button>
+      <ResourceEmpty icon="DisconnectOutlined" :title="t('resourceDashboard.loadError')">
+        <a-button size="small" @click="refresh">{{ t('resourceDashboard.retry') }}</a-button>
+      </ResourceEmpty>
     </div>
     <template v-else>
       <ResourceEmpty v-if="!rows.length" class="gateway-empty" icon="DisconnectOutlined"
@@ -31,8 +32,9 @@
         <div class="trend">
           <div v-if="trendLoading" class="state"><a-spin /></div>
           <div v-else-if="trendError" class="state">
-            <ResourceEmpty icon="LineChartOutlined" :title="t('resourceDashboard.loadError')" />
-            <a-button size="small" @click="refreshTrend">{{ t('resourceDashboard.retry') }}</a-button>
+            <ResourceEmpty icon="LineChartOutlined" :title="t('resourceDashboard.loadError')">
+              <a-button size="small" @click="refreshTrend">{{ t('resourceDashboard.retry') }}</a-button>
+            </ResourceEmpty>
           </div>
           <ResourceEmpty v-else-if="!hasHistory" icon="LineChartOutlined" :title="t('resourceDashboard.gatewayStatus.noHistory')" />
           <template v-else>
@@ -71,7 +73,6 @@ header :deep(.ant-segmented-item), header :deep(.ant-segmented-thumb) { border-r
 header :deep(.ant-segmented-item-label) { min-height: 26px; padding: 2px 10px; line-height: 22px; }
 header :deep(.ant-segmented-item-selected) { color: #1677ff; box-shadow: 0 1px 3px #1d212914; }
 .state { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
-.state :deep(.resource-empty) { height: auto; }
 .gateway-empty { flex: 1; }
 .gateway-empty :deep(.empty-title) { color: #606b7a; font-weight: 400; }
 .gateway-empty :deep(.empty-desc) { color: #8693a5; }
