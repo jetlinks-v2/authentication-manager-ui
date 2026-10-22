@@ -1,6 +1,9 @@
 import { request } from '@jetlinks-web/core'
+import { getProjectCodeFromLocation } from '@jetlinks-web-core/utils/project-runtime'
+import { getProjectStorage } from '@jetlinks-web-core/utils/project-storage'
+import { getRequestTenantDomain } from '@jetlinks-web-core/utils/request-context'
 import dayjs from 'dayjs'
-import { recordOf, rowsOf, textOf } from './apiResult'
+import { recordOf, resultOf, rowsOf, textOf } from './apiResult'
 import { HOME_TARGETS } from './navigation'
 import type { HomeRow } from './types'
 import { resolveAnnouncementText } from '../../../views/system/Announcement/announcementI18n'
@@ -32,10 +35,31 @@ const announcementSummary = (row: Record<string, unknown>) => {
   return resolveAnnouncementText(parseAnnouncementDetail(row), 'summary') || textOf(row.message)
 }
 export const loadAnnouncements = async (): Promise<HomeRow[]> => {
+  const terms: { column: string; termType: string; value: unknown }[] = [
+    { column: 'topicProvider', termType: 'eq', value: 'SystemBulletin' },
+  ]
+  if (getRequestTenantDomain()) {
+    // 项目 code 不等于租户 ID；缺少入口保存的 ID 时，读取服务端按域名解析的响应头，不从账号租户维度猜测。
+    let tenantId = getProjectStorage(getProjectCodeFromLocation())?.id
+    if (!tenantId) {
+      resultOf(await request.get('/authorize/context', {}, {
+        hiddenError: true,
+        transformResponse: [(data: string, headers: Record<string, unknown>) => {
+          tenantId = textOf(headers['x-tenant-id'])
+          return JSON.parse(data)
+        }],
+      }))
+    }
+    if (!tenantId) throw new Error('Missing current project tenant')
+    terms.push({
+      column: 'dataId', termType: 'system-bulletin-notification',
+      value: [{ column: 'tenantId', termType: 'eq', value: tenantId }],
+    })
+  }
   const result = await request.post('/notifications/_query', {
     paging: true, pageSize: 5, pageIndex: 0,
     sorts: [{ name: 'notifyTime', order: 'desc' }],
-    terms: [{ column: 'topicProvider', termType: 'eq', value: 'SystemBulletin' }],
+    terms,
   }, { hiddenError: true })
   return rowsOf(result).map((row, index) => {
     const isNew = index === 0 && isUnread(row)
