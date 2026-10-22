@@ -1,17 +1,26 @@
 <template>
+
+  <DefineEmptyCreate>
+    <a-button type="primary" :disabled="saving" @click="openEditor()">
+      <template #icon><AIcon type="PlusOutlined" /></template>{{ $t('ApiApplication.subscription.create') }}
+    </a-button>
+  </DefineEmptyCreate>
   <div class="subscription-panel">
     <div class="subscription-toolbar">
       <ConditionFilter :columns="filterColumns" :target="`api-subscriptions-${application?.id}`" @change="handleSearch" />
       <a-space><a-button :loading="catalogLoading" @click="refresh">{{ $t('ThirdPartyApplication.project.refresh') }}</a-button>
-      <a-button type="primary" :disabled="saving" @click="openEditor()">
-        <template #icon><AIcon type="PlusOutlined" /></template>{{ $t('ApiApplication.subscription.create') }}
-      </a-button></a-space>
+      <EmptyCreateButton /></a-space>
     </div>
     <a-alert v-if="catalogError" type="error" show-icon :message="$t('ApiApplication.subscription.catalogError')" :description="catalogError" class="subscription-alert" />
     <a-alert v-if="listError" type="error" show-icon :message="$t('ApiApplication.subscription.loadError')" :description="listError" class="subscription-alert" />
     <a-alert v-if="operationError && !editorOpen && !detailOpen" type="error" show-icon :message="operationError" class="subscription-alert" />
     <j-pro-table class="pro-table__no-padding" v-if="application" :key="application.id" ref="tableRef" mode="TABLE"
       :columns="columns" :request="requestPage" :params="filters" :scroll="{ x: 1350 }">
+      <template #emptyText>
+        <CloudEmpty :search="filters.terms" :search-name="$t('components.Card.812844-0')">
+          <EmptyCreateButton />
+        </CloudEmpty>
+      </template>
       <template #name="row"><a-button type="link" @click="openDetail(row)">{{ row.name }}</a-button></template>
       <template #scopes="row">{{ row.scopes?.length || 0 }}</template>
       <template #eventTypes="row">{{ scopeSummary(row.scopes) }}</template>
@@ -81,6 +90,8 @@
 </template>
 
 <script setup lang="ts">
+import { createReusableTemplate } from '@vueuse/core'
+
 import { useI18n } from 'vue-i18n'
 import type { ApiApplication } from '@authentication-manager-ui/api/application-center/apiApplication'
 import { useSubscriptionPanel } from '../useSubscriptionPanel'
@@ -94,6 +105,8 @@ const { providers, channels, catalogLoading, catalogError, listError, operationE
   tableRef, filters, editorOpen, detailOpen, detailLoading, editing, selected, applicationEnabled,
   filterColumns, columns, refresh, requestPage, handleSearch, eventSummary, scopeSummary, channelName, executionLabel,
   openEditor, openDetail, save, check, toggle, remove } = useSubscriptionPanel(() => props.application)
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style scoped>

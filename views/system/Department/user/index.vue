@@ -1,4 +1,17 @@
 <template>
+
+  <DefineEmptyCreate>
+    <j-permission-button
+        class="authentication-system-list-page__primary-action"
+        type="primary"
+        :hasPermission="`${permission}:bind-user`"
+        @click="addUserDialogVisible = true"
+        :disabled="isShow"
+    >
+        <AIcon type="PlusOutlined"/>
+        {{ $t('position.User.473212-0') }}
+    </j-permission-button>
+  </DefineEmptyCreate>
   <div :key="parentId" class="authentication-system-list-page">
     <FullPage>
       <j-pro-table
@@ -16,6 +29,11 @@
         }"
           mode="TABLE"
       >
+        <template #emptyText>
+          <CloudEmpty :search="queryParams?.terms" :search-name="$t('Department.index.945805-2')">
+            <EmptyCreateButton />
+          </CloudEmpty>
+        </template>
         <template #headerLeftRender>
             <a-flex gap="small">
 
@@ -29,16 +47,7 @@
                     ref="searchRef"
                 />
               <a-space>
-                  <j-permission-button
-                      class="authentication-system-list-page__primary-action"
-                      type="primary"
-                      :hasPermission="`${permission}:bind-user`"
-                      @click="addUserDialogVisible = true"
-                      :disabled="isShow"
-                  >
-                      <AIcon type="PlusOutlined"/>
-                      {{ $t('position.User.473212-0') }}
-                  </j-permission-button>
+                  <EmptyCreateButton />
                 <j-permission-button
                     :hasPermission="`${permission}:bind-user`"
                     @click="dialogVisible = true"
@@ -109,6 +118,10 @@
 </template>
 
 <script setup lang="ts" name="user">
+import type { ConditionQueryTerm } from '@authentication-manager-ui/views/system/conditionFilterUtils'
+
+import { createReusableTemplate } from '@vueuse/core'
+
 import AddBindUserDialog from './components/AddBindUserDialog.vue'
 import {unBindUser_api} from '@authentication-manager-ui/api/system/department'
 import AddUserDialog from '../positions/Detail/AddUserDialog.vue'
@@ -145,7 +158,7 @@ const show = ref(true)
 // const searchTarget = useRouteQuery('target')
 
 // 搜索参数
-const queryParams = ref({})
+const queryParams = ref<{ terms?: ConditionQueryTerm[] }>({})
 const dialogVisible = ref(false)
 const addUserDialogVisible = ref(false)
 
@@ -350,4 +363,6 @@ watch(
       searchRef.value?.reset?.()
     },
 )
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>

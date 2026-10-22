@@ -1,5 +1,15 @@
 <template>
-  <div>
+
+  <DefineEmptyCreate>
+    <j-permission-button
+      type="primary"
+      :hasPermission="`${permission}:update`"
+      @click="openDialog($t('ButtonMange.index.544049-0'), {})"
+    >
+      <AIcon type="PlusOutlined" />{{ $t('ButtonMange.index.544049-0') }}
+    </j-permission-button>
+  </DefineEmptyCreate>
+  <div v-bind="$attrs">
     <j-pro-table
       ref="tableRef"
       mode="TABLE"
@@ -8,14 +18,13 @@
       :columns="columns"
       :dataSource="tableData"
     >
+      <template #emptyText>
+        <CloudEmpty :search-name="$t('EmptyCreate.names.buttons')">
+          <EmptyCreateButton />
+        </CloudEmpty>
+      </template>
       <template #headerLeftRender>
-        <j-permission-button
-          type="primary"
-          :hasPermission="`${permission}:update`"
-          @click="openDialog($t('ButtonMange.index.544049-0'), {})"
-        >
-          <AIcon type="PlusOutlined" />{{ $t('ButtonMange.index.544049-0') }}
-        </j-permission-button>
+        <EmptyCreateButton />
       </template>
       <template #name="slotProps">
         {{ slotProps?.i18nName || slotProps?.name}}
@@ -68,6 +77,8 @@
 </template>
 
 <script setup lang="ts">
+import { createReusableTemplate } from '@vueuse/core'
+
 import { updateMenu } from '@authentication-manager-ui/api/system/menu'
 import { onlyMessage } from '@jetlinks-web/utils'
 import ButtonAddDialog from '../../components/ButtonAddDialog.vue'
@@ -149,4 +160,6 @@ const onSave = () => {
 watchEffect(() => {
   tableData.value = props.value?.buttons || []
 })
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>

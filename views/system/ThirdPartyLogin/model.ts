@@ -1,3 +1,4 @@
+import globalI18n from '@jetlinks-web-core/locales'
 import type {
   ApplicationProvider,
   EnumValue,
@@ -141,7 +142,7 @@ export function fromApplication(
     roleIdList: [...(application.sso?.roleIdList || [])],
     orgIdList: [...(application.sso?.orgIdList || [])],
     enabled: enumValue(application.state) === 'enabled',
-    createdAt: timestamp ? new Date(timestamp).toLocaleString() : '--',
+    createdAt: timestamp ? new Date(timestamp).toLocaleString() : globalI18n.global.t('comm.table.empty-2'),
   }
 }
 

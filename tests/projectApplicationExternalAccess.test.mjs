@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { readFile } from 'node:fs/promises'
 import { build } from 'esbuild'
+import { coreI18nPlugin } from '../../../jetlinks-web-core/tests/helpers/coreI18nPlugin.mjs'
 import { buildApplicationConfiguration, buildInitialApplicationConfiguration } from '../views/application-center/ProjectApplication/applicationConfiguration.ts'
 import { applyApplicationScopeHeaders } from '../../../jetlinks-web-core/src/utils/application-scope.ts'
 
@@ -65,7 +66,7 @@ const { useApplicationOpenGuard } = await import(`data:text/javascript;base64,${
 const modelBuild = await build({
   entryPoints: [new URL('../views/application-center/ProjectApplication/applicationModel.ts', import.meta.url).pathname],
   bundle: true, write: false, format: 'esm',
-  plugins: [{
+  plugins: [coreI18nPlugin(), {
     name: 'application-model-fixture',
     setup(plugin) {
       plugin.onResolve({ filter: /^(dayjs|@jetlinks-web-core\/layout\/runtime\/layoutVariant)$/ }, args => ({ path: args.path, namespace: 'fixture' }))
@@ -79,7 +80,7 @@ const { normalizeTemplate, normalizeApplication } = await import(`data:text/java
 const homeBuild = await build({
   entryPoints: [new URL('../visDashboard/Base/shared/api.ts', import.meta.url).pathname],
   bundle: true, write: false, format: 'esm',
-  plugins: [{
+  plugins: [coreI18nPlugin(), {
     name: 'home-application-fixture',
     setup(plugin) {
       plugin.onResolve({ filter: /^(dayjs|@authentication-manager-ui\/api\/application-center\/businessApplication|@jetlinks-web-core\/layout\/runtime\/layoutVariant|\.\/api(Announcements|Resources|Quotas)|\.\.\/QuickGuide\/apiQuickGuide)$/ }, args => ({ path: args.path, namespace: 'fixture' }))

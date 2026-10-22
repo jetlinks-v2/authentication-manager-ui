@@ -18,7 +18,7 @@
       </span>
       <span class="template-copy">
         <strong>{{ item.name }}</strong>
-        <span>{{ item.description || '--' }}</span>
+        <span>{{ item.description || $t('comm.table.empty') }}</span>
       </span>
       <a-button
         v-if="!item.disabled"
@@ -54,7 +54,7 @@
           <AIcon v-else :type="previewTemplate.icon || 'AppstoreOutlined'" />
         </span>
         <div class="preview-copy">
-          <p>{{ previewTemplate.description || '--' }}</p>
+          <p>{{ previewTemplate.description || $t('comm.table.empty') }}</p>
           <a-spin :spinning="menusLoading">
             <div v-if="previewMenus.length" class="preview-menus">
               <a-tag v-for="menu in previewMenus" :key="menu">{{ menu }}</a-tag>

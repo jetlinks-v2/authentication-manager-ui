@@ -374,7 +374,7 @@
   "BasicInfo.Permission.040830-3": "Supported",
   "BasicInfo.Permission.040830-4": "Indirect Control",
   "BasicInfo.Permission.040830-5": "This menu's data is controlled by data permissions of other menus",
-  "BasicInfo.Permission.040830-6": "Please select asset type",
+  "BasicInfo.Permission.040830-6": "Please select asset types (multiple allowed)",
   "BasicInfo.Permission.040830-7": "Please select related menu",
   "BasicInfo.Permission.040830-8": "Permission",
   "components.PermissionChoose.947802-0": "Please enter permission name",
@@ -2620,5 +2620,11 @@
       "complete": "Complete",
       "error": "Connection error"
     }
-  }
+  },
+  "EmptyCreate.names.application_templates": "application templates",
+  "EmptyCreate.names.buttons": "buttons",
+  "EmptyCreate.names.dictionary_entries": "dictionary entries",
+  "EmptyCreate.names.notification_templates": "notification templates",
+  "EmptyCreate.names.dictionaries": "dictionaries",
+  "EmptyCreate.names.regions": "regions"
 }

@@ -2,11 +2,28 @@ import { request } from '@jetlinks-web/core'
 import type { AxiosResponseRewrite } from '@jetlinks-web/types'
 
 const menuRequest = request as {
+  get<T>(url: string): Promise<AxiosResponseRewrite<T> & { message?: string }>
   post<T>(url: string, data: unknown): Promise<AxiosResponseRewrite<T>>
 }
 
+export type MenuAccessSupport = 'unsupported' | 'support' | 'indirect'
+
+export interface MenuDataAccess {
+  accessSupport?: MenuAccessSupport | { value: MenuAccessSupport; text?: string; label?: string } | null
+  assetTypes?: string[] | null
+  /** 历史单资产字段，读取时仅在 assetTypes 为空时回退。 */
+  assetType?: string | null
+  indirectMenus?: string[] | null
+}
+
+export interface AssetTypeDefinition {
+  id: string
+  name: string
+  i18nName?: string
+}
+
 /** 菜单定义保留服务端扩展字段，owner 只由本地菜单配置确定。 */
-export interface MenuDefinition {
+export interface MenuDefinition extends MenuDataAccess {
   id?: string
   key?: string
   code: string
@@ -68,7 +85,7 @@ export const validMenuCode = (data: any) => request.get(`/menu/code/_validate`,d
  * 获取资产类型
  * @returns 
  */
-export const getAssetsType = () => request.get(`/asset/types`);
+export const getAssetsType = () => menuRequest.get<AssetTypeDefinition[]>(`/asset/types`);
 
 /**
  * 获取菜单详情

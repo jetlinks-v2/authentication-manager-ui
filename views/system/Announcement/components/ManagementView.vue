@@ -1,5 +1,17 @@
 <template>
-  <FullPage hasPadding>
+
+  <DefineEmptyCreate>
+    <j-permission-button
+      class="authentication-system-list-page__primary-action"
+      has-permission="system/Announcement:add"
+      type="primary"
+      @click="$emit('create')"
+    >
+      <AIcon type="PlusOutlined" />
+      {{ $t('Announcement.action.create') }}
+    </j-permission-button>
+  </DefineEmptyCreate>
+  <FullPage v-bind="$attrs" hasPadding>
     <j-pro-table
       ref="tableRef"
       class="pro-table__no-padding"
@@ -10,6 +22,11 @@
       :default-params="{ sorts: [{ name: 'createTime', order: 'desc' }] }"
       :scroll="{ y: 'calc(100% - 3.75rem)' }"
     >
+      <template #emptyText>
+        <CloudEmpty :search="queryParams.terms" :search-name="$t('Announcement.inbox.title')">
+          <EmptyCreateButton />
+        </CloudEmpty>
+      </template>
       <template #headerLeftRender>
         <div class="announcement-list-toolbar">
           <h2 class="announcement-list-title">{{ $t('Announcement.title.management') }}</h2>
@@ -23,15 +40,7 @@
             target="system-announcement"
             @change="handleFilterChange"
           />
-          <j-permission-button
-            class="authentication-system-list-page__primary-action"
-            has-permission="system/Announcement:add"
-            type="primary"
-            @click="$emit('create')"
-          >
-            <AIcon type="PlusOutlined" />
-            {{ $t('Announcement.action.create') }}
-          </j-permission-button>
+          <EmptyCreateButton />
         </a-flex>
       </template>
 
@@ -136,6 +145,8 @@
 </template>
 
 <script setup lang="ts">
+import { createReusableTemplate } from '@vueuse/core'
+
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { FullPage } from '@jetlinks-web-core/layout'
@@ -236,6 +247,8 @@ function handleFilterChange(payload: ConditionFilterChangePayload) {
 
 /** 供页面容器在写操作完成后刷新公告列表。 */
 defineExpose({ reload: () => tableRef.value?.reload() })
+
+const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style scoped lang="less">
