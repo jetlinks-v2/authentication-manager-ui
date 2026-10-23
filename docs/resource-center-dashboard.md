@@ -1,5 +1,19 @@
 # 资源中心仪表盘组件
 
+## 默认布局与短缓存键
+
+目标与范围：按用户给定的十项坐标调整 SaaS 默认布局，仅修改 `views/resources/Dashboard/resourceDashboardLayout.ts` 中网关状态卡片（历史类型 `resourceCenterVideoPlaybackTrend`）高度为 18；地图沿用 `useResourceDashboard.ts` 的底部整行装配，坐标为 `x:0, y:31, w:12, h:16`。私有化继续按可用组件与容器宽度生成 24 列布局。
+
+缓存方案：`resourceLayoutStorage.ts` 使用 `resource-dashboard:v8:<32位摘要>`，总长固定 54 个字符。摘要输入为用户/运行范围、部署方式、宽度档位及排序去重后的最终组件集合（含地图），保持既有隔离边界；复用工作区已有的 `crypto-js`，不新增依赖。
+
+实施：优先读取同范围已发布的 SaaS v6 / 私有化 v7 长键，将组件完整且坐标有效的个人布局复制到短键；新键已有内容时优先使用，原记录保留。继续支持新增地图和旧 v5/v4 迁移，已有个人坐标继续恢复，没有个人缓存时使用新默认值。验证结果：
+
+- `node --test tests/resourceDashboardAvailability.test.mjs tests/resourceDashboardDeviceMap.test.mjs`：40/40 通过。真实组装输出与用户给定十条坐标逐项相等；覆盖 54 字符短键、组件排序去重、账号/项目/API 范围/部署/宽度/地图隔离、v6/v7 长键迁移、旧坐标保留、新键优先、非法缓存拒绝及真实画布保存恢复。既有隔离生命周期和 Node localStorage 提示保留。
+- `git diff --check` 通过。模块与工作区未配置 lint 脚本；按本机性能约束未执行完整类型检查或生产构建，必要时在 `runtime-ui` 执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json`、`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`。
+- 当前 `localhost:9200` 的进程归属运行时 `jetlinks-web-core`；访问 `/#/resources/dashboard` 在会话初始化阶段因 `DefaultApplicationEntryError: Default application entry unavailable` 跳转 403，未进入仪表盘。因此本轮真实页面布局目测与浏览器缓存迁移待应用入口可用后验证；没有通过修改真实账号缓存绕过该状态。
+
+发布：更新 runtime-ui 前端资源后生效，无需重启后端。
+
 ## 资源中心接入设备地图（已实施，真实点位待接口访问恢复后复验）
 
 目标与范围：在运行时 `/resources/dashboard` 增加现有设备地图，供资源管理员查看设备位置、聚合点及设备详情。任务级别 M，owning module 为 `runtime-ui/modules/authentication-manager-ui`；通过现有画布组件发现机制复用 `runtime-ui/modules/device-manager-ui/visDashboard/DeviceManagement/DeviceMapCard`，保留 `deviceMapCard` 类型及其取数、刷新、聚合和详情交互。
@@ -81,7 +95,7 @@
 [                       设备分布                         ]
 ```
 
-缓存：私有化资源中心改为 `resource-center-dashboard-v7:<scope>:private:<mode>:<widgets>`，概览使用 `project-overview-private-v2:model/basic`。首次采用新的均分默认布局，不迁入旧固定比例坐标；所有历史记录保留。新策略内个人拖动 / 缩放仍优先恢复，不同模块组合、宽度档位分别保存；SaaS 的 v6 key 与旧缓存迁移保留。
+缓存：资源中心统一使用 `resource-dashboard:v8:<摘要>`，对同范围 SaaS v6 / 私有化 v7 长键迁移有效的个人坐标；不同账号、项目、部署、模块组合和宽度档位仍分别保存，历史记录保留。私有化不迁入更早的固定比例布局。概览继续使用 `project-overview-private-v2:model/basic`。
 
 #### 验证与发布边界
 

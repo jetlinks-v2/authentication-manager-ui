@@ -8,7 +8,7 @@ export const resourceDeviceMapType = 'deviceMapCard'
 export const saasResourceLayout: readonly ResourceLayoutItem[] = [
   ['EdgeNodes', 0, 0, 3, 4], ['IotDevices', 3, 0, 3, 4], ['VideoDevices', 6, 0, 3, 4], ['Visualization', 9, 0, 3, 4],
   ['QuickStart', 0, 4, 6, 9], ['MessageTrend', 6, 4, 6, 9],
-  ['AlgorithmCoverage', 0, 13, 6, 9], ['VideoPlaybackTrend', 6, 13, 6, 14],
+  ['AlgorithmCoverage', 0, 13, 6, 9], ['VideoPlaybackTrend', 6, 13, 6, 18],
   ['DeviceDistribution', 0, 22, 6, 9],
 ]
 
