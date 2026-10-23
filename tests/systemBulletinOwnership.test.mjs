@@ -374,5 +374,8 @@ test('keeps the bell badge synchronized with the backend unread count', () => {
   assert.match(coreNoticeSource, /getUnreadCount_api\(params\)[\s\S]*total\.value = toBadgeCount\(resp\.result\)/)
   assert.match(coreNoticeSource, /async onMessage\(data\)[\s\S]*handleRegisteredRealtimeNotice[\s\S]*getList\(\)/)
   assert.match(coreNoticeSource, /watch\(visible, \(opened\) => \{[\s\S]*if \(opened\) \{[\s\S]*getList\(\)/)
+  assert.match(coreNoticeSource, /<NoticeInfo ref="noticeInfoRef"/)
+  assert.match(coreNoticeSource, /noticeInfoRef\.value\?\.refresh\(\)/)
+  assert.match(coreNoticeInfoSource, /defineExpose\(\{\s*refresh: onRefresh,\s*\}\)/)
   assert.doesNotMatch(coreNoticeSource, /total\.value\s*=\s*Math\.min\(total\.value\s*\+\s*1/)
 })
