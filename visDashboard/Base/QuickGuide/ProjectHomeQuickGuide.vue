@@ -1,8 +1,7 @@
 <template>
-  <div class="project-home-shell quick-guide-shell">
+  <div v-if="available" class="project-home-shell quick-guide-shell">
     <div class="quick-guide-main">
       <h3 class="guide-title">{{ t('packages.ProjectHome.QuickGuide') }}</h3>
-      <span class="guide-subtitle">{{ t('packages.ProjectHome.QuickGuide_subtitle') }}</span>
     </div>
     <div class="quick-guide-content">
       <HomeView :steps="steps" @action="handleAction" />
@@ -18,7 +17,7 @@ import { useQuickGuideSteps } from './useQuickGuideSteps'
 
 const props = withDefaults(defineProps<{ info?: HomeInfo; isEdit?: boolean }>(), { isEdit: false })
 const { t } = useI18n()
-const { steps, handleAction } = useQuickGuideSteps(() => props.isEdit)
+const { available, steps, handleAction } = useQuickGuideSteps(() => props.isEdit)
 </script>
 
 <style scoped lang="less">
@@ -43,11 +42,9 @@ const { steps, handleAction } = useQuickGuideSteps(() => props.isEdit)
 }
 .quick-guide-main { display: flex; align-items: baseline; gap: var(--space-2, 8px); min-width: 0; flex-shrink: 0; }
 .guide-title { margin: 0; font-size: var(--fs-18, 18px); line-height: 24px; font-weight: 600; color: var(--guide-title); flex-shrink: 0; }
-.guide-subtitle { color: var(--guide-secondary); font-size: var(--fs-14, 14px); line-height: 20px; }
 .quick-guide-content { flex: 1; min-height: 0; margin-top: var(--space-4, 16px); }
 
 @container project-home (max-height: 140px) {
   .quick-guide-content { margin-top: var(--space-2, 8px); }
-  .guide-subtitle { display: none; }
 }
 </style>

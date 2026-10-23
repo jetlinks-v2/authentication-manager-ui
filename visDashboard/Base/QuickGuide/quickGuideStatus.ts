@@ -1,10 +1,12 @@
 import type { HomeRow } from '../shared/types'
 
 export type GuideStatus = 'complete' | 'incomplete' | 'loading' | 'unknown'
+export type GuideStepKey = 'space' | 'gateway' | 'device' | 'algorithm' | 'alarm' | 'application'
 
 export interface GuideRowsState {
   rows: HomeRow[]
   loading: boolean
+  error?: boolean
 }
 
 function countOf(rows: HomeRow[], id: string): number | undefined {
@@ -16,25 +18,29 @@ function statusOf(value: number | undefined, loading: boolean): GuideStatus {
   return loading ? 'loading' : value === undefined ? 'unknown' : value > 0 ? 'complete' : 'incomplete'
 }
 
+/** 六步分别使用真实业务配置；查询不可用不等同于尚未配置。 */
 export function resolveGuideStatuses(
   health: GuideRowsState,
   algorithms: GuideRowsState,
-  space: GuideRowsState,
+  configuration: GuideRowsState,
+  applications: GuideRowsState,
   isEdit = false,
-): Record<string, GuideStatus> {
-  if (isEdit) return { gateway: 'incomplete', device: 'incomplete', space: 'incomplete', algorithm: 'incomplete' }
+): Record<GuideStepKey, GuideStatus> {
+  if (isEdit) return { space: 'incomplete', gateway: 'incomplete', device: 'incomplete', algorithm: 'incomplete', alarm: 'incomplete', application: 'incomplete' }
   const deviceCounts = ['devices', 'video'].map(id => countOf(health.rows, id))
   const device: GuideStatus = health.loading ? 'loading'
     : deviceCounts.some(value => value !== undefined && value > 0) ? 'complete'
     : deviceCounts.every(value => value === 0) ? 'incomplete' : 'unknown'
   return {
+    space: statusOf(countOf(configuration.rows, 'space'), configuration.loading),
     gateway: statusOf(countOf(health.rows, 'gateway'), health.loading),
     device,
-    space: statusOf(countOf(space.rows, 'space'), space.loading),
     algorithm: statusOf(countOf(algorithms.rows, 'coverage'), algorithms.loading),
+    alarm: statusOf(countOf(configuration.rows, 'alarm'), configuration.loading),
+    application: statusOf(applications.error ? undefined : applications.rows.length, applications.loading),
   }
 }
 
-export function shouldShowGuide(statuses: Record<string, GuideStatus>): boolean {
+export function shouldShowGuide(statuses: Record<GuideStepKey, GuideStatus>): boolean {
   return Object.values(statuses).some(status => status === 'incomplete' || status === 'unknown')
 }

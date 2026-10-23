@@ -1,5 +1,6 @@
 import { computed, markRaw, type Ref } from 'vue'
 import { isSaaS } from '@jetlinks-web-core/utils/consts'
+import { isPrivateDeployment } from '@jetlinks-web-core/utils/deployment'
 import { dashboardSources } from '@jetlinks-web-core/components/DashBoardCanvas/dashboard-sources'
 import { useDashboardCatalog } from '@jetlinks-web-core/components/DashBoardCanvas/discovery'
 import { readDashboardLayout } from '@jetlinks-web-core/components/DashBoardCanvas/utils/layoutStorage'
@@ -81,6 +82,7 @@ function migrateQuickGuideLayout() {
 
 export function useOverviewDashboard(showQuickGuide: Ref<boolean>) {
   const modules = useDashboardModules()
+  const quickGuideAvailable = !isPrivateDeployment()
   if (isSaaS) migrateQuickGuideLayout()
   // 私有化按模型能力隔离新尺寸；旧布局保留，不覆盖过滤后的默认排布。
   const storageKey = computed(() => isSaaS ? 'project-overview' : `project-overview-private-v2:${modules.value.model ? 'model' : 'basic'}`)
@@ -93,6 +95,8 @@ export function useOverviewDashboard(showQuickGuide: Ref<boolean>) {
     const components = { ...catalog.value.components }
     // 租户用量接口只属于 SaaS 项目，私有化环境不暴露卡片及其添加入口。
     if (!isSaaS) delete components.projectHomeQuotas
+    // 私有化不提供引导入口，旧布局中的引导记录也不能重新生成实例。
+    if (!quickGuideAvailable) delete components.projectHomeQuickGuide
     const registerFallback = (
       type: string,
       comp: { component: any },
@@ -111,13 +115,15 @@ export function useOverviewDashboard(showQuickGuide: Ref<boolean>) {
       }
     }
 
-    registerFallback(
-      'projectHomeQuickGuide',
-      ProjectHomeQuickGuide,
-      ProjectHomeQuickGuideConfig,
-      ProjectHomeQuickGuideConfigProps,
-      { w: 12, h: guideRows, x: 0, y: 0, minW: 4, minH: 3 },
-    )
+    if (quickGuideAvailable) {
+      registerFallback(
+        'projectHomeQuickGuide',
+        ProjectHomeQuickGuide,
+        ProjectHomeQuickGuideConfig,
+        ProjectHomeQuickGuideConfigProps,
+        { w: 12, h: guideRows, x: 0, y: 0, minW: 4, minH: 3 },
+      )
+    }
     registerFallback(
       'projectHomeDeviceAccess',
       ProjectHomeDeviceAccess,
