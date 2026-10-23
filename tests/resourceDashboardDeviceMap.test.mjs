@@ -110,7 +110,7 @@ test('the real map entry is discovered alone and appended at full width in both 
       assert.equal(grid.x, 0)
       assert.equal(grid.y, Math.max(...components.slice(0, -1).map(item => item.componentProps.gridItem.y + item.componentProps.gridItem.h)))
       assert.ok(grid.minH * 16 + (grid.minH - 1) * 18 >= 420)
-      assert.match(hook.storageKey.value, /deviceMapCard/)
+      assert.match(hook.storageKey.value, /^resource-dashboard:v8:[a-f0-9]{32}$/)
     }
     assert.deepEqual(loaded, [mapEntry])
     assert.equal(api.mapDefinition.DeviceMapCardConfigProps.componentProps.gridItem.minH, 8)
@@ -122,7 +122,7 @@ test('an absent device-map source preserves the previous catalog and storage key
   assert.equal(hook.loading.value, false)
   assert.deepEqual(hook.errors.value, [])
   assert.equal(hook.dashboard.value.components.some(item => item.type === 'deviceMapCard'), false)
-  assert.doesNotMatch(hook.storageKey.value, /deviceMapCard/)
+  assert.match(hook.storageKey.value, /^resource-dashboard:v8:[a-f0-9]{32}$/)
 })
 
 test('map discovery failure is visible and retry recovers the complete dashboard', async t => {
@@ -218,4 +218,96 @@ test('SaaS keeps its existing v5 migration before adding the map without changin
   assert.deepEqual(JSON.parse(saved.getItem(key)).slice(0, -1), previous)
   assert.equal(JSON.parse(saved.getItem(key)).at(-1).w, 12)
   assert.deepEqual(JSON.parse(saved.getItem('resource-center-dashboard-v5')), previous)
+})
+
+test('the SaaS default canvas matches the requested ten widget positions', async t => {
+  const { hook } = await fixture(t, { saas: true })
+  const layout = hook.dashboard.value.components.map(item => {
+    const { x, y, w, h } = item.componentProps.gridItem
+    return { i: item.id, x, y, w, h }
+  })
+  assert.deepEqual(layout, [
+    { i: 'resourceCenterEdgeNodes', x: 0, y: 0, w: 3, h: 4 },
+    { i: 'resourceCenterIotDevices', x: 3, y: 0, w: 3, h: 4 },
+    { i: 'resourceCenterVideoDevices', x: 6, y: 0, w: 3, h: 4 },
+    { i: 'resourceCenterVisualization', x: 9, y: 0, w: 3, h: 4 },
+    { i: 'resourceCenterQuickStart', x: 0, y: 4, w: 6, h: 9 },
+    { i: 'resourceCenterMessageTrend', x: 6, y: 4, w: 6, h: 9 },
+    { i: 'resourceCenterAlgorithmCoverage', x: 0, y: 13, w: 6, h: 9 },
+    { i: 'resourceCenterVideoPlaybackTrend', x: 6, y: 13, w: 6, h: 18 },
+    { i: 'resourceCenterDeviceDistribution', x: 0, y: 22, w: 6, h: 9 },
+    { i: 'deviceMapCard', x: 0, y: 31, w: 12, h: 16 },
+  ])
+})
+
+test('short storage keys stay fixed-length and isolate scopes, deployments, widths and final widget sets', async t => {
+  const { api } = await fixture(t, { available: false })
+  const scoped = profile({ scope: JSON.stringify(['account'.repeat(80), 'project'.repeat(80), '/api/runtime/project-a']) })
+  const key = api.resourceLayoutStorageKey(scoped)
+  assert.match(key, /^resource-dashboard:v8:[a-f0-9]{32}$/)
+  assert.equal(key.length, 54)
+  assert.equal(key, api.resourceLayoutStorageKey({ ...scoped, widgets: ['MessageTrend', 'QuickStart', 'MessageTrend'] }))
+  const variants = [
+    scoped, { ...scoped, scope: 'user-b/project-a' }, { ...scoped, scope: 'user-a/project-b' },
+    { ...scoped, scope: scoped.scope + '/other-api' }, { ...scoped, saas: true },
+    { ...scoped, mode: 'medium' }, { ...scoped, mode: 'compact' },
+    { ...scoped, widgets: ['QuickStart'] }, { ...scoped, deviceMap: true },
+  ]
+  assert.equal(new Set(variants.map(api.resourceLayoutStorageKey)).size, variants.length)
+})
+
+const legacyScopedKey = profile => {
+  const widgets = [...new Set([...profile.widgets, ...(profile.deviceMap ? ['deviceMapCard'] : [])])].sort().join(',')
+  return `resource-center-dashboard-${profile.saas ? 'v6' : 'v7'}:${encodeURIComponent(profile.scope)}:${profile.saas ? 'saas' : 'private'}:${profile.mode}:${widgets}`
+}
+
+test('same-scope v6/v7 long keys migrate to short keys without losing personal geometry or replacing newer layouts', async t => {
+  const { api } = await fixture(t, { available: false })
+  for (const saas of [false, true]) for (const mode of ['wide', 'medium', 'compact']) for (const deviceMap of [false, true]) {
+    const current = profile({ saas, mode, deviceMap })
+    const layout = deviceMap ? [...previous, { i: 'deviceMapCard', x: 0, y: 16, w: saas ? 12 : 24, h: 16 }] : previous
+    const saved = storage(), legacy = legacyScopedKey(current), key = api.resourceLayoutStorageKey(current)
+    const original = JSON.stringify(layout)
+    saved.setItem(legacy, original)
+    api.migrateResourceLayout(saved, key, layout.map(item => item.i), current, mapGrid)
+    assert.deepEqual(JSON.parse(saved.getItem(key)), layout)
+    assert.equal(saved.getItem(legacy), original)
+    saved.setItem(key, 'newer-personal-layout')
+    api.migrateResourceLayout(saved, key, layout.map(item => item.i), current, mapGrid)
+    assert.equal(saved.getItem(key), 'newer-personal-layout')
+  }
+})
+
+test('adding the map can upgrade a matching pre-map long key and preserve all old coordinates', async t => {
+  const { api } = await fixture(t, { available: false })
+  for (const saas of [false, true]) {
+    const current = profile({ saas, deviceMap: true }), before = { ...current, deviceMap: false }
+    const saved = storage(), legacy = legacyScopedKey(before), key = api.resourceLayoutStorageKey(current)
+    saved.setItem(legacy, JSON.stringify(previous))
+    api.migrateResourceLayout(saved, key, [...previous.map(item => item.i), 'deviceMapCard'], current, mapGrid)
+    assert.deepEqual(JSON.parse(saved.getItem(key)), [
+      ...previous, { i: 'deviceMapCard', x: 0, y: 16, w: saas ? 12 : 24, h: 16 },
+    ])
+    assert.deepEqual(JSON.parse(saved.getItem(legacy)), previous)
+  }
+})
+
+test('long-key migration rejects invalid geometry and never reads another account or project scope', async t => {
+  const { api } = await fixture(t, { available: false })
+  const current = profile(), legacy = legacyScopedKey(current), key = api.resourceLayoutStorageKey(current)
+  for (const value of ['bad json', JSON.stringify(previous.slice(1)), JSON.stringify([previous[0], previous[0]]),
+    ...[{ w: 0 }, { h: -1 }, { x: -1 }, { y: 0.5 }, { w: 25 }, { i: 'removed-card' }].map(change => JSON.stringify([{ ...previous[0], ...change }, previous[1]]))]) {
+    const saved = storage()
+    saved.setItem(legacy, value)
+    api.migrateResourceLayout(saved, key, previous.map(item => item.i), current)
+    assert.equal(saved.getItem(key), null)
+    assert.equal(saved.getItem(legacy), value)
+  }
+  for (const scope of ['user-b/project-a', 'user-a/project-b']) {
+    const saved = storage(), otherKey = legacyScopedKey({ ...current, scope })
+    saved.setItem(otherKey, JSON.stringify(previous))
+    api.migrateResourceLayout(saved, key, previous.map(item => item.i), current)
+    assert.equal(saved.getItem(key), null)
+    assert.deepEqual(JSON.parse(saved.getItem(otherKey)), previous)
+  }
 })

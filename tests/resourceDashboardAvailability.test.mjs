@@ -181,12 +181,12 @@ test('the wide profile uses equal-width rows and no-module defaults shrink the q
   assert.deepEqual(reduced.MessageTrend, [12, 10, 12, 9])
 })
 
-test('SaaS retains its nine existing default positions', async () => {
+test('SaaS uses the requested gateway height and retains the other default positions', async () => {
   const { api } = await fixture(true)
   assert.deepEqual(api.saasResourceLayout, [
     ['EdgeNodes', 0, 0, 3, 4], ['IotDevices', 3, 0, 3, 4], ['VideoDevices', 6, 0, 3, 4], ['Visualization', 9, 0, 3, 4],
     ['QuickStart', 0, 4, 6, 9], ['MessageTrend', 6, 4, 6, 9], ['AlgorithmCoverage', 0, 13, 6, 9],
-    ['VideoPlaybackTrend', 6, 13, 6, 14], ['DeviceDistribution', 0, 22, 6, 9],
+    ['VideoPlaybackTrend', 6, 13, 6, 18], ['DeviceDistribution', 0, 22, 6, 9],
   ])
 })
 
@@ -434,7 +434,7 @@ test('new private layouts never inherit fixed-ratio geometry and keep all previo
   const old = JSON.stringify([{ i: 'resourceCenterQuickStart', x: 0, y: 4, w: 12, h: 9 }])
   for (const key of ['resource-center-dashboard-v4', 'resource-center-dashboard-v5', 'resource-center-dashboard-v6:old']) saved.setItem(key, old)
   const key = api.resourceLayoutStorageKey(profile())
-  assert.ok(key.startsWith('resource-center-dashboard-v7:'))
+  assert.ok(key.startsWith('resource-dashboard:v8:'))
   api.migrateResourceLayout(saved, key, ['resourceCenterQuickStart'], profile())
   assert.equal(saved.getItem(key), null)
   assert.equal([...saved.values.values()].every(value => value === old), true)

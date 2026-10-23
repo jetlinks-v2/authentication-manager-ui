@@ -8,12 +8,23 @@ const collectSpaceIds = (rows: Record<string, unknown>[]): string[] => rows.flat
 ]).filter(Boolean)
 
 /** 空间步骤需要已有空间且至少一条设备绑定；默认空空间树不算完成。 */
-export async function loadQuickGuideRows(): Promise<HomeRow[]> {
+async function loadSpaceBindings(): Promise<number> {
   const tree = rowsOf(await request.post('/space/_query/tree', { paging: false }, { hiddenError: true }))
   const spaceIds = [...new Set(collectSpaceIds(tree))]
-  if (!spaceIds.length) return [{ id: 'space', value: 0 }]
-  const count = countOf(await request.post('/space/data-bind/_count', {
+  if (!spaceIds.length) return 0
+  return countOf(await request.post('/space/data-bind/_count', {
     terms: [{ column: 'spaceId', termType: 'in', value: spaceIds }],
   }, { hiddenError: true }))
-  return [{ id: 'space', value: count }]
+}
+
+/** 配置告警按视觉告警工作台的聚合任务判断，不以是否产生过告警作为完成条件。 */
+export async function loadQuickGuideRows(): Promise<HomeRow[]> {
+  const loaders: [string, () => Promise<number>][] = [
+    ['space', loadSpaceBindings],
+    ['alarm', async () => countOf(await request.post('/ai/aggregate/task/_count', {}, { hiddenError: true }))],
+  ]
+  // 单项失败只影响对应步骤，不能清空另一项已查到的配置状态。
+  return Promise.all(loaders.map(async ([id, load]) => {
+    try { return { id, value: await load() } } catch { return { id, failed: true } }
+  }))
 }

@@ -304,21 +304,34 @@ Chrome 实测：画布 layout/content 的 overflowY 均为 visible；外层页�
 
 ## 快速上手组件与应用中心空状态实施
 
+### 六步引导补齐方案
+
+- 目标与范围：仅调整运行时 `authentication-manager-ui` 的 `visDashboard/Base/QuickGuide` 和 `views/project/Overview/useOverviewDashboard.ts`，沿用概览画布、菜单权限和页面共享轮询；私有化部署不展示快速上手，也不提供添加入口或发起引导订阅。
+- 方案：按用户提供的六步原型与补充图标采用插图编号卡片，结构为 `快速上手 / [配置空间] → [接入网关] → [接入设备] → [配置算法] → [配置告警] → [创建应用]`。每卡保留标题、说明、状态与就近操作，完成态使用完整描边与浅色背景；窄容器可横向滚动，高度充足时换行。操作进入已有业务页面。
+- 路径：配置告警进入“告警中心 → 视觉告警”（`machine-vision/VisualAlarm`）；创建应用进入“开发与集成 → 应用管理”（`application-center/ProjectApplication`）。
+- 部署边界：复用 core 的 `isPrivateDeployment()`（空 `VITE_APP_ENVIRONMENT`）。私有化在 `useQuickGuideSteps.ts` 订阅前返回不可用状态，组件独立使用时不渲染；`views/project/Overview/useOverviewDashboard.ts` 从目录和默认实例中排除引导，兼容已缓存的布局。
+- 状态：保留原有空间绑定、网关、设备、算法覆盖判断；新增视觉告警聚合任务数量与应用数量。请求失败保留“状态暂不可用”，六步全部完成后隐藏；应用数据复用现有 `Applications` 订阅。
+- 实施：补齐六步定义、状态与中英文文案，移除四步副标题，前四步保留原始插图及 72px 裁切，配置告警与创建应用使用用户提供的两张原图；保持已完成步骤可跳转和菜单权限控制。
+- 验证：更新状态与实际 Vue 视图回归，增加配置查询和菜单跳转验证；执行 SFC/LESS 与差异检查，使用单个浏览器预览检查宽窄布局。整包构建及完整类型检查因本机资源限制不执行，登录后真实接口与路由验收以可用环境为准。
+
 1. **功能实现**：
    - **快速上手组件（QuickGuide）**：
      - 落地于 `visDashboard/Base/QuickGuide`（包括 `config.ts`、`index.ts`、`ProjectHomeQuickGuide.vue` 及 `components/HomeView.vue`）。
-     - SaaS 与私有化概览布局均默认搭载于顶部，占位 `x: 0, y: 0, w: 12, h: 6`；布局由共享画布保存。
-     - 按 Figma 节点 `arHAXmzThOpRg72RvxNDX3 / 1:552` 复刻标题说明、72px 插图、96px 卡片、步骤编号与完成态渐变，使用本地原始素材。每张已完成卡片都有右上角标，相邻两步都完成时连接箭头高亮，未完成步骤统一显示“去接入”。
-     - 展示顺序为“接入网关 → 配置空间 → 接入设备 → 配置算法”。插图、状态及跳转目标按业务 key 关联，编号按当前顺序生成。
+     - 非私有化概览在顶部搭载引导，私有化从组件目录与实际布局排除；非私有化占位 `x: 0, y: 0, w: 12, h: 6`；布局由共享画布保存。
+     - 沿用 Figma 节点 `arHAXmzThOpRg72RvxNDX3 / 1:552` 的 72px 插图、96px 卡片、步骤编号与完成态渐变；原有四张插图和裁切保持不变，`assets/alarm.png`、`assets/application.png` 分别原样使用用户补充的告警、应用图标。每张已完成卡片都有右上角标，相邻两步都完成时连接箭头高亮；空间、算法、告警显示“去配置”，网关、设备显示“去接入”，应用显示“去创建”。
+     - 展示顺序为“配置空间 → 接入网关 → 接入设备 → 配置算法 → 配置告警 → 创建应用”，移除旧的四步副标题。插图、状态及跳转目标按业务 key 关联，编号按当前顺序生成。
      - 窄容器横向滚动，高度充足时改为网格；矮容器复用同一视图显示紧凑编号和标题，不维护独立展开/收起缓存。
-     - 配置状态来自现有查询，保留加载、状态不可用和菜单权限反馈；已完成步骤仍可通过卡片进入管理页。
-     - 接入项目路由跳转（`useMenuStore.jumpPage`），分别直达边缘网关、空间管理、设备新增与算法中心。
+     - 配置状态来自现有查询：空间至少已有一条设备绑定；网关、设备和算法沿用原有计数；告警使用 `apiQuickGuide.ts` 中的 `POST /ai/aggregate/task/_count` 查询视觉告警工作台的配置任务；应用复用共享 `Applications` 订阅。各项失败独立显示状态不可用，六步全部完成后隐藏引导；已完成步骤仍可通过卡片进入管理页。标题和说明只在溢出时通过平台深色提示显示全文，无菜单权限保留禁用与权限提示。
+     - 接入项目路由跳转（`useMenuStore.jumpPage`），分别直达空间管理、边缘网关、设备新增、算法中心、告警中心的视觉告警、开发与集成的应用管理；后两个目标使用 `HOME_TARGETS.visionAlarm` 与 `HOME_TARGETS.applications`。
    - **应用中心空状态（Applications）**：
      - `HomeWidget.vue` 支持 `#empty` 插槽与动态右上角更多文本；当 `feature === 'Applications'` 时右上角操作文案自适应展示为“查看所有应用 ›”。
      - `ProjectHomeApplications.vue` 接入 `#empty` 专属空状态：居中大图标（`AppstoreOutlined`）、标题“暂无应用”、说明“可基于场景包快速创建应用，统一管理项目内的业务系统”，以及蓝色主按钮“去创建应用”。
 2. **验证结果**：
-   - `node modules/authentication-manager-ui/scripts/verify-overview-components.cjs`：53 个 Vue SFC 编译全部通过，0 SFC 错误，0 相对导入缺失。
-   - 浏览器与 Vite 编译正常，HMR 响应正常，控制台 0 报错。
+   - 在模块目录运行 `node --test tests/quickGuideStatus.test.mjs tests/quickGuideView.test.mjs tests/quickGuideData.test.mjs tests/quickGuideSteps.test.mjs tests/homePolling.test.mjs`：23 项全部通过。覆盖六步顺序及中英文动作、完成/加载/不可用状态、首四步完成后仍显示未完成的新步骤、配置查询失败隔离、菜单权限、两个新增跳转目标、共享轮询及六张插图按业务 key 对应；新增私有化不创建订阅、旧目录含引导时也不生成实例、SaaS 完成后仍隐藏的回归。Node 仍提示模块未声明 ESM 类型，测试本身通过。
+   - `node scripts/verify-overview-components.cjs`：63 个 Vue SFC 通过，0 SFC 错误、0 相对导入缺失。两个改动 Vue 文件的 LESS/scoped CSS 单独编译通过；中英文 JSON 与 `git diff --check` 通过。
+   - 浏览器加载真实 `ProjectHomeQuickGuide.vue`、`HomeView.vue`、菜单目标及平台 Button/Tooltip/Ellipsis，数据与菜单写入边界使用预览夹具：1920px 宽屏六张卡片同排；1280px 窄屏横向滚动可进入最后一步且无纵向溢出；900px × 450px 容器为两列六卡，无裁切。六张插图均加载成功，展示尺寸均为 72px；新增两图为原始 108px PNG。预览点击核对了视觉告警与应用管理的菜单编码，不能代替登录后的真实页面验收。 部署分支预览使用真实组件与环境夹具分别验证：私有化无引导外壳、无步骤卡片；SaaS 显示 1 个引导外壳与 6 张卡片。
+   - 模块与工作区未配置 lint 脚本。根据本机资源约束未运行整包构建或完整类型检查；后续需要时在 `runtime-ui` 执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false`、`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`。
+   - 本地业务服务未运行，真实配置接口响应及登录环境跳转待验证。本次只更新前端源码与静态资源，部署对应前端后生效，无需后端服务变更。
 
 ## 资源中心多组件拆分与 UI 样式改造（对齐 Figma 设计稿）
 
