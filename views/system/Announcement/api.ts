@@ -1,11 +1,6 @@
 import dayjs from 'dayjs'
 import { request } from '@jetlinks-web/core'
 import {
-  changeAllStatus,
-  changeStatus_api,
-  getList_api,
-} from '@jetlinks-web-core/api/account/notificationRecord'
-import {
   buildAnnouncementI18nFields,
   resolveAnnouncementText,
   type AnnouncementI18n,
@@ -53,6 +48,7 @@ export interface AnnouncementDraft {
 }
 
 export interface AnnouncementQuery {
+  paging?: boolean
   pageIndex?: number
   pageSize?: number
   terms?: Array<Record<string, unknown>>
@@ -90,13 +86,14 @@ interface SystemBulletin {
   createTime?: number | null
   modifyTime?: number | null
   creatorName?: string
-  dimension?: SystemBulletinDimension[]
+  dimension?: DimensionInfo[]
   i18nMessages?: AnnouncementI18n
 }
 
-interface SystemBulletinDimension {
-  dimensionType: string
-  dimensionIds: string[]
+interface DimensionInfo {
+  type: string
+  id: string
+  name?: string
 }
 
 interface PageResult<T> {
@@ -122,9 +119,7 @@ const normalizeBulletin = (record: SystemBulletin): AnnouncementRecord => {
   const type = typeof record.type === 'object'
     ? { value: record.type.value, text: record.type.text || record.type.value }
     : { value: record.type || 'default', text: record.type || '' }
-  const dimensionMap = new Map(
-    (record.dimension || []).map(item => [item.dimensionType, item.dimensionIds || []]),
-  )
+  const dimensions = record.dimension || []
   return {
     id: record.id,
     title: resolveAnnouncementText(record, 'title'),
@@ -141,8 +136,8 @@ const normalizeBulletin = (record: SystemBulletin): AnnouncementRecord => {
     createTime: formatTime(record.createTime),
     modifyTime: formatTime(record.modifyTime),
     creatorName: record.creatorName || '',
-    userIds: dimensionMap.get('user') || [],
-    organizationIds: dimensionMap.get('org') || [],
+    userIds: dimensions.filter(item => item.type === 'user').map(item => item.id),
+    organizationIds: dimensions.filter(item => item.type === 'org').map(item => item.id),
   }
 }
 
@@ -237,35 +232,36 @@ export const getSystemBulletinNotificationDetail = async (
   }
 }
 
-/** 查询当前用户收到的公告通知，不与公告管理查询混用。 */
-export const queryAnnouncementInbox = (query: AnnouncementQuery = {}) => getList_api({
-  ...query,
-  terms: [
-    ...(query.terms || []),
-    {
-      column: 'topicProvider',
-      termType: 'eq',
-      value: SYSTEM_BULLETIN_PROVIDER,
-    },
-  ],
-})
+/** 公告接收查询直接读取发布范围及个人状态，不依赖发送通道或收件箱物化。 */
+export const queryAnnouncementInbox = (query: AnnouncementQuery = {}) => request.post(
+  '/system/bulletin/received/_query', query,
+)
+
+export const queryAnnouncementInboxNoPaging = (query: AnnouncementQuery = {}) => request.post(
+  '/system/bulletin/received/_query/no-paging', query,
+)
+
+export const countAnnouncementInbox = (query: AnnouncementQuery = {}) => request.post(
+  '/system/bulletin/received/_count', query,
+)
+
+export const countAnnouncementUnread = (query: AnnouncementQuery = {}) => request.post(
+  '/system/bulletin/received/unread/_count', query,
+)
 
 export const changeAnnouncementReadState = (
   type: '_read' | '_unread',
   ids: string[],
-) => changeStatus_api(type, ids)
+) => request.put(`/system/bulletin/received/_state/${type === '_read' ? 'read' : 'unread'}`, ids)
 
-export const markAllAnnouncementsRead = () => changeAllStatus(
-  '_read',
-  [SYSTEM_BULLETIN_PROVIDER],
-)
+export const markAllAnnouncementsRead = () => request.put('/system/bulletin/received/_read')
 
 /** 保存未发布公告，或通过 deployType=now 保存并立即发布。 */
 export const saveAnnouncement = (draft: AnnouncementDraft) => {
   const dimension = [
-    { dimensionType: 'user', dimensionIds: draft.userIds },
-    { dimensionType: 'org', dimensionIds: draft.organizationIds },
-  ].filter(item => item.dimensionIds.length > 0)
+    ...draft.userIds.map(id => ({ type: 'user', id })),
+    ...draft.organizationIds.map(id => ({ type: 'org', id })),
+  ]
 
   const {
     i18nMessages,

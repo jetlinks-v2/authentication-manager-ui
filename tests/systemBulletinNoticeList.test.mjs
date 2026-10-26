@@ -13,15 +13,11 @@ const loadLoader = async ({ list, unread, detail }) => {
   }).outputText
   const exports = {}
   const dependency = (id) => {
-    if (id === '@jetlinks-web-core/api/account/notificationRecord') {
-      return {
-        getList_api: async () => ({ result: { data: list } }),
-        getUnreadNoPagingList_api: async () => ({ result: { data: unread } }),
-      }
-    }
     if (id === './api') {
       return {
         SYSTEM_BULLETIN_PROVIDER: 'SystemBulletin',
+        queryAnnouncementInbox: async () => ({ result: { data: list } }),
+        queryAnnouncementInboxNoPaging: async () => ({ result: unread }),
         parseSystemBulletinDetail: (record) => record.detail,
         resolveSystemBulletinReference: (record) => record.detail,
         getSystemBulletinNotificationDetail: async (reference) => detail(reference),

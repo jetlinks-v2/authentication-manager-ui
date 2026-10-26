@@ -179,9 +179,9 @@ test('uses the bulletin title and internal scrolling for management details', ()
 })
 
 test('loads all unread bulletins before the five latest read bulletins in the bell', () => {
-  assert.match(registerSource, /props: \{ listHandler: loadSystemBulletinNoticeList \}/)
+  assert.match(registerSource, /listHandler: loadSystemBulletinNoticeList/)
   assert.match(noticeListLoaderSource, /const READ_NOTICE_LIMIT = 5/)
-  assert.match(noticeListLoaderSource, /getUnreadNoPagingList_api\(\{\s*paging: false,/)
+  assert.match(noticeListLoaderSource, /queryAnnouncementInboxNoPaging\(\{\s*paging: false,/)
   assert.match(noticeListLoaderSource, /pageSize: READ_NOTICE_LIMIT/)
   assert.match(noticeListLoaderSource, /\{ column: 'state', termType: 'eq', value: 'read' \}/)
   assert.match(noticeListLoaderSource, /filter\(record => stateValue\(record\) === 'unread'\)/)
@@ -371,7 +371,7 @@ test('re-resolves notification text when the active locale changes', async () =>
 })
 
 test('keeps the bell badge synchronized with the backend unread count', () => {
-  assert.match(coreNoticeSource, /getUnreadCount_api\(params\)[\s\S]*total\.value = toBadgeCount\(resp\.result\)/)
+  assert.match(coreNoticeSource, /queryNoticeUnreadSummary\(topicProviders, params\)[\s\S]*total\.value = toBadgeCount\(resp\.result\?\.total\)/)
   assert.match(coreNoticeSource, /async onMessage\(data\)[\s\S]*handleRegisteredRealtimeNotice[\s\S]*getList\(\)/)
   assert.match(coreNoticeSource, /watch\(visible, \(opened\) => \{[\s\S]*if \(opened\) \{[\s\S]*getList\(\)/)
   assert.match(coreNoticeSource, /<NoticeInfo ref="noticeInfoRef"/)
