@@ -1,5 +1,6 @@
 import { request } from '@jetlinks-web/core'
 import type { AxiosResponseRewrite } from '@jetlinks-web/types'
+import type { AssetAccessPolicy, MenuPermissionNode } from '@jetlinks-web-core/hooks'
 import type { BasicLayoutVariant } from '@jetlinks-web-core/layout/runtime/layoutVariant'
 
 type RequestConfig = Record<string, unknown>
@@ -219,6 +220,11 @@ export const queryBusinessApplicationTemplates = (data: QueryPayload = { paging:
     '/business-application-template/_query/no-paging?paging=false',
     data,
   )
+
+/** 应用模板菜单与实例专属菜单构成授权候选，资产策略仍沿用模板。 */
+export const getBusinessApplicationMenus = (id: string) =>
+  apiRequest.get<{ menus: MenuPermissionNode[]; assetAccesses: AssetAccessPolicy[] }>(
+    `/business-application/${encodeURIComponent(id)}/menus`, undefined, { applicationScope: false })
 
 export const getBusinessApplicationTemplateMenus = (id: string) =>
   apiRequest.get<MenuView[]>(`/business-application-template/${id}/menus`)

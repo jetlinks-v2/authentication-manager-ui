@@ -2635,5 +2635,6 @@
   "EmptyCreate.names.dictionary_entries": "dictionary entries",
   "EmptyCreate.names.notification_templates": "notification templates",
   "EmptyCreate.names.dictionaries": "dictionaries",
-  "EmptyCreate.names.regions": "regions"
+  "EmptyCreate.names.regions": "regions",
+  "ProjectApplication.role.permissionLoadFailed": "Failed to load menu permissions. Please retry."
 }

@@ -44,8 +44,7 @@
               <RoleManagement
                 :roles="detail.roles"
                 :users="detail.users"
-                :template-id="application.templateId"
-                :is-external="application.provider === 'third-party'"
+                :scope="{ applicationId: application.id, templateId: application.templateId, isExternal: application.provider === 'third-party' }"
                 @save-role="saveRole"
                 @delete-role="removeRole"
               />
@@ -88,7 +87,7 @@ const route = useRoute()
 const menuStore = useMenuStore()
 const store = useProjectApplication()
 const { t: $t } = useI18n()
-const activeTab = ref('settings')
+const activeTab = ref(route.query.tab === 'roles' ? 'roles' : 'settings')
 const loading = ref(false)
 const settingsEditing = ref(false)
 const settingsSaving = ref(false)
@@ -112,7 +111,7 @@ const {
 watch(applicationId, async id => {
   const version = ++detailLoadVersion
   if (!id) return
-  activeTab.value = 'settings'
+  activeTab.value = route.query.tab === 'roles' ? 'roles' : 'settings'
   settingsEditing.value = false
   loading.value = true
   try {

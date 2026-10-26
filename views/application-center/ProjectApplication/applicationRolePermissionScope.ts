@@ -11,7 +11,7 @@ import {
 interface ApplicationRolePermissionScopeInput {
   isExternal: boolean
   currentUserMenus: MenuPermissionNode[]
-  templateMenus?: MenuPermissionNode[]
+  availableMenus?: MenuPermissionNode[]
   roleMenus?: MenuPermissionNode[]
   templateAssetAccesses?: AssetAccessPolicy[]
   roleAssetAccesses?: AssetAccessPolicy[]
@@ -22,8 +22,8 @@ export const buildApplicationRoleMenuQuery = (isExternal: boolean) => isExternal
   : { paging: false, terms: [{ column: 'owner', value: 'app' }] }
 
 /**
- * 应用角色候选始终取模板上限与当前操作者可授范围的交集。
- * 外链模板包含跨 owner 的接口权限候选，因此只跳过应用菜单过滤，不跳过模板上限。
+ * 应用角色候选始终取应用有效菜单上限与当前操作者可授范围的交集。
+ * 外链模板包含跨 owner 的接口权限候选，因此只跳过应用菜单过滤，不跳过应用有效菜单上限。
  */
 export const resolveApplicationRolePermissionScope = (
   input: ApplicationRolePermissionScopeInput,
@@ -31,16 +31,16 @@ export const resolveApplicationRolePermissionScope = (
   const currentUserMenus = input.isExternal
     ? input.currentUserMenus
     : filterApplicationMenuInterfacePermissions(input.currentUserMenus)
-  const templateMenus = input.isExternal
-    ? input.templateMenus || []
-    : filterApplicationMenuInterfacePermissions(input.templateMenus || [])
-  const candidateMenus = filterApplicationMenuTreeBySourceIds(templateMenus, currentUserMenus)
+  const availableMenus = input.isExternal
+    ? input.availableMenus || []
+    : filterApplicationMenuInterfacePermissions(input.availableMenus || [])
+  const candidateMenus = filterApplicationMenuTreeBySourceIds(availableMenus, currentUserMenus)
   const menus = normalizeCandidateMenus(candidateMenus)
   const roleMenus = input.isExternal
     ? input.roleMenus || []
     : filterApplicationMenuInterfacePermissions(input.roleMenus || [])
   const grantedMenus = normalizeGrantedMenus(
-    filterGrantedMenuAssetAccessesByMenuScope(roleMenus, menus),
+    filterGrantedMenuAssetAccessesByMenuScope(filterApplicationMenuTreeBySourceIds(roleMenus, menus), menus),
     menus,
   )
   const roleAssetAccesses = filterAssetAccessPoliciesByMenuScope(
