@@ -1,6 +1,6 @@
 <template>
   <div class="role-workspace">
-    <div v-if="roles.length" class="role-layout" :class="{ 'role-layout--external': isExternal }">
+    <div v-if="roles.length" class="role-layout" :class="{ 'role-layout--external': scope.isExternal }">
       <aside class="role-sidebar">
         <header class="sidebar-heading">
           <strong>{{ $t('ProjectApplication.role.list') }}</strong>
@@ -39,7 +39,7 @@
         </div>
       </aside>
 
-      <main v-if="activeRole && !isExternal" class="permission-panel">
+      <main v-if="activeRole && !scope.isExternal" class="permission-panel">
         <div class="permission-heading">
           <div class="permission-title">
             <h3>{{ activeRole.name }}</h3>
@@ -51,7 +51,10 @@
           </a-button>
         </div>
         <a-spin :spinning="permissionLoading">
-          <MenuAssetPermissionEditor
+          <a-alert v-if="permissionError" type="error" show-icon :message="$t('ProjectApplication.role.permissionLoadFailed')">
+            <template #action><a-button size="small" @click="loadPermissions">{{ $t('ProjectApplication.list.retry') }}</a-button></template>
+          </a-alert>
+          <MenuAssetPermissionEditor v-else
             class="permission-editor"
             :context="editor"
             :columns="columns"
@@ -86,163 +89,19 @@
 </template>
 
 <script setup lang="ts" name="ProjectApplicationRoleManagement">
-import type { PropType } from 'vue'
-import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { onlyMessage } from '@jetlinks-web/utils'
 import { MenuAssetPermissionEditor } from '@jetlinks-web-core/components'
-import { useMenuAssetPermissionEditor } from '@jetlinks-web-core/hooks'
-import type { AssetAccessPolicy, AssetTypeName, MenuPermissionNode } from '@jetlinks-web-core/hooks'
-import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
-import {
-  getPermissionDetail_api as getRolePermissionDetail,
-  updatePermissionTree_api as saveRolePermission,
-} from '@authentication-manager-ui/api/system/role'
-import { getAssetsType as queryAssetTypes } from '@authentication-manager-ui/api/system/menu'
-import {
-  getApplicationTemplateMenus,
-  getCurrentUserMenuTree,
-} from '@authentication-manager-ui/api/application-center/applicationTemplate'
-import {
-  normalizeAssetTypeNames,
-  unwrapResult,
-} from '../../../Template/Save/menu-config.shared'
-import {
-  buildApplicationRoleMenuQuery,
-  resolveApplicationRolePermissionScope,
-} from '../../applicationRolePermissionScope'
 import type { ApplicationRole, ApplicationRoleDraft, ApplicationUser } from '../../types'
-
-interface GrantDetail {
-  menus?: MenuPermissionNode[]
-  assetAccesses?: AssetAccessPolicy[]
-}
-
-const props = defineProps({
-  roles: { type: Array as PropType<ApplicationRole[]>, default: () => [] },
-  users: { type: Array as PropType<ApplicationUser[]>, default: () => [] },
-  templateId: { type: String, default: '' },
-  isExternal: { type: Boolean, default: false },
-})
-const emits = defineEmits(['save-role', 'delete-role'])
+import { useApplicationRoleManagement, type ApplicationRoleScope } from './useApplicationRoleManagement'
+const props = defineProps<{ roles: ApplicationRole[]; users: ApplicationUser[]; scope: ApplicationRoleScope }>()
+const emits = defineEmits<{
+  'save-role': [draft: ApplicationRoleDraft, id?: string]
+  'delete-role': [role: ApplicationRole]
+}>()
 const { t: $t } = useI18n()
-const activeRoleId = ref('')
-const roleModalOpen = ref(false)
-const editingRoleId = ref<string>()
-const formRef = ref()
-const form = reactive<ApplicationRoleDraft>({ name: '', description: '' })
-const permissionLoading = ref(false)
-const savingPermissions = ref(false)
-const initialized = ref(false)
-const editor = useMenuAssetPermissionEditor({ defaultSupportIds: ['creator'] })
-
-const activeRole = computed(() => props.roles.find(item => item.id === activeRoleId.value))
-const memberCount = (roleId: string) => props.users.filter(user => user.roleId === roleId).length
-const columns = computed(() => [
-  { title: $t('ProjectApplication.role.menu'), dataIndex: 'menu', key: 'menu', width: '38%' },
-  { title: $t('ProjectApplication.role.operationPermissions'), dataIndex: 'action', key: 'action' },
-])
-const rules = computed(() => ({ name: [{ required: true, message: $t('ProjectApplication.role.nameRequired') }] }))
-let loadSequence = 0
-
-const clearPermissions = () => {
-  initialized.value = false
-  permissionLoading.value = false
-  editor.reset({ menus: [], assetTypes: [] })
-}
-
-const assertSuccess = <T,>(response: any, fallback: T): T => {
-  if (response?.success === false) throw new Error(response.message)
-  return unwrapResult(response, fallback)
-}
-
-const loadAssetTypes = async (): Promise<AssetTypeName[]> => {
-  if (!isNoCommunity) return []
-  const response = await queryAssetTypes()
-  if (response?.success === false) throw new Error(response.message)
-  return normalizeAssetTypeNames(response)
-}
-
-const loadPermissions = async () => {
-  const sequence = ++loadSequence
-  if (props.isExternal || !activeRoleId.value || !props.templateId) {
-    clearPermissions()
-    return
-  }
-  initialized.value = false
-  permissionLoading.value = true
-  try {
-    const [templateResponse, menuResponse, detailResponse, assetTypes] = await Promise.all([
-      getApplicationTemplateMenus(props.templateId),
-      getCurrentUserMenuTree(buildApplicationRoleMenuQuery(props.isExternal)),
-      getRolePermissionDetail(activeRoleId.value),
-      loadAssetTypes(),
-    ])
-    if (sequence !== loadSequence) return
-
-    const templateDetail = assertSuccess<GrantDetail>(templateResponse, {})
-    const roleDetail = assertSuccess<GrantDetail>(detailResponse, {})
-    const permissionScope = resolveApplicationRolePermissionScope({
-      isExternal: props.isExternal,
-      currentUserMenus: assertSuccess<MenuPermissionNode[]>(menuResponse, []),
-      templateMenus: Array.isArray(templateDetail.menus) ? templateDetail.menus : [],
-      roleMenus: Array.isArray(roleDetail.menus) ? roleDetail.menus : [],
-      templateAssetAccesses: Array.isArray(templateDetail.assetAccesses) ? templateDetail.assetAccesses : [],
-      roleAssetAccesses: Array.isArray(roleDetail.assetAccesses) ? roleDetail.assetAccesses : [],
-    })
-
-    // 回显前按最终候选菜单裁剪，避免再次提交超出当前操作者可授范围的资产权限。
-    editor.reset({
-      menus: permissionScope.menus,
-      grantedMenus: permissionScope.grantedMenus,
-      assetAccesses: permissionScope.assetAccesses,
-      assetTypes,
-    })
-    initialized.value = true
-  } catch {
-    if (sequence === loadSequence) clearPermissions()
-  } finally {
-    if (sequence === loadSequence) permissionLoading.value = false
-  }
-}
-
-watch(() => props.roles, roles => {
-  if (!roles.some(item => item.id === activeRoleId.value)) activeRoleId.value = roles[0]?.id || ''
-}, { immediate: true, deep: true })
-watch([
-  activeRoleId,
-  () => props.templateId,
-  () => props.isExternal,
-], loadPermissions, { immediate: true, deep: true })
-
-const savePermissions = async () => {
-  if (props.isExternal || !initialized.value || !activeRoleId.value) return
-  savingPermissions.value = true
-  try {
-    await saveRolePermission(activeRoleId.value, editor.getSnapshot())
-    onlyMessage($t('ProjectApplication.role.permissionSuccess', { name: activeRole.value?.name || '' }))
-  } catch {
-    // The shared request layer reports the backend error.
-  } finally {
-    savingPermissions.value = false
-  }
-}
-
-const openRole = (role?: ApplicationRole) => {
-  editingRoleId.value = role?.id
-  Object.assign(form, { name: role?.name || '', description: role?.description || '' })
-  roleModalOpen.value = true
-}
-
-const confirmRole = async () => {
-  try {
-    await formRef.value?.validate()
-  } catch {
-    return
-  }
-  emits('save-role', { ...form }, editingRoleId.value)
-  roleModalOpen.value = false
-}
+const { activeRoleId, roleModalOpen, editingRoleId, formRef, form, permissionLoading, permissionError,
+  savingPermissions, initialized, editor, activeRole, memberCount, columns, rules, savePermissions,
+  openRole, confirmRole, loadPermissions } = useApplicationRoleManagement(props, (draft, id) => emits('save-role', draft, id))
 </script>
 
 <style scoped>

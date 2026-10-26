@@ -24,7 +24,7 @@ const permissionScope = await import(
 )
 
 const roleManagementSource = readFileSync(new URL(
-  '../views/application-center/ProjectApplication/Detail/components/RoleManagement.vue',
+  '../views/application-center/ProjectApplication/Detail/components/useApplicationRoleManagement.ts',
   import.meta.url,
 ), 'utf8')
 const detailSource = readFileSync(new URL(
@@ -61,7 +61,7 @@ test('external application roles use the template and operator menu intersection
   const result = permissionScope.resolveApplicationRolePermissionScope({
     isExternal: true,
     currentUserMenus: [currentMenu, menu('operator-only', { owner: 'cloud' })],
-    templateMenus: [currentMenu, menu('template-only', { owner: 'cloud' })],
+    availableMenus: [currentMenu, menu('template-only', { owner: 'cloud' })],
     roleMenus: [{ ...currentMenu, granted: true, buttons: [{ ...currentMenu.buttons[0], granted: true }] }],
     templateAssetAccesses: [{
       assetType: 'device',
@@ -93,7 +93,7 @@ test('internal application roles remain limited to the template and app menu int
   const result = permissionScope.resolveApplicationRolePermissionScope({
     isExternal: false,
     currentUserMenus: currentMenus,
-    templateMenus: [
+    availableMenus: [
       menu('template-menu', { owner: 'app' }),
       menu('template-only', { owner: 'app' }),
       menu('open-api-menu', { owner: 'app', showPage: ['open-api'] }),
@@ -105,10 +105,26 @@ test('internal application roles remain limited to the template and app menu int
   assert.equal(result.grantedMenus[0].granted, true)
 })
 
-test('role page always loads the template and keeps the external all-owner menu query', () => {
-  assert.match(detailSource, /:is-external="application\.provider === 'third-party'"/)
-  assert.match(roleManagementSource, /getApplicationTemplateMenus\(props\.templateId\)/)
+test('role page loads the effective application scope and keeps role grants on the existing endpoint', () => {
+  assert.match(detailSource, /isExternal: application\.provider === 'third-party'/)
+  assert.match(roleManagementSource, /getBusinessApplicationMenus\(props\.scope\.applicationId\)/)
   assert.doesNotMatch(roleManagementSource, /Promise\.resolve\(undefined\)/)
-  assert.match(roleManagementSource, /getCurrentUserMenuTree\(buildApplicationRoleMenuQuery\(props\.isExternal\)\)/)
+  assert.match(roleManagementSource, /getCurrentUserMenuTree\(buildApplicationRoleMenuQuery\(props\.scope\.isExternal\)\)/)
   assert.match(roleManagementSource, /saveRolePermission\(activeRoleId\.value, editor\.getSnapshot\(\)\)/)
+})
+
+
+test('effective scope includes a published application menu but excludes another application', () => {
+  const template = menu('shared-template', {owner: 'app'})
+  const published = menu('published-a', {owner: 'app', options: {businessApplicationId: 'a'}})
+  const unrelated = menu('published-b', {owner: 'app', options: {businessApplicationId: 'b'}})
+  const result = permissionScope.resolveApplicationRolePermissionScope({
+    isExternal: false,
+    currentUserMenus: [template, published, unrelated],
+    availableMenus: [template, published],
+    roleMenus: [{...published, granted: true}, {...unrelated, granted: true}],
+  })
+  assert.deepEqual(result.menus.map(item => item.id), ['shared-template', 'published-a'])
+  assert.equal(result.grantedMenus.find(item => item.id === 'published-a')?.granted, true)
+  assert.equal(result.grantedMenus.some(item => item.id === 'published-b'), false)
 })

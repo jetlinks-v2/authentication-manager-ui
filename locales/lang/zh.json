@@ -2635,5 +2635,6 @@
   "EmptyCreate.names.dictionary_entries": "字典项",
   "EmptyCreate.names.notification_templates": "通知模版",
   "EmptyCreate.names.dictionaries": "字典",
-  "EmptyCreate.names.regions": "区域"
+  "EmptyCreate.names.regions": "区域",
+  "ProjectApplication.role.permissionLoadFailed": "菜单权限加载失败，请重试"
 }
