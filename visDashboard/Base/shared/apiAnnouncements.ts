@@ -1,4 +1,4 @@
-import { request } from '@jetlinks-web/core'
+import { queryAnnouncementInbox } from '../../../views/system/Announcement/api'
 import dayjs from 'dayjs'
 import { recordOf, rowsOf, textOf } from './apiResult'
 import { HOME_TARGETS } from './navigation'
@@ -32,11 +32,11 @@ const announcementSummary = (row: Record<string, unknown>) => {
   return resolveAnnouncementText(parseAnnouncementDetail(row), 'summary') || textOf(row.message)
 }
 export const loadAnnouncements = async (): Promise<HomeRow[]> => {
-  const result = await request.post('/notifications/_query', {
+  const result = await queryAnnouncementInbox({
     paging: true, pageSize: 5, pageIndex: 0,
     sorts: [{ name: 'notifyTime', order: 'desc' }],
     terms: [{ column: 'topicProvider', termType: 'eq', value: 'SystemBulletin' }],
-  }, { hiddenError: true })
+  })
   return rowsOf(result).map((row, index) => {
     const isNew = index === 0 && isUnread(row)
     const timeVal = Number(row.notifyTime) || (row.notifyTime as string)

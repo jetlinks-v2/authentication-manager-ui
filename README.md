@@ -144,6 +144,8 @@ System bulletin pages, API contracts, types, notification detail rendering, and 
 
 The announcement editor loads its supported types from `POST /system/bulletin/type` through `getAnnouncementTypes`; it does not call the legacy `/dictionary/s_bulletin_type/items` dictionary endpoint.
 
+公告正文保存和发布均要求非空：编辑器以当前中英文内容为准，至少一种语言有非空白正文才允许保存，不使用隐藏的旧正文或默认模板回填清空结果。后端在保存和发布入口执行相同的正文约束；已有空草稿的发布按钮禁用。
+
 ### Bulletin Tenant Data Access
 
 Announcement management must declare `systemBulletin` as its menu asset type and enable data access, so service grants can apply the existing `tenant` (所在租户) policy. The repair pairs this menu declaration with the notify-manager bulletin entity's support for the framework-managed `tenantId` extension; management queries continue to use the existing AssetsHolder boundary. Verify that saving a tenant grant includes `systemBulletin`, and that project A can read its bulletin while project B cannot.
@@ -826,3 +828,5 @@ URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显�
 - 2.20 配套：前端 PR #104 保持目标 2.20；后端当前工作树采用 auth #359 bcc628ee、components #1607 3d59410a，并依赖 hsweb #371 的三状态及缓存实现。前后端 Provider 契约必须配套，更新后端不等于浏览器加载了新模块。
 - 此前旧 Vite 源码将 Provider 当成单个事件，导致旧下拉框、空 schema 和保存失败；获准重启开发服务后只核对过返回源码，未把它当作交互验收。本轮不重复重启服务，不通过放宽后端校验接受错误事件 ID。
 - 本轮前端 Provider 选择、关联展示、国际化和现有文档修改随 PR #104 交付；复用源码与差异检查，未运行构建、类型检查、lint、测试或浏览器。两类勾选、半选回显、多范围/草稿、语言切换、说明弹窗和错误反馈仍由用户在现有环境人工验收。
+
+公告接收使用 `/system/bulletin/received` 下的分页、未读统计与状态接口，概览、铃铛和个人中心共享同一接收来源。`views/system/Announcement/register.ts` 通过通知 Provider 注册接收分类及数据源，分类不要求用户拥有公告管理菜单或发送通道配置。接收列表的稳定记录 ID 用于已读操作，正文继续用公告 ID 与发布版本查询；公告保存的接收维度使用 `DimensionInfo` 的 `{type, id}` 单条结构。

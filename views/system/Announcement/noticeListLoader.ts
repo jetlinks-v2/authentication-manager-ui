@@ -1,10 +1,8 @@
-import {
-  getList_api,
-  getUnreadNoPagingList_api,
-} from '@jetlinks-web-core/api/account/notificationRecord'
 import type { NoticeListHandler } from '@jetlinks-web-core/layout/components/noticeListHandler'
 import {
   getSystemBulletinNotificationDetail,
+  queryAnnouncementInbox,
+  queryAnnouncementInboxNoPaging,
   parseSystemBulletinDetail,
   resolveSystemBulletinReference,
   SYSTEM_BULLETIN_PROVIDER,
@@ -62,12 +60,12 @@ export const loadSystemBulletinNoticeList: NoticeListHandler = async ({
   }
 
   const [unreadResponse, readResponse] = await Promise.all([
-    getUnreadNoPagingList_api({
+    queryAnnouncementInboxNoPaging({
       paging: false,
       sorts: notifyTimeDesc,
-      terms: [providerTerm],
+      terms: [providerTerm, { column: 'state', termType: 'eq', value: 'unread' }],
     }),
-    getList_api({
+    queryAnnouncementInbox({
       pageIndex: 0,
       pageSize: READ_NOTICE_LIMIT,
       sorts: notifyTimeDesc,

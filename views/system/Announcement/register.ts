@@ -1,5 +1,14 @@
 import { defineAsyncComponent } from 'vue'
-import { SYSTEM_BULLETIN_PROVIDER } from './api'
+import i18n from '@jetlinks-web-core/locales'
+import {
+  SYSTEM_BULLETIN_PROVIDER,
+  queryAnnouncementInbox,
+  queryAnnouncementInboxNoPaging,
+  countAnnouncementInbox,
+  countAnnouncementUnread,
+  changeAnnouncementReadState,
+  markAllAnnouncementsRead,
+} from './api'
 import { loadSystemBulletinNoticeList, resolveSystemBulletinNoticeTexts } from './noticeListLoader'
 import { handleSystemBulletinNotice } from './realtimeNotification'
 import type { NoticeTextResolverContext } from '@jetlinks-web-core/layout/components/noticeTextResolver'
@@ -15,7 +24,25 @@ export const getRegisterComponents = () => [
   {
     targetPage: 'notification-provider',
     code: SYSTEM_BULLETIN_PROVIDER,
-    props: { listHandler: loadSystemBulletinNoticeList },
+    props: {
+      listHandler: loadSystemBulletinNoticeList,
+      metadata: () => ({
+        provider: SYSTEM_BULLETIN_PROVIDER,
+        name: i18n.global.t('Announcement.inbox.title'),
+        type: {
+          id: SYSTEM_BULLETIN_PROVIDER,
+          name: i18n.global.t('Announcement.inbox.title'),
+        },
+      }),
+      dataSource: {
+        query: queryAnnouncementInbox,
+        queryNoPaging: queryAnnouncementInboxNoPaging,
+        count: countAnnouncementInbox,
+        unreadCount: countAnnouncementUnread,
+        changeState: changeAnnouncementReadState,
+        readAll: markAllAnnouncementsRead,
+      },
+    },
   },
   {
     targetPage: 'notification-realtime',

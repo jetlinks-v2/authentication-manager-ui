@@ -171,7 +171,6 @@ function getPopupContainer(triggerNode: HTMLElement) {
 interface AnnouncementEditorForm {
   title: string
   summary: string
-  content: string
   type: string
   userIds: string[]
   organizationIds: string[]
@@ -181,7 +180,6 @@ interface AnnouncementEditorForm {
 const form = reactive<AnnouncementEditorForm>({
   title: '',
   summary: '',
-  content: '',
   type: '',
   userIds: [],
   organizationIds: [],
@@ -215,7 +213,7 @@ const canSubmit = computed(() => {
   const i18n = normalizeAnnouncementI18n(form.i18nMessages)
   return Boolean(
     resolveCompatibilityText(i18n.title, form.title.trim())
-    && resolveCompatibilityText(i18n.content, form.content.trim())
+    && resolveCompatibilityText(i18n.content)
     && form.type,
   )
 })
@@ -227,17 +225,14 @@ watch(() => props.open, (open) => {
 /** 弹窗每次打开都从当前记录重新初始化，关闭后不会残留上一次草稿。 */
 function resetForm() {
   const record = props.record
-  const translatedDefaultContent = $t('Announcement.editor.defaultContent')
-  const defaultContent = record?.content || translatedDefaultContent
   const i18n = mergeLegacyAnnouncementI18n(record?.i18nMessages, {
     title: record?.legacyTitle,
     summary: record?.legacySummary,
-    content: record?.legacyContent === translatedDefaultContent ? undefined : record?.legacyContent,
+    content: record?.legacyContent,
   })
 
   form.title = record?.title || ''
   form.summary = record?.summary || ''
-  form.content = defaultContent
   initialTitle = form.title
   initialSummary = form.summary
   form.type = record?.type.value || props.typeOptions[0]?.value || ''
@@ -279,14 +274,11 @@ function submit(publish: boolean) {
   if (form.summary.trim() !== initialSummary) {
     i18n = updateAnnouncementLocaleText(i18n, 'summary', currentLanguage.value, form.summary)
   }
-  if (!props.record && form.content.trim() && !Object.keys(i18n.content ?? {}).length) {
-    i18n = updateAnnouncementLocaleText(i18n, 'content', currentLanguage.value, form.content)
-  }
   emit('save', {
     id: props.record?.id,
     title: form.title.trim(),
     summary: form.summary.trim() || undefined,
-    content: form.content.trim(),
+    content: resolveCompatibilityText(i18n.content),
     type,
     userIds: [...form.userIds],
     organizationIds: [...form.organizationIds],

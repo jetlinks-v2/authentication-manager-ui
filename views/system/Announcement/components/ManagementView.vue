@@ -101,6 +101,7 @@
             v-if="record.state === 'unpublished'"
             has-permission="system/Announcement:publish"
             type="link"
+            :disabled="!record.legacyContent?.trim()"
             style="padding: 0"
             :tooltip="{ title: $t('Announcement.action.publish') }"
             :pop-confirm="{
