@@ -6,7 +6,7 @@
 		    @create="openCreate"
 		    @edit="openEdit"
 		    @inspect="openDetail"
-		    @publish="publishAnnouncement"
+		    @publish="openPublish"
 		    @withdraw="withdrawAnnouncement"
 		    @remove="removeAnnouncement"
 	    />
@@ -17,14 +17,20 @@
     v-model:open="editorOpen"
     :record="editingRecord"
     :loading="saving"
-    :publish-mode="publishMode"
     :type-options="typeOptions"
     :type-loading="typeLoading"
+    @save="saveAnnouncement"
+  />
+
+  <AnnouncementPublishDialog
+    v-model:open="publishOpen"
+    :record="publishingRecord"
+    :loading="publishing"
     :user-options="userOptions"
     :user-loading="userLoading"
     @search-users="handleUserSearch"
     @selected-users-change="handleSelectedUsersChange"
-    @save="saveAnnouncement"
+    @publish="publishAnnouncement"
   />
 
   <a-modal
@@ -44,12 +50,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
-import { getUserList_api } from '@authentication-manager-ui/api/system/user'
+import { useAnnouncementAudience } from './useAnnouncementAudience'
 import AnnouncementDetail from './components/AnnouncementDetail.vue'
 import AnnouncementEditorDialog from './components/AnnouncementEditorDialog.vue'
+import AnnouncementPublishDialog from './components/AnnouncementPublishDialog.vue'
 import ManagementView from './components/ManagementView.vue'
 import { resolveAnnouncementText } from './announcementI18n'
 import {
@@ -64,19 +71,8 @@ import type {
   AnnouncementDraft,
   AnnouncementRecord,
   AnnouncementType,
-  AnnouncementUserOption,
+  AnnouncementAudience,
 } from './types'
-
-interface PlatformUser {
-  id: string
-  name?: string
-  username?: string
-}
-
-interface UserQueryResponse {
-  success?: boolean
-  result?: PlatformUser[] | { data?: PlatformUser[] }
-}
 
 defineOptions({ name: 'AnnouncementManagement' })
 
@@ -85,18 +81,16 @@ const managementViewRef = ref<{ reload: () => void }>()
 const editorOpen = ref(false)
 const editingRecord = ref<AnnouncementRecord>()
 const saving = ref(false)
-const publishMode = ref(false)
+const publishOpen = ref(false)
+const publishingRecord = ref<AnnouncementRecord>()
+const publishing = ref(false)
 const detailOpen = ref(false)
 const detailRecord = ref<AnnouncementRecord>()
 const detailLoading = ref(false)
 const detailLocale = ref('zh')
-const userOptions = ref<AnnouncementUserOption[]>([])
 const typeOptions = ref<AnnouncementType[]>([])
 const typeLoading = ref(false)
-const selectedUserIds = ref<string[]>([])
-const userLoading = ref(false)
-let userSearchTimer: ReturnType<typeof setTimeout> | undefined
-let userRequestSequence = 0
+const { userOptions, userLoading, initializeUserOptions, handleUserSearch, handleSelectedUsersChange } = useAnnouncementAudience()
 
 /** 详情查看语言默认跟随界面语言，仅支持中英。 */
 function currentViewLocale() {
@@ -108,104 +102,6 @@ const detailTitle = computed(() => {
   return (record && resolveAnnouncementText(record, 'title', detailLocale.value))
     || $t('Announcement.action.view')
 })
-
-/** 将平台用户转换为公告选择器选项，提交值始终只保留用户 ID。 */
-function toUserOption(user: PlatformUser): AnnouncementUserOption {
-  const primaryName = user.name || user.username || user.id
-  const username = user.username && user.username !== primaryName
-    ? `（${user.username}）`
-    : ''
-  return {
-    label: `${primaryName}${username}`,
-    value: user.id,
-  }
-}
-
-/** 兼容平台分页与不分页查询结果，并丢弃缺少 ID 的异常记录。 */
-function extractUsers(response: UserQueryResponse): PlatformUser[] {
-  if (!response.success) return []
-  const result = response.result
-  const users = Array.isArray(result) ? result : result?.data
-  return (users || []).filter((user) => Boolean(user.id))
-}
-
-/** 仅保留已选用户与本次搜索结果，兼顾标签回显和搜索结果准确性。 */
-function replaceUserOptions(options: AnnouncementUserOption[]) {
-  const previousOptionMap = new Map(userOptions.value.map((option) => [option.value, option]))
-  const optionMap = new Map(options.map((option) => [option.value, option]))
-  selectedUserIds.value.forEach((userId) => {
-    const selectedOption = previousOptionMap.get(userId)
-    if (selectedOption) optionMap.set(userId, selectedOption)
-  })
-  userOptions.value = [...optionMap.values()]
-}
-
-/** 从平台用户接口加载候选项；编辑时额外补齐已选用户用于名称回显。 */
-async function loadUserOptions(keyword = '', selectedUserIds: string[] = []) {
-  const requestSequence = ++userRequestSequence
-  userLoading.value = true
-  const normalizedKeyword = keyword.trim()
-  const requests = [
-    getUserList_api({
-      paging: true,
-      pageIndex: 0,
-      pageSize: 50,
-      includes: ['id', 'name', 'username'],
-      filter: normalizedKeyword
-        ? {
-            name$like: `%${normalizedKeyword}%`,
-            $or$username$like: `%${normalizedKeyword}%`,
-          }
-        : undefined,
-    }),
-  ]
-  if (selectedUserIds.length) {
-    requests.push(getUserList_api({
-      paging: true,
-      pageIndex: 0,
-      pageSize: selectedUserIds.length,
-      includes: ['id', 'name', 'username'],
-      terms: [{ column: 'id', termType: 'in', value: selectedUserIds }],
-    }))
-  }
-
-  try {
-    const responses = await Promise.all(requests) as UserQueryResponse[]
-    if (requestSequence !== userRequestSequence) return
-    replaceUserOptions(responses.flatMap(extractUsers).map(toUserOption))
-  } catch {
-    if (requestSequence === userRequestSequence) {
-      replaceUserOptions([])
-    }
-  } finally {
-    if (requestSequence === userRequestSequence) {
-      userLoading.value = false
-    }
-  }
-}
-
-/** 打开编辑器时重置候选项，并从真实用户数据加载首批及已选用户。 */
-function initializeUserOptions(initialUserIds: string[] = []) {
-  if (userSearchTimer) clearTimeout(userSearchTimer)
-  userSearchTimer = undefined
-  userOptions.value = []
-  selectedUserIds.value = [...initialUserIds]
-  void loadUserOptions('', initialUserIds)
-}
-
-/** 用户输入停止 300ms 后再查询，减少高频搜索请求。 */
-function handleUserSearch(keyword: string) {
-  if (userSearchTimer) clearTimeout(userSearchTimer)
-  userSearchTimer = setTimeout(() => {
-    userSearchTimer = undefined
-    void loadUserOptions(keyword, selectedUserIds.value)
-  }, 300)
-}
-
-/** 同步弹窗内当前选中用户，供后续搜索保留名称标签。 */
-function handleSelectedUsersChange(userIds: string[]) {
-  selectedUserIds.value = [...userIds]
-}
 
 /** 首次打开编辑器时加载公告类型，后续打开复用同一字典结果。 */
 async function ensureTypeOptions() {
@@ -221,16 +117,12 @@ async function ensureTypeOptions() {
 async function openCreate() {
   await ensureTypeOptions()
   editingRecord.value = undefined
-  publishMode.value = false
-  initializeUserOptions()
   editorOpen.value = true
 }
 
 async function openEdit(record: AnnouncementRecord) {
   await ensureTypeOptions()
   editingRecord.value = record
-  publishMode.value = false
-  initializeUserOptions(record.userIds)
   editorOpen.value = true
 }
 
@@ -255,22 +147,32 @@ async function saveAnnouncement(draft: AnnouncementDraft) {
     await saveAnnouncementApi(draft)
     editorOpen.value = false
     managementViewRef.value?.reload()
-    const messageKey = draft.publish
-      ? 'Announcement.message.published'
-      : editing
-        ? 'Announcement.message.updated'
-        : 'Announcement.message.created'
+    const messageKey = editing ? 'Announcement.message.updated' : 'Announcement.message.created'
     onlyMessage($t(messageKey))
   } finally {
     saving.value = false
   }
 }
 
-/** 通过行内二次确认直接发布草稿，发布后重新查询服务端状态。 */
-async function publishAnnouncement(record: AnnouncementRecord) {
-  await publishAnnouncementApi(record.id)
-  managementViewRef.value?.reload()
-  onlyMessage($t('Announcement.message.published'))
+/** 每次发布重新选择范围，撤回重发不自动继承旧投递关系。 */
+function openPublish(record: AnnouncementRecord) {
+  publishingRecord.value = record
+  initializeUserOptions()
+  publishOpen.value = true
+}
+
+/** 发布失败保持弹窗及选择，成功后才刷新状态并关闭。 */
+async function publishAnnouncement(audience: AnnouncementAudience) {
+  if (publishing.value || !publishingRecord.value) return
+  publishing.value = true
+  try {
+    await publishAnnouncementApi(publishingRecord.value.id, audience)
+    publishOpen.value = false
+    managementViewRef.value?.reload()
+    onlyMessage($t('Announcement.message.published'))
+  } finally {
+    publishing.value = false
+  }
 }
 
 /** 撤回后刷新列表以同步未发布状态。 */
@@ -287,8 +189,4 @@ async function removeAnnouncement(record: AnnouncementRecord) {
   onlyMessage($t('Announcement.message.deleted'))
 }
 
-onBeforeUnmount(() => {
-  if (userSearchTimer) clearTimeout(userSearchTimer)
-  userRequestSequence += 1
-})
 </script>

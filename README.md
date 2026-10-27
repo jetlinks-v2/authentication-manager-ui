@@ -835,20 +835,22 @@ URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显�
 
 
 
-### 空选择默认全员与撤回重发
+### 内容保存与发布范围
 
-新建和撤回重发均允许不选用户与组织。`api.ts` 对两个空数组提交 `dimension: []`、`allVisible: true`；撤回后清空原指定对象等同主动改为所属维度全员，不显示必选提示。统一发布接口按公告可信来源生成平台 `user:*` 或所属项目 `tenant:项目ID` 全员目标；投递关系同时记录来源 Key 与目标 Key，项目公告不得扩到其他项目。新版本使用新范围，不能沿用旧版本的指定关系。
+`POST /system/bulletin/_save` 只保存内容、类型与国际化字段，不保存接收维度、不触发发布。内容编辑器不包含范围选择。列表“发布”打开独立范围弹窗，通过 `PUT /system/bulletin/_deploy?id=...` 提交 `{ dimension: DimensionInfo[], deployType: 'now' }`；本页面只提供立即发布，后端定时发布能力不由页面删除或改写。
 
-明确指定用户或组织时，前端提交 `DimensionInfo[]` 并原样保留选择 ID；服务端保存维度关系，在接收查询时匹配当前成员及组织层级，并与可信来源取交集，不展开人员快照或把无人命中的目标自动广播。本次不新增重发专用入口或额外范围阻断规则；发布仍只传公告ID，HTTP错误沿用统一提示，失败不报成功，编辑失败保留草稿。
+每次发布（含撤回重发）从空选择开始，弹窗明确告知空选用户与组织表示公告所属来源范围全员。指定用户与组织取并集，再与可信来源取交集；前端保留所选 ID，候选查询失败不把指定范围改成全员。发布失败保留弹窗和选择，不报成功、不刷新为已发布；成功后才关闭并刷新。新版本只使用本次提交的范围，不继承旧发布关系。
 
+管理详情的 `dimension` 是投递关系只读投影，`sourceDimension` 是可信来源；`deliveryVersion` 与 `deliveryState` 标明该范围所属批次及 `unselected/scheduled/published/revoked` 生命周期。列表与详情使用 `announcementAudience.ts` 统一展示：未选择提示“发布时选择范围”，待发布与撤回保留对应状态；只有 `user:*` 或目标等于来源维度才显示来源范围全员，空投影不猜测为全员。`api.ts` 明确筛选保存字段，管理详情投影不会被写回公告内容。
 
+本轮验证入口：`tests/systemBulletinDimensions.test.mjs` 覆盖保存/发布 HTTP 参数、只读投影、空选与失效目标、页面处理函数及发布弹窗的失败/重试/重复点击/重新打开行为；`systemBulletinRealtimeSubscription.test.mjs` 覆盖当前项目参数及迟到结果隔离。两份 checkout 定向行为测试各 29/29 通过，`ui` 五个改动 Vue 文件的样式门禁通过；两端执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 生产构建通过。公告全集 64 项通过 59 项；剩余 5 项 Ownership 静态断言已在 HEAD `2663825` 的临时快照重现（18 项通过 13 项），涉及既有国际化/列表/订阅菜单/core Notice 实现位置，未删除或弱化。整仓 `vue-tsc --noEmit -p tsconfig.base.json` 默认堆内存耗尽；收敛公告入口、8GB 堆的检查有 195 条依赖诊断，与同配置 HEAD 快照逐条完全一致，公告目录无诊断，不能视为整仓类型通过。真实页面创建→发布与新后端联动受本机旧关系表结构阻塞，未迁移历史测试数据，运行服务已恢复旧表匹配的 PR79 包，不能计为本分支页面通过；9100/9200 现有代理指向本机 LAN 地址 192.168.35.139 的 9800/8800，须先确认后端加载本次构建。
 
 ### 公告实时订阅与弹窗
 
-运行端 `register.ts` 通过 `NoticeDataSource.subscribeRealtime` 接入顶栏 Notice，`realtimeSubscription.ts` 使用共享 wsClient 订阅 `/system/bulletin/received` 并保存真实 RxJS Subscription；最后一个消费者卸载时释放。core 只提供可选实时钩子和注册分派，公告 Topic 与业务规则归公告模块。
+运行端 `register.ts` 通过 `NoticeDataSource.subscribeRealtime` 接入顶栏 Notice，`realtimeSubscription.ts` 使用共享 wsClient 订阅 `/system/bulletin/received`，有当前项目时传 `{ tenantDomain }`，值与当前 HTTP 的 `X-Tenant-Domain` 一致。该值只是选择意图，由租户端校验真实成员与启用状态后构建可信来源，再按来源和目标维度路由；通用通知模块不解析租户。最后一个消费者卸载时释放真实 RxJS Subscription。core 只提供可选实时钩子和注册分派，公告 Topic 与业务规则归公告模块。
 
-每次消息按稳定发布批次 ID 调用当前 HTTP 会话的接收查询确认资格，只展示查询返回的记录；共享连接的旧握手身份不能直接将旧内容带入当前身份。通过已有变更广播刷新铃铛、概览和个人中心。`realtimeNotification.ts` 复用 `NotificationDetail`，按服务/真实用户确认作用域＋发布批次去重；收到、展示、关闭均不写已读，只有确认按钮保存本地状态。列表手动查看允许重开，已确认批次与会话内重复批次不再自动弹出。
+服务端在推送前完成来源与目标边界限制，浏览器 HTTP 回查不承担防泄漏职责。消息到达后按稳定发布批次 ID 回查当前版本与撤回状态，只展示查询仍返回的记录。通过已有变更广播刷新铃铛、概览和个人中心。`realtimeNotification.ts` 复用 `NotificationDetail`，按服务/真实用户确认作用域＋发布批次去重；收到、展示、关闭均不写已读，只有确认按钮保存本地状态。列表手动查看允许重开，已确认批次与会话内重复批次不再自动弹出。
 
 账号/服务/项目上下文变化时取消旧逻辑订阅、销毁旧实时弹窗并使确认回调失效；HTTP 查询完成后也再次核对上下文。确认记录保持同服务同用户跨项目共用，连接指纹排除二次校验缓存。浏览器 online 可重建逻辑订阅并保留会话去重记录。
 
-当前共享 WebSocket 身份固定在物理连接握手时，逻辑重订阅不能替换握手身份；未整页刷新的账号/项目切换可能遗漏新身份消息，需要重新加载页面建立当前身份连接。依赖的 restoreSubscriptions 也仅恢复本地 Subject，不重发 sub 帧，因此仍不能保证 socket 断线后的自动续订；遗漏公告通过既有接收查询查看，本模块不修改第三方依赖。初始载入不自动弹出历史未确认公告；每个已打开标签各自弹窗，确认继续跨标签同步。
+当前共享 WebSocket 用户身份固定在物理连接握手时；同一用户切项目通过新逻辑订阅的 `tenantDomain` 由服务端重新校验，不能沿用旧项目快照。账号变更仍不能靠此参数替换握手用户身份，需要重新加载页面建立当前身份连接。依赖的 restoreSubscriptions 也仅恢复本地 Subject，不重发 sub 帧，因此仍不能保证 socket 断线后的自动续订；遗漏公告通过既有接收查询查看，本模块不修改第三方依赖。初始载入不自动弹出历史未确认公告；每个已打开标签各自弹窗，确认继续跨标签同步。

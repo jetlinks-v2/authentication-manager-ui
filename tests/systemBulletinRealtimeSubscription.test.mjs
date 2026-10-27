@@ -34,7 +34,7 @@ test('shared realtime subscription rechecks current qualification and releases s
   const releaseSecond = subscribeAnnouncementRealtime(payload => second.push(payload))
   assert.equal(sockets.length, 1)
   assert.equal(sockets[0].topic, '/system/bulletin/received')
-  assert.deepEqual(sockets[0].parameter, {})
+  assert.deepEqual(sockets[0].parameter, { tenantDomain: 'one' })
   state.verify = 'new-verification'
   assert.equal(sockets.length, 1, 'verification cache is not a connection identity')
   const receive = sockets[0].receive({ payload: { id: 'batch1', message: 'untrusted' } })
@@ -49,12 +49,13 @@ test('shared realtime subscription rechecks current qualification and releases s
   state.project = 'two'
   assert.equal(sockets[0].releases, 1)
   assert.equal(sockets.length, 2, 'remaining consumer retains reactive context watcher')
+  assert.deepEqual(sockets[1].parameter, { tenantDomain: 'two' }, 'project selection reaches server authorization')
   await sockets[0].receive({ payload: { id: 'late' } })
   assert.equal(queries.length, 1)
   const invisible = sockets[1].receive({ payload: { id: 'private' } })
   queries[1].resolve({ success: true, result: [] })
   await invisible
-  assert.equal(second.length, 1, 'old handshake content cannot bypass HTTP qualification')
+  assert.equal(second.length, 1, 'withdrawn or no longer visible batches are not displayed')
   const pending = sockets[1].receive({ payload: { id: 'pending' } })
   state.scope = ''
   queries[2].resolve({ success: true, result: [{ id: 'pending' }] })
@@ -62,8 +63,10 @@ test('shared realtime subscription rechecks current qualification and releases s
   assert.equal(second.length, 1)
   assert.equal(sockets[1].releases, 1)
   assert.equal(sockets.length, 2, 'logged out users must not subscribe')
+  state.project = ''
   state.scope = 'service:user2'
   assert.equal(sockets.length, 3)
+  assert.deepEqual(sockets[2].parameter, {}, 'platform subscription omits project intent')
   const beforeOnline = disposals
   events.get('online')()
   assert.equal(disposals, beforeOnline, 'online rebuild retains session deduplication')

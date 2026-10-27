@@ -7,6 +7,7 @@ import {
 } from './announcementI18n'
 
 export type AnnouncementState = 'unpublished' | 'published'
+export type AnnouncementDeliveryState = 'unselected' | 'scheduled' | 'published' | 'revoked'
 export const SYSTEM_BULLETIN_PROVIDER = 'SystemBulletin'
 export const SYSTEM_BULLETIN_CHANNEL = 'inside-mail'
 
@@ -27,8 +28,10 @@ export interface AnnouncementRecord {
   createTime: string
   modifyTime: string
   creatorName: string
-  userIds: string[]
-  organizationIds: string[]
+  dimension: DimensionInfo[]
+  sourceDimension?: DimensionInfo
+  deliveryVersion: number
+  deliveryState: AnnouncementDeliveryState
   i18nMessages?: AnnouncementI18n
   legacyTitle?: string
   legacySummary?: string
@@ -41,10 +44,12 @@ export interface AnnouncementDraft {
   summary?: string
   content: string
   type: AnnouncementType
+  i18nMessages?: unknown
+}
+
+export interface AnnouncementAudience {
   userIds: string[]
   organizationIds: string[]
-  publish: boolean
-  i18nMessages?: unknown
 }
 
 export interface AnnouncementQuery {
@@ -87,10 +92,13 @@ interface SystemBulletin {
   modifyTime?: number | null
   creatorName?: string
   dimension?: DimensionInfo[]
+  sourceDimension?: DimensionInfo
+  deliveryVersion: number
+  deliveryState: AnnouncementDeliveryState
   i18nMessages?: AnnouncementI18n
 }
 
-interface DimensionInfo {
+export interface DimensionInfo {
   type: string
   id: string
   name?: string
@@ -119,7 +127,6 @@ const normalizeBulletin = (record: SystemBulletin): AnnouncementRecord => {
   const type = typeof record.type === 'object'
     ? { value: record.type.value, text: record.type.text || record.type.value }
     : { value: record.type || 'default', text: record.type || '' }
-  const dimensions = record.dimension || []
   return {
     id: record.id,
     title: resolveAnnouncementText(record, 'title'),
@@ -136,8 +143,10 @@ const normalizeBulletin = (record: SystemBulletin): AnnouncementRecord => {
     createTime: formatTime(record.createTime),
     modifyTime: formatTime(record.modifyTime),
     creatorName: record.creatorName || '',
-    userIds: dimensions.filter(item => item.type === 'user').map(item => item.id),
-    organizationIds: dimensions.filter(item => item.type === 'org').map(item => item.id),
+    dimension: record.dimension || [],
+    sourceDimension: record.sourceDimension,
+    deliveryVersion: record.deliveryVersion,
+    deliveryState: record.deliveryState,
   }
 }
 
@@ -237,13 +246,8 @@ export {
   markAllAnnouncementsRead,
 } from './receivedDataSource'
 
-/** 保存未发布公告，或通过 deployType=now 保存并立即发布。 */
+/** 仅保存公告内容；接收范围在发布时单独提交。 */
 export const saveAnnouncement = (draft: AnnouncementDraft) => {
-  const dimension = [
-    ...draft.userIds.map(id => ({ type: 'user', id })),
-    ...draft.organizationIds.map(id => ({ type: 'org', id })),
-  ]
-
   const {
     i18nMessages,
     title,
@@ -258,18 +262,19 @@ export const saveAnnouncement = (draft: AnnouncementDraft) => {
     content,
     i18nMessages,
     type: draft.type,
-    allVisible: dimension.length === 0,
-    dimension,
-    state: 'unpublished',
-    deployType: draft.publish ? 'now' : 'manual',
-    deployConfig: {},
   })
 }
 
-/** 发布一条未发布公告。 */
-export const publishAnnouncement = (id: string) => request.put(
+/** 本次选择只属于本次发布，空数组由服务端解析为公告来源范围全员。 */
+export const publishAnnouncement = (id: string, audience: AnnouncementAudience) => request.put(
   '/system/bulletin/_deploy',
-  {},
+  {
+    dimension: [
+      ...audience.userIds.map(id => ({ type: 'user', id })),
+      ...audience.organizationIds.map(id => ({ type: 'org', id })),
+    ],
+    deployType: 'now',
+  },
   { params: { id } },
 )
 

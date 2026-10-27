@@ -51,42 +51,6 @@
         />
       </a-form-item>
 
-      <a-row :gutter="16">
-        <a-col :span="12">
-          <a-form-item :label="$t('Announcement.editor.users')">
-            <a-select
-              v-model:value="form.userIds"
-              mode="multiple"
-              show-search
-              allow-clear
-              :filter-option="false"
-              :loading="userLoading"
-              :max-tag-count="2"
-              :options="userOptions"
-              :placeholder="$t('Announcement.editor.usersPlaceholder')"
-              :get-popup-container="getPopupContainer"
-              @change="handleUserChange"
-              @search="$emit('search-users', $event)"
-            />
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item :label="$t('Announcement.editor.organizations')">
-            <form-item-org
-              v-model:value="form.organizationIds"
-              :show-add="false"
-              :extra-props="{
-                multiple: true,
-                allowClear: true,
-                maxTagCount: 2,
-                placeholder: $t('Announcement.editor.organizationsPlaceholder'),
-                getPopupContainer,
-              }"
-            />
-          </a-form-item>
-        </a-col>
-      </a-row>
-
       <a-form-item :label="$t('Announcement.editor.content')" required>
         <AnnouncementI18nMarkdownEditor
           v-model="form.i18nMessages.content"
@@ -99,12 +63,11 @@
     <template #footer>
       <a-button :disabled="loading" @click="$emit('update:open', false)">{{ $t('Announcement.action.cancel') }}</a-button>
       <j-permission-button
-        v-if="!publishMode"
         :has-permission="record ? 'system/Announcement:edit' : 'system/Announcement:add'"
         type="primary"
         :loading="loading"
         :disabled="!canSubmit"
-        @click="submit(false)"
+        @click="submit"
       >
         {{ $t('Announcement.action.save') }}
       </j-permission-button>
@@ -130,7 +93,6 @@ import type {
   AnnouncementDraft,
   AnnouncementRecord,
   AnnouncementType,
-  AnnouncementUserOption,
 } from '../types'
 import {
   mergeLegacyAnnouncementI18n,
@@ -148,18 +110,13 @@ const props = defineProps({
   open: { type: Boolean, default: false },
   record: { type: Object as PropType<AnnouncementRecord>, default: undefined },
   loading: { type: Boolean, default: false },
-  publishMode: { type: Boolean, default: false },
   typeOptions: { type: Array as PropType<AnnouncementType[]>, default: () => [] },
   typeLoading: { type: Boolean, default: false },
-  userOptions: { type: Array as PropType<AnnouncementUserOption[]>, default: () => [] },
-  userLoading: { type: Boolean, default: false },
 })
 
 const emit = defineEmits<{
   (event: 'update:open', open: boolean): void
   (event: 'save', draft: AnnouncementDraft): void
-  (event: 'search-users', keyword: string): void
-  (event: 'selected-users-change', userIds: string[]): void
 }>()
 
 const { t: $t, locale } = useI18n()
@@ -172,8 +129,6 @@ interface AnnouncementEditorForm {
   title: string
   summary: string
   type: string
-  userIds: string[]
-  organizationIds: string[]
   i18nMessages: AnnouncementI18n
 }
 
@@ -181,8 +136,6 @@ const form = reactive<AnnouncementEditorForm>({
   title: '',
   summary: '',
   type: '',
-  userIds: [],
-  organizationIds: [],
   i18nMessages: {},
 })
 
@@ -205,7 +158,6 @@ let initialTitle = ''
 let initialSummary = ''
 
 const dialogTitle = computed(() => {
-  if (props.publishMode) return $t('Announcement.editor.publishTitle')
   return props.record ? $t('Announcement.editor.editTitle') : $t('Announcement.editor.createTitle')
 })
 
@@ -236,8 +188,6 @@ function resetForm() {
   initialTitle = form.title
   initialSummary = form.summary
   form.type = record?.type.value || props.typeOptions[0]?.value || ''
-  form.userIds = [...(record?.userIds || [])]
-  form.organizationIds = [...(record?.organizationIds || [])]
 
   form.i18nMessages = i18n
 }
@@ -254,16 +204,8 @@ function saveI18nMessages(messages: Record<string, string>) {
   }
 }
 
-function handleUserChange(value: unknown) {
-  const userIds = Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === 'string')
-    : []
-  form.userIds = userIds
-  emit('selected-users-change', userIds)
-}
-
-/** 将编辑器内容按保存草稿或立即发布意图提交给页面容器。 */
-function submit(publish: boolean) {
+/** 将内容草稿交给页面保存，接收范围由发布弹窗管理。 */
+function submit() {
   if (!canSubmit.value) return
   const type = props.typeOptions.find(item => item.value === form.type) || props.record?.type
   if (!type) return
@@ -280,9 +222,6 @@ function submit(publish: boolean) {
     summary: form.summary.trim() || undefined,
     content: resolveCompatibilityText(i18n.content),
     type,
-    userIds: [...form.userIds],
-    organizationIds: [...form.organizationIds],
-    publish,
     i18nMessages: i18n,
   })
 }

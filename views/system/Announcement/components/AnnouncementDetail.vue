@@ -58,6 +58,7 @@ import type { PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import MarkdownEditor from '@jetlinks-web-core/components/MarkdownEditor'
 import type { AnnouncementRecord } from '../types'
+import { formatAnnouncementAudience } from '../announcementAudience'
 import {
   getAnnouncementI18n,
   resolveAnnouncementText,
@@ -106,12 +107,8 @@ const languagePanes = computed(() => {
   }))
 })
 
-const audienceText = computed(() => {
-  const userCount = props.record.userIds?.length || 0
-  const organizationCount = props.record.organizationIds?.length || 0
-  if (!userCount && !organizationCount) return $t('Announcement.scope.platform')
-  return $t('Announcement.scope.selected', { userCount, organizationCount })
-})
+const audienceText = computed(() => formatAnnouncementAudience(props.record, $t))
+
 </script>
 
 <style scoped lang="less">

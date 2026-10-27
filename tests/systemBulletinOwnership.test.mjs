@@ -75,7 +75,6 @@ test('renders the announcement type selector in the editor dialog', async () => 
   assert.match(editorSource, /<a-select\s+v-model:value="form\.type"/)
   assert.match(editorSource, /:options="typeOptions"/)
   assert.match(editorSource, /:get-popup-container="getPopupContainer"/)
-  assert.match(editorSource, /getPopupContainer,/)
   assert.match(editorSource, /function getPopupContainer\(triggerNode: HTMLElement\)/)
   assert.match(editorSource, /return triggerNode\.parentElement \|\| document\.body/)
   assert.doesNotMatch(editorSource, /公告类型暂不对用户展示/)
@@ -287,11 +286,11 @@ test('exposes subscription management as a project runtime menu candidate', () =
     )))
 })
 
-test('publishes from the management row through deploy endpoint after confirmation', () => {
-  assert.match(managementSource, /Announcement\.confirm\.publish/)
-  assert.match(managementSource, /onConfirm: \(\) => \$emit\('publish', record\)/)
-  assert.match(pageSource, /publishAnnouncementApi\(record\.id\)/)
-  assert.doesNotMatch(pageSource, /editingRecord\.value = await getAnnouncement\(record\.id\)/)
+test('management publication opens a scope dialog and submits its selection through deploy', () => {
+  assert.match(managementSource, /@click="\$emit\('publish', record\)"/)
+  assert.match(pageSource, /@publish="openPublish"/)
+  assert.match(pageSource, /<AnnouncementPublishDialog/)
+  assert.match(pageSource, /publishAnnouncementApi\(publishingRecord\.value\.id, audience\)/)
 })
 
 test('allows every unpublished bulletin to be deleted and hides unavailable details', () => {

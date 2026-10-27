@@ -104,10 +104,7 @@
             :disabled="!record.legacyContent?.trim()"
             style="padding: 0"
             :tooltip="{ title: $t('Announcement.action.publish') }"
-            :pop-confirm="{
-              title: $t('Announcement.confirm.publish'),
-              onConfirm: () => $emit('publish', record),
-            }"
+            @click="$emit('publish', record)"
           >
             <AIcon type="PlayCircleOutlined" />
           </j-permission-button>
@@ -157,6 +154,7 @@ import type {
 } from '@jetlinks-web-core/components/ConditionFilter'
 import { queryAnnouncements } from '../api'
 import type { AnnouncementRecord } from '../types'
+import { formatAnnouncementAudience } from '../announcementAudience'
 import { resolveBulletinTypeIcon } from '../bulletinTypeIcon'
 import { resolveAnnouncementStateLabel } from '../announcementI18n'
 
@@ -235,10 +233,7 @@ const columns = computed(() => [
 ])
 
 function audienceText(record: AnnouncementRecord) {
-  const userCount = record.userIds?.length || 0
-  const organizationCount = record.organizationIds?.length || 0
-  if (!userCount && !organizationCount) return $t('Announcement.scope.platform')
-  return $t('Announcement.scope.selected', { userCount, organizationCount })
+  return formatAnnouncementAudience(record, $t)
 }
 
 /** 将通用筛选条件作为服务端查询参数提交。 */

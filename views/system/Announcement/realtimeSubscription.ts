@@ -33,12 +33,15 @@ const connect = (force = false) => {
   context = next
   if (!next) return
   const current = generation
-  subscription = wsClient.getWebSocket(`system-bulletin-${generation}`, '/system/bulletin/received', {})
+  // 当前项目是订阅意图，由服务端按真实成员资格校验，不能沿用共享连接的项目快照。
+  const tenantDomain = getRequestHeaders()['X-Tenant-Domain']
+  subscription = wsClient.getWebSocket(`system-bulletin-${generation}`, '/system/bulletin/received',
+    tenantDomain ? { tenantDomain } : {})
     .subscribe(async message => {
       const id = message.payload?.id
       // 旧身份迟到的帧不能刷新或打开当前身份的公告。
       if (current !== generation || next !== getContext() || !id) return
-      // 共享连接握手身份可能早于项目/账号切换，只展示当前 HTTP 会话重新确认可见的批次。
+      // 服务端按来源与目标维度路由；这里复核撤回、版本等当前状态，不承担推送权限过滤。
       try {
         const response = await queryAnnouncementInboxNoPaging({
           paging: false,
