@@ -1,4 +1,4 @@
-import { onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
@@ -6,6 +6,9 @@ import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { deleteApiApplication, getApiApplication, updateApiApplication } from '@authentication-manager-ui/api/application-center/apiApplication'
 import type { ApiApplication } from '@authentication-manager-ui/api/application-center/apiApplication'
 import { apiState, applicationError, responseBody } from '../applicationUtils'
+import type { AccessDebugMode } from './accessDebugUtils'
+
+export type ApplicationTextField = 'name' | 'description'
 
 export const useDirectDetail = () => {
   const route = useRoute()
@@ -16,12 +19,30 @@ export const useDirectDetail = () => {
   const saving = ref(false)
   const error = ref('')
   const activeTab = ref('basic')
+  const debugMode = ref<AccessDebugMode>('token')
+  const openDebug = (mode: AccessDebugMode) => { debugMode.value = mode; activeTab.value = 'debug' }
+  const tabOptions = computed(() => [
+    { key: 'basic', label: t('ThirdPartyApplication.direct.credentialsTab') },
+    { key: 'grants', label: t('ThirdPartyApplication.direct.grants') },
+    { key: 'subscriptions', label: t('ApiApplication.subscription.title') },
+    { key: 'guide', label: t('ThirdPartyApplication.direct.guideTab') },
+    { key: 'debug', label: t('ThirdPartyApplication.direct.debugTab') },
+  ])
   const form = reactive({ name: '', description: '' })
+  const textState = reactive<Record<ApplicationTextField, { saving: boolean; error: string }>>({
+    name: { saving: false, error: '' },
+    description: { saving: false, error: '' },
+  })
+  const textSaving = computed(() => textState.name.saving || textState.description.saving)
   let generation = 0
   onBeforeUnmount(() => { generation++ })
   const load = async () => {
     const current = ++generation
     application.value = undefined; error.value = ''; loading.value = true; saving.value = false
+    for (const field of ['name', 'description'] as const) {
+      form[field] = ''
+      Object.assign(textState[field], { saving: false, error: '' })
+    }
     try {
       const id = String(route.params.id || '')
       if (!id) throw new Error('ThirdPartyApplication.direct.notFound')
@@ -36,8 +57,30 @@ export const useDirectDetail = () => {
     finally { if (current === generation) loading.value = false }
   }
   const back = () => menu.jumpPage('application-center/ThirdPartyApplication', {})
-  const mutate = async (operation: (id: string) => Promise<unknown>, remove = false) => {
-    if (!application.value || saving.value) return
+  const saveText = async (field: ApplicationTextField, value: string) => {
+    if (!application.value || saving.value || textState[field].saving) return
+    const state = textState[field]
+    const nextValue = value.trim()
+    form[field] = nextValue
+    state.error = ''
+    if (field === 'name' && !nextValue) {
+      state.error = t('ThirdPartyApplication.direct.autosave.nameRequired')
+      return
+    }
+    if (nextValue === (application.value[field] || '')) return
+    const current = generation
+    const id = application.value.id
+    state.saving = true
+    try {
+      // 每次只更新当前字段，避免两个行内编辑请求互相覆盖。
+      await updateApiApplication(id, { [field]: nextValue })
+      if (current !== generation || !application.value) return
+      application.value[field] = nextValue
+    } catch (cause) { if (current === generation) state.error = applicationError(cause, t) }
+    finally { if (current === generation) state.saving = false }
+  }
+  const mutate = async (operation: (id: string) => Promise<unknown>, onSuccess: () => void) => {
+    if (!application.value || saving.value || textSaving.value) return
     const current = generation
     const id = application.value.id
     saving.value = true; error.value = ''
@@ -45,20 +88,21 @@ export const useDirectDetail = () => {
       await operation(id)
       if (current !== generation) return
       onlyMessage(t('ThirdPartyApplication.direct.saved'))
-      if (remove) back()
-      else await load()
+      onSuccess()
     } catch (cause) { if (current === generation) error.value = applicationError(cause, t) }
     finally { if (current === generation) saving.value = false }
   }
-  const save = () => { if (form.name.trim()) return mutate(id => updateApiApplication(id, { name: form.name.trim(), description: form.description.trim() })) }
   const toggle = () => {
     const state = apiState(application.value) === 'enabled' ? 'disabled' : 'enabled'
-    return mutate(id => updateApiApplication(id, { state }))
+    return mutate(id => updateApiApplication(id, { state }), () => {
+      if (application.value) application.value.state = state
+    })
   }
-  const remove = () => mutate(deleteApiApplication, true)
+  const remove = () => mutate(deleteApiApplication, back)
   watch(() => route.params.id, () => {
-    activeTab.value = ['basic', 'grants', 'oauth', 'subscriptions'].includes(String(route.query.tab)) ? String(route.query.tab) : 'basic'
+    activeTab.value = ['basic', 'grants', 'subscriptions', 'guide', 'debug'].includes(String(route.query.tab)) ? String(route.query.tab) : 'basic'
+    debugMode.value = 'token'
     void load()
   }, { immediate: true })
-  return { application, loading, saving, error, form, activeTab, load, back, save, toggle, remove }
+  return { application, loading, saving, textSaving, textState, error, form, activeTab, tabOptions, debugMode, openDebug, load, back, saveText, toggle, remove }
 }

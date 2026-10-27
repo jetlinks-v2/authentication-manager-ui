@@ -48,7 +48,7 @@ export interface SubscriptionEvent {
   name: string
   description?: string
   version?: string
-  schema?: Record<string, unknown>
+  properties?: SubscriptionMetadataProperty[]
 }
 
 export interface SubscriptionEventProvider {
@@ -61,8 +61,17 @@ export interface SubscriptionMetadataProperty {
   id: string
   name?: string
   description?: string
-  valueType?: { type?: string; [key: string]: unknown }
+  valueType?: SubscriptionMetadataValueType
   expands?: Record<string, unknown>
+}
+
+export interface SubscriptionMetadataValueType {
+  type?: string
+  name?: string
+  properties?: SubscriptionMetadataProperty[]
+  elementType?: SubscriptionMetadataValueType
+  elements?: { value: unknown; text?: string }[]
+  [key: string]: unknown
 }
 
 export interface SubscriptionChannel {

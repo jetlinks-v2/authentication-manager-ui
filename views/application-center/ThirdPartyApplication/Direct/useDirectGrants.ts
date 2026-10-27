@@ -20,6 +20,14 @@ export const useDirectGrants = (targetId: () => string, targetType: string = API
   const original = ref<ApiGroupGrant[]>([])
   const selected = ref<Record<string, string[]>>({})
   const changed = ref<string[]>([])
+  const pendingChanges = computed(() => {
+    const initial = selectedGroupOperations(original.value)
+    return changed.value.filter(groupId => {
+      const before = initial[groupId] || []
+      const after = selected.value[groupId] || []
+      return before.length !== after.length || before.some(id => !after.includes(id))
+    })
+  })
   const loading = ref(false)
   const saving = ref(false)
   const loaded = ref(false)
@@ -64,11 +72,41 @@ export const useDirectGrants = (targetId: () => string, targetType: string = API
     const retained = (selected.value[group.id] || []).filter(id => original.value.some(grant => grant.groupId === group.id && grant.operationIds?.includes(id)))
     update(group.id, [...operations(group).filter(item => !item.disabled).map(item => item.id), ...retained])
   }
+  const tableColumns = computed(() => [
+    { title: t('ThirdPartyApplication.direct.groupColumn'), key: 'group', width: '40%' },
+    { title: t('ThirdPartyApplication.direct.operationColumn'), key: 'operations' },
+  ])
+  const groupRows = computed(() => groups.value.map(group => {
+    const operationOptions = operations(group)
+    const selectedIds = selected.value[group.id] || []
+    const available = operationOptions.filter(operation => !operation.disabled)
+    // 历史不可用操作不被全选新增，但仍允许用户取消整组来显式撤销。
+    const checked = selectedIds.length > 0 && available.every(operation => selectedIds.includes(operation.id))
+    return { ...group, operationOptions, selectedIds, checked,
+      indeterminate: selectedIds.length > 0 && !checked,
+      selectionDisabled: !available.length && !selectedIds.length,
+      hasUnavailableOperations: operationOptions.some(operation => operation.disabled),
+    }
+  }))
+  const tableSelection = computed(() => {
+    const rows = groupRows.value.filter(group => !group.selectionDisabled)
+    const checked = rows.length > 0 && rows.every(group => group.checked)
+    return { checked, indeterminate: !checked && rows.some(group => group.selectedIds.length > 0), disabled: !rows.length }
+  })
+  const toggleGroup = (group: ApiGroup, checked: boolean) => {
+    if (!loaded.value || loading.value || saving.value) return
+    if (checked) selectAll(group)
+    else update(group.id, [])
+  }
+  const toggleAll = (checked: boolean) => {
+    for (const group of groupRows.value) if (!group.selectionDisabled) toggleGroup(group, checked)
+  }
   const openGroupManager = () => { if (canManageGroups.value) menu.jumpPage(groupMenu, {}) }
   const payload = computed(() => {
     // 授权接口是全量替换。未编辑的授权（含目录暂不可见项）和现有资产范围必须保留。
-    const result = original.value.filter(grant => !changed.value.includes(grant.groupId))
-    for (const groupId of changed.value) {
+    const editedGroups = targetType === API_CLIENT_TARGET ? pendingChanges.value : changed.value
+    const result = original.value.filter(grant => !editedGroups.includes(grant.groupId))
+    for (const groupId of editedGroups) {
       const ids = selected.value[groupId] || []
       if (!ids.length) continue
       const previous = original.value.filter(grant => grant.groupId === groupId)
@@ -81,6 +119,7 @@ export const useDirectGrants = (targetId: () => string, targetType: string = API
   const assetHint = (group: ApiGroup) => groupAssetHint(group, original.value, targetType === TEMPLATE_GRANT_TARGET)
   const save = async (revokeAll = false) => {
     if (saving.value || !loaded.value || loading.value) return
+    if (!revokeAll && targetType === API_CLIENT_TARGET && !pendingChanges.value.length) return
     const current = generation
     saving.value = true; error.value = ''
     try {
@@ -93,6 +132,7 @@ export const useDirectGrants = (targetId: () => string, targetType: string = API
     finally { if (current === generation) saving.value = false }
   }
   watch(targetId, load, { immediate: true })
-  return { groups, original, selected, changed, loading, saving, loaded, error, hiddenGrants, payload,
+  return { groups, original, selected, changed, pendingChanges, loading, saving, loaded, error, hiddenGrants, payload,
+    tableColumns, groupRows, tableSelection, toggleGroup, toggleAll,
     update, selectAll, operations, assetHint, canManageGroups, openGroupManager, save, load }
 }
