@@ -2,6 +2,12 @@
 
 当前页面已复用应用管理 `/application` 接口，支持管理当前登录页使用的微信公众号、钉钉和通用 OAuth2 SSO 应用，登录图标通过应用的 `logoUrl` 保存。企业微信、微信开放平台网站应用、小程序、组织同步和独立登录页展示开关不属于当前登录方式，页面不展示这些入口。
 
+## 操作列图标按钮
+
+`runtime-ui/modules/authentication-manager-ui/views/system/ThirdPartyLogin/index.vue` 的编辑、删除入口使用 `j-permission-button` 与 `EditOutlined` / `DeleteOutlined`，通过 `tooltip.title` 复用既有国际化文案，并为图标提供中文可访问名称。保留编辑回调、删除确认和已启用时禁止删除的限制，不调整接口、菜单或授权规则；9200 端口对应运行时开发服务，本次仅修改该前端模块。
+
+验证：本地 `http://localhost:9200/#/system/third-party-login` 已确认图标渲染、编辑及删除的悬停提示、中文按钮名称和启用记录的删除禁用状态；未保存配置、启停或删除真实记录。模块生产构建 `pnpm --config.verify-deps-before-run=false -F jetlinks-web-core build -- --module-name authentication-manager-ui`（42.45 秒）、最终 Vue SFC 脚本与模板编译及 `git diff --check` 通过，页面 233 行。模块与工作区未配置 lint 脚本；`pnpm --config.verify-deps-before-run=false exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 仍有其他文件的 617 项诊断，第三方登录目录无诊断。完整类型检查尚未通过，清理工作区类型错误后需重跑同一命令。
+
 ## 应用管理兼容入口
 
 `system/Apply` 保留全部应用的管理能力，方便尚未提供第三方登录菜单的环境继续查看和编辑微信等已有配置。入口为 `views/system/Apply/index.vue`：列表直接使用 `getApplyList_api`，保留搜索、排序和分页参数，不强制追加 `provider=third-party`。后端沿用通用 `POST /application/_query/`，新增应用仍默认第三方类型。
