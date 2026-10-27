@@ -57,7 +57,7 @@ export interface AnnouncementQuery {
 
 export interface SystemBulletinReference {
   bulletinId: string
-  publishVersion?: number
+  publishVersion: number
 }
 
 export interface SystemBulletinNotificationDetail {
@@ -195,14 +195,9 @@ export const resolveSystemBulletinReference = (
   notification: Record<string, any>,
 ): SystemBulletinReference | undefined => {
   const detail = parseSystemBulletinDetail(notification)
-  const bulletinId = String(detail?.bulletinId || detail?.id || notification.dataId || '').trim()
-  if (!bulletinId) return undefined
-  // 旧通知不携带版本号，仍由当前用户正文接口校验可见性；显式非法版本不降级。
-  if (detail?.publishVersion === undefined || detail?.publishVersion === null) return { bulletinId }
-  const publishVersion = Number(detail.publishVersion)
-  if (!Number.isInteger(publishVersion) || publishVersion <= 0) {
-    return undefined
-  }
+  const bulletinId = String(notification.bulletinId || detail?.bulletinId || '').trim()
+  const publishVersion = Number(notification.publishVersion ?? detail?.publishVersion)
+  if (!bulletinId || !Number.isInteger(publishVersion) || publishVersion <= 0) return undefined
   return { bulletinId, publishVersion }
 }
 
@@ -212,7 +207,7 @@ export const getSystemBulletinNotificationDetail = async (
 ): Promise<SystemBulletinNotificationDetail> => {
   const response = await request.get(
     `/system/bulletin/${encodeURIComponent(reference.bulletinId)}`,
-    reference.publishVersion === undefined ? {} : { publishVersion: reference.publishVersion },
+    { publishVersion: reference.publishVersion },
     { hiddenError: true },
   ) as ApiResponse<SystemBulletin>
   const detail = response.result
@@ -232,29 +227,15 @@ export const getSystemBulletinNotificationDetail = async (
   }
 }
 
-/** 公告接收查询直接读取发布范围及个人状态，不依赖发送通道或收件箱物化。 */
-export const queryAnnouncementInbox = (query: AnnouncementQuery = {}) => request.post(
-  '/system/bulletin/received/_query', query,
-)
-
-export const queryAnnouncementInboxNoPaging = (query: AnnouncementQuery = {}) => request.post(
-  '/system/bulletin/received/_query/no-paging', query,
-)
-
-export const countAnnouncementInbox = (query: AnnouncementQuery = {}) => request.post(
-  '/system/bulletin/received/_count', query,
-)
-
-export const countAnnouncementUnread = (query: AnnouncementQuery = {}) => request.post(
-  '/system/bulletin/received/unread/_count', query,
-)
-
-export const changeAnnouncementReadState = (
-  type: '_read' | '_unread',
-  ids: string[],
-) => request.put(`/system/bulletin/received/_state/${type === '_read' ? 'read' : 'unread'}`, ids)
-
-export const markAllAnnouncementsRead = () => request.put('/system/bulletin/received/_read')
+/** 接收资格由服务端判断，确认状态由公告模块本地数据源生成。 */
+export {
+  queryAnnouncementInbox,
+  queryAnnouncementInboxNoPaging,
+  countAnnouncementInbox,
+  countAnnouncementUnread,
+  changeAnnouncementReadState,
+  markAllAnnouncementsRead,
+} from './receivedDataSource'
 
 /** 保存未发布公告，或通过 deployType=now 保存并立即发布。 */
 export const saveAnnouncement = (draft: AnnouncementDraft) => {

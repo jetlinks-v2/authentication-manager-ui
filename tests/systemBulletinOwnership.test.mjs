@@ -5,7 +5,7 @@ import { test } from 'node:test'
 
 const moduleRoot = resolve(import.meta.dirname, '..')
 const workspaceRoot = resolve(moduleRoot, '../../..')
-const coreRoot = resolve(workspaceRoot, 'ui/jetlinks-web-core/src')
+const coreRoot = resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src')
 
 const readSourceTree = async (directory) => {
   const entries = await readdir(directory, { withFileTypes: true })
@@ -35,15 +35,15 @@ const [apiSource, registerSource, inboxSource, realtimeSource, notificationDetai
   readFile(resolve(workspaceRoot, 'ui/modules/saas-manager-ui/views/personalCenter/index.vue'), 'utf8'),
   readFile(resolve(workspaceRoot, 'ui/modules/project-side-ui/views/PersonCenter/index.vue'), 'utf8'),
   readSourceTree(coreRoot),
-  readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/api/account/center.ts'), 'utf8'),
-  readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/api/account/notificationRecord.ts'), 'utf8'),
-  readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/api/account/notificationSubscription.ts'), 'utf8'),
-  readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/views/account/center/components/StationMessage/components/NotificationRecord/components/ViewDialog.vue'), 'utf8'),
-  readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/layout/components/Notice.vue'), 'utf8'),
-  readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/layout/components/NoticeItem.vue'), 'utf8'),
-  readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/layout/components/noticeRealtimeHandler.ts'), 'utf8'),
-  readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/layout/components/NoticeInfo.vue'), 'utf8'),
-  readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/layout/components/noticeListHandler.ts'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src/api/account/center.ts'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src/api/account/notificationRecord.ts'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src/api/account/notificationSubscription.ts'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src/views/account/center/components/StationMessage/components/NotificationRecord/components/ViewDialog.vue'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src/layout/components/Notice.vue'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src/layout/components/NoticeItem.vue'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src/layout/components/noticeRealtimeHandler.ts'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src/layout/components/NoticeInfo.vue'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src/layout/components/noticeListHandler.ts'), 'utf8'),
   readFile(resolve(moduleRoot, 'locales/lang/zh.json'), 'utf8'),
   readFile(resolve(moduleRoot, 'locales/lang/en.json'), 'utf8'),
   readFile(resolve(workspaceRoot, 'ui/modules/saas-manager-ui/views/personalCenter/components/MessageContent.vue'), 'utf8'),
@@ -81,20 +81,20 @@ test('renders the announcement type selector in the editor dialog', async () => 
   assert.doesNotMatch(editorSource, /公告类型暂不对用户展示/)
 })
 
-test('shows one typed realtime tip and opens the bulletin detail after clicking it', () => {
+test('opens the bulletin detail directly without a realtime tip', () => {
   assert.match(realtimeSource, /import NotificationDetail from '.\/components\/NotificationDetail\.vue'/)
   assert.match(realtimeSource, /content: h\(NotificationDetail/)
   assert.match(realtimeSource, /class: 'announcement-notification-modal'/)
   assert.match(realtimeSource, /appContext/)
-  assert.match(realtimeSource, /onOk: \(\) => markRead\(\)/)
+  assert.match(realtimeSource, /onOk: \(\) => active && scope === getAnnouncementReadScope\(\) \? markRead\(\)/)
   assert.doesNotMatch(realtimeSource, /void markRead\(\)/)
   assert.doesNotMatch(realtimeSource, /defineAsyncComponent/)
   assert.match(registerSource, /props: \{ handler: handleSystemBulletinNotice \}/)
-  assert.match(realtimeSource, /source !== 'realtime' \|\| !showTip/)
-  assert.match(realtimeSource, /onClick: \(\) => openAnnouncementDetail\(context\)/)
-  assert.match(realtimeSource, /createBulletinTypeIconNode\(parseSystemBulletinDetail\(payload\)\?\.type\)/)
+  assert.match(realtimeSource, /return openAnnouncementDetail\(\{ \.\.\.context, realtime \}\)/)
+  assert.doesNotMatch(realtimeSource, /showTip|createBulletinTypeIconNode/)
+  assert.match(realtimeSource, /centered: true/)
+  assert.match(realtimeSource, /closable: true/)
   assert.match(realtimeSource, /title: resolveNoticeTitle\(payload\)/)
-  assert.match(realtimeSource, /description: summary && summary !== title \? summary : undefined/)
   assert.doesNotMatch(realtimeSource, /Modal\.info\([\s\S]*\{\s*payload\.message\s*\}/)
   assert.match(inboxSource, /:title="getNotificationTitle\(detailRecord\)/)
   assert.match(notificationDetailSource, /detail\.content/)
@@ -118,7 +118,6 @@ test('maps the six built-in bulletin types to one icon vocabulary with a default
   assert.match(bulletinTypeIconSource, /DEFAULT_BULLETIN_TYPE_ICON = 'NotificationOutlined'/)
   assert.match(bulletinTypeIconSource, /BULLETIN_TYPE_ICONS\[String\(value \?\? ''\)\.trim\(\)\] \|\| DEFAULT_BULLETIN_TYPE_ICON/)
   assert.doesNotMatch(bulletinTypeIconSource, /billing|urgent|severity/)
-  assert.match(realtimeSource, /createBulletinTypeIconNode/)
   assert.match(noticeListLoaderSource, /topicName: title/)
   assert.match(noticeListLoaderSource, /noticeIcon: resolveBulletinTypeIcon\(type\)/)
   assert.match(notificationDetailSource, /const typeIcon = computed\(\(\) => resolveBulletinTypeIcon\(detail\.value\?\.type\)\)/)
@@ -338,7 +337,7 @@ test('keeps web-core notification handling business-neutral', () => {
   assert.match(coreRealtimeSource, /showTip\?: \(options: NoticeTipOptions\) => void/)
   assert.match(coreRealtimeSource, /export interface NoticeTipOptions/)
   assert.match(coreNoticeSource, /source: 'realtime'/)
-  assert.match(coreNoticeSource, /showTip: \(options: NoticeTipOptions\) => showNoticeTip\(data\.payload, options\)/)
+  assert.match(coreNoticeSource, /showTip: \(options: NoticeTipOptions\) => showNoticeTip\(payload, options\)/)
   assert.match(coreNoticeSource, /notification\.close\(key\)/)
   assert.match(coreNoticeItemSource, /source: 'list'/)
   assert.match(coreNoticeItemSource, /const noticeIcon = computed\(\(\) => String\(props\.data\?\.noticeIcon \|\| ''\)\.trim\(\)\)/)
@@ -372,7 +371,7 @@ test('re-resolves notification text when the active locale changes', async () =>
 
 test('keeps the bell badge synchronized with the backend unread count', () => {
   assert.match(coreNoticeSource, /queryNoticeUnreadSummary\(topicProviders, params\)[\s\S]*total\.value = toBadgeCount\(resp\.result\?\.total\)/)
-  assert.match(coreNoticeSource, /async onMessage\(data\)[\s\S]*handleRegisteredRealtimeNotice[\s\S]*getList\(\)/)
+  assert.match(coreNoticeSource, /const handleRealtimePayload = async[\s\S]*handleRegisteredRealtimeNotice[\s\S]*getList\(\)/)
   assert.match(coreNoticeSource, /watch\(visible, \(opened\) => \{[\s\S]*if \(opened\) \{[\s\S]*getList\(\)/)
   assert.match(coreNoticeSource, /<NoticeInfo ref="noticeInfoRef"/)
   assert.match(coreNoticeSource, /noticeInfoRef\.value\?\.refresh\(\)/)

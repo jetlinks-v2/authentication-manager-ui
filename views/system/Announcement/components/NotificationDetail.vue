@@ -92,3 +92,77 @@ watch(() => props.data, loadDetail, { immediate: true })
   }
 }
 </style>
+
+<style lang="less">
+.announcement-notification-modal.ant-modal-confirm {
+  .ant-modal-content {
+    overflow: hidden;
+    border-radius: 0.5rem !important;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--jet-theme-primary) 29.4%, var(--jet-theme-bg-container)),
+      var(--jet-theme-bg-container) 40%
+    );
+  }
+
+  .ant-modal-body {
+    padding: 0 !important;
+  }
+
+  .ant-modal-confirm-body .ant-modal-confirm-title {
+    padding: var(--space-5) 4rem var(--space-5) var(--space-6);
+    font-size: var(--fs-18);
+    font-weight: 600;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  .ant-modal-close {
+    top: var(--space-5);
+    inset-inline-end: var(--space-6);
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--r-2);
+    background: color-mix(in srgb, var(--jet-theme-bg-container) 80%, transparent);
+    color: var(--jet-theme-text-secondary);
+  }
+
+  .ant-modal-confirm-content {
+    width: 100%;
+    margin-block-start: 0 !important;
+    padding: var(--space-6);
+  }
+
+  .announcement-notification-detail__meta {
+    display: none;
+  }
+
+  .announcement-notification-scroll {
+    max-height: min(60vh, calc(100vh - 13rem));
+    max-height: min(60dvh, calc(100dvh - 13rem));
+  }
+
+  .announcement-notification-detail .j-md-editor__surface {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .announcement-notification-detail .j-md-editor__preview-only {
+    min-height: 0;
+    padding: 0;
+    background: transparent;
+  }
+
+  .ant-modal-confirm-btns {
+    margin-top: 0;
+    padding: var(--space-3) var(--space-6);
+    border-top: 1px solid var(--jet-theme-border-secondary);
+  }
+
+  .ant-modal-confirm-btns .ant-btn {
+    min-width: 5rem;
+    border-radius: var(--r-2);
+  }
+}
+</style>

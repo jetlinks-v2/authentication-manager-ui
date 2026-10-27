@@ -1,4 +1,6 @@
 import { defineAsyncComponent } from 'vue'
+import { subscribeAnnouncementReadChanges } from './localReadStore'
+import { subscribeAnnouncementRealtime } from './realtimeSubscription'
 import i18n from '@jetlinks-web-core/locales'
 import {
   SYSTEM_BULLETIN_PROVIDER,
@@ -35,6 +37,9 @@ export const getRegisterComponents = () => [
         },
       }),
       dataSource: {
+        subscribe: subscribeAnnouncementReadChanges,
+        subscribeRealtime: subscribeAnnouncementRealtime,
+        confirmOnDetail: true,
         query: queryAnnouncementInbox,
         queryNoPaging: queryAnnouncementInboxNoPaging,
         count: countAnnouncementInbox,

@@ -154,18 +154,23 @@ Existing deployments must synchronize the updated menu metadata, save the servic
 
 Validation: the menu grant regression and related bulletin tests pass (9 tests), the module production build passes, and the backend bulletin suite passes (21 tests). A local probe using the real tenant listener, entity asset supplier and tenant holder allows project A to read its bulletin and denies project B. Live management-list queries against deployed project sessions remain to be verified after the menu and subscription updates; the module has no lint script, and the workspace typecheck remains blocked by unrelated existing diagnostics.
 
-### Bulletin Type Icons And Realtime Tip
+### Bulletin Type Icons And Realtime Dialog
 
-Goal: give the six built-in bulletin types one icon vocabulary, and stop a realtime bulletin from auto-opening the detail dialog.
+Goal: give the six built-in bulletin types one icon vocabulary, and open a centered announcement dialog as soon as the frontend receives a bulletin.
 
 - `views/system/Announcement/bulletinTypeIcon.ts` owns the type-to-icon map (`default`, `maintenance`, `incident`, `release`, `security`, `policy`) and falls back to `NotificationOutlined` for unknown, historical or missing values. Icons only mark the content topic; they never carry severity or colour level.
-- `views/system/Announcement/realtimeNotification.ts` keeps two entries: a realtime arrival calls the core-provided `showTip` once with the type icon, title and summary, and only a tip click opens `openAnnouncementDetail`; clicking a bell record still opens the announcement detail directly, and `我知道了` keeps the existing read confirmation and badge refresh.
+- `views/system/Announcement/realtimeNotification.ts` routes both realtime arrivals and bell-record clicks directly to `openAnnouncementDetail`, with a centered, closable dialog and no right-corner tip. `我知道了` keeps the existing read confirmation and badge refresh; closing the dialog alone does not mark it read.
+- Dialog styling follows the space-management prototype's “添加绑定通道” modal: rounded surface, inset close button, padded reading area and a separated footer with right-aligned confirmation. One continuous vertical gradient covers the entire modal: the top uses 29.4% primary color mixed with the container background (30% lighter than the previous 42% mix), fading to white by 40% of the modal height. The title, Markdown preview and footer remain transparent so white occupies most of the dialog without background seams. The announcement title appears only in the modal header; the body renders `content` without adding `title`, summary or publication metadata. Headings authored within `content` remain intact. Keep the skin scoped to `.announcement-notification-modal` and verify the continuous background and title/body separation.
 - `noticeListLoader.ts` decorates bell records with the business-neutral `noticeIcon` field, and `components/NotificationDetail.vue` shows the same icon in the announcement detail shared by the bell, the realtime dialog and the message center.
-- Shared core only adds generic hooks: `noticeRealtimeHandler.ts` gains `source` and an optional `showTip`, `Notice.vue` renders that tip while keeping the default tip for other providers, and `NoticeItem.vue` renders `noticeIcon` when present. Core still contains no `SystemBulletin` name, bulletin API or bulletin copy.
+- Shared core exposes generic hooks through `noticeRealtimeHandler.ts`; the bulletin handler returns `true` to suppress the generic tip. Ordinary notifications retain their existing tip, and `NoticeItem.vue` renders `noticeIcon` when present. Core still contains no `SystemBulletin` name, bulletin API or bulletin copy.
 
-Scope: this module plus the business-neutral `jetlinks-web-core/src/layout/components/` files. `runtime-ui/` and the backend type enum, dictionary and notification `type` payload stay outside this frontend change.
+Scope for the dialog adjustment: only the runtime `runtime-ui/modules/authentication-manager-ui` handler, tests and this section. Backend delivery and subscription decisions remain unchanged. Reuse the existing detail component, localized content and read confirmation; verify direct dialog opening, suppression of the realtime tip, ordinary-provider fallthrough and confirmation before marking read.
 
-Verification: the focused Node suite reports 20/21 passing, where the only failure is the pre-existing project-runtime menu URL expectation (`/system/ps/NoticeRule` in `baseMenu.json` versus `/system/NoticeRule` asserted by the test) and is unrelated to this change; the module production build passes (built in 19.03s from the `jetlinks-web-core` Vite entry). The realtime tip cannot be exercised end to end until the backend emits `type` in the notification detail payload; unknown types intentionally fall back to the default icon. The type-provider switch is covered by the focused bulletin ownership assertion and the module production build.
+
+
+
+
+R19 integration validation supersedes the earlier transient core-export blocker: `useNoticeDataSourceChanges` is now exported, and the announcement module production build passes. The corrected runtime Ownership path reports 15/18, with three existing static assertions still failing; the historical presentation-only results above are retained as their original stage evidence. Current announcement behavior tests pass 35/35; the workspace typecheck still has existing diagnostics.
 
 ### Base Menu Merge Compatibility
 
@@ -829,4 +834,26 @@ URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显�
 - 此前旧 Vite 源码将 Provider 当成单个事件，导致旧下拉框、空 schema 和保存失败；获准重启开发服务后只核对过返回源码，未把它当作交互验收。本轮不重复重启服务，不通过放宽后端校验接受错误事件 ID。
 - 本轮前端 Provider 选择、关联展示、国际化和现有文档修改随 PR #104 交付；复用源码与差异检查，未运行构建、类型检查、lint、测试或浏览器。两类勾选、半选回显、多范围/草稿、语言切换、说明弹窗和错误反馈仍由用户在现有环境人工验收。
 
-公告接收使用 `/system/bulletin/received` 下的分页、未读统计与状态接口，概览、铃铛和个人中心共享同一接收来源。`views/system/Announcement/register.ts` 通过通知 Provider 注册接收分类及数据源，分类不要求用户拥有公告管理菜单或发送通道配置。接收列表的稳定记录 ID 用于已读操作，正文继续用公告 ID 与发布版本查询；公告保存的接收维度使用 `DimensionInfo` 的 `{type, id}` 单条结构。
+公告接收通过 `/system/bulletin/received/_query`、`/_query/no-paging`、`/_count` 查询当前可见的已发布批次。`views/system/Announcement/receivedDataSource.ts` 将嵌套 `state` 条件递归转换为本地批次集合的普通 `id in/nin` 条件，再由后端完成资格过滤、排序、分页和统计；空集合使用稳定 ID 的非空约束表达常量谓词。响应显式携带 `bulletinId`、`publishVersion`，详情不解析 `dataId`。撤回隐藏，重发版本重新未读，不迁移历史已读。
+
+本地确认由 `localReadStore.ts` 统一保存，作用域为实际 API 服务和认证 `userInfo.id`，稳定接收 ID 标识公告发布批次；项目不是确认作用域的一部分。每个发布批次独立使用 `作用域:batch:批次ID` 的 localStorage 键保存 `read/unread`，不同标签页确认不同公告不会覆盖；同一批次采用最后写入的状态。此前本地 v1 集合只保留读取，独立批次状态优先，不迁移后端已读。同页批量操作仅通知一次，跨标签页 storage 事件在末次变更后 30ms 合并刷新顶栏、概览与个人中心，销毁订阅取消待处理刷新。全部已读仅查询当前可见批次的 `includes: ['id']`，不拉正文、不使用时间水位。公告不调用服务端已读接口，普通通知仍使用原服务端状态。
+
+
+
+### 空选择默认全员与撤回重发
+
+新建和撤回重发均允许不选用户与组织。`api.ts` 对两个空数组提交 `dimension: []`、`allVisible: true`；撤回后清空原指定对象等同主动改为所属维度全员，不显示必选提示。统一发布接口按公告可信来源生成平台 `all:*` 或所属项目 `tenant:项目ID`，人员标识均为 `*`；项目公告不得扩到其他项目。新版本使用新范围，不能沿用旧版本的指定关系。
+
+明确指定用户或组织时，前端原样保留选择ID，由服务端沿用既有解析与项目约束，不把解析后空集合自动广播。本次不新增重发专用入口或额外范围阻断规则；发布仍只传公告ID，HTTP错误沿用统一提示，失败不报成功，编辑失败保留草稿。
+
+
+
+### 公告实时订阅与弹窗
+
+运行端 `register.ts` 通过 `NoticeDataSource.subscribeRealtime` 接入顶栏 Notice，`realtimeSubscription.ts` 使用共享 wsClient 订阅 `/system/bulletin/received` 并保存真实 RxJS Subscription；最后一个消费者卸载时释放。core 只提供可选实时钩子和注册分派，公告 Topic 与业务规则归公告模块。
+
+每次消息按稳定发布批次 ID 调用当前 HTTP 会话的接收查询确认资格，只展示查询返回的记录；共享连接的旧握手身份不能直接将旧内容带入当前身份。通过已有变更广播刷新铃铛、概览和个人中心。`realtimeNotification.ts` 复用 `NotificationDetail`，按服务/真实用户确认作用域＋发布批次去重；收到、展示、关闭均不写已读，只有确认按钮保存本地状态。列表手动查看允许重开，已确认批次与会话内重复批次不再自动弹出。
+
+账号/服务/项目上下文变化时取消旧逻辑订阅、销毁旧实时弹窗并使确认回调失效；HTTP 查询完成后也再次核对上下文。确认记录保持同服务同用户跨项目共用，连接指纹排除二次校验缓存。浏览器 online 可重建逻辑订阅并保留会话去重记录。
+
+当前共享 WebSocket 身份固定在物理连接握手时，逻辑重订阅不能替换握手身份；未整页刷新的账号/项目切换可能遗漏新身份消息，需要重新加载页面建立当前身份连接。依赖的 restoreSubscriptions 也仅恢复本地 Subject，不重发 sub 帧，因此仍不能保证 socket 断线后的自动续订；遗漏公告通过既有接收查询查看，本模块不修改第三方依赖。初始载入不自动弹出历史未确认公告；每个已打开标签各自弹窗，确认继续跨标签同步。
