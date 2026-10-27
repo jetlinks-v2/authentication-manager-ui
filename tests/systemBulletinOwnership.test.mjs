@@ -5,7 +5,7 @@ import { test } from 'node:test'
 
 const moduleRoot = resolve(import.meta.dirname, '..')
 const workspaceRoot = resolve(moduleRoot, '../../..')
-const coreRoot = resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src')
+const coreRoot = resolve(moduleRoot, '../../jetlinks-web-core/src')
 
 const readSourceTree = async (directory) => {
   const entries = await readdir(directory, { withFileTypes: true })
@@ -35,15 +35,15 @@ const [apiSource, registerSource, inboxSource, realtimeSource, notificationDetai
   readFile(resolve(workspaceRoot, 'ui/modules/saas-manager-ui/views/personalCenter/index.vue'), 'utf8'),
   readFile(resolve(workspaceRoot, 'ui/modules/project-side-ui/views/PersonCenter/index.vue'), 'utf8'),
   readSourceTree(coreRoot),
-  readFile(resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src/api/account/center.ts'), 'utf8'),
-  readFile(resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src/api/account/notificationRecord.ts'), 'utf8'),
-  readFile(resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src/api/account/notificationSubscription.ts'), 'utf8'),
-  readFile(resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src/views/account/center/components/StationMessage/components/NotificationRecord/components/ViewDialog.vue'), 'utf8'),
-  readFile(resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src/layout/components/Notice.vue'), 'utf8'),
-  readFile(resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src/layout/components/NoticeItem.vue'), 'utf8'),
-  readFile(resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src/layout/components/noticeRealtimeHandler.ts'), 'utf8'),
-  readFile(resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src/layout/components/NoticeInfo.vue'), 'utf8'),
-  readFile(resolve(workspaceRoot, 'runtime-ui/jetlinks-web-core/src/layout/components/noticeListHandler.ts'), 'utf8'),
+  readFile(resolve(coreRoot, 'api/account/center.ts'), 'utf8'),
+  readFile(resolve(coreRoot, 'api/account/notificationRecord.ts'), 'utf8'),
+  readFile(resolve(coreRoot, 'api/account/notificationSubscription.ts'), 'utf8'),
+  readFile(resolve(coreRoot, 'views/account/center/components/StationMessage/components/NotificationRecord/components/ViewDialog.vue'), 'utf8'),
+  readFile(resolve(coreRoot, 'layout/components/Notice.vue'), 'utf8'),
+  readFile(resolve(coreRoot, 'layout/components/NoticeItem.vue'), 'utf8'),
+  readFile(resolve(coreRoot, 'layout/components/noticeRealtimeHandler.ts'), 'utf8'),
+  readFile(resolve(coreRoot, 'layout/components/NoticeInfo.vue'), 'utf8'),
+  readFile(resolve(coreRoot, 'layout/components/noticeListHandler.ts'), 'utf8'),
   readFile(resolve(moduleRoot, 'locales/lang/zh.json'), 'utf8'),
   readFile(resolve(moduleRoot, 'locales/lang/en.json'), 'utf8'),
   readFile(resolve(workspaceRoot, 'ui/modules/saas-manager-ui/views/personalCenter/components/MessageContent.vue'), 'utf8'),
