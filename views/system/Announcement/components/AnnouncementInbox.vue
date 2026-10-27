@@ -14,6 +14,7 @@ import {
 import NotificationDetail from './NotificationDetail.vue'
 import { resolveBulletinTypeIcon } from '../bulletinTypeIcon'
 import { resolveAnnouncementText } from '../announcementI18n'
+import { subscribeAnnouncementReadChanges } from '../localReadStore'
 
 const columns = [
   {
@@ -95,6 +96,7 @@ const incomingNotification = computed(() => {
 })
 
 const reload = () => tableRef.value?.reload?.()
+const stopReadChanges = subscribeAnnouncementReadChanges(reload)
 
 const markRead = async (record: Record<string, any>) => {
   const response = await changeAnnouncementReadState('_read', [record.id])
@@ -143,6 +145,7 @@ watch(() => incomingNotification.value?.id, () => {
 }, { immediate: true })
 
 onUnmounted(() => {
+  stopReadChanges()
   if (user.messageInfo?.topicProvider === SYSTEM_BULLETIN_PROVIDER) {
     user.messageInfo = {}
   }

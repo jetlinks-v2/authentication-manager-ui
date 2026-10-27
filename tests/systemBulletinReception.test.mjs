@@ -2,40 +2,6 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { loadLogModule } from './logTestLoader.mjs'
 
-const loadApi = (request) => loadLogModule('views/system/Announcement/api.ts', {
-  '@jetlinks-web/core': { request },
-  './announcementI18n': {},
-})
-
-test('all reception queries call bulletin endpoints independently of ordinary notification APIs', async () => {
-  const calls = []
-  const api = loadApi({ post: async (url, params) => { calls.push([url, params]); return { status: 200 } } })
-  const query = { pageIndex: 1, pageSize: 5, terms: [{ column: 'state', termType: 'eq', value: 'read' }] }
-  await api.queryAnnouncementInbox(query)
-  await api.queryAnnouncementInboxNoPaging(query)
-  await api.countAnnouncementInbox(query)
-  await api.countAnnouncementUnread(query)
-  assert.deepEqual(calls, [
-    ['/system/bulletin/received/_query', query],
-    ['/system/bulletin/received/_query/no-paging', query],
-    ['/system/bulletin/received/_count', query],
-    ['/system/bulletin/received/unread/_count', query],
-  ])
-})
-
-test('read, unread and all-read use stable received IDs and the bulletin state endpoints', async () => {
-  const calls = []
-  const api = loadApi({ put: async (url, ids) => { calls.push([url, ids]); return { status: 200 } } })
-  await api.changeAnnouncementReadState('_read', ['intent-1', 'intent-2'])
-  await api.changeAnnouncementReadState('_unread', ['intent-2'])
-  await api.markAllAnnouncementsRead()
-  assert.deepEqual(calls, [
-    ['/system/bulletin/received/_state/read', ['intent-1', 'intent-2']],
-    ['/system/bulletin/received/_state/unread', ['intent-2']],
-    ['/system/bulletin/received/_read', undefined],
-  ])
-})
-
 test('overview loads bulletin reception rows and keeps the publication reference for its detail', async () => {
   const calls = []
   const row = { id: 'intent-1', topicName: 'Platform notice', message: 'Summary', state: { value: 'unread' },
@@ -53,4 +19,34 @@ test('overview loads bulletin reception rows and keeps the publication reference
   assert.equal(rows[0].label, 'Platform notice')
   assert.equal(rows[0].isNew, true)
   assert.equal(rows[0].notification, row)
+})
+
+test('the real bulletin registration enables detail confirmation and routes it through its own source', async () => {
+  const changes = []
+  const api = {
+    SYSTEM_BULLETIN_PROVIDER: 'SystemBulletin',
+    queryAnnouncementInbox: async () => ({success: true, result: {data: []}}),
+    queryAnnouncementInboxNoPaging: async () => ({success: true, result: []}),
+    countAnnouncementInbox: async () => ({success: true, result: 0}),
+    countAnnouncementUnread: async () => ({success: true, result: {count: 0}}),
+    changeAnnouncementReadState: async (state, ids) => { changes.push({state, ids}); return {status: 200, success: true} },
+    markAllAnnouncementsRead: async () => ({status: 200, success: true}),
+  }
+  const registration = loadLogModule('views/system/Announcement/register.ts', {
+    './api': api,
+    './noticeListLoader': {},
+    './realtimeNotification': {},
+    './localReadStore': {subscribeAnnouncementReadChanges: () => () => {}},
+    '@jetlinks-web-core/locales': {__esModule: true, default: {global: {t: key => key}}},
+  })
+  const registrations = registration.getRegisterComponents().filter(item => item.targetPage === 'notification-provider')
+  const core = loadLogModule('../../jetlinks-web-core/src/layout/components/noticeListHandler.ts', {
+    '@jetlinks-web-core/utils/components-registry': {componentsRegistry: {getRegistry: () => registrations}},
+    '@jetlinks-web-core/api/account/notificationRecord': {changeStatus_api: () => assert.fail('must use the bulletin source')},
+  })
+  const source = core.getNoticeDataSource(['SystemBulletin'])
+  assert.equal(source.confirmOnDetail, true, 'the existing personal-center confirmation must opt into marking read')
+  assert.equal(source.changeState, api.changeAnnouncementReadState)
+  await core.changeNoticeReadState(['SystemBulletin'], '_read', ['publication-v2'])
+  assert.deepEqual(changes, [{state: '_read', ids: ['publication-v2']}])
 })

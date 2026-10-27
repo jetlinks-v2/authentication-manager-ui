@@ -12,6 +12,7 @@ import {
 import { loadSystemBulletinNoticeList, resolveSystemBulletinNoticeTexts } from './noticeListLoader'
 import { handleSystemBulletinNotice } from './realtimeNotification'
 import type { NoticeTextResolverContext } from '@jetlinks-web-core/layout/components/noticeTextResolver'
+import { subscribeAnnouncementReadChanges } from './localReadStore'
 
 export const getRegisterComponents = () => [
   {
@@ -35,12 +36,14 @@ export const getRegisterComponents = () => [
         },
       }),
       dataSource: {
+        confirmOnDetail: true,
         query: queryAnnouncementInbox,
         queryNoPaging: queryAnnouncementInboxNoPaging,
         count: countAnnouncementInbox,
         unreadCount: countAnnouncementUnread,
         changeState: changeAnnouncementReadState,
         readAll: markAllAnnouncementsRead,
+        subscribe: subscribeAnnouncementReadChanges,
       },
     },
   },
