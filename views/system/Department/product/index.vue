@@ -312,6 +312,7 @@ import PageHeader from '@jetlinks-web-core/components/PageHeader';
 
 const {t: $t} = useI18n();
 const permission = 'system/Department';
+const deviceMenuCode = 'iot-user-device-list';
 
 const departmentStore = useDepartmentStore();
 const emits = defineEmits(['openDeviceBind', 'refresh']);
@@ -651,7 +652,7 @@ const table = {
   },
   addConfirm: () => {
     onRefresh()
-    if (menuStore.hasMenu('device/Instance')) {
+    if (menuStore.hasMenu(deviceMenuCode)) {
       dialogs.nextShow = true;
     }
   },

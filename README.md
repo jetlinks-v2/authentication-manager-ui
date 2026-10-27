@@ -929,6 +929,12 @@ Verification result:
 - 已做源码请求/保存字段及本地导入路径核对、菜单与语言 JSON 解析、中英文键对齐检查；本轮 Vue 文件均小于 300 行。未执行构建、类型检查、lint、测试或浏览器操作，也未启停服务、自动发布菜单或操作业务数据。真实 CRUD、授权可见性和页面交互仍待用户在现有环境人工验收；源码检查不等于运行验收。
 - 现有环境由菜单管理员单独增加/发布新入口并配置按钮权限；本地菜单种子不会自动覆盖已保存菜单，不应全量重置菜单。未提交、推送或生成 PR。
 
+### 接口分组列表操作
+
+运行时 `views/application-center/ApiGroup/index.vue` 复用 `TableActions` / `TableActionsItem`，三个操作均标记为常用项，行内显示图标并在悬停时展示既有国际化文案。编辑/查看使用 `EditOutlined` / `EyeOutlined`，禁用/启用使用 `StopOutlined` / `PlayCircleOutlined`，删除使用 `DeleteOutlined`。权限按钮、忙碌状态、确认弹窗和业务回调保持原样；启停、删除的文字提示放在下方，避免遮挡上方确认框。`useApiGroupList.ts` 将固定操作列宽收敛为 120；不改接口、授权、菜单、公共组件或运营端。
+
+验证：本地 `http://localhost:9200/#/open/api-group` 已确认三个图标、中文可访问名称及文字提示；禁用和删除均可打开原确认框并通过鼠标取消，记录仍在列表且保持正常状态，没有提交业务变更。`pnpm --config.verify-deps-before-run=false -F jetlinks-web-core build -- --module-name authentication-manager-ui` 最终生产构建通过（1 分 13 秒），`git diff --check` 通过，页面 95 行。工作区与模块无 lint 脚本；`pnpm --config.verify-deps-before-run=false exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 因其他文件的 615 项诊断未通过，本次两个代码文件无诊断，清理工作区类型问题后需重跑同一命令。只读权限和已禁用分组的页面分支未切换真实账号或业务状态验证。
+
 ### 接口分组到应用授权链路核对（2026-10-09）
 
 用户授权使用临时凭证进行当前运行环境只读联调，凭证不写入文件或输出。保持后端代码、配置及运行服务不动，不执行真实业务写入、浏览器、构建或测试。前端修正仅限本模块：①接口选择区区分原始目录为空与筛选无结果，禁止空选择确认；②应用列表与详情的 provider 判断保持一致，不因 integrationModes 非空拒绝详情；③应用上下文键复用当前请求 API 地址；④授权目录只新增选择启用且接口权限关联完整的操作，保留已有不可见授权及 assetAccesses，并提供分组管理入口。接口目录的数据供给缺口不能用 Swagger 假 ID、自动建组或前端自动授权掩盖。完成后原位记录只读结果及尚未验收的保存、OAuth2 换令牌与事件投递环节。

@@ -82,9 +82,24 @@
                     <template v-else-if="column.key === 'actions'">
                       <a-space :size="8">
                         <!-- 后端暂无无副作用的 SSO 测试接口，接口补齐后再开放测试入口。 -->
-                        <a-button type="link" size="small" @click="editRecord(record as LoginConfig)">{{ $t('ThirdPartyLogin.edit') }}</a-button>
+                        <j-permission-button
+                          type="link"
+                          size="small"
+                          :tooltip="{ title: $t('ThirdPartyLogin.edit') }"
+                          @click="editRecord(record as LoginConfig)"
+                        >
+                          <span role="img" :aria-label="$t('ThirdPartyLogin.edit')"><AIcon type="EditOutlined" /></span>
+                        </j-permission-button>
                         <a-popconfirm :disabled="record.enabled" :title="$t('ThirdPartyLogin.deleteConfirm')" @confirm="deleteRecord(record as LoginConfig)">
-                          <a-button type="link" size="small" danger :disabled="record.enabled">{{ $t('ThirdPartyLogin.delete') }}</a-button>
+                          <j-permission-button
+                            type="link"
+                            size="small"
+                            danger
+                            :disabled="record.enabled"
+                            :tooltip="{ title: $t('ThirdPartyLogin.delete') }"
+                          >
+                            <span role="img" :aria-label="$t('ThirdPartyLogin.delete')"><AIcon type="DeleteOutlined" /></span>
+                          </j-permission-button>
                         </a-popconfirm>
                       </a-space>
                     </template>
