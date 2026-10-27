@@ -142,6 +142,14 @@ SaaS 初始布局按当前概览设计的 9 组坐标同步到 `views/project/Ov
 - `node modules/authentication-manager-ui/scripts/verify-overview-components.cjs`：83 个 Vue SFC 编译通过，相对导入缺失为 0。未执行全量构建，lint/typecheck 边界沿用前述说明。
 - 剩余联调：真实项目目前没有未处理记录，实际后端处理成功及权限拒绝需有真实记录时验证；不能将隔离验收当作后端写入验证。运维告警继续待正式契约后接入。
 
+### 快捷处理的公开复用
+
+`register.ts` 将既有 `AlarmQuickEntry.vue` 以 `QuickAlarmEntry` 注册为公开组件，供告警仪表盘复用；其他模块通过 `moduleRegistry` 读取，不导入本模块私有组件或 API 路径。
+
+可选 `trigger` 插槽提供 `open / disabled / setOpen`，允许调用方绘制快捷统计卡；不传插槽时，概览原有按钮保持。可选 `queryTerms` 仅追加列表条件（例如统计使用的 alarmTime 范围），不改变类型与 warning 限制；详情仍按类别和记录 ID 重新读取。可选 `scopeKey` 在账号、项目、显式时间筛选变化时废弃旧列表 / 详情 / 提交回调，关闭旧弹层；普通轮询仅更新 queryTerms，不清空填写内容。KeepAlive 离开时关闭浮层并使旧回调失效。处理接口、字段、200 字必填说明与失败保留逻辑沿用原实现。
+
+本轮验证结果与发布边界统一记录于 `rule-engine-manager-ui/docs/alarm-center-dashboard.md` 的快捷处理卡小节。运行时两模块静态资源需同时更新，无后端服务重启要求。
+
 ## 资源中心展示边界
 
 应用中心与项目应用列表统一查询 `/business-application/_query/no-paging`，按创建时间倒序展示当前可管理应用；应用自身描述为空时回退到关联模板描述，与项目应用卡片口径一致。启用描述展示时始终保留描述行，两者均为空时显示 `--`，避免名称下方留空导致信息层级不一致。

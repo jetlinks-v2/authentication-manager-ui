@@ -21,6 +21,7 @@ export interface QuickAlarm {
   alarmTime?: string | number
   alarmConfigId: string
 }
+export interface QuickAlarmQueryTerm { column: string; termType: string; value: unknown }
 export interface QuickAlarmPage { rows: QuickAlarm[]; total: number }
 export const ALARM_PAGE_SIZE = 5
 
@@ -64,11 +65,13 @@ function mapAlarm(row: Record<string, unknown>): QuickAlarm {
 }
 
 /** 分类与概览数量口径一致，只展示未处理记录；详情查询不限制状态。 */
-export async function queryQuickAlarms(category: AlarmCategory, page = 1): Promise<QuickAlarmPage> {
+export async function queryQuickAlarms(
+  category: AlarmCategory, page = 1, terms: readonly QuickAlarmQueryTerm[] = [],
+): Promise<QuickAlarmPage> {
   const response = await request.post(`/alarm/record/${ALARM_TARGETS[category]}/_query`, {
     paging: true, pageIndex: page - 1, pageSize: ALARM_PAGE_SIZE,
     sorts: [{ name: 'alarmTime', order: 'desc' }],
-    terms: buildPendingAlarmTerms(category),
+    terms: [...buildPendingAlarmTerms(category), ...terms],
   }, { hiddenError: true })
   return { rows: rowsOf(response).map(mapAlarm), total: countOf(response) }
 }
