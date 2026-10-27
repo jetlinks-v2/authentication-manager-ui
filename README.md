@@ -164,13 +164,8 @@ Goal: give the six built-in bulletin types one icon vocabulary, and open a cente
 - `noticeListLoader.ts` decorates bell records with the business-neutral `noticeIcon` field, and `components/NotificationDetail.vue` shows the same icon in the announcement detail shared by the bell, the realtime dialog and the message center.
 - Shared core exposes generic hooks through `noticeRealtimeHandler.ts`; the bulletin handler returns `true` to suppress the generic tip. Ordinary notifications retain their existing tip, and `NoticeItem.vue` renders `noticeIcon` when present. Core still contains no `SystemBulletin` name, bulletin API or bulletin copy.
 
-Scope for the dialog adjustment: only the runtime `runtime-ui/modules/authentication-manager-ui` handler, tests and this section. Backend delivery and subscription decisions remain unchanged. Reuse the existing detail component, localized content and read confirmation; verify direct dialog opening, suppression of the realtime tip, ordinary-provider fallthrough and confirmation before marking read.
+The shared announcement handler and detail component apply to both UI checkouts. Reuse the existing localized content and explicit confirmation; realtime arrivals open the detail dialog, ordinary providers keep their existing tip, and only confirmation marks a bulletin as read.
 
-
-
-
-
-R19 integration validation supersedes the earlier transient core-export blocker: `useNoticeDataSourceChanges` is now exported, and the announcement module production build passes. The corrected runtime Ownership path reports 15/18, with three existing static assertions still failing; the historical presentation-only results above are retained as their original stage evidence. Current announcement behavior tests pass 35/35; the workspace typecheck still has existing diagnostics.
 
 ### Base Menu Merge Compatibility
 
