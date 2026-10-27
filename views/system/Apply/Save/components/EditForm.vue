@@ -1465,7 +1465,7 @@
 </template>
 
 <script setup lang="ts">
-import {passwordRegEx, testIP} from '@/utils/validate';
+import {passwordRegEx, testIpv4_6} from '@/utils/validate';
 
 import {
   getDepartmentList_api,
@@ -1976,7 +1976,7 @@ const validateIP = (_rule: Rule, value: string) => {
         ?.split(/[\n,]/g)
         .filter((i: string) => i && i.trim());
     const errorIPList = ipList?.filter(
-        (f: string) => !testIP(f.replace(/\s*/g, '')),
+        (f: string) => !testIpv4_6(f.replace(/\s*/g, '')),
     );
     return new Promise((resolve, reject) => {
       !errorIPList?.length
