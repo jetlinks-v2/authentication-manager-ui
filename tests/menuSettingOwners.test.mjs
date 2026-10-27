@@ -140,9 +140,9 @@ test('validates real depth and cycles through ancestors in another owner tab', (
 test('sync adds button and permission actions without changing draft visibility, parent or sort', () => {
   const current = menu('app', 'app', { parentId: 'external', sortIndex: 8, options: { show: false },
     buttons: [{ id: 'edit', permissions: [{ permission: 'device', actions: ['query'] }] }],
-    permissions: [{ permission: 'device', actions: ['query'] }] })
+    permissions: [{ permission: 'device', actions: ['query'] }], assetTypes: ['device'] })
   const base = [menu('app', 'app', { buttons: [{ id: 'edit', permissions: [{ permission: 'device', actions: ['save'] }] }, { id: 'new' }],
-    permissions: [{ permission: 'device', actions: ['save'] }] })]
+    permissions: [{ permission: 'device', actions: ['save'] }], assetTypes: ['device', 'alarmConfig'] })]
   const { drafts } = createMenuDrafts(base, [current])
   const synced = synchronizeMenuDefinitions(drafts, base)
   const node = byId(synced, 'app')
@@ -151,6 +151,7 @@ test('sync adds button and permission actions without changing draft visibility,
   assert.equal(node.sortIndex, 8)
   assert.equal(node.options.show, false)
   assert.deepEqual(node.permissions[0].actions, ['query', 'save'])
+  assert.deepEqual(node.assetTypes, ['device', 'alarmConfig'])
   assert.deepEqual(node.buttons[0].permissions[0].actions, ['query', 'save'])
   assert.equal(node.buttons[1].id, 'new')
   assert.deepEqual(byId(drafts, 'app').permissions[0].actions, ['query'])

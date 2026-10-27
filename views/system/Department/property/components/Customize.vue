@@ -99,6 +99,7 @@ import {
 } from '@authentication-manager-ui/api/system/department';
 import { dictType } from '../typings';
 import { useI18n } from 'vue-i18n';
+import type { ConditionFilterExpose } from '@jetlinks-web-core/components/ConditionFilter';
 import CheckboxGroup from '@jetlinks-web-core/components/CheckboxGroup/index.vue'
 import { systemImg } from '@authentication-manager-ui/assets/index'
 import dayjs from 'dayjs';
@@ -125,7 +126,7 @@ const _selectedRowKeys = ref<string[]>([]) // 选中项的id
 const backRowKeys = ref<string[]>([]) // 旧选中项的id
 const selectedRows = ref<any[]>([]) // 选中项
 const tableData = ref<any[]>([]) // 列表的浅拷贝
-const searchRef = ref()
+const searchRef = ref<ConditionFilterExpose>()
 
 const onChange = (val: string[], record: any) => {
   selectedRows.value.forEach((i: any) => {
@@ -384,13 +385,14 @@ watch(
 
 onMounted(() => {
   if (props.productIds?.length && props.assetType === 'device' && searchRef.value) {
-    searchRef.value.setValues({ terms: [{
-        terms: [{
-          column: 'productName',
-          termType: 'in',
-          value: props.productIds
-        }]
-      }]})
+    // 继续分配设备时，仅展示刚分配产品下可绑定的设备。
+    searchRef.value.setFilter({
+      terms: [{
+        column: 'productName',
+        termType: 'in',
+        value: props.productIds,
+      }],
+    })
   }
 })
 
