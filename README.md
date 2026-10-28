@@ -1028,9 +1028,9 @@ URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显�
 ```
 
 - “范围”的真实语义：后端 `ApplicationEventSubscriptionScope` 保存 `eventTypes + configuration`，多个 scope 在公共订阅契约中为 OR；当前两个设备 Provider 没有消费 `spec.configuration` 的范围参数，真实数据权限由 AssetsHolder 控制。移除列表范围计数、详情及表单“范围1/新增范围”的 UI 概念，不删除后端 `scopes` 协议。`subscriptionForm.ts/scopesForEvents` 在保存时按初始快照映射已选事件：未调整的配置和重复事件所属的多份配置保留，取消后重新选择恢复原归属；只有明确取消了全部事件的原分组被移除。新选事件加入无附加配置的集合，不套用其他事件的条件；不可用的旧事件仍在选择表中保留，可显式取消。
-- 元数据契约：`GET /application/{applicationId}/subscriptions/events` 返回 Provider → events → properties，认证端 `ApplicationEventSubscriptionEventView` 透传公共 `EventDefinition.properties: List<PropertyMetadata>`，不再消费手工 JSON Schema。前后端配套更新，不保留本次未上线旧格式。
+- 元数据契约：`GET /application/{applicationId}/subscriptions/events` 返回 Provider → events → schema，认证端 `ApplicationEventSubscriptionEventView` 透传公共 `EventDefinition.schema: Map<String, Object>`，设备 Provider 通过统一元数据解析和 `JsonSchemaTypeMapper` 生成 JSON Schema。前后端保持单一 schema 契约，不维护 properties 双格式。
 - 后端落点：`D:/Project-all/idea/jetlinks/cloud/jetlinks-ultimate/modules/device-manager` 的实体/消息 Provider 使用已有 `CommandMetadataResolver.resolveInputs` 解析 `@Schema`，保留原公开字段白名单与中英文说明。实体复用已有注解；Core 消息没有注解，设备模块仅声明公开投影 DTO。数采只参考实现，未新增数采依赖或修改 POM；不暴露实体配置、密钥、headers，不改负载、权限和投递。需公共组件、设备 Provider、认证服务配套加载后页面才能显示新目录字段。
-- 实现入口：`SubscriptionEventPicker.vue` / `useSubscriptionEventPicker.ts` 维护搜索、分页和跨页勾选；`SubscriptionEventFields.vue` / `subscriptionMetadata.ts` 直接读取 PropertyMetadata 的 id/name/description/valueType/expands，展示树形字段表；`SubscriptionEventSummary.vue` 收口类别摘要。枚举、数组和对象由原生元数据提供；动态数据保留 unknown，不强制标为 object，不维护类型/字段中文映射。
+- 实现入口：`SubscriptionEventPicker.vue` / `useSubscriptionEventPicker.ts` 维护搜索、分页和跨页勾选；`SubscriptionEventFields.vue` / `subscriptionMetadata.ts` 读取 JSON Schema 的 properties/title/description/type/items/enum/examples，展示树形字段表；`SubscriptionEventSummary.vue` 收口类别摘要。枚举、数组和对象由 schema 提供；动态字段未声明 type 时不推测类型，不维护设备字段中文映射。
 - 验证：前端完成源码、组件契约、本地引用和差异检查；未运行构建、lint、类型检查、测试、浏览器或服务操作。大量事件、跨页勾选、长名称、窄屏、配置保留和错误反馈仍待人工验收。后端公共 DTO 9 项、真实 RPC 6 项、设备 12 项、认证 5 项共 32 个不同用例通过；元数据实现及目录投影行覆盖均 100%，公共 EventDefinition 行覆盖 97.2%。已集中审查字段白名单、语言、序列化及权限/投递边界，无阻断发现。公共组件正常本地安装用于测试，未安装设备/认证模块、未部署或重启服务，未提交推送。
 
 

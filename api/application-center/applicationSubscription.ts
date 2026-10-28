@@ -48,7 +48,7 @@ export interface SubscriptionEvent {
   name: string
   description?: string
   version?: string
-  properties?: SubscriptionMetadataProperty[]
+  schema?: SubscriptionEventSchema
 }
 
 export interface SubscriptionEventProvider {
@@ -57,21 +57,23 @@ export interface SubscriptionEventProvider {
   events: SubscriptionEvent[]
 }
 
+export interface SubscriptionEventSchema {
+  type?: string | string[]
+  title?: string
+  description?: string
+  properties?: Record<string, SubscriptionEventSchema>
+  items?: SubscriptionEventSchema
+  enum?: unknown[]
+  examples?: unknown[]
+}
+
+// 凭据配置仍使用平台原生元数据，与事件目录的 JSON Schema 契约分离。
 export interface SubscriptionMetadataProperty {
   id: string
   name?: string
   description?: string
-  valueType?: SubscriptionMetadataValueType
+  valueType?: { type?: string; [key: string]: unknown }
   expands?: Record<string, unknown>
-}
-
-export interface SubscriptionMetadataValueType {
-  type?: string
-  name?: string
-  properties?: SubscriptionMetadataProperty[]
-  elementType?: SubscriptionMetadataValueType
-  elements?: { value: unknown; text?: string }[]
-  [key: string]: unknown
 }
 
 export interface SubscriptionChannel {

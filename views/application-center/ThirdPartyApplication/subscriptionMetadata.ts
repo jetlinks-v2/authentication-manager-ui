@@ -1,5 +1,5 @@
 import type {
-  SubscriptionEvent, SubscriptionMetadataProperty, SubscriptionMetadataValueType,
+  SubscriptionEvent, SubscriptionEventSchema,
 } from '@authentication-manager-ui/api/application-center/applicationSubscription'
 
 export interface SubscriptionMetadataField {
@@ -14,33 +14,33 @@ export interface SubscriptionMetadataField {
 
 const displayValue = (value: unknown): string | undefined => value === undefined ? undefined
   : typeof value === 'string' ? value : JSON.stringify(value)
-const fieldType = (valueType?: SubscriptionMetadataValueType): string => {
-  if (valueType?.type === 'array') {
-    const elementType = fieldType(valueType.elementType)
-    return elementType ? `${elementType}[]` : valueType.name || valueType.type
+const fieldType = (schema?: SubscriptionEventSchema): string => {
+  if (schema?.type === 'array') {
+    const itemType = fieldType(schema.items)
+    return itemType ? `${itemType}[]` : 'array'
   }
-  return valueType?.name || valueType?.type || ''
+  const type = schema?.type
+  return Array.isArray(type) ? type.join(' | ') : type || ''
 }
-const elementType = (valueType?: SubscriptionMetadataValueType): SubscriptionMetadataValueType | undefined =>
-  valueType?.type === 'array' ? elementType(valueType.elementType) : valueType
+const elementSchema = (schema: SubscriptionEventSchema): SubscriptionEventSchema =>
+  schema.type === 'array' && schema.items ? elementSchema(schema.items) : schema
 
-// 直接读取目录的原生 PropertyMetadata，不再维护 JSON Schema 或设备字段中文映射。
+// 展示公共 JSON Schema，不推测动态字段类型或维护设备字段翻译。
 export const subscriptionMetadataFields = (event: SubscriptionEvent): SubscriptionMetadataField[] => {
-  const fields = (properties: SubscriptionMetadataProperty[], path: string[] = []): SubscriptionMetadataField[] =>
-    properties.map(property => {
-      const key = [...path, property.id]
-      const type = elementType(property.valueType)
-      const children = fields(type?.properties || [], key)
-      const enumValues = type?.elements?.map(element => element.text
-        ? `${displayValue(element.value)}（${element.text}）` : displayValue(element.value)).join('、')
+  const fields = (schema: SubscriptionEventSchema, path: string[] = []): SubscriptionMetadataField[] =>
+    Object.entries(elementSchema(schema).properties || {}).map(([name, property]) => {
+      const key = [...path, name]
+      const element = elementSchema(property)
+      const children = fields(property, key)
+      const enumValues = element.enum?.map(displayValue).join('、')
       return {
-        key: JSON.stringify(key), name: property.id, type: fieldType(property.valueType),
-        description: property.description || property.name || '',
-        enumValues: enumValues || undefined, example: displayValue(property.expands?.example),
+        key: JSON.stringify(key), name, type: fieldType(property),
+        description: property.description || property.title || '',
+        enumValues: enumValues || undefined, example: displayValue(property.examples?.[0]),
         ...(children.length ? { children } : {}),
       }
     })
-  return fields(event.properties || [])
+  return fields(event.schema || {})
 }
 
 export const hasMissingFieldDescriptions = (fields: SubscriptionMetadataField[]): boolean => fields.some(field =>
