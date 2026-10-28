@@ -4,13 +4,13 @@
     <a-button type="primary" @click="openCreate"><template #icon><AIcon type="PlusOutlined" /></template>{{ $t('ThirdPartyApplication.direct.create') }}</a-button>
   </DefineEmptyCreate>
   <j-page-container v-bind="$attrs">
-    <div class="direct-page">
-      <a-flex align="center" justify="space-between" :gap="12" class="direct-toolbar">
-        <ConditionFilter class="direct-filter" :columns="filterColumns" target="third-party-direct" @change="search" />
-        <EmptyCreateButton />
+    <ContentPanel fill class="application-list direct-page">
+      <a-flex align="center" justify="space-between" :gap="16" class="application-list-toolbar">
+        <ConditionFilter class="application-list-filter" :columns="filterColumns" target="third-party-direct" @change="search" />
+        <EmptyCreateButton class="application-list-create" />
       </a-flex>
       <a-alert v-if="error" type="error" show-icon :message="error" class="page-alert" />
-      <j-pro-table class="pro-table__no-padding" ref="tableRef" mode="TABLE" :columns="columns" :request="query" :params="filters" :scroll="{ x: 800 }">
+      <j-pro-table ref="tableRef" mode="TABLE" :columns="columns" :request="query" :params="filters" :body-style="{ padding: 0 }" :alert-show="false" :pagination="{ size: 'small' }" :scroll="false">
         <template #emptyText>
           <CloudEmpty :search="filters.terms" :search-name="$t('components.EditForm.949962-3')">
             <EmptyCreateButton />
@@ -22,24 +22,29 @@
         <template #action="row">
           <TableActions>
             <TableActionsItem common>
-              <a-tooltip :title="$t('ThirdPartyApplication.edit')">
-                <a-button type="link" size="small" :disabled="!!busyId" :aria-label="$t('ThirdPartyApplication.edit')" @click="openEdit(row)">
-                  <template #icon><AIcon type="EditOutlined" /></template>
-                </a-button>
-              </a-tooltip>
+              <j-permission-button type="link" size="small" :hasPermission="true" :disabled="!!busyId"
+                :tooltip="{ title: $t('ThirdPartyApplication.edit') }" @click="openEdit(row)">
+                <template #icon><AIcon type="EditOutlined" /></template>
+              </j-permission-button>
             </TableActionsItem>
-            <TableActionsItem v-slot="{ close }" :close-on-click="false">
-              <a-popconfirm :title="$t(apiState(row) === 'enabled' ? 'ThirdPartyApplication.direct.disableConfirm' : 'ThirdPartyApplication.direct.enableConfirm')" @confirm="toggle(row, close)">
-                <a-button type="link" size="small" :disabled="!!busyId" :loading="busyId === row.id" :danger="apiState(row) === 'enabled'">
-                  <template #icon><AIcon :type="apiState(row) === 'enabled' ? 'StopOutlined' : 'CheckCircleOutlined'" /></template>
-                  {{ $t(apiState(row) === 'enabled' ? 'ThirdPartyApplication.direct.disable' : 'ApiApplication.actions.enable') }}
-                </a-button>
-              </a-popconfirm>
+            <TableActionsItem>
+              <j-permission-button type="link" size="small" :hasPermission="true" :disabled="!!busyId" :loading="busyId === row.id"
+                :popConfirm="{ title: $t(apiState(row) === 'enabled' ? 'ThirdPartyApplication.direct.disableConfirm' : 'ThirdPartyApplication.direct.enableConfirm'), onConfirm: () => toggle(row) }">
+                <template #icon><AIcon :type="apiState(row) === 'enabled' ? 'StopOutlined' : 'CheckCircleOutlined'" /></template>
+                {{ $t(apiState(row) === 'enabled' ? 'ThirdPartyApplication.direct.disable' : 'ApiApplication.actions.enable') }}
+              </j-permission-button>
+            </TableActionsItem>
+            <TableActionsItem>
+              <j-permission-button type="link" size="small" danger :hasPermission="true" :disabled="!!busyId || apiState(row) !== 'disabled'"
+                :tooltip="{ title: $t(apiState(row) !== 'disabled' ? 'ThirdPartyApplication.direct.deleteDisabledOnly' : 'ApiApplication.actions.delete') }"
+                :popConfirm="{ title: $t('ThirdPartyApplication.direct.deleteConfirm'), onConfirm: () => remove(row) }">
+                <template #icon><AIcon type="DeleteOutlined" /></template>{{ $t('ApiApplication.actions.delete') }}
+              </j-permission-button>
             </TableActionsItem>
           </TableActions>
         </template>
       </j-pro-table>
-    </div>
+    </ContentPanel>
     <a-modal v-model:open="formOpen" :title="$t(editingId ? 'ThirdPartyApplication.edit' : 'ThirdPartyApplication.direct.create')" :confirm-loading="saving"
       :closable="!saving" :mask-closable="!saving" :cancel-button-props="{ disabled: saving }"
       :ok-button-props="{ disabled: !form.name.trim() }" @ok="save">
@@ -65,7 +70,7 @@ import { formatTime } from '../integrationUtils'
 const { t: $t } = useI18n()
 const tableRef = ref<{ reload: () => void }>()
 const filters = ref<{ terms: Array<Record<string, unknown>> }>({ terms: [] })
-const { error, formError, saving, busyId, formOpen, editingId, form, query, openCreate, openEdit, saveForm, openDetail, toggleState } = useDirectApplications()
+const { error, formError, saving, busyId, formOpen, editingId, form, query, openCreate, openEdit, saveForm, openDetail, toggleState, removeApplication } = useDirectApplications()
 const filterColumns = computed<ConditionFilterField[]>(() => [
   { dataIndex: 'name', title: $t('ThirdPartyApplication.name'), search: { type: 'string', defaultTermType: 'like' } },
   { dataIndex: 'state', title: $t('ApiApplication.subscription.state'), search: { type: 'select', options: [
@@ -81,20 +86,14 @@ const columns = computed(() => [
 ])
 const search = ({ filter }: ConditionFilterChangePayload) => { filters.value = { terms: filter.terms as Array<Record<string, unknown>> }; tableRef.value?.reload() }
 const save = async () => { if (await saveForm()) tableRef.value?.reload() }
-const toggle = async (row: ApiApplication, close: () => void) => {
-  if (await toggleState(row)) {
-    close()
-    tableRef.value?.reload()
-  }
-}
+const toggle = async (row: ApiApplication) => { if (await toggleState(row)) tableRef.value?.reload() }
+const remove = async (row: ApiApplication) => { if (await removeApplication(row)) tableRef.value?.reload() }
 
 const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
+<style scoped src="../../application-list.less" lang="less"></style>
 <style scoped>
-.direct-page { box-sizing: border-box; min-width: 0; padding: var(--space-4); min-height: 100%; background: var(--bg); }
-.direct-toolbar { margin-bottom: var(--space-3); }
-.direct-filter { flex: 1 1 auto; min-width: 0; margin: 0; }
-.direct-toolbar > .ant-btn { flex-shrink: 0; }
+.direct-page { overflow: visible; }
 .page-alert { margin: 16px 0; }
 .table-link { padding-inline: 0; }
 </style>

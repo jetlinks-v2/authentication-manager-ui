@@ -29,8 +29,6 @@ export const useApplicationLogs = (context: { application: ApiApplication; initi
     { title: 'IP', key: 'ip', dataIndex: 'ip', scopedSlots: true, width: 160 },
     { title: t('Access.index.480752-2'), key: 'action', dataIndex: 'action', scopedSlots: true, width: 200, ellipsis: true },
   ])
-  const tableRef = ref<{ reload: () => void }>()
-  const pending = ref(false)
   const error = ref('')
 
   if (context.initialFilter) {
@@ -47,20 +45,15 @@ export const useApplicationLogs = (context: { application: ApiApplication; initi
   const query = async (params: LogQuery, context?: { signal: AbortSignal }) => {
     if (!applicationId.value) throw new Error(t('ThirdPartyApplication.logs.missingApplication'))
     error.value = ''
-    pending.value = true
     logs.open.value = false
-    try {
-      return await queryAccess({
-        ...params,
-        // 用户条件整体与应用归属作 AND，避免其中的 OR 放宽固定查询范围。
-        terms: [
-          { column: 'context', termType: 'json_value', value: { path: 'applicationId', termType: 'eq', value: applicationId.value } },
-          ...(params.terms.length ? [{ type: 'and', terms: params.terms }] : []),
-        ],
-      }, context)
-    } finally {
-      if (!context?.signal.aborted) pending.value = false
-    }
+    return queryAccess({
+      ...params,
+      // 用户条件整体与应用归属作 AND，避免其中的 OR 放宽固定查询范围。
+      terms: [
+        { column: 'context', termType: 'json_value', value: { path: 'applicationId', termType: 'eq', value: applicationId.value } },
+        ...(params.terms.length ? [{ type: 'and', terms: params.terms }] : []),
+      ],
+    }, context)
   }
 
   const handleRequestError = (cause: unknown) => {
@@ -70,7 +63,5 @@ export const useApplicationLogs = (context: { application: ApiApplication; initi
       ? t('ThirdPartyApplication.logs.forbidden')
       : t('ThirdPartyApplication.logs.loadFailed')
   }
-  const refresh = () => tableRef.value?.reload()
-
-  return { ...logs, columns, filterColumns, applicationId, tableRef, pending, error, query, refresh, handleRequestError }
+  return { ...logs, columns, filterColumns, applicationId, error, query, handleRequestError }
 }

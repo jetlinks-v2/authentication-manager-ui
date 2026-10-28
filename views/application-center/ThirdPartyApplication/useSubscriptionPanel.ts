@@ -22,7 +22,6 @@ export const useSubscriptionPanel = (application: () => ApiApplication) => {
   let disposed = false
   onBeforeUnmount(() => { disposed = true })
   const reload = () => { if (!disposed) tableRef.value?.reload() }
-  const refresh = () => { void api.loadCatalog(application().id); reload() }
   const requestPage = (params: QueryPayload) => api.query(application().id, {
     ...params, terms: params.terms || filters.value.terms,
   })
@@ -64,12 +63,14 @@ export const useSubscriptionPanel = (application: () => ApiApplication) => {
     editorOpen.value = false; reload()
   }
   const check = (data: SubscriptionConfiguration) => api.check(application().id, data)
-  const toggle = async (row: ApplicationSubscription, close?: () => void) => {
+  const toggle = async (row: ApplicationSubscription) => {
     if (row.state !== 'enabled' && !applicationEnabled.value) return
-    if (await api.changeState(application().id, row)) { close?.(); reload() }
+    if (await api.changeState(application().id, row)) reload()
   }
-  const remove = async (row: ApplicationSubscription, close?: () => void) => {
-    if (await api.remove(application().id, row.id)) { close?.(); reload() }
+  const remove = async (row: ApplicationSubscription) => {
+    // 与列表禁用态保持一致，启用中的订阅须先停用再删除。
+    if (row.state !== 'disabled') return
+    if (await api.remove(application().id, row.id)) reload()
   }
   watch(() => application().id, id => {
     filters.value = { terms: [] }
@@ -78,5 +79,5 @@ export const useSubscriptionPanel = (application: () => ApiApplication) => {
   // 后端目录文案随请求语言返回；切换语言只刷新目录，不重置正在编辑的草稿。
   watch(locale, () => { void api.loadCatalog(application().id) })
   return { ...api, tableRef, filters, editorOpen, detailOpen, detailLoading, editing, selected, applicationEnabled,
-    filterColumns, columns, refresh, requestPage, handleSearch, channelName, executionLabel, openEditor, openDetail, save, check, toggle, remove }
+    filterColumns, columns, requestPage, handleSearch, channelName, executionLabel, openEditor, openDetail, save, check, toggle, remove }
 }

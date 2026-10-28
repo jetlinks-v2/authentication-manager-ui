@@ -1,16 +1,11 @@
 <template>
   <ContentPanel fill :padding="0" :background="false" class="application-logs">
     <p class="scope-hint">{{ $t('ThirdPartyApplication.logs.scopeHint') }}</p>
-    <a-flex align="center" :gap="12" wrap="wrap" class="logs-toolbar">
-      <ConditionFilter v-if="applicationId" v-model="filterTerms" class="logs-filter" :columns="filterColumns"
-        target="third-party-application-access" @change="handleSearch" />
-      <a-button :loading="pending" :disabled="!applicationId" @click="refresh">
-        <template #icon><AIcon type="ReloadOutlined" /></template>{{ $t('ThirdPartyApplication.project.refresh') }}
-      </a-button>
-    </a-flex>
+    <ConditionFilter v-if="applicationId" v-model="filterTerms" class="logs-filter" :columns="filterColumns"
+      target="third-party-application-access" @change="handleSearch" />
     <a-alert v-if="error" type="error" show-icon :message="error" />
     <CloudEmpty v-if="!applicationId" :description="$t('ThirdPartyApplication.logs.missingApplication')" />
-    <j-pro-table v-else v-show="!error" ref="tableRef" mode="TABLE" class="pro-table__no-padding application-log-table"
+    <j-pro-table v-else v-show="!error" mode="TABLE" class="pro-table__no-padding application-log-table"
       :columns="columns" :request="query" :default-params="defaultParams" :params="params"
       :custom-row="customRow" :row-class-name="rowClassName" :scroll="{ x: 1160 }" @request-error="handleRequestError">
       <template #emptyText><CloudEmpty :description="$t('ThirdPartyApplication.logs.empty')" /></template>
@@ -42,17 +37,15 @@ import type { ApplicationLogFilter } from './accessDebugUtils'
 
 const props = defineProps<{ application: ApiApplication; initialFilter?: ApplicationLogFilter }>()
 const { t: $t } = useI18n()
-const { applicationId, columns, filterColumns, params, defaultParams, filterTerms, tableRef, pending, error,
-  open, selected, customRow, rowClassName, query, refresh, handleSearch, handleRecordClick,
+const { applicationId, columns, filterColumns, params, defaultParams, filterTerms, error,
+  open, selected, customRow, rowClassName, query, handleSearch, handleRecordClick,
   searchSameValue, handleRequestError } = useApplicationLogs(props)
 </script>
 
 <style scoped>
 .application-logs { min-width: 0; gap: var(--space-3); }
 .scope-hint { margin: 0; color: var(--ink-3); font-size: var(--fs-14); line-height: 1.6; }
-.logs-toolbar { min-width: 0; }
-.logs-filter { flex: 1 1 20rem; min-width: 0; }
-.logs-toolbar > .ant-btn { flex: none; margin-inline-start: auto; }
+.logs-filter { flex: none; min-width: 0; margin: 0; }
 .application-log-table { min-width: 0; }
 .application-log-table :deep(.access-log-row) { cursor: pointer; }
 .request-line { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }

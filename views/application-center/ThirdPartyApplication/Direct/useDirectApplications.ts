@@ -2,7 +2,7 @@ import { onBeforeUnmount, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
-import { queryApiApplications, updateApiApplication } from '@authentication-manager-ui/api/application-center/apiApplication'
+import { deleteApiApplication, queryApiApplications, updateApiApplication } from '@authentication-manager-ui/api/application-center/apiApplication'
 import type { ApiApplication, QueryPayload } from '@authentication-manager-ui/api/application-center/apiApplication'
 import { createDirectApplication } from '@authentication-manager-ui/api/application-center/directApiApplication'
 import { apiState, applicationError, responseBody } from '../applicationUtils'
@@ -55,20 +55,27 @@ export const useDirectApplications = () => {
     } catch (cause) { if (!disposed) formError.value = applicationError(cause, t); return false }
     finally { if (!disposed) saving.value = false }
   }
-  const toggleState = async (application: ApiApplication) => {
+  const mutate = async (application: ApiApplication, request: () => Promise<unknown>, message: string) => {
     if (busyId.value) return false
     busyId.value = application.id; error.value = ''
     try {
-      const state = apiState(application) === 'enabled' ? 'disabled' : 'enabled'
-      await updateApiApplication(application.id, { state })
+      await request()
       if (disposed) return false
-      onlyMessage(t('ThirdPartyApplication.direct.saved'))
+      onlyMessage(t(message))
       return true
     } catch (cause) { if (!disposed) error.value = applicationError(cause, t); return false }
     finally { if (!disposed) busyId.value = '' }
   }
+  const toggleState = (application: ApiApplication) => mutate(application, () => updateApiApplication(application.id, {
+    state: apiState(application) === 'enabled' ? 'disabled' : 'enabled',
+  }), 'ThirdPartyApplication.direct.saved')
+  const removeApplication = async (application: ApiApplication) => {
+    // 与设备列表一致，仅停用后的应用允许从列表删除。
+    if (apiState(application) !== 'disabled') return false
+    return mutate(application, () => deleteApiApplication(application.id), 'ThirdPartyApplication.deleted')
+  }
   const openDetail = (application: ApiApplication) => menu.jumpPage('application-center/ThirdPartyApplication/Detail', {
     params: { id: application.id }, query: { tab: 'basic' },
   })
-  return { error, formError, saving, busyId, formOpen, editingId, form, query, openCreate, openEdit, saveForm, openDetail, toggleState }
+  return { error, formError, saving, busyId, formOpen, editingId, form, query, openCreate, openEdit, saveForm, openDetail, toggleState, removeApplication }
 }
