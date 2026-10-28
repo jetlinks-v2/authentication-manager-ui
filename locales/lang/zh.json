@@ -2877,5 +2877,12 @@
   "ThirdPartyApplication.subscription.unavailableEventsHint": "原订阅已保留，取消勾选将移除。",
   "ThirdPartyApplication.subscription.partialCategory": "部分订阅",
   "ThirdPartyApplication.subscription.categorySelectionHint": "勾选类别将订阅该类别当前全部事件。",
-  "ThirdPartyApplication.subscription.selectDocumentEvent": "选择事件查看说明"
+  "ThirdPartyApplication.subscription.selectDocumentEvent": "选择事件查看说明",
+  "ThirdPartyApplication.logs.title": "调用日志",
+  "ThirdPartyApplication.logs.view": "查看调用日志",
+  "ThirdPartyApplication.logs.scopeHint": "仅显示当前应用的调用记录，不包含未记录应用标识的历史日志。",
+  "ThirdPartyApplication.logs.missingApplication": "当前应用缺少应用标识，无法查询调用日志。",
+  "ThirdPartyApplication.logs.empty": "当前条件下没有访问记录，请调整时间范围或筛选条件。",
+  "ThirdPartyApplication.logs.forbidden": "没有访问日志查询权限，或当前数据权限不允许查看这些记录。",
+  "ThirdPartyApplication.logs.loadFailed": "调用日志查询失败，请刷新重试。"
 }

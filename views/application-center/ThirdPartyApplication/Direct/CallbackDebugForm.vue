@@ -1,5 +1,5 @@
 <template>
-  <SegmentPanel :model-value="context.source" :options="context.sourceOptions" class="callback-sources" @change="context.setSource">
+  <SegmentPanel :model-value="context.source" :options="context.sourceOptions" fill :padding="0" :background="false" class="callback-sources" @change="context.setSource">
     <div class="callback-notice">
       <a-typography-paragraph type="secondary">{{ $t(context.isSample ? 'ThirdPartyApplication.debug.sampleHint' : 'ThirdPartyApplication.debug.localOnly') }}</a-typography-paragraph>
       <a-button v-if="context.isSample" size="small" :disabled="disabled" @click="context.generateSample">{{ $t('ThirdPartyApplication.debug.newSample') }}</a-button>
@@ -59,7 +59,7 @@ const { t: $t } = useI18n()
 </script>
 
 <style scoped>
-.callback-sources { height: auto; padding: 0; background: transparent; border: 0; }
+.callback-sources { height: auto; flex: initial; gap: var(--space-3); }
 .callback-sources :deep(.segment-panel__content) { flex: initial; }
 .callback-notice { display: flex; align-items: start; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-4); }
 .callback-notice > .ant-typography { flex: 1; min-width: 12rem; margin: 0; }

@@ -4,6 +4,7 @@ import { applicationDebugUrl } from '@authentication-manager-ui/api/application-
 import { selectedGroupOperations } from '../../ApiApplication/groupGrantUtils'
 
 export type AccessDebugMode = 'token' | 'call' | 'callback'
+export interface ApplicationLogFilter { path: string; method: string; timeRange: [number, number] }
 export interface DebugApi extends ApiSpec {
   method: string; path: string; label: string; tags?: string[];
   provider?: string; group?: string; specification?: string; apiDoc?: string;

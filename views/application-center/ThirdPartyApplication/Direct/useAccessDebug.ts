@@ -10,7 +10,7 @@ import { applicationDebugUrl, sendApplicationDebugRequest } from '@authenticatio
 import type { DebugHttpResponse } from '@authentication-manager-ui/api/application-center/applicationDebug'
 import { apiState, applicationError, responseBody } from '../applicationUtils'
 import { apiDebugUrl, displayDebugResponse, grantedDebugApis, isJsonBody, parseDebugToken, pathParameters, redactDebugText } from './accessDebugUtils'
-import type { AccessDebugMode, DebugApi, DebugParameter, DebugToken } from './accessDebugUtils'
+import type { AccessDebugMode, ApplicationLogFilter, DebugApi, DebugParameter, DebugToken } from './accessDebugUtils'
 import { useCallbackDebug } from './useCallbackDebug'
 
 const credentialType = 'oauth2-client-secret'
@@ -30,6 +30,7 @@ export const useAccessDebug = (context: { application: ApiApplication; initialMo
   const tokenResponse = ref<DebugHttpResponse>()
   const callResponse = ref<DebugHttpResponse>()
   const callAddress = ref('')
+  const callLogFilter = ref<ApplicationLogFilter>()
   const catalogLoading = ref(false)
   const catalogError = ref('')
   let catalogLoaded = false
@@ -69,7 +70,7 @@ export const useAccessDebug = (context: { application: ApiApplication; initialMo
   const messageOf = (cause: unknown) => cause instanceof TypeError
     ? t('ThirdPartyApplication.debug.networkError') : redactDebugText(applicationError(cause, t), secrets())
 
-  const clearToken = () => { token.value = undefined; tokenResponse.value = undefined; callResponse.value = undefined; callAddress.value = '' }
+  const clearToken = () => { token.value = undefined; tokenResponse.value = undefined; callResponse.value = undefined; callAddress.value = ''; callLogFilter.value = undefined }
   const cancel = () => {
     operation++
     controller?.abort(); controller = undefined; busy.value = false
@@ -176,6 +177,8 @@ export const useAccessDebug = (context: { application: ApiApplication; initialMo
     const url = apiDebugUrl(api, paths.value, query.value)
     if (requestBodyError.value) throw new Error('ThirdPartyApplication.debug.invalidJson')
     callResponse.value = undefined
+    callLogFilter.value = undefined
+    const startedAt = Date.now()
     callAddress.value = redactDebugText(`${api.method} ${url.href}`, secrets())
     const response = await sendApplicationDebugRequest({
       url, method: api.method, token: token.value.value, signal,
@@ -183,6 +186,11 @@ export const useAccessDebug = (context: { application: ApiApplication; initialMo
     })
     if (!current()) return
     callResponse.value = displayDebugResponse(response, secrets())
+    callLogFilter.value = {
+      path: url.pathname.slice(applicationDebugUrl('/').pathname.length - 1),
+      method: api.method,
+      timeRange: [startedAt - 60_000, Date.now() + 60_000],
+    }
     if (response.status === 401) token.value = undefined
   })
 
@@ -191,7 +199,7 @@ export const useAccessDebug = (context: { application: ApiApplication; initialMo
 
   watch(clientSecret, clearToken, { flush: 'sync' })
   watch(selectedApi, api => { paths.value = pathParameters(api?.path || ''); query.value = []; body.value = ''; contentType.value = 'application/json' })
-  watch([paths, query, body, contentType], () => { callResponse.value = undefined; callAddress.value = '' }, { deep: true })
+  watch([paths, query, body, contentType], () => { callResponse.value = undefined; callAddress.value = ''; callLogFilter.value = undefined }, { deep: true })
   watch(mode, value => { error.value = ''; if (value === 'call' && !loading.value && !catalogLoaded) void loadCatalog() })
   watch([mode, loading], ([value, pending]) => { if (value === 'callback' && !pending) callbackDebug.ensureSample() })
   watch(applicationEnabled, enabled => {
@@ -204,7 +212,7 @@ export const useAccessDebug = (context: { application: ApiApplication; initialMo
   onBeforeUnmount(() => { disposed = true; generation++; clearSensitive() })
 
   return { mode, setMode, modes, loading, metadataError, error, busy, provider, credential, clientId, clientSecret,
-    applicationEnabled, credentialActive, canReveal, ready, endpoint, token, tokenValid, response, callAddress,
+    applicationEnabled, credentialActive, canReveal, ready, endpoint, token, tokenValid, response, callAddress, callLogFilter,
     apiId, apis, selectedApi, paths, query, body, contentType, hasBody, requiresConfirmation, requestBodyError, sendDisabled,
     catalogLoading, catalogError, callbackForm, callbackIsSample, verification, initBodyEditor,
     loadMetadata, loadCatalog, useCurrentCredential, acquireToken, sendApi, cancel, setCredentialSecret, addQuery, removeQuery }

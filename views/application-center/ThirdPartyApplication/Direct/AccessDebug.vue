@@ -15,6 +15,9 @@
     <SectionCard icon="FileSearchOutlined" :title="$t('ThirdPartyApplication.debug.result')" class="debug-section result-section">
       <template #actions>
         <a-tag v-if="mode === 'callback'">{{ $t('ThirdPartyApplication.debug.callbackSource.' + callbackForm.source) }}</a-tag>
+        <a-button v-if="mode === 'call' && callLogFilter" size="small" @click="$emit('logs', callLogFilter)">
+          {{ $t('ThirdPartyApplication.logs.view') }}
+        </a-button>
         <a-button v-if="busy" size="small" @click="cancel">{{ $t('ThirdPartyApplication.debug.cancel') }}</a-button>
       </template>
       <a-alert v-if="error" type="error" show-icon :message="error" />
@@ -63,7 +66,7 @@
       <CloudEmpty v-else-if="!error" class="result-empty" :description="$t('ThirdPartyApplication.debug.resultEmpty')" />
     </SectionCard>
   </DefineResult>
-  <SegmentPanel :model-value="mode" :options="modes" class="access-debug" @change="setMode">
+  <SegmentPanel :model-value="mode" :options="modes" fill :padding="0" :background="false" class="access-debug" @change="setMode">
     <a-spin :spinning="loading">
       <a-alert v-if="metadataError && (mode !== 'callback' || !callbackIsSample)" type="error" show-icon :message="metadataError" class="debug-notice">
         <template #action><a-button size="small" @click="loadMetadata">{{ $t('ThirdPartyApplication.debug.retry') }}</a-button></template>
@@ -160,24 +163,25 @@ import { useI18n } from 'vue-i18n'
 import type { ApiApplication } from '@authentication-manager-ui/api/application-center/apiApplication'
 import { formatTime } from '../integrationUtils'
 import { useAccessDebug } from './useAccessDebug'
+import type { ApplicationLogFilter } from './accessDebugUtils'
 import DebugApiPicker from './DebugApiPicker.vue'
 import CallbackDebugForm from './CallbackDebugForm.vue'
 import DebugApiDocument from './DebugApiDocument.vue'
 
 const props = defineProps<{ application: ApiApplication; initialMode?: 'token' | 'call' | 'callback' }>()
-defineEmits<{ navigate: [tab: 'basic' | 'grants'] }>()
+defineEmits<{ navigate: [tab: 'basic' | 'grants']; logs: [filter: ApplicationLogFilter] }>()
 const { t: $t } = useI18n()
 const [DefineCredentialFields, CredentialFields] = createReusableTemplate<{ callback?: boolean }>()
 const [DefineResult, DebugResult] = createReusableTemplate()
 const contentTypes = ['application/json', 'application/x-www-form-urlencoded', 'text/plain'].map(value => ({ label: value, value }))
 const { mode, setMode, modes, loading, metadataError, error, busy, clientId, clientSecret, applicationEnabled, credentialActive,
-  canReveal, ready, endpoint, token, tokenValid, response, callAddress, apiId, apis, selectedApi, paths, query,
+  canReveal, ready, endpoint, token, tokenValid, response, callAddress, callLogFilter, apiId, apis, selectedApi, paths, query,
   body, contentType, hasBody, requiresConfirmation, requestBodyError, sendDisabled, catalogLoading, catalogError, callbackForm, callbackIsSample, verification, initBodyEditor,
   loadMetadata, loadCatalog, useCurrentCredential, acquireToken, sendApi, cancel, setCredentialSecret, addQuery, removeQuery } = useAccessDebug(props)
 </script>
 
 <style scoped>
-.access-debug { height: auto; padding: 0; background: transparent; border: 0; }
+.access-debug { height: auto; flex: initial; gap: var(--space-3); }
 .access-debug :deep(.segment-panel__content) { flex: initial; }
 .debug-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; gap: var(--space-4); }
 .debug-section { min-width: 0; margin-bottom: 0; }

@@ -822,6 +822,18 @@ Verification result:
 - 不借鉴项与确认结论：不保留第二套常驻树导航，不使用狭窄长下拉承载接口，不引入营销卡片或统计块；用户已确认“顶部原位展开选择、选后收起”，按此实施。保留调用原有切换逻辑对参数和响应的处理，不额外引入草稿恢复。
 - 验证结果与边界：已完成相关源码、相对引用、文案和差异检查；页面实现已完成，构建、lint、类型检查、测试、浏览器及真实请求均未执行。菜单展开/收起后的排版、长名称/长路径、大量接口分页、搜索无结果、接口切换与焦点、加载失败和窄窗口效果待用户在当前运行环境人工验收；此处不将源码检查视作运行验收。
 
+- 调试间距调整（本轮已实现，待人工验收）：仅在 `Direct/AccessDebug.vue` 与 `Direct/CallbackDebugForm.vue` 的分段面板实例复用 `fill`、`padding` 和 `background` 配置，关闭空标题占位、取消重复内边距及背景，分段与内容间距统一为 `--space-3`（0.75rem）；不改公共组件、请求、Token 或验签逻辑。已完成源码、组件属性透传与差异检查；未执行构建、类型检查、lint、测试或浏览器操作，实际间距与窄屏效果待用户在现有运行环境人工验收。
+
+#### 应用调用日志（已实现，待现有环境人工验收）
+
+- 目标与授权：用户已同意补充最小后端审计信息，并要求切换开发分支、提交和推送，不创建 PR。记录可信 `context.applicationId`，前端只按当前应用 ID 查询；保留现有 `creatorId`、`context.userId`、Token、认证用户、功能权限和日志数据权限。不再使用应用创建人近似日志归属。
+- owning module：后端为 `jetlinks-ultimate/jetlinks-components/logging-component`，修改 `LoggingUtil#fillingLog` 和 `TimeSeriesAccessLoggerService` 的上下文元数据，不新增业务模块依赖或实体顶层字段；前端仅为本仓库 `runtime-ui/modules/authentication-manager-ui`，保留前述接入调试间距修复，不修改运营端 `ui/` 或公共前端组件。
+- 实施步骤：从认证结果保留的 `api-client` 维度读取应用 ID 并写入访问日志上下文；为该子属性注册字符串查询元数据；复用现有 `context` 的 `json_value` 条件（`path=applicationId`、`termType=eq`）查询；将 `Direct/useApplicationLogs.ts` 的固定条件改为 `context.applicationId = application.id`，用户筛选整体嵌套 AND，缺应用 ID 不请求；修正中英文提示并保留现有日志权限控制。
+- 已确认的交互：现有五个 Tab 后增加“调用日志”，复用 `ConditionFilter`、紧凑分页列表、右侧单层无遮罩详情、HTTP 状态标签和手动刷新。调试结果“查看调用日志”只携带接口、方法、请求前后一分钟时间窗口；Token 获取、本地回调验签不显示该入口。不增加菜单、统计、图表、重放、导出或自动轮询。
+- 身份与历史边界：应用 Token 与创建人登录 Token 不一定相同；应用调用可使用创建人的数据身份，同时仍保留独立应用维度。新增字段只记录可信服务端身份，不采信请求头/参数自报应用 ID，不记录 Secret 或 Token。历史无应用标识的日志不反推补关联；多人共享应用凭据仍不能区分具体自然人。
+- 验证结果：后端执行 `mvn -nsu -s <本机settings.xml> -Dmaven.repo.local=D:/maven-out/repository -pl logging-component -Dtest=LoggingUtilTest,LogTimeSeriesQueryTest,SerializableAccessLogTest test`，编译成功，15 项测试通过且无跳过；覆盖同一执行用户的不同应用、普通用户不采信客户端应用 ID、组织绑定与链路信息保留、匿名请求、应用上下文存储/读取及查询元数据。JaCoCo 行覆盖率：`LoggingUtil` 43/45（95.56%），`TimeSeriesAccessLoggerService` 41/43（95.35%），本次新增生产行均已覆盖。前端按用户约束仅做源码和差异核对，未运行 lint/typecheck/build、自动测试、浏览器或服务启停；真实页面和实际时序存储的过滤效果待部署本次后端组件后人工验收。
+- Git 边界：后端组件仓库与前端模块仓库使用 `codex/open-platform-call-logs-20261028`；保留切分支前的所有提交和无关工作区改动，不提交本次新生成的文档，不创建或回复 PR。
+
 #### 接口授权表格化重设计（已实现）
 
 已按用户确认实现，并取消开放平台授权页的“分组管理”和“刷新”。表格替代此前“分组卡片 + 选择本组全部操作 / 清除本组操作”的展示，不扩展到应用列表、其他详情页签或模板授权。

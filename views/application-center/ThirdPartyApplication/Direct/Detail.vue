@@ -72,9 +72,10 @@
         <div v-if="application" class="detail-workspace">
           <CredentialPanel v-if="activeTab === 'basic'" :key="application.id" :application-id="application.id" :active="true" compact />
           <AccessGuide v-else-if="activeTab === 'guide'" @navigate="activeTab = $event" @debug="openDebug" />
-          <AccessDebug v-else-if="activeTab === 'debug'" :key="application.id" :application="application" :initial-mode="debugMode" @navigate="activeTab = $event" />
+          <AccessDebug v-else-if="activeTab === 'debug'" :key="application.id" :application="application" :initial-mode="debugMode" @navigate="activeTab = $event" @logs="openLogs" />
           <GrantPanel v-else-if="activeTab === 'grants'" :key="application.id" :target-id="application.id" />
           <SubscriptionPanel v-else-if="activeTab === 'subscriptions'" :key="application.id" :application="application" />
+          <CallLogs v-else-if="activeTab === 'logs'" :key="application.id" :application="application" :initial-filter="logFilter" />
         </div>
         <CloudEmpty v-else-if="!loading" :description="$t('ThirdPartyApplication.direct.notFound')"><a-button @click="load">{{ $t('ThirdPartyApplication.project.refresh') }}</a-button></CloudEmpty>
       </a-spin>
@@ -93,8 +94,9 @@ import SubscriptionPanel from '../components/SubscriptionPanel.vue'
 import GrantPanel from './GrantPanel.vue'
 import AccessGuide from './AccessGuide.vue'
 import AccessDebug from './AccessDebug.vue'
+import CallLogs from './CallLogs.vue'
 const { t: $t } = useI18n()
-const { application, loading, saving, textSaving, textState, error, form, activeTab, tabOptions, debugMode, openDebug, load, back, saveText, toggle, remove } = useDirectDetail()
+const { application, loading, saving, textSaving, textState, error, form, activeTab, tabOptions, debugMode, logFilter, openDebug, openLogs, load, back, saveText, toggle, remove } = useDirectDetail()
 const [DefineTextFeedback, TextFeedback] = createReusableTemplate<{ field: ApplicationTextField }>()
 </script>
 <style scoped>

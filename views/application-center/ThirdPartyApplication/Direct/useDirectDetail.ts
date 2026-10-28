@@ -6,7 +6,7 @@ import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { deleteApiApplication, getApiApplication, updateApiApplication } from '@authentication-manager-ui/api/application-center/apiApplication'
 import type { ApiApplication } from '@authentication-manager-ui/api/application-center/apiApplication'
 import { apiState, applicationError, responseBody } from '../applicationUtils'
-import type { AccessDebugMode } from './accessDebugUtils'
+import type { AccessDebugMode, ApplicationLogFilter } from './accessDebugUtils'
 
 export type ApplicationTextField = 'name' | 'description'
 
@@ -20,6 +20,8 @@ export const useDirectDetail = () => {
   const error = ref('')
   const activeTab = ref('basic')
   const debugMode = ref<AccessDebugMode>('token')
+  const logFilter = ref<ApplicationLogFilter>()
+  const openLogs = (filter: ApplicationLogFilter) => { logFilter.value = filter; activeTab.value = 'logs' }
   const openDebug = (mode: AccessDebugMode) => { debugMode.value = mode; activeTab.value = 'debug' }
   const tabOptions = computed(() => [
     { key: 'basic', label: t('ThirdPartyApplication.direct.credentialsTab') },
@@ -27,6 +29,7 @@ export const useDirectDetail = () => {
     { key: 'subscriptions', label: t('ApiApplication.subscription.title') },
     { key: 'guide', label: t('ThirdPartyApplication.direct.guideTab') },
     { key: 'debug', label: t('ThirdPartyApplication.direct.debugTab') },
+    { key: 'logs', label: t('ThirdPartyApplication.logs.title') },
   ])
   const form = reactive({ name: '', description: '' })
   const textState = reactive<Record<ApplicationTextField, { saving: boolean; error: string }>>({
@@ -100,9 +103,10 @@ export const useDirectDetail = () => {
   }
   const remove = () => mutate(deleteApiApplication, back)
   watch(() => route.params.id, () => {
-    activeTab.value = ['basic', 'grants', 'subscriptions', 'guide', 'debug'].includes(String(route.query.tab)) ? String(route.query.tab) : 'basic'
+    activeTab.value = ['basic', 'grants', 'subscriptions', 'guide', 'debug', 'logs'].includes(String(route.query.tab)) ? String(route.query.tab) : 'basic'
     debugMode.value = 'token'
+    logFilter.value = undefined
     void load()
   }, { immediate: true })
-  return { application, loading, saving, textSaving, textState, error, form, activeTab, tabOptions, debugMode, openDebug, load, back, saveText, toggle, remove }
+  return { application, loading, saving, textSaving, textState, error, form, activeTab, tabOptions, debugMode, logFilter, openDebug, openLogs, load, back, saveText, toggle, remove }
 }
