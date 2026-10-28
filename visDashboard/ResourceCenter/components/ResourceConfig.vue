@@ -10,7 +10,7 @@
     <a-collapse-panel v-if="kind !== 'QuickStart'" key="more" :header="t('resourceDashboard.moreConfig')">
       <a-form layout="vertical">
         <a-form-item :label="t('resourceDashboard.refresh')" :help="t('resourceDashboard.refreshHelp')"><a-input-number :value="config.refreshSeconds" :min="0" :max="3600" :step="15" @update:value="update('refreshSeconds',$event)" /></a-form-item>
-        <a-form-item v-if="['DeviceDistribution','NetworkCards'].includes(kind)" :label="t('resourceDashboard.limit')"><a-input-number :value="config.limit" :min="1" :max="50" :precision="0" @update:value="update('limit',$event)" /></a-form-item>
+        <a-form-item v-if="['DeviceDistribution','NetworkCards','VisionTaskRanking'].includes(kind)" :label="t('resourceDashboard.limit')"><a-input-number :value="config.limit" :min="1" :max="50" :precision="0" @update:value="update('limit',$event)" /></a-form-item>
       </a-form>
     </a-collapse-panel>
   </a-collapse>

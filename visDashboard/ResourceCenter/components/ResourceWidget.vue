@@ -1,5 +1,5 @@
 <template>
-  <section class="resource-widget" :class="{ 'is-metric-card': isMetricCard }" :data-resource-kind="kind" :aria-label="title">
+  <section v-if="!unavailable" class="resource-widget" :class="{ 'is-metric-card': isMetricCard }" :data-resource-kind="kind" :aria-label="title">
     <header v-if="!isMetricCard">
       <h3>{{ title }}</h3>
       <a-segmented v-if="kind === 'DeviceDistribution'" v-model:value="deviceType" class="resource-switch" size="small" :options="deviceOptions" />
@@ -8,8 +8,7 @@
         {{ t('resourceDashboard.algorithmConfig') }} <RightOutlined class="action-arrow" />
       </a-button>
     </header>
-    <div v-if="unavailable" class="state"><ResourceEmpty :title="t('resourceDashboard.privateOnly')" /></div>
-    <div v-else-if="loading" class="state"><a-spin /></div>
+    <div v-if="loading" class="state"><a-spin /></div>
     <div v-else-if="error" class="state">
       <ResourceEmpty :title="t('resourceDashboard.loadError')">
         <a-button size="small" @click="refresh">{{ t('resourceDashboard.retry') }}</a-button>
@@ -66,6 +65,7 @@ function openAlgorithmConfig() {
   })
 }
 </script>
+<style scoped src="./resourceControls.css" />
 <style scoped>
 .resource-widget {
   width: 100%;
@@ -108,16 +108,6 @@ h3 {
   margin: 0;
   min-width: 0;
 }
-.action-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: #1677ff;
-  padding: 0;
-  height: auto;
-}
-.action-arrow { font-size: 11px; }
 .content {
   flex: 1;
   min-height: 0;
@@ -143,20 +133,4 @@ h3 {
   gap: 8px;
   overflow: auto;
 }
-.resource-switch.ant-segmented {
-  max-width: 100%;
-  overflow-x: auto;
-  padding: 2px;
-  border-radius: 4px;
-  background: #F2F3F5;
-  color: #4E5969;
-  font-size: 12px;
-}
-.resource-switch :deep(.ant-segmented-group) { gap: 2px; }
-.resource-switch :deep(.ant-segmented-item) { border-radius: 3px; transition: color .2s; }
-.resource-switch :deep(.ant-segmented-item-label) { min-height: 22px; padding: 2px 10px; line-height: 18px; font-size: 12px; font-weight: 400; }
-.resource-switch :deep(.ant-segmented-item-selected),
-.resource-switch :deep(.ant-segmented-thumb) { border-radius: 3px; background: #fff; color: #165DFF; font-weight: 500; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); }
-.resource-switch :deep(.ant-segmented-item:hover:not(.ant-segmented-item-selected)) { color: #1D2129; }
-.resource-switch :deep(.ant-segmented-item:has(input:focus-visible)) { outline: 2px solid #1677ff; outline-offset: -1px; }
 </style>

@@ -1,7 +1,7 @@
 export const kinds = [
   'EdgeNodes', 'IotDevices', 'VideoDevices', 'Visualization', 'QuickStart',
   'AlgorithmCoverage', 'VideoPlaybackTrend', 'MessageTrend', 'Collection',
-  'NetworkCards', 'DeviceDistribution'
+  'NetworkCards', 'DeviceDistribution', 'VisionTaskRanking'
 ] as const
 export type ResourceKind = typeof kinds[number]
 export type DeviceKind = 'edge' | 'iot' | 'video'

@@ -1,5 +1,5 @@
 <template>
-  <div class="home-content home-actions" :class="{ 'home-actions--grid': chart.displayStyle === 'grid', 'home-actions--six': rows.length === 6 }">
+  <div class="home-content home-actions" :class="{ 'home-actions--grid': chart.displayStyle === 'grid', 'home-actions--six': rows.length === 6, 'home-actions--five': rows.length === 5 }">
     <button
       v-for="row in rows"
       :key="row.id"
@@ -72,6 +72,9 @@ const getToneClass = (id: string) => {
 .home-actions { grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: none; grid-auto-rows: minmax(76px, 1fr); gap: 10px; align-content: start; }
 .home-action { grid-column: span 3; }
 .home-actions--six .home-action { grid-column: span 4; }
+/* 边缘与视觉入口同时隐藏后剩五项，按三项、两项两行铺满。 */
+.home-actions--five .home-action { grid-column: span 4; }
+.home-actions--five .home-action:nth-child(n + 4) { grid-column: span 6; }
 @container project-home (min-width: 721px) {
   .home-action:nth-child(5):nth-last-child(3),
   .home-action:nth-child(5):nth-last-child(3) ~ .home-action { grid-column: span 4; }
@@ -86,6 +89,9 @@ const getToneClass = (id: string) => {
   .home-actions:not(.home-actions--grid) .home-action { grid-column: auto; padding: 8px 10px; }
   .home-actions:not(.home-actions--grid) .home-action:nth-child(7):last-child { grid-column: 2; }
   .home-actions--six:not(.home-actions--grid) { grid-template-rows: repeat(2, minmax(0, 1fr)); }
+  .home-actions--five:not(.home-actions--grid) { grid-template-columns: repeat(6, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }
+  .home-actions--five:not(.home-actions--grid) .home-action { grid-column: span 2; }
+  .home-actions--five:not(.home-actions--grid) .home-action:nth-child(n + 4) { grid-column: span 3; }
 }
 @container project-home (max-width: 480px) {
   .home-actions:not(.home-actions--grid) .home-action { gap: 6px; padding: 6px 8px; }

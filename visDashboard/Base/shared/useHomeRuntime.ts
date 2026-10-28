@@ -1,11 +1,12 @@
-import { inject, onActivated, onDeactivated, onUnmounted, ref, watch, type Ref } from 'vue'
+import { computed, inject, onActivated, onDeactivated, onUnmounted, ref, watch, type Ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { getProjectCodeFromLocation } from '@jetlinks-web-core/utils/project-runtime'
+import { getProjectCodeFromLocation, getApplicationRuntimeEntry } from '@jetlinks-web-core/utils/project-runtime'
+import { useUserStore } from '@jetlinks-web-core/store/user'
 import { loadHomeRows } from './api'
 import { createHomePolling } from './homePolling'
 import { homePollingKey } from './homePollingContext'
 import { QUICK_ACTIONS } from './navigation'
-import { RESOURCE_ROWS, resourceRowAvailable } from './resources'
+import { RESOURCE_ROWS, resourceRowAvailable, homeFeatureAvailable, homeTitleKey } from './resources'
 import { useDashboardModules } from '../../useDashboardModules'
 import type { HomeFeature, HomeRow } from './types'
 
@@ -14,17 +15,21 @@ export function useHomeRuntime(feature: HomeFeature, isEdit: Ref<boolean>, refre
   const polling = sharedPolling ?? inject(homePollingKey, undefined) ?? createHomePolling(loadHomeRows)
   const route = useRoute()
   const modules = useDashboardModules(isEdit)
+  const user = useUserStore()
+  const available = computed(() => isEdit.value || homeFeatureAvailable(feature, modules.value))
+  const titleKey = computed(() => homeTitleKey(feature, modules.value))
   const rows = ref<HomeRow[]>([]), loading = ref(false), error = ref(false)
   const active = ref(true)
-  // 模块变化切换订阅范围，旧响应和缓存不得重新带回已隐藏的模型或边缘节点。
-  const scope = () => JSON.stringify([getProjectCodeFromLocation(), route.params.projectId, route.query.projectId, modules.value.model, modules.value.edge])
+  // 账号、应用或任一能力变化都切换订阅范围，旧缓存和迟到响应不得重新带回已隐藏的信息。
+  const scope = () => JSON.stringify([user.userInfo.id, getProjectCodeFromLocation(), route.params.projectId,
+    route.query.projectId, getApplicationRuntimeEntry().applicationId, modules.value])
   const keys: HomeFeature[] = feature === 'Operations' ? ['DeviceAccess', 'Operations']
     : feature === 'Resources' ? ['DeviceAccess', 'Collection', 'Visualization', 'AiCenter', 'RuleEngine'] : [feature]
   let stop = () => {}
   watch([isEdit, refreshTime, active, scope], () => {
     stop()
     rows.value = []; error.value = false; loading.value = false
-    if (!active.value) return
+    if (!active.value || !available.value) return
     if (feature === 'QuickActions') {
       rows.value = QUICK_ACTIONS.filter(row => isEdit.value || resourceRowAvailable(row))
         .map(({ id, target }) => ({ id, labelKey: `action_${id}`, descriptionKey: `action_${id}Desc`, icon: id, target }))
@@ -34,16 +39,17 @@ export function useHomeRuntime(feature: HomeFeature, isEdit: Ref<boolean>, refre
     const results = new Map<HomeFeature, HomeRow[]>()
     const failures = new Set<HomeFeature>()
     loading.value = true
-    const stops = keys.map(key => polling.subscribe(key, Number(refreshTime.value), (data, failed) => {
+    const activeKeys = keys.filter(key => homeFeatureAvailable(key, modules.value))
+    const stops = activeKeys.map(key => polling.subscribe(key, Number(refreshTime.value), (data, failed) => {
       results.set(key, data ?? [])
       if (failed) failures.add(key); else failures.delete(key)
-      const combined = keys.flatMap(item => results.get(item) ?? [])
+      const combined = activeKeys.flatMap(item => results.get(item) ?? [])
       rows.value = feature === 'Resources' || feature === 'DeviceAccess'
         ? RESOURCE_ROWS.flatMap(template => {
           const value = combined.find(row => row.id === template.id)
           return value ? [{ ...template, ...value, group: template.group, subgroup: template.subgroup }] : []
-        }).filter(resourceRowAvailable) : combined.filter(resourceRowAvailable)
-      loading.value = results.size < keys.length
+        }).filter(row => resourceRowAvailable(row)) : combined.filter(row => resourceRowAvailable(row))
+      loading.value = results.size < activeKeys.length
       error.value = !loading.value && (failures.size > 0 || (rows.value.length > 0 && rows.value.every(row => row.failed)))
     }, scope()))
     stop = () => stops.forEach(dispose => dispose())
@@ -53,5 +59,5 @@ export function useHomeRuntime(feature: HomeFeature, isEdit: Ref<boolean>, refre
   onActivated(() => { active.value = true })
   onDeactivated(() => { active.value = false; stop() })
   onUnmounted(() => stop())
-  return { rows, loading, error, retry }
+  return { rows, loading, error, retry, available, titleKey }
 }

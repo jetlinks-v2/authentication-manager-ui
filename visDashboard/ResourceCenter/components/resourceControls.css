@@ -1,0 +1,10 @@
+.action-link { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: #1677ff; padding: 0; height: auto; }
+.action-arrow { font-size: 11px; }
+.resource-switch.ant-segmented { max-width: 100%; overflow-x: auto; padding: 2px; border-radius: 4px; background: #f2f3f5; color: #4e5969; font-size: 12px; }
+.resource-switch :deep(.ant-segmented-group) { gap: 2px; }
+.resource-switch :deep(.ant-segmented-item) { border-radius: 3px; transition: color .2s; }
+.resource-switch :deep(.ant-segmented-item-label) { min-height: 22px; padding: 2px 10px; line-height: 18px; font-size: 12px; font-weight: 400; }
+.resource-switch :deep(.ant-segmented-item-selected),
+.resource-switch :deep(.ant-segmented-thumb) { border-radius: 3px; background: #fff; color: #165dff; font-weight: 500; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); }
+.resource-switch :deep(.ant-segmented-item:hover:not(.ant-segmented-item-selected)) { color: #1d2129; }
+.resource-switch :deep(.ant-segmented-item:has(input:focus-visible)) { outline: 2px solid #1677ff; outline-offset: -1px; }

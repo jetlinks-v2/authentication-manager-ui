@@ -3,7 +3,7 @@ import { normalizeGridItem, parseStoredLayout } from '@jetlinks-web-core/compone
 import type { DashboardGridItem } from '@jetlinks-web-core/components/DashBoardCanvas'
 import type { ResourceCapabilities } from '../../../visDashboard/ResourceCenter/services/capabilities'
 import type { ResourceKind } from '../../../visDashboard/ResourceCenter/shared'
-import { resourceDeviceMapType, type ResourceLayoutMode } from './resourceDashboardLayout'
+import { resourceDeviceMapType, resourceVisionRankingType, type ResourceLayoutMode } from './resourceDashboardLayout'
 
 export interface ResourceLayoutProfile {
   scope: string
@@ -46,12 +46,27 @@ function readScopedLayout(storage: Storage, key: string, ids: readonly string[],
 export function migrateResourceLayout(
   storage: Storage, key: string, ids: readonly string[], profile: ResourceLayoutProfile,
   deviceMapGrid?: Partial<DashboardGridItem>,
+  visionRankingGrid?: Partial<DashboardGridItem>,
 ) {
   if (storage.getItem(key) !== null) return
   const columns = profile.saas ? 12 : 24
   const scopedLayout = readScopedLayout(storage, legacyScopedKey(profile), ids, columns)
   if (scopedLayout) {
     storage.setItem(key, JSON.stringify(scopedLayout))
+    return
+  }
+  // 同身份/能力组合只追加新排行，保留所有已有拖拽坐标（包括地图），不覆盖新键和旧键。
+  if (profile.widgets.includes('VisionTaskRanking')) {
+    if (!visionRankingGrid || !ids.includes(resourceVisionRankingType)) return
+    const previousProfile = { ...profile, widgets: profile.widgets.filter(kind => kind !== 'VisionTaskRanking') }
+    const previousKey = resourceLayoutStorageKey(previousProfile)
+    const previousIds = ids.filter(id => id !== resourceVisionRankingType)
+    migrateResourceLayout(storage, previousKey, previousIds, previousProfile, deviceMapGrid)
+    const layout = readScopedLayout(storage, previousKey, previousIds, columns)
+    if (!layout) return
+    const bottom = Math.max(0, ...layout.map(item => item.y + item.h))
+    const { x, y, w, h } = normalizeGridItem({ ...visionRankingGrid, x: 0, y: bottom, w: columns }, columns)
+    storage.setItem(key, JSON.stringify([...layout, { i: resourceVisionRankingType, x, y, w, h }]))
     return
   }
   if (profile.deviceMap) {

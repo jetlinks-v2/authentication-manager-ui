@@ -1,21 +1,21 @@
 <template>
   <ResourceEmpty
     v-if="!series.length"
-    icon="LineChartOutlined"
+    icon="BarChartOutlined"
     :title="t('resourceDashboard.noIotDevices')"
     :description="t('resourceDashboard.noIotDevicesDesc')"
     :action-text="t('resourceDashboard.actionAddIotDevice')"
     @action="handleAddDevice"
   />
   <div v-else class="trend">
-    <Echarts :option="option" :library="[LineChart, GridComponent]" />
+    <Echarts :option="option" :library="[BarChart, GridComponent]" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { theme } from 'ant-design-vue'
 import { computed } from 'vue'
-import { LineChart } from 'echarts/charts'
+import { BarChart } from 'echarts/charts'
 import { GridComponent } from 'echarts/components'
 import Echarts from '@jetlinks-web-core/components/Echarts'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
@@ -51,7 +51,7 @@ const option = computed(() => ({
   },
   xAxis: {
     type: 'category',
-    boundaryGap: false,
+    boundaryGap: true,
     data: props.series.map(item => item.time),
     axisTick: { show: false },
     axisLine: { lineStyle: { color: '#ECEFF3' } },
@@ -87,25 +87,10 @@ const option = computed(() => ({
   },
   series: [{
     name: t('resourceDashboard.messages'),
-    type: 'line',
-    smooth: 0.35,
-    symbol: 'none',
+    type: 'bar',
+    barMaxWidth: 24,
     data: props.series.map(item => item.value),
-    lineStyle: { color: '#1E72F0', width: 2 },
-    itemStyle: { color: '#1E72F0' },
-    areaStyle: {
-      color: {
-        type: 'linear',
-        x: 0,
-        y: 0,
-        x2: 0,
-        y2: 1,
-        colorStops: [
-          { offset: 0, color: 'rgba(30, 114, 240, 0.22)' },
-          { offset: 1, color: 'rgba(30, 114, 240, 0.01)' }
-        ]
-      }
-    }
+    itemStyle: { color: '#1E72F0', borderRadius: [3, 3, 0, 0] }
   }]
 }))
 

@@ -14,12 +14,13 @@ const built = await build({
     name: 'quick-guide-runtime-fixture',
     setup(plugin) {
       const modules = {
+        '../../useDashboardModules': 'export const useDashboardModules = () => globalThis.quickGuideFixture.modules',
         'vue-i18n': 'export const useI18n = () => ({ t: key => globalThis.quickGuideFixture.translations[key] ?? key })',
         '@jetlinks-web-core/store/menu': 'export const useMenuStore = () => globalThis.quickGuideFixture.menu',
         '@jetlinks-web-core/utils/deployment': 'export const isPrivateDeployment = () => globalThis.quickGuideFixture.privateDeployment',
         '../shared/useHomeRuntime': 'export const useHomeRuntime = (...args) => globalThis.quickGuideFixture.runtime(...args)',
       }
-      plugin.onResolve({ filter: /^(vue-i18n|@jetlinks-web-core\/store\/menu|@jetlinks-web-core\/utils\/deployment|\.\.\/shared\/useHomeRuntime)$/ },
+      plugin.onResolve({ filter: /^(vue-i18n|@jetlinks-web-core\/store\/menu|@jetlinks-web-core\/utils\/deployment|\.\.\/shared\/useHomeRuntime|\.\.\/\.\.\/useDashboardModules)$/ },
         args => ({ path: args.path, namespace: 'fixture' }))
       plugin.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ contents: modules[args.path] }))
     },
@@ -28,7 +29,7 @@ const built = await build({
 function fixture(t, allowed = true, privateDeployment = false) {
   const jumps = [], subscriptions = []
   globalThis.quickGuideFixture = {
-    translations, privateDeployment,
+    translations, privateDeployment, modules: ref({ edge:true, model:true, vision:true, collection:true, networkCards:true }),
     menu: {
       getMenu: code => allowed && ({ code }),
       jumpPage: (...args) => jumps.push(args),
@@ -41,7 +42,7 @@ function fixture(t, allowed = true, privateDeployment = false) {
   t.after(() => { delete globalThis.quickGuideFixture })
   const loaded = { exports: {} }
   new Function('require', 'module', 'exports', built.outputFiles[0].text)(createRequire(import.meta.url), loaded, loaded.exports)
-  return { jumps, subscriptions, useQuickGuideSteps: loaded.exports.useQuickGuideSteps }
+  return { jumps, subscriptions, modules: globalThis.quickGuideFixture.modules, useQuickGuideSteps: loaded.exports.useQuickGuideSteps }
 }
 
 test('the six prototype steps use their business actions and the confirmed menu destinations', t => {
@@ -72,6 +73,30 @@ test('steps without menu permissions and editor previews cannot navigate', t => 
   assert.deepEqual(jumps, [])
 })
 
+test('guide removes unavailable steps reactively and ignores hidden completion states', t => {
+  const { modules, useQuickGuideSteps, jumps } = fixture(t)
+  const guide = useQuickGuideSteps(() => false)
+  const oldAlarm = guide.steps.value.find(step => step.key === 'alarm')
+  modules.value = { ...modules.value, edge:false, vision:false }
+  assert.deepEqual(guide.steps.value.map(step => step.key), ['space', 'device', 'application'])
+  guide.handleAction(oldAlarm)
+  assert.deepEqual(jumps, [])
+  modules.value = { ...modules.value, vision:true }
+  assert.deepEqual(guide.steps.value.map(step => step.key), ['space', 'device', 'alarm', 'application'])
+  modules.value = { ...modules.value, edge:true }
+  assert.equal(guide.steps.value.length, 6)
+})
+
+test('guide completion ignores removed gateway, algorithm and alarm steps', t => {
+  const { modules, useQuickGuideSteps } = fixture(t)
+  modules.value = { ...modules.value, edge:false, vision:false }
+  const rows = { DeviceAccess:[{id:'devices',value:1},{id:'video',value:0}], AiCenter:[], QuickGuide:[{id:'space',value:1}], Applications:[{id:'app'}] }
+  globalThis.quickGuideFixture.runtime = feature => ({ rows:ref(rows[feature]), loading:ref(false), error:ref(false) })
+  const guide = useQuickGuideSteps(() => false)
+  assert.deepEqual(guide.steps.value.map(step => step.key), ['space','device','application'])
+  assert.equal(guide.showGuide.value, false)
+})
+
 test('private deployment never exposes the guide or creates subscriptions, including editor previews', t => {
   const { jumps, subscriptions, useQuickGuideSteps } = fixture(t, true, true)
   for (const isEdit of [false, true]) {
@@ -97,7 +122,8 @@ const dashboardBuilt = await build({
         '@jetlinks-web-core/components/DashBoardCanvas/dashboard-sources': 'export const dashboardSources = []',
         '@jetlinks-web-core/components/DashBoardCanvas/discovery': 'export const useDashboardCatalog = () => context.catalogState',
         '@jetlinks-web-core/components/DashBoardCanvas/utils/layoutStorage': 'export const readDashboardLayout = () => undefined',
-        '../../../visDashboard/useDashboardModules': 'import { computed } from "vue"; export const useDashboardModules = () => computed(() => ({ model: true, edge: true }))',
+        '../../../visDashboard/ResourceCenter/hooks/useResourceCapabilities': 'export const useResourceCapabilities = () => context.capabilities',
+        '../../useDashboardModules': 'export const getDashboardModules = () => context.capabilities.modules.value',
       }
       plugin.onResolve({ filter: /.*/ }, args => {
         if (boundaries[args.path]) return { path: args.path, namespace: 'overview-boundary' }
@@ -125,6 +151,7 @@ function overviewFixture(privateDeployment) {
   }]))
   const context = {
     privateDeployment, saas: !privateDeployment,
+    capabilities: { modules: ref({edge:true, model:true, vision:true, collection:true, networkCards:true}), scope: ref('user-a/project-a'), loading: ref(false), errors: ref([]), reload: async()=>{} },
     catalogState: { catalog: ref({ components }), loading: ref(false), errors: ref([]), reload: () => {} },
   }
   const builtModule = { exports: {} }
@@ -148,7 +175,28 @@ test('SaaS overview keeps the six-step guide and still hides it after completion
   const show = ref(true)
   const overview = useOverviewDashboard(show)
   assert.ok(overview.catalog.value.components.projectHomeQuickGuide)
-  assert.equal(overview.dashboard.value.components.find(component => component.type === 'projectHomeQuickGuide').visible, true)
+  assert.ok(overview.dashboard.value.components.find(component => component.type === 'projectHomeQuickGuide'))
   show.value = false
-  assert.equal(overview.dashboard.value.components.find(component => component.type === 'projectHomeQuickGuide').visible, false)
+  assert.equal(overview.dashboard.value.components.find(component => component.type === 'projectHomeQuickGuide'), undefined)
+})
+
+test('overview catalog, layout and cache follow scope and composite capability changes', () => {
+  for (const privateDeployment of [false, true]) {
+    const {context,useOverviewDashboard}=overviewFixture(privateDeployment)
+    const overview=useOverviewDashboard(ref(true))
+    const initialKey=overview.storageKey.value
+    const initialComponents=overview.dashboard.value.components
+    assert.ok(initialComponents.some(item=>item.type==='projectHomeCollection'))
+    context.capabilities.modules.value={edge:false,model:false,vision:false,collection:false,networkCards:false}
+    assert.equal(overview.catalog.value.components.projectHomeCollection, undefined)
+    assert.equal(overview.dashboard.value.components.some(item=>item.type==='projectHomeCollection'), false)
+    assert.equal(overview.dashboard.value.components.some(item=>item.type==='projectHomeAiCenter'), privateDeployment)
+    assert.notEqual(overview.storageKey.value, initialKey)
+    const reducedKey=overview.storageKey.value
+    context.capabilities.scope.value='user-b/project-a'
+    assert.notEqual(overview.storageKey.value, reducedKey)
+    context.capabilities.scope.value='user-a/project-b'
+    assert.notEqual(overview.storageKey.value, reducedKey)
+    assert.deepEqual(overview.legacyLayoutKeys, [])
+  }
 })
