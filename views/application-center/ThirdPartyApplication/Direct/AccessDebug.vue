@@ -21,7 +21,7 @@
         <a-button v-if="busy" size="small" @click="cancel">{{ $t('ThirdPartyApplication.debug.cancel') }}</a-button>
       </template>
       <a-alert v-if="error" type="error" show-icon :message="error" />
-      <div v-if="busy" class="result-loading" role="status"><a-spin /><span>{{ $t('ThirdPartyApplication.debug.running') }}</span></div>
+      <div v-if="busy" class="result-loading" role="status" aria-live="polite"><a-spin /><span>{{ $t('ThirdPartyApplication.debug.running') }}</span></div>
       <template v-else-if="mode === 'callback' && verification">
         <a-alert :type="verification.valid ? 'success' : 'error'" show-icon
           :message="$t(callbackIsSample ? (verification.valid ? 'ThirdPartyApplication.debug.sampleVerified' : 'ThirdPartyApplication.debug.sampleFailed')
@@ -40,8 +40,9 @@
         </a-collapse>
       </template>
       <template v-else-if="mode !== 'callback' && response">
-        <a-space wrap>
-          <a-badge :status="response.ok ? 'success' : 'error'" :text="$t(response.ok ? 'ThirdPartyApplication.debug.requestSucceeded' : 'ThirdPartyApplication.debug.requestFailed')" />
+        <a-space wrap role="status" aria-live="polite">
+          <a-badge :status="response.ok ? 'success' : 'error'"
+            :text="$t(response.ok ? (mode === 'call' ? 'ThirdPartyApplication.debug.responseReceived' : 'ThirdPartyApplication.debug.requestSucceeded') : 'ThirdPartyApplication.debug.requestFailed')" />
           <a-tag>HTTP {{ response.status }}</a-tag><span>{{ response.elapsed }} ms</span>
         </a-space>
         <a-descriptions v-if="mode === 'token' && token" :column="1" size="small" bordered>
@@ -81,56 +82,65 @@
         </DebugApiPicker>
         <main v-if="mode === 'call' && selectedApi" class="api-workspace">
           <div class="api-columns">
-            <div class="request-column">
-              <SectionCard icon="ApiOutlined" :title="$t('ThirdPartyApplication.debug.requestTitle')" class="debug-section">
-                <a-form layout="vertical" :disabled="busy" @submit.prevent>
-                  <a-alert v-if="!tokenValid" type="info" show-icon :message="$t('ThirdPartyApplication.debug.tokenRequired')" class="debug-notice">
-                    <template #action><a-button size="small" :disabled="busy" @click="mode = 'token'">{{ $t('ThirdPartyApplication.debug.acquireToken') }}</a-button></template>
-                  </a-alert>
-                  <div v-if="paths.length" class="request-fields">
-                    <a-form-item v-for="parameter in paths" :key="parameter.name" :label="parameter.name" required>
-                      <a-input v-model:value="parameter.value" :aria-label="parameter.name" :disabled="busy" />
-                    </a-form-item>
-                  </div>
-                  <a-form-item :label="$t('ThirdPartyApplication.debug.query')" class="request-fields">
-                    <div v-for="(parameter, index) in query" :key="index" class="query-row">
-                      <a-input v-model:value="parameter.name" :disabled="busy" :aria-label="$t('ThirdPartyApplication.debug.parameterName')" :placeholder="$t('ThirdPartyApplication.debug.parameterName')" />
-                      <a-input v-model:value="parameter.value" :disabled="busy" :aria-label="$t('ThirdPartyApplication.debug.parameterValue')" :placeholder="$t('ThirdPartyApplication.debug.parameterValue')" />
-                      <a-button type="text" :disabled="busy" :aria-label="$t('ThirdPartyApplication.debug.removeParameter')" @click="removeQuery(index)">
-                        <template #icon><AIcon type="DeleteOutlined" /></template>
-                      </a-button>
-                    </div>
-                    <a-button type="link" size="small" :disabled="busy" class="inline-action" @click="addQuery">
-                      <template #icon><AIcon type="PlusOutlined" /></template>{{ $t('ThirdPartyApplication.debug.addParameter') }}
-                    </a-button>
+            <SectionCard icon="ApiOutlined" :title="$t('ThirdPartyApplication.debug.requestTitle')" class="debug-section request-section">
+              <template #actions>
+                <a-space wrap size="small">
+                  <a-button :disabled="busy" @click="documentOpen = true">
+                    <template #icon><AIcon type="FileTextOutlined" /></template>{{ $t('ThirdPartyApplication.debug.doc.title') }}
+                  </a-button>
+                  <a-popconfirm v-if="requiresConfirmation" :title="$t('ThirdPartyApplication.debug.writeConfirm')"
+                    :disabled="sendDisabled" @confirm="sendApi">
+                    <a-button type="primary" :loading="busy" :disabled="sendDisabled">{{ $t('ThirdPartyApplication.debug.send') }}</a-button>
+                  </a-popconfirm>
+                  <a-button v-else type="primary" :loading="busy" :disabled="sendDisabled" @click="sendApi">{{ $t('ThirdPartyApplication.debug.send') }}</a-button>
+                </a-space>
+              </template>
+              <a-form layout="vertical" :disabled="busy" @submit.prevent>
+                <a-alert v-if="!tokenValid" type="info" show-icon :message="$t('ThirdPartyApplication.debug.tokenRequired')" class="debug-notice">
+                  <template #action><a-button size="small" :disabled="busy" @click="mode = 'token'">{{ $t('ThirdPartyApplication.debug.acquireToken') }}</a-button></template>
+                </a-alert>
+                <div v-if="paths.length" class="request-fields">
+                  <a-form-item v-for="parameter in paths" :key="parameter.name" :label="parameter.name" required>
+                    <a-input v-model:value="parameter.value" :aria-label="parameter.name" :disabled="busy" />
                   </a-form-item>
-                  <template v-if="hasBody">
-                    <a-form-item label="Content-Type">
-                      <a-select v-model:value="contentType" :disabled="busy" :options="contentTypes" />
-                    </a-form-item>
-                    <a-form-item :label="$t('ThirdPartyApplication.debug.body')" :validate-status="requestBodyError ? 'error' : undefined" :help="requestBodyError || undefined">
-                      <div v-if="contentType === 'application/json'" class="json-editor" :class="{ 'json-editor--error': requestBodyError }">
-                        <MonacoEditor v-model="body" theme="vs" language="json" :read-only="busy" :blur-format="false" :init="initBodyEditor"
-                          :options="{ minimap: { enabled: false }, wordWrap: 'on', formatOnPaste: false, ariaLabel: $t('ThirdPartyApplication.debug.body') }" />
-                      </div>
-                      <a-textarea v-else v-model:value="body" :aria-label="$t('ThirdPartyApplication.debug.body')" :disabled="busy" :auto-size="{ minRows: 5, maxRows: 14 }" />
-                    </a-form-item>
-                  </template>
-                  <a-typography-paragraph type="secondary">{{ $t('ThirdPartyApplication.debug.realRequest') }}</a-typography-paragraph>
-                  <PageActions>
-                    <a-popconfirm v-if="requiresConfirmation" :title="$t('ThirdPartyApplication.debug.writeConfirm')"
-                      :disabled="sendDisabled" @confirm="sendApi">
-                      <a-button type="primary" :disabled="sendDisabled">{{ $t('ThirdPartyApplication.debug.send') }}</a-button>
-                    </a-popconfirm>
-                    <a-button v-else type="primary" :disabled="sendDisabled" @click="sendApi">{{ $t('ThirdPartyApplication.debug.send') }}</a-button>
-                  </PageActions>
-                </a-form>
-              </SectionCard>
+                </div>
+                <a-form-item :label="$t('ThirdPartyApplication.debug.query')" class="request-fields">
+                  <div v-for="(parameter, index) in query" :key="index" class="query-row">
+                    <a-input v-model:value="parameter.name" :disabled="busy" :aria-label="$t('ThirdPartyApplication.debug.parameterName')" :placeholder="$t('ThirdPartyApplication.debug.parameterName')" />
+                    <a-input v-model:value="parameter.value" :disabled="busy" :aria-label="$t('ThirdPartyApplication.debug.parameterValue')" :placeholder="$t('ThirdPartyApplication.debug.parameterValue')" />
+                    <a-button type="text" :disabled="busy" :aria-label="$t('ThirdPartyApplication.debug.removeParameter')" @click="removeQuery(index)">
+                      <template #icon><AIcon type="DeleteOutlined" /></template>
+                    </a-button>
+                  </div>
+                  <a-button type="link" size="small" :disabled="busy" class="inline-action" @click="addQuery">
+                    <template #icon><AIcon type="PlusOutlined" /></template>{{ $t('ThirdPartyApplication.debug.addParameter') }}
+                  </a-button>
+                </a-form-item>
+                <template v-if="hasBody">
+                  <a-form-item label="Content-Type">
+                    <a-select v-model:value="contentType" :disabled="busy" :options="contentTypes" />
+                  </a-form-item>
+                  <a-form-item :label="$t('ThirdPartyApplication.debug.body')" :validate-status="requestBodyError ? 'error' : undefined" :help="requestBodyError || undefined">
+                    <div v-if="contentType === 'application/json'" class="json-editor" :class="{ 'json-editor--error': requestBodyError }">
+                      <MonacoEditor v-model="body" theme="vs" language="json" :read-only="busy" :blur-format="false" :init="initBodyEditor"
+                        :options="{ minimap: { enabled: false }, wordWrap: 'on', formatOnPaste: false, ariaLabel: $t('ThirdPartyApplication.debug.body') }" />
+                    </div>
+                    <a-textarea v-else v-model:value="body" :aria-label="$t('ThirdPartyApplication.debug.body')" :disabled="busy" :auto-size="{ minRows: 5, maxRows: 14 }" />
+                  </a-form-item>
+                </template>
+                <a-typography-paragraph type="secondary">{{ $t('ThirdPartyApplication.debug.realRequest') }}</a-typography-paragraph>
+              </a-form>
+            </SectionCard>
+            <section ref="callResultRef" class="call-result" tabindex="-1" :aria-label="$t('ThirdPartyApplication.debug.result')">
               <DebugResult />
-            </div>
-            <DebugApiDocument :api="selectedApi" />
+            </section>
           </div>
         </main>
+        <JlDrawerShell v-if="selectedApi" v-model:open="documentOpen" :width="760"
+          :title="selectedApi.summary || $t('ThirdPartyApplication.debug.doc.title')" :sub="`${selectedApi.method} ${selectedApi.path}`"
+          icon="FileTextOutlined" :mask="false" :push="false" :autofocus="false">
+          <DebugApiDocument :api="selectedApi" />
+        </JlDrawerShell>
       </div>
       <div v-if="mode !== 'call'" class="debug-layout">
         <SectionCard icon="ApiOutlined" :title="$t('ThirdPartyApplication.debug.mode.' + mode)" class="debug-section">
@@ -160,6 +170,7 @@
 <script setup lang="ts">
 import { createReusableTemplate } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
+import JlDrawerShell from '@jetlinks-web-core/components/JlDrawerShell/index.vue'
 import type { ApiApplication } from '@authentication-manager-ui/api/application-center/apiApplication'
 import { formatTime } from '../integrationUtils'
 import { useAccessDebug } from './useAccessDebug'
@@ -175,7 +186,7 @@ const [DefineCredentialFields, CredentialFields] = createReusableTemplate<{ call
 const [DefineResult, DebugResult] = createReusableTemplate()
 const contentTypes = ['application/json', 'application/x-www-form-urlencoded', 'text/plain'].map(value => ({ label: value, value }))
 const { mode, setMode, modes, loading, metadataError, error, busy, clientId, clientSecret, applicationEnabled, credentialActive,
-  canReveal, ready, endpoint, token, tokenValid, response, callAddress, callLogFilter, apiId, apis, selectedApi, paths, query,
+  canReveal, ready, endpoint, token, tokenValid, response, callAddress, callLogFilter, callResultRef, documentOpen, apiId, apis, selectedApi, paths, query,
   body, contentType, hasBody, requiresConfirmation, requestBodyError, sendDisabled, catalogLoading, catalogError, callbackForm, callbackIsSample, verification, initBodyEditor,
   loadMetadata, loadCatalog, useCurrentCredential, acquireToken, sendApi, cancel, setCredentialSecret, addQuery, removeQuery } = useAccessDebug(props)
 </script>
@@ -198,8 +209,17 @@ const { mode, setMode, modes, loading, metadataError, error, busy, clientId, cli
 .result-section :deep(.cb-body) { max-height: 32rem; overflow: auto; }
 .result-section :deep(.ant-collapse-content .code-block + .code-block) { margin-top: var(--space-3); }
 .call-workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); align-items: start; min-width: 0; }
-.api-workspace, .request-column { display: grid; gap: var(--space-4); min-width: 0; }
-.api-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 28rem), 1fr)); align-items: start; gap: var(--space-4); min-width: 0; }
+.api-workspace { min-width: 0; }
+.api-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: var(--space-4); min-width: 0; }
+.request-section :deep(.section-head) { flex-wrap: wrap; }
+.call-result { position: sticky; top: var(--space-4); min-width: 0; scroll-margin-top: var(--space-4); }
+.call-result :deep(.result-section) { min-height: 18rem; }
+.call-result :deep(.cb-body) { max-height: min(26rem, 44dvh); }
+.call-result :deep(.result-loading) { min-height: 8rem; justify-content: center; }
+.call-result :deep(.idle-result) { flex: 1; display: grid; place-items: center; padding-block: var(--space-4); }
 .idle-result { margin: 0; }
-@media (max-width: 64rem) { .debug-layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 64rem) {
+  .debug-layout, .api-columns { grid-template-columns: minmax(0, 1fr); }
+  .call-result { position: static; }
+}
 </style>

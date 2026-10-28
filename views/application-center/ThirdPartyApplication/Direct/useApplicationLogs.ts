@@ -5,8 +5,7 @@ import type { ConditionFilterChangePayload } from '@jetlinks-web-core/components
 import { queryAccess } from '@authentication-manager-ui/api/log'
 import type { ApiApplication } from '@authentication-manager-ui/api/application-center/apiApplication'
 import { useAccessLog } from '../../../system/Log/Access/useAccessLog'
-import { displayText, formatDuration, formatRequestTime } from '../../../system/Log/Access/accessLogPresentation'
-import type { AccessLogRecord } from '../../../system/Log/Access/accessLogPresentation'
+import { formatRequestTime } from '../../../system/Log/Access/accessLogPresentation'
 import type { ApplicationLogFilter } from './accessDebugUtils'
 
 type LogQuery = ConditionFilterChangePayload['filter'] & { pageIndex?: number; pageSize?: number }
@@ -16,16 +15,19 @@ export const useApplicationLogs = (context: { application: ApiApplication; initi
   const { t } = useI18n()
   const logs = useAccessLog()
   const applicationId = computed(() => context.application.id?.trim() || '')
+  const formatTimeFilter = (value: unknown) => Array.isArray(value)
+    ? value.map(formatRequestTime).join(' ~ ') : formatRequestTime(value)
+  const filterColumns = computed(() => logs.columns.value.map(column => column.dataIndex === 'requestTime' ? {
+    ...column,
+    search: { ...column.search, format: 'YYYY-MM-DD HH:mm:ss', formatValuePreview: formatTimeFilter, formatValueTooltip: formatTimeFilter },
+  } : column))
   const columns = computed(() => [
-    { title: t('Access.index.480752-5'), key: 'requestTime', dataIndex: 'requestTime', width: 190,
-      customRender: ({ record }: { record: AccessLogRecord }) => formatRequestTime(record.requestTime) },
+    { title: t('Access.index.480752-5'), key: 'requestTime', dataIndex: 'requestTime', scopedSlots: true, width: 190 },
     { title: t('Access.list.request'), key: 'request', dataIndex: 'url', scopedSlots: true },
     { title: t('Access.index.responseStatus'), key: 'responseStatus', dataIndex: 'responseStatus', scopedSlots: true, width: 160 },
-    { title: t('Access.index.480752-6'), key: 'duration', width: 100,
-      customRender: ({ record }: { record: AccessLogRecord }) => formatDuration(record) },
+    { title: t('Access.index.480752-6'), key: 'duration', dataIndex: 'duration', scopedSlots: true, width: 100 },
     { title: 'IP', key: 'ip', dataIndex: 'ip', scopedSlots: true, width: 160 },
-    { title: t('Access.index.480752-2'), key: 'action', dataIndex: 'action', width: 200, ellipsis: true,
-      customRender: ({ record }: { record: AccessLogRecord }) => displayText(record.action) },
+    { title: t('Access.index.480752-2'), key: 'action', dataIndex: 'action', scopedSlots: true, width: 200, ellipsis: true },
   ])
   const tableRef = ref<{ reload: () => void }>()
   const pending = ref(false)
@@ -33,12 +35,13 @@ export const useApplicationLogs = (context: { application: ApiApplication; initi
 
   if (context.initialFilter) {
     const filter = context.initialFilter
+    // 调试入口已知实际路径，筛选模型只存原值，不预加通配符。
     logs.filterTerms.value = [
       { column: 'requestTime', termType: 'btw', value: filter.timeRange },
-      { column: 'url', termType: 'like', value: `%${filter.path}%`, type: 'and' },
+      { column: 'url', termType: 'eq', value: filter.path, type: 'and' },
       { column: 'httpMethod', termType: 'eq', value: filter.method, type: 'and' },
     ]
-    logs.params.value = buildQueryFilter(logs.filterTerms.value, logs.columns.value)
+    logs.params.value = buildQueryFilter(logs.filterTerms.value, filterColumns.value)
   }
 
   const query = async (params: LogQuery, context?: { signal: AbortSignal }) => {
@@ -69,5 +72,5 @@ export const useApplicationLogs = (context: { application: ApiApplication; initi
   }
   const refresh = () => tableRef.value?.reload()
 
-  return { ...logs, columns, filterColumns: logs.columns, applicationId, tableRef, pending, error, query, refresh, handleRequestError }
+  return { ...logs, columns, filterColumns, applicationId, tableRef, pending, error, query, refresh, handleRequestError }
 }

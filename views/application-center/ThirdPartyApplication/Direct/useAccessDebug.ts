@@ -1,4 +1,4 @@
-import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useNow } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import type { editor } from 'monaco-editor'
@@ -31,6 +31,8 @@ export const useAccessDebug = (context: { application: ApiApplication; initialMo
   const callResponse = ref<DebugHttpResponse>()
   const callAddress = ref('')
   const callLogFilter = ref<ApplicationLogFilter>()
+  const callResultRef = ref<HTMLElement>()
+  const documentOpen = ref(false)
   const catalogLoading = ref(false)
   const catalogError = ref('')
   let catalogLoaded = false
@@ -76,6 +78,7 @@ export const useAccessDebug = (context: { application: ApiApplication; initialMo
     controller?.abort(); controller = undefined; busy.value = false
   }
   const clearSensitive = () => {
+    documentOpen.value = false
     cancel(); clearToken(); clientSecret.value = ''; callbackDebug.clear(); body.value = ''; query.value = []
   }
   const run = async (action: (signal: AbortSignal, current: () => boolean) => Promise<void>) => {
@@ -170,14 +173,15 @@ export const useAccessDebug = (context: { application: ApiApplication; initialMo
   })
 
   const sendApi = () => run(async (signal, current) => {
+    callResponse.value = undefined
+    callLogFilter.value = undefined
+    callAddress.value = ''
     if (!applicationEnabled.value) throw new Error('ThirdPartyApplication.debug.enableFirst')
     if (!token.value || token.value.expiresAt <= Date.now()) throw new Error('ThirdPartyApplication.debug.tokenRequired')
     const api = selectedApi.value
     if (!api) throw new Error('ThirdPartyApplication.debug.apiRequired')
     const url = apiDebugUrl(api, paths.value, query.value)
     if (requestBodyError.value) throw new Error('ThirdPartyApplication.debug.invalidJson')
-    callResponse.value = undefined
-    callLogFilter.value = undefined
     const startedAt = Date.now()
     callAddress.value = redactDebugText(`${api.method} ${url.href}`, secrets())
     const response = await sendApplicationDebugRequest({
@@ -200,7 +204,17 @@ export const useAccessDebug = (context: { application: ApiApplication; initialMo
   watch(clientSecret, clearToken, { flush: 'sync' })
   watch(selectedApi, api => { paths.value = pathParameters(api?.path || ''); query.value = []; body.value = ''; contentType.value = 'application/json' })
   watch([paths, query, body, contentType], () => { callResponse.value = undefined; callAddress.value = ''; callLogFilter.value = undefined }, { deep: true })
-  watch(mode, value => { error.value = ''; if (value === 'call' && !loading.value && !catalogLoaded) void loadCatalog() })
+  watch(busy, async pending => {
+    if (!pending || mode.value !== 'call') return
+    documentOpen.value = false
+    await nextTick()
+    // 窄屏请求/结果顺排，发送后将焦点与可视区域一起交给本次结果。
+    if (disposed || mode.value !== 'call' || !window.matchMedia('(max-width: 64rem)').matches) return
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    callResultRef.value?.scrollIntoView({ block: 'start', behavior: reducedMotion ? 'auto' : 'smooth' })
+    callResultRef.value?.focus({ preventScroll: true })
+  })
+  watch(mode, value => { documentOpen.value = false; error.value = ''; if (value === 'call' && !loading.value && !catalogLoaded) void loadCatalog() })
   watch([mode, loading], ([value, pending]) => { if (value === 'callback' && !pending) callbackDebug.ensureSample() })
   watch(applicationEnabled, enabled => {
     if (!enabled) {
@@ -212,7 +226,7 @@ export const useAccessDebug = (context: { application: ApiApplication; initialMo
   onBeforeUnmount(() => { disposed = true; generation++; clearSensitive() })
 
   return { mode, setMode, modes, loading, metadataError, error, busy, provider, credential, clientId, clientSecret,
-    applicationEnabled, credentialActive, canReveal, ready, endpoint, token, tokenValid, response, callAddress, callLogFilter,
+    applicationEnabled, credentialActive, canReveal, ready, endpoint, token, tokenValid, response, callAddress, callLogFilter, callResultRef, documentOpen,
     apiId, apis, selectedApi, paths, query, body, contentType, hasBody, requiresConfirmation, requestBodyError, sendDisabled,
     catalogLoading, catalogError, callbackForm, callbackIsSample, verification, initBodyEditor,
     loadMetadata, loadCatalog, useCurrentCredential, acquireToken, sendApi, cancel, setCredentialSecret, addQuery, removeQuery }

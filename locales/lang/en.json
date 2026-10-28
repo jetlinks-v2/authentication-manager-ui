@@ -2884,5 +2884,6 @@
   "ThirdPartyApplication.logs.missingApplication": "The application ID is missing. Call logs cannot be queried.",
   "ThirdPartyApplication.logs.empty": "No access records match these filters. Adjust the time range or filters.",
   "ThirdPartyApplication.logs.forbidden": "You do not have access-log query permission, or your data permissions do not allow these records.",
-  "ThirdPartyApplication.logs.loadFailed": "Failed to query call logs. Refresh to try again."
+  "ThirdPartyApplication.logs.loadFailed": "Failed to query call logs. Refresh to try again.",
+  "ThirdPartyApplication.debug.responseReceived": "Response received"
 }

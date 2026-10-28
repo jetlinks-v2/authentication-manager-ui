@@ -2884,5 +2884,6 @@
   "ThirdPartyApplication.logs.missingApplication": "当前应用缺少应用标识，无法查询调用日志。",
   "ThirdPartyApplication.logs.empty": "当前条件下没有访问记录，请调整时间范围或筛选条件。",
   "ThirdPartyApplication.logs.forbidden": "没有访问日志查询权限，或当前数据权限不允许查看这些记录。",
-  "ThirdPartyApplication.logs.loadFailed": "调用日志查询失败，请刷新重试。"
+  "ThirdPartyApplication.logs.loadFailed": "调用日志查询失败，请刷新重试。",
+  "ThirdPartyApplication.debug.responseReceived": "已收到响应"
 }

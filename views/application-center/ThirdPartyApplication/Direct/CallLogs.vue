@@ -14,6 +14,9 @@
       :columns="columns" :request="query" :default-params="defaultParams" :params="params"
       :custom-row="customRow" :row-class-name="rowClassName" :scroll="{ x: 1160 }" @request-error="handleRequestError">
       <template #emptyText><CloudEmpty :description="$t('ThirdPartyApplication.logs.empty')" /></template>
+      <template #requestTime="record">{{ formatRequestTime(record.requestTime) }}</template>
+      <template #duration="record">{{ formatDuration(record) }}</template>
+      <template #action="record">{{ displayText(record.action) }}</template>
       <template #request="record">
         <div class="request-line">
           <a-tag class="http-method">{{ record.httpMethod || '-' }}</a-tag>
@@ -32,7 +35,7 @@
 import { useI18n } from 'vue-i18n'
 import type { ApiApplication } from '@authentication-manager-ui/api/application-center/apiApplication'
 import HttpStatusBadge from '../../../system/Log/Access/components/HttpStatusBadge.vue'
-import { getPrimaryIp } from '../../../system/Log/Access/accessLogPresentation'
+import { displayText, formatDuration, formatRequestTime, getPrimaryIp } from '../../../system/Log/Access/accessLogPresentation'
 import AccessLogDetail from '../../../system/Log/Access/components/AccessLogDetail.vue'
 import { useApplicationLogs } from './useApplicationLogs'
 import type { ApplicationLogFilter } from './accessDebugUtils'

@@ -834,6 +834,18 @@ Verification result:
 - 验证结果：后端执行 `mvn -nsu -s <本机settings.xml> -Dmaven.repo.local=D:/maven-out/repository -pl logging-component -Dtest=LoggingUtilTest,LogTimeSeriesQueryTest,SerializableAccessLogTest test`，编译成功，15 项测试通过且无跳过；覆盖同一执行用户的不同应用、普通用户不采信客户端应用 ID、组织绑定与链路信息保留、匿名请求、应用上下文存储/读取及查询元数据。JaCoCo 行覆盖率：`LoggingUtil` 43/45（95.56%），`TimeSeriesAccessLoggerService` 41/43（95.35%），本次新增生产行均已覆盖。前端按用户约束仅做源码和差异核对，未运行 lint/typecheck/build、自动测试、浏览器或服务启停；真实页面和实际时序存储的过滤效果待部署本次后端组件后人工验收。
 - Git 边界：后端组件仓库与前端模块仓库使用 `codex/open-platform-call-logs-20261028`；保留切分支前的所有提交和无关工作区改动，不提交本次新生成的文档，不创建或回复 PR。
 
+##### 调试反馈修正（已实现，待人工验收）
+
+- 目标与证据：用户反馈调试结果后的“查看调用日志”带条件查不到，清空条件可以查到；结果位于请求表单下方，必须滚动后才知道请求已完成。已确认原实现 `useApplicationLogs.ts` 给路径预加 `%`，而 `ConditionFilter/utils.ts#normalizeOutputTermValue` 会转义已有 `%` 并自动加通配符，导致查询包含字面 `%` 的路径；时间标签显示“当天”不能单独证明底层时间范围丢失，修正时核对实际构造值并保留毫秒时间窗口。
+- 影响范围与不做项：M 级，仅本前端模块 `ThirdPartyApplication/Direct` 的日志快捷条件、调试布局/状态、必要的中英文文案及本 README；不修改后端、应用身份、Token、权限、公共组件或运营端 `ui/`，不增加重试、轮询、导出或新的业务操作。
+- 已确认方案档案：`solutionName=对象详情工作区内的请求—结果并排调试台`；`primaryFilterSurface=保留现有 ConditionFilter`；`contentSurface=顶部接口选择、下方左右请求/结果双栏`；`detailCarrier=结果常驻，接口文档通过单层 JlDrawerShell 按需查看`；`editMode=原位编辑现有请求字段，保持写接口二次确认`；`coreComponents=现有 DebugApiPicker/DebugApiDocument、SectionCard、CodeBlock、JlDrawerShell 与 Ant Design Vue`；`actionPlacement=发送请求移到请求区标题操作位，查看调用日志保留结果区标题操作位`；`densityTarget=两主区并排、结果状态在顶部、正文独立限高滚动`；`sidebarMode=只读文档单层侧栏`；`confirmationMode=用户已确认`。
+- 首屏骨架：上方“所选接口 / 方法 / 路径”；下方“请求参数 [查看接口文档] [发送请求] | 调试结果 [查看调用日志]”；左侧 Path/Query/Body，右侧请求中/完成/失败、HTTP 状态与耗时、响应正文。发送开始立即呈现等待状态，窄屏顺排并在发送时定位结果；不只依赖 Toast 或让结果继续堆在表单下面。
+- 条件修正：快捷入口按真实请求路径做等值匹配，方法等值，保留请求前后一分钟范围；筛选模型只保存业务值，不手工添加 `%`，时间条件明确显示到秒。应用 ID 固定条件和用户条件整体 AND 不变。截图中的原始时间戳/空耗时改用本地表格列插槽复用现有格式化方法，不改公共表格实现。
+- 风险与不借鉴清单：接口文档从常驻右栏改为按需查看是本轮用户已确认的主要交互变化；响应状态只表达 HTTP/传输结果，不将 HTTP 200 自动解释成业务成功。不采用每次自动弹出结果抽屉（打断连续调参），不新增统计、装饰卡、接口侧边导航或重新设计整页详情壳层。
+- 实施结果：`AccessDebug.vue` 的接口调用模式改为左请求/右结果，发送按钮移至请求标题操作位并保留写接口 Popconfirm；`DebugApiDocument` 复用于单层无遮罩只读文档侧栏。结果正文独立限高滚动，请求中与 HTTP 响应状态即时展示，窄屏发送后定位并聚焦结果且尊重减少动态效果设置。新请求开始先清除旧响应和旧日志快捷条件，避免校验/网络错误时误读上一次结果；模式切换、重置与发送时关闭文档侧栏。`CallLogs.vue` 的时间、耗时和动作采用列插槽，继续复用现有格式化函数。
+- 源码与差异检查：已核对原始路径等值、HTTP 方法、前后一分钟毫秒范围、时间到秒的预览/提示、固定应用归属与用户条件嵌套 AND；核对 SectionCard/actions、JlDrawerShell、表格列插槽及 ConditionFilter 的实际组件契约。修改的 Vue 文件均低于 300 行，差异格式检查通过，未修改公共组件或后端。前端 lint/typecheck/build、自动测试、浏览器和服务操作均按用户约束未执行，不声称页面已验收；本轮后端未变，不重复执行已有后端测试。
+- 待人工验收与交付边界：在现有环境验证调试后带条件定位同应用同路径同方法的日志、可读时间与耗时、请求中/成功/失败状态、长响应、文档侧栏和窄屏结果定位。本轮在现有 `codex/open-platform-call-logs-20261028` 分支提交推送；继续遵守不创建 PR、不丢弃已有改动、不提交新生成文档的约束。
+
 #### 接口授权表格化重设计（已实现）
 
 已按用户确认实现，并取消开放平台授权页的“分组管理”和“刷新”。表格替代此前“分组卡片 + 选择本组全部操作 / 清除本组操作”的展示，不扩展到应用列表、其他详情页签或模板授权。
