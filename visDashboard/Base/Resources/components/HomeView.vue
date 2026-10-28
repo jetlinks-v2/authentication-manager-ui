@@ -20,6 +20,7 @@
         </div>
         <div class="resources-row">
           <AiCenterCard
+            v-if="rows.some(row => row.group === 'intelligence' && row.subgroup === 'ai')"
             class="resource-card-ai"
             :rows="rows"
             :show-icon="chart.showIcon"

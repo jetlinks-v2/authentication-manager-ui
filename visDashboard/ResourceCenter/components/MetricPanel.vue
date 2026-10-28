@@ -17,7 +17,7 @@
       <strong>{{ value(key) }}</strong>
     </div>
   </div>
-  <div v-else class="metric-card">
+  <div v-else class="metric-card" :class="{ 'visualization-metric': kind === 'Visualization' }">
     <div class="card-main">
       <div class="card-info">
         <span class="card-title"><JEllipsis>{{ title || t(`resourceDashboard.${kind}`) }}</JEllipsis></span>
@@ -32,7 +32,8 @@
     </div>
     <div class="card-divider" />
     <div class="card-sub-metrics">
-      <span v-for="(item, index) in secondaryMetrics" :key="item.key" class="sub-item">
+      <span v-for="(item, index) in secondaryMetrics" :key="item.key" class="sub-item"
+        :title="kind === 'Visualization' ? `${t(`resourceDashboard.${item.key}`)} ${item.failed ? '—' : item.value?.toLocaleString()}` : undefined">
         <i class="dot" :style="{ background: getDotColor(item.key, index) }" />
         <span class="sub-label">{{ t(`resourceDashboard.${item.key}`) }}</span>
         <span class="sub-value">{{ item.failed ? '—' : item.value?.toLocaleString() }}</span>
@@ -164,6 +165,21 @@ function getDotColor(key: string, index: number) {
   gap: 8px 16px;
   line-height: 18px;
 }
+/* 素材指标等分宽度并保持单行，长文本通过原生提示查看完整内容。 */
+.visualization-metric .value-row { margin-top: 0; }
+.visualization-metric .card-divider { margin: var(--space-1, .25rem) 0; }
+.visualization-metric .card-sub-metrics {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--space-1, .25rem);
+  min-width: 0;
+  line-height: 1rem;
+}
+.visualization-metric .sub-item { min-width: 0; }
+.visualization-metric .dot { display: none; }
+.visualization-metric .sub-label,
+.visualization-metric .sub-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .sub-item {
   display: inline-flex;
   align-items: center;

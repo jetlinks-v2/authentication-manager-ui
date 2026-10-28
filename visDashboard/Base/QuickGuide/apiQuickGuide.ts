@@ -1,6 +1,7 @@
 import { request } from '@jetlinks-web/core'
 import { countOf, recordOf, rowsOf, textOf } from '../shared/apiResult'
 import type { HomeRow } from '../shared/types'
+import { resourceRowAvailable } from '../shared/resources'
 
 const collectSpaceIds = (rows: Record<string, unknown>[]): string[] => rows.flatMap(row => [
   textOf(row.id),
@@ -24,7 +25,7 @@ export async function loadQuickGuideRows(): Promise<HomeRow[]> {
     ['alarm', async () => countOf(await request.post('/ai/aggregate/task/_count', {}, { hiddenError: true }))],
   ]
   // 单项失败只影响对应步骤，不能清空另一项已查到的配置状态。
-  return Promise.all(loaders.map(async ([id, load]) => {
+  return Promise.all(loaders.filter(([id]) => resourceRowAvailable({ id })).map(async ([id, load]) => {
     try { return { id, value: await load() } } catch { return { id, failed: true } }
   }))
 }

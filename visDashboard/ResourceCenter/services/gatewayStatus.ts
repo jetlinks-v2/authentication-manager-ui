@@ -36,10 +36,11 @@ function queryMetric(metric: GatewayMetric) {
   return { pointId, alias, aggregation: 'LAST' }
 }
 
-async function loadGatewayDirectory(): Promise<OverviewGatewayItem[]> {
+export async function loadGatewayDirectory(isCurrent: () => boolean = () => true): Promise<OverviewGatewayItem[]> {
   const gateways: OverviewGatewayItem[] = []
   let pageIndex = 0
   while (true) {
+    if (!isCurrent()) throw new Error('Gateway query cancelled')
     const page = await queryOverviewGatewayPage(100, pageIndex++)
     gateways.push(...page.data)
     if (gateways.length >= page.total) break

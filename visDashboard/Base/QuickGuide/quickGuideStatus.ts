@@ -1,4 +1,5 @@
 import type { HomeRow } from '../shared/types'
+import type { DashboardModules } from '../../useDashboardModules'
 
 export type GuideStatus = 'complete' | 'incomplete' | 'loading' | 'unknown'
 export type GuideStepKey = 'space' | 'gateway' | 'device' | 'algorithm' | 'alarm' | 'application'
@@ -41,6 +42,14 @@ export function resolveGuideStatuses(
   }
 }
 
-export function shouldShowGuide(statuses: Record<GuideStepKey, GuideStatus>): boolean {
+/** 不可用步骤不参与引导完成度；算法覆盖步骤还依赖边缘接入能力。 */
+export function guideStepAvailable(key: GuideStepKey, modules: DashboardModules): boolean {
+  if (key === 'gateway') return modules.edge
+  if (key === 'algorithm') return modules.edge && modules.vision
+  if (key === 'alarm') return modules.vision
+  return true
+}
+
+export function shouldShowGuide(statuses: Partial<Record<GuideStepKey, GuideStatus>>): boolean {
   return Object.values(statuses).some(status => status === 'incomplete' || status === 'unknown')
 }

@@ -5,9 +5,10 @@ import { useDashboardCatalog } from '@jetlinks-web-core/components/DashBoardCanv
 import type { DashboardValue, DashboardWidget } from '@jetlinks-web-core/components/DashBoardCanvas'
 import { kinds, typeOf } from '../../../visDashboard/ResourceCenter/shared'
 import { provideResourceCapabilities, useResourceCapabilities } from '../../../visDashboard/ResourceCenter/hooks/useResourceCapabilities'
-import { buildPrivateResourceLayout, resourceDeviceMapType, resourceLayoutMode, saasResourceLayout } from './resourceDashboardLayout'
+import { buildPrivateResourceLayout, buildSaasResourceLayout, resourceDeviceMapType, resourceVisionRankingType, resourceLayoutMode } from './resourceDashboardLayout'
 import { migrateResourceLayout, resourceLayoutStorageKey } from './resourceLayoutStorage'
 import { getQuickStartActions } from '../../../visDashboard/ResourceCenter/services/quickStart'
+import { resourceKindAvailable } from '../../../visDashboard/ResourceCenter/services/capabilities'
 
 const thumbnails = import.meta.glob('../../../visDashboard/ResourceCenter/*/thumbnail.svg', { eager: true,query: '?url',import: 'default' }) as Record<string,string>
 const deviceMapGroup = 'device-manager-ui/visDashboard/DeviceManagement'
@@ -19,14 +20,10 @@ export function useResourceDashboard(preview: Ref<boolean> = ref(false), width: 
   const capabilities = useResourceCapabilities(preview)
   provideResourceCapabilities(capabilities)
   const privateMode = computed(() => preview.value || !isSaaS)
-  const allowed = computed(() => kinds.filter(kind => (
-    kind === 'Collection' ? capabilities.capabilities.value.collection
-      : kind === 'NetworkCards' ? capabilities.capabilities.value.networkCards
-        : ['EdgeNodes', 'VideoPlaybackTrend'].includes(kind) ? capabilities.modules.value.edge : true
-  )))
+  const allowed = computed(() => kinds.filter(kind => resourceKindAvailable(kind, capabilities.modules.value)))
   const actionCount = computed(() => getQuickStartActions({
     ...capabilities.capabilities.value, edge: capabilities.modules.value.edge,
-  }, isSaaS, preview.value).length)
+  }, preview.value).length)
   const discovery = useDashboardCatalog(dashboardSources,computed(() => ({
     modules: ['authentication-manager-ui', ...(hasDeviceMap ? ['device-manager-ui'] : [])], directories: ['visDashboard'],
     groups: ['authentication-manager-ui/visDashboard/ResourceCenter', ...(hasDeviceMap ? [deviceMapGroup] : [])],
@@ -42,7 +39,7 @@ export function useResourceDashboard(preview: Ref<boolean> = ref(false), width: 
     const columns = privateMode.value ? 24 : 12
     const components: DashboardWidget[] = (privateMode.value
       ? buildPrivateResourceLayout(allowed.value, width.value, actionCount.value)
-      : saasResourceLayout).flatMap(([kind,x,y,w,h]) => {
+      : buildSaasResourceLayout(allowed.value, width.value, actionCount.value)).flatMap(([kind,x,y,w,h]) => {
       const type = typeOf(kind),definition = catalog.value.components[type]
       if (!definition) return []
       return [{ ...definition.defaultConfig,id: type,type,componentProps: { ...definition.defaultConfig.componentProps,
@@ -66,7 +63,7 @@ export function useResourceDashboard(preview: Ref<boolean> = ref(false), width: 
   const profile = computed(() => ({
     scope: capabilities.scope.value,
     saas: !privateMode.value,
-    mode: privateMode.value ? resourceLayoutMode(width.value) : 'wide' as const,
+    mode: resourceLayoutMode(width.value),
     capabilities: capabilities.capabilities.value,
     widgets: allowed.value,
     deviceMap: hasDeviceMap,
@@ -84,7 +81,8 @@ export function useResourceDashboard(preview: Ref<boolean> = ref(false), width: 
     try {
       if (storageKey.value && typeof localStorage !== 'undefined') {
         const mapGrid = dashboard.value.components.find(item => item.type === resourceDeviceMapType)?.componentProps.gridItem
-        migrateResourceLayout(localStorage, storageKey.value, dashboard.value.components.map(item => item.id), profile.value, mapGrid)
+        const rankingGrid = dashboard.value.components.find(item => item.type === resourceVisionRankingType)?.componentProps.gridItem
+        migrateResourceLayout(localStorage, storageKey.value, dashboard.value.components.map(item => item.id), profile.value, mapGrid, rankingGrid)
       }
     } catch { /* 本地存储不可用时使用当前能力组合的默认坐标。 */ }
     layoutReady.value = true
