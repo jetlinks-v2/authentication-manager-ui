@@ -31,7 +31,7 @@ export const useDebugApiPicker = (context: {
   const searchable = computed<ApiRow[]>(() => controllers.value.flatMap(controller => controller.ids.map(id => ({ id, controller, api: apiById.value.get(id)! }))))
   const { filterFields, filtered: rows, search: filter } = useLocalTextFilter(() => searchable.value, () => [
     { title: t('ThirdPartyApplication.debug.searchAll'), dataIndex: 'keyword' },
-    { title: 'Controller', dataIndex: 'controller' },
+    { title: t('ApiGroupManagement.spec.resource'), dataIndex: 'controller' },
     { title: t('ApiGroupManagement.spec.summary'), dataIndex: 'summary' },
     { title: t('ApiGroupManagement.spec.path'), dataIndex: 'path' },
     { title: t('ApiGroupManagement.spec.method'), dataIndex: 'method' },
@@ -41,7 +41,7 @@ export const useDebugApiPicker = (context: {
   const columns = computed(() => [
     { key: 'name', title: t('ApiGroupManagement.spec.summary'), width: '30%' },
     { key: 'endpoint', title: t('ThirdPartyApplication.debug.methodPath'), width: '50%' },
-    { key: 'controller', title: 'Controller', width: '20%' },
+    { key: 'controller', title: t('ApiGroupManagement.spec.resource'), width: '20%' },
   ])
   const pagination = computed(() => ({
     current: page.value, pageSize: 8, total: rows.value.length, showSizeChanger: false,
