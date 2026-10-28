@@ -27,7 +27,7 @@ export const useApiGroupList = () => {
       search: { type: 'select', options: [{ label: t('ApiGroupManagement.state.enabled'), value: 'enabled' }, { label: t('ApiGroupManagement.state.disabled'), value: 'disabled' }] } },
     { title: t('ApiGroupManagement.description'), dataIndex: 'description', key: 'description', ellipsis: true },
     { title: t('ApiGroupManagement.operationCount'), key: 'operationCount', dataIndex: 'operationCount', scopedSlots: true, width: 100 },
-    { title: t('ApiGroupManagement.actions'), key: 'action', dataIndex: 'action', scopedSlots: true, fixed: 'right' as const, width: 245 },
+    { title: t('ApiGroupManagement.actions'), key: 'action', dataIndex: 'action', scopedSlots: true, fixed: 'right' as const, width: 120 },
   ])
   const requestPage = async (query: QueryPayload) => {
     if (!permissions.canQuery.value) return

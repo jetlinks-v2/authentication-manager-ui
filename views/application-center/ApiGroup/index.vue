@@ -24,17 +24,51 @@
           <template #status="row"><a-badge :status="groupValue(row.status) === 'enabled' ? 'success' : 'default'" :text="groupText(row.status, $t, 'ApiGroupManagement.state.')" /></template>
           <template #operationCount="row">{{ row.operations?.length || 0 }}</template>
           <template #action="row">
-            <a-space :size="0">
-              <j-permission-button :hasPermission="groupMenu + ':view'" type="link" @click="open(row)">{{ $t(canUpdate ? 'ApiGroupManagement.edit' : 'ApiGroupManagement.view') }}</j-permission-button>
-              <a-popconfirm :title="$t(groupValue(row.status) === 'enabled' ? 'ApiGroupManagement.disableConfirm' : 'ApiGroupManagement.enableConfirm')" @confirm="toggle(row)">
-                <j-permission-button :hasPermission="groupMenu + ':action'" type="link" :disabled="!!busyId" :loading="busyId === row.id">
-                  {{ $t(groupValue(row.status) === 'enabled' ? 'ApiGroupManagement.disable' : 'ApiGroupManagement.enable') }}
+            <TableActions>
+              <TableActionsItem common>
+                <j-permission-button
+                  :hasPermission="groupMenu + ':view'"
+                  type="link"
+                  size="small"
+                  :tooltip="{ title: $t(canUpdate ? 'ApiGroupManagement.edit' : 'ApiGroupManagement.view') }"
+                  @click="open(row)"
+                >
+                  <span role="img" :aria-label="$t(canUpdate ? 'ApiGroupManagement.edit' : 'ApiGroupManagement.view')">
+                    <AIcon :type="canUpdate ? 'EditOutlined' : 'EyeOutlined'" />
+                  </span>
                 </j-permission-button>
-              </a-popconfirm>
-              <a-popconfirm :title="$t('ApiGroupManagement.deleteConfirm')" @confirm="remove(row)">
-                <j-permission-button :hasPermission="groupMenu + ':delete'" type="link" danger :disabled="!!busyId">{{ $t('ApiGroupManagement.delete') }}</j-permission-button>
-              </a-popconfirm>
-            </a-space>
+              </TableActionsItem>
+              <TableActionsItem common>
+                <a-popconfirm :title="$t(groupValue(row.status) === 'enabled' ? 'ApiGroupManagement.disableConfirm' : 'ApiGroupManagement.enableConfirm')" @confirm="toggle(row)">
+                  <j-permission-button
+                    :hasPermission="groupMenu + ':action'"
+                    type="link"
+                    size="small"
+                    :disabled="!!busyId"
+                    :loading="busyId === row.id"
+                    :tooltip="{ title: $t(groupValue(row.status) === 'enabled' ? 'ApiGroupManagement.disable' : 'ApiGroupManagement.enable'), placement: 'bottom' }"
+                  >
+                    <span role="img" :aria-label="$t(groupValue(row.status) === 'enabled' ? 'ApiGroupManagement.disable' : 'ApiGroupManagement.enable')">
+                      <AIcon :type="groupValue(row.status) === 'enabled' ? 'StopOutlined' : 'PlayCircleOutlined'" />
+                    </span>
+                  </j-permission-button>
+                </a-popconfirm>
+              </TableActionsItem>
+              <TableActionsItem common>
+                <a-popconfirm :title="$t('ApiGroupManagement.deleteConfirm')" @confirm="remove(row)">
+                  <j-permission-button
+                    :hasPermission="groupMenu + ':delete'"
+                    type="link"
+                    size="small"
+                    danger
+                    :disabled="!!busyId"
+                    :tooltip="{ title: $t('ApiGroupManagement.delete'), placement: 'bottom' }"
+                  >
+                    <span role="img" :aria-label="$t('ApiGroupManagement.delete')"><AIcon type="DeleteOutlined" /></span>
+                  </j-permission-button>
+                </a-popconfirm>
+              </TableActionsItem>
+            </TableActions>
           </template>
         </j-pro-table>
       </template>

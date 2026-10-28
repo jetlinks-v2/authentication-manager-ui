@@ -35,6 +35,7 @@ const props = defineProps({
 })
 const activeKey = ref('product');
 const menuStore = useMenuStore();
+const deviceMenuCode = 'iot-user-device-list';
 const _extra = ref([
   {
     name: 'product',
@@ -59,7 +60,7 @@ const init = async () => {
   if (!menuStore.hasMenu('device/Product')) {
     _extra.value.splice(_extra.value.findIndex(i => i.name === 'product'), 1)
   }
-  if (!menuStore.hasMenu('device/Instance')) {
+  if (!menuStore.hasMenu(deviceMenuCode)) {
     _extra.value.splice(_extra.value.findIndex(i => i.name === 'device'), 1)
   }
   activeKey.value = _extra.value?.[0]?.name
@@ -96,7 +97,7 @@ const queryProductCount = async () => {
 }
 
 const queryDeviceCount = async () => {
-  if (menuStore.hasMenu('device/Instance')) {
+  if (menuStore.hasMenu(deviceMenuCode)) {
     const res = await getDeviceCount({
       terms: [
         {

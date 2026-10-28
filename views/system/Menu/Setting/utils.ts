@@ -98,7 +98,7 @@ const mergePermissions = (current: MenuPermission[] = [], configured: MenuPermis
   return [...merged.values()]
 }
 
-/** 按按钮 ID 和权限标识补充定义，保留草稿的显示状态、顺序、层级和 owner。 */
+/** 按按钮 ID、权限标识与资产类型补充定义，保留草稿的显示状态、顺序、层级和 owner。 */
 export const synchronizeMenuDefinitions = (drafts: MenuDrafts, base: MenuDefinition[]): MenuDrafts => {
   const definitions = new Map(flattenMenus(base).map(menu => [menu.id, menu]))
   const sync = (tree: MenuNode[]): MenuNode[] => tree.map(menu => {
@@ -110,7 +110,9 @@ export const synchronizeMenuDefinitions = (drafts: MenuDrafts, base: MenuDefinit
         permissions: mergePermissions(existing?.permissions, button.permissions) })
     }
     return { ...cloneDeep(menu), buttons: [...buttons.values()],
-      permissions: mergePermissions(menu.permissions, local?.permissions), children: sync(menu.children || []) }
+      permissions: mergePermissions(menu.permissions, local?.permissions),
+      assetTypes: [...new Set([...(menu.assetTypes || []), ...(local?.assetTypes || [])])],
+      children: sync(menu.children || []) }
   })
   return { iot: sync(drafts.iot), app: sync(drafts.app) }
 }
