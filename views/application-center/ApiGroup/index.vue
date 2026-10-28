@@ -32,6 +32,7 @@
               </TableActionsItem>
               <TableActionsItem>
                 <j-permission-button :hasPermission="groupMenu + ':action'" type="link" size="small" :disabled="!!busyId" :loading="busyId === row.id"
+                  :danger="groupValue(row.status) === 'enabled'"
                   :popConfirm="{ title: $t(groupValue(row.status) === 'enabled' ? 'ApiGroupManagement.disableConfirm' : 'ApiGroupManagement.enableConfirm'), onConfirm: () => toggle(row) }">
                   <template #icon><AIcon :type="groupValue(row.status) === 'enabled' ? 'StopOutlined' : 'CheckCircleOutlined'" /></template>
                   {{ $t(groupValue(row.status) === 'enabled' ? 'ApiGroupManagement.disable' : 'ApiGroupManagement.enable') }}

@@ -29,6 +29,7 @@
             </TableActionsItem>
             <TableActionsItem>
               <j-permission-button type="link" size="small" :hasPermission="true" :disabled="!!busyId" :loading="busyId === row.id"
+                :danger="apiState(row) === 'enabled'"
                 :popConfirm="{ title: $t(apiState(row) === 'enabled' ? 'ThirdPartyApplication.direct.disableConfirm' : 'ThirdPartyApplication.direct.enableConfirm'), onConfirm: () => toggle(row) }">
                 <template #icon><AIcon :type="apiState(row) === 'enabled' ? 'StopOutlined' : 'CheckCircleOutlined'" /></template>
                 {{ $t(apiState(row) === 'enabled' ? 'ThirdPartyApplication.direct.disable' : 'ApiApplication.actions.enable') }}

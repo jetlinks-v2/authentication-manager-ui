@@ -42,7 +42,7 @@
           </TableActionsItem>
           <TableActionsItem>
             <j-permission-button type="link" size="small" :hasPermission="true"
-              :disabled="saving || (row.state !== 'enabled' && !applicationEnabled)"
+              :danger="row.state === 'enabled'" :disabled="saving || (row.state !== 'enabled' && !applicationEnabled)"
               :tooltip="{ title: $t(row.state !== 'enabled' && !applicationEnabled ? 'ApiApplication.subscription.enableApplicationFirst' : row.state === 'enabled' ? 'ApiApplication.actions.disable' : 'ApiApplication.actions.enable') }"
               :popConfirm="{ title: $t(row.state === 'enabled' ? 'ApiApplication.subscription.disableConfirm' : 'ApiApplication.subscription.enableConfirm'), okButtonProps: { loading: saving }, onConfirm: () => toggle(row) }">
               <template #icon><AIcon :type="row.state === 'enabled' ? 'StopOutlined' : 'CheckCircleOutlined'" /></template>
