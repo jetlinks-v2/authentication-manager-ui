@@ -32,9 +32,54 @@ export const transformAnnouncementStateTerms = (terms: Term[], readIds: string[]
   return { ...transformed, column: 'id', termType: read ? 'in' : 'nin', value: readIds }
 })
 
+/** 本地批次按发布版本分组，避免把旧版本确认应用到重发后的公告。 */
+const batchTerms = (term: Term): Term => {
+  const negative = ['not', 'neq', 'nin'].includes(term.termType)
+  const groups = new Map<number, string[]>()
+  const values = Array.isArray(term.value) ? term.value : [term.value]
+  values.forEach(value => {
+    const match = /^(.+):(\d+)$/.exec(String(value))
+    if (!match) return
+    const version = Number(match[2])
+    const ids = groups.get(version) || []
+    ids.push(match[1])
+    groups.set(version, ids)
+  })
+  if (!groups.size) return { type: term.type, column: 'id', termType: negative ? 'notnull' : 'isnull' }
+  return {
+    type: term.type,
+    terms: [...groups].map(([version, ids]) => ({
+      type: negative ? 'and' : 'or',
+      terms: [
+        { column: 'publishVersion', termType: negative ? 'not' : 'eq', value: version },
+        { column: 'id', termType: negative ? 'nin' : 'in', value: ids, type: negative ? 'or' : 'and' },
+      ],
+    })),
+  }
+}
+
+const bulletinFields: Record<string, string> = {
+  topicName: 'title', message: 'summary', notifyTime: 'deployTime', bulletinId: 'id', sourceId: 'id',
+}
+
+/** 通知界面的字段仅在数据源边界适配，独立公告接口直接使用实体 QueryParam。 */
+const bulletinTerms = (terms: Term[]): Term[] => terms.map(term => {
+  if (!term.column) return { ...term, terms: bulletinTerms(term.terms || []) }
+  if (term.column === 'id' && ['eq', 'not', 'neq', 'in', 'nin'].includes(term.termType || 'eq')) {
+    return batchTerms(term)
+  }
+  if (term.column === 'topicProvider') {
+    const values = Array.isArray(term.value) ? term.value : [term.value]
+    const matches = values.includes('SystemBulletin') !== ['not', 'neq', 'nin'].includes(term.termType)
+    return { type: term.type, column: 'id', termType: matches ? 'notnull' : 'isnull' }
+  }
+  return { ...term, column: bulletinFields[term.column] || term.column }
+})
+
 const localQuery = (query: Query, scope: string | undefined) => ({
   ...query,
-  terms: transformAnnouncementStateTerms(query.terms || [], getAnnouncementReadIds(scope)),
+  sorts: query.sorts?.map((sort: Query) => ({ ...sort, name: bulletinFields[sort.name] || sort.name })),
+  terms: bulletinTerms(transformAnnouncementStateTerms(query.terms || [], getAnnouncementReadIds(scope))),
 })
 
 const injectState = (record: Query, ids: Set<string>) => {
@@ -89,7 +134,7 @@ export const markAllAnnouncementsRead = async () => {
   const scope = getAnnouncementReadScope()
   const response = await request.post(`${RECEIVED_PATH}/_query/no-paging`, {
     paging: false,
-    includes: ['id'],
+    includes: ['id', 'publishVersion'],
   })
   if (response.success) {
     changeAnnouncementLocalState('_read', (response.result || []).map((record: Query) => record.id), scope)

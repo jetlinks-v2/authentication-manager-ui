@@ -829,7 +829,7 @@ URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显�
 - 此前旧 Vite 源码将 Provider 当成单个事件，导致旧下拉框、空 schema 和保存失败；获准重启开发服务后只核对过返回源码，未把它当作交互验收。本轮不重复重启服务，不通过放宽后端校验接受错误事件 ID。
 - 本轮前端 Provider 选择、关联展示、国际化和现有文档修改随 PR #104 交付；复用源码与差异检查，未运行构建、类型检查、lint、测试或浏览器。两类勾选、半选回显、多范围/草稿、语言切换、说明弹窗和错误反馈仍由用户在现有环境人工验收。
 
-公告接收通过 `/system/bulletin/received/_query`、`/_query/no-paging`、`/_count` 查询当前可见的已发布批次。`views/system/Announcement/receivedDataSource.ts` 将嵌套 `state` 条件递归转换为本地批次集合的普通 `id in/nin` 条件，再由后端完成资格过滤、排序、分页和统计；空集合使用稳定 ID 的非空约束表达常量谓词。响应显式携带 `bulletinId`、`publishVersion`，详情不解析 `dataId`。撤回隐藏，重发版本重新未读，不迁移历史已读。
+公告接收通过 `/system/bulletin/received/_query`、`/_query/no-paging`、`/_count` 查询当前可见的已发布批次。`views/system/Announcement/receivedDataSource.ts` 将嵌套 `state` 条件按本地批次的发布版本分组：已读为 `(publishVersion = v AND id in ids)` 的并集，未读为对应反集，再由后端完成资格过滤、排序、分页和统计；空集合使用主键非空约束表达常量谓词。通知界面的 `topicName/message/notifyTime` 在此映射为公告 `title/summary/deployTime`，摘要搜索针对保存的摘要；`topicProvider` 固定条件按真值保留 AND/OR，后端不模拟通知表字段。全部确认投影 `id/publishVersion`，响应继续使用 `公告ID:版本` 批次标识。响应显式携带 `bulletinId`、`publishVersion`，详情不解析 `dataId`。撤回隐藏，重发版本重新未读，不迁移历史已读。
 
 本地确认由 `localReadStore.ts` 统一保存，作用域为实际 API 服务和认证 `userInfo.id`，稳定接收 ID 标识公告发布批次；项目不是确认作用域的一部分。每个发布批次独立使用 `作用域:batch:批次ID` 的 localStorage 键保存 `read/unread`，不同标签页确认不同公告不会覆盖；同一批次采用最后写入的状态。此前本地 v1 集合只保留读取，独立批次状态优先，不迁移后端已读。同页批量操作仅通知一次，跨标签页 storage 事件在末次变更后 30ms 合并刷新顶栏、概览与个人中心，销毁订阅取消待处理刷新。全部已读仅查询当前可见批次的 `includes: ['id']`，不拉正文、不使用时间水位。公告不调用服务端已读接口，普通通知仍使用原服务端状态。
 

@@ -35,6 +35,7 @@ const matches = (record, terms = []) => terms.reduce((result, term, index) => {
     else if (term.termType === 'notnull') value = field != null
     else if (term.termType === 'in') value = term.value.includes(field)
     else if (term.termType === 'nin') value = !term.value.includes(field)
+    else if (term.termType === 'not') value = field !== term.value
     else value = field === term.value
   } else value = matches(record, term.terms)
   return index === 0 ? value : term.type === 'or' ? result || value : result && value
@@ -65,11 +66,11 @@ test('nested AND/OR and empty sets keep true/false semantics without sending sta
 
 test('205 rows paginate/count on visible qualification before state injection, including invisible local IDs', async () => {
   const { store, source, respond, calls } = createEnvironment()
-  const rows = Array.from({ length: 205 }, (_, i) => ({ id: `batch-${i}`, tenant: i < 180 ? 'A' : 'B' }))
+  const rows = Array.from({ length: 205 }, (_, i) => ({ id: `bulletin-${i}:1`, bulletinId: `bulletin-${i}`, publishVersion: 1, tenant: i < 180 ? 'A' : 'B' }))
   const readIds = rows.filter((_, i) => i % 3 === 0).map(row => row.id).concat('invisible-old-batch')
   store.changeAnnouncementLocalState('_read', readIds)
   respond((url, query) => {
-    const eligible = rows.filter(row => row.tenant === 'A' && matches(row, query.terms))
+    const eligible = rows.filter(row => row.tenant === 'A' && matches({ ...row, id: row.bulletinId }, query.terms))
     return { success: true, status: 200, result: url.endsWith('_count') ? eligible.length : {
       data: eligible.slice(query.pageIndex * query.pageSize, (query.pageIndex + 1) * query.pageSize), total: eligible.length } }
   })
@@ -120,7 +121,7 @@ test('all-read projects IDs only and records the captured account without hiding
   user.userInfo.id = 'user-A'
   assert.deepEqual(store.getAnnouncementReadIds(), ['visible-v1'])
   assert.equal(store.getAnnouncementReadIds().includes('later-visible-old-publication'), false)
-  assert.deepEqual(calls[0].query, { paging: false, includes: ['id'] })
+  assert.deepEqual(calls[0].query, { paging: false, includes: ['id', 'publishVersion'] })
 })
 
 test('same-page, storage writes and clear refresh listeners; other identities do not; cleanup removes listener', t => {
@@ -232,4 +233,40 @@ test('205 publication storage events coalesce to one refresh and unsubscribe can
   stop()
   t.mock.timers.tick(30)
   assert.equal(refreshed, 2, 'destroyed subscriptions do not refresh later')
+})
+
+
+test('notification fields and provider groups map to ordinary bulletin queries', async () => {
+  const { source, calls } = createEnvironment()
+  await source.queryAnnouncementInbox({
+    sorts: [{ name: 'notifyTime', order: 'desc' }],
+    terms: [{ terms: [{ column: 'topicProvider', termType: 'in', value: ['SystemBulletin'] },
+      { column: 'topicProvider', termType: 'eq', value: 'Other', type: 'or' }] },
+      { column: 'topicName', termType: 'like', value: 'title%' },
+      { column: 'message', termType: 'like', value: 'summary%' },
+      { column: 'notifyTime', termType: 'gte', value: 10 }],
+  })
+  const query = calls[0].query
+  assert.deepEqual(query.sorts, [{ name: 'deployTime', order: 'desc' }])
+  assert.equal(matches({ id: 'bulletin' }, query.terms[0].terms), true)
+  assert.deepEqual(query.terms.slice(1).map(term => term.column), ['title', 'summary', 'deployTime'])
+})
+
+test('mixed publication versions preserve nested read predicates and realtime lookup', async () => {
+  const { source, store, calls } = createEnvironment()
+  store.changeAnnouncementLocalState('_read', ['a:1', 'b:2', 'foreign:1', 'removed-batch'])
+  const rows = [{ id: 'a', publishVersion: 1 }, { id: 'a', publishVersion: 2 },
+    { id: 'b', publishVersion: 1 }, { id: 'b', publishVersion: 2 }, { id: 'c', publishVersion: 3 }]
+  for (const state of ['read', 'unread']) {
+    await source.queryAnnouncementInbox({ terms: [{ terms: [{ column: 'state', value: state },
+      { column: 'topicName', value: 'forced', type: 'or' }] }] })
+    const terms = calls.at(-1).query.terms
+    rows.forEach(row => {
+      const read = ['a:1', 'b:2'].includes(`${row.id}:${row.publishVersion}`)
+      assert.equal(matches(row, terms), state === 'read' ? read : !read)
+      assert.equal(matches({ ...row, title: 'forced' }, terms), true)
+    })
+  }
+  await source.queryAnnouncementInboxNoPaging({ terms: [{ column: 'id', termType: 'eq', value: 'a:2' }] })
+  assert.deepEqual(rows.filter(row => matches(row, calls.at(-1).query.terms)), [rows[1]])
 })
