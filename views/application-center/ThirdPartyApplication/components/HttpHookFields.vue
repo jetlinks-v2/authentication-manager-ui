@@ -8,14 +8,21 @@
       @update:value="value => emit('update:modelValue', { ...modelValue, method: value })" />
   </a-form-item>
   <a-form-item :label="$t('ThirdPartyApplication.subscription.headers')" :extra="$t('ThirdPartyApplication.subscription.httpHookHint')">
-    <a-space v-for="(header, index) in modelValue.headers" :key="index" class="header-row">
-      <a-input :value="header.name" :disabled="disabled" :placeholder="$t('ThirdPartyApplication.subscription.headerName')"
-        @update:value="value => updateHeader(index, { ...header, name: value })" />
-      <a-input :value="header.value" :disabled="disabled" :placeholder="$t('ThirdPartyApplication.subscription.headerValue')"
-        @update:value="value => updateHeader(index, { ...header, value })" />
-      <a-button type="text" danger :disabled="disabled" @click="removeHeader(index)">{{ $t('ApiApplication.actions.delete') }}</a-button>
-    </a-space>
-    <a-button :disabled="disabled" @click="emit('update:modelValue', { ...modelValue, headers: [...modelValue.headers, { name: '', value: '' }] })">
+    <div v-if="modelValue.headers.length" class="header-list">
+      <div v-for="(header, index) in modelValue.headers" :key="index" class="header-row">
+        <a-input :value="header.name" :disabled="disabled" :placeholder="$t('ThirdPartyApplication.subscription.headerName')"
+          @update:value="value => updateHeader(index, { ...header, name: value })" />
+        <a-input :value="header.value" :disabled="disabled" :placeholder="$t('ThirdPartyApplication.subscription.headerValue')"
+          @update:value="value => updateHeader(index, { ...header, value })" />
+        <a-tooltip :title="$t('ApiApplication.actions.delete')">
+          <a-button type="text" danger :disabled="disabled" :aria-label="$t('ApiApplication.actions.delete')" @click="removeHeader(index)">
+            <template #icon><AIcon type="DeleteOutlined" /></template>
+          </a-button>
+        </a-tooltip>
+      </div>
+    </div>
+    <a-button type="link" size="small" class="add-header" :disabled="disabled" @click="emit('update:modelValue', { ...modelValue, headers: [...modelValue.headers, { name: '', value: '' }] })">
+      <template #icon><AIcon type="PlusOutlined" /></template>
       {{ $t('ThirdPartyApplication.subscription.addHeader') }}
     </a-button>
   </a-form-item>
@@ -33,4 +40,9 @@ const removeHeader = (index: number) => emit('update:modelValue', {
   ...props.modelValue, headers: props.modelValue.headers.filter((_, i) => i !== index),
 })
 </script>
-<style scoped>.header-row { display: flex; margin-bottom: 12px; }.header-row :deep(.ant-space-item:not(:last-child)) { flex: 1; min-width: 0; }</style>
+<style scoped>
+.header-list { display: grid; gap: var(--space-2); max-height: 15rem; margin-bottom: var(--space-2); overflow: auto; }
+.header-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: center; gap: var(--space-2); }
+.header-row .ant-input { min-width: 0; }
+.add-header { padding-inline: 0; }
+</style>

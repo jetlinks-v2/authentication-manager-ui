@@ -3,12 +3,13 @@
     <template #content>
       <a-descriptions :column="1" size="small" class="spec-details">
         <a-descriptions-item :label="$t('ApiGroupManagement.spec.id')"><a-typography-text copyable :content="spec.id">{{ spec.id }}</a-typography-text></a-descriptions-item>
+        <a-descriptions-item v-if="spec.assetType" :label="$t('ApiGroupManagement.spec.assetType')">{{ spec.assetType }}</a-descriptions-item>
         <a-descriptions-item :label="$t('ApiGroupManagement.spec.permissionId')">{{ spec.permissionId || '-' }}</a-descriptions-item>
         <a-descriptions-item :label="$t('ApiGroupManagement.spec.actions')">{{ spec.actions?.join(', ') || '-' }}</a-descriptions-item>
       </a-descriptions>
       <a-tag v-if="!validSpecPermission(spec)" color="warning">{{ $t('ApiGroupManagement.spec.noPermissionMapping') }}</a-tag>
     </template>
-    <a-button type="link" size="small">{{ $t('ApiGroupManagement.spec.details') }}</a-button>
+    <a-button class="spec-details-trigger" type="link" size="small">{{ $t('ApiGroupManagement.spec.details') }}</a-button>
   </a-popover>
 </template>
 <script setup lang="ts">
@@ -20,4 +21,5 @@ const { t: $t } = useI18n()
 </script>
 <style scoped>
 .spec-details { max-width: min(460px, 70vw); overflow-wrap: anywhere; }
+.spec-details-trigger { padding-inline: 0; }
 </style>

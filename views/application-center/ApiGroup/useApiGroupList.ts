@@ -16,6 +16,11 @@ export const useApiGroupList = () => {
   const params = ref<QueryPayload>({ terms: [] })
   const error = ref('')
   const busyId = ref('')
+  const editOpen = ref(false)
+  const editingId = ref('')
+  const editForm = ref({ name: '', description: '' })
+  const editError = ref('')
+  const saving = ref(false)
   let disposed = false
   let querySequence = 0
   onBeforeUnmount(() => { disposed = true; querySequence++ })
@@ -26,8 +31,7 @@ export const useApiGroupList = () => {
     { title: t('ApiGroupManagement.status'), dataIndex: 'status', key: 'status', scopedSlots: true, width: 100,
       search: { type: 'select', options: [{ label: t('ApiGroupManagement.state.enabled'), value: 'enabled' }, { label: t('ApiGroupManagement.state.disabled'), value: 'disabled' }] } },
     { title: t('ApiGroupManagement.description'), dataIndex: 'description', key: 'description', ellipsis: true },
-    { title: t('ApiGroupManagement.operationCount'), key: 'operationCount', dataIndex: 'operationCount', scopedSlots: true, width: 100 },
-    { title: t('ApiGroupManagement.actions'), key: 'action', dataIndex: 'action', scopedSlots: true, fixed: 'right' as const, width: 120 },
+    { title: t('ApiGroupManagement.actions'), key: 'action', dataIndex: 'action', scopedSlots: true, fixed: 'right' as const, width: 100 },
   ])
   const requestPage = async (query: QueryPayload) => {
     if (!permissions.canQuery.value) return
@@ -43,6 +47,25 @@ export const useApiGroupList = () => {
   const refresh = () => { if (!disposed) tableRef.value?.reload() }
   const create = () => { if (permissions.canCreate.value) menu.jumpPage(groupMenu + '/Save', {}) }
   const open = (row: ManagedApiGroup) => { if (permissions.canQuery.value) menu.jumpPage(groupMenu + '/Save', { query: { id: row.id } }) }
+  const openEdit = (row: ManagedApiGroup) => {
+    if (!permissions.canUpdate.value) return
+    editingId.value = row.id
+    editForm.value = { name: row.name, description: row.description || '' }
+    editError.value = ''; editOpen.value = true
+  }
+  const saveEdit = async () => {
+    if (saving.value || !permissions.canUpdate.value) return
+    const name = editForm.value.name.trim()
+    editError.value = !name ? t('ApiGroupManagement.nameRequired')
+      : name.length > 64 ? t('ApiGroupManagement.nameTooLong') : ''
+    if (editError.value) return
+    saving.value = true
+    try {
+      await updateManagedGroup(editingId.value, { name, description: editForm.value.description.trim() })
+      if (!disposed) { editOpen.value = false; onlyMessage(t('ApiGroupManagement.saved')); refresh() }
+    } catch (cause) { if (!disposed) editError.value = groupError(cause, t) }
+    finally { if (!disposed) saving.value = false }
+  }
   const mutate = async (row: ManagedApiGroup, request: () => Promise<unknown>) => {
     if (busyId.value) return
     busyId.value = row.id; error.value = ''
@@ -55,6 +78,9 @@ export const useApiGroupList = () => {
     const status = groupValue(row.status) === 'enabled' ? 'disabled' : 'enabled'
     return mutate(row, () => updateManagedGroup(row.id, { status }))
   }
-  const remove = (row: ManagedApiGroup) => { if (permissions.canDelete.value) return mutate(row, () => deleteManagedGroup(row.id)) }
-  return { ...permissions, groupMenu, tableRef, params, columns, error, busyId, requestPage, handleSearch, refresh, create, open, toggle, remove }
+  const remove = (row: ManagedApiGroup) => {
+    if (permissions.canDelete.value && groupValue(row.status) === 'disabled') return mutate(row, () => deleteManagedGroup(row.id))
+  }
+  return { ...permissions, groupMenu, tableRef, params, columns, error, busyId, editOpen, editForm, editError, saving,
+    requestPage, handleSearch, refresh, create, open, openEdit, saveEdit, toggle, remove }
 }

@@ -35,6 +35,7 @@ export interface RawOpenApiSpec {
   summary?: string
   appId?: string
   operationId?: string
+  tags?: string[]
   permissionId?: string
   actions?: string[]
   assetType?: string
@@ -62,8 +63,12 @@ export const updateManagedGroup = async (id: string, body: Partial<ApiGroupWrite
 }
 export const deleteManagedGroup = (id: string) => api.remove<unknown>(groupRoot + '/' + encode(id))
 // 只读配置所需的真实元数据，不把 specification/apiDoc 载入选择器或写入草稿。
-const specIncludes = ['id', 'method', 'path', 'summary', 'appId', 'operationId', 'permissionId', 'actions', 'assetType']
+const specIncludes = ['id', 'method', 'path', 'summary', 'appId', 'operationId', 'tags', 'permissionId', 'actions', 'assetType']
 export const queryRawSpecs = (query: QueryPayload) => api.post<Pager<RawOpenApiSpec>>(specRoot + '/_query', { ...query, includes: specIncludes })
+// 权限动作批量选择必须基于完整目录，而不是当前分页。
+export const querySpecCatalog = async () => groupBody(await api.post<RawOpenApiSpec[]>(specRoot + '/_query/no-paging', {
+  paging: false, includes: specIncludes,
+}))
 export const queryLinkedSpecs = async (ids: string[]) => groupBody(await api.post<RawOpenApiSpec[]>(specRoot + '/_query/no-paging', {
   paging: false, includes: specIncludes, terms: [{ column: 'id', termType: 'in', value: ids }],
 }))
