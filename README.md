@@ -625,6 +625,18 @@ Unsupported prototype surfaces were removed: fake quotas and metrics, channel-le
 
 Every created or substantially edited Vue file remains at or below 300 lines.
 
+### 系统日志列表与详情样式
+
+`views/system/list-page.less` 为表格右侧筛选区补充 `40rem` 最小宽度；`views/system/Log/components/logDetailSections.css` 为访问日志与系统日志共用的详情折叠区增加分组间距、圆角和浅色标题背景，恢复内容区的默认左右内边距。查询、日志数据展示和详情展开逻辑保持原有契约；窄屏筛选区与详情折叠面板的最终视觉效果仍需人工验收。
+
+### 应用模板列表操作
+
+运行时应用模板页 `/infrastructure/app-template` 的状态列仅展示状态，复用产品列表 `modules/device-manager-ui/views/device/Product/index.vue` 的 `j-badge-status`，以 `enabled → processing`、`disabled → error` 映射呈现蓝色／红色状态标签。沿用应用模板文案和字符串／枚举对象归一化，标签外观由现有表格公共样式提供，不另写样式。`views/application-center/Template/index.vue` 的操作列复用 core `TableActions`，编辑图标保留行内入口，启用／停用与删除放入更多面板；分别使用菜单已有的 `update`、`action`、`delete` 权限码，并复用现有中英文资源。`useApplicationTemplateList.ts` 移除开关的临时乐观状态，取消确认时保留原状态，接口成功后更新状态并刷新，加载状态在请求结束时释放。后端接口、菜单定义、运营端 `ui/`、产品列表和其他模板配置保持原有契约。
+
+验证（2026-10-29 交付复核）：页面 Vue 脚本与模板、日志 CSS/Less 编译通过；使用真实 Vue 响应式和平台边界替身的定向检查覆盖确认取消、启用／停用成功、请求失败、请求期间状态、loading 释放和成功刷新。`node --test tests/systemLogPresentation.test.mjs tests/accessLogPresentation.test.mjs` 回归通过（15/15）。在 `jetlinks-web-core` 使用 Vite `build` API 和 `process.argv.push('--module-name', 'authentication-manager-ui')`，将输出目录指定为 `/tmp/codex-authentication-manager-ui-delivery-build-20261029`，模块生产构建通过（11,900 个模块，1 分 40 秒），保留输出选项、CSS 与大分块等现有告警。`git diff --check` 通过；工作区和模块未配置 lint 脚本。在 `runtime-ui` 执行 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json` 报告本次修改文件之外的 617 项类型诊断，修改的页面、hook 及 `TableActions` 没有诊断，需处理项目类型错误后重跑。
+
+此前真实 `9200` 页面七行均展示蓝色只读状态标签，页面无开关；已有更多面板与停用／删除确认、取消验证，取消后仍保留七条模板及原状态。本次交付复核未重跑浏览器或提交真实启停、删除；成功提交、接口失败及停用模板的启用分支仍待后端联调，定向检查中的平台边界替身不代表真实接口验证。
+
 ### 应用模板数据权限候选一致性
 
 - 从项目进入 runtime-ui 时，应用模板的数据权限候选以当前项目菜单为上限，首次配置、保存回显及重新打开保持一致。模板接口补齐的候选不会额外引入「全部数据」；项目菜单本身允许 `all` 时仍正常提供该选项。
