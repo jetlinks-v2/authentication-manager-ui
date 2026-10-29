@@ -189,7 +189,7 @@ const { t } = useI18n()
 
 @container project-home (max-width: 1400px) {
   .quick-guide-view { overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: thin; }
-  .step-entry { flex: 0 0 280px; scroll-snap-align: start; }
+  .step-entry { flex: 1 0 280px; scroll-snap-align: start; }
 }
 
 @container project-home (max-width: 1400px) and (min-height: 320px) {

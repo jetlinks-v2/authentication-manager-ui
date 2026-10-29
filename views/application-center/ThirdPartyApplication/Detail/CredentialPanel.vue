@@ -2,13 +2,20 @@
   <a-spin :spinning="loading">
     <a-alert v-if="error" type="error" show-icon :message="$t('ThirdPartyApplication.credential.loadError')" />
     <CloudEmpty v-else-if="!providers.length" :description="$t('ThirdPartyApplication.credential.empty')" />
-    <div v-for="provider in providers" :key="provider.type" class="credential-card">
-      <div class="section-head">
+    <component :is="compact ? 'SectionCard' : 'div'" v-for="provider in providers" :key="provider.type"
+      :class="compact ? 'credential-section' : 'credential-card'" :icon="compact ? 'KeyOutlined' : undefined"
+      :title="compact ? (providers.length > 1 ? provider.type : $t('ThirdPartyApplication.credential.title')) : undefined">
+      <template v-if="compact" #actions>
+        <a-badge :status="credentialOf(provider.type)?.state === 'active' ? 'success' : 'default'"
+          :text="credentialStateText(provider.type)" />
+      </template>
+      <div v-if="!compact" class="section-head">
         <div><h3>{{ provider.type }}</h3><p>{{ $t('ThirdPartyApplication.credential.description') }}</p></div>
         <a-badge :status="credentialOf(provider.type)?.state === 'active' ? 'success' : 'default'"
           :text="credentialStateText(provider.type)" />
       </div>
-      <a-descriptions :column="1" bordered size="small">
+      <a-descriptions :column="1" bordered size="small" :label-style="compact ? { width: '10rem' } : undefined"
+        :content-style="compact ? { overflowWrap: 'anywhere' } : undefined">
         <a-descriptions-item :label="$t('ThirdPartyApplication.credential.clientId')">
           <a-typography-text v-if="visibleCredentialOf(provider.type)?.clientId" copyable :content="visibleCredentialOf(provider.type)?.clientId">{{ visibleCredentialOf(provider.type)?.clientId }}</a-typography-text><span v-else>-</span>
         </a-descriptions-item>
@@ -20,16 +27,16 @@
           <span v-else>{{ visibleCredentialOf(provider.type)?.secretHint || '-' }}</span>
         </a-descriptions-item>
         <a-descriptions-item :label="$t('ThirdPartyApplication.credential.endpoint')">{{ provider.tokenEndpoint || '-' }}</a-descriptions-item>
-        <a-descriptions-item :label="$t('ThirdPartyApplication.credential.grantType')">{{ provider.grantType || '-' }}</a-descriptions-item>
-        <a-descriptions-item :label="$t('ThirdPartyApplication.credential.authMethods')">{{ provider.clientAuthMethods?.join(' / ') || '-' }}</a-descriptions-item>
+        <a-descriptions-item v-if="!compact" :label="$t('ThirdPartyApplication.credential.grantType')">{{ provider.grantType || '-' }}</a-descriptions-item>
+        <a-descriptions-item v-if="!compact" :label="$t('ThirdPartyApplication.credential.authMethods')">{{ provider.clientAuthMethods?.join(' / ') || '-' }}</a-descriptions-item>
       </a-descriptions>
-      <a-form v-if="configurations[provider.type] && credentialOf(provider.type)?.state !== 'active'" layout="vertical" class="credential-config">
+      <a-form v-if="configurations[provider.type] && credentialOf(provider.type)?.state !== 'active' && (!compact || provider.configMetadata?.properties?.length)" layout="vertical" class="credential-config">
         <a-form-item v-for="field in provider.configMetadata?.properties || []" :key="field.id"
           :label="field.name || field.id" :extra="field.description">
           <MetadataValueItem v-model="configurations[provider.type][field.id]" :item="{ ...field, valueType: field.valueType || { type: 'string' } }" />
         </a-form-item>
       </a-form>
-      <a-space class="actions">
+      <component :is="compact ? 'PageActions' : 'a-space'" class="actions">
         <a-button v-if="credentialOf(provider.type)?.state !== 'active'" type="primary" :loading="saving" @click="enable(applicationId, provider.type, configurations[provider.type] || {})">{{ $t('ThirdPartyApplication.credential.enable') }}</a-button>
         <template v-else>
           <a-button v-if="provider.features?.includes('reveal')" :loading="saving" @click="reveal(applicationId, provider.type)">{{ $t('ThirdPartyApplication.credential.reveal') }}</a-button>
@@ -40,10 +47,10 @@
             <a-button danger :loading="saving">{{ $t('ThirdPartyApplication.credential.revoke') }}</a-button>
           </a-popconfirm>
         </template>
-      </a-space>
+      </component>
       <a-alert v-if="secret?.type === provider.type && secret.clientSecret" type="warning" show-icon class="secret-panel"
         :message="$t('ThirdPartyApplication.credential.secretNotice')" />
-    </div>
+    </component>
   </a-spin>
 </template>
 
@@ -51,7 +58,7 @@
 import { reactive, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCredential } from './useCredential'
-const props = defineProps<{ applicationId: string; active: boolean }>()
+const props = defineProps<{ applicationId: string; active: boolean; compact?: boolean }>()
 const { t: $t } = useI18n()
 const configurations = reactive<Record<string, Record<string, unknown>>>({})
 const { providers, credentials, secret, loading, saving, error, load, clearSecret, enable, reveal, rotate, revoke } = useCredential()
@@ -79,4 +86,6 @@ onBeforeUnmount(clearSecret)
 .section-head p { color: var(--ink-4); margin: 4px 0 0; }
 .credential-config, .actions, .secret-panel { margin-top: var(--space-3); }
 .secret-value { overflow-wrap: anywhere; }
+.credential-section:last-child { margin-bottom: 0; }
+.credential-section .credential-config, .credential-section .actions, .credential-section .secret-panel { margin-top: 0; }
 </style>

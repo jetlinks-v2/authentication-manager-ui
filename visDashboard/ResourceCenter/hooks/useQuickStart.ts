@@ -1,6 +1,5 @@
 import { computed, inject, type Ref } from 'vue'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
-import { isSaaS } from '@jetlinks-web-core/utils/consts'
 import { getQuickStartActions } from '../services/quickStart'
 import { resourceCapabilitiesKey, useResourceCapabilities } from './useResourceCapabilities'
 
@@ -12,7 +11,7 @@ export function useQuickStart(isEdit: Ref<boolean>, isPreview?: Ref<boolean>) {
   const resourceCapabilities = inject(resourceCapabilitiesKey, undefined) ?? useResourceCapabilities(preview)
   const visibleActions = computed(() => getQuickStartActions({
     ...resourceCapabilities.capabilities.value, edge: resourceCapabilities.modules.value.edge,
-  }, isSaaS, preview.value).map(action => ({
+  }, preview.value).map(action => ({
     ...action,
     disabled: !preview.value && !menu.getMenu(action.menu),
   })))

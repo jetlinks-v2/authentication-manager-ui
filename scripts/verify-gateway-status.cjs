@@ -7,7 +7,8 @@ const esbuild = require(path.join(root, 'node_modules/esbuild'))
 const vue = require(path.join(root, 'node_modules/vue'))
 const group = path.join(root, 'modules/authentication-manager-ui/visDashboard/ResourceCenter').replaceAll('\\', '/')
 global.__gatewayRequest = {}
-global.__gatewayModules = new Set(['edge-master-ui', 'visualization-model-ui'])
+global.__gatewayModules = new Set(['edge-master-ui', 'visualization-model-ui', 'jetlinks-ai-ui'])
+global.__gatewayMenu = vue.reactive({ initialized: true, loading: false, menuResultCache: [{code:'iot-user-device-list'}, {code:'algorithm-center'}], getMenu: () => ({}), jumpPage: () => {} })
 global.__gatewayRoute = vue.reactive({ params: {}, query: {} })
 global.__gatewayPage = async () => ({ data: [], total: 0 })
 const tick = async () => { await vue.nextTick(); await new Promise(resolve => setTimeout(resolve, 10)) }
@@ -17,11 +18,12 @@ const tick = async () => { await vue.nextTick(); await new Promise(resolve => se
     stdin: { contents: `export * from '${group}/services/gatewayStatus.ts'; export * from '${group}/hooks/useGatewayStatus.ts'`, resolveDir: root },
     bundle: true, write: false, platform: 'node', format: 'cjs', packages: 'external',
     plugins: [{ name: 'boundaries', setup(build) {
-      build.onResolve({ filter: /^@jetlinks-web\/core$|^@jetlinks-web-core\/utils\/(project-runtime|module-registry|consts)$|^vue-router$|^vue-i18n$|api\/overview$/ }, args => ({ path: args.path, namespace: 'mock' }))
+      build.onResolve({ filter: /^@jetlinks-web\/core$|^@jetlinks-web-core\/utils\/(project-runtime|module-registry|consts)$|^vue-router$|^vue-i18n$|^@jetlinks-web-core\/store\/menu$|api\/overview$/ }, args => ({ path: args.path, namespace: 'mock' }))
       build.onLoad({ filter: /.*/, namespace: 'mock' }, args => ({ contents:
         args.path.endsWith('/module-registry') ? 'export const moduleRegistry={hasModule:id=>global.__gatewayModules.has(id),onChange:()=>()=>{}}' :
         args.path.endsWith('/consts') ? 'export const isSaaS=false' :
         args.path === '@jetlinks-web/core' ? 'export const request = global.__gatewayRequest' :
+        args.path === '@jetlinks-web-core/store/menu' ? 'export const useMenuStore = () => global.__gatewayMenu' :
         args.path === 'vue-router' ? 'export const useRoute = () => global.__gatewayRoute' :
         args.path === 'vue-i18n' ? 'export const useI18n = () => ({t: key => key})' :
         args.path.endsWith('api/overview') ? 'export const queryOverviewGatewayPage = (...args) => global.__gatewayPage(...args)' :
@@ -61,41 +63,28 @@ const tick = async () => { await vue.nextTick(); await new Promise(resolve => se
   }
   global.__gatewayRequest.post=async()=>({result:[]})
   assert.deepEqual((await api.loadGatewayStatuses('queue')).gateways,[])
-  global.__gatewayRequest.post=async(url,body)=>{
-    assert.equal(url,'/device/metrics/_agg');assert.equal(body.interval,'15m')
-    assert.equal(body.from,'2026-09-20 12:00:00');assert.equal(body.to,'2026-09-21 12:00:00')
-    assert.equal(body.groupBy,undefined);assert.equal(body.labelGroupBy,undefined)
-    assert.equal(body.metrics[0].aggregation,'LAST')
-    return {result:[{timestamp:'2026-09-21 11:45:00',queuePending:9},{timestamp:'2026-09-21 11:15:00',queuePending:0},{timestamp:'2026-09-21 11:30:00',queuePending:null},{timestamp:'invalid',queuePending:100}]}
-  }
-  const points=await api.loadGatewayHistory('a','queue',now)
-  // 与 gatewayStatusHistory.test.mjs 相同：保留实际桶，不补造整天96条快照。
-  assert.equal(points.length,3);assert.deepEqual(points.map(x=>x.value),[0,null,9])
-  assert.deepEqual(api.normalizeGatewayHistory({result:[]},'queuePending',now-86400000,now),[])
   let calls=0
-  global.__gatewayPage=async()=>{calls++;return {data:[gateway],total:1}}
+  global.__gatewayPage=async()=>{calls++;return {data:[{...gateway, productName:'Product'}],total:1}}
   const scope=vue.effectScope(),preview=vue.ref(true);let widget
   scope.run(()=>{widget=api.useGatewayStatus(vue.ref({componentProps:{resourceCenterVideoPlaybackTrend:{refreshSeconds:0}}}),preview)})
   await tick();assert.equal(calls,0);assert.equal(widget.rows.value.length,10)
   const pending=[]
   global.__gatewayRequest.post=async(url,body)=>{
-    const alias=body.metrics[0].alias
-    if(!body.interval)return {result:[{thingId:'a',[alias]:20}]}
-    return new Promise(resolve=>pending.push({resolve,alias}))
+    assert.equal(url,'/device/metrics/_agg')
+    assert.equal(body.interval,undefined, 'ranking must not request history')
+    return new Promise(resolve=>pending.push({resolve,alias:body.metrics[0].alias}))
   }
   preview.value=false;await tick();assert.equal(pending.length,1)
   widget.metric.value='cpu';await tick();assert.equal(pending.length,2)
-  const time=Math.floor(Date.now()/900000)*900000
-  pending[1].resolve({result:[{timestamp:time,cpuUsage:35}]});await tick()
-  pending[0].resolve({result:[{timestamp:time,queuePending:999}]});await tick()
-  assert.equal(widget.points.value.at(-1).value,35)
-  assert.equal(widget.hasHistory.value,true)
-  assert.equal(widget.option.value.series[0].connectNulls,false)
+  pending[1].resolve({result:[{thingId:'a',cpuUsage:35}]});await tick()
+  pending[0].resolve({result:[{thingId:'a',queuePending:999}]});await tick()
+  assert.equal(widget.rows.value[0].id,'a');assert.equal(widget.rows.value[0].text,'35%')
+  assert.equal(widget.rows.value[0].caption,'Product')
   widget.metric.value='disk';await tick();scope.stop()
-  pending[2].resolve({result:[{timestamp:time,diskUsage:77}]});await tick()
-  assert.equal(widget.points.value.length,0)
+  pending[2].resolve({result:[{thingId:'a',diskUsage:77}]});await tick()
+  assert.equal(widget.rows.value.length,0)
   const compiler = require(path.join(root, 'node_modules/vue/compiler-sfc'))
-  for (const file of ['components/GatewayStatusPanel.vue', 'VideoPlaybackTrend/VideoPlaybackTrend.vue', 'components/ResourceWidget.vue', 'components/ResourceConfig.vue']) {
+  for (const file of ['components/GatewayStatusPanel.vue', 'components/ResourceRankList.vue', 'VideoPlaybackTrend/VideoPlaybackTrend.vue', 'components/ResourceWidget.vue', 'components/ResourceConfig.vue']) {
     const source = fs.readFileSync(path.join(group, file), 'utf8')
     const { descriptor, errors } = compiler.parse(source)
     assert.deepEqual(errors, [])
@@ -104,5 +93,5 @@ const tick = async () => { await vue.nextTick(); await new Promise(resolve => se
     assert.deepEqual(template.errors, [])
     assert.ok(source.split('\n').length <= 300)
   }
-  console.log('PASS: POST-only aggregation payloads, gateway pagination, fixed documented units, missing buckets, 24h LAST history, preview isolation, stale response protection, disposal and Vue compilation')
+  console.log('PASS: POST-only ranking aggregation payloads, pagination, units, preview isolation, stale response protection, disposal and Vue compilation')
 })().catch(error => { console.error(error); process.exitCode = 1 })

@@ -64,7 +64,7 @@
 
 目标：依据当前私有化部署的可用模块和账号权限，展示数据采集、物联网卡及对应快捷入口；任意组件被条件过滤后，由同行其余卡片补齐可用空间。任务级别 M，沿用已确认的画布方案。
 
-实现入口：`visDashboard/ResourceCenter/services/capabilities.ts` 与 `hooks/useResourceCapabilities.ts` 负责可选模块的后端能力、前端路由及当前菜单权限交集；`views/resources/Dashboard/useResourceDashboard.ts` 统一生成可见组件集合并共享给快速开始；同目录 `resourceDashboardLayout.ts` 接收最终可见集合，生成默认坐标，`resourceLayoutStorage.ts` 隔离缓存并迁移同集合的旧布局。`index.vue` 测量实际画布宽度，并等待能力、组件发现和迁移就绪后挂载现有 `DashBoardCanvas`。core 画布的布局编辑及存储实现保持复用。
+实现入口：`visDashboard/ResourceCenter/services/capabilities.ts` 与 `hooks/useResourceCapabilities.ts` 统一消费服务端授权菜单树，私有化再与已注册模块取交集；`views/resources/Dashboard/useResourceDashboard.ts` 统一生成可见组件集合并共享给快速开始；同目录 `resourceDashboardLayout.ts` 接收最终可见集合，生成默认坐标，`resourceLayoutStorage.ts` 隔离缓存并迁移同集合的旧布局。`index.vue` 测量实际画布宽度，并等待能力、组件发现和迁移就绪后挂载现有 `DashBoardCanvas`。core 画布的布局编辑及存储实现保持复用。
 
 ### 私有化付费模块与横向均分扩展（已实施）
 
@@ -75,10 +75,10 @@
 - `visDashboard/useDashboardModules.ts` 按使用时机读取 core `moduleRegistry`，并在作用域内订阅注册变化；不在文件顶层缓存未完成的注册状态。3D 使用 `visualization-model-ui`，边缘网关使用 `edge-master-ui`。网关与物联设备共享 `iot-user-device-list`，所以不能仅看该菜单存在。
 - 概览在 `Base/shared/apiResources.ts` 发请求前调用 `resources.ts` 的资源准入规则，缺少 3D 时不查询模型；`useHomeRuntime.ts` 切换订阅范围并过滤迟到结果。可视化运行组件与旧 Resources 分组使用同一 `visualizationGroups`：私有化按实际资源项均分网格，SaaS 保留原有素材 / 作品两列。缺少模型时，概览可视化默认高度由14行缩至12行，内部四项等宽排列；资源中心可视化统计同样不查询或显示模型指标。
 - `ResourceCenter/hooks/useResourceCapabilities.ts` 集中持有已有采集 / 物联网卡能力结果及模块状态；`useResourceDashboard.ts` 据此移除 `EdgeNodes` 和 `VideoPlaybackTrend`（实际为网关状态），组件发现、实例和布局共同消费最终可见集合。
-- `useResourceWidget.ts` 过滤设备分布 edge 类型，配置中的 edge 在统计 watcher 执行前回退到 iot；`useGatewayStatus.ts` 在模块不可用时停止状态、历史及轮换流程并废弃迟到响应。
+- `useResourceWidget.ts` 过滤设备分布 edge 类型，配置中的 edge 在统计 watcher 执行前回退到 iot；`useGatewayStatus.ts` 在模块不可用时停止排行取数、关闭跳转入口并废弃迟到响应。
 - 概览边缘节点已补齐：复用同一模块准入规则，在 `loadHealthRows` 发请求前过滤 gateway；`useHomeRuntime` 的订阅范围同时包含边缘状态，过滤设备与接入、运维健康信息及快捷操作，并废弃旧范围响应。剩余设备卡纵向填满、健康卡按实际数量均分、六个快捷入口排为三列两行；SaaS 原有显示规则及设计预览保留。
 - `ResourceCenter/services/quickStart.ts` 为展示和布局提供同一入口集合；边缘、采集、物联网卡入口随其模块 / 能力隐藏。`useQuickStart.ts` 优先复用页面注入，独立宿主则使用同一能力检查；错误可重试，不能因没有页面注入而显示全部入口。基础入口数量不再固定为4，高度按最终3–6项计算。
-- 数据采集与物联网卡的后端能力、前端路由、账号菜单交集沿用下方 v6 规则；零数据、403、超时、服务错误不作为未购买依据。设计预览保持独立，SaaS 的模块显示规则与默认布局保留。
+- 数据采集、物联网卡、3D、边缘和视觉能力统一依据服务端授权菜单树；私有化额外要求模块已注册，SaaS 也不绕过菜单权限。取消数据采集与物联网卡的接口探测，不以零数据、403 或404推断购买关系。设计预览使用独立示例能力，重试刷新菜单授权。
 
 #### 已选方案与布局
 
@@ -95,7 +95,7 @@
 [                       设备分布                         ]
 ```
 
-缓存：资源中心统一使用 `resource-dashboard:v8:<摘要>`，对同范围 SaaS v6 / 私有化 v7 长键迁移有效的个人坐标；不同账号、项目、部署、模块组合和宽度档位仍分别保存，历史记录保留。私有化不迁入更早的固定比例布局。概览继续使用 `project-overview-private-v2:model/basic`。
+缓存：资源中心统一使用 `resource-dashboard:v8:<摘要>`，对同范围 SaaS v6 / 私有化 v7 长键迁移有效的个人坐标；不同账号、项目、部署、模块组合和宽度档位仍分别保存，历史记录保留。私有化不迁入更早的固定比例布局。概览使用 `project-overview:v3:<范围摘要>`，按账号、项目、API、应用、部署、能力组合及引导可见性隔离；保留旧记录但不读取旧的全局布局键。
 
 #### 验证与发布边界
 
@@ -109,7 +109,9 @@
 - 最终 `node --test tests/resourceDashboardAvailability.test.mjs tests/videoNavigationTarget.test.mjs tests/gatewayStatusHistory.test.mjs tests/gatewayRotation.test.mjs` 为38/38通过；两个 service / Hook 验证脚本通过，`verify-overview-components.cjs` 的63个 SFC与相对引用检查通过。本次7个修改的 Vue 文件已通过脚本、模板、Less / CSS解析且均不超过300行，14个修改 / 新增 TypeScript 文件语法检查及 `git diff --check` 通过。隔离 Hook 验证中的 effectScope 生命周期提示和既有 Node 模块类型提示保留，不将这些脚本当作完整 KeepAlive 验收。按性能约束未运行全量 lint、typecheck 或构建；当前工作区与模块未配置 lint / 样式门禁脚本，完整检查入口为 `pnpm -C runtime-ui exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json`、`pnpm -C runtime-ui build:standalone`。
 - 需要发布更新后的 runtime-ui 静态资源，无后端服务重启要求；未提交或推送。
 
-### v6 实现记录：保留现有画布，过滤后自动生成默认布局
+### v6 历史布局记录：保留现有画布，过滤后自动生成默认布局
+
+本节坐标和验证记录属于历史实现；当前模块授权、概览缓存及排行布局以上方模块规则和下方排行说明为准。
 
 - 业务任务与方案：沿用现有监控感知页，快速查看资源状态、趋势和分布并跳转到功能入口；不改变页面的业务入口和卡片风格。
 - 主要筛选：保留各卡片现有时间范围、设备类型等局部筛选；本页不新增主搜索表单。
@@ -140,7 +142,7 @@
 
 ### 实施规则与边界
 
-1. **能力来源已核实**：复用普通登录账号可访问的现有接口。数据采集使用 `/command-supports/service/collectorService:collector/exists` 的显式布尔结果；物联网卡使用 `/network/flow/timeseries/enabled` 检查其模块能力接口是否提供，成功的 `true` 或 `false` 均表示接口存在，`false` 仅表示时序关闭，不能视为未安装。物联网卡能力接口明确返回 404 时判为当前部署不提供该能力；403、5xx、超时及非法响应作为检查失败并允许重试，不依赖业务统计失败或零数据推断购买关系。再与当前前端路由实现、账号菜单权限取交集。`/system/resources/permission` 已实测需要额外的 `system-resources:query` 管理权限，因此不用于正式仪表盘。
+1. **能力来源**：统一读取 `useDashboardModules.ts` 中的授权菜单树，等待菜单初始化完成；私有化与 `moduleRegistry` 的模块注册状态取交集。能力变化同时影响目录、布局、快捷入口和请求生命周期；不调用能力探测接口，不以接口失败推断模块缺失。
 2. **先过滤再创建组件**：在页面组装层统一产出可用模块集合，供组件发现、组件实例与快速开始复用；能力加载完成前使用既有加载态，避免先展示全量卡片再移除，也避免对不存在的模块持续取数。
 3. **过滤后按行补位**：用户补充每个组件都可能被条件过滤，默认布局改为接收统一的可见组件集合。保留 24 列网格与现有业务分区，通过行/列分组描述宽度比例和跨行关系；先裁掉隐藏组件和空分组，再由同行剩余组件按原比例分配全部空间，单项撑满，整行为空时后续分区上移。按实际画布宽度提供桌面、两栏、窄屏模板，不再为两项可选模块枚举四套坐标。快速开始按实际入口数计算高度。
 4. **保护个人布局**：使用 `resource-center-dashboard-v6:<scope>:<deployment>:<mode>:<sorted-widget-set>`，按账号、项目、API 范围、部署类型、宽度档位及最终组件集合隔离布局缓存，组件顺序变化不生成新缓存。仅桌面且组件 ID 集合完全相同时复制旧 v5/v4 布局，保留原记录；精简后的私有化集合不能继承旧 SaaS 的同名 12 列坐标。相同组件集合继续优先恢复用户位置和尺寸，自动补位用于无对应个人布局时的默认值。
@@ -421,14 +423,23 @@ const { catalog, dashboard, loading, errors } = useResourceDashboard(preview)
    - 卡片头部“算法配置”快捷入口跳转路由精准对齐至 `#/resources/devices/list/batch?type=gateway&gatewayScope=query`，在 `ResourceWidget.vue` 中调用 `menuStore.jumpPage('iot-user-device-list/Batch', { query: { type: 'gateway', gatewayScope: 'query' } })`；
    - 优化 `AlgorithmCoveragePanel.vue` 条目垂直布局：将原有的 `justify-content: space-around` 改为 `justify-content: flex-start` 并设置统一间距 `gap: 16px`，彻底解决条目数量较少（如仅有 1 种已配置算法 + 未配置算法共 2 项）时条目被过度拉伸分置顶部与底部、中间留下大面积空白的问题。
 
+### 视觉任务运行状态排行
+
+- 默认组件 `resourceCenterVisionTaskRanking` 与视觉覆盖卡共用边缘节点和视觉模块准入规则。默认画布依次为四张概览卡、快速开始/设备上报趋势、边缘节点状态排行/视觉任务运行状态排行、视觉任务覆盖统计/设备分布、可选采集器/物联网卡、设备地图；排行默认高度为9行。已有个人布局保留坐标，缺少新组件时追加到底部。
+- 通过当前运行时 `GET /device/metrics/_supported` 核验指标、维度和单位，再调用 `POST /device/metrics/_agg`。耗时使用 `edge.ai.cv.task.inference.latency.avg / LAST`；复判积压使用 `edge.ai.review.dimension.pending / LAST`；识别丢弃使用 `edge.ai.cv.task.slot_reject.total / SUM`，表示区间增量次数，不是百分比。丢弃额外查询 `MIN` 判断是否存在有效增量，空值不补零。
+- 查询窗口为近20分钟；按指标降序取 Top50。保留网关、任务、模型/视频源或复判维度，避免跨来源混用耗时。单位来自目录，未声明时不追加单位。
+- 卡片默认展示前8项，查看更多按网关分组展示本次 Top50。任务名称按网关批量补齐；有详情的任务通过 AI 模块公开的 `GatewayVisionTaskDetail` 打开既有详情弹窗。全局算法配置使用 `algorithm-center` 菜单，分组入口直达对应网关的 `visionModels` 页签。
+- 两类排行共用 `ResourceRankList` 和卡片样式，按原型使用同行标题与指标切换、圆形序号、两行名称和细进度条，不额外展示查询窗口和排序说明。省略文本通过局部深度选择器固定字号，避免 `j-ellipsis` 默认字体覆盖。`GatewayVisionTaskDetail` 仅适配网关/任务/来源身份，详情内容直接复用 AI 模块已有的 `EdgeTaskDetail`。
+- 加载、空数据、查询失败重试、指标未启用和部分任务名称失败分别展示。预览不请求，失去模块权限或切换账号/项目后清空旧状态，离页停止轮询。
+
 ### 网关状态指标替换视频播放趋势（2026-09-21）
 
-- 保留历史类型 resourceCenterVideoPlaybackTrend 与配置命名空间，兼容已保存布局；UI使用网关状态指标，提供复判队列、CPU、内存和磁盘切换。
-- 按《AI网关监控指标前端聚合查询接口文档》V2.1接入 POST /device/metrics/_agg。当前部署未提供 GET /device/metrics/_supported，因此前端不再请求该接口；正式数据也不使用设备 properties/latest 或 agg/_query，不猜测物模型字段。
+- 保留历史类型 resourceCenterVideoPlaybackTrend 与配置命名空间，兼容已保存布局；UI使用边缘节点状态排行，提供复判队列、CPU、内存和磁盘切换。
+- 按《AI网关监控指标前端聚合查询接口文档》V2.1接入 POST /device/metrics/_agg；正式数据不使用设备 properties/latest 或 agg/_query，不猜测物模型字段。
 - 复判指标：edge-ai-gateway / edge.ai.review.queue.pending。系统指标：device-health / system.cpu.usage、system.memory.usage、system.disk.usage。
-- 排行查询只含一个LAST指标，thingIds来自当前项目网关列表的全部分页，groupBy为thingId，按指标别名DESC排序，limit=10。名称和在线状态仍来自业务目录。网关总体查询不带任务标签。
+- 排行查询只含一个LAST指标，thingIds来自当前项目网关列表的全部分页，groupBy为thingId，按指标别名DESC排序，limit=10。名称、产品名称和在线状态来自业务目录。网关总体查询不带任务标签。
 - 复判排行取最近20分钟（覆盖5分钟采集周期，与云端staleAfter一致），系统指标取最近2分钟；查询时间不冒充最后采样时间。
-- 单网关趋势固定最近24小时，interval=15m，每桶LAST，时间为Asia/Shanghai字符串，读取result数组和timestamp字段。保留空值及缺失桶断点，不插值、不补0；全空显示暂无数据。
+- 卡片仅展示排行，不再加载单网关历史趋势或轮换选中行。点击整行复用 `iot-user-device-list/GatewayDetail`，使用真实网关 ID 和 `type=gateway`，打开默认运行概览；右上“节点列表”使用 `iot-user-device-list?type=gateway`。预览、模块不可用或目标菜单缺失时禁止对应跳转。
 - 单位按文档固定：复判积压为“条”，system.*.usage 为“%”。后端配置的系统点位直接映射既有使用率属性，前端不根据值小于1而自动乘100。
 - 聚合结果无采样时显示空态，请求失败提供重试。设计预览独立使用示例数据，不调用接口。
-- 专项验证：node modules/authentication-manager-ui/scripts/verify-gateway-status.cjs。覆盖四项请求契约、分页、单位、空值/零值、历史断点、预览隔离、迟到响应、卸载与Vue编译。此验证使用契约响应模拟，不代表真实部署联调通过。
+- 专项验证：node modules/authentication-manager-ui/scripts/verify-gateway-status.cjs。覆盖四项请求契约、分页、单位、空值/零值、排行跳转、预览隔离、迟到响应、卸载与Vue编译。此验证使用契约响应模拟，不代表真实部署联调通过。

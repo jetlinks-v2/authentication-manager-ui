@@ -73,7 +73,7 @@ const healthPercent = (row: HomeRow) =>
     : 0
 
 const groups = computed(() => {
-  const allGroups = [...new Set(props.rows.map(row => row.group))]
+  const allGroups = [...new Set(props.rows.map(row => row.group).filter((group): group is string => !!group))]
   return allGroups.sort((a, b) => (a === 'health' ? -1 : 1))
 })
 
@@ -82,6 +82,7 @@ const healthGridStyle = computed(() => {
   return {
     '--home-health-columns': Math.max(1, Math.min(3, count)),
     '--home-health-compact-columns': Math.max(1, Math.min(2, count)),
+    '--home-alarm-columns': Math.max(1, Math.min(2, props.rows.filter(row => row.group === 'alarms').length)),
   }
 })
 
@@ -123,7 +124,7 @@ const getGroupRows = (group: string) => {
   }
 
   &.items--alarms {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--home-alarm-columns), minmax(0, 1fr));
     gap: 12px;
   }
 }
@@ -246,7 +247,7 @@ const getGroupRows = (group: string) => {
   }
 
   .home-operations:not(.home-operations--cards) .home-operation-group--alarms .home-operation-items.items--alarms {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--home-alarm-columns), minmax(0, 1fr));
   }
 
   .home-health-card { min-height: 72px; padding-block: 4px; }

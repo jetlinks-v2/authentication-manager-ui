@@ -9,6 +9,8 @@ const built = await build({
   plugins: [{
     name: 'quick-guide-request-fixture',
     setup(plugin) {
+      plugin.onResolve({ filter: /^\.\.\/shared\/resources$/ }, args => ({ path: args.path, namespace: 'resources' }))
+      plugin.onLoad({ filter: /.*/, namespace: 'resources' }, () => ({ contents: 'export const resourceRowAvailable = row => row.id !== \"alarm\" || globalThis.quickGuideVision !== false' }))
       plugin.onResolve({ filter: /^@jetlinks-web\/core$/ }, args => ({ path: args.path, namespace: 'request' }))
       plugin.onLoad({ filter: /.*/, namespace: 'request' }, () => ({
         contents: 'export const request = { post: (...args) => globalThis.quickGuideRequest(...args) }',
@@ -64,4 +66,12 @@ test('a failed space query preserves alarm configuration and a failed alarm quer
       ? [{ id: 'space', failed: true }, { id: 'alarm', value: 1 }]
       : [{ id: 'space', value: 1 }, { id: 'alarm', failed: true }])
   }
+})
+
+test('missing vision skips the aggregate alarm request while retaining space', async t => {
+  globalThis.quickGuideVision = false
+  t.after(() => { delete globalThis.quickGuideVision })
+  const calls = fixture(t, () => ({ result: [] }))
+  assert.deepEqual(await loadQuickGuideRows(), [{ id: 'space', value: 0 }])
+  assert.deepEqual(calls.map(item => item.path), ['/space/_query/tree'])
 })

@@ -20,6 +20,7 @@ export interface OverviewGatewayItem {
   id: string
   name: string
   productId?: string
+  productName?: string
   online: boolean
 }
 
@@ -278,6 +279,7 @@ export const queryOverviewGatewayPage = async (pageSize = 4, pageIndex = 0): Pro
         id,
         name: textOf(row.name, id, globalI18n.global.t('comm.table.empty')),
         productId: textOf(row.productId) || undefined,
+        productName: textOf(row.productName) || undefined,
         online: enumValueOf(state) === 'online',
       }
     }).filter(item => item.id),

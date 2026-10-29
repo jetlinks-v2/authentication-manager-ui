@@ -19,10 +19,9 @@ const actions: QuickStartAction[] = [
 ]
 
 /** 卡片与布局按同一最终入口集合计算，不能再把基础入口数固定为四个。 */
-export function getQuickStartActions(available: ResourceCapabilities & { edge: boolean }, saas: boolean, preview = false) {
+export function getQuickStartActions(available: ResourceCapabilities & { edge: boolean }, preview = false) {
   return actions.filter(action => {
     if (preview || !action.capability) return true
-    if (saas) return action.capability === 'edge'
     return available[action.capability]
   })
 }

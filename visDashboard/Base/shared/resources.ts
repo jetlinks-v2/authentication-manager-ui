@@ -1,13 +1,31 @@
 import { isSaaS } from '@jetlinks-web-core/utils/consts'
-import type { HomeRow } from './types'
+import type { HomeFeature, HomeRow } from './types'
 import { HOME_TARGETS } from './navigation'
-import { getDashboardModules } from '../../useDashboardModules'
+import { getDashboardModules, type DashboardModules } from '../../useDashboardModules'
 
 /** 资源项、健康统计与快捷操作共用模块准入；业务零值仍按原有空态展示。 */
-export const resourceRowAvailable = (row: Pick<HomeRow, 'id'>) => {
-  if (row.id === 'model') return getDashboardModules().model
-  if (row.id === 'gateway') return getDashboardModules().edge
+export const resourceRowAvailable = (row: Pick<HomeRow, 'id'>, modules: DashboardModules = getDashboardModules()) => {
+  if (row.id === 'model') return modules.model
+  if (row.id === 'gateway') return modules.edge
+  if (row.id === 'collector') return modules.collection
+  if (row.id === 'card') return modules.networkCards
+  if (['algorithm', 'visionAlarm', 'alarm'].includes(row.id)) return modules.vision
+  if (row.id === 'coverage') return modules.vision && modules.edge
   return true
+}
+
+/** 复合卡有任一独立能力即可保留；智能体不依赖视觉任务，SaaS 沿用不展示智能体的约定。 */
+export function homeFeatureAvailable(feature: HomeFeature, modules: DashboardModules, saas = isSaaS): boolean {
+  if (feature === 'Collection') return modules.collection || modules.networkCards
+  if (feature === 'AiCenter') return !saas || modules.vision
+  return true
+}
+
+/** 单一采集能力使用对应标题，避免标题仍承诺已隐藏的另一种资源。 */
+export function homeTitleKey(feature: HomeFeature, modules: DashboardModules): string {
+  return feature === 'Collection' && !(modules.collection && modules.networkCards)
+    ? modules.collection ? 'collector' : 'card'
+    : feature
 }
 
 /** 私有化按实际项交错均分网格；SaaS 保留素材、作品两列分组。 */
@@ -34,6 +52,6 @@ export const RESOURCE_ROWS: HomeRow[] = [
   { id: 'coverage', group: 'intelligence', subgroup: 'ai', value: 45 },
   { id: 'scene', group: 'intelligence', subgroup: 'rules', value: 14 },
 ]
-// 私有化能力在资源入口统一筛选，SaaS 不展示该分组，也不触发对应统计。
-.filter(row => !isSaaS || (row.subgroup !== 'collection' && row.id !== 'agent'))
+// 采集器与物联网卡在运行时按能力筛选；仅保留原有 SaaS 不展示智能体的约定。
+.filter(row => !isSaaS || row.id !== 'agent')
 .map(row => ({ ...row, labelKey: row.id, descriptionKey: `${row.id}Desc`, target: HOME_TARGETS[row.id], icon: row.id }))

@@ -32,9 +32,10 @@ export const loadHealthRows = async (): Promise<HomeRow[]> => {
 }
 export const loadResourceRows = async (select: (row: HomeRow) => boolean = () => true): Promise<HomeRow[]> => {
   // 先选择指标再发请求，卡片不加载其他业务的数据，也不等待无关接口。
-  const selectedRows = RESOURCE_ROWS.filter(resourceRowAvailable).filter(select)
+  const selectedRows = RESOURCE_ROWS.filter(row => resourceRowAvailable(row)).filter(select)
   const healthRequest = selectedRows.some(row => ['gateway', 'devices', 'video'].includes(row.id)) ? loadHealthRows() : Promise.resolve([])
-  const algorithmRequest = selectedRows.some(row => ['algorithm', 'coverage'].includes(row.id)) ? loadAlgorithmMetrics() : Promise.resolve(undefined)
+  const algorithmRequest = selectedRows.some(row => ['algorithm', 'coverage'].includes(row.id))
+    ? loadAlgorithmMetrics(selectedRows.some(row => row.id === 'coverage')) : Promise.resolve(undefined)
   const loaders: Record<string, () => Promise<number>> = {
     collector: async () => countOf(await request.post('/data-collect/collector/_count', {}, { hiddenError: true })),
     card: () => pageCount('/network/card/detail/_query'),
@@ -58,7 +59,7 @@ export const loadResourceRows = async (select: (row: HomeRow) => boolean = () =>
 }
 export const loadOperationRows = async (): Promise<HomeRow[]> => {
   const categories: AlarmCategory[] = ['visionAlarm', 'deviceAlarm']
-  const alarms = await Promise.all(categories.map(async id => {
+  const alarms = await Promise.all(categories.filter(id => resourceRowAvailable({ id })).map(async id => {
     try {
       const value = countOf(await request.post(`/alarm/record/${ALARM_TARGETS[id]}/_count`, { terms: buildPendingAlarmTerms(id) }, { hiddenError: true }))
       return { id, labelKey: id, group: 'alarms', value, target: HOME_TARGETS[id] }

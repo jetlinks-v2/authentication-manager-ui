@@ -30,11 +30,12 @@ export const countSceneAlgorithms = (scenes: Record<string, unknown>[]): number 
 )
 
 /** 算法数量与覆盖通道独立查询，单项失败不吞掉另一项的有效统计。 */
-export const loadAlgorithmMetrics = async (): Promise<{ algorithm?: number; coverage?: number }> => {
+export const loadAlgorithmMetrics = async (includeCoverage = true): Promise<{ algorithm?: number; coverage?: number }> => {
   const [algorithm, coverage] = await Promise.allSettled([
     request.post('/ai/scene/tree/_query/no-paging', { paging: false }, { hiddenError: true })
-      .then(response => countSceneAlgorithms(rowsOf(response))),
-    loadCoverageChannelCount(),
+      .then((response: unknown) => countSceneAlgorithms(rowsOf(response))),
+    // 覆盖统计依赖边缘接入；保留独立算法配置数量，避免查询未开通的边缘任务。
+    includeCoverage ? loadCoverageChannelCount() : Promise.resolve(undefined),
   ])
   return {
     algorithm: algorithm.status === 'fulfilled' ? algorithm.value : undefined,

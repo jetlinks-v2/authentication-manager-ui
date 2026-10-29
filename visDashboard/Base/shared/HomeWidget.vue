@@ -1,7 +1,7 @@
 <template>
-  <a-card class="project-home-shell" :data-home-feature="feature" :bordered="false"
+  <a-card v-if="available" class="project-home-shell" :data-home-feature="feature" :bordered="false"
     :style="tokens" :body-style="{ flex: 1, minHeight: 0, padding: '16px 20px 20px' }">
-    <template #title><div class="home-widget-title"><strong>{{ t(`packages.ProjectHome.${feature}`) }}</strong><span v-if="description">{{ description }}</span></div></template>
+    <template #title><div class="home-widget-title"><strong>{{ t(`packages.ProjectHome.${titleKey}`) }}</strong><span v-if="description">{{ description }}</span></div></template>
     <template #extra>
       <slot name="extra" :more-target="moreTarget" :can-open="canOpen" :open="open">
         <a-button v-if="!hideMore && moreTarget && config.chart.navigation" type="link" size="small" :disabled="!canOpen(moreTarget)" @click="open(moreTarget)">
@@ -39,7 +39,7 @@ import type { HomeFeature, HomeInfo } from './types'
 const props = defineProps<{ feature: HomeFeature; info?: HomeInfo; isEdit: boolean; refreshKey?: number; hideMore?: boolean }>()
 const { t, te } = useI18n()
 const description = computed(() => {
-  const key = `packages.ProjectHome.${props.feature}Desc`
+  const key = `packages.ProjectHome.${titleKey.value}Desc`
   return te(key) ? t(key) : ''
 })
 const emptyDescription = computed(() => {
@@ -48,7 +48,7 @@ const emptyDescription = computed(() => {
 })
 const { token } = theme.useToken()
 const config = computed(() => getHomeConfig(props.feature, props.info))
-const { rows, loading, error, retry } = useHomeRuntime(props.feature, computed(() => props.isEdit), computed(() => config.value.refreshTime), computed(() => props.refreshKey || 0))
+const { rows, loading, error, retry, available, titleKey } = useHomeRuntime(props.feature, computed(() => props.isEdit), computed(() => config.value.refreshTime), computed(() => props.refreshKey || 0))
 const { canOpen, open } = useHomeNavigation(computed(() => config.value.chart.navigation), computed(() => props.isEdit))
 const moreTarget = HOME_MORE_TARGETS[props.feature]
 const moreText = computed(() => {

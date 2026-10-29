@@ -10,7 +10,7 @@
           :can-open="canOpen"
           @navigate="open"
         />
-        <p class="capability-hint">{{ t('packages.ProjectHome.collectionHint') }}</p>
+        <p v-if="rows.length > 1" class="capability-hint">{{ t('packages.ProjectHome.collectionHint') }}</p>
       </div>
     </template>
   </HomeWidget>

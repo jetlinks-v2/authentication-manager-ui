@@ -12,7 +12,7 @@ const root = fileURLToPath(new URL('../../../', import.meta.url))
 const dashboard = path.join(root, 'modules/authentication-manager-ui/views/resources/Dashboard')
 const group = path.join(root, 'modules/authentication-manager-ui/visDashboard/ResourceCenter')
 const mapEntry = 'device-manager-ui/visDashboard/DeviceManagement/DeviceMapCard'
-const kinds = ['EdgeNodes', 'IotDevices', 'VideoDevices', 'Visualization', 'QuickStart', 'AlgorithmCoverage', 'VideoPlaybackTrend', 'MessageTrend', 'Collection', 'NetworkCards', 'DeviceDistribution']
+const kinds = ['EdgeNodes', 'IotDevices', 'VideoDevices', 'Visualization', 'QuickStart', 'AlgorithmCoverage', 'VideoPlaybackTrend', 'MessageTrend', 'Collection', 'NetworkCards', 'DeviceDistribution', 'VisionTaskRanking']
 const tick = async () => { await vue.nextTick(); await new Promise(setImmediate) }
 const storage = () => {
   const values = new Map()
@@ -25,7 +25,7 @@ async function fixture(t, { saas = false, width = 1600, available = true, fail =
   const saved = storage()
   const capabilities = {
     capabilities: vue.ref({ collection: !saas, networkCards: !saas }),
-    modules: vue.ref({ edge: true, model: true }), scope: vue.ref('user-a/project-a'),
+    modules: vue.ref({ edge: true, model: true, vision: true, collection: !saas, networkCards: !saas }), scope: vue.ref('user-a/project-a'),
     loading: vue.ref(false), errors: vue.ref([]), reload: async () => {},
   }
   const context = { saas, sources, capabilities }
@@ -226,18 +226,19 @@ test('the SaaS default canvas matches the requested ten widget positions', async
     const { x, y, w, h } = item.componentProps.gridItem
     return { i: item.id, x, y, w, h }
   })
-  assert.deepEqual(layout, [
+  assert.deepEqual(layout.sort((a, b) => a.i.localeCompare(b.i)), [
     { i: 'resourceCenterEdgeNodes', x: 0, y: 0, w: 3, h: 4 },
     { i: 'resourceCenterIotDevices', x: 3, y: 0, w: 3, h: 4 },
     { i: 'resourceCenterVideoDevices', x: 6, y: 0, w: 3, h: 4 },
     { i: 'resourceCenterVisualization', x: 9, y: 0, w: 3, h: 4 },
     { i: 'resourceCenterQuickStart', x: 0, y: 4, w: 6, h: 9 },
     { i: 'resourceCenterMessageTrend', x: 6, y: 4, w: 6, h: 9 },
-    { i: 'resourceCenterAlgorithmCoverage', x: 0, y: 13, w: 6, h: 9 },
-    { i: 'resourceCenterVideoPlaybackTrend', x: 6, y: 13, w: 6, h: 18 },
-    { i: 'resourceCenterDeviceDistribution', x: 0, y: 22, w: 6, h: 9 },
+    { i: 'resourceCenterAlgorithmCoverage', x: 0, y: 22, w: 6, h: 9 },
+    { i: 'resourceCenterVideoPlaybackTrend', x: 0, y: 13, w: 6, h: 9 },
+    { i: 'resourceCenterVisionTaskRanking', x: 6, y: 13, w: 6, h: 9 },
+    { i: 'resourceCenterDeviceDistribution', x: 6, y: 22, w: 6, h: 9 },
     { i: 'deviceMapCard', x: 0, y: 31, w: 12, h: 16 },
-  ])
+  ].sort((a, b) => a.i.localeCompare(b.i)))
 })
 
 test('short storage keys stay fixed-length and isolate scopes, deployments, widths and final widget sets', async t => {
@@ -309,5 +310,21 @@ test('long-key migration rejects invalid geometry and never reads another accoun
     api.migrateResourceLayout(saved, key, previous.map(item => item.i), current)
     assert.equal(saved.getItem(key), null)
     assert.deepEqual(JSON.parse(saved.getItem(otherKey)), previous)
+  }
+})
+
+
+test('v8 map layout preserves all coordinates and appends the ranking across scopes and widths', async t => {
+  const { api } = await fixture(t, { available: false })
+  for (const saas of [false, true]) for (const mode of ['wide', 'medium', 'compact']) {
+    const before = profile({ saas, mode, deviceMap: true })
+    const after = { ...before, widgets: [...before.widgets, 'VisionTaskRanking'] }
+    const map = { i: 'deviceMapCard', x: 1, y: 20, w: saas ? 10 : 20, h: 16 }
+    const old = [...previous, map], saved = storage()
+    const oldKey = api.resourceLayoutStorageKey(before), key = api.resourceLayoutStorageKey(after)
+    saved.setItem(oldKey, JSON.stringify(old))
+    api.migrateResourceLayout(saved, key, [...old.map(item => item.i), 'resourceCenterVisionTaskRanking'], after, mapGrid, { w: 12, h: 14 })
+    assert.deepEqual(JSON.parse(saved.getItem(key)), [...old, { i: 'resourceCenterVisionTaskRanking', x: 0, y: 36, w: saas ? 12 : 24, h: 14 }])
+    assert.deepEqual(JSON.parse(saved.getItem(oldKey)), old)
   }
 })

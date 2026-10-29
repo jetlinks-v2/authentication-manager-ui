@@ -1,5 +1,5 @@
 <template>
-  <div class="alarm-entry-shell">
+  <div class="alarm-entry-shell" :class="{ 'alarm-entry-shell--custom': !!$slots.trigger }">
     <a-popover :open="open" trigger="click" placement="bottomRight" @open-change="setOpen">
     <template #content>
       <div class="alarm-list" :aria-label="title">
@@ -22,6 +22,7 @@
         </template>
       </div>
     </template>
+    <slot name="trigger" :open="open" :disabled="disabled" :setOpen="setOpen">
     <button
       class="alarm-entry-card"
       :class="[`alarm-entry-card--${category}`, { 'alarm-entry-card--active': open }]"
@@ -38,27 +39,30 @@
       </span>
       <small class="alarm-entry-description">{{ t(count === undefined ? 'packages.ProjectHome.metricUnknown' : count === 0 ? 'packages.ProjectHome.alarmZeroGuide' : 'packages.ProjectHome.alarmReview') }}</small>
     </button>
+    </slot>
     </a-popover>
     <a-button v-if="count === 0 && canConfigure" class="alarm-entry-configure" type="text" size="small"
       @click="$emit('configure')">{{ t('packages.ProjectHome.alarmConfigure') }} ›</a-button>
   </div>
   <AlarmQuickDetail :category="category" :alarm="selected" :title="t('packages.ProjectHome.alarmDetailTitle', { title })"
-    :loading="detailLoading" :failed="detailError" :submitting="submitting" :submit-error="submitError"
+    :loading="detailLoading || disabled" :failed="detailError" :submitting="submitting" :submit-error="submitError"
     @close="close" @retry="selected && select(selected)" @submit="submit" />
 </template>
 <script setup lang="ts">
 import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import { useI18n } from 'vue-i18n'
 import { AlertOutlined, WarningOutlined } from '@ant-design/icons-vue'
-import { ALARM_PAGE_SIZE, type AlarmCategory } from '../alarmService'
+import { ALARM_PAGE_SIZE, type AlarmCategory, type QuickAlarmQueryTerm } from '../alarmService'
 import { useQuickAlarms } from '../useQuickAlarms'
 import AlarmQuickDetail from './AlarmQuickDetail.vue'
 
-const props = defineProps<{ category: AlarmCategory; title: string; count?: number; disabled: boolean; canConfigure: boolean }>()
+const props = defineProps<{ category: AlarmCategory; title: string; count?: number; disabled: boolean; canConfigure: boolean; queryTerms?: readonly QuickAlarmQueryTerm[]; scopeKey?: string }>()
 const emit = defineEmits<{ handled: []; configure: [] }>()
 const { t } = useI18n()
 const { open, loading, error, rows, total, page, selected, detailLoading, detailError, submitting, submitError,
-  load, setOpen, select, close, submit } = useQuickAlarms(props.category, () => emit('handled'))
+  load, setOpen, select, close, submit } = useQuickAlarms(props.category, () => emit('handled'), {
+    terms: () => props.queryTerms || [], scope: () => props.scopeKey, disabled: () => props.disabled,
+  })
 </script>
 <style scoped lang="less">
 .alarm-entry-shell {
@@ -68,6 +72,8 @@ const { open, loading, error, rows, total, page, selected, detailLoading, detail
   border-radius: 4px;
   background: #f8fafc;
 }
+
+.alarm-entry-shell--custom { padding: 0; border: 0; background: transparent; }
 
 .alarm-entry-card {
   display: flex;
