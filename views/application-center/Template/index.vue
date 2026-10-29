@@ -60,31 +60,51 @@
 	            </template>
 		
 		            <template #state="slotProps">
-		              <a-switch
-		                :checked="slotProps._switchChecked ?? normalizeState(slotProps.state) === 'enabled'"
-		                :loading="slotProps._statusLoading"
-		                @change="checked => table.changeStatus(slotProps, checked === true)"
+		              <j-badge-status
+		                :status="normalizeState(slotProps.state)"
+		                :statusNames="{ enabled: 'processing', disabled: 'error' }"
+		                :text="$t(normalizeState(slotProps.state) === 'enabled' ? 'ApplicationTemplate.common.enabled' : 'ApplicationTemplate.common.disabled')"
 		              />
 		            </template>
 		
 		            <template #action="slotProps">
-		              <a-space>
-		                <j-permission-button
-		                  :hasPermission="`${permission}:update`"
-		                  type="link"
-		                  @click="table.viewDetail(slotProps)"
-		                >
-		                  {{ $t('ApplicationTemplate.common.edit') }}
-		                </j-permission-button>
-		                <j-permission-button
-		                  :hasPermission="`${permission}:delete`"
-		                  type="link"
-		                  danger
-		                  @click="table.clickDel(slotProps.id)"
-		                >
-		                  {{ $t('ApplicationTemplate.common.delete') }}
-		                </j-permission-button>
-		              </a-space>
+		              <TableActions>
+		                <TableActionsItem common>
+		                  <j-permission-button
+		                    :hasPermission="`${permission}:update`"
+		                    type="link"
+		                    size="small"
+		                    :tooltip="{ title: $t('ApplicationTemplate.common.edit') }"
+		                    @click="table.viewDetail(slotProps)"
+		                  >
+		                    <span role="img" :aria-label="$t('ApplicationTemplate.common.edit')">
+		                      <AIcon type="EditOutlined" />
+		                    </span>
+		                  </j-permission-button>
+		                </TableActionsItem>
+		                <TableActionsItem>
+		                  <j-permission-button
+		                    :hasPermission="`${permission}:action`"
+		                    type="link"
+		                    :loading="slotProps._statusLoading"
+		                    @click="table.changeStatus(slotProps, normalizeState(slotProps.state) !== 'enabled')"
+		                  >
+		                    <AIcon :type="normalizeState(slotProps.state) === 'enabled' ? 'StopOutlined' : 'PlayCircleOutlined'" />
+		                    {{ $t(normalizeState(slotProps.state) === 'enabled' ? 'ApplicationTemplate.common.disable' : 'ApplicationTemplate.common.enable') }}
+		                  </j-permission-button>
+		                </TableActionsItem>
+		                <TableActionsItem>
+		                  <j-permission-button
+		                    :hasPermission="`${permission}:delete`"
+		                    type="link"
+		                    danger
+		                    @click="table.clickDel(slotProps.id)"
+		                  >
+		                    <AIcon type="DeleteOutlined" />
+		                    {{ $t('ApplicationTemplate.common.delete') }}
+		                  </j-permission-button>
+		                </TableActionsItem>
+		              </TableActions>
 		            </template>
 		          </j-pro-table>
 		        </a-spin>
@@ -105,6 +125,7 @@
 import { createReusableTemplate } from '@vueuse/core'
 
 import ConditionFilter from '@jetlinks-web-core/components/ConditionFilter'
+import TableActions, { TableActionsItem } from '@jetlinks-web-core/components/TableActions'
 import ApplicationTemplateCreateDialog from './components/ApplicationTemplateCreateDialog.vue'
 import { useApplicationTemplateList } from './useApplicationTemplateList'
 

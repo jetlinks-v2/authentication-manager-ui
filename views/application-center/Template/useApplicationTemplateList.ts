@@ -67,7 +67,7 @@ export const useApplicationTemplateList = () => {
     },
     {
       title: $t('ApplicationTemplate.common.action'),
-      dataIndex: 'action', key: 'action', width: 150, scopedSlots: true,
+      dataIndex: 'action', key: 'action', width: 100, scopedSlots: true,
     },
   ])
   const defaultParams = {
@@ -89,9 +89,6 @@ export const useApplicationTemplateList = () => {
   const viewDetail = (row: { id: string }) =>
     menuStore.jumpPage('application-center/Template/Save', { query: { id: row.id } })
   const changeStatus = (row: Record<string, any>, checked: boolean) => {
-    if (row._switchChecked === undefined) row._switchChecked = stateValue(row.state) === 'enabled'
-    const oldChecked = row._switchChecked
-    row._switchChecked = checked
     Modal.confirm({
       title: $t('ApplicationTemplate.message.confirmChangeStatus', [
         $t(checked ? 'ApplicationTemplate.common.enable' : 'ApplicationTemplate.common.disable'),
@@ -103,13 +100,10 @@ export const useApplicationTemplateList = () => {
           row.state = checked ? 'enabled' : 'disabled'
           onlyMessage($t('ApplicationTemplate.message.success'))
           refresh()
-        } catch {
-          row._switchChecked = oldChecked
         } finally {
           row._statusLoading = false
         }
       },
-      onCancel: () => { row._switchChecked = oldChecked },
     })
   }
 
