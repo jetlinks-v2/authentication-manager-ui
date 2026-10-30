@@ -1,23 +1,27 @@
 <template>
-  <div class="home-content home-announcements" :class="{ 'home-announcements--timeline': chart.displayStyle === 'timeline' }">
+  <div class="home-content home-announcements" :class="{ 'home-announcements--timeline': chart.displayStyle === 'timeline', 'home-announcements--saas': chart.displayStyle === 'saas' }">
     <button
       v-for="row in rows"
       :key="row.id"
       type="button"
       class="home-announcement"
+      :class="{ 'home-announcement--unread': row.readState === 'unread', 'home-announcement--read': row.readState === 'read' }"
       :disabled="!chart.navigation"
       :title="row.description || label(row)"
       @click="$emit('select', row)"
     >
       <div class="announcement-header">
         <span class="announcement-heading">
+          <a-tag v-if="chart.displayStyle === 'saas' && row.announcementType" class="announcement-type"
+            :style="{ '--announcement-type-color': row.announcementType.color }">{{ row.announcementType.text }}</a-tag>
           <span class="announcement-title">{{ label(row) }}</span>
-          <span v-if="row.isNew" class="announcement-tag">{{ t('packages.ProjectHome.new') }}</span>
+          <span v-if="chart.displayStyle !== 'saas' && row.isNew" class="announcement-tag">{{ t('packages.ProjectHome.new') }}</span>
         </span>
+        <span v-if="chart.displayStyle === 'saas' && chart.showDescription && row.description" class="announcement-excerpt">{{ row.description }}</span>
         <time v-if="chart.showDate && row.date" class="announcement-date">{{ row.date }}</time>
       </div>
       <span
-        v-if="chart.showDescription && row.description"
+        v-if="chart.displayStyle !== 'saas' && chart.showDescription && row.description"
         class="announcement-description"
       >
         {{ row.description }}
@@ -152,5 +156,43 @@ const label = (row: HomeRow) => row.label || t(`packages.ProjectHome.${row.label
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+/* SaaS 以类型和标题字重表达主题与阅读状态，保留既有行间距与 hover 范围。 */
+.home-announcements.home-announcements--saas { gap: 4px; padding: 4px 0; height: auto; overflow: visible; }
+.home-announcements--saas .home-announcement {
+  position: relative;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 12px;
+  margin: 0;
+  border-radius: var(--r-2, 6px);
+  border: 0;
+  background: transparent;
+  transition: background-color 0.2s ease;
+  &:hover:not(:disabled) {
+    background: var(--home-card-surface, #f7f9fc);
+    .announcement-title { color: var(--business-component-primary, #1677ff); }
+  }
+}
+.home-announcements--saas .announcement-header { align-items: center; gap: 10px; }
+.home-announcements--saas .announcement-title { font-size: 13px; font-weight: 400; transition: color 0.2s ease; }
+.home-announcements--saas .announcement-heading { flex: 0 1 300px; }
+.announcement-excerpt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--business-component-muted, #646c73); font-size: 12px; }
+.home-announcements--saas .home-announcement--unread .announcement-title { font-weight: 600; }
+.home-announcements--saas .home-announcement--read:not(:hover) .announcement-title { color: var(--business-component-muted, #646c73); }
+.announcement-type {
+  flex-shrink: 0; margin: 0; padding: 0 6px; border: 0; border-radius: var(--r-1, 4px);
+  color: var(--announcement-type-color); background: color-mix(in srgb, var(--announcement-type-color) 10%, white);
+  font-size: 12px; font-weight: 400; line-height: 20px;
+}
+.home-announcements--saas .announcement-date { font-size: 12px; color: var(--business-component-muted, #646c73); }
+@container project-home (max-width: 339px) {
+  .home-announcements--saas .announcement-header { align-items: flex-start; flex-wrap: wrap; gap: 4px; }
+  .home-announcements--saas .announcement-heading { flex-basis: 100%; }
+}
+@container project-home (max-width: 599px) {
+  .home-announcements--saas .announcement-excerpt { display: none; }
+  .home-announcements--saas .announcement-heading { flex: 1; }
 }
 </style>

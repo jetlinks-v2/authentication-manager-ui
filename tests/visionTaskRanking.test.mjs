@@ -139,7 +139,7 @@ test('queries only authorized gateway scope and batches task names once per gate
   for (const call of names) assert.deepEqual(call.body, { paging: false, terms: [{ column: 'id', termType: 'in', value: ['t1', 't2'] }] })
   assert.equal(result.rows.length, 14)
   assert.equal(result.rows.find(row => row.taskId === 't1').sourceName, '来源一')
-  assert.equal(result.rows.find(row => row.taskId === 't1').detailAvailable, true)
+  assert.equal(result.rows.find(row => row.taskId === 't1').name, '任务一')
   assert.equal(result.metadataFailed, false)
 })
 
@@ -150,6 +150,7 @@ test('aggregation business failure rejects, while name failure retains metrics a
   const result = await loadVisionTaskRanking('latency')
   assert.equal(result.metadataFailed, true)
   assert.equal(result.rows[0].name, 't')
+  assert.equal(result.rows[0].gatewayId, 'g1')
   assert.equal(result.rows[0].detailAvailable, false)
 })
 
@@ -169,7 +170,7 @@ test('scope invalidation stops queued gateway name requests', async () => {
   await waitUntil(() => pending.length === 4, 'four name requests were not started')
   current = false
   pending.splice(0).forEach(resolve => resolve())
-  await resultPromise
+  await assert.rejects(resultPromise, /cancelled/i)
   assert.equal(called.length, 4)
 })
 
@@ -178,4 +179,94 @@ test('scope invalidation prevents further directory pages and aggregation', asyn
   globalThis.__visionRankingFixture = { page: async () => { pages++; current = false; return { data: [gateway('g1')], total: 2 } }, post: () => assert.fail('aggregation requested') }
   await assert.rejects(loadVisionTaskRanking('latency', () => current), /cancelled/i)
   assert.equal(pages, 1)
+})
+
+
+test('small node directory distinguishes no tasks from missing metrics', async () => {
+  const calls = []
+  globalThis.__visionRankingFixture = { page: directory(['g1']), post: async (url, body) => {
+    calls.push({url,body})
+    return ok(url === '/device/metrics/_agg' ? [] : [{id:'t1',name:'未上报任务',configuration:{sources:[{id:'s1'},{id:'s2'}]}}])
+  }}
+  let result = await loadVisionTaskRanking('latency')
+  assert.equal(result.taskCount, 1); assert.equal(result.directoryIncomplete, false)
+  assert.equal(result.rows[0].value, undefined); assert.equal(result.rows[0].taskId, 't1'); assert.equal(result.rows[0].sourceId, undefined); assert.equal(result.rows[0].detailAvailable, true)
+  assert.deepEqual(calls.find(item=>item.url.includes('/edge/detail/')).body.terms, [{column:'domain',termType:'eq',value:'ComputerVision'}])
+  globalThis.__visionRankingFixture.post = async () => ok([])
+  result = await loadVisionTaskRanking('latency')
+  assert.equal(result.taskCount, 0); assert.deepEqual(result.rows, [])
+})
+
+test('offline directory is unknown and old metric retains identity without its value', async () => {
+  const calls = []
+  globalThis.__visionRankingFixture = { page: async () => ({data:[gateway('online'),{id:'offline',name:'Offline',online:false}],total:2}), post: async (url, body) => {
+    calls.push(url)
+    return ok(url === '/device/metrics/_agg' ? [latency('offline','old','s1',42)] : [])
+  }}
+  const result = await loadVisionTaskRanking('latency')
+  assert.equal(result.directoryIncomplete, true); assert.equal(result.taskCount, undefined)
+  assert.equal(result.rows[0].taskId, 'old'); assert.equal(result.rows[0].value, undefined); assert.equal(result.rows[0].online, false); assert.equal(result.rows[0].detailAvailable, false)
+  assert.ok(calls.every(url=>!url.includes('/offline/')))
+})
+
+test('directory failure and contradictory aggregation never become a false empty task count', async () => {
+  globalThis.__visionRankingFixture = { page: directory(['g1']), post: async url => url === '/device/metrics/_agg' ? ok([]) : {status:403} }
+  let result = await loadVisionTaskRanking('latency')
+  assert.equal(result.taskCount, undefined); assert.equal(result.directoryIncomplete, true)
+  globalThis.__visionRankingFixture.post = async url => ok(url === '/device/metrics/_agg' ? [latency('g1','t')] : [])
+  result = await loadVisionTaskRanking('latency')
+  assert.equal(result.taskCount, undefined); assert.equal(result.directoryIncomplete, true); assert.equal(result.rows.length, 1)
+})
+
+test('offline identity survives missing value or increment while invalid online samples are rejected', () => {
+  const gateways = [gateway('on'), {id:'off',name:'Offline',online:false}]
+  const latencyRows = normalizeVisionRanking(ok([latency('off','offline','s',null), latency('on','invalid','s',null)]), gateways, 'latency')
+  assert.deepEqual(latencyRows.map(row=>[row.taskId,row.value,row.online]), [['offline',undefined,false]])
+  const discardRows = normalizeVisionRanking(ok([{...latency('off','offline','s',null),validIncrement:null},{...latency('on','invalid','s',0),validIncrement:null}]),gateways,'discard')
+  assert.deepEqual(discardRows.map(row=>[row.taskId,row.value,row.online]), [['offline',undefined,false]])
+})
+
+test('offline top 50 cannot displace online metrics and both scopes share the same time window', async () => {
+  const calls = []
+  globalThis.__visionRankingFixture = {
+    page: async () => ({ data: [gateway('on'), { id: 'off', name: 'Offline', online: false }], total: 2 }),
+    post: async (url, body) => {
+      if (url !== '/device/metrics/_agg') return ok([{ id: 'live', name: 'Live' }])
+      calls.push(body)
+      return ok(body.thingIds[0] === 'on'
+        ? [latency('on', 'live', 'source', 1)]
+        : Array.from({ length: 50 }, (_, i) => latency('off', `old-${i}`, 'source', 100 + i)))
+    },
+  }
+  const result = await loadVisionTaskRanking('latency')
+  assert.deepEqual(calls.map(call => call.thingIds), [['on'], ['off']])
+  assert.equal(calls[0].from, calls[1].from)
+  assert.equal(calls[0].to, calls[1].to)
+  assert.equal(result.rows.length, 51)
+  assert.equal(result.rows[0].taskId, 'live')
+  assert.equal(result.rows[0].value, 1)
+  assert.ok(result.rows.slice(1).every(row => row.online === false && row.value === undefined))
+  assert.equal(result.limited, true)
+})
+
+test('task metadata uses enum text and source-specific scene without mixing dimensions', async () => {
+  globalThis.__visionRankingFixture = {page:directory(['g1']),post:async url => ok(url === '/device/metrics/_agg'
+    ? [latency('g1','t','s1',3),latency('g1','t','s2',2),latency('g1','t','s3',1)]
+    : [{id:'t',name:'任务',modelName:'模型',taskTargetDetail:{value:'ClutterDetection',text:'杂物检测'},configuration:{sources:[
+      {id:'s1',sceneName:'场景一'}, {id:'s2',headers:{sceneName:'场景二'}}, {id:'s3',others:{sceneName:'历史场景'}},
+    ]}}])}
+  const result=await loadVisionTaskRanking('latency')
+  assert.deepEqual(result.rows.map(r=>[r.sourceId,r.sceneName,r.algorithmName]),[['s1','场景一','杂物检测'],['s2','场景二','杂物检测'],['s3','历史场景','杂物检测']])
+})
+
+test('configuration scene wins and ambiguous source-free task has no invented scene', async () => {
+  globalThis.__visionRankingFixture = {page:directory(['g1']),post:async url => ok(url === '/device/metrics/_agg' ? [] : [
+    {id:'configured',taskTargetDetail:{text:'算法一'},configuration:{sceneName:'配置场景',sources:[{id:'s1',sceneName:'来源场景'}]}},
+    {id:'ambiguous',name:'任务名',modelName:'模型名',taskTargetDetail:{text:'算法二'},configuration:{sources:[{id:'s1',sceneName:'一'},{id:'s2',sceneName:'二'}]}},
+  ])}
+  const result=await loadVisionTaskRanking('latency')
+  const byId=Object.fromEntries(result.rows.map(r=>[r.taskId,r]))
+  assert.equal(byId.configured.sceneName,'配置场景')
+  assert.equal(byId.ambiguous.sceneName,undefined)
+  assert.equal(byId.ambiguous.algorithmName,'算法二')
 })

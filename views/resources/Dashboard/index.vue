@@ -1,90 +1,9 @@
 <template>
-  <main ref="host" class="resource-dashboard">
-    <div v-if="loading" class="resource-dashboard-state"><a-spin /></div>
-    <a-result v-else-if="errors.length" status="error" :title="t('resourceDashboard.loadError')">
-      <template #extra>
-        <a-button @click="reload">{{ t('resourceDashboard.retry') }}</a-button>
-      </template>
-    </a-result>
-    <DashBoardCanvas
-      v-else
-      :key="storageKey"
-      :model-value="dashboard"
-      :catalog="catalog"
-      :editable="false"
-      :layout-editable="true"
-      :storage-key="storageKey"
-      :preview-mode="false"
-    />
-  </main>
+  <SaasResourceDashboard v-if="isSaaS" />
+  <LegacyResourceDashboard v-else />
 </template>
-
 <script setup lang="ts" name="ResourceCenterDashboard">
-import { ref } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useElementSize } from '@vueuse/core'
-import { DashBoardCanvas } from '@jetlinks-web-core/components/DashBoardCanvas'
-import { useResourceDashboard } from './useResourceDashboard'
-import { provideVideoSummary } from '../../../visDashboard/ResourceCenter/hooks/videoSummaryContext'
-
-provideVideoSummary()
-const { t } = useI18n()
-const host = ref<HTMLElement>()
-const { width } = useElementSize(host)
-// 可用能力与画布宽度共同决定默认布局，个人拖拽结果仍由原画布恢复。
-const { catalog, dashboard, storageKey, loading, errors, reload } = useResourceDashboard(ref(false), width)
+import { isSaaS } from '@jetlinks-web-core/utils/consts'
+import SaasResourceDashboard from './SaasResourceDashboard.vue'
+import LegacyResourceDashboard from './LegacyResourceDashboard.vue'
 </script>
-
-<style scoped>
-.resource-dashboard {
-  width: 100%;
-  margin-inline: auto;
-  height: auto;
-  min-height: 0;
-  box-sizing: border-box;
-}
-.resource-dashboard-state { min-height: 30rem; display: grid; place-items: center; }
-.resource-dashboard :deep(.device-map-card) {
-  border-radius: var(--r-3, 8px);
-  overflow: hidden;
-}
-
-/* 无侧栏时对齐顶部菜单起始位置，并在 2K/4K 大屏保持自适应留白 */
-.basic-layout-page:not(:has(.ant-layout-sider)):not(:has(.project-secondary-menu .ant-tabs-left)) .resource-dashboard {
-  --overview-side-margin: clamp(24px, 12vw, 224px);
-  width: 100%;
-  max-width: none;
-  padding: 0 calc(var(--overview-side-margin) - var(--space-4, 16px)) var(--space-4);
-}
-
-@media (min-width: 1600px) {
-  .basic-layout-page:not(:has(.ant-layout-sider)):not(:has(.project-secondary-menu .ant-tabs-left)) .resource-dashboard {
-    --overview-side-margin: var(--sidebar-w, 224px);
-  }
-}
-
-@media (min-width: 2560px) {
-  .basic-layout-page:not(:has(.ant-layout-sider)):not(:has(.project-secondary-menu .ant-tabs-left)) .resource-dashboard {
-    --overview-side-margin: 256px;
-  }
-}
-
-@media (min-width: 3200px) {
-  .basic-layout-page:not(:has(.ant-layout-sider)):not(:has(.project-secondary-menu .ant-tabs-left)) .resource-dashboard {
-    --overview-side-margin: 336px;
-  }
-}
-/* 由外层页面滚动，避免固定画布高度产生第二条滚动条。 */
-.resource-dashboard :deep(.dashboard-card-layout),
-.resource-dashboard :deep(.dashboard-card-content) {
-  height: auto;
-  overflow: visible;
-}
-.resource-dashboard :deep(.dashboard-card-content) { scrollbar-gutter: auto; }
-.resource-dashboard :deep(.dashboard-grid) {
-  min-height: 0;
-  /* 网格负边距用于卡片对齐，横向越界在画布边界裁切，纵向由外层页面滚动。 */
-  overflow-x: clip;
-  overflow-y: visible;
-}
-</style>

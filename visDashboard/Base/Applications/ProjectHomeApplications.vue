@@ -13,9 +13,9 @@
       <CloudEmpty class="home-app-empty">
         <template #description>
           <div class="empty-title">{{ t('packages.ProjectHome.ApplicationsEmpty') }}</div>
-          <div class="empty-desc">{{ t('packages.ProjectHome.ApplicationsEmptyDesc') }}</div>
+          <div v-if="canCreateApp" class="empty-desc">{{ t('packages.ProjectHome.ApplicationsEmptyDesc') }}</div>
         </template>
-        <a-button type="primary" class="empty-btn" @click="handleCreateApp">
+        <a-button v-if="canCreateApp" type="primary" class="empty-btn" @click="handleCreateApp">
           {{ t('packages.ProjectHome.ApplicationsCreate') }}
         </a-button>
       </CloudEmpty>
@@ -25,52 +25,17 @@
 <script setup lang="ts">
 import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import { useI18n } from 'vue-i18n'
-import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import HomeWidget from '../shared/HomeWidget.vue'
 import HomeView from './components/HomeView.vue'
-import type { HomeInfo, HomeRow } from '../shared/types'
-import { useApplicationOpenGuard } from '../../../views/application-center/ProjectApplication/useApplicationOpenGuard'
-import type { ProjectApplication } from '../../../views/application-center/ProjectApplication/types'
+import type { HomeInfo } from '../shared/types'
+import { useHomeApplications } from './useHomeApplications'
 
 const props = withDefaults(defineProps<{ info?: HomeInfo; isEdit?: boolean }>(), { isEdit: false })
 const { t } = useI18n()
-const menuStore = useMenuStore()
-
-const {
-  openingApplicationIds,
-  openApplication,
-} = useApplicationOpenGuard()
-
-const canOpenApp = (row: HomeRow) => {
-  if (props.isEdit) return false
-  if (openingApplicationIds.value.includes(row.id)) return false
-  if (row.application?.status === 'disabled') return false
-  return true
-}
-
-const handleOpenApp = async (row: HomeRow) => {
-  if (props.isEdit) return
-  const application: ProjectApplication = row.application || {
-    id: row.id,
-    name: row.label || row.id,
-    templateId: '',
-    status: 'enabled',
-    statusText: '',
-    description: row.description || '',
-    createdAt: '',
-    defaultLanguage: 'zh-CN',
-    timezone: 'Asia/Shanghai',
-    domain: '',
-  }
-  await openApplication(application)
-}
-
-function handleCreateApp() {
-  if (props.isEdit) return
-  if (menuStore.getMenu('application-center/ProjectApplication')) {
-    menuStore.jumpPage('application-center/ProjectApplication', { query: { action: 'create' } })
-  }
-}
+const { openingApplicationIds, canOpenApp, canCreateApp, handleOpenApp, handleCreateApp } = useHomeApplications({
+  isEdit: () => props.isEdit,
+  info: () => props.info,
+})
 </script>
 <style scoped lang="less">
 .home-app-empty {

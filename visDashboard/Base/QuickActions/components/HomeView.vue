@@ -1,5 +1,5 @@
 <template>
-  <div class="home-content home-actions" :class="{ 'home-actions--grid': chart.displayStyle === 'grid', 'home-actions--six': rows.length === 6, 'home-actions--five': rows.length === 5 }">
+  <div class="home-content home-actions" :class="{ 'home-actions--grid': chart.displayStyle === 'grid', 'home-actions--saas': chart.displayStyle === 'saas', 'home-actions--six': chart.displayStyle !== 'saas' && rows.length === 6, 'home-actions--five': chart.displayStyle !== 'saas' && rows.length === 5 }">
     <button
       v-for="row in rows"
       :key="row.id"
@@ -133,5 +133,43 @@ const getToneClass = (id: string) => {
 
 .home-action:not(:disabled):hover .home-action-icon-box {
   transform: scale(1.05);
+}
+
+/* SaaS 概览只展示高频入口，独立变体不改变私有化和自定义卡片的网格。 */
+.home-actions.home-actions--saas {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: none;
+  grid-auto-rows: minmax(76px, auto);
+  gap: 12px;
+  height: auto;
+  overflow: visible;
+}
+.home-actions.home-actions--saas .home-action {
+  grid-column: auto;
+  min-height: 76px;
+  height: auto;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--line, #e5e6eb);
+  border-radius: var(--r-2, 6px);
+  background: transparent;
+  &:hover:not(:disabled) { border-color: var(--business-component-primary, #1677ff); background: var(--home-card-surface, #f7f9fc); }
+  &:focus-visible { outline: 2px solid var(--business-component-primary, #1677ff); outline-offset: 2px; }
+}
+.home-actions.home-actions--saas .home-action-icon-box {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  flex-basis: 32px;
+  background: var(--accent-soft, #e8f3ff);
+  color: var(--business-component-primary, #1677ff);
+  transform: none;
+  :deep(.home-icon) { color: var(--business-component-primary, #1677ff) !important; }
+}
+.home-actions--saas .home-action-label { font-size: 13px; line-height: 20px; white-space: normal; }
+.home-actions--saas .home-action-copy :deep(.home-action-description) { -webkit-line-clamp: 2; line-height: 18px; }
+@container project-home (max-width: 339px) {
+  .home-actions.home-actions--saas { grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(64px, auto); }
+  .home-actions.home-actions--saas .home-action { min-height: 64px; }
 }
 </style>

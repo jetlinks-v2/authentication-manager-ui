@@ -51,12 +51,12 @@ export function useResourceDashboard(preview: Ref<boolean> = ref(false), width: 
       components.push({
         ...mapDefinition.defaultConfig, id: resourceDeviceMapType, type: resourceDeviceMapType,
         componentProps: { ...mapDefinition.defaultConfig.componentProps,
-          // 此页每行仅16px，另计18px间距；14行下限覆盖地图320px正文及标题、内边距。
+          // 此页每行及间距均为16px；14行下限覆盖地图320px正文及标题、内边距。
           gridItem: { ...mapDefinition.defaultGridItem, x: 0, y: bottom, w: columns, h: 16, minH: 14 } },
       })
     }
     return {
-      canvas: { backgroundColor: 'transparent', gridLayout: { colNum: columns, rowHeight: 16, marginHorizontal: 18, marginVertical: 18 } },
+      canvas: { backgroundColor: 'transparent', gridLayout: { colNum: columns, rowHeight: 16, marginHorizontal: 16, marginVertical: 16 } },
       components,
     }
   })
