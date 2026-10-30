@@ -18,6 +18,7 @@ export interface ResourceInfo {
   componentProps?: Record<string, unknown>
 }
 export interface Metric { key: string; value?: number; failed?: boolean }
+export interface Datum { id: string; name: string; value: number; online?: number; offline?: number }
 export interface AlgorithmCoverageItem {
   id: string
   name: string

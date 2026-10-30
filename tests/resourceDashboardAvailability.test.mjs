@@ -67,7 +67,7 @@ async function bundle(saas) {
       buildApi.onResolve({ filter: /\.\.\/services\/gatewayStatus$/ }, () => ({ path: 'gateway-service', namespace: 'gateway-hook-test' }))
       buildApi.onResolve({ filter: /^(vue-router|vue-i18n|@vueuse\/core)$/ }, args => ({ path: args.path, namespace: 'gateway-hook-test' }))
       buildApi.onLoad({ filter: /.*/, namespace: 'gateway-hook-test' }, args => ({ contents: args.path === 'gateway-service'
-        ? `export const gatewayMetrics=['queue','cpu','memory','disk'];export const loadGatewayStatuses=(metric)=>context.gatewayLoad(metric);export const loadGatewayHistory=async()=>[]`
+        ? `export const gatewayMetrics=['queue','cpu','memory','disk'];export const loadGatewayDirectory=async()=>context.gatewayDirectory;export const loadGatewayNodeStatuses=async(directory,metrics)=>context.gatewayLoad(metrics[0]);export const loadGatewayStatuses=(metric)=>context.gatewayLoad(metric);export const loadGatewayHistory=async()=>[]`
         : args.path === 'vue-router' ? 'export const useRoute=()=>({params:{},query:{}})'
           : args.path === 'vue-i18n' ? 'export const useI18n=()=>({t:key=>key})'
             : `export const useDocumentVisibility=()=>context.vue.ref('visible')`, loader: 'js' }))
@@ -103,6 +103,7 @@ async function fixture(saas = false) {
   }
   context.summary = async id => { calls.push({ summary: id }); return { total: 0, online: 0 } }
   context.homeLoad = async feature => { calls.push({ home: feature }); return [] }
+  context.gatewayDirectory = Array.from({ length: 4 }, (_, i) => ({ id: String(i), online: true }))
   context.gatewayLoad = async metric => { calls.push({ gateway: metric }); return { gateways: [], unit: '条' } }
   context.moduleRegistry = {
     hasModule: id => context.modules.has(id),
@@ -762,4 +763,29 @@ test('all four ranking metrics load without history and ignore a response after 
   pending.at(-1).resolve({ gateways: [{ id: 'disposed', name: 'disposed', metrics: { disk: { property: 'disk', value: 99 } } }], unit: '%' })
   await tick()
   assert.deepEqual(state.rows.value.map(item => item.id), before)
+})
+
+
+test('gateway presentation switches between zero, small table and four-node ranking', async () => {
+  const context = await fixture()
+  context.setModules('edge-master-ui', 'jetlinks-ai-ui')
+  const requested = []
+  context.gatewayLoad = async metric => { requested.push(metric); return { gateways: context.gatewayDirectory.map(item => ({ ...item, metrics: {} })), unit: '%' } }
+  const scope = vue.effectScope()
+  const info = vue.ref({ componentProps: { resourceCenterVideoPlaybackTrend: { refreshSeconds: 0 }, visionEnabled: false } })
+  const counts = []
+  const state = scope.run(() => context.api.useGatewayStatus(info, vue.ref(false), count => counts.push(count)))
+  await tick()
+  assert.equal(state.nodeCount.value, 4)
+  assert.equal(state.tableMode.value, false)
+  assert.ok(!state.tabs.value.some(tab => tab.value === 'queue'))
+  for (const count of [3, 1, 0, 4]) {
+    context.gatewayDirectory = Array.from({ length: count }, (_, i) => ({ id: String(i), name: `Node ${i}`, online: true }))
+    await state.refresh(); await tick()
+    assert.equal(state.nodeCount.value, count)
+    assert.equal(state.tableMode.value, count > 0 && count <= 3)
+    assert.equal(state.tableRows.value.length, count)
+  }
+  assert.deepEqual(counts, [4, 3, 1, 0, 4])
+  scope.stop()
 })

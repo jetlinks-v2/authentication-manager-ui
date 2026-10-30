@@ -16,6 +16,7 @@ export interface QuickAlarm {
   actual: string
   state: string
   stateText: string
+  level?: unknown
   time: string
   shortTime: string
   alarmTime?: string | number
@@ -58,6 +59,7 @@ function mapAlarm(row: Record<string, unknown>): QuickAlarm {
     rule: textOf(row.triggerDesc || row.alarmConfigName),
     actual: textOf(row.actualDesc || latest.actualDesc),
     state: textOf(state.value || row.state), stateText: textOf(state.text),
+    level: row.level,
     time: date?.isValid() ? date.format('YYYY-MM-DD HH:mm:ss') : '—',
     shortTime: date?.isValid() ? date.format('MM-DD HH:mm') : '—',
     alarmTime, alarmConfigId: textOf(row.alarmConfigId),

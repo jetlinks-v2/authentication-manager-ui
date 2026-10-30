@@ -8,7 +8,7 @@ const addVideoTarget: HomeTarget = isPrivateDeployment()
 
 /** 菜单编码来自各 owning module，运行时只解析当前项目已授予的菜单。 */
 export const HOME_TARGETS: Record<string, HomeTarget> = {
-  devices: { menus: ['iot-user-device-list', 'iot-user/device/list'] },
+  devices: { menus: ['iot-user-device-list', 'iot-user/device/list'], query: { type: 'device' } },
   addDevice: { menus: ['iot-user-device-list'], query: { type: 'device', action: 'create' } },
   video: { menus: ['video/resources', 'media/Device', 'video/live'] },
   addVideo: addVideoTarget,
@@ -43,7 +43,7 @@ export const HOME_TARGETS: Record<string, HomeTarget> = {
   deviceAlarm: { menus: ['iot-user/device/alarm'] },
 }
 export const HOME_MORE_TARGETS: Partial<Record<HomeFeature, HomeTarget>> = {
-  Applications: HOME_TARGETS.applications, Quotas: HOME_TARGETS.usage, Announcements: HOME_TARGETS.announcements,
+  Applications: HOME_TARGETS.applications, Quotas: HOME_TARGETS.usage, SaasQuotas: HOME_TARGETS.usage, Announcements: HOME_TARGETS.announcements,
 }
 export const QUICK_ACTIONS = [
   { id: 'devices', target: HOME_TARGETS.addDevice },

@@ -75,3 +75,21 @@ test('an old request cannot publish into a reopened subscription', async () => {
   assert.equal(current[0][0].value, 2)
   polling.dispose()
 })
+
+test('cached subscription replays original completion time without pretending to refresh', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 1000 })
+  let calls = 0
+  const polling = createHomePolling(async () => [{ id: 'devices', value: ++calls }])
+  const first = [], replay = []
+  polling.subscribe('SaasResources', 60, (rows, failed, completedAt) => first.push({ rows, failed, completedAt }))
+  await flush()
+  t.mock.timers.tick(12000)
+  polling.subscribe('SaasResources', 60, (rows, failed, completedAt) => replay.push({ rows, failed, completedAt }))
+  assert.equal(calls, 1)
+  assert.deepEqual(replay[0], first[0])
+  assert.equal(replay[0].completedAt, 1000)
+  polling.refresh(['SaasResources']); await flush()
+  assert.equal(calls, 2)
+  assert.equal(replay.at(-1).completedAt, 13000)
+  polling.dispose()
+})

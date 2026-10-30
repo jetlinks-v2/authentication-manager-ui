@@ -83,18 +83,22 @@ const homeBuild = await build({
   plugins: [coreI18nPlugin(), {
     name: 'home-application-fixture',
     setup(plugin) {
-      plugin.onResolve({ filter: /^(dayjs|@authentication-manager-ui\/api\/application-center\/businessApplication|@jetlinks-web-core\/layout\/runtime\/layoutVariant|\.\/api(Announcements|Resources|Quotas)|\.\.\/QuickGuide\/apiQuickGuide)$/ }, args => ({ path: args.path, namespace: 'fixture' }))
+      plugin.onResolve({ filter: /^(dayjs|@authentication-manager-ui\/api\/application-center\/businessApplication|@jetlinks-web-core\/layout\/runtime\/layoutVariant|\.\/api(Announcements|Resources|Quotas)|\.\.\/QuickGuide\/apiQuickGuide|\.\.\/Saas\/services\/(resources|today))$/ }, args => ({ path: args.path, namespace: 'fixture' }))
       plugin.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ contents: `
         export default () => ({ format: () => '', isValid: () => true });
         export const normalizeBasicLayoutVariant = value => value;
         export const queryBusinessApplications = () => globalThis.homeFixture.applications();
-        export const queryBusinessApplicationTemplates = () => globalThis.homeFixture.templates();
+        export const queryOverviewBusinessApplications = query => globalThis.homeFixture.pagedApplications(query);
+        export const queryBusinessApplicationTemplates = query => globalThis.homeFixture.templates(query);
         export const loadAnnouncements = () => [];
+        export const loadAnnouncementUnread = () => [];
         export const loadResourceRows = () => [];
         export const loadOperationRows = () => [];
         export const loadHealthRows = () => [];
         export const loadQuotaRows = () => [];
         export const loadQuickGuideRows = () => [];
+        export const loadSaasResourceRows = () => [];
+        export const loadSaasTodayRows = () => [];
       ` }))
     },
   }],
@@ -231,6 +235,50 @@ test('home cards load template provider before opening and ignore legacy instanc
   assert.equal(await guard.openApplication(rows[0].application), true)
   assert.equal(calls.some(call => call[0] === 'redirect'), true)
   assert.equal(calls.some(call => call[0] === 'runtime'), false)
+})
+
+test('home cards prefer the application description and otherwise use its template description', async () => {
+  globalThis.homeFixture = {
+    applications: async () => ({ result: [
+      { id: 'own', name: 'Own', templateId: 'template', description: '应用描述' },
+      { id: 'fallback', name: 'Fallback', templateId: 'template' },
+      { id: 'none', name: 'None', templateId: 'missing' },
+    ] }),
+    templates: async () => ({ result: [{ id: 'template', name: 'Template', description: '模板描述' }] }),
+  }
+  try {
+    const rows = await loadHomeRows('Applications')
+    assert.deepEqual(rows.map(row => row.description), ['应用描述', '模板描述', undefined])
+  } finally {
+    delete globalThis.homeFixture
+  }
+})
+
+test('SaaS overview requests a bounded page and only its associated templates', async () => {
+  const calls = []
+  globalThis.homeFixture = {
+    pagedApplications: async query => { calls.push(['applications', query]); return { result: { data: [
+      { id: 'a', name: 'A', templateId: 'one', description: '应用描述' },
+      { id: 'b', name: 'B', templateId: 'one' },
+      { id: 'c', name: 'C', templateId: 'two' },
+    ] } } },
+    templates: async query => { calls.push(['templates', query]); return { result: [
+      { id: 'one', name: 'One', description: '模板描述' },
+      { id: 'two', name: 'Two', description: '另一个模板' },
+    ] } },
+  }
+  try {
+    const rows = await loadHomeRows('SaasApplications')
+    assert.deepEqual(rows.map(row => row.description), ['应用描述', '模板描述', '另一个模板'])
+    assert.deepEqual(calls[0][1], { pageIndex: 0, pageSize: 20, paging: true, sorts: [{ name: 'createTime', order: 'desc' }] })
+    assert.deepEqual(calls[1][1], { paging: false, terms: [{ column: 'id', termType: 'in', value: ['one', 'two'] }] })
+    calls.length = 0
+    globalThis.homeFixture.pagedApplications = async query => { calls.push(['applications', query]); return { result: { data: [] } } }
+    assert.deepEqual(await loadHomeRows('SaasApplications'), [])
+    assert.equal(calls.length, 1)
+  } finally {
+    delete globalThis.homeFixture
+  }
 })
 
 test('detail and shared application list load template information even when applications finish first', async () => {
