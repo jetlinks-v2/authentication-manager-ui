@@ -230,6 +230,30 @@ export const getBusinessApplicationMenus = (id: string) =>
   apiRequest.get<{ menus: MenuPermissionNode[]; assetAccesses: AssetAccessPolicy[] }>(
     `/business-application/${encodeURIComponent(id)}/menus`, undefined, { applicationScope: false })
 
+/**
+ * 查询应用角色的现有菜单与数据权限授权。
+ *
+ * 该入口以目标应用的有效菜单为范围，不依赖当前管理员的运行时菜单集合。
+ */
+export const getBusinessApplicationRoleMenuGrantDetail = (applicationId: string, roleId: string) =>
+  apiRequest.get<{ menus: MenuPermissionNode[]; assetAccesses: AssetAccessPolicy[] }>(
+    `/business-application/${encodeURIComponent(applicationId)}/roles/${encodeURIComponent(roleId)}/menus/_grant/detail`,
+    undefined,
+    { applicationScope: false },
+  )
+
+/**
+ * 在目标应用范围内保存角色菜单与数据权限授权。
+ *
+ * 后端会验证角色归属、应用有效菜单和模板资产策略。
+ */
+export const saveBusinessApplicationRoleMenuGrant = (applicationId: string, roleId: string, data: unknown) =>
+  apiRequest.put<void>(
+    `/business-application/${encodeURIComponent(applicationId)}/roles/${encodeURIComponent(roleId)}/menus/_grant`,
+    data,
+    { applicationScope: false },
+  )
+
 export const getBusinessApplicationTemplateMenus = (id: string) =>
   apiRequest.get<MenuView[]>(`/business-application-template/${id}/menus`)
 
