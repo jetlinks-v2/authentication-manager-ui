@@ -61,7 +61,7 @@ const columns = computed(() => [
   { title: $t('ThirdPartyApplication.project.integrationId'), key: 'id', width: 220 },
   { title: $t('ThirdPartyApplication.project.environment'), key: 'environment', dataIndex: 'environment', width: 110 },
   { title: $t('ThirdPartyApplication.project.integrationState'), key: 'state', width: 110 },
-  { title: $t('ApiApplication.columns.createTime'), key: 'createTime', width: 175 },
+  { title: $t('ApiApplication.columns.createTime'), key: 'createTime', width: 180 },
   { title: $t('ApiApplication.columns.action'), key: 'action', width: 200 },
 ])
 

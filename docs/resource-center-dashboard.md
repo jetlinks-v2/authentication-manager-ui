@@ -14,7 +14,7 @@
 
 发布：更新 runtime-ui 前端资源后生效，无需重启后端。
 
-## 资源中心接入设备地图（已实施，真实点位待接口访问恢复后复验）
+## 资源中心接入设备地图（已实施，空点位底图已复验）
 
 目标与范围：在运行时 `/resources/dashboard` 增加现有设备地图，供资源管理员查看设备位置、聚合点及设备详情。任务级别 M，owning module 为 `runtime-ui/modules/authentication-manager-ui`；通过现有画布组件发现机制复用 `runtime-ui/modules/device-manager-ui/visDashboard/DeviceManagement/DeviceMapCard`，保留 `deviceMapCard` 类型及其取数、刷新、聚合和详情交互。
 
@@ -25,16 +25,16 @@
 3. 在 `views/resources/Dashboard/resourceLayoutStorage.ts` 补充新增地图的缓存兼容：保留同账号、项目、部署、宽度档位与原组件集合的个人坐标，将地图追加到已存布局底部，保留原缓存；新布局继续由画布保存。
 4. `tests/resourceDashboardDeviceMap.test.mjs` 使用真实组件注册入口、discovery 与画布状态实现验证本次装配和缓存行为；测试中的 Vue 运行视图及账号能力为隔离替身，不将它们作为真实点位渲染证据。
 
-边界：仅在运行时 `authentication-manager-ui` 接入设备地图并配置该页面所需的查询权限；不修改运营端 `ui/`、后端接口、路由、地图组件内部交互或现有资源卡的业务规则，不增加新依赖。
+边界：在运行时 `authentication-manager-ui` 接入设备地图并配置该页面所需的查询权限；地图自身的底图挂载及空流完成修复归属 `device-manager-ui`，见下方说明。不修改运营端 `ui/`、后端接口、路由或现有资源卡的业务规则，不增加新依赖。
 
-布局与兼容：地图默认放在页面底部并占满一行，私有化与 SaaS 运行时均接入。底图沿用现有高德 Key 和版本支持检查；缺少配置、无坐标及接口失败使用地图现有状态。缓存键在组件集合中增加 `deviceMapCard`，仅从同范围、不含地图的旧键复制完整且有效的坐标并追加地图；新布局优先、迁移幂等，原记录保留。SaaS 继续沿用既有 v5/v4 历史迁移规则。
+布局与兼容：地图默认放在页面底部并占满一行，私有化与 SaaS 运行时均接入。底图仅在缺少高德 JS API Key 或密钥时显示配置提示；配置齐全后先显示底图，空点位只显示底图，接口失败在地图上方提示，不限制社区版。缓存键在组件集合中增加 `deviceMapCard`，仅从同范围、不含地图的旧键复制完整且有效的坐标并追加地图；新布局优先、迁移幂等，原记录保留。SaaS 继续沿用既有 v5/v4 历史迁移规则。
 
 验证结果（以下命令在各自模块目录执行）：
 
 - `node --test tests/resourceDashboardDeviceMap.test.mjs`：10/10 通过，覆盖私有化/SaaS、360/640/900/1600px 布局、精确入口过滤、来源缺失、加载失败重试、等待完整目录、预览无缓存写入、真实画布状态的拖动/缩放保存恢复、旧坐标迁移、非法记录拒绝、账号隔离及 SaaS v5 兼容。
 - `node --test tests/resourceDashboardAvailability.test.mjs tests/videoNavigationTarget.test.mjs tests/gatewayStatusHistory.test.mjs tests/gatewayRotation.test.mjs`：38/38 通过。设备模块的 `node --test tests/deviceMapCluster.test.mjs tests/dashboardRuntime.test.mjs tests/deviceLocationGeoContract.test.mjs`：14/14 通过。复用这些未被后续局部 CSS 变更影响的验证证据，共 62 项通过；既有隔离 Hook 生命周期提示和 Node 模块/MockTimers 提示保留。
 - `index.vue` 的脚本、模板及 scoped CSS 编译通过，`git diff --check` 通过。对本次三个 Dashboard TypeScript 入口执行定向 `vue-tsc --noEmit`，共享依赖产生 211 项诊断，本次修改的三个文件无诊断；不能据此宣称完整类型检查通过。运行时工作区及模块未提供 lint 或样式门禁脚本，未执行完整生产构建。清理共享类型问题后可在 `runtime-ui/` 执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 与 `pnpm build`。
-- Chrome 的 `http://localhost:9200/#/resources/dashboard` 已实际渲染底部整行地图卡片，圆角及高度正常；位置流 `/geo/object/device/_search/geo.json` 返回 403 Forbidden，点击重试后仍失败，组件展示现有错误态。真实点位、底图、聚合与详情尚未在该环境验收；浏览器拖动/缩放受开发页刷新影响未形成有效证据，布局保存恢复由真实画布状态定向测试覆盖。需要接口访问恢复后再复验这些交互，不能以隔离测试代替真实接口验收。
+- 浏览器的 `http://localhost:9200/#/resources/dashboard` 已实际渲染底部整行地图卡片。后续完成下述空流及 Spin 容器高度修复后，热更新与重新加载均可显示真实高德底图，空点位时仅显示底图，圆角及高度正常。非空真实点位、聚合与详情尚未在该环境验收；浏览器拖动/缩放未形成有效证据，布局保存恢复由真实画布状态定向测试覆盖。
 
 ### 设备地图查询权限补齐
 
@@ -44,7 +44,15 @@
 
 验证：`node --test tests/menuSettingOwners.test.mjs` 15/15 通过。额外通过 esbuild 加载实际 `baseMenu.ts`、`baseMenu.json` 和菜单同步工具，确认导出恰好包含这两项查询权限；模拟旧服务端菜单同步后，自定义权限、资产范围、名称、父级、排序、隐藏状态均保留，重复同步幂等，原草稿未被修改。JSON 解析和 `git diff --check` 通过。本轮未同步服务端菜单或复测位置接口，403 是否消失仍待真实环境验证。本次仅修改 JSON 权限声明，不涉及 TypeScript/Vue 实现，未重跑受共享依赖错误阻断的全量类型检查或生产构建；模块与工作区无 lint 脚本。
 
-发布边界：本次修改运行时资源中心装配、缓存兼容、局部样式、定向测试与页面查询权限声明，不修改设备地图内部实现及后端权限校验。生产环境需要重新构建发布 runtime-ui 静态资源并同步对应菜单权限。代码与本文一并提交到 `authentication-manager-ui` 当前 `2.20` 分支，具体提交见该分支 Git 记录；未推送远端。提交时复用上方仍有效的 62 项地图/资源中心测试、15 项菜单配置回归与实际菜单权限合并检查结果，不重复运行测试或构建。
+### 空点位时先显示底图
+
+用户补齐权限后反馈位置接口返回 200、响应为空；因此本次触发已从接入阶段的 403 变为前端将有限 SSE 的正常结束误报为失败。已确认有无点位都应先展示底图：运行时 `device-manager-ui/visDashboard/DeviceManagement/DeviceMapCard/DeviceMapCard.vue` 仅在缺少 `amap.apiKey`（高德 JS API Key）或 `amap.secretKey`（密钥，含空白值）时提示前往“系统设置 → 基础配置 → 地图配置”，不依赖 Web 服务 Key，也不限制社区版。配置齐全即挂载底图，点位仅决定标记图层；空结果只显示底图，不显示“暂无设备位置信息”；请求失败在地图上方提示，保留重试。该模块的 `services/deviceMap.ts` 区分成功 EOF 与真实错误，`hooks/useDeviceMap.ts` 在正常完成时结束加载。
+
+容器高度：`a-spin` 的 `class` 作用于转圈元素，原样式未命中实际嵌套外层，正文为 441px 而高德容器为 0px。地图 SFC 改用组件提供的 `wrapper-class-name` 后，Spin 两层及高德容器均为 441px，真实空数据底图在热更新和重新加载后均显示正常；移除运行态空数据提示后再次打开页面，确认底图仍正常且无提示条。
+
+验证入口及范围见 `../device-manager-ui/visDashboard/README.md`（相对本模块根目录）。移除运行态空数据提示后设备模块 24 项定向测试重新通过，覆盖真实事件流库的结束语义、Vue Hook、真实 SFC 的底图挂载、社区版、8 种配置缺失/空白情形及配置恢复。地图 SFC 脚本/模板/Less 重新编译通过，中英文地图词条键一致；沿用逻辑修复后的定向类型检查证据，依赖链仍有 163 项诊断，三个改动入口无诊断，未运行完整构建，模块及工作区无 lint 脚本。高德 SDK 在 SFC 测试中为替身，空数据真实底图已由浏览器复验补足，非空点位、聚合及详情仍待联调，本轮修复尚未提交。
+
+发布边界：资源中心装配、缓存兼容、局部样式、定向测试与页面查询权限声明已提交于 `authentication-manager-ui` 的 `2.20` 分支，commit `5adb4dd`，未推送远端；复用接入阶段的 62 项地图/资源中心测试、15 项菜单配置回归与实际菜单权限合并证据。空流与底图挂载修复归属运行时 `device-manager-ui`，不改后端权限校验；生产环境需构建发布 runtime-ui，并同步前述菜单权限定义。
 
 ## BUG-41641：算法覆盖统计范围（已实施，本地定向验证通过）
 

@@ -42,7 +42,7 @@ export const useSubscriptionPanel = (application: () => ApiApplication) => {
     { title: t('ApiApplication.subscription.executionState'), key: 'executionState', scopedSlots: true, width: 145 },
     { title: t('ApiApplication.subscription.state'), dataIndex: 'state', key: 'state', scopedSlots: true, width: 100 },
     { title: t('ApiApplication.subscription.validation'), key: 'validation', scopedSlots: true, width: 110 },
-    { title: t('ApiApplication.subscription.createTime'), dataIndex: 'createTime', key: 'createTime', scopedSlots: true, width: 170 },
+    { title: t('ApiApplication.subscription.createTime'), dataIndex: 'createTime', key: 'createTime', scopedSlots: true, width: 180 },
     { title: t('ApiApplication.subscription.actions'), key: 'action', scopedSlots: true, fixed: 'right', width: 100 },
   ])
   const channelName = (id?: string) => channelLabel(id, t)
