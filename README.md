@@ -142,6 +142,8 @@ SaaS 概览公告使用 [notify-manager #81](https://github.com/jetlinks-v2/noti
 
 ## System Bulletin Ownership
 
+公告接收列表的类型直接采用接收接口顶层 type，并由现有 normalizeBulletinType/resolveAnnouncementTypeLabel 兼容旧枚举、快照和当前语言；不将 provider 分类“公告”作为内容类型。register.ts 在接收源的 typeFilter 中声明查询列 type，选项与公告编辑页共用 BULLETIN_TYPE_VALUES，core 通过这一通用声明生成筛选，实际类型条件由 receivedDataSource.ts 原样传给接收查询接口。列表和筛选的类型值、文案保持同源，不新增类型接口、后端枚举或本地已读规则。按用户要求直接修正，本轮未运行页面复现、自动检查或构建；更新前端资源即可，无后端重启要求。
+
 System bulletin pages, API contracts, types, notification detail rendering, and provider constants are owned by `views/system/Announcement/`; user-facing copy follows this module's locale convention. The shared web core only exposes generic notification-provider and detail-component registration points; it does not identify `SystemBulletin` or call bulletin APIs. SaaS modules may contribute menu binding metadata, but they do not implement bulletin pages or APIs.
 
 ### 系统公告原型对齐计划
