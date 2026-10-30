@@ -1,3 +1,13 @@
+import { h, type Component, type VNode } from 'vue'
+import {
+  FileTextOutlined,
+  NotificationOutlined,
+  RocketOutlined,
+  SafetyCertificateOutlined,
+  ToolOutlined,
+  WarningOutlined,
+} from '@ant-design/icons-vue'
+
 /** 平台内置公告类型与统一图标语义；类型只表达内容主题，不承担紧急程度或颜色等级。 */
 export const BULLETIN_TYPE_ICONS: Record<string, string> = {
   default: 'NotificationOutlined',
@@ -9,6 +19,15 @@ export const BULLETIN_TYPE_ICONS: Record<string, string> = {
 }
 
 export const DEFAULT_BULLETIN_TYPE_ICON = 'NotificationOutlined'
+
+const BULLETIN_TYPE_ICON_COMPONENTS: Record<string, Component> = {
+  NotificationOutlined,
+  ToolOutlined,
+  WarningOutlined,
+  RocketOutlined,
+  SafetyCertificateOutlined,
+  FileTextOutlined,
+}
 
 export const BULLETIN_TYPE_COLORS: Record<string, string> = {
   default: 'var(--jet-theme-primary)',
@@ -33,3 +52,9 @@ export const resolveBulletinTypeIcon = (type?: unknown): string => {
     : type
   return BULLETIN_TYPE_ICONS[String(value ?? '').trim()] || DEFAULT_BULLETIN_TYPE_ICON
 }
+
+/** 程序式通知无法使用模板中的全局 AIcon，统一创建与公告类型一致的图标节点。 */
+export const createBulletinTypeIconNode = (type?: unknown): VNode => h(
+  BULLETIN_TYPE_ICON_COMPONENTS[resolveBulletinTypeIcon(type)] || NotificationOutlined, {
+  style: { color: resolveBulletinTypeColor(type) },
+})

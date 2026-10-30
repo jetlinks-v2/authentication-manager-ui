@@ -36,6 +36,7 @@ test('the real bulletin registration enables detail confirmation and routes it t
     './api': api,
     './noticeListLoader': {},
     './realtimeNotification': {},
+    './loginPopup': {},
     './localReadStore': {subscribeAnnouncementReadChanges: () => () => {}},
     './realtimeSubscription': {subscribeAnnouncementRealtime: () => () => {}},
     '@jetlinks-web-core/locales': {__esModule: true, default: {global: {t: key => key}}},

@@ -19,12 +19,19 @@ test('uses the explicit current publication reference, including top-level recei
   }), { bulletinId: 'bulletin-B', publishVersion: 1 })
 })
 
-test('does not infer publication identity from dataId or accept an unversioned reference', () => {
+test('keeps legacy unversioned references but rejects a batch id without its explicit version', () => {
   const { resolveSystemBulletinReference } = loadApi()
+  assert.deepEqual(resolveSystemBulletinReference({ dataId: 'legacy-bulletin' }), {
+    bulletinId: 'legacy-bulletin',
+  })
+  assert.deepEqual(resolveSystemBulletinReference({ detail: { id: 'legacy-detail' } }), {
+    bulletinId: 'legacy-detail',
+  })
+  assert.deepEqual(resolveSystemBulletinReference({ bulletinId: 'legacy-top-level' }), {
+    bulletinId: 'legacy-top-level',
+  })
   for (const input of [
     { dataId: 'bulletin-A:3' },
-    { detail: { id: 'bulletin-A', publishVersion: 3 } },
-    { bulletinId: 'bulletin-A' },
     { bulletinId: 'bulletin-A', publishVersion: 0 },
     { bulletinId: 'bulletin-A', publishVersion: -1 },
     { bulletinId: 'bulletin-A', publishVersion: 1.5 },

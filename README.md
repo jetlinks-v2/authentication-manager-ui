@@ -142,7 +142,45 @@ Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/1
 
 System bulletin pages, API contracts, types, notification detail rendering, and provider constants are owned by `views/system/Announcement/`; user-facing copy follows this module's locale convention. The shared web core only exposes generic notification-provider and detail-component registration points; it does not identify `SystemBulletin` or call bulletin APIs. SaaS modules may contribute menu binding metadata, but they do not implement bulletin pages or APIs.
 
-The announcement editor loads its supported types from `POST /system/bulletin/type` through `getAnnouncementTypes`; it does not call the legacy `/dictionary/s_bulletin_type/items` dictionary endpoint.
+### 系统公告原型对齐计划
+
+状态：已按确认原型完成前端实现；真实后端数据和浏览器交互仍需联调确认。
+
+目标与 owning module：公告页面和通知处理继续由 `ui/modules/authentication-manager-ui/views/system/Announcement/` 维护；运营端入口仍为“运营中心 > 资讯与公告 > 系统公告管理”。SaaS 运营人员在新增/编辑时选择 SaaS 端、一个或多个区域，二者可同时选择且至少选择一项；前端只保存范围，不展开区域项目。按新原型调整管理列表、轻量筛选栏和新增/编辑弹窗，不复制页面到 `saas-manager-ui`。
+
+方案档案：采用“标准管理表格页”，因为运营人员的第一任务是按标题/摘要和发布状态定位公告并执行轻量 CRUD。首屏不再重复展示页面标题，调整为 `独立筛选面板（标题或摘要、状态、重置） -> 独立列表面板（左上新增 + j-pro-table）`，两个面板使用统一间距形成清晰分隔；列表保持 6 个主要信息列：标题（第二行摘要）、状态、弹窗提醒、创建时间、发布时间、操作。状态用 `j-badge-status`，新增是唯一主视觉动作，不增加 KPI、说明 banner、卡片台账或侧栏。搜索层按原型和窄改旧页采用固定轻量筛选/`ProSearch` 例外：只有关键词与状态两个固定条件，无保存搜索、远程选项或路由回显需求；不采用更重的 `ConditionFilter` 表达式交互。
+
+编辑方案：新增/编辑继续使用完整弹窗，因为标题、摘要、弹窗提醒、Markdown 正文、投递范围和“保存草稿 / 保存并发布”存在跨字段校验及两种提交结果。标题和摘要同排，弹窗提醒与 SaaS/区域范围位于正文前，正文复用 Web Core 的 `MarkdownEditor`，底部提供取消、保存草稿、保存并发布。公告类型必填且新增时不预填默认值，在 `others.popup` 保存弹窗标记，并在 `others.deliveryScope` 保存 SaaS 与区域选择。
+
+明确不做：不新增公告主表、投递任务表或副本映射表，不修改 `runtime-ui/`，不恢复接收用户、接收组织或发布人字段，不在前端查询或选择项目，不复制原型中的示例公告数据，也不引入新的页面级通用组件。
+
+实施步骤：恢复摘要字段的编辑、保存和标题下摘要展示；增加“弹窗提醒”列；将筛选栏与列表拆成两个 `ContentPanel`，把新增按钮移到列表工具栏左侧，并加强标题与摘要的字号、字重层级；正文使用 Markdown 编辑器；增加 SaaS 复选框和区域多选，校验至少一项；保存成功后按提交意图调用 SaaS 公告编排接口；将页面标题、筛选文案、状态、按钮和提示同步到中英文 i18n；更新公告契约测试并执行样式、类型/构建和目标交互验证。
+
+风险与待确认：当前后端 `SystemBulletinService` 的更新和删除都限定 `state=unpublished`，因此原型里“已发布公告直接编辑、删除”仅改前端会产生无效操作。推荐保持有效生命周期：未发布显示编辑/立即发布/删除，已发布显示查看/撤回；其余布局和字段按原型实现。若必须让已发布公告也能编辑或删除，需要另行扩展后端状态规则。现有通知一次性弹窗仍不是跨标签页/跨设备的原子领取，本次不处理该问题。
+
+实现结果：`ManagementView.vue` 去掉重复的页面标题，用两个 `ContentPanel` 分隔筛选区与列表区；模块内 `AnnouncementListFilters.vue` 只维护关键词、状态和重置交互，查询仍由列表页负责。新增按钮位于列表工具栏左侧；公告标题使用 `--fs-20` 和 700 字重突出展示，第二行摘要保持常规字号与字重；两者通过局部 `:deep` 选择器命中 `j-ellipsis` 实际渲染的内部元素。列表同时增加弹窗提醒列，行内动作遵循未发布可编辑/发布/删除、已发布可查看/撤回的生命周期。`AnnouncementEditorDialog.vue` 复用 `MarkdownEditor` 保存单份 Markdown 字符串正文，关闭文件上传工具栏，保留标题和摘要的国际化兼容，并增加 SaaS/区域范围选择。`api.ts` 将 `others.deliveryScope` 与 `others.popup` 一次保存，保存并发布及列表发布/撤回统一调用 `/saas/bulletin/**`；旧的用户/组织发布弹窗与辅助逻辑已删除。
+
+验证结果：本次操作级范围契约测试 5/5 通过，覆盖保存范围、发布/撤回 Body 映射、运行时 ID 归一化以及保存并发布的串行和失败状态；列表发布定向断言 1/1 通过，UI 样式门禁通过。范围保存/编排、Markdown 正文、登录首次弹窗、接收数据源与实时提示的既有定向前端测试 14 项通过；完整公告套件仍有当前工作区既有的多语言编辑器和 `system/NoticeRule` 项目运行时菜单断言不一致，不属于本次 Body 契约范围。使用 Vite 7 程序化兼容入口的模块生产构建此前通过，转换 11,083 个模块；本次未重复执行完整构建。完整 `vue-tsc` 仍因工作区既有诊断退出（1,312 行），公告目录命中 0 条；旧发布范围文件删除后未保留公告类型诊断。`index.vue` 为 139 行，`git diff --check` 通过。登录态页面、控制端到区域 Runtime Command 以及真实双账号铃铛/弹窗仍待部署联调。
+
+### 公告类型字符串化与展示计划
+
+目标与 owning module：公告类型的前端契约统一为普通字符串。运营人员在 `views/system/Announcement/components/AnnouncementEditorDialog.vue` 的新增/编辑弹窗中输入公告类型，默认值为 `default`、必填且最长 64 个字符；`api.ts` 保存字符串并在编辑时原样回显。管理列表增加“公告类型”列，右上角铃铛的公告卡片增加类型标签。
+
+影响范围：公告页面、API 类型、通知文本装配和中英文 i18n 继续由 `ui/modules/authentication-manager-ui/views/system/Announcement/` 维护；共享 `jetlinks-web-core` 只为 `NoticeItem.vue` 增加业务中立的可选标签展示字段，不识别 `SystemBulletin`、不调用公告接口。该改动属于既有页面的单字段与单卡片展示调整，不改变页面壳层、筛选结构或主交互方案。
+
+明确不做：不修改 `runtime-ui/`，不新增类型字典选择器、类型筛选或公告表，不改变 SaaS/区域投递、发布、撤回、铃铛已读和首次登录弹窗语义，也不把自定义类型强制映射为新的图标或颜色；未知类型继续使用现有默认公告图标。
+
+实施与验证：将 `AnnouncementRecord`、`AnnouncementDraft` 和通知详情中的 `type` 收敛为字符串，移除保存时固定 `{ value, text }` 的逻辑；新增类型输入、列表列和铃铛卡片标签，并同步中英文占位文案。更新公告契约测试和通用通知卡片测试，检查修改后的 Vue 文件行数，执行公告定向测试、样式门禁、模块生产构建及 `git diff --check`。部署联调需验证自定义类型经过 SaaS 保存、Runtime Command 和项目副本后仍保持一致。
+
+### 系统公告发布与接收链路适配计划
+
+目标与 owning module：以 `notify-manager` PR #81 的发布投递、接收查询和 `/system/bulletin/received` 实时推送为后端事实源；`authentication-manager-ui` 保留当前系统公告管理原型，只适配“保存并发布”、右上角铃铛独立公告数据源和登录后首次弹窗。后端测试分支使用 `notify-manager` PR #81，前端测试分支使用本模块 PR #118；共享 `jetlinks-web-core` 只补业务中立的数据源扩展能力，不识别系统公告。
+
+明确不做：不修改 `runtime-ui/`，不恢复公告类型或定向用户/组织选择，不再写入或读取通用 `/notifications` 收件箱，不把本地确认描述为服务端跨设备已读，也不提交、推送或创建新的 PR。SaaS 端和每个区域项目内仍是两套公告数据，前端不直接创建项目副本。
+
+实施步骤：后端 `_save` 在事务完成后返回公告 ID，前端“保存并发布”串行执行 `_save` 与 `/saas/bulletin/_deploy`；保存数据中的 `others.deliveryScope` 只负责编辑回显，发布和撤回将当前范围转换为 `{ all, runtimes: [{ id, projects: [] }] }` Body 交给 SaaS 后端编排区域副本。铃铛查询、未读统计、已读确认和实时刷新继续使用 `/system/bulletin/received`；登录处理器只查询该独立数据源中未确认且 `others.popup=true` 的公告，弹窗关闭后按 `公告ID + publishVersion` 写入当前服务和账号隔离的浏览器确认记录；保留当前管理列表和 i18n 交互。
+
+风险与验证：接收视图不保存服务端已读状态，因此“首次弹窗”只能保证同账号、同浏览器、同发布版本一次，跨浏览器或清理存储后会再次弹出。`notify-manager` 副本命令测试 2 项、`saas-manager` 编排测试 6 项、`tenant-notify` 可信上下文测试 24 项通过；`notify-manager` 数据库集成测试已完成编译，但本机无可用 Docker，Testcontainers 在进入业务断言前停止。前端定向测试和生产构建通过，公告目录无类型诊断。真实区域 Runtime Command、数据库自动升级及双账号浏览器联调仍须在完整部署环境验证。
 
 公告正文保存和发布均要求非空：编辑器以当前中英文内容为准，至少一种语言有非空白正文才允许保存，不使用隐藏的旧正文或默认模板回填清空结果。后端在保存和发布入口执行相同的正文约束；已有空草稿的发布按钮禁用。
 
@@ -160,7 +198,7 @@ Goal: give the six built-in bulletin types one icon vocabulary, and open a cente
 
 - `views/system/Announcement/bulletinTypeIcon.ts` owns the type-to-icon map (`default`, `maintenance`, `incident`, `release`, `security`, `policy`) and falls back to `NotificationOutlined` for unknown, historical or missing values. Icons only mark the content topic; they never carry severity or colour level.
 - `views/system/Announcement/realtimeNotification.ts` routes both realtime arrivals and bell-record clicks directly to `openAnnouncementDetail`, with a centered, closable dialog and no right-corner tip. `我知道了` keeps the existing read confirmation and badge refresh; closing the dialog alone does not mark it read.
-- Dialog styling follows the space-management prototype's “添加绑定通道” modal: rounded surface, inset close button, padded reading area and a separated footer with right-aligned confirmation. One continuous vertical gradient covers the entire modal: the top uses 29.4% primary color mixed with the container background (30% lighter than the previous 42% mix), fading to white by 40% of the modal height. The title, Markdown preview and footer remain transparent so white occupies most of the dialog without background seams. The announcement title appears only in the modal header; the body renders `content` without adding `title`, summary or publication metadata. Headings authored within `content` remain intact. Keep the skin scoped to `.announcement-notification-modal` and verify the continuous background and title/body separation.
+- Announcement dialog plan: keep `components/NotificationDetail.vue` as the shared renderer and scope the new skin to `.announcement-notification-modal`. The modal-content padding is cleared so the primary-colour header fills the complete top edge and both sides; it displays the localized announcement title and publication time above a separately scrollable Markdown body. The fixed footer uses a centered pill-shaped confirmation button. The generic Ant modal title is omitted to prevent duplicate headings; the bell and message-center embeds retain their compact metadata layout. Login confirmation, realtime read confirmation, APIs and Markdown compatibility stay unchanged. Focused popup/realtime regressions pass 6/6, the UI style gate and final production build pass, the shared Vue file is 255 lines, and scoped `git diff --check` passes. Authenticated visual verification remains required for final browser spacing and long-content scrolling.
 - `noticeListLoader.ts` decorates bell records with the business-neutral `noticeIcon` field, and `components/NotificationDetail.vue` shows the same icon in the announcement detail shared by the bell, the realtime dialog and the message center.
 - Shared core exposes generic hooks through `noticeRealtimeHandler.ts`; the bulletin handler returns `true` to suppress the generic tip. Ordinary notifications retain their existing tip, and `NoticeItem.vue` renders `noticeIcon` when present. Core still contains no `SystemBulletin` name, bulletin API or bulletin copy.
 
@@ -173,7 +211,7 @@ Goal: preserve the remote `system > platform/settings` menu restructuring while 
 
 Scope: update only `baseMenu.json`, the focused menu ownership regression in `tests/systemBulletinOwnership.test.mjs`, and this section. Keep the remote menu hierarchy, URLs, ordering, permissions, and unrelated menu entries unchanged. Do not restore the pre-merge file wholesale or revive the remote-deleted iot `system/NoticeRule` entry.
 
-Implementation: the original `system/NoticeRule` contract from `61fba7e` is restored under the remote `system > platform/settings` hierarchy as an `owner: cloud` project-settings contribution, including `routeTarget: midhub/settings`, its permission buttons, and asset-access metadata. `system/Announcement` is also `owner: cloud` in this module so `baseMenu.ts` marks it as a runtime menu candidate; `saas-manager-ui` retains the separate `owner: iot` operations binding. The focused test asserts both ownership boundaries and the restored cloud-only subscription candidate.
+Current ownership: `authentication-manager-ui` owns the `system/Announcement` page and notification integrations but no longer contributes an operations menu binding. `saas-manager-ui` contributes the single `owner: iot` entry under `operation/information`; runtime subscription-management history in this section does not change that current announcement boundary.
 
 Validation: `baseMenu.json` parses successfully; aside from the restored NoticeRule and the runtime-required Announcement owner, the file canonically matches remote parent `44bcfd9`, while both cloud menu contracts match the pre-merge project-runtime semantics. The focused Node menu/announcement suite passes all 19 tests, the production build passes with 10,222 transformed modules, the built `dist/baseMenu.json` matches the source, and `git diff --check` passes. Authenticated project-runtime menu synchronization remains pending because no usable logged-in runtime context was verified in this task.
 
@@ -277,7 +315,7 @@ The Parent Position filter keeps IDs as its query value and uses `loadSelectedOp
 
 The `views/system/` list pages that combine `ConditionFilter` with `j-pro-table` use the shared `PageHeader` list shell: the page title stays on the left, filtering and the primary create action stay on the right, existing batch actions remain in the table toolbar, and dropdown-based batch actions stay grouped.
 
-These list pages also use `FullPage hasPadding` so their table content keeps the same page inset; `views/system/Announcement/components/ManagementView.vue` follows the same container contract as Permission and the other system management lists.
+These list pages also use `FullPage hasPadding` so their table content keeps the same page inset. `views/system/Announcement/components/ManagementView.vue` is the explicit later exception: it owns a two-panel search/list shell, so the route layout does not wrap it in another `ContentPanel`.
 
 The Role page uses the shared `EqualHeightColumns` shell for its role-group selector and role list, with the system-wide `18.75rem` / `1fr` tracks and no outer padding or divider.
 
@@ -1093,20 +1131,30 @@ URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显�
 
 ### 内容保存与发布范围
 
-`POST /system/bulletin/_save` 只保存内容、类型与国际化字段，不保存接收维度、不触发发布。内容编辑器不包含范围选择。列表“发布”打开独立范围弹窗，通过 `PUT /system/bulletin/_deploy?id=...` 提交 `{ dimension: DimensionInfo[], deployType: 'now' }`；本页面只提供立即发布，后端定时发布能力不由页面删除或改写。
+#### 公告多语言内容完善（已完成）
 
-每次发布（含撤回重发）从空选择开始，弹窗明确告知空选用户与组织表示公告所属来源范围全员。指定用户与组织取并集，再与可信来源取交集；前端保留所选 ID，候选查询失败不把指定范围改成全员。发布失败保留弹窗和选择，不报成功、不刷新为已发布；成功后才关闭并刷新。新版本只使用本次提交的范围，不继承旧发布关系。
+- 目标：新增和编辑公告时，标题、摘要、类型、Markdown 正文均可分别维护中文与英文；管理列表、查看弹窗、顶栏铃铛、实时提示、通知详情和首次登录弹窗按当前界面语言展示，缺少当前语言时继续回退兼容主字段。
+- Owning module：前端以 `views/system/Announcement/` 为主，复用现有 `AnnouncementI18nTextDialog.vue`、`AnnouncementI18nMarkdownEditor.vue` 与 `announcementI18n.ts`；后端继续使用 `SystemBulletinEntity.i18nMessages` 的“字段 -> 语言 -> 文本”结构。区域副本沿现有 Runtime Command 原样复制国际化内容，不新增表字段或迁移脚本。
+- 数据兼容：`i18nMessages` 扩展并统一保存 `title/summary/type/content`。顶层 `title/summary/content` 继续作为历史消费方和缺省语言回退值；顶层 `type` 继续作为兼容值及既有公告图标识别依据，新增当前语言的类型展示值，避免翻译文本破坏 `maintenance/incident/release/security/policy` 等已有图标语义。历史公告没有对应语言时不回填数据库，读取时回退顶层字段。
+- 实施步骤：先统一四个字段的归一化、校验、兼容投影和当前语言解析；再为标题、摘要和类型接入中英文文本配置，为正文接入中英文 Markdown 页签；随后让管理列表、详情标题/正文、铃铛标签、实时通知、通知详情和登录弹窗使用当前语言文本，并保留原始类型值供图标选择；最后补齐中英文界面文案和前后端定向测试。
+- 明确不做：不提供机器翻译，不强制中英文同时必填，不修改公告发布、撤回、投递范围、已读确认、权限或菜单，不同步修改 `runtime-ui/`，不新增公告任务表、副本映射表或多语言专用列。
+- 实现结果：`announcementI18n.ts` 已统一归一化 `title/summary/type/content`，保存时中文优先、英文兜底生成顶层兼容字段，但顶层 `type` 始终保留原始语义键。编辑器为标题、摘要和类型共用中英文配置弹窗，正文改用中英文 Markdown 页签；管理列表、查看页、铃铛标签、通知详情和首次登录/实时详情使用当前语言文本，语言切换会刷新列表或重新加载通知详情。所选正文语言确实缺失时才显示回退提示；历史公告读取时只回退顶层字段，不因读取动作写回数据库。
+- 验证结果：多语言解析与铃铛文本 8 项测试、编辑/展示契约 6 项测试均通过；完整公告套件 63 项中 62 项通过，唯一失败仍为既有 `system/NoticeRule` 运行时菜单断言，与本次改动无关。中英文 locale JSON 可解析，6 个相关 Vue 文件通过 `check:ui-style`，目标 Vue 文件均不超过 300 行，`git diff --check` 通过。全量 `vue-tsc` 仍有 1,312 行工作区既有诊断，但本次公告目标文件命中 0 条；Vite 7 生产构建通过，转换 11,086 个模块。后端数据结构和复制链路未改动，因此未补后端编译；浏览器中英文切换及 SaaS 到区域副本的真实部署联调仍待执行。
 
-管理详情的 `dimension` 是投递关系只读投影，`sourceDimension` 是可信来源；`deliveryVersion` 与 `deliveryState` 标明该范围所属批次及 `unselected/scheduled/published/revoked` 生命周期。列表与详情使用 `announcementAudience.ts` 统一展示：未选择提示“发布时选择范围”，待发布与撤回保留对应状态；只有 `user:*` 或目标等于来源维度才显示来源范围全员，空投影不猜测为全员。`api.ts` 明确筛选保存字段，管理详情投影不会被写回公告内容。
+`POST /system/bulletin/_save` 保存标题、摘要、Markdown 字符串正文、国际化内容、`others.popup` 与 `others.deliveryScope`；保存成功返回公告 ID。投递范围支持 SaaS 端、一个或多个区域，二者可同时选择且至少选择一项。没有 `deliveryScope` 的历史草稿默认按仅 SaaS 端回显，避免旧数据被意外扩散到区域项目。
 
-本轮验证入口：`tests/systemBulletinDimensions.test.mjs` 覆盖保存/发布 HTTP 参数、只读投影、空选与失效目标、页面处理函数及发布弹窗的失败/重试/重复点击/重新打开行为；`systemBulletinRealtimeSubscription.test.mjs` 覆盖当前项目参数及迟到结果隔离。两份 checkout 定向行为测试各 29/29 通过，`ui` 五个改动 Vue 文件的样式门禁通过；两端执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 生产构建通过。公告全集 64 项通过 59 项；剩余 5 项 Ownership 静态断言已在 HEAD `2663825` 的临时快照重现（18 项通过 13 项），涉及既有国际化/列表/订阅菜单/core Notice 实现位置，未删除或弱化。整仓 `vue-tsc --noEmit -p tsconfig.base.json` 默认堆内存耗尽；收敛公告入口、8GB 堆的检查有 195 条依赖诊断，与同配置 HEAD 快照逐条完全一致，公告目录无诊断，不能视为整仓类型通过。真实页面创建→发布与新后端联动受本机旧关系表结构阻塞，未迁移历史测试数据，运行服务已恢复旧表匹配的 PR79 包，不能计为本分支页面通过；9100/9200 现有代理指向本机 LAN 地址 192.168.35.139 的 9800/8800，须先确认后端加载本次构建。
+公告类型使用普通字符串：新增和编辑表单提供必填文本输入框，新增时保持为空、不预填默认值，最多 64 个字符；编辑时回显已保存类型，保存请求直接提交字符串。管理列表新增“公告类型”列，顶栏铃铛卡片通过 Web Core 的业务中立 `noticeTag` 字段显示类型标签，登录及通知详情弹窗在蓝色标题区显示同一类型标签。前端仅在读取滚动升级期间的旧响应时兼容 `{ value, text }` 枚举对象，不再以该对象格式保存。
+
+“保存草稿”只调用 `_save`；“保存并发布”串行执行 `_save` 与 `PUT /saas/bulletin/_deploy?id=...`。列表中的发布和撤回分别调用 `/saas/bulletin/_deploy`、`/saas/bulletin/_revocation`，并把当前回显范围转换为 `{ all, runtimes: [{ id, projects: [] }] }` Body；`all` 对应 SaaS 端，区域 ID 对应 `runtimes[].id`，本期始终提交空 `projects`，前端不查询或选择项目，也不直接访问项目运行时。铃铛、实时通知、首次登录弹窗和管理列表仍使用 `/system/bulletin/**`，因此 SaaS 管理列表只显示主公告一条数据。
+
+发布失败时保留编辑弹窗和已保存草稿，不提示发布成功；发布成功后才关闭弹窗并刷新列表。撤回后重发会生成新的 `publishVersion`，独立接收数据源据此形成新的未读批次，旧版本的本地确认不会隐藏新版本。
+
+验证结果：公告相关定向测试 38 项中 37 项通过，唯一失败是既有 `system/NoticeRule` 运行时菜单断言，与本次公告类型改造无关；本次直接相关的编辑、列表和 Web Core 解耦 3 项测试单独通过，共享铃铛数据源 8 项测试通过。中英文 locale JSON 可解析，修改的 Vue 文件均不超过 300 行，公告模块 Vite 7 生产构建通过。Web Core 全仓 `git diff --check` 被用户已有的 `.env.development` 文件尾空行阻断，本次修改的 `NoticeItem.vue` 定向检查通过。真实页面验收前仍须确认控制端与区域运行时加载本地通知模块产物，并完成 SaaS → Runtime Command → 项目数据库以及浏览器铃铛标签的部署联调。
 
 ### 公告实时订阅与弹窗
 
-运行端 `register.ts` 通过 `NoticeDataSource.subscribeRealtime` 接入顶栏 Notice，`realtimeSubscription.ts` 使用共享 wsClient 订阅 `/system/bulletin/received`，有当前项目时传 `{ tenantDomain }`，值与当前 HTTP 的 `X-Tenant-Domain` 一致。该值只是选择意图，由租户端校验真实成员与启用状态后构建可信来源，再按来源和目标维度路由；通用通知模块不解析租户。最后一个消费者卸载时释放真实 RxJS Subscription。core 只提供可选实时钩子和注册分派，公告 Topic 与业务规则归公告模块。
+`register.ts` 同时注册公告独立数据源、实时订阅和登录处理器。顶栏铃铛、未读统计和个人中心通过 `/system/bulletin/received/_query`、`/_query/no-paging`、`/_count` 查询，不再依赖通用 `/notifications` 收件箱；普通通知继续使用原服务端数据源和已读状态。Web Core 只负责按 provider 分派数据源与生命周期，不包含公告接口、存储键或业务判断。
 
-服务端在推送前完成来源与目标边界限制，浏览器 HTTP 回查不承担防泄漏职责。消息到达后按稳定发布批次 ID 回查当前版本与撤回状态，只展示查询仍返回的记录。通过已有变更广播刷新铃铛、概览和个人中心。`realtimeNotification.ts` 复用 `NotificationDetail`，按服务/真实用户确认作用域＋发布批次去重；收到、展示、关闭均不写已读，只有确认按钮保存本地状态。列表手动查看允许重开，已确认批次与会话内重复批次不再自动弹出。
+登录处理器按发布时间从旧到新查询当前账号的未读公告，只对 `others.popup === true` 的批次展示不可点遮罩关闭的详情弹窗；用户关闭或确认后，以 `公告ID + publishVersion` 写入当前 API 服务和账号隔离的浏览器确认记录并刷新铃铛。普通未读公告不会在登录时弹窗，也不会被自动确认，仍保留在铃铛中。该语义只保证同服务、同账号、同浏览器、同发布版本一次，不保证跨设备原子一次。
 
-账号/服务/项目上下文变化时取消旧逻辑订阅、销毁旧实时弹窗并使确认回调失效；HTTP 查询完成后也再次核对上下文。确认记录保持同服务同用户跨项目共用，连接指纹排除二次校验缓存。浏览器 online 可重建逻辑订阅并保留会话去重记录。
-
-当前共享 WebSocket 用户身份固定在物理连接握手时；同一用户切项目通过新逻辑订阅的 `tenantDomain` 由服务端重新校验，不能沿用旧项目快照。账号变更仍不能靠此参数替换握手用户身份，需要重新加载页面建立当前身份连接。依赖的 restoreSubscriptions 也仅恢复本地 Subject，不重发 sub 帧，因此仍不能保证 socket 断线后的自动续订；遗漏公告通过既有接收查询查看，本模块不修改第三方依赖。初始载入不自动弹出历史未确认公告；每个已打开标签各自弹窗，确认继续跨标签同步。
+实时订阅使用共享 wsClient 订阅 `/system/bulletin/received`，收到消息后按发布批次回查当前资格和撤回状态，再刷新角标与列表。实时到达仅显示带公告类型图标的轻提示，点击后打开详情；只有详情确认按钮写入本地已读。账号、服务或项目上下文变化时释放旧逻辑订阅、销毁旧详情弹窗并使旧确认回调失效，避免上一身份的迟到消息污染当前账号。

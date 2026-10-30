@@ -7,13 +7,25 @@ import {
 } from './announcementI18n'
 
 export type AnnouncementState = 'unpublished' | 'published'
-export type AnnouncementDeliveryState = 'unselected' | 'scheduled' | 'published' | 'revoked'
 export const SYSTEM_BULLETIN_PROVIDER = 'SystemBulletin'
 export const SYSTEM_BULLETIN_CHANNEL = 'inside-mail'
 
-export interface AnnouncementType {
+export interface AnnouncementDeliveryScope {
+  saas: boolean
+  regionIds: string[]
+}
+
+export interface AnnouncementDeliveryRequest {
+  all: boolean
+  runtimes: Array<{
+    id: string
+    projects: string[]
+  }>
+}
+
+export interface AnnouncementRegionOption {
+  label: string
   value: string
-  text: string
 }
 
 export interface AnnouncementRecord {
@@ -23,15 +35,17 @@ export interface AnnouncementRecord {
   content: string
   state: AnnouncementState
   stateText: string
-  type: AnnouncementType
+  type: string
+  typeText: string
   deployTime: string
   createTime: string
   modifyTime: string
   creatorName: string
-  dimension: DimensionInfo[]
-  sourceDimension?: DimensionInfo
-  deliveryVersion: number
-  deliveryState: AnnouncementDeliveryState
+  userIds: string[]
+  organizationIds: string[]
+  popup: boolean
+  deliveryScope: AnnouncementDeliveryScope
+  others?: Record<string, unknown>
   i18nMessages?: AnnouncementI18n
   legacyTitle?: string
   legacySummary?: string
@@ -43,13 +57,12 @@ export interface AnnouncementDraft {
   title: string
   summary?: string
   content: string
-  type: AnnouncementType
+  type: string
+  popup: boolean
+  deliveryScope: AnnouncementDeliveryScope
+  publish: boolean
+  others?: Record<string, unknown>
   i18nMessages?: unknown
-}
-
-export interface AnnouncementAudience {
-  userIds: string[]
-  organizationIds: string[]
 }
 
 export interface AnnouncementQuery {
@@ -62,7 +75,7 @@ export interface AnnouncementQuery {
 
 export interface SystemBulletinReference {
   bulletinId: string
-  publishVersion: number
+  publishVersion?: number
 }
 
 export interface SystemBulletinNotificationDetail {
@@ -70,8 +83,10 @@ export interface SystemBulletinNotificationDetail {
   title: string
   summary?: string
   content: string
-  type?: AnnouncementType
+  type?: string
+  typeText?: string
   deployTime?: number | null
+  popup: boolean
   i18nMessages?: AnnouncementI18n
 }
 
@@ -91,17 +106,14 @@ interface SystemBulletin {
   createTime?: number | null
   modifyTime?: number | null
   creatorName?: string
-  dimension?: DimensionInfo[]
-  sourceDimension?: DimensionInfo
-  deliveryVersion: number
-  deliveryState: AnnouncementDeliveryState
+  others?: Record<string, unknown>
+  dimension?: SystemBulletinDimension[]
   i18nMessages?: AnnouncementI18n
 }
 
-export interface DimensionInfo {
-  type: string
-  id: string
-  name?: string
+interface SystemBulletinDimension {
+  dimensionType: string
+  dimensionIds: string[]
 }
 
 interface PageResult<T> {
@@ -116,17 +128,43 @@ interface ApiResponse<T> {
   result: T
 }
 
-const formatTime = (value?: number | null) => value
-  ? dayjs(value).format('YYYY-MM-DD HH:mm')
-  : ''
+const formatTime = (value?: number | null) => value ? dayjs(value).format('YYYY-MM-DD HH:mm') : ''
 
-/** 将后端枚举对象与毫秒时间统一转换为公告页面使用的数据结构。 */
+/** 滚动升级期间兼容旧枚举对象；页面模型和新保存请求始终使用字符串。 */
+export const normalizeBulletinType = (value: unknown, fallback = ''): string => {
+  const raw = value && typeof value === 'object'
+    ? (value as { value?: unknown }).value
+    : value
+  return String(raw ?? '').trim() || fallback
+}
+
+/** 历史公告没有范围字段时沿用旧行为，仅投递 SaaS 端。 */
+const normalizeDeliveryScope = (others?: Record<string, unknown>): AnnouncementDeliveryScope => {
+  const raw = others?.deliveryScope
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { saas: true, regionIds: [] }
+  }
+  const scope = raw as Record<string, unknown>
+  return {
+    saas: scope.saas === true,
+    regionIds: Array.isArray(scope.regionIds)
+      ? [...new Set(scope.regionIds
+          .filter(item => item !== null && item !== undefined)
+          .map(String)
+          .map(item => item.trim())
+          .filter(Boolean))]
+      : [],
+  }
+}
+
+/** 将后端状态枚举与毫秒时间统一转换为公告页面使用的数据结构。 */
 const normalizeBulletin = (record: SystemBulletin): AnnouncementRecord => {
   const state = typeof record.state === 'object' ? record.state.value : record.state || 'unpublished'
   const stateText = typeof record.state === 'object' ? record.state.text || '' : ''
-  const type = typeof record.type === 'object'
-    ? { value: record.type.value, text: record.type.text || record.type.value }
-    : { value: record.type || 'default', text: record.type || '' }
+  const dimensionMap = new Map(
+    (record.dimension || []).map(item => [item.dimensionType, item.dimensionIds || []]),
+  )
+  const type = normalizeBulletinType(record.type, 'default')
   return {
     id: record.id,
     title: resolveAnnouncementText(record, 'title'),
@@ -137,26 +175,19 @@ const normalizeBulletin = (record: SystemBulletin): AnnouncementRecord => {
     legacySummary: record.summary || '',
     legacyContent: record.content || '',
     type,
+    typeText: resolveAnnouncementText({ ...record, type }, 'type'),
     state,
     stateText,
     deployTime: formatTime(record.deployTime),
     createTime: formatTime(record.createTime),
     modifyTime: formatTime(record.modifyTime),
     creatorName: record.creatorName || '',
-    dimension: record.dimension || [],
-    sourceDimension: record.sourceDimension,
-    deliveryVersion: record.deliveryVersion,
-    deliveryState: record.deliveryState,
+    userIds: dimensionMap.get('user') || [],
+    organizationIds: dimensionMap.get('org') || [],
+    popup: record.others?.popup === true,
+    deliveryScope: normalizeDeliveryScope(record.others),
+    others: record.others,
   }
-}
-
-/** 查询系统公告支持类型，选择器展示 text、提交 value。 */
-export const getAnnouncementTypes = async (): Promise<AnnouncementType[]> => {
-  const response = await request.post('/system/bulletin/type') as ApiResponse<Array<EnumValue<string>>>
-  return (response.result || []).map(item => ({
-    value: item.value,
-    text: item.text || item.value,
-  }))
 }
 
 /** 分页查询公告管理详情，并转换枚举与时间字段。 */
@@ -204,9 +235,24 @@ export const resolveSystemBulletinReference = (
   notification: Record<string, any>,
 ): SystemBulletinReference | undefined => {
   const detail = parseSystemBulletinDetail(notification)
-  const bulletinId = String(notification.bulletinId || detail?.bulletinId || '').trim()
-  const publishVersion = Number(notification.publishVersion ?? detail?.publishVersion)
-  if (!bulletinId || !Number.isInteger(publishVersion) || publishVersion <= 0) return undefined
+  const legacyDataId = String(notification.dataId || '').trim()
+  const bulletinId = String(
+    notification.bulletinId
+    || detail?.bulletinId
+    || detail?.id
+    || notification.sourceId
+    // 新接收视图的 dataId 是“公告ID:版本”；缺少显式版本字段时不能把批次 ID 当公告 ID。
+    || (legacyDataId.includes(':') ? '' : legacyDataId)
+    || '',
+  ).trim()
+  if (!bulletinId) return undefined
+  // 旧通知不携带版本号，仍由当前用户正文接口校验可见性；显式非法版本不降级。
+  const rawPublishVersion = notification.publishVersion ?? detail?.publishVersion
+  if (rawPublishVersion === undefined || rawPublishVersion === null) return { bulletinId }
+  const publishVersion = Number(rawPublishVersion)
+  if (!Number.isInteger(publishVersion) || publishVersion <= 0) {
+    return undefined
+  }
   return { bulletinId, publishVersion }
 }
 
@@ -216,27 +262,25 @@ export const getSystemBulletinNotificationDetail = async (
 ): Promise<SystemBulletinNotificationDetail> => {
   const response = await request.get(
     `/system/bulletin/${encodeURIComponent(reference.bulletinId)}`,
-    { publishVersion: reference.publishVersion },
+    reference.publishVersion === undefined ? {} : { publishVersion: reference.publishVersion },
     { hiddenError: true },
   ) as ApiResponse<SystemBulletin>
   const detail = response.result
-  const type = typeof detail.type === 'object'
-    ? { value: detail.type.value, text: detail.type.text || detail.type.value }
-    : detail.type
-      ? { value: detail.type, text: detail.type }
-      : undefined
+  const type = normalizeBulletinType(detail.type)
   return {
     id: detail.id,
     title: resolveAnnouncementText(detail, 'title'),
     summary: resolveAnnouncementText(detail, 'summary'),
     content: resolveAnnouncementText(detail, 'content'),
     i18nMessages: detail.i18nMessages,
-    type,
+    type: type || undefined,
+    typeText: resolveAnnouncementText({ ...detail, type }, 'type') || undefined,
     deployTime: detail.deployTime,
+    popup: detail.others?.popup === true,
   }
 }
 
-/** 接收资格由服务端判断，确认状态由公告模块本地数据源生成。 */
+/** 接收资格由服务端判断，确认状态由公告模块按账号和发布版本在浏览器本地维护。 */
 export {
   queryAnnouncementInbox,
   queryAnnouncementInboxNoPaging,
@@ -246,44 +290,72 @@ export {
   markAllAnnouncementsRead,
 } from './receivedDataSource'
 
-/** 仅保存公告内容；接收范围在发布时单独提交。 */
-export const saveAnnouncement = (draft: AnnouncementDraft) => {
+/** 保存未发布公告及其 SaaS/区域投递范围。 */
+export const saveAnnouncement = async (draft: AnnouncementDraft): Promise<string> => {
   const {
     i18nMessages,
     title,
     summary,
+    type,
     content,
   } = buildAnnouncementI18nFields(draft)
 
-  return request.post('/system/bulletin/_save', {
+  const response = await request.post('/system/bulletin/_save', {
     id: draft.id,
     title,
     summary: summary || undefined,
     content,
     i18nMessages,
-    type: draft.type,
-  })
+    type,
+    others: {
+      ...(draft.others || {}),
+      popup: draft.popup,
+      deliveryScope: {
+        saas: draft.deliveryScope.saas,
+        regionIds: [...new Set(draft.deliveryScope.regionIds)],
+      },
+    },
+  }) as ApiResponse<string>
+  return String(response.result || draft.id || '')
 }
 
-/** 本次选择只属于本次发布，空数组由服务端解析为公告来源范围全员。 */
-export const publishAnnouncement = (id: string, audience: AnnouncementAudience) => request.put(
-  '/system/bulletin/_deploy',
-  {
-    dimension: [
-      ...audience.userIds.map(id => ({ type: 'user', id })),
-      ...audience.organizationIds.map(id => ({ type: 'org', id })),
-    ],
-    deployType: 'now',
-  },
+/** 将编辑回显范围转换为单次发布/撤回契约，项目级范围开放前始终提交空 projects。 */
+const buildDeliveryRequest = (
+  scope: AnnouncementDeliveryScope,
+): AnnouncementDeliveryRequest => ({
+  all: scope.saas,
+  runtimes: [...new Set(scope.regionIds
+    .map(id => id.trim())
+    .filter(Boolean))]
+    .map(id => ({ id, projects: [] })),
+})
+
+/** 发布一条未发布公告；本次请求 Body 是后端执行投递的唯一范围。 */
+export const publishAnnouncement = (id: string, scope: AnnouncementDeliveryScope) => request.put(
+  '/saas/bulletin/_deploy',
+  buildDeliveryRequest(scope),
   { params: { id } },
 )
 
 /** 撤回一条已发布公告。 */
-export const withdrawAnnouncement = (id: string) => request.put(
-  '/system/bulletin/_revocation',
-  {},
+export const withdrawAnnouncement = (id: string, scope: AnnouncementDeliveryScope) => request.put(
+  '/saas/bulletin/_revocation',
+  buildDeliveryRequest(scope),
   { params: { id } },
 )
+
+/** 查询运营端可选区域，公告只保存区域 ID，不在前端展开项目。 */
+export const queryAnnouncementRegions = async (): Promise<AnnouncementRegionOption[]> => {
+  const response = await request.post('/saas/runtime/_query/', {
+    pageIndex: 0,
+    pageSize: 1000,
+    sorts: [{ name: 'createTime', order: 'desc' }],
+  }) as ApiResponse<PageResult<{ id: string; name?: string }>>
+  return (response.result?.data || []).map(region => ({
+    label: region.name || region.id,
+    value: region.id,
+  }))
+}
 
 /** 删除未发布公告。 */
 export const deleteAnnouncement = (id: string) => request.remove(

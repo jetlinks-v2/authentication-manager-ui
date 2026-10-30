@@ -13,6 +13,7 @@ import {
 } from './api'
 import { loadSystemBulletinNoticeList, resolveSystemBulletinNoticeTexts } from './noticeListLoader'
 import { handleSystemBulletinNotice } from './realtimeNotification'
+import { handleSystemBulletinLogin } from './loginPopup'
 import type { NoticeTextResolverContext } from '@jetlinks-web-core/layout/components/noticeTextResolver'
 
 export const getRegisterComponents = () => [
@@ -54,6 +55,12 @@ export const getRegisterComponents = () => [
     targetModule: 'handlers',
     code: SYSTEM_BULLETIN_PROVIDER,
     props: { handler: handleSystemBulletinNotice },
+  },
+  {
+    targetPage: 'notification-login',
+    targetModule: 'handlers',
+    code: SYSTEM_BULLETIN_PROVIDER,
+    props: { handler: handleSystemBulletinLogin },
   },
   {
     targetPage: 'notification-text',

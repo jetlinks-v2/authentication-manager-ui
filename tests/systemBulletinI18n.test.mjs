@@ -38,16 +38,19 @@ test('resolves the current locale and falls back to the legacy field without cro
   const record = {
     title: '旧标题',
     summary: '旧摘要',
+    type: 'maintenance',
     content: '旧正文',
     i18nMessages: {
       title: { zh: '中文标题', en: 'English title' },
       summary: { zh: '中文摘要' },
+      type: { zh: '维护公告', en: 'Maintenance' },
       content: { zh: '中文正文', en: 'English content' },
     },
   }
 
   assert.equal(resolveAnnouncementText(record, 'title'), 'English title')
   assert.equal(resolveAnnouncementText(record, 'summary'), '旧摘要')
+  assert.equal(resolveAnnouncementText(record, 'type'), 'Maintenance')
   assert.equal(resolveAnnouncementText(record, 'content'), 'English content')
 })
 
@@ -128,15 +131,19 @@ test('supports regional locales and keeps legacy compatibility fields Chinese-fi
     i18nMessages: {
       title: { zh: '中文标题', en: 'English title' },
       summary: { en: 'English summary' },
+      type: { zh: '维护公告', en: 'Maintenance' },
       content: {},
     },
+    type: 'maintenance',
   }), {
     i18nMessages: {
       title: { zh: '中文标题', en: 'English title' },
       summary: { en: 'English summary' },
+      type: { zh: '维护公告', en: 'Maintenance' },
     },
     title: '中文标题',
     summary: 'English summary',
+    type: 'maintenance',
     content: '旧正文',
   })
 
@@ -174,6 +181,7 @@ test('supports regional locales and keeps legacy compatibility fields Chinese-fi
     i18nMessages: undefined,
     title: '',
     summary: '',
+    type: '',
     content: '',
   })
 })

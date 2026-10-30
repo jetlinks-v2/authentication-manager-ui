@@ -143,6 +143,7 @@ const view = async (record: Record<string, any>) => {
 watch(() => incomingNotification.value?.id, () => {
   if (incomingNotification.value) view(incomingNotification.value)
 }, { immediate: true })
+watch(globalI18n.global.locale, reload)
 
 onUnmounted(() => {
   if (user.messageInfo?.topicProvider === SYSTEM_BULLETIN_PROVIDER) {

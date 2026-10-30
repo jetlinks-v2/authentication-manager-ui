@@ -5,7 +5,7 @@ import { test } from 'node:test'
 
 const moduleRoot = resolve(import.meta.dirname, '..')
 const workspaceRoot = resolve(moduleRoot, '../../..')
-const coreRoot = resolve(moduleRoot, '../../jetlinks-web-core/src')
+const coreRoot = resolve(workspaceRoot, 'ui/jetlinks-web-core/src')
 
 const readSourceTree = async (directory) => {
   const entries = await readdir(directory, { withFileTypes: true })
@@ -35,15 +35,15 @@ const [apiSource, registerSource, inboxSource, realtimeSource, notificationDetai
   readFile(resolve(workspaceRoot, 'ui/modules/saas-manager-ui/views/personalCenter/index.vue'), 'utf8'),
   readFile(resolve(workspaceRoot, 'ui/modules/project-side-ui/views/PersonCenter/index.vue'), 'utf8'),
   readSourceTree(coreRoot),
-  readFile(resolve(coreRoot, 'api/account/center.ts'), 'utf8'),
-  readFile(resolve(coreRoot, 'api/account/notificationRecord.ts'), 'utf8'),
-  readFile(resolve(coreRoot, 'api/account/notificationSubscription.ts'), 'utf8'),
-  readFile(resolve(coreRoot, 'views/account/center/components/StationMessage/components/NotificationRecord/components/ViewDialog.vue'), 'utf8'),
-  readFile(resolve(coreRoot, 'layout/components/Notice.vue'), 'utf8'),
-  readFile(resolve(coreRoot, 'layout/components/NoticeItem.vue'), 'utf8'),
-  readFile(resolve(coreRoot, 'layout/components/noticeRealtimeHandler.ts'), 'utf8'),
-  readFile(resolve(coreRoot, 'layout/components/NoticeInfo.vue'), 'utf8'),
-  readFile(resolve(coreRoot, 'layout/components/noticeListHandler.ts'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/api/account/center.ts'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/api/account/notificationRecord.ts'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/api/account/notificationSubscription.ts'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/views/account/center/components/StationMessage/components/NotificationRecord/components/ViewDialog.vue'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/layout/components/Notice.vue'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/layout/components/NoticeItem.vue'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/layout/components/noticeRealtimeHandler.ts'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/layout/components/NoticeInfo.vue'), 'utf8'),
+  readFile(resolve(workspaceRoot, 'ui/jetlinks-web-core/src/layout/components/noticeListHandler.ts'), 'utf8'),
   readFile(resolve(moduleRoot, 'locales/lang/zh.json'), 'utf8'),
   readFile(resolve(moduleRoot, 'locales/lang/en.json'), 'utf8'),
   readFile(resolve(workspaceRoot, 'ui/modules/saas-manager-ui/views/personalCenter/components/MessageContent.vue'), 'utf8'),
@@ -57,43 +57,94 @@ const findMenus = (menus, code) => menus.flatMap(menu => [
 
 test('keeps bulletin API and notification renderer registration in authentication-manager-ui', () => {
   assert.match(apiSource, /SYSTEM_BULLETIN_PROVIDER = 'SystemBulletin'/)
-  assert.match(apiSource, /post\('\/system\/bulletin\/type'\)/)
-  assert.doesNotMatch(apiSource, /get\('\/dictionary\/s_bulletin_type\/items'\)/)
+  assert.doesNotMatch(apiSource, /system\/bulletin\/type|s_bulletin_type/)
   assert.match(apiSource, /post\('\/system\/bulletin\/detail\/_query'/)
   assert.doesNotMatch(apiSource, /post\('\/system\/bulletin\/_query'/)
   assert.match(apiSource, /system\/bulletin\/\$\{encodeURIComponent\(reference\.bulletinId\)\}/)
   assert.match(apiSource, /parseSystemBulletinDetail/)
   assert.match(registerSource, /NotificationDetail\.vue/)
   assert.match(registerSource, /targetPage: 'notification-provider'/)
+  assert.match(registerSource, /dataSource:/)
+  assert.match(registerSource, /query: queryAnnouncementInbox/)
   assert.match(registerSource, /targetPage: 'notification-text'/)
+  assert.match(registerSource, /targetPage: 'notification-login'/)
   assert.match(moduleSource, /views\/system\/Announcement\/register/)
 })
 
-test('renders the announcement type selector in the editor dialog', async () => {
-  const editorSource = await readFile(resolve(moduleRoot, 'views/system/Announcement/components/AnnouncementEditorDialog.vue'), 'utf8')
-  assert.match(editorSource, /<a-form-item :label="\$t\('Announcement\.editor\.type'\)" required>/)
-  assert.match(editorSource, /<a-select\s+v-model:value="form\.type"/)
-  assert.match(editorSource, /:options="typeOptions"/)
-  assert.match(editorSource, /:get-popup-container="getPopupContainer"/)
-  assert.match(editorSource, /function getPopupContainer\(triggerNode: HTMLElement\)/)
-  assert.match(editorSource, /return triggerNode\.parentElement \|\| document\.body/)
-  assert.doesNotMatch(editorSource, /公告类型暂不对用户展示/)
+test('runs popup bulletins once from the business-neutral login notification hook', async () => {
+  const [loginSource, headerSource, loginCoreSource] = await Promise.all([
+    readFile(resolve(moduleRoot, 'views/system/Announcement/loginPopup.ts'), 'utf8'),
+    readFile(resolve(coreRoot, 'layout/components/useHeaderNotice.ts'), 'utf8'),
+    readFile(resolve(coreRoot, 'layout/components/noticeLoginHandler.ts'), 'utf8'),
+  ])
+  assert.match(registerSource, /props: \{ handler: handleSystemBulletinLogin \}/)
+  assert.match(loginSource, /queryAnnouncementInboxNoPaging/)
+  assert.match(loginSource, /detail\?\.others\?\.popup !== true/)
+  assert.match(loginSource, /changeAnnouncementReadState\('_read', \[record\.id\]\)/)
+  assert.match(loginSource, /await showLoginPopup\(record, appContext\)/)
+  assert.doesNotMatch(loginSource, /Modal\.info\(\{\s*class: 'announcement-notification-modal',\s*title:/)
+  assert.match(loginSource, /sorts: \[\{ name: 'notifyTime', order: 'asc' \}\]/)
+  assert.match(headerSource, /let loginHandlersStarted = false/)
+  assert.match(headerSource, /!loginHandlersStarted && providers\.length/)
+  assert.match(headerSource, /runRegisteredLoginNoticeHandlers/)
+  assert.match(loginCoreSource, /notification-login:handlers/)
+  assert.doesNotMatch(loginCoreSource, /SystemBulletin|system\/bulletin|Announcement/)
 })
 
-test('opens the bulletin detail directly without a realtime tip', () => {
+test('edits title, summary, type, popup and Markdown content with draft or publish intent', async () => {
+  const editorSource = await readFile(resolve(moduleRoot, 'views/system/Announcement/components/AnnouncementEditorDialog.vue'), 'utf8')
+  assert.match(editorSource, /Announcement\.editor\.title/)
+  assert.match(editorSource, /Announcement\.editor\.summary/)
+  assert.match(editorSource, /v-model:value="form\.summary"/)
+  assert.match(editorSource, /Announcement\.editor\.type/)
+  assert.match(editorSource, /v-model:value="form\.type"/)
+  assert.match(editorSource, /:maxlength="64"/)
+  assert.match(editorSource, /type: ''/)
+  assert.match(editorSource, /form\.type = record\?\.type \|\| ''/)
+  assert.doesNotMatch(editorSource, /type: 'default'|record\?\.type \|\| 'default'/)
+  assert.match(editorSource, /<AnnouncementI18nMarkdownEditor/)
+  assert.match(editorSource, /v-model="form\.i18nMessages\.content"/)
+  assert.match(editorSource, /:rows="14"/)
+  assert.match(editorSource, /openTextI18n\('title'\)/)
+  assert.match(editorSource, /openTextI18n\('summary'\)/)
+  assert.match(editorSource, /openTextI18n\('type'\)/)
+  assert.match(editorSource, /Announcement\.editor\.popup/)
+  assert.match(editorSource, /v-model:checked="form\.popup"/)
+  assert.match(editorSource, /submit\(false\)/)
+  assert.match(editorSource, /submit\(true\)/)
+  assert.match(editorSource, /Announcement\.action\.saveDraft/)
+  assert.match(editorSource, /Announcement\.action\.savePublish/)
+  assert.doesNotMatch(editorSource, /Announcement\.editor\.(?:users|organizations)/)
+  assert.doesNotMatch(editorSource, /form\.(?:userIds|organizationIds)/)
+  assert.doesNotMatch(apiSource, /allVisible: true/)
+  assert.match(apiSource, /others: \{[\s\S]*?\.\.\.\(draft\.others \|\| \{\}\),[\s\S]*?popup: draft\.popup,[\s\S]*?deliveryScope:/)
+  assert.match(apiSource, /saas: draft\.deliveryScope\.saas/)
+  assert.match(apiSource, /regionIds: \[\.\.\.new Set\(draft\.deliveryScope\.regionIds\)\]/)
+  assert.match(apiSource, /\} = buildAnnouncementI18nFields\(draft\)/)
+  assert.match(apiSource, /\n    type,\n/)
+  assert.match(editorSource, /type: form\.type\.trim\(\)/)
+  assert.match(apiSource, /summary: summary \|\| undefined/)
+  assert.match(apiSource, /request\.put\(\s*'\/saas\/bulletin\/_deploy'/)
+  assert.doesNotMatch(apiSource, /dimension: \[\], deployType: 'now'/)
+  assert.match(pageSource, /const savedId = await saveAnnouncementApi\(draft\)/)
+  assert.match(pageSource, /await publishAnnouncementApi\(savedId, draft\.deliveryScope\)/)
+  assert.match(editorSource, /publish,/)
+})
+
+test('shows one typed realtime tip and opens the bulletin detail after clicking it', () => {
   assert.match(realtimeSource, /import NotificationDetail from '.\/components\/NotificationDetail\.vue'/)
   assert.match(realtimeSource, /content: h\(NotificationDetail/)
   assert.match(realtimeSource, /class: 'announcement-notification-modal'/)
   assert.match(realtimeSource, /appContext/)
-  assert.match(realtimeSource, /onOk: \(\) => active && scope === getAnnouncementReadScope\(\) \? markRead\(\)/)
+  assert.match(realtimeSource, /onOk: \(\) => generation === dialogGeneration \? markRead\(\) : undefined/)
   assert.doesNotMatch(realtimeSource, /void markRead\(\)/)
   assert.doesNotMatch(realtimeSource, /defineAsyncComponent/)
   assert.match(registerSource, /props: \{ handler: handleSystemBulletinNotice \}/)
-  assert.match(realtimeSource, /return openAnnouncementDetail\(\{ \.\.\.context, realtime \}\)/)
-  assert.doesNotMatch(realtimeSource, /showTip|createBulletinTypeIconNode/)
-  assert.match(realtimeSource, /centered: true/)
-  assert.match(realtimeSource, /closable: true/)
-  assert.match(realtimeSource, /title: resolveNoticeTitle\(payload\)/)
+  assert.match(realtimeSource, /source !== 'realtime' \|\| !showTip/)
+  assert.match(realtimeSource, /onClick: \(\) => openAnnouncementDetail\(context\)/)
+  assert.match(realtimeSource, /createBulletinTypeIconNode\(parseSystemBulletinDetail\(payload\)\?\.type\)/)
+  assert.match(realtimeSource, /showTip\(\{[\s\S]*?title,/)
+  assert.match(realtimeSource, /description: summary && summary !== title \? summary : undefined/)
   assert.doesNotMatch(realtimeSource, /Modal\.info\([\s\S]*\{\s*payload\.message\s*\}/)
   assert.match(inboxSource, /:title="getNotificationTitle\(detailRecord\)/)
   assert.match(notificationDetailSource, /detail\.content/)
@@ -102,8 +153,18 @@ test('opens the bulletin detail directly without a realtime tip', () => {
   assert.match(notificationDetailSource, /overflow-y: auto/)
   assert.match(notificationDetailSource, /\.announcement-notification-modal \.ant-modal-confirm-content/)
   assert.match(notificationDetailSource, /max-width: 100%/)
+  assert.match(notificationDetailSource, /class="announcement-notification-dialog-header"/)
+  assert.match(notificationDetailSource, /\{\{ detail\.title \}\}/)
+  assert.match(notificationDetailSource, /class="announcement-notification-dialog-header__type"/)
+  assert.match(notificationDetailSource, /\{\{ detail\.typeText \|\| detail\.type \}\}/)
+  assert.match(notificationDetailSource, /dayjs\(detail\.deployTime\)\.format\('YYYY-MM-DD HH:mm:ss'\)/)
+  assert.match(notificationDetailSource, /max-height: min\(55dvh, 32rem\)/)
+  assert.match(notificationDetailSource, /justify-content: center/)
+  assert.match(notificationDetailSource, /min-width: 12rem/)
+  assert.match(notificationDetailSource, /\.ant-modal-content \{[\s\S]*?padding: 0;/)
+  assert.match(notificationDetailSource, /border-radius: var\(--r-pill\)/)
+  assert.doesNotMatch(realtimeSource, /title: resolveNoticeTitle\(payload\) \|\| i18n/)
   assert.doesNotMatch(notificationDetailSource, /<a-divider/)
-  assert.doesNotMatch(notificationDetailSource, /detail\.title/)
   assert.doesNotMatch(notificationDetailSource, /detail\.summary/)
 })
 
@@ -117,17 +178,18 @@ test('maps the six built-in bulletin types to one icon vocabulary with a default
   assert.match(bulletinTypeIconSource, /DEFAULT_BULLETIN_TYPE_ICON = 'NotificationOutlined'/)
   assert.match(bulletinTypeIconSource, /BULLETIN_TYPE_ICONS\[String\(value \?\? ''\)\.trim\(\)\] \|\| DEFAULT_BULLETIN_TYPE_ICON/)
   assert.doesNotMatch(bulletinTypeIconSource, /billing|urgent|severity/)
+  assert.match(realtimeSource, /createBulletinTypeIconNode/)
   assert.match(noticeListLoaderSource, /topicName: title/)
+  assert.match(noticeListLoaderSource, /noticeTag: typeText/)
   assert.match(noticeListLoaderSource, /noticeIcon: resolveBulletinTypeIcon\(type\)/)
   assert.match(notificationDetailSource, /const typeIcon = computed\(\(\) => resolveBulletinTypeIcon\(detail\.value\?\.type\)\)/)
   assert.match(notificationDetailSource, /<AIcon :type="typeIcon" \/>/)
 })
 
-test('stores and renders announcement content with the platform i18nMessages field', async () => {
-  const [editorSource, i18nSource, markdownSource, zhLocale, enLocale] = await Promise.all([
+test('stores localized title, summary, type and Markdown content', async () => {
+  const [editorSource, i18nSource, zhLocale, enLocale] = await Promise.all([
     readFile(resolve(moduleRoot, 'views/system/Announcement/components/AnnouncementEditorDialog.vue'), 'utf8'),
     readFile(resolve(moduleRoot, 'views/system/Announcement/announcementI18n.ts'), 'utf8'),
-    readFile(resolve(moduleRoot, 'views/system/Announcement/components/AnnouncementI18nMarkdownEditor.vue'), 'utf8'),
     readFile(resolve(moduleRoot, 'locales/lang/zh.json'), 'utf8'),
     readFile(resolve(moduleRoot, 'locales/lang/en.json'), 'utf8'),
   ])
@@ -137,16 +199,19 @@ test('stores and renders announcement content with the platform i18nMessages fie
   assert.match(apiSource, /legacyTitle: record\.title/)
   assert.match(i18nSource, /getAnnouncementI18n/)
   assert.match(i18nSource, /messages\[normalizedLocale\], messages\[language\]/)
-  assert.match(editorSource, /AnnouncementI18nMarkdownEditor/)
+  assert.match(editorSource, /<AnnouncementI18nMarkdownEditor/)
   assert.match(editorSource, /v-model="form\.i18nMessages\.content"/)
   assert.match(editorSource, /AnnouncementI18nTextDialog/)
   assert.match(editorSource, /updateAnnouncementLocaleText\(i18n, 'title', currentLanguage\.value, form\.title\)/)
-  assert.match(editorSource, /title: record\?\.legacyTitle/)
-  assert.match(editorSource, /record\?\.legacyContent === translatedDefaultContent \? undefined : record\?\.legacyContent/)
-  assert.match(editorSource, /!props\.record && form\.content\.trim\(\) && !Object\.keys\(i18n\.content \?\? \{\}\)\.length/)
+  assert.match(editorSource, /updateAnnouncementLocaleText\(i18n, 'summary', currentLanguage\.value, form\.summary\)/)
+  assert.match(editorSource, /type: record\?\.type/)
+  assert.doesNotMatch(editorSource, /delete i18n\.content/)
+  assert.match(editorSource, /summary: form\.summary\.trim\(\) \|\| undefined/)
+  assert.match(editorSource, /content: resolveCompatibilityText\(i18n\.content\)/)
+  assert.match(i18nSource, /\['title', 'summary', 'type', 'content'\]/)
+  assert.match(apiSource, /typeText: resolveAnnouncementText/)
   assert.doesNotMatch(editorSource, /:display-value=/)
   assert.match(i18nSource, /locale === 'zh' \|\| locale === 'en'/)
-  assert.match(markdownSource, /activeLanguage = ref\('zh'\)/)
   assert.equal(JSON.parse(zhLocale)['Announcement.i18n.configure'], '国际化配置')
   assert.equal(JSON.parse(enLocale)['Announcement.i18n.configure'], 'Internationalization')
 })
@@ -157,18 +222,9 @@ test('uses the bulletin title and internal scrolling for management details', ()
   assert.match(pageSource, /resolveAnnouncementText\(record, 'title', detailLocale\.value\)/)
   assert.match(announcementDetailSource, /<a-tabs v-model:activeKey="viewLocale"/)
   assert.match(announcementDetailSource, /v-for="item in languagePanes"/)
-  assert.match(announcementDetailSource, /resolveAnnouncementText\(props\.record, 'summary', item\.value\)/)
   assert.match(announcementDetailSource, /resolveAnnouncementText\(props\.record, 'content', item\.value\)/)
   assert.match(announcementDetailSource, /Announcement\.detail\.languageMissing/)
-  assert.match(announcementDetailSource, /:text="stateText"/)
-  assert.match(announcementDetailSource, /resolveAnnouncementStateLabel\(props\.record\?\.state, viewLocale\.value\)/)
-  // 元信息表格在标签页之外，不能引用 v-for 的 item，否则运行时会读 undefined。
-  assert.doesNotMatch(announcementDetailSource.split('<a-tabs')[0], /\bitem\./)
-  assert.match(managementSource, /:text="resolveStateLabel\(record\)"/)
-  assert.match(managementSource, /resolveAnnouncementStateLabel\(record\?\.state\)/)
-  // 英文状态不能换行，状态列需留出足够宽度。
-  assert.match(managementSource, /white-space: nowrap/)
-  assert.match(managementSource, /key: 'state',\s*width: 120/)
+  assert.doesNotMatch(announcementDetailSource, /Announcement\.detail\.(?:summary|scope|state|creator|publishTime|type)/)
   assert.match(announcementDetailSource, /class="announcement-detail-scroll"/)
   assert.match(announcementDetailSource, /max-height: min\(70dvh, 48rem\)/)
   assert.match(announcementDetailSource, /overflow-y: auto/)
@@ -219,17 +275,45 @@ test('renders registered bulletin details inside the generic message-center dial
   assert.match(coreDialogSource, /v-else-if=/)
 })
 
-test('shows bulletin title and summary as separate columns with visible inbox actions', () => {
-  assert.match(managementSource, /<FullPage\s+hasPadding>/)
+test('shows separated filters and list with emphasized title metadata in management', async () => {
+  const filterSource = await readFile(
+    resolve(moduleRoot, 'views/system/Announcement/components/AnnouncementListFilters.vue'),
+    'utf8',
+  )
+  assert.doesNotMatch(managementSource, /PageHeader|Announcement\.title\.management/)
+  assert.match(managementSource, /<FullPage v-bind="\$attrs" :flex="true" class="announcement-list-page">/)
+  assert.match(managementSource, /<AnnouncementListFilters @change="applyFilters" \/>[\s\S]*<ContentPanel fill class="announcement-list-page__table-panel">/)
+  assert.match(managementSource, /<template #headerLeftRender>[\s\S]*?<EmptyCreateButton \/>[\s\S]*?<\/template>/)
+  assert.doesNotMatch(managementSource, /#headerRightRender/)
+  assert.match(filterSource, /<ContentPanel fill class="announcement-list-filter-panel">/)
+  assert.match(filterSource, /Announcement\.search\.keywordPlaceholder/)
+  assert.match(filterSource, /Announcement\.search\.allStatus/)
+  assert.match(filterSource, /Announcement\.action\.reset/)
+  assert.match(moduleSource, /'system\/Announcement': false/)
+  assert.match(managementSource, /column: 'title'/)
+  assert.match(managementSource, /column: 'summary'/)
   assert.match(managementSource, /key: 'announcementTitle'/)
   assert.match(managementSource, /#announcementTitle="record"/)
-  assert.match(managementSource, /dataIndex: 'summary'/)
-  assert.match(managementSource, /key: 'announcementSummary'/)
-  assert.match(managementSource, /#announcementSummary="record"/)
-  assert.doesNotMatch(managementSource, /#(?:title|summary)=/)
+  assert.match(managementSource, /record\.summary/)
+  assert.match(managementSource, /dataIndex: 'state'/)
+  assert.match(managementSource, /#state="record"/)
+  assert.match(managementSource, /dataIndex: 'type'/)
+  assert.match(managementSource, /#type="record"/)
+  assert.match(managementSource, /dataIndex: 'popup'/)
+  assert.match(managementSource, /#popup="record"/)
+  assert.match(managementSource, /dataIndex: 'createTime'/)
+  assert.match(managementSource, /#createTime="record"/)
+  assert.match(managementSource, /dataIndex: 'deployTime'/)
+  assert.match(managementSource, /#deployTime="record"/)
+  assert.doesNotMatch(managementSource, /dataIndex: '(?:content|summary|creatorName)'/)
+  assert.doesNotMatch(managementSource, /key: 'scope'/)
   assert.match(managementSource, /:line-clamp="1"/)
   assert.match(managementSource, /:tooltip="\{ placement: 'topLeft' \}"/)
-  assert.doesNotMatch(managementSource, /announcement-title-cell__summary/)
+  assert.match(managementSource, /announcement-title-cell__summary/)
+  assert.match(managementSource, /class="announcement-title-cell__title"\s+:tooltip="\{ placement: 'topLeft' \}"/)
+  assert.match(managementSource, /:deep\(\.announcement-title-cell__title\)\s*\{[\s\S]*?width: fit-content;[\s\S]*?max-width: 100%;/)
+  assert.match(managementSource, /:deep\(\.announcement-title-cell__title\)\s*\{[\s\S]*?font-size: var\(--fs-20\);[\s\S]*?font-weight: 700;/)
+  assert.match(managementSource, /:deep\(\.announcement-title-cell__summary\)\s*\{[\s\S]*?font-weight: 400;/)
   assert.match(inboxSource, /dataIndex: 'title'/)
   assert.match(inboxSource, /key: 'announcementTitle'/)
   assert.match(inboxSource, /#announcementTitle="record"/)
@@ -248,12 +332,27 @@ test('shows bulletin title and summary as separate columns with visible inbox ac
   assert.doesNotMatch(inboxSource, /\{\{\s*\$t\('Announcement\.inbox\.(?:markRead|view)'\)\s*\}\}/)
 })
 
-test('keeps project announcement metadata in the owner module without a duplicate saas binding', () => {
+test('groups website content and the single announcement menu under information', () => {
   const ownerMenus = findMenus(JSON.parse(moduleMenuSource), 'system/Announcement')
-  const saasMenus = findMenus(JSON.parse(saasMenuSource), 'system/Announcement')
-  assert.equal(ownerMenus.length, 1)
-  assert.equal(ownerMenus[0].owner, 'iot')
-  assert.equal(saasMenus.length, 0)
+  const saasRoot = JSON.parse(saasMenuSource)
+  const saasMenus = findMenus(saasRoot, 'system/Announcement')
+  const operationManager = findMenus(saasRoot, 'operation/manager')[0]
+  const information = findMenus(saasRoot, 'operation/information')[0]
+  assert.equal(ownerMenus.length, 0)
+  assert.equal(saasMenus.length, 1)
+  assert.equal(information.name, '资讯与公告')
+  assert.equal(information.sortIndex, 4)
+  assert.equal(saasMenus[0].name, '系统公告管理')
+  assert.equal(saasMenus[0].sortIndex, 2)
+  assert.equal(saasMenus[0].assetType, 'systemBulletin')
+  assert.equal(saasMenus[0].allVisible, undefined)
+  assert.deepEqual(operationManager.children.map(menu => menu.code), [
+    'operation/manager/Customer',
+  ])
+  assert.deepEqual(information.children.map(menu => [menu.code, menu.name, menu.sortIndex]), [
+    ['operation/manager/WebsiteArticle', '官网资讯管理', 1],
+    ['system/Announcement', '系统公告管理', 2],
+  ])
 })
 
 test('exposes subscription management as a project runtime menu candidate', () => {
@@ -286,11 +385,18 @@ test('exposes subscription management as a project runtime menu candidate', () =
     )))
 })
 
-test('management publication opens a scope dialog and submits its selection through deploy', () => {
-  assert.match(managementSource, /@click="\$emit\('publish', record\)"/)
-  assert.match(pageSource, /@publish="openPublish"/)
-  assert.match(pageSource, /<AnnouncementPublishDialog/)
-  assert.match(pageSource, /publishAnnouncementApi\(publishingRecord\.value\.id, audience\)/)
+test('publishes from the management row through deploy endpoint after confirmation', () => {
+  assert.match(managementSource, /Announcement\.confirm\.publish/)
+  assert.match(managementSource, /onConfirm: \(\) => \$emit\('publish', record\)/)
+  assert.match(pageSource, /publishAnnouncementApi\(record\.id, record\.deliveryScope\)/)
+  assert.doesNotMatch(pageSource, /editingRecord\.value = await getAnnouncement\(record\.id\)/)
+})
+
+test('keeps announcement actions within the backend lifecycle', () => {
+  assert.match(managementSource, /v-if="record\.state === 'unpublished'"\s+has-permission="system\/Announcement:edit"/)
+  assert.match(managementSource, /v-if="record\.state === 'unpublished'"\s+has-permission="system\/Announcement:publish"/)
+  assert.match(managementSource, /v-if="record\.state === 'published'"\s+has-permission="system\/Announcement:view"/)
+  assert.match(managementSource, /v-if="record\.state === 'published'"\s+has-permission="system\/Announcement:withdraw"/)
 })
 
 test('allows every unpublished bulletin to be deleted and hides unavailable details', () => {
@@ -309,14 +415,15 @@ test('allows every unpublished bulletin to be deleted and hides unavailable deta
   assert.equal(enLocale['Announcement.message.deleted'], 'Announcement deleted')
 })
 
-test('keeps web-core notification handling business-neutral', () => {
+test('keeps web-core notification handling business-neutral', async () => {
+  const headerSource = await readFile(resolve(coreRoot, 'layout/components/useHeaderNotice.ts'), 'utf8')
   assert.doesNotMatch(coreSource, /SystemBulletin|systemBulletin|system\/bulletin|AnnouncementHistory/)
   assert.doesNotMatch(coreCenterSource, /SystemBulletin|systemBulletin|system\/bulletin/)
   assert.doesNotMatch(coreRecordSource, /SystemBulletin|system\/bulletin/)
   assert.doesNotMatch(coreSubscriptionSource, /SystemBulletin|system\/bulletin/)
   assert.doesNotMatch(coreDialogSource, /SystemBulletin|systemBulletin|system\/bulletin/)
   assert.doesNotMatch(coreNoticeSource, /SystemBulletin|systemBulletin|system\/bulletin/)
-  assert.match(coreNoticeSource, /appContext/)
+  assert.match(headerSource, /appContext/)
   assert.match(coreDialogSource, /const notificationTitle = computed/)
   assert.match(coreDialogSource, /_data\.value\?\.i18nMessages\?\.title/)
   assert.match(coreNoticeItemSource, /appContext/)
@@ -335,13 +442,15 @@ test('keeps web-core notification handling business-neutral', () => {
   assert.match(coreRealtimeSource, /source: 'realtime' \| 'list'/)
   assert.match(coreRealtimeSource, /showTip\?: \(options: NoticeTipOptions\) => void/)
   assert.match(coreRealtimeSource, /export interface NoticeTipOptions/)
-  assert.match(coreNoticeSource, /source: 'realtime'/)
-  assert.match(coreNoticeSource, /showTip: \(options: NoticeTipOptions\) => showNoticeTip\(payload, options\)/)
-  assert.match(coreNoticeSource, /notification\.close\(key\)/)
+  assert.match(headerSource, /source: 'realtime'/)
+  assert.match(headerSource, /showTip: options => showNoticeTip\(notice, options\)/)
+  assert.match(headerSource, /notification\.close\(key\)/)
   assert.match(coreNoticeItemSource, /source: 'list'/)
   assert.match(coreNoticeItemSource, /const noticeIcon = computed\(\(\) => String\(props\.data\?\.noticeIcon \|\| ''\)\.trim\(\)\)/)
   assert.match(coreNoticeItemSource, /v-if="noticeIcon"[\s\S]*class="list-item__icon"[\s\S]*:style="\{ color: noticeIconColor \}"/)
   assert.match(coreNoticeItemSource, /const noticeIconColor = computed\(\(\) => String\(props\.data\?\.noticeIconColor \|\| ''\)\.trim\(\)\)/)
+  assert.match(coreNoticeItemSource, /const noticeTag = computed\(\(\) => String\(props\.data\?\.noticeTag \|\| ''\)\.trim\(\)\)/)
+  assert.match(coreNoticeItemSource, /<a-tag v-if="noticeTag" class="list-item__tag">\{\{ noticeTag \}\}<\/a-tag>/)
 })
 
 test('localizes generic notification list text without bulletin coupling', async () => {
@@ -368,12 +477,13 @@ test('re-resolves notification text when the active locale changes', async () =>
   assert.match(recordSource, /watch\(locale, refresh\)/)
 })
 
-test('keeps the bell badge synchronized with the backend unread count', () => {
-  assert.match(coreNoticeSource, /queryNoticeUnreadSummary\(topicProviders, params\)[\s\S]*total\.value = toBadgeCount\(resp\.result\?\.total\)/)
-  assert.match(coreNoticeSource, /const handleRealtimePayload = async[\s\S]*handleRegisteredRealtimeNotice[\s\S]*getList\(\)/)
-  assert.match(coreNoticeSource, /watch\(visible, \(opened\) => \{[\s\S]*if \(opened\) \{[\s\S]*getList\(\)/)
-  assert.match(coreNoticeSource, /<NoticeInfo ref="noticeInfoRef"/)
-  assert.match(coreNoticeSource, /noticeInfoRef\.value\?\.refresh\(\)/)
+test('keeps the bell badge synchronized with the backend unread count', async () => {
+  const headerSource = await readFile(resolve(coreRoot, 'layout/components/useHeaderNotice.ts'), 'utf8')
+  assert.match(headerSource, /queryNoticeUnreadSummary\([\s\S]*createUnreadQueryParams\(providers, BADGE_OVERFLOW_COUNT\)[\s\S]*total\.value = toBadgeCount\(response\.result\.total\)/)
+  assert.match(headerSource, /handleRealtimePayload[\s\S]*handleRegisteredRealtimeNotice[\s\S]*getList\(\)/)
+  assert.match(headerSource, /watch\(visible, opened => \{[\s\S]*if \(opened\) \{[\s\S]*getList\(\)/)
+  assert.match(coreNoticeSource, /<NoticeInfo[^>]*ref="noticeInfoRef"/)
+  assert.match(headerSource, /noticeInfoRef\.value\?\.refresh\(\)/)
   assert.match(coreNoticeInfoSource, /defineExpose\(\{\s*refresh: onRefresh,\s*\}\)/)
-  assert.doesNotMatch(coreNoticeSource, /total\.value\s*=\s*Math\.min\(total\.value\s*\+\s*1/)
+  assert.doesNotMatch(headerSource, /total\.value\s*=\s*Math\.min\(total\.value\s*\+\s*1/)
 })

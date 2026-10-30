@@ -5,6 +5,7 @@ export type AnnouncementLocalizedText = Record<string, string>
 export interface AnnouncementI18n {
   title?: AnnouncementLocalizedText
   summary?: AnnouncementLocalizedText
+  type?: AnnouncementLocalizedText
   content?: AnnouncementLocalizedText
 }
 
@@ -42,7 +43,7 @@ const normalizeTextMap = (value: unknown) => {
 export const normalizeAnnouncementI18n = (value: unknown): AnnouncementI18n => {
   if (!isRecord(value)) return {}
   const normalized: AnnouncementI18n = {}
-  const fields: AnnouncementI18nField[] = ['title', 'summary', 'content']
+  const fields: AnnouncementI18nField[] = ['title', 'summary', 'type', 'content']
   fields.forEach((field) => {
     const messages = normalizeTextMap(value[field])
     if (messages) normalized[field] = messages
@@ -114,6 +115,7 @@ export const buildAnnouncementI18nFields = (draft: {
   i18nMessages?: unknown
   title?: unknown
   summary?: unknown
+  type?: unknown
   content?: unknown
 }) => {
   const i18n = normalizeAnnouncementI18n(draft.i18nMessages)
@@ -121,6 +123,8 @@ export const buildAnnouncementI18nFields = (draft: {
     i18nMessages: Object.keys(i18n).length > 0 ? i18n : undefined,
     title: resolveCompatibilityText(i18n.title, firstText(draft.title)),
     summary: resolveCompatibilityText(i18n.summary, firstText(draft.summary)),
+    // 顶层类型是稳定语义键，国际化类型仅用于展示，不能反向覆盖图标映射值。
+    type: firstText(draft.type),
     content: resolveCompatibilityText(i18n.content, firstText(draft.content)),
   }
 }
@@ -151,7 +155,7 @@ export const updateAnnouncementLocaleText = (
 
 export const mergeLegacyAnnouncementI18n = (
   i18n: unknown,
-  legacy: { title?: unknown; summary?: unknown; content?: unknown },
+  legacy: { title?: unknown; summary?: unknown; type?: unknown; content?: unknown },
 ) => {
   const normalized = normalizeAnnouncementI18n(i18n)
 
@@ -167,6 +171,8 @@ export const mergeLegacyAnnouncementI18n = (
   if (title) normalized.title = { ...(normalized.title ?? {}), zh: title }
   const summary = resolveLegacyChinese(normalized.summary, legacy.summary)
   if (summary) normalized.summary = { ...(normalized.summary ?? {}), zh: summary }
+  const type = resolveLegacyChinese(normalized.type, legacy.type)
+  if (type) normalized.type = { ...(normalized.type ?? {}), zh: type }
   const content = resolveLegacyChinese(normalized.content, legacy.content)
   if (content) normalized.content = { ...(normalized.content ?? {}), zh: content }
   return normalized

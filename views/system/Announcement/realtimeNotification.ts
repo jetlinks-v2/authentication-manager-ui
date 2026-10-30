@@ -6,28 +6,29 @@ import type { NoticeRealtimeHandlerContext } from '@jetlinks-web-core/layout/com
 import NotificationDetail from './components/NotificationDetail.vue'
 import { parseSystemBulletinDetail } from './api'
 import { resolveAnnouncementText } from './announcementI18n'
-import { getAnnouncementReadIds, getAnnouncementReadScope } from './localReadStore'
+import { createBulletinTypeIconNode } from './bulletinTypeIcon'
 
 interface RealtimeAnnouncementContext {
   payload: Record<string, any>
   markRead: () => Promise<void>
   appContext?: AppContext
-  realtime?: boolean
 }
 
-const shown = new Set<string>()
-const dialogs = new Set<() => void>()
+type ModalHandle = { destroy: () => void }
+const realtimeDialogs = new Set<ModalHandle>()
+let dialogGeneration = 0
 
-/** 身份或项目切换后销毁旧实时弹窗，同时使其确认回调失效。 */
+/** 身份或订阅上下文变化时关闭旧公告详情，并使旧确认回调失效。 */
 export const disposeAnnouncementRealtimeDialogs = () => {
-  dialogs.forEach(dispose => dispose())
-  dialogs.clear()
-  shown.clear()
+  dialogGeneration += 1
+  const dialogs = [...realtimeDialogs]
+  realtimeDialogs.clear()
+  dialogs.forEach(dialog => dialog.destroy())
 }
 
 const text = (value: unknown) => String(value ?? '').trim()
 
-/** 标题仅用于弹窗头部，正文组件独立渲染公告内容。 */
+/** 标题缺省时回退摘要，保证轻提示和公告弹窗都有可读标题。 */
 const resolveNoticeTitle = (payload: Record<string, any>) => {
   const detail = parseSystemBulletinDetail(payload)
   return text(resolveAnnouncementText(detail, 'title'))
@@ -41,43 +42,41 @@ export const openAnnouncementDetail = ({
   payload,
   markRead,
   appContext,
-  realtime = false,
 }: RealtimeAnnouncementContext) => {
-  const scope = getAnnouncementReadScope()
-  let active = true
-  const dispose = () => {
-    active = false
-    modal.destroy()
-  }
-  const modal = Modal.info({
+  const generation = dialogGeneration
+  let handle: ModalHandle | undefined
+  handle = Modal.info({
     class: 'announcement-notification-modal',
-    title: resolveNoticeTitle(payload) || i18n.global.t('Announcement.inbox.detailTitle'),
     content: h(NotificationDetail, { data: payload }),
-    width: 820,
-    centered: true,
-    closable: true,
+    width: 900,
     icon: null,
     okText: i18n.global.t('Announcement.action.confirm'),
-    onOk: () => active && scope === getAnnouncementReadScope() ? markRead() : undefined,
+    onOk: () => generation === dialogGeneration ? markRead() : undefined,
     afterClose: () => {
-      active = false
-      dialogs.delete(dispose)
+      if (handle) realtimeDialogs.delete(handle)
     },
     appContext,
-  })
-  if (realtime) dialogs.add(dispose)
+  }) as ModalHandle | undefined
+  if (handle?.destroy) realtimeDialogs.add(handle)
   return true
 }
 
-/** 收到公告即打开详情并接管通知，避免继续显示通用站内信轻提示。 */
+/** 实时到达只显示一次轻提示，点击提示后再打开公告详情；铃铛列表点击仍直接打开详情。 */
 export const handleSystemBulletinNotice = (context: NoticeRealtimeHandlerContext) => {
-  const realtime = context.source === 'realtime'
-  if (realtime) {
-    const scope = getAnnouncementReadScope()
-    const id = text(context.payload.id)
-    const key = `${scope}:${id}`
-    if (!scope || !id || getAnnouncementReadIds(scope).includes(id) || shown.has(key)) return true
-    shown.add(key)
+  const { payload, source, showTip } = context
+  if (source !== 'realtime' || !showTip) {
+    return openAnnouncementDetail(context)
   }
-  return openAnnouncementDetail({ ...context, realtime })
+  const detail = parseSystemBulletinDetail(payload)
+  const title = resolveNoticeTitle(payload)
+  const summary = text(resolveAnnouncementText(detail, 'summary'))
+    || text(resolveAnnouncementText(detail, 'content'))
+    || text(payload.message)
+  showTip({
+    icon: createBulletinTypeIconNode(parseSystemBulletinDetail(payload)?.type),
+    title,
+    description: summary && summary !== title ? summary : undefined,
+    onClick: () => openAnnouncementDetail(context),
+  })
+  return true
 }
