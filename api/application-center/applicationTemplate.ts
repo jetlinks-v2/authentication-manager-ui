@@ -167,3 +167,6 @@ export const getTemplateNotificationSignature = (id: string) =>
 
 export const revealTemplateNotificationSignature = (id: string) =>
   request.post<TemplateNotificationSignatureSecret>(`${notificationSignatureUrl(id)}/_reveal`)
+
+export const saveTemplateNotificationSignature = (id: string, credential: TemplateNotificationSignatureSecret): Promise<unknown> =>
+  request.put(notificationSignatureUrl(id), credential)
