@@ -49,6 +49,7 @@ export const openAnnouncementDetail = ({
     class: 'announcement-notification-modal',
     content: h(NotificationDetail, { data: payload }),
     width: 900,
+    closable: true,
     icon: null,
     okText: i18n.global.t('Announcement.action.confirm'),
     onOk: () => generation === dialogGeneration ? markRead() : undefined,

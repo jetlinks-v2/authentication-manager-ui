@@ -239,25 +239,24 @@ export const resolveSystemBulletinReference = (
   notification: Record<string, any>,
 ): SystemBulletinReference | undefined => {
   const detail = parseSystemBulletinDetail(notification)
-  const legacyDataId = String(notification.dataId || '').trim()
-  const bulletinId = String(
-    notification.bulletinId
-    || detail?.bulletinId
-    || detail?.id
-    || notification.sourceId
-    // 新接收视图的 dataId 是“公告ID:版本”；缺少显式版本字段时不能把批次 ID 当公告 ID。
-    || (legacyDataId.includes(':') ? '' : legacyDataId)
-    || '',
-  ).trim()
-  if (!bulletinId) return undefined
-  // 旧通知不携带版本号，仍由当前用户正文接口校验可见性；显式非法版本不降级。
-  const rawPublishVersion = notification.publishVersion ?? detail?.publishVersion
-  if (rawPublishVersion === undefined || rawPublishVersion === null) return { bulletinId }
-  const publishVersion = Number(rawPublishVersion)
-  if (!Number.isInteger(publishVersion) || publishVersion <= 0) {
-    return undefined
+  // 新接收视图的显式引用必须完整，不得将批次 dataId 当成公告主键降级查询。
+  if ('bulletinId' in notification || 'publishVersion' in notification) {
+    const bulletinId = String(notification.bulletinId || '').trim()
+    const publishVersion = Number(notification.publishVersion)
+    if (!bulletinId || !Number.isSafeInteger(publishVersion) || publishVersion <= 0) return undefined
+    return { bulletinId, publishVersion }
   }
-  return { bulletinId, publishVersion }
+  if (detail && ('bulletinId' in detail || 'publishVersion' in detail)) {
+    const bulletinId = String(detail.bulletinId || '').trim()
+    const publishVersion = Number(detail.publishVersion)
+    if (!bulletinId || !Number.isSafeInteger(publishVersion) || publishVersion <= 0) return undefined
+    return { bulletinId, publishVersion }
+  }
+  const legacyDataId = String(notification.dataId || '').trim()
+  const bulletinId = String(detail?.id || (legacyDataId.includes(':') ? '' : legacyDataId)).trim()
+  if (!bulletinId) return undefined
+  // 旧通知不携带版本号，仍由当前用户正文接口校验可见性。
+  return { bulletinId }
 }
 
 /** 按通知发布版本查询当前用户可见的公告正文。 */

@@ -172,6 +172,13 @@ test('the announcement adapter feeds the generic core capped-count contract with
   assert.equal(calls[0].url, '/system/bulletin/received/_count')
 })
 
+test('unread count caps at 99 without server read endpoints', async () => {
+  const { source, respond, calls } = createEnvironment()
+  respond(() => ({ success: true, status: 200, result: 205 }))
+  const response = await source.countAnnouncementUnread({ pageSize: 99 })
+  assert.deepEqual(response.result, { count: 99, overflow: true })
+  assert.equal(calls[0].url, '/system/bulletin/received/_count')
+})
 
 test('interleaved confirmations in independent tabs preserve both publication IDs', () => {
   const {store, createTab} = createEnvironment()
@@ -269,4 +276,14 @@ test('mixed publication versions preserve nested read predicates and realtime lo
   }
   await source.queryAnnouncementInboxNoPaging({ terms: [{ column: 'id', termType: 'eq', value: 'a:2' }] })
   assert.deepEqual(rows.filter(row => matches(row, calls.at(-1).query.terms)), [rows[1]])
+})
+test('404 and malformed responses do not fall back to notifications or fabricate counts', async () => {
+  const { source, respond, calls } = createEnvironment()
+  respond(() => ({ success: false, status: 404 }))
+  assert.equal((await source.queryAnnouncementInbox()).status, 404)
+  assert.equal((await source.countAnnouncementUnread()).status, 404)
+  assert.ok(calls.every(call => call.url.startsWith('/system/bulletin/received/')))
+  respond(() => ({ success: true, status: 200, result: null }))
+  await assert.rejects(source.queryAnnouncementInbox(), /collection/)
+  await assert.rejects(source.countAnnouncementUnread(), /count/)
 })

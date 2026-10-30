@@ -8,5 +8,6 @@ export interface ResourceRankRow {
   width: number
   text: string
   color?: string
+  online?: boolean
   detailAvailable: boolean
 }

@@ -1,6 +1,8 @@
 import type { ProjectApplication } from '../../../views/application-center/ProjectApplication/types'
-export type HomeFeature = 'QuickActions' | 'Applications' | 'Resources' | 'Quotas' | 'Operations' | 'Announcements' | 'QuickGuide' | 'DeviceAccess' | 'Visualization' | 'AiCenter' | 'RuleEngine' | 'Collection'
+export type HomeFeature = 'QuickActions' | 'Applications' | 'Resources' | 'Quotas' | 'Operations' | 'Announcements' | 'AnnouncementUnread' | 'QuickGuide' | 'DeviceAccess' | 'Visualization' | 'AiCenter' | 'RuleEngine' | 'Collection' | 'SaasResources' | 'SaasToday' | 'SaasQuotas' | 'SaasApplications'
 export interface HomeChart {
+  maxItems?: number
+  titleKey?: string
   displayStyle: string
   fontSize: number
   showIcon: boolean
@@ -26,14 +28,19 @@ export interface HomeRow {
   subgroup?: string
   icon?: string
   value?: number
+  yesterday?: number
+  statuses?: { labelKey: string; value?: number; tone?: 'success' | 'error' | 'default' }[]
   online?: number
   offline?: number
   limit?: number | null
   unit?: string
+  unitKey?: string
   date?: string
   target?: HomeTarget
   notification?: Record<string, unknown>
   failed?: boolean
   application?: ProjectApplication
   isNew?: boolean
+  readState?: 'read' | 'unread'
+  announcementType?: { value: string; text: string; color: string }
 }

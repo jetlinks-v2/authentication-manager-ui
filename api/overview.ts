@@ -21,6 +21,8 @@ export interface OverviewGatewayItem {
   name: string
   productId?: string
   productName?: string
+  connectionStatus: 'online' | 'offline' | 'disabled'
+  connectionStatusText?: string
   online: boolean
 }
 
@@ -223,15 +225,17 @@ export const buildOverviewDeviceTerms = (kind: 'edge' | 'iot'): OverviewDeviceTe
   kind === 'edge' ? buildGatewayTerms() : buildIotDeviceTerms()
 )
 
-/** 按视频资源页的设备与通道链路统计当前在线通道和通道总数。 */
-export const queryOverviewChannelSummary = async (): Promise<OverviewCountSummary> => {
+export interface OverviewChannelBreakdown extends OverviewCountSummary { id: string }
+
+/** 按视频资源页统计接入来源；私有化 all 范围包含插件及扩展来源，默认保留现有数量卡口径。 */
+export const queryOverviewChannelBreakdown = async (scope: 'default' | 'all' = 'default'): Promise<OverviewChannelBreakdown[]> => {
   const mediaDevices = (await queryAllPages('/media/device/_query', {
     sorts: [
       { name: 'createTime', order: 'desc' },
       { name: 'name', order: 'desc' },
     ],
   })).filter((row) => (
-    textOf(row.id) && MEDIA_ACCESS_PROVIDERS.has(enumValueOf(row.provider))
+    textOf(row.id) && (scope === 'all' || MEDIA_ACCESS_PROVIDERS.has(enumValueOf(row.provider)))
   ))
 
   const summaries = await Promise.all(mediaDevices.map(async (device) => {
@@ -243,21 +247,30 @@ export const queryOverviewChannelSummary = async (): Promise<OverviewCountSummar
         { sorts: [{ name: 'createTime', order: 'desc' }] },
       )
       return {
+        id: enumValueOf(device.provider),
         total: channels.length,
         online: channels.filter(channel => isChannelOnline(channel, connection)).length,
       }
     } catch (error) {
-      if (isAgentDisconnected(error)) return { total: 0, online: 0 }
+      if (isAgentDisconnected(error)) return { id: enumValueOf(device.provider), total: 0, online: 0 }
       throw error
     }
   }))
 
-  return summaries.reduce<OverviewCountSummary>((summary, current) => ({
-    total: summary.total + current.total,
-    online: summary.online + current.online,
-  }), { total: 0, online: 0 })
+  const groups = new Map<string, OverviewChannelBreakdown>()
+  for (const current of summaries) {
+    const previous = groups.get(current.id)
+    groups.set(current.id, { id: current.id, total: (previous?.total ?? 0) + current.total, online: (previous?.online ?? 0) + current.online })
+  }
+  return [...groups.values()]
 }
 
+/** 数量卡沿用同一接入来源统计结果，避免分布与总量使用不同范围。 */
+export const queryOverviewChannelSummary = async (): Promise<OverviewCountSummary> => (
+  (await queryOverviewChannelBreakdown()).reduce((summary, current) => ({
+    total: summary.total + current.total, online: summary.online + current.online,
+  }), { total: 0, online: 0 })
+)
 
 /** 默认查询概览前几台网关；仪表盘指标可分页遍历同一网关范围。 */
 export const queryOverviewGatewayPage = async (pageSize = 4, pageIndex = 0): Promise<OverviewGatewayPage> => {
@@ -275,12 +288,18 @@ export const queryOverviewGatewayPage = async (pageSize = 4, pageIndex = 0): Pro
       const row = recordOf(value)
       const id = textOf(row.id)
       const state = row.connectionStatus ?? row.status ?? row.state
+      const stateValue = enumValueOf(state)
+      // 与设备列表的三态口径一致，保留禁用状态，不能把所有非在线节点归为离线。
+      const connectionStatus: OverviewGatewayItem['connectionStatus'] =
+        stateValue === 'online' || stateValue === 'offline' ? stateValue : 'disabled'
       return {
         id,
         name: textOf(row.name, id, globalI18n.global.t('comm.table.empty')),
         productId: textOf(row.productId) || undefined,
         productName: textOf(row.productName) || undefined,
-        online: enumValueOf(state) === 'online',
+        connectionStatus,
+        connectionStatusText: textOf(recordOf(state).text) || undefined,
+        online: connectionStatus === 'online',
       }
     }).filter(item => item.id),
     total: countOf(page.total ?? rows.length),

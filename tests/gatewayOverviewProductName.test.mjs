@@ -20,3 +20,13 @@ test('gateway directory maps the product name supplied by device details without
   assert.equal(page.data[1].productName, undefined)
   assert.equal(page.total, 2)
 })
+
+test('gateway directory preserves the device API online, offline and notActive states', async () => {
+  globalThis.__gatewayOverviewPost = async () => ({ result: { total: 3, data: [
+    { id: 'a', state: { value: 'online', text: '在线' } },
+    { id: 'b', state: { value: 'offline', text: '离线' } },
+    { id: 'c', state: { value: 'notActive', text: '禁用' } },
+  ] } })
+  const page = await queryOverviewGatewayPage()
+  assert.deepEqual(page.data.map(item => [item.connectionStatus, item.online, item.connectionStatusText]), [['online', true, '在线'], ['offline', false, '离线'], ['disabled', false, '禁用']])
+})

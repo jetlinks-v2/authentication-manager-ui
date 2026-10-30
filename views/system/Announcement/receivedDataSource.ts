@@ -6,8 +6,25 @@ import {
   getAnnouncementReadScope,
 } from './localReadStore'
 
-type Query = Record<string, any>
-type Term = Record<string, any>
+export interface AnnouncementReceivedQuery {
+  paging?: boolean
+  pageIndex?: number
+  pageSize?: number
+  includes?: string[]
+  excludes?: string[]
+  sorts?: { name: string; order: string }[]
+  terms?: AnnouncementReceivedTerm[]
+}
+export interface AnnouncementReceivedTerm {
+  column?: string
+  termType?: string
+  type?: string
+  value?: unknown
+  terms?: AnnouncementReceivedTerm[]
+}
+type Query = AnnouncementReceivedQuery
+type Term = AnnouncementReceivedTerm
+type ReceivedRecord = Record<string, unknown>
 const RECEIVED_PATH = '/system/bulletin/received'
 
 /** 递归保留 AND/OR 分组，只将本地 state 谓词替换成后端普通 ID 条件。 */
@@ -17,7 +34,7 @@ export const transformAnnouncementStateTerms = (terms: Term[], readIds: string[]
   if (term.column !== 'state') return transformed
   const operator = term.termType || 'eq'
   const values = (Array.isArray(term.value) ? term.value : String(term.value).split(','))
-    .map(value => typeof value === 'object' ? value?.value : value)
+    .map(value => value && typeof value === 'object' ? (value as { value?: unknown }).value : value)
   const negative = ['not', 'neq', 'nin'].includes(operator)
   if (!['eq', 'not', 'neq', 'in', 'nin'].includes(operator)) {
     throw new Error(`Unsupported announcement state condition: ${operator}`)
@@ -34,13 +51,14 @@ export const transformAnnouncementStateTerms = (terms: Term[], readIds: string[]
 
 /** 本地批次按发布版本分组，避免把旧版本确认应用到重发后的公告。 */
 const batchTerms = (term: Term): Term => {
-  const negative = ['not', 'neq', 'nin'].includes(term.termType)
+  const negative = ['not', 'neq', 'nin'].includes(term.termType || 'eq')
   const groups = new Map<number, string[]>()
   const values = Array.isArray(term.value) ? term.value : [term.value]
   values.forEach(value => {
     const match = /^(.+):(\d+)$/.exec(String(value))
     if (!match) return
     const version = Number(match[2])
+    if (!Number.isSafeInteger(version) || version <= 0) return
     const ids = groups.get(version) || []
     ids.push(match[1])
     groups.set(version, ids)
@@ -70,7 +88,7 @@ const bulletinTerms = (terms: Term[]): Term[] => terms.map(term => {
   }
   if (term.column === 'topicProvider') {
     const values = Array.isArray(term.value) ? term.value : [term.value]
-    const matches = values.includes('SystemBulletin') !== ['not', 'neq', 'nin'].includes(term.termType)
+    const matches = values.includes('SystemBulletin') !== ['not', 'neq', 'nin'].includes(term.termType || 'eq')
     return { type: term.type, column: 'id', termType: matches ? 'notnull' : 'isnull' }
   }
   return { ...term, column: bulletinFields[term.column] || term.column }
@@ -78,12 +96,12 @@ const bulletinTerms = (terms: Term[]): Term[] => terms.map(term => {
 
 const localQuery = (query: Query, scope: string | undefined) => ({
   ...query,
-  sorts: query.sorts?.map((sort: Query) => ({ ...sort, name: bulletinFields[sort.name] || sort.name })),
+  sorts: query.sorts?.map(sort => ({ ...sort, name: bulletinFields[sort.name] || sort.name })),
   terms: bulletinTerms(transformAnnouncementStateTerms(query.terms || [], getAnnouncementReadIds(scope))),
 })
 
-const injectState = (record: Query, ids: Set<string>) => {
-  const value = ids.has(record.id) ? 'read' : 'unread'
+const injectState = (record: ReceivedRecord, ids: Set<string>) => {
+  const value = typeof record.id === 'string' && ids.has(record.id) ? 'read' : 'unread'
   return {
     ...record,
     state: { value, text: i18n.global.t(value === 'read' ? 'NotificationRecord.index.803553-9' : 'NotificationRecord.index.803553-8') },
@@ -92,21 +110,24 @@ const injectState = (record: Query, ids: Set<string>) => {
 
 const queryRecords = async (path: string, query: Query) => {
   const scope = getAnnouncementReadScope()
-  const response = await request.post(`${RECEIVED_PATH}${path}`, localQuery(query, scope))
-  if (!response.success) return response
+  const response = await request.post(`${RECEIVED_PATH}${path}`, localQuery(query, scope), { hiddenError: true })
+  if (response.success === false || response.status >= 400) return response
+  if (!Array.isArray(response.result) && !Array.isArray(response.result?.data)) {
+    throw new Error('Invalid received announcement collection')
+  }
   const ids = new Set(getAnnouncementReadIds(scope))
   return {
     ...response,
     result: Array.isArray(response.result)
-      ? response.result.map((record: Query) => injectState(record, ids))
-      : { ...response.result, data: (response.result?.data || []).map((record: Query) => injectState(record, ids)) },
+      ? response.result.map((record: ReceivedRecord) => injectState(record, ids))
+      : { ...response.result, data: response.result.data.map((record: ReceivedRecord) => injectState(record, ids)) },
   }
 }
 
 export const queryAnnouncementInbox = (query: Query = {}) => queryRecords('/_query', query)
 export const queryAnnouncementInboxNoPaging = (query: Query = {}) => queryRecords('/_query/no-paging', query)
 export const countAnnouncementInbox = (query: Query = {}) => request.post(
-  `${RECEIVED_PATH}/_count`, localQuery(query, getAnnouncementReadScope()),
+  `${RECEIVED_PATH}/_count`, localQuery(query, getAnnouncementReadScope()), { hiddenError: true },
 )
 
 /** 未读统计由后端在当前可见资格内执行，不能减去本地不可见的历史确认数。 */
@@ -118,9 +139,12 @@ export const countAnnouncementUnread = async (query: Query = {}) => {
       { column: 'state', termType: 'eq', value: 'unread' },
     ],
   })
-  if (!response.success) return response
-  const count = Number(response.result || 0)
-  const limit = Number(query.pageSize || 99)
+  if (response.success === false || response.status >= 400) return response
+  const count = response.result
+  if (typeof count !== 'number' || !Number.isSafeInteger(count) || count < 0) {
+    throw new Error('Invalid announcement unread count')
+  }
+  const limit = query.pageSize && Number.isInteger(query.pageSize) && query.pageSize > 0 ? query.pageSize : 99
   return { ...response, result: { count: Math.min(count, limit), overflow: count > limit } }
 }
 
@@ -137,7 +161,7 @@ export const markAllAnnouncementsRead = async () => {
     includes: ['id', 'publishVersion'],
   })
   if (response.success) {
-    changeAnnouncementLocalState('_read', (response.result || []).map((record: Query) => record.id), scope)
+    changeAnnouncementLocalState('_read', (response.result || []).map((record: { id: string }) => record.id), scope)
   }
   return response
 }
