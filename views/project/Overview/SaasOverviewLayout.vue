@@ -35,7 +35,7 @@ defineProps<{ dashboard: DashboardValue; catalog: DashboardCatalog; storageKey: 
 .saas-overview-layout :deep(.saas-recent-card .ant-card-head-title) { padding-block: 0; }
 .saas-overview-layout :deep(.project-home-shell--saas .ant-card-body) { padding: 16px !important; }
 /* 公告行自带 12px 留白，使内容与卡头的 16px 留白对齐。 */
-.saas-overview-layout :deep(.project-home-shell--saas[data-home-feature="Announcements"] .ant-card-body) { padding-inline: 4px !important; }
+.saas-overview-layout :deep(.project-home-shell--saas[data-home-feature="Announcements"] .ant-card-body) { padding: 4px 4px 16px !important; }
 .saas-overview-layout :deep(.saas-recent-card .ant-card-body),
 .saas-overview-layout :deep(.saas-utility-card .ant-card-body) { padding: 16px; }
 /* 帮助文档正文边距移除，通栏分割线与全宽 hover */
