@@ -3,7 +3,9 @@
     :open="visible"
     :title="title"
     :width="600"
+    :z-index="I18N_MODAL_Z_INDEX"
     :mask-closable="false"
+    destroy-on-close
     @cancel="handleCancel"
     @ok="handleOk"
   >
@@ -55,6 +57,8 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+// 与主题的二级浮层语义保持一致，确保反复打开时始终位于公告编辑弹窗上方。
+const I18N_MODAL_Z_INDEX = 1100
 const formRef = ref()
 const formData = reactive<Record<string, string>>({})
 const languages = computed(() => [

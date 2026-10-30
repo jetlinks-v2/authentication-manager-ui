@@ -14,7 +14,7 @@
   <AnnouncementEditorDialog
     v-model:open="editorOpen"
     :record="editingRecord"
-    :loading="saving"
+    :loading-action="savingAction"
     @save="saveAnnouncement"
   />
 
@@ -57,7 +57,7 @@ const { t: $t, locale } = useI18n()
 const managementViewRef = ref<{ reload: () => void }>()
 const editorOpen = ref(false)
 const editingRecord = ref<AnnouncementRecord>()
-const saving = ref(false)
+const savingAction = ref<'draft' | 'publish'>()
 const detailOpen = ref(false)
 const detailRecord = ref<AnnouncementRecord>()
 const detailLoading = ref(false)
@@ -97,8 +97,9 @@ async function openDetail(record: AnnouncementRecord) {
 }
 
 async function saveAnnouncement(draft: AnnouncementDraft) {
+  if (savingAction.value) return
   const editing = Boolean(draft.id)
-  saving.value = true
+  savingAction.value = draft.publish ? 'publish' : 'draft'
   try {
     const savedId = await saveAnnouncementApi(draft)
     if (draft.publish) {
@@ -115,7 +116,7 @@ async function saveAnnouncement(draft: AnnouncementDraft) {
         : 'Announcement.message.created'
     onlyMessage($t(messageKey))
   } finally {
-    saving.value = false
+    savingAction.value = undefined
   }
 }
 

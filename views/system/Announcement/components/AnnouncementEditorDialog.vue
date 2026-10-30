@@ -41,16 +41,11 @@
         </a-col>
         <a-col :span="8">
           <a-form-item :label="$t('Announcement.editor.type')" required>
-            <a-input
+            <a-select
               v-model:value="form.type"
-              :maxlength="64"
-              show-count
+              :options="typeOptions"
               :placeholder="$t('Announcement.editor.typePlaceholder')"
-            >
-              <template #suffix>
-                <AnnouncementI18nTrigger @configure="openTextI18n('type')" />
-              </template>
-            </a-input>
+            />
           </a-form-item>
         </a-col>
       </a-row>
@@ -101,13 +96,13 @@
     </a-form>
 
     <template #footer>
-      <a-button :disabled="loading" @click="$emit('update:open', false)">
+      <a-button :disabled="Boolean(loadingAction)" @click="$emit('update:open', false)">
         {{ $t('Announcement.action.cancel') }}
       </a-button>
       <j-permission-button
         :has-permission="record ? 'system/Announcement:edit' : 'system/Announcement:add'"
-        :loading="loading"
-        :disabled="!canSubmit"
+        :loading="loadingAction === 'draft'"
+        :disabled="!canSubmit || Boolean(loadingAction)"
         @click="submit(false)"
       >
         {{ $t('Announcement.action.saveDraft') }}
@@ -115,8 +110,8 @@
       <j-permission-button
         :has-permission="record ? 'system/Announcement:edit' : 'system/Announcement:add'"
         type="primary"
-        :loading="loading"
-        :disabled="!canSubmit"
+        :loading="loadingAction === 'publish'"
+        :disabled="!canSubmit || Boolean(loadingAction)"
         @click="submit(true)"
       >
         {{ $t('Announcement.action.savePublish') }}
@@ -140,6 +135,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import type { PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { AnnouncementDraft, AnnouncementRecord } from '../types'
+import { BULLETIN_TYPE_VALUES } from '../bulletinTypeIcon'
 import { useAnnouncementRegions } from '../hooks/useAnnouncementRegions'
 import {
   mergeLegacyAnnouncementI18n,
@@ -157,7 +153,7 @@ import AnnouncementI18nTrigger from './AnnouncementI18nTrigger.vue'
 const props = defineProps({
   open: { type: Boolean, default: false },
   record: { type: Object as PropType<AnnouncementRecord>, default: undefined },
-  loading: { type: Boolean, default: false },
+  loadingAction: { type: String as PropType<'draft' | 'publish'>, default: undefined },
 })
 
 const emit = defineEmits<{
@@ -181,9 +177,10 @@ const {
   load: loadRegions,
 } = useAnnouncementRegions()
 const i18nDialogVisible = ref(false)
-const i18nField = ref<Extract<AnnouncementI18nField, 'title' | 'summary' | 'type'>>('title')
+const i18nField = ref<Extract<AnnouncementI18nField, 'title' | 'summary'>>('title')
 let initialTitle = ''
 let initialSummary = ''
+let initialType = ''
 
 const currentLanguage = computed(() => String(locale.value || 'zh').replace('_', '-').split('-')[0])
 const dialogTitle = computed(() => props.record
@@ -193,7 +190,11 @@ const i18nDialogTitle = computed(() => $t('Announcement.i18n.dialogTitle', {
   field: $t(`Announcement.editor.${i18nField.value}`),
 }))
 const i18nDialogData = computed(() => form.i18nMessages[i18nField.value] ?? {})
-const i18nDialogMaxLength = computed(() => ({ title: 200, summary: 120, type: 64 })[i18nField.value])
+const i18nDialogMaxLength = computed(() => ({ title: 200, summary: 120 })[i18nField.value])
+const typeOptions = computed(() => BULLETIN_TYPE_VALUES.map(value => ({
+  value,
+  label: $t(`Announcement.type.${value}`),
+})))
 const scopeInvalid = computed(() => !form.saas && form.regionIds.length === 0)
 const canSubmit = computed(() => {
   const i18n = normalizeAnnouncementI18n(form.i18nMessages)
@@ -227,6 +228,7 @@ function resetForm() {
   initialTitle = form.title
   initialSummary = form.summary
   form.type = record?.type || ''
+  initialType = form.type
   form.popup = record?.popup === true
   form.saas = record?.deliveryScope?.saas ?? true
   form.regionIds = [...(record?.deliveryScope?.regionIds || [])]
@@ -240,9 +242,7 @@ function openTextI18n(field: typeof i18nField.value) {
 function saveTextI18n(messages: Record<string, string>) {
   const field = i18nField.value
   form.i18nMessages = { ...form.i18nMessages, [field]: messages }
-  if (field === 'title' || field === 'summary') {
-    form[field] = resolveLocalizedText(messages, currentLanguage.value)
-  }
+  form[field] = resolveLocalizedText(messages, currentLanguage.value)
 }
 
 function submit(publish: boolean) {
@@ -254,6 +254,8 @@ function submit(publish: boolean) {
   if (form.summary.trim() !== initialSummary) {
     i18n = updateAnnouncementLocaleText(i18n, 'summary', currentLanguage.value, form.summary)
   }
+  // 固定类型改选后不保留旧的逐公告类型翻译，避免隐藏文案覆盖统一语言包。
+  if (form.type !== initialType) delete i18n.type
   emit('save', {
     id: props.record?.id,
     title: form.title.trim(),

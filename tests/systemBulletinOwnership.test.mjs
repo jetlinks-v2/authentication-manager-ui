@@ -92,13 +92,17 @@ test('runs popup bulletins once from the business-neutral login notification hoo
 })
 
 test('edits title, summary, type, popup and Markdown content with draft or publish intent', async () => {
-  const editorSource = await readFile(resolve(moduleRoot, 'views/system/Announcement/components/AnnouncementEditorDialog.vue'), 'utf8')
+  const [editorSource, i18nDialogSource] = await Promise.all([
+    readFile(resolve(moduleRoot, 'views/system/Announcement/components/AnnouncementEditorDialog.vue'), 'utf8'),
+    readFile(resolve(moduleRoot, 'views/system/Announcement/components/AnnouncementI18nTextDialog.vue'), 'utf8'),
+  ])
   assert.match(editorSource, /Announcement\.editor\.title/)
   assert.match(editorSource, /Announcement\.editor\.summary/)
   assert.match(editorSource, /v-model:value="form\.summary"/)
   assert.match(editorSource, /Announcement\.editor\.type/)
   assert.match(editorSource, /v-model:value="form\.type"/)
-  assert.match(editorSource, /:maxlength="64"/)
+  assert.match(editorSource, /<a-select[\s\S]*?:options="typeOptions"/)
+  assert.match(editorSource, /BULLETIN_TYPE_VALUES\.map/)
   assert.match(editorSource, /type: ''/)
   assert.match(editorSource, /form\.type = record\?\.type \|\| ''/)
   assert.doesNotMatch(editorSource, /type: 'default'|record\?\.type \|\| 'default'/)
@@ -107,7 +111,13 @@ test('edits title, summary, type, popup and Markdown content with draft or publi
   assert.match(editorSource, /:rows="14"/)
   assert.match(editorSource, /openTextI18n\('title'\)/)
   assert.match(editorSource, /openTextI18n\('summary'\)/)
-  assert.match(editorSource, /openTextI18n\('type'\)/)
+  assert.doesNotMatch(editorSource, /openTextI18n\('type'\)/)
+  assert.match(editorSource, /:loading="loadingAction === 'draft'"/)
+  assert.match(editorSource, /:loading="loadingAction === 'publish'"/)
+  assert.match(editorSource, /:disabled="!canSubmit \|\| Boolean\(loadingAction\)"/)
+  assert.match(pageSource, /savingAction\.value = draft\.publish \? 'publish' : 'draft'/)
+  assert.match(i18nDialogSource, /:z-index="I18N_MODAL_Z_INDEX"/)
+  assert.match(i18nDialogSource, /I18N_MODAL_Z_INDEX = 1100/)
   assert.match(editorSource, /Announcement\.editor\.popup/)
   assert.match(editorSource, /v-model:checked="form\.popup"/)
   assert.match(editorSource, /submit\(false\)/)
@@ -168,11 +178,13 @@ test('shows one typed realtime tip and opens the bulletin detail after clicking 
   assert.doesNotMatch(notificationDetailSource, /detail\.summary/)
 })
 
-test('maps the six built-in bulletin types to one icon vocabulary with a default fallback', () => {
+test('maps fixed and historical bulletin types to one icon vocabulary with a default fallback', () => {
+  assert.match(bulletinTypeIconSource, /BULLETIN_TYPE_VALUES = \['maintenance', 'release', 'campaign', 'policy'\]/)
   assert.match(bulletinTypeIconSource, /default: 'NotificationOutlined'/)
   assert.match(bulletinTypeIconSource, /maintenance: 'ToolOutlined'/)
   assert.match(bulletinTypeIconSource, /incident: 'WarningOutlined'/)
   assert.match(bulletinTypeIconSource, /release: 'RocketOutlined'/)
+  assert.match(bulletinTypeIconSource, /campaign: 'NotificationOutlined'/)
   assert.match(bulletinTypeIconSource, /security: 'SafetyCertificateOutlined'/)
   assert.match(bulletinTypeIconSource, /policy: 'FileTextOutlined'/)
   assert.match(bulletinTypeIconSource, /DEFAULT_BULLETIN_TYPE_ICON = 'NotificationOutlined'/)
@@ -209,11 +221,13 @@ test('stores localized title, summary, type and Markdown content', async () => {
   assert.match(editorSource, /summary: form\.summary\.trim\(\) \|\| undefined/)
   assert.match(editorSource, /content: resolveCompatibilityText\(i18n\.content\)/)
   assert.match(i18nSource, /\['title', 'summary', 'type', 'content'\]/)
-  assert.match(apiSource, /typeText: resolveAnnouncementText/)
+  assert.match(apiSource, /typeText: resolveAnnouncementTypeLabel/)
   assert.doesNotMatch(editorSource, /:display-value=/)
   assert.match(i18nSource, /locale === 'zh' \|\| locale === 'en'/)
   assert.equal(JSON.parse(zhLocale)['Announcement.i18n.configure'], '国际化配置')
   assert.equal(JSON.parse(enLocale)['Announcement.i18n.configure'], 'Internationalization')
+  assert.equal(JSON.parse(zhLocale)['Announcement.type.campaign'], '运营活动')
+  assert.equal(JSON.parse(enLocale)['Announcement.type.campaign'], 'Campaign')
 })
 
 test('uses the bulletin title and internal scrolling for management details', () => {

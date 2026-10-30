@@ -11,6 +11,7 @@ import {
 } from './api'
 import {
   getAnnouncementI18n,
+  resolveAnnouncementTypeLabel,
   resolveAnnouncementText,
   resolveLocalizedText,
 } from './announcementI18n'
@@ -111,9 +112,9 @@ export const resolveSystemBulletinNoticeTexts = async (
     if (record.topicProvider !== SYSTEM_BULLETIN_PROVIDER) return record
     const snapshot = parseSystemBulletinDetail(record)
     const snapshotI18n = getAnnouncementI18n(snapshot?.i18nMessages)
-    const hasCurrentText = (field: 'title' | 'summary' | 'type') =>
+    const hasCurrentText = (field: 'title' | 'summary') =>
       Boolean(resolveLocalizedText(snapshotI18n[field]))
-    const shouldLoadDetail = (['title', 'summary', 'type'] as const)
+    const shouldLoadDetail = (['title', 'summary'] as const)
       .some(field => !hasCurrentText(field))
     const loadedDetail = shouldLoadDetail ? await loadDetail(record) : undefined
     const title = loadedDetail?.title
@@ -125,9 +126,10 @@ export const resolveSystemBulletinNoticeTexts = async (
       || resolveAnnouncementText(snapshot, 'content')
       || String(record.message || '').trim()
     const type = normalizeBulletinType(loadedDetail?.type || snapshot?.type, 'default')
-    const typeText = loadedDetail?.typeText
-      || resolveAnnouncementText(snapshot, 'type')
-      || type
+    const typeText = loadedDetail?.typeText || resolveAnnouncementTypeLabel(
+      type,
+      resolveAnnouncementText(snapshot, 'type'),
+    )
     const localizedDetail = loadedDetail
       ? {
           ...(snapshot || {}),

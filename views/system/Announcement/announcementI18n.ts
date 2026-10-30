@@ -88,6 +88,24 @@ export const resolveAnnouncementStateLabel = (
   }
 }
 
+/** 固定公告类型由本地语言包统一展示，历史自定义类型继续使用公告内翻译或原始值。 */
+export const resolveAnnouncementTypeLabel = (
+  type: unknown,
+  fallback = '',
+  locale?: string,
+): string => {
+  const value = firstText(type)
+  if (!value) return firstText(fallback)
+  const language = String(locale || currentLocale()).replace('_', '-').split('-')[0]
+  try {
+    const messages = globalI18n.global.getLocaleMessage(language) as Record<string, unknown>
+    const localized = messages?.[`Announcement.type.${value}`]
+    return firstText(localized, fallback, value)
+  } catch {
+    return firstText(fallback, value)
+  }
+}
+
 /** 当前 locale 优先，缺失时只回退旧顶层字段，不跨语言取值。 */
 export const resolveAnnouncementText = (
   record: AnnouncementTextRecord | undefined,

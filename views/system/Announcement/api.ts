@@ -2,6 +2,7 @@ import dayjs from 'dayjs'
 import { request } from '@jetlinks-web/core'
 import {
   buildAnnouncementI18nFields,
+  resolveAnnouncementTypeLabel,
   resolveAnnouncementText,
   type AnnouncementI18n,
 } from './announcementI18n'
@@ -175,7 +176,10 @@ const normalizeBulletin = (record: SystemBulletin): AnnouncementRecord => {
     legacySummary: record.summary || '',
     legacyContent: record.content || '',
     type,
-    typeText: resolveAnnouncementText({ ...record, type }, 'type'),
+    typeText: resolveAnnouncementTypeLabel(
+      type,
+      resolveAnnouncementText({ ...record, type }, 'type'),
+    ),
     state,
     stateText,
     deployTime: formatTime(record.deployTime),
@@ -274,7 +278,10 @@ export const getSystemBulletinNotificationDetail = async (
     content: resolveAnnouncementText(detail, 'content'),
     i18nMessages: detail.i18nMessages,
     type: type || undefined,
-    typeText: resolveAnnouncementText({ ...detail, type }, 'type') || undefined,
+    typeText: resolveAnnouncementTypeLabel(
+      type,
+      resolveAnnouncementText({ ...detail, type }, 'type'),
+    ) || undefined,
     deployTime: detail.deployTime,
     popup: detail.others?.popup === true,
   }

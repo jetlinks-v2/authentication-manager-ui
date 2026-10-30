@@ -8,12 +8,15 @@ import {
   WarningOutlined,
 } from '@ant-design/icons-vue'
 
+export const BULLETIN_TYPE_VALUES = ['maintenance', 'release', 'campaign', 'policy'] as const
+
 /** 平台内置公告类型与统一图标语义；类型只表达内容主题，不承担紧急程度或颜色等级。 */
 export const BULLETIN_TYPE_ICONS: Record<string, string> = {
   default: 'NotificationOutlined',
   maintenance: 'ToolOutlined',
   incident: 'WarningOutlined',
   release: 'RocketOutlined',
+  campaign: 'NotificationOutlined',
   security: 'SafetyCertificateOutlined',
   policy: 'FileTextOutlined',
 }
@@ -34,6 +37,7 @@ export const BULLETIN_TYPE_COLORS: Record<string, string> = {
   maintenance: '#fa8c16',
   incident: '#f5222d',
   release: '#1677ff',
+  campaign: 'var(--jet-theme-primary)',
   security: '#722ed1',
   policy: '#52c41a',
 }

@@ -29,6 +29,7 @@ const loadLoader = async ({ list, unread, detail }) => {
         getAnnouncementI18n: (i18nMessages) => i18nMessages || {},
         resolveLocalizedText: (messages) => String(messages?.en || '').trim(),
         resolveAnnouncementText: (record, field) => String(record?.i18nMessages?.[field]?.en || record?.[field] || '').trim(),
+        resolveAnnouncementTypeLabel: (type, fallback = '') => String(fallback || type || '').trim(),
       }
     }
     if (id === './bulletinTypeIcon') {

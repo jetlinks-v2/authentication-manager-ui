@@ -10,6 +10,7 @@ const loadApi = request => loadLogModule('views/system/Announcement/api.ts', {
   './receivedDataSource': {},
   './announcementI18n': {
     resolveAnnouncementText: (record, key) => record[key] || '',
+    resolveAnnouncementTypeLabel: (type, fallback = '') => fallback || type || '',
     buildAnnouncementI18nFields: draft => draft,
   },
 })
@@ -126,7 +127,7 @@ test('normalizing saved scope ignores null blank and duplicate regions', async (
 const loadPage = (api) => {
   const source = readFileSync(new URL('../views/system/Announcement/index.vue', import.meta.url), 'utf8')
     .match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]
-  const { code } = transformSync(`${source}\nexport { saveAnnouncement, publishAnnouncement, managementViewRef, editorOpen, saving }`, {
+  const { code } = transformSync(`${source}\nexport { saveAnnouncement, publishAnnouncement, managementViewRef, editorOpen, savingAction }`, {
     loader: 'ts', format: 'cjs',
   })
   const messages = []

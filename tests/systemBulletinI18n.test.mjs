@@ -22,6 +22,7 @@ const loadHelper = async (locale = 'en') => {
             getLocaleMessage: (target) => ({
               'Announcement.status.published': target === 'zh' ? '已发布' : 'Published',
               'Announcement.status.unpublished': target === 'zh' ? '未发布' : 'Unpublished',
+              'Announcement.type.maintenance': target === 'zh' ? '系统维护' : 'System Maintenance',
             }),
           },
         },
@@ -201,4 +202,12 @@ test('resolves the announcement state label by target language', async () => {
   assert.equal(resolveAnnouncementStateLabel('unknown', 'en'), '')
   assert.equal(resolveAnnouncementStateLabel('', 'en'), '')
   assert.equal(resolveAnnouncementStateLabel(undefined, 'en'), '')
+})
+
+test('localizes fixed bulletin types and preserves historical fallback text', async () => {
+  const { resolveAnnouncementTypeLabel } = await loadHelper('zh')
+  assert.equal(resolveAnnouncementTypeLabel('maintenance', '', 'zh'), '系统维护')
+  assert.equal(resolveAnnouncementTypeLabel('maintenance', '', 'en'), 'System Maintenance')
+  assert.equal(resolveAnnouncementTypeLabel('custom', '历史类型', 'en'), '历史类型')
+  assert.equal(resolveAnnouncementTypeLabel('custom', '', 'en'), 'custom')
 })
