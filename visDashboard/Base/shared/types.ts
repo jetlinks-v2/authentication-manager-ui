@@ -1,4 +1,5 @@
 import type { ProjectApplication } from '../../../views/application-center/ProjectApplication/types'
+import type { CardAvatarData } from '@jetlinks-web-core/components/CardBox/types'
 export type HomeFeature = 'QuickActions' | 'Applications' | 'Resources' | 'Quotas' | 'Operations' | 'Announcements' | 'AnnouncementUnread' | 'QuickGuide' | 'DeviceAccess' | 'Visualization' | 'AiCenter' | 'RuleEngine' | 'Collection' | 'SaasResources' | 'SaasToday' | 'SaasQuotas' | 'SaasApplications'
 export interface HomeChart {
   maxItems?: number
@@ -40,6 +41,7 @@ export interface HomeRow {
   notification?: Record<string, unknown>
   failed?: boolean
   application?: ProjectApplication
+  applicationAvatar?: CardAvatarData
   isNew?: boolean
   readState?: 'read' | 'unread'
   announcementType?: { value: string; text: string; color: string }

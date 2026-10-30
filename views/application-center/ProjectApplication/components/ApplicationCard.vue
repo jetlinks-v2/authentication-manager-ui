@@ -55,7 +55,7 @@ import { computed, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CardBox from '@jetlinks-web-core/components/CardBox/index.vue'
 import CardAvatar from '@jetlinks-web-core/components/CardBox/CardAvatar.vue'
-import type { CardAvatarData } from '@jetlinks-web-core/components/CardBox/types'
+import { applicationAvatar } from '../applicationModel'
 import type { ApplicationTemplate, ProjectApplication } from '../types'
 
 interface ApplicationCardItem {
@@ -88,18 +88,7 @@ const { t: $t } = useI18n()
 // 只有 enabled 需要绿色状态位；disabled 交给 BadgeStatus 回退为灰色。
 const STATUS_NAMES: Record<string, string> = { enabled: 'success', disabled: 'default' }
 
-const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(icon) || icon.includes('.'))
-
-const avatar = computed<CardAvatarData>(() => {
-  const icon = props.item.application.icon || props.item.template.icon
-  const usesImage = isImageIcon(icon)
-  return {
-    src: usesImage ? icon : undefined,
-    icon: icon && !usesImage ? icon : undefined,
-    text: icon ? undefined : props.item.application.name.slice(0, 1),
-    tone: 'info',
-  }
-})
+const avatar = computed(() => applicationAvatar(props.item.application, props.item.template))
 
 const description = computed(() =>
   props.item.application.description || props.item.template.description || $t('comm.table.empty'))

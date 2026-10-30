@@ -37,8 +37,9 @@ const { t } = useI18n()
   :deep(.ant-card-extra) { padding: 0; min-width: 0; }
   :deep(.ant-card-body) { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 16px; }
   :deep(.ant-card-body::before), :deep(.ant-card-body::after) { display: none; }
-  :deep(.ant-btn-link) { height: auto; padding: 0; font-size: 12px; line-height: 20px; color: var(--business-component-muted, #646c73); }
-  :deep(.ant-btn-link:hover:not(:disabled)) { color: var(--business-component-primary, #1677ff); }
+  :deep(.ant-btn-link) { height: auto; padding: 0; font-size: 12px; line-height: 20px; }
+  :deep(.ant-card-extra .ant-btn-link:not(:disabled)) { color: var(--business-component-primary, #1677ff); }
+  :deep(.ant-card-extra .ant-btn-link:hover:not(:disabled)) { color: var(--ant-color-primary-hover, #4096ff); }
 }
 .private-panel-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; min-width: 0; }
 .private-panel-heading h2 { margin: 0; color: var(--business-component-text, #1f2329); font-size: 15px; font-weight: 600; line-height: 22px; }

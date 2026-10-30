@@ -3,15 +3,6 @@ import { recordOf, resultOf, textOf } from './apiResult'
 import { HOME_TARGETS } from './navigation'
 import type { HomeRow } from './types'
 
-// 对应 owning metrics：InternalResourceMetric、MediaChannelEntityQuotaLimiter、
-// FileDiskQuotaLimiter、DeviceMessageQuotaMetric。只选已返回的真实业务指标，不补虚构额度。
-const CORE_QUOTA_ORDER = [
-  'device:entityQuota',
-  'mediaCenter:mediaChannelQuota',
-  'file:distUsage',
-  'device:message_quota',
-] as const
-
 /** 布尔、空串、非数值和无效负值保持未知，不能变成正常的零用量/零额度。 */
 function quotaNumber(value: unknown, allowUnlimited = false): number | undefined {
   if (typeof value !== 'number' && typeof value !== 'string') return undefined
@@ -35,8 +26,8 @@ function quotaResources(response: unknown): Record<string, unknown>[] {
   })
 }
 
-/** SaaS 概览可选择稳定业务指标；独立配额组件保持原有按使用率取前五项的语义。 */
-export const loadQuotaRows = async (coreOnly = false): Promise<HomeRow[]> => {
+/** SaaS 概览按已用量取前五项；独立配额组件保持按使用率排序。 */
+export const loadQuotaRows = async (order: 'usage' | 'utilization' = 'utilization'): Promise<HomeRow[]> => {
   // 保留项目会话与租户域名，不能为绕过错误切换成全局查询。
   const resources = quotaResources(await request.get('/tenant/me/limits', {}, { hiddenError: true }))
   const selected = new Map<string, HomeRow>()
@@ -60,7 +51,10 @@ export const loadQuotaRows = async (coreOnly = false): Promise<HomeRow[]> => {
       })
     }
   }
-  if (coreOnly) return CORE_QUOTA_ORDER.flatMap(key => selected.has(key) ? [selected.get(key)!] : [])
+  // 不限量也参与用量排序；未知值置后，真实零值不能被当作未获取。
+  if (order === 'usage') return [...selected.values()]
+    .sort((a, b) => (b.value ?? -1) - (a.value ?? -1))
+    .slice(0, 5)
   return [...selected.values()]
     .filter(row => row.label && ((row.limit !== null && row.limit !== undefined && row.limit >= -1) || (row.value ?? 0) > 0))
     .sort((a, b) => {

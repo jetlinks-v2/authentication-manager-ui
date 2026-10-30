@@ -10,6 +10,9 @@
 .resource-dashboard :deep(.resource-panel) { height: 100%; display: flex; flex-direction: column; min-width: 0; border-radius: var(--r-3, 8px); border: 1px solid var(--jet-theme-border-secondary, #e8edf3); background: var(--ant-color-bg-container, #ffffff); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03); overflow: hidden; }
 .resource-dashboard :deep(.resource-panel > .ant-card-head) { flex-shrink: 0; min-height: 54px; padding: 16px 16px 12px; border-bottom: 1px solid #f0f2f5; }
 .resource-dashboard :deep(.resource-panel .ant-card-head-wrapper) { min-height: 28px; }
+/* 消息筛选控件与设备分布图例高度不同，统一单行标题栏高度以对齐分割线。 */
+.resource-dashboard :deep(.resource-message-panel > .ant-card-head) { min-height: 61px; box-sizing: border-box; }
+.resource-dashboard :deep(.resource-message-panel .ant-card-head-wrapper) { min-height: 32px; }
 .resource-dashboard :deep(.resource-panel .ant-card-head-title) { font-size: 15px; font-weight: 600; line-height: 24px; color: #17243b; padding-block: 0; }
 .resource-dashboard :deep(.resource-panel .ant-card-extra) { padding-block: 0; }
 .resource-dashboard :deep(.resource-panel > .ant-card-body) { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 16px; }
@@ -37,7 +40,7 @@
 .resource-dashboard :deep(.resource-rank-row .rank-2),
 .resource-dashboard :deep(.resource-rank-row .rank-3) { background: var(--ant-color-primary, #1677ff); color: #fff; }
 .resource-dashboard :deep(.device-map-card) { padding: 0 16px 16px; border: 1px solid var(--jet-theme-border-secondary, #e8edf3); border-radius: var(--r-3, 8px); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03); background: var(--ant-color-bg-container, #ffffff); overflow: hidden; }
-.resource-dashboard :deep(.device-map-card > .section-header) { flex-shrink: 0; min-height: 54px; margin: 0 -16px 12px; padding: 16px 16px 12px; border-bottom: 1px solid #f0f2f5; box-sizing: border-box; }
+.resource-dashboard :deep(.device-map-card > .section-header) { flex-shrink: 0; min-height: 61px; margin: 0 -16px 12px; padding: 16px 16px 12px; border-bottom: 1px solid #f0f2f5; box-sizing: border-box; }
 .resource-dashboard :deep(.device-map-card > .section-header::after) { display: none; }
 .resource-dashboard :deep(.device-map-card__body) { min-height: 280px; }
 .resource-dashboard :deep(.device-map-card .section-header .title) { font-size: 15px; font-weight: 600; line-height: 24px; color: #17243b; }

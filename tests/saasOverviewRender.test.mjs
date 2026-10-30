@@ -11,9 +11,9 @@ const { parse, compileScript } = require('vue/compiler-sfc')
 const { build } = require('esbuild')
 const root = fileURLToPath(new URL('../', import.meta.url))
 const base = path.join(root, 'visDashboard/Base')
-const bundle = await build({ stdin: { contents: `export { default as Resource } from ${JSON.stringify(path.join(base,'Saas/components/ResourceOverview.vue'))}; export { default as Today } from ${JSON.stringify(path.join(base,'Saas/components/TodayOverview.vue'))}; export { default as Applications } from ${JSON.stringify(path.join(base,'Applications/ProjectHomeApplications.vue'))}; export { default as AppView } from ${JSON.stringify(path.join(base,'Applications/components/HomeView.vue'))}`, resolveDir: root, loader: 'ts' }, bundle:true, write:false, platform:'node', format:'cjs', packages:'external', external:['vue'], plugins:[{name:'fixture',setup(b){
+const bundle = await build({ stdin: { contents: `export { default as Summary } from ${JSON.stringify(path.join(base,'Saas/components/ProjectSummary.vue'))}; export { default as Quota } from ${JSON.stringify(path.join(base,'Saas/components/QuotaOverview.vue'))}; export { default as Resource } from ${JSON.stringify(path.join(base,'Saas/components/ResourceOverview.vue'))}; export { default as Today } from ${JSON.stringify(path.join(base,'Saas/components/TodayOverview.vue'))}; export { default as Applications } from ${JSON.stringify(path.join(base,'Applications/ProjectHomeApplications.vue'))}; export { default as AppView } from ${JSON.stringify(path.join(base,'Applications/components/HomeView.vue'))}`, resolveDir: root, loader: 'ts' }, bundle:true, write:false, platform:'node', format:'cjs', packages:'external', external:['vue'], plugins:[{name:'fixture',setup(b){
   b.onResolve({filter:/\.vue$/}, args => {
-    if (/HomeIcon\.vue|CloudEmpty\/index\.vue|shared\/HomeWidget\.vue/.test(args.path)) return {path:args.path,namespace:'stub-vue'}
+    if (/HomeIcon\.vue|CloudEmpty\/index\.vue|shared\/HomeWidget\.vue|CardAvatar\.vue/.test(args.path)) return {path:args.path,namespace:'stub-vue'}
     return {path:path.resolve(args.resolveDir,args.path),namespace:'vue'}
   })
   b.onLoad({filter:/.*/,namespace:'vue'}, args => {const {descriptor,errors}=parse(readFileSync(args.path,'utf8'),{filename:args.path}); if(errors.length)throw errors[0]; const script=compileScript(descriptor,{id:args.path,inlineTemplate:true}); return {contents:script.content,loader:'ts',resolveDir:path.dirname(args.path)}})
@@ -22,8 +22,8 @@ const bundle = await build({ stdin: { contents: `export { default as Resource } 
   b.onLoad({filter:/.*/,namespace:'stub-js'}, args=>({contents:args.path==='vue-i18n' ? `import {ref} from 'vue'; export const useI18n=()=>({t:k=>k.split('.').pop(),locale:ref('zh-CN')})` : args.path.includes('icons-vue') ? `export const RightOutlined={render:()=>null}` : args.path.includes('useHomeApplications') ? `import {ref} from 'vue'; export const useHomeApplications=()=>({openingApplicationIds:ref([]),canOpenApp:()=>true,canCreateApp:ref(true),handleOpenApp:()=>{},handleCreateApp:()=>{}})` : args.path.includes('store/menu') ? `export const useMenuStore=()=>({getMenu:()=>false})` : `import {ref} from 'vue'; export const useApplicationOpenGuard=()=>({openingApplicationIds:ref([]),openApplication:()=>{}})`,loader:'js'}))
 }}]})
 const module={exports:{}}; Function('module','exports','require',bundle.outputFiles[0].text)(module,module.exports,require)
-const {Resource,Today,Applications,AppView}=module.exports
-async function render(component,props){const app=vue.createSSRApp({render:()=>vue.h(component,props)}); app.component('a-badge',{render:()=>null}); app.component('a-tooltip',{render(){return this.$slots.default?.()}});app.component('j-ellipsis',{render(){return vue.h('span',this.$slots.default?.())}}); app.component('a-button',{render(){return vue.h('button',this.$slots.default?.())}});return renderToString(app)}
+const {Resource,Today,Applications,AppView,Quota,Summary}=module.exports
+async function render(component,props){const app=vue.createSSRApp({render:()=>vue.h(component,props)}); app.component('a-card',{render(){return vue.h('section',this.$slots.default?.())}}); app.component('a-progress',require('ant-design-vue').Progress); app.component('a-badge',{render:()=>null}); app.component('a-tooltip',{render(){return this.$slots.default?.()}});app.component('j-ellipsis',{render(){return vue.h('span',this.$slots.default?.())}}); app.component('a-button',{render(){return vue.h('button',this.$slots.default?.())}});return renderToString(app)}
 test('new project renders genuine resource zero and unknown distinctly',async()=>{
  const html=await render(Resource,{canOpen:()=>true,rows:[{id:'devices',label:'设备',value:0,unit:'台',statuses:[{labelKey:'online',value:0}]},{id:'video',label:'视频',value:0,failed:true}]})
  assert.match(html,/设备/);assert.match(html,/<strong>0<\/strong>/);assert.doesNotMatch(html,/saasOpenResource/);assert.match(html,/online 0/);assert.doesNotMatch(html,/metricUnknown/)
@@ -48,25 +48,50 @@ test('overview catalog leaves resources and today uncapped and removes unauthori
  const built=await build({entryPoints:[entry],bundle:true,write:false,platform:'node',format:'cjs',packages:'external',external:['vue'],plugins:[{name:'catalog-test',setup(b){
   b.onResolve({filter:/\.vue$/},args=>({path:args.path,namespace:'empty'}))
   b.onLoad({filter:/.*/,namespace:'empty'},()=>({contents:'export default {}',loader:'js'}))
-  const stubs={useResourceCapabilities:`import {ref} from 'vue'; export const useResourceCapabilities=()=>({scope:ref('scope'),loading:ref(false),errors:ref([]),reload:()=>{}})`,access:`export const getSaasGrantedMenus=()=>context.menus; export const getSaasOverviewAccess=()=>context.access; export const hasSaasTarget=(menus,target)=>menus.has(target.key)`,navigation:`export const HOME_TARGETS={usage:{key:'usage'},applications:{key:'apps'}}`,config:`export const createDefaults=()=>({chart:{}})`,useHomeRuntime:`import {ref} from 'vue'; export const useHomeRuntime=(feature,edit,refresh,unused,polling,enabled)=>{ context.calls.push({feature,polling,enabled}); return {rows:ref(Array.from({length:feature==='SaasResources'?8:4},()=>({}))),loading:ref(false)} }`,useSaasUtilities:`import {ref} from 'vue'; export const useSaasUtilities=()=>({hasActions:ref(context.actions)})`}
-  b.onResolve({filter:/(useResourceCapabilities|services\/access|shared\/navigation|shared\/config|shared\/useHomeRuntime|useSaasUtilities)$/},args=>({path:args.path.split('/').pop(),namespace:'bound'}))
+  const stubs={vueuse:`import {ref} from 'vue'; export const useElementSize=()=>({width:context.width ?? ref(0)})`,useResourceCapabilities:`import {ref} from 'vue'; export const useResourceCapabilities=()=>({scope:context.scope ?? ref('scope'),loading:ref(false),errors:ref([]),reload:()=>{}})`,access:`export const getSaasGrantedMenus=()=>context.menus; export const getSaasOverviewAccess=()=>context.access; export const hasSaasTarget=(menus,target)=>menus.has(target.key)`,navigation:`export const HOME_TARGETS={usage:{key:'usage'},applications:{key:'apps'}}`,config:`export const createDefaults=()=>({chart:{}})`,useHomeRuntime:`import {ref} from 'vue'; export const useHomeRuntime=(feature,edit,refresh,unused,polling,enabled)=>{ context.calls.push({feature,polling,enabled}); return {rows:ref(Array.from({length:feature==='SaasResources'?8:4},()=>({}))),loading:ref(false)} }`,useSaasUtilities:`import {ref} from 'vue'; export const useSaasUtilities=()=>({hasActions:ref(context.actions)})`}
+  b.onResolve({filter:/(useResourceCapabilities|@vueuse\/core|services\/access|shared\/navigation|shared\/config|shared\/useHomeRuntime|useSaasUtilities)$/},args=>({path:args.path === '@vueuse/core' ? 'vueuse' : args.path.split('/').pop(),namespace:'bound'}))
   b.onLoad({filter:/.*/,namespace:'bound'},args=>({contents:stubs[args.path],loader:'js',resolveDir:root}))
  }}]})
  const context={calls:[],menus:new Set(['usage','apps']),access:{showResources:true,showToday:true,resourceIds:['devices','video','gateway','screen'],todayIds:['deviceAlarm','visionAlarm','message','aiEvent']},actions:true}, module={exports:{}}; Function('module','exports','require','context',built.outputFiles[0].text)(module,module.exports,require,context)
  const state=module.exports.useSaasOverviewDashboard(vue.ref(undefined))
  const chart=feature=>state.catalog.components[`projectHome${feature}`].defaultConfig.componentProps[`projectHome${feature}`].chart
  assert.equal(chart('SaasResources').maxItems,undefined);assert.equal(chart('SaasToday').maxItems,undefined)
- assert.equal(chart('Applications').maxItems,undefined);assert.equal(chart('Announcements').maxItems,4);assert.equal(chart('SaasQuotas').maxItems,5)
- assert.equal(state.dashboard.value.components.length,7)
+ assert.equal(chart('Applications').maxItems,3);assert.equal(chart('Announcements').maxItems,4);assert.equal(chart('SaasQuotas').maxItems,5)
+ assert.equal(state.dashboard.value.components.length,8)
+ assert.deepEqual(state.catalog.components.projectHomeSaasSummary.configs,[])
+ assert.equal(state.dashboard.value.components[0].type,'projectHomeSaasSummary')
  context.access.showResources=false; context.access.showToday=false; context.menus.clear(); context.actions=false
- const reduced=module.exports.useSaasOverviewDashboard(vue.ref(undefined)); assert.deepEqual(reduced.dashboard.value.components.map(x=>x.type),['projectHomeSaasRecent','projectHomeAnnouncements','projectHomeSaasHelp'])
+ const reduced=module.exports.useSaasOverviewDashboard(vue.ref(undefined)); assert.deepEqual(reduced.dashboard.value.components.map(x=>x.type),['projectHomeSaasSummary','projectHomeSaasRecent','projectHomeAnnouncements','projectHomeSaasHelp'])
  assert.equal(context.calls.length,0)
+ const original=globalThis.localStorage, map=new Map(), storage={getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)}
+ globalThis.localStorage=storage
+ try {
+  context.scope=vue.ref('scope-a');context.width=vue.ref(1400)
+  const oldFeatures=['SaasRecent','Announcements','SaasHelp']
+  const oldKey=scope=>`project-overview:saas:canvas:v1:${scope}:wide:${oldFeatures.join(',')}`
+  const old=oldFeatures.map((feature,i)=>({i:`projectHome${feature}`,x:0,y:i*10,w:24,h:7}))
+  map.set(oldKey('scope-a'),JSON.stringify(old));map.set(oldKey('scope-b'),JSON.stringify(old))
+  const effect=vue.effectScope(), migrated=effect.run(()=>module.exports.useSaasOverviewDashboard(vue.ref(undefined)))
+  assert.equal(migrated.loading.value,false)
+  assert.equal(JSON.parse(map.get(migrated.storageKey.value))[1].y,4)
+  context.scope.value='scope-b'
+  assert.equal(JSON.parse(map.get(migrated.storageKey.value))[1].y,4)
+  assert.ok(map.has(oldKey('scope-a')) && map.has(oldKey('scope-b')))
+  effect.stop()
+ } finally {if(original===undefined)delete globalThis.localStorage;else globalThis.localStorage=original}
 })
 
 
 test('SaaS application list hides routine status but retains disabled status', async () => {
  const html=await render(AppView,{chart:{displayStyle:'saas',showDescription:true},canOpen:row=>row.application.status!=='disabled',rows:[{id:'one',label:'正常应用',application:{status:'enabled',statusText:'运行中'}},{id:'two',label:'停用应用',application:{status:'disabled',statusText:'已停用'}}]})
  assert.match(html,/正常应用/);assert.doesNotMatch(html,/运行中/);assert.match(html,/已停用/);assert.match(html,/disabled/)
+})
+
+test('SaaS application list caps at three even if an older saved config allows more', async () => {
+ const rows=Array.from({length:5},(_,i)=>({id:String(i),label:`应用${i}`,application:{status:'enabled'}}))
+ const html=await render(AppView,{chart:{displayStyle:'saas',maxItems:5,showDescription:true},canOpen:()=>true,rows})
+ for(const i of [0,1,2]) assert.match(html,new RegExp(`应用${i}`))
+ for(const i of [3,4]) assert.doesNotMatch(html,new RegExp(`应用${i}`))
 })
 
 test('application cards display the description or a no-description placeholder', async () => {
@@ -121,4 +146,31 @@ test('real HomeWidget hides partial-failure alerts and preserves full-error retr
  app.component('a-button',{render(){return vue.h('button',this.$slots.default?.())}})
  const html=await renderToString(app)
  assert.match(html,/full-error/);assert.match(html,/loadError/);assert.match(html,/<button>.*alarmRetry.*<\/button>/)
+})
+
+
+test('quota rendering preserves unlimited, finite, excess, unknown and failed states', async () => {
+ const html = await render(Quota, { canOpen: () => true, rows: [
+  { id: 'unlimited', label: '不限量项', value: 932, limit: -1 },
+  { id: 'finite', label: '有限项', value: 5, limit: 10 },
+  { id: 'excess', label: '超额项', value: 12, limit: 10 },
+  { id: 'unknown', label: '未知额度', value: 7, limit: null },
+  { id: 'failed', label: '失败项', value: 0, limit: 10, failed: true },
+ ] })
+ const rows = html.split('<button').slice(1)
+ assert.equal(rows.length, 5)
+ assert.match(rows[0], /ant-progress/); assert.match(rows[0], /unlimited/); assert.doesNotMatch(rows[0], /saas-quota-percent/)
+ assert.match(rows[1], /50%/); assert.match(rows[1], /ant-progress-status-normal/)
+ assert.match(rows[2], /120%/); assert.match(rows[2], /ant-progress-status-exception/)
+ assert.match(rows[3], /quotaUnknown/); assert.doesNotMatch(rows[3], /ant-progress/)
+ assert.match(rows[4], /—/); assert.doesNotMatch(rows[4], /ant-progress|0%/)
+})
+
+
+test('summary displays only supplied metadata and no billing controls', async () => {
+ const html=await render(Summary,{summary:{welcome:'晚上好，用户',details:['根组织','最近登录：2026-10-30 20:58（重庆）'],updatedAt:'2026-10-30 22:00'}})
+ assert.match(html,/晚上好，用户/);assert.match(html,/根组织/);assert.match(html,/最近登录/);assert.match(html,/saasUpdatedAt/)
+ assert.doesNotMatch(html,/<button|续费|升级|dialog/i)
+ const empty=await render(Summary,{summary:{welcome:'你好',details:[]}})
+ assert.doesNotMatch(empty,/saas-user-details|·|<button|dialog/i)
 })

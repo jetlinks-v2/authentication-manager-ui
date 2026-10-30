@@ -10,8 +10,8 @@
     <template #extra>
       <slot name="extra" :more-target="moreTarget" :can-open="canOpen" :open="open"
         :rows="rows" :loading="loading" :error="error" :updated-at="updatedAt">
-        <a-button v-if="!hideMore && moreTarget && config.chart.navigation && (!compact || canOpen(moreTarget))" type="link" size="small" :disabled="!canOpen(moreTarget)" @click="open(moreTarget)">
-          {{ moreText }} ›
+        <a-button v-if="!hideMore && moreTarget && config.chart.navigation && (!compact || canOpen(moreTarget))" type="link" size="small" :disabled="!canOpen(moreTarget)" class="home-widget-more" @click="open(moreTarget)">
+          {{ moreText }}<RightOutlined class="home-widget-arrow" />
         </a-button>
       </slot>
     </template>
@@ -34,6 +34,7 @@
 import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import { computed } from 'vue'
 import { theme } from 'ant-design-vue'
+import { RightOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { getHomeConfig } from './config'
 import { useHomeRuntime } from './useHomeRuntime'
@@ -63,6 +64,7 @@ const moreTarget = HOME_MORE_TARGETS[props.feature]
 const moreText = computed(() => {
   if (props.feature === 'Applications') return t(compact.value
     ? 'packages.ProjectHome.saasApplicationsMore' : 'packages.ProjectHome.ApplicationsMore')
+  if (props.feature === 'Announcements') return t('packages.ProjectHome.announcementsMore')
   return t('packages.ProjectHome.more')
 })
 const tokens = computed(() => ({
@@ -85,7 +87,12 @@ const tokens = computed(() => ({
 .project-home-shell :deep(.ant-card-body) { display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
 .project-home-shell :deep(.ant-card-body::before), .project-home-shell :deep(.ant-card-body::after) { display: none; }
 .project-home-shell :deep(.ant-card-body > .home-content) { flex: 1; height: auto; }
-.project-home-shell :deep(.ant-card-extra .ant-btn) { padding: 0; height: auto; font-size: 13px; line-height: 20px; color: #83899f; transition: color 0.2s ease; &:hover { color: #1e72f0; } }
+.project-home-shell :deep(.ant-card-extra .ant-btn) { padding: 0; height: auto; font-size: 13px; line-height: 20px; transition: color 0.2s ease; }
+.project-home-shell :deep(.ant-card-extra .ant-btn-link:not(:disabled)) { color: var(--business-component-primary, #1677ff); }
+.project-home-shell :deep(.ant-card-extra .ant-btn-link:hover:not(:disabled)) { color: var(--ant-color-primary-hover, #4096ff); }
+.home-widget-more { display: inline-flex; align-items: center; gap: 3px; }
+.home-widget-arrow { font-size: 8.5px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; transition: transform 0.2s ease; }
+.home-widget-more:not(:disabled):hover .home-widget-arrow { transform: translateX(2px); }
 .home-state { display: grid; place-items: center; height: 100%; overflow: auto; }
 </style>
 <style scoped lang="less">
@@ -95,6 +102,8 @@ const tokens = computed(() => ({
   :deep(.ant-card-head) { padding: 0 18px; min-height: 46px; border-bottom: 1px solid var(--line, #f2f3f5); }
   :deep(.ant-card-head-title) { font-size: 15px; line-height: 22px; }
   :deep(.ant-card-body) { padding: 14px 18px 18px !important; overflow: visible; }
+  &[data-home-feature="Applications"] :deep(.ant-card-body) { padding: 0 !important; }
+  &[data-home-feature="Announcements"] :deep(.ant-card-body) { padding-inline: 6px !important; }
   .home-state { min-height: 120px; height: auto; overflow: visible; }
   :deep(.home-content) { overflow: visible; }
   :deep(.home-state .ant-empty-image) { height: 64px; }

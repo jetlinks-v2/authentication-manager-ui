@@ -30,7 +30,8 @@ export function useSaasUtilities(isEdit: () => boolean) {
       && navigation.canOpen(row.target)
       && (row.id !== 'scene' || HOME_TARGETS.scene.menus.some(code => menus.has(code) && auth.hasPermission(`${code}:add`))))
   })
-  const documents = computed(() => SAAS_HELP_DOCUMENTS.map(doc => ({ id: doc.id, title: t(`packages.ProjectHome.${doc.titleKey}`) })))
+  // 概览仅保留四个常用入口，完整文档由帮助中心承接。
+  const documents = computed(() => SAAS_HELP_DOCUMENTS.slice(0, 4).map(doc => ({ id: doc.id, title: t(`packages.ProjectHome.${doc.titleKey}`) })))
   const hasActions = computed(() => rows.value.length > 0)
   const chart = { ...createDefaults('QuickActions').chart, displayStyle: 'saas' }
   /** 只打开配置中的正式文档，编辑预览不触发外部跳转。 */
