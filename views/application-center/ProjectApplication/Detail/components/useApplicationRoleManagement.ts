@@ -4,24 +4,20 @@ import { onlyMessage } from '@jetlinks-web/utils'
 import { useMenuAssetPermissionEditor } from '@jetlinks-web-core/hooks'
 import type { AssetAccessPolicy, AssetTypeName, MenuPermissionNode } from '@jetlinks-web-core/hooks'
 import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
-import {
-  getPermissionDetail_api as getRolePermissionDetail,
-  updatePermissionTree_api as saveRolePermission,
-} from '@authentication-manager-ui/api/system/role'
 import { getAssetsType as queryAssetTypes } from '@authentication-manager-ui/api/system/menu'
-import {
-  getCurrentUserMenuTree,
-} from '@authentication-manager-ui/api/application-center/applicationTemplate'
 import {
   normalizeAssetTypeNames,
   unwrapResult,
 } from '../../../Template/Save/menu-config.shared'
 import {
-  buildApplicationRoleMenuQuery,
   resolveApplicationRolePermissionScope,
 } from '../../applicationRolePermissionScope'
 import type { ApplicationRole, ApplicationRoleDraft, ApplicationUser } from '../../types'
-import { getBusinessApplicationMenus } from '@authentication-manager-ui/api/application-center/businessApplication'
+import {
+  getBusinessApplicationMenus,
+  getBusinessApplicationRoleMenuGrantDetail,
+  saveBusinessApplicationRoleMenuGrant,
+} from '@authentication-manager-ui/api/application-center/businessApplication'
 
 interface GrantDetail {
   menus?: MenuPermissionNode[]
@@ -30,6 +26,11 @@ interface GrantDetail {
 
 export interface ApplicationRoleScope { applicationId: string; templateId: string; isExternal: boolean }
 
+/**
+ * 管理应用内角色及其授权编辑器。
+ *
+ * 菜单候选和角色已授权项始终在同一应用范围读取，避免管理员尚未获得菜单时无法为新角色首次授权。
+ */
 export function useApplicationRoleManagement(
   props: { roles: ApplicationRole[]; users: ApplicationUser[]; scope: ApplicationRoleScope },
   saveRole: (draft: ApplicationRoleDraft, id?: string) => void
@@ -83,10 +84,9 @@ export function useApplicationRoleManagement(
     permissionLoading.value = true
     permissionError.value = false
     try {
-      const [availableResponse, menuResponse, detailResponse, assetTypes] = await Promise.all([
+      const [availableResponse, detailResponse, assetTypes] = await Promise.all([
         getBusinessApplicationMenus(props.scope.applicationId),
-        getCurrentUserMenuTree(buildApplicationRoleMenuQuery(props.scope.isExternal)),
-        getRolePermissionDetail(activeRoleId.value),
+        getBusinessApplicationRoleMenuGrantDetail(props.scope.applicationId, activeRoleId.value),
         loadAssetTypes(),
       ])
       if (sequence !== loadSequence) return
@@ -95,14 +95,13 @@ export function useApplicationRoleManagement(
       const roleDetail = assertSuccess<GrantDetail>(detailResponse, {})
       const permissionScope = resolveApplicationRolePermissionScope({
         isExternal: props.scope.isExternal,
-        currentUserMenus: assertSuccess<MenuPermissionNode[]>(menuResponse, []),
         availableMenus: Array.isArray(availableDetail.menus) ? availableDetail.menus : [],
         roleMenus: Array.isArray(roleDetail.menus) ? roleDetail.menus : [],
         templateAssetAccesses: Array.isArray(availableDetail.assetAccesses) ? availableDetail.assetAccesses : [],
         roleAssetAccesses: Array.isArray(roleDetail.assetAccesses) ? roleDetail.assetAccesses : [],
       })
 
-      // 回显前按最终候选菜单裁剪，避免再次提交超出当前操作者可授范围的资产权限。
+      // 回显前按应用有效菜单裁剪，避免将已从应用范围移除的配置再次提交。
       editor.reset({
         menus: permissionScope.menus,
         grantedMenus: permissionScope.grantedMenus,
@@ -130,7 +129,11 @@ export function useApplicationRoleManagement(
     if (props.scope.isExternal || !initialized.value || !activeRoleId.value) return
     savingPermissions.value = true
     try {
-      await saveRolePermission(activeRoleId.value, editor.getSnapshot())
+      await saveBusinessApplicationRoleMenuGrant(
+        props.scope.applicationId,
+        activeRoleId.value,
+        editor.getSnapshot(),
+      )
       onlyMessage($t('ProjectApplication.role.permissionSuccess', { name: activeRole.value?.name || '' }))
     } catch {
       // The shared request layer reports the backend error.

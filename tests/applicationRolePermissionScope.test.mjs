@@ -40,15 +40,7 @@ const menu = (id, extra = {}) => ({
   ...extra,
 })
 
-test('external applications query all menus available to the current operator', () => {
-  assert.deepEqual(permissionScope.buildApplicationRoleMenuQuery(true), { paging: false })
-  assert.deepEqual(permissionScope.buildApplicationRoleMenuQuery(false), {
-    paging: false,
-    terms: [{ column: 'owner', value: 'app' }],
-  })
-})
-
-test('external application roles use the template and operator menu intersection without open-api filtering', () => {
+test('external application roles keep every effective menu without operator-menu intersection', () => {
   const currentMenu = menu('external-api', {
     owner: 'iot',
     permissions: [{ permission: 'open-api', actions: ['query'] }],
@@ -60,7 +52,6 @@ test('external application roles use the template and operator menu intersection
   })
   const result = permissionScope.resolveApplicationRolePermissionScope({
     isExternal: true,
-    currentUserMenus: [currentMenu, menu('operator-only', { owner: 'cloud' })],
     availableMenus: [currentMenu, menu('template-only', { owner: 'cloud' })],
     roleMenus: [{ ...currentMenu, granted: true, buttons: [{ ...currentMenu.buttons[0], granted: true }] }],
     templateAssetAccesses: [{
@@ -73,7 +64,7 @@ test('external application roles use the template and operator menu intersection
     }],
   })
 
-  assert.deepEqual(result.menus.map(item => item.id), ['external-api'])
+  assert.deepEqual(result.menus.map(item => item.id), ['external-api', 'template-only'])
   assert.deepEqual(result.menus[0].permissions, currentMenu.permissions)
   assert.deepEqual(result.menus[0].buttons[0].permissions, currentMenu.buttons[0].permissions)
   assert.equal(result.grantedMenus[0].granted, true)
@@ -84,15 +75,9 @@ test('external application roles use the template and operator menu intersection
   }])
 })
 
-test('internal application roles remain limited to the template and app menu intersection', () => {
-  const currentMenus = [
-    menu('template-menu', { owner: 'app' }),
-    menu('operator-only', { owner: 'app' }),
-    menu('open-api-menu', { owner: 'app', showPage: ['open-api'] }),
-  ]
+test('internal application roles use the effective menu scope and exclude open-api permissions', () => {
   const result = permissionScope.resolveApplicationRolePermissionScope({
     isExternal: false,
-    currentUserMenus: currentMenus,
     availableMenus: [
       menu('template-menu', { owner: 'app' }),
       menu('template-only', { owner: 'app' }),
@@ -101,16 +86,16 @@ test('internal application roles remain limited to the template and app menu int
     roleMenus: [menu('template-menu', { owner: 'app', granted: true })],
   })
 
-  assert.deepEqual(result.menus.map(item => item.id), ['template-menu'])
+  assert.deepEqual(result.menus.map(item => item.id), ['template-menu', 'template-only'])
   assert.equal(result.grantedMenus[0].granted, true)
 })
 
-test('role page loads the effective application scope and keeps role grants on the existing endpoint', () => {
+test('role page reads and saves grants through the application-scoped endpoint', () => {
   assert.match(detailSource, /isExternal: application\.provider === 'third-party'/)
   assert.match(roleManagementSource, /getBusinessApplicationMenus\(props\.scope\.applicationId\)/)
   assert.doesNotMatch(roleManagementSource, /Promise\.resolve\(undefined\)/)
-  assert.match(roleManagementSource, /getCurrentUserMenuTree\(buildApplicationRoleMenuQuery\(props\.scope\.isExternal\)\)/)
-  assert.match(roleManagementSource, /saveRolePermission\(activeRoleId\.value, editor\.getSnapshot\(\)\)/)
+  assert.match(roleManagementSource, /getBusinessApplicationRoleMenuGrantDetail\(props\.scope\.applicationId, activeRoleId\.value\)/)
+  assert.match(roleManagementSource, /saveBusinessApplicationRoleMenuGrant\(/)
 })
 
 
@@ -120,7 +105,6 @@ test('effective scope includes a published application menu but excludes another
   const unrelated = menu('published-b', {owner: 'app', options: {businessApplicationId: 'b'}})
   const result = permissionScope.resolveApplicationRolePermissionScope({
     isExternal: false,
-    currentUserMenus: [template, published, unrelated],
     availableMenus: [template, published],
     roleMenus: [{...published, granted: true}, {...unrelated, granted: true}],
   })
