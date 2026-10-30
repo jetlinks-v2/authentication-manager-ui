@@ -7,6 +7,7 @@ import {
   AlertOutlined, ApiOutlined, AppstoreAddOutlined, AppstoreOutlined, BlockOutlined,
   DashboardOutlined, DatabaseOutlined, DeploymentUnitOutlined, EyeOutlined, FundOutlined,
   GatewayOutlined, PictureOutlined, RobotOutlined, ThunderboltOutlined,
+  CodeOutlined, HddOutlined, MessageOutlined, PlayCircleOutlined, SafetyCertificateOutlined,
   VideoCameraAddOutlined, VideoCameraOutlined, WifiOutlined,
 } from '@ant-design/icons-vue'
 const props = withDefaults(defineProps<{ name?: string; neutral?: boolean }>(), { name: '', neutral: false })
@@ -32,6 +33,14 @@ const icons: Record<string, { component: Component; color: string }> = {
   model: { component: GatewayOutlined, color: '#59a7a5' },
   agent: { component: RobotOutlined, color: '#966dc2' },
   scene: { component: ThunderboltOutlined, color: '#d79c42' },
+  products: { component: BlockOutlined, color: '#1E72F0' },
+  message: { component: MessageOutlined, color: '#1E72F0' },
+  ai: { component: EyeOutlined, color: '#59a7a5' },
+  protocol: { component: CodeOutlined, color: '#1E72F0' },
+  network: { component: DeploymentUnitOutlined, color: '#1E72F0' },
+  media: { component: HddOutlined, color: '#1E72F0' },
+  certificate: { component: SafetyCertificateOutlined, color: '#1E72F0' },
+  task: { component: PlayCircleOutlined, color: '#1E72F0' },
 }
 const icon = computed(() => icons[props.name] || icons.applications)
 </script>

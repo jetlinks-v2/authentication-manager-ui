@@ -119,6 +119,10 @@ h3 {
   flex: 1;
   min-height: 0;
 }
+[data-resource-kind="MessageTrend"] > .content {
+  /* 图表随容器缩放，避免占位滚动条与画布 resize 相互触发。 */
+  overflow: hidden;
+}
 [data-resource-kind="QuickStart"] > .content {
   /* 快捷卡片随网格收缩，悬浮装饰和亚像素溢出不应触发滚动条。 */
   overflow: clip;

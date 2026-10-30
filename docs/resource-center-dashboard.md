@@ -1,6 +1,28 @@
 # 资源中心仪表盘组件
 
-## 默认布局与短缓存键
+## SaaS 概览与资源中心布局
+
+SaaS 管理员页面复用 core `DashBoardCanvas`。概览的项目摘要固定在画布上方，其余七类卡片按授权装配；资源中心每张摘要与业务面板都是独立 widget。两页均使用 `editable=false`、`layoutEditable=true`、`previewMode=false`，保持真实取数并开放拖拽、缩放，不开放添加、删除和配置。
+
+默认坐标、最小尺寸和单列布局由容器宽度生成，长内容在卡片内滚动。个人坐标按账号、项目、API、应用、宽度档及可见组件集合隔离保存；业务刷新不重置几何，隐藏页面的零宽度不切换缓存。概览使用 `project-overview:saas:canvas:v1`，资源中心使用 `resource-dashboard:saas:v9:<摘要>`，旧 v8 缓存保留。私有化入口保留 `LegacyResourceDashboard.vue` 的旧画布和个人坐标。
+
+资源中心顶部优先显示已授权的边缘节点、物联设备、视频通道和可视化；不足四项时补入可访问的今日消息与 AI 识别事件，仍不足则按实际数量排布，不显示灰色或锁定占位。素材分项逐项授权。SaaS 不装配产品、物联卡和采集通道，默认正文不保留旧快速开始、算法覆盖及区域数量分布。
+
+边缘节点 1–3 台时显示表格，超过 3 台显示排行，零台显示空态。少节点场景额外查询在线节点的完整 `ComputerVision` 任务目录，保留已配置但无指标的任务；只有目录完整且为空才显示“还没有视觉任务”。离线不发目录 RPC，保留已确认身份并清空旧指标；查询失败或离线不推断为无任务。多节点排行按 Top50 查询，非完整目录只能显示已获取的条目数。
+
+设备分布通过 `deviceMapCard.presentation=distribution` 使用简化陆地底图和逐设备状态圆点，位置与状态来自真实 GeoJSON 和设备接口，不含示例点；未知和禁用显示灰色，不计为离线。该模式独立于高德 Key，其他地图入口保持原行为。地图组件经 catalog discovery 发现，由 `DashboardWidgetRenderer` 注入，沿用原详情与权限。
+
+消息卡头右侧放置物联设备入口，时间筛选与节点、视觉排行共用 `ranking-switch` 样式；消息总量和每小时/每天说明同行。节点展示当前值，视觉任务按真实服务显示近 20 分钟最新值或增量，不标成近 1 小时平均。物联下钻统一传递 `type=device`，列表按同一产品接入范围过滤；视频按通道统计。今日消息、识别事件比较昨日同时段；在线历史仅展示已有在线率，不换算为平均设备台数。
+
+概览资源概况仅包含已授权的设备、视频通道、边缘节点和数据看板，不查询空间、场景、算法及 AI 任务统计。最近访问使用本机隔离记录；帮助使用正式链接；续费、企业版升级和扩容保持本地演示保存。非管理员专属布局、单资源宽版与私有化新版原型不在本轮实现范围。
+
+## 消息趋势图的滚动边界
+
+`ResourceWidget.vue` 的通用正文使用 `overflow: auto`，占位滚动条与小数尺寸可能使 ECharts 取整和容器 resize 相互触发。仅将 MessageTrend 正文设为 `overflow: hidden`，沿用共享图表及尺寸监听；地图、列表和加载/错误态保留各自滚动规则，避免影响其他组件。
+
+## 默认布局与短缓存键（旧画布 v8）
+
+本节保留旧画布的实现与验收记录；当前 SaaS 单页入口使用上文 v9 范围键，私有化入口继续复用旧画布及其缓存机制。
 
 目标与范围：按用户给定的十项坐标调整 SaaS 默认布局，仅修改 `views/resources/Dashboard/resourceDashboardLayout.ts` 中网关状态卡片（历史类型 `resourceCenterVideoPlaybackTrend`）高度为 18；地图沿用 `useResourceDashboard.ts` 的底部整行装配，坐标为 `x:0, y:31, w:12, h:16`。私有化继续按可用组件与容器宽度生成 24 列布局。
 
@@ -433,12 +455,14 @@ const { catalog, dashboard, loading, errors } = useResourceDashboard(preview)
 
 ### 视觉任务运行状态排行
 
-- 默认组件 `resourceCenterVisionTaskRanking` 与视觉覆盖卡共用边缘节点和视觉模块准入规则。默认画布依次为四张概览卡、快速开始/设备上报趋势、边缘节点状态排行/视觉任务运行状态排行、视觉任务覆盖统计/设备分布、可选采集器/物联网卡、设备地图；排行默认高度为9行。已有个人布局保留坐标，缺少新组件时追加到底部。
-- 通过当前运行时 `GET /device/metrics/_supported` 核验指标、维度和单位，再调用 `POST /device/metrics/_agg`。耗时使用 `edge.ai.cv.task.inference.latency.avg / LAST`；复判积压使用 `edge.ai.review.dimension.pending / LAST`；识别丢弃使用 `edge.ai.cv.task.slot_reject.total / SUM`，表示区间增量次数，不是百分比。丢弃额外查询 `MIN` 判断是否存在有效增量，空值不补零。
-- 查询窗口为近20分钟；按指标降序取 Top50。保留网关、任务、模型/视频源或复判维度，避免跨来源混用耗时。单位来自目录，未声明时不追加单位。
-- 卡片默认展示前8项，查看更多按网关分组展示本次 Top50。任务名称按网关批量补齐；有详情的任务通过 AI 模块公开的 `GatewayVisionTaskDetail` 打开既有详情弹窗。全局算法配置使用 `algorithm-center` 菜单，分组入口直达对应网关的 `visionModels` 页签。
-- 两类排行共用 `ResourceRankList` 和卡片样式，按原型使用同行标题与指标切换、圆形序号、两行名称和细进度条，不额外展示查询窗口和排序说明。省略文本通过局部深度选择器固定字号，避免 `j-ellipsis` 默认字体覆盖。`GatewayVisionTaskDetail` 仅适配网关/任务/来源身份，详情内容直接复用 AI 模块已有的 `EdgeTaskDetail`。
-- 加载、空数据、查询失败重试、指标未启用和部分任务名称失败分别展示。预览不请求，失去模块权限或切换账号/项目后清空旧状态，离页停止轮询。
+- 组件 `resourceCenterVisionTaskRanking` 沿用边缘节点与视觉能力准入规则、原卡头和指标切换，默认展示前 8 项。按最新确认移除右上角“任务列表”入口，不恢复“查看更多”分组弹窗。
+- 条目恢复使用 AI 模块公开的 `GatewayVisionTaskDetail` 展示原任务详情，点击不离开仪表盘。仅在线且已取得任务元数据的条目可打开，预览、能力不可用或缺少详情组件时禁用；切换作用域、指标或离页时清理选中任务。空态的“配置视觉任务”仍进入已授权的 `algorithm-center`（或 `project/algorithm-center`）。
+- `GET /device/metrics/_supported` 校验指标及标签能力，`POST /device/metrics/_agg` 使用 20 分钟窗口。耗时为 `edge.ai.cv.task.inference.latency.avg / LAST`；积压为 `edge.ai.review.dimension.pending / LAST`；丢弃为 `edge.ai.cv.task.slot_reject.total / SUM`，同时用 `MIN` 判定增量有效性，不将空桶补零当成真实采样。
+- 在线与离线网关分别按完整维度降序取 Top50，使用同一查询时刻，合并时在线有效指标优先。离线历史只保留身份，不参与排名或显示旧值；任一组达到上限即提示部分结果。只有完整任务目录才显示任务总数，其他场景显示已获取的指标条目数。
+- 两类排行复用 `ResourceRankList`。明确离线才显示红色；在线缺指标显示灰色。视觉排行上方为节点名，下方为“场景名称 · 算法名称”，算法使用 `taskTargetDetail.text`；场景取配置或匹配来源的 `sceneName` / `headers.sceneName` / `others.sceneName`，缺失时省略，均缺失时显示“—”。不使用任务名、通道名或模型包名称冒充场景和算法，任务原始身份继续供详情弹窗使用；元数据查询失败时保留指标和提示，对应详情不可打开。
+- 现有页面及后端核对：算法配置页是摄像头与场景的配置矩阵，节点 `visionModels` 是节点视觉模型配置，均不支持任务 ID 深链。任务监控页把 latency 格式化为 `ms`，但聚合目录没有声明推理耗时单位。上级 `runtime/{iot-service,all-in-one}/src/main/resources/application-device-metric.yml` 的三项映射未填 `unit`，`DeviceMetricSupportedMetric` 直接返回编译后的配置单位。按最新展示要求，排行的推理耗时固定后缀为 `ms`，不换算数值；其他指标沿用接口单位。
+- 后端待确认 1：确认上述三项点位的实际单位，并在 `_supported` 中补齐 `unit`；耗时是否与既有任务监控页的毫秒口径一致。
+- 后端待确认 2：离线时是否存在按 `gatewayId + taskId` 批量读取可靠名称/来源的云端快照。现有 `/edge/device/{gatewayId}/_/ai/task/edge/detail/_query/no-paging` 依赖在线边端；`/ai/edge/task/{gatewayId}/channel/bind/_query` 虽定义 `taskName/taskId`，`EdgeAiTaskChannelBindService.executeQueryCommand` 仍查询对应 Agent，新的 `/ai/edge/task/channel/bind/_query` 失败时返回 `unknown` 和空 `info`，不能补出离线名称。
 
 ### 网关状态指标替换视频播放趋势（2026-09-21）
 
@@ -446,6 +470,7 @@ const { catalog, dashboard, loading, errors } = useResourceDashboard(preview)
 - 按《AI网关监控指标前端聚合查询接口文档》V2.1接入 POST /device/metrics/_agg；正式数据不使用设备 properties/latest 或 agg/_query，不猜测物模型字段。
 - 复判指标：edge-ai-gateway / edge.ai.review.queue.pending。系统指标：device-health / system.cpu.usage、system.memory.usage、system.disk.usage。
 - 排行查询只含一个LAST指标，thingIds来自当前项目网关列表的全部分页，groupBy为thingId，按指标别名DESC排序，limit=10。名称、产品名称和在线状态来自业务目录。网关总体查询不带任务标签。
+- 节点状态与设备列表保持在线、离线、禁用三态；`notActive` 归为禁用，优先显示接口枚举文案。排行与少节点表格中离线为红色、禁用为灰色，两者均不查询当前指标、不参与排名，不能统一标为离线。SaaS 资源中心顶部边缘节点摘要也分别按原始 `state` 计数并展示三态，不能用总数减在线数作为离线数。
 - 复判排行取最近20分钟（覆盖5分钟采集周期，与云端staleAfter一致），系统指标取最近2分钟；查询时间不冒充最后采样时间。
 - 卡片仅展示排行，不再加载单网关历史趋势或轮换选中行。点击整行复用 `iot-user-device-list/GatewayDetail`，使用真实网关 ID 和 `type=gateway`，打开默认运行概览；右上“节点列表”使用 `iot-user-device-list?type=gateway`。预览、模块不可用或目标菜单缺失时禁止对应跳转。
 - 单位按文档固定：复判积压为“条”，system.*.usage 为“%”。后端配置的系统点位直接映射既有使用率属性，前端不根据值小于1而自动乘100。

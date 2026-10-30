@@ -17,35 +17,51 @@ export function useVisionTaskRanking(info: Ref<ResourceInfo | undefined>, isEdit
   const capabilities = useResourceCapabilities(preview)
   const available = computed(() => capabilities.modules.value.edge && capabilities.modules.value.vision)
   const config = computed(() => settingsOf('VisionTaskRanking', info.value))
-  const title = computed(() => config.value.title || t('resourceDashboard.VisionTaskRanking'))
+  const title = computed(() => noTasks.value ? t('resourceDashboard.visionRanking.tasksTitle') : config.value.title || t('resourceDashboard.VisionTaskRanking'))
   const metric = ref<VisionRankingMetric>('latency')
   const tabs = computed(() => visionRankingMetrics.map(value => ({ value, label: t(`resourceDashboard.visionRanking.${value}`) })))
   const data = shallowRef<VisionTaskRank[]>([])
   const loading = ref(false), error = ref(false), metadataFailed = ref(false), limited = ref(false)
-  const moreOpen = ref(false), expanded = ref<string[]>([])
   const selected = shallowRef<VisionTaskRank>()
   const active = ref(true), visibility = useDocumentVisibility()
   const unsupported = ref(false), unit = ref('')
+  const taskCount = ref<number>(), directoryIncomplete = ref(false)
+  const noTasks = computed(() => taskCount.value === 0 && data.value.length === 0 && !directoryIncomplete.value)
+  const metricCaption = computed(() => t(`resourceDashboard.visionRanking.${metric.value === 'discard' ? 'incrementWindow' : 'latestWindow'}`))
+  // 按产品确认的展示口径固定耗时后缀，数值不换算；其他指标仍使用接口单位。
+  const metricUnit = computed(() => metric.value === 'latency' ? 'ms' : unit.value)
   const rows = computed<VisionTaskRankRow[]>(() => {
-    const max = Math.max(1, ...data.value.map(item => item.value))
-    return data.value.map((item, index) => ({ ...item, rank: index + 1, width: Math.min(100, item.value / max * 100),
-      label: [item.name, item.sourceName].filter(Boolean).join(' · '), caption: item.gatewayName,
-      tooltip: [item.gatewayName, item.name, item.sourceName].filter(Boolean).join(' · '),
-      text: `${Number(item.value.toFixed(2))}${unit.value ? ` ${unit.value === 'percent' ? '%' : unit.value === 'count' ? t('resourceDashboard.visionRanking.records') : unit.value}` : ''}` }))
+    // 离线历史值不冒充当前值；有任务但无指标时保留身份，不参与排名。
+    const valueOf = (item: VisionTaskRank) => item.online === false ? undefined : item.value
+    const sorted = [...data.value].sort((a, b) => Number(a.online === false) - Number(b.online === false)
+      || Number(valueOf(b) !== undefined) - Number(valueOf(a) !== undefined) || (valueOf(b) ?? 0) - (valueOf(a) ?? 0))
+    const max = Math.max(1, ...sorted.map(item => valueOf(item) ?? 0))
+    let rank = 0
+    return sorted.map(item => {
+      const value = valueOf(item)
+      const identity = [item.sceneName, item.algorithmName].filter(Boolean)
+      return { ...item, rank: value === undefined ? 0 : ++rank, width: value === undefined ? 0 : Math.min(100, value / max * 100),
+        detailAvailable: item.detailAvailable && item.online !== false && Boolean(item.gatewayId && item.taskId),
+        label: identity.join(' · ') || '—', caption: item.gatewayName,
+        tooltip: [item.gatewayName, ...identity].filter(Boolean).join(' · '),
+        text: item.online === false ? t('resourceDashboard.offline') : value === undefined ? t('resourceDashboard.gatewayStatus.metricMissing')
+          : `${Number(value.toFixed(2))}${metricUnit.value ? ` ${metricUnit.value === 'percent' ? '%' : metricUnit.value === 'count' ? t('resourceDashboard.visionRanking.records') : metricUnit.value}` : ''}`,
+        color: item.online === false ? '#ff4d4f' : value === undefined || value === 0 ? '#bfbfbf' : undefined }
+    })
   })
   const cardRows = computed(() => rows.value.slice(0, config.value.limit))
-  const groups = computed(() => [...new Set(rows.value.map(row => row.gatewayId))].map(id => ({
-    id, name: rows.value.find(row => row.gatewayId === id)!.gatewayName, rows: rows.value.filter(row => row.gatewayId === id),
-  })))
-  const allExpanded = computed(() => groups.value.length > 0 && groups.value.every(group => expanded.value.includes(group.id)))
-  const allCollapsed = computed(() => groups.value.length > 0 && expanded.value.length === 0)
-  function setGroupsExpanded(value: boolean) {
-    expanded.value = value ? groups.value.map(group => group.id) : []
-  }
+  // 聚合按任务及来源分组且受 Top50 限制，只有完整目录才能称为任务总数。
+  const countCaption = computed(() => {
+    const count = taskCount.value === undefined
+      ? t(limited.value ? 'resourceDashboard.visionRanking.limitedItems' : 'resourceDashboard.visionRanking.returnedItems', { count: rows.value.length })
+      : t('resourceDashboard.visionRanking.taskCount', { count: taskCount.value })
+    return cardRows.value.length < rows.value.length ? `${t('resourceDashboard.visionRanking.shownItems', { count: cardRows.value.length })} · ${count}` : count
+  })
+  const configureTarget = computed(() => ['algorithm-center', 'project/algorithm-center'].find(code => !!menu.getMenu(code)))
+  const canConfigure = computed(() => available.value && !preview.value && !!configureTarget.value)
   const detailComponent = computed(() => available.value
     ? moduleRegistry.getResourceItem<Component>('jetlinks-ai-ui', 'components', 'GatewayVisionTaskDetail') : undefined)
-  const canConfigure = computed(() => available.value && !preview.value && !!menu.getMenu('algorithm-center'))
-  const canConfigureGateway = computed(() => available.value && !preview.value && !!menu.getMenu('iot-user-device-list/GatewayDetail'))
+  const canOpenDetail = computed(() => available.value && active.value && !preview.value && !!detailComponent.value)
   let generation = 0
   let timer: ReturnType<typeof setTimeout> | undefined
   const enabled = () => available.value && active.value && (preview.value || visibility.value === 'visible')
@@ -53,17 +69,18 @@ export function useVisionTaskRanking(info: Ref<ResourceInfo | undefined>, isEdit
   async function refresh() {
     const current = ++generation
     clearTimeout(timer)
-    loading.value = false; error.value = false; unsupported.value = false
+    loading.value = false; error.value = false; unsupported.value = false; taskCount.value = undefined; directoryIncomplete.value = false
     if (!enabled()) { data.value = []; return }
     loading.value = true
     const isCurrent = () => current === generation && enabled()
     try {
       const result = preview.value
-        ? { rows: previewRows(), metadataFailed: false, limited: false, supported: true, unit: metric.value === 'latency' ? 'ms' : 'count' }
+        ? { rows: previewRows(), metadataFailed: false, limited: false, supported: true, unit: metric.value === 'latency' ? 'ms' : 'count', taskCount: 8, directoryIncomplete: false }
         : await loadVisionTaskRanking(metric.value, isCurrent)
       if (!isCurrent()) return
       data.value = result.rows; metadataFailed.value = result.metadataFailed; limited.value = result.limited
       unsupported.value = !result.supported; unit.value = result.unit
+      taskCount.value = result.taskCount; directoryIncomplete.value = Boolean(result.directoryIncomplete)
     } catch {
       if (isCurrent()) { error.value = true; data.value = [] }
     } finally {
@@ -77,36 +94,29 @@ export function useVisionTaskRanking(info: Ref<ResourceInfo | undefined>, isEdit
     ++generation; clearTimeout(timer)
     data.value = []; metadataFailed.value = false; limited.value = false; unsupported.value = false; unit.value = ''
     selected.value = undefined
-    if (!available.value || !active.value) moreOpen.value = false
     void refresh()
   }, { immediate: true, flush: 'sync' })
-  watch(moreOpen, open => { expanded.value = open ? groups.value.map(group => group.id) : [] })
-  // 刷新保留用户的展开选择；首次加载或切换后新增的网关默认展开。
-  watch(groups, (next, previous) => {
-    if (!moreOpen.value) return
-    const currentIds = new Set(next.map(group => group.id)), previousIds = new Set(previous.map(group => group.id))
-    expanded.value = [...expanded.value.filter(id => currentIds.has(id)), ...next.filter(group => !previousIds.has(group.id)).map(group => group.id)]
-  })
   onActivated(() => { active.value = true })
   onDeactivated(() => { active.value = false })
   onScopeDispose(() => { ++generation; clearTimeout(timer) })
   function openTask(row: VisionTaskRank) {
-    if (available.value && !preview.value && row.detailAvailable && detailComponent.value) selected.value = row
+    if (!canOpenDetail.value || !row.detailAvailable || row.online === false || !row.gatewayId || !row.taskId) return
+    selected.value = row
   }
-  function configure(gatewayId?: string) {
-    if (gatewayId ? !canConfigureGateway.value : !canConfigure.value) return
-    moreOpen.value = false; selected.value = undefined
-    if (gatewayId) menu.jumpPage('iot-user-device-list/GatewayDetail', { params: { gatewayId }, query: { type: 'gateway', tab: 'visionModels' } })
-    else menu.jumpPage('algorithm-center')
+  function configure() {
+    if (canConfigure.value && configureTarget.value) menu.jumpPage(configureTarget.value)
   }
   function previewRows(): VisionTaskRank[] {
     return [486, 412, 375, 308, 256, 198, 142, 96].map((value, index) => ({
       id: `preview-${index}`, gatewayId: `preview-${index % 3}`, taskId: `preview-${index}`,
       gatewayName: t('resourceDashboard.visionRanking.previewGateway', { index: index % 3 + 1 }),
       name: t('resourceDashboard.visionRanking.previewTask', { index: index + 1 }), sourceName: '',
+      sceneName: t('resourceDashboard.visionRanking.previewScene', { index: index % 3 + 1 }),
+      algorithmName: t('resourceDashboard.visionRanking.previewAlgorithm', { index: index + 1 }),
       value: metric.value === 'latency' ? value : Math.floor(value / 10), detailAvailable: false,
     }))
   }
-  return { title, metric, tabs, rows, cardRows, groups, loading, error, metadataFailed, limited, available, unsupported,
-    moreOpen, expanded, allExpanded, allCollapsed, setGroupsExpanded, selected, detailComponent, canConfigure, canConfigureGateway, preview, refresh, openTask, configure }
+  return { title, metric, tabs, rows, cardRows, loading, error, metadataFailed, limited, available, unsupported,
+    noTasks, directoryIncomplete, metricCaption, countCaption,
+    canConfigure, canOpenDetail, detailComponent, selected, preview, refresh, openTask, configure }
 }

@@ -6,10 +6,15 @@
     <ResourceEmpty v-else-if="state.error" class="state" :title="t('resourceDashboard.loadError')">
       <a-button size="small" @click="emit('retry')">{{ t('resourceDashboard.retry') }}</a-button>
     </ResourceEmpty>
+    <ResourceEmpty v-else-if="!state.hasRows && state.directoryIncomplete" class="state"
+      :title="t('resourceDashboard.visionRanking.unknownTasks')" :description="t('resourceDashboard.visionRanking.unknownTasksDescription')">
+      <a-button size="small" @click="emit('retry')">{{ t('resourceDashboard.retry') }}</a-button>
+    </ResourceEmpty>
     <ResourceEmpty v-else-if="!state.hasRows" class="state" icon="FundProjectionScreenOutlined"
       :title="t('resourceDashboard.visionRanking.empty')" :description="t('resourceDashboard.visionRanking.emptyDescription')" />
     <template v-else>
-      <div v-if="state.metadataFailed" class="notice">{{ t('resourceDashboard.visionRanking.metadataFailed') }}</div>
+      <div v-if="state.directoryIncomplete" class="notice">{{ t('resourceDashboard.visionRanking.incompleteDirectory') }}</div>
+      <div v-else-if="state.metadataFailed" class="notice">{{ t('resourceDashboard.visionRanking.metadataFailed') }}</div>
       <slot />
     </template>
   </div>
@@ -17,7 +22,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import ResourceEmpty from './ResourceEmpty.vue'
-defineProps<{ state: { loading: boolean; unsupported: boolean; error: boolean; hasRows: boolean; metadataFailed: boolean } }>()
+defineProps<{ state: { loading: boolean; unsupported: boolean; error: boolean; hasRows: boolean; metadataFailed: boolean; directoryIncomplete?: boolean } }>()
 const emit = defineEmits<{ retry: [] }>()
 const { t } = useI18n()
 </script>

@@ -183,6 +183,10 @@ export interface MenuView {
 export const queryBusinessApplications = (data: QueryPayload) =>
   apiRequest.post<BusinessApplicationEntity[]>('/business-application/_query/no-paging?paging=false', data)
 
+/** 概览只取有限条目，避免为单张卡片加载完整应用列表。 */
+export const queryOverviewBusinessApplications = (data: QueryPayload) =>
+  apiRequest.post<PagerResult<BusinessApplicationEntity>>('/business-application/_query', data)
+
 /** 获取当前用户可进入的业务应用，用于补充维度成员查询不可见的本人应用关系。 */
 export const getCurrentUserBusinessApplications = () =>
   apiRequest.get<BusinessApplicationEntity[]>('/business-application/me')

@@ -36,6 +36,7 @@ export const openAnnouncementDetail = ({
     title: resolveNoticeTitle(payload) || i18n.global.t('Announcement.inbox.detailTitle'),
     content: h(NotificationDetail, { data: payload }),
     width: 820,
+    closable: true,
     icon: null,
     okText: i18n.global.t('Announcement.action.confirm'),
     onOk: () => markRead(),

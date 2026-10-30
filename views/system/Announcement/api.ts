@@ -200,11 +200,19 @@ export const resolveSystemBulletinReference = (
   notification: Record<string, any>,
 ): SystemBulletinReference | undefined => {
   const detail = parseSystemBulletinDetail(notification)
+  // 新接收视图的显式引用必须完整，不得将批次 dataId 当成公告主键降级查询。
+  if ('bulletinId' in notification || 'publishVersion' in notification) {
+    const bulletinId = String(notification.bulletinId || '').trim()
+    const publishVersion = Number(notification.publishVersion)
+    if (!bulletinId || !Number.isSafeInteger(publishVersion) || publishVersion <= 0) return undefined
+    return { bulletinId, publishVersion }
+  }
   const bulletinId = String(detail?.bulletinId || detail?.id || notification.dataId || '').trim()
   if (!bulletinId) return undefined
   // 旧通知不携带版本号，仍由当前用户正文接口校验可见性；显式非法版本不降级。
-  if (detail?.publishVersion === undefined || detail?.publishVersion === null) return { bulletinId }
-  const publishVersion = Number(detail.publishVersion)
+  const version = detail?.publishVersion
+  if (version === undefined || version === null) return { bulletinId }
+  const publishVersion = Number(version)
   if (!Number.isInteger(publishVersion) || publishVersion <= 0) {
     return undefined
   }
