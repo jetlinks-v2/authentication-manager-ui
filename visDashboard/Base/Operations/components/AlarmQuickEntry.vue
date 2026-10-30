@@ -37,7 +37,7 @@
         <span class="alarm-entry-title">{{ title }}</span>
         <strong class="alarm-entry-count">{{ count === undefined ? '—' : count.toLocaleString() }}</strong>
       </span>
-      <small class="alarm-entry-description">{{ t(count === undefined ? 'packages.ProjectHome.metricUnknown' : count === 0 ? 'packages.ProjectHome.alarmZeroGuide' : 'packages.ProjectHome.alarmReview') }}</small>
+      <small v-if="count !== undefined" class="alarm-entry-description">{{ t(count === 0 ? 'packages.ProjectHome.alarmZeroGuide' : 'packages.ProjectHome.alarmReview') }}</small>
     </button>
     </slot>
     </a-popover>

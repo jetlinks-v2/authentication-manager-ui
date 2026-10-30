@@ -12,15 +12,12 @@
       </a-radio-group>
       <a-button v-if="canOpen(target)" type="link" size="small" @click="$emit('navigate', target)">{{ t(metric === 'message' ? 'privateOverview.resourceDashboard' : 'privateOverview.events') }} ›</a-button>
     </template>
-    <a-alert v-if="data?.series.some(series => series.failed)" type="warning" show-icon :message="t('privateOverview.partialError')">
-      <template #action><a-button size="small" @click="$emit('retry')">{{ t('privateOverview.retry') }}</a-button></template>
-    </a-alert>
     <div class="private-trend-legend">
       <span v-for="(series, index) in data?.series" :key="series.id"><i :class="{ yesterday: index > 0 }" />{{ t(series.labelKey) }} {{ series.failed ? '—' : series.total?.toLocaleString() }} {{ t('privateOverview.items') }}</span>
       <span v-if="data" class="private-trend-time">{{ t('privateOverview.until', { time: dayjs(data.updatedAt).format('HH:mm') }) }}</span>
     </div>
     <div v-if="hasData" class="private-trend-chart"><Echarts :option="option" :library="[LineChart, BarChart, GridComponent, TooltipComponent]" /></div>
-    <div v-else class="private-trend-empty">{{ t(data?.series.some(series => series.failed) ? 'privateOverview.loadError' : metric === 'message' ? 'privateOverview.messageEmpty' : 'privateOverview.aiEmpty') }}</div>
+    <div v-else class="private-trend-empty">{{ data?.series.some(series => series.failed) ? '—' : t(metric === 'message' ? 'privateOverview.messageEmpty' : 'privateOverview.aiEmpty') }}</div>
   </PrivatePanel>
 </template>
 <script setup lang="ts">

@@ -21,13 +21,13 @@ export function useResourceSummary(access: Ref<ResourcePageAccess>, scope: Ref<s
   const cards = computed(() => (query.data ?? definitions.value).map(card => ({
     ...card,
     label: t(card.labelKey), unit: t(card.unitKey),
-    valueText: card.value === undefined ? '—' : number.value.format(card.value),
+    valueText: card.failed || card.value === undefined ? '—' : number.value.format(card.value),
     interactive: navigation.canOpen(card.target),
     hasError: !!card.failed || card.statuses.some(status => status.failed),
     errorText: t(card.failed ? 'resourcePage.summary.loadError' : 'resourcePage.summary.partialError'),
     statuses: card.statuses.map(status => ({ ...status,
       label: t(status.labelKey),
-      valueText: status.value === undefined ? '—' : number.value.format(status.value),
+      valueText: status.failed || status.value === undefined ? '—' : number.value.format(status.value),
     })),
   })))
 
