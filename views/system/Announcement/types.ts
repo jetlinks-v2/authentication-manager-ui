@@ -4,12 +4,6 @@ import type {
 } from './api'
 
 export type { AnnouncementState } from './api'
-export type { AnnouncementType } from './api'
-
-export interface AnnouncementUserOption {
-  label: string
-  value: string
-}
 
 export type AnnouncementDraft = ApiAnnouncementDraft
 

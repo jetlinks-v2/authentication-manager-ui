@@ -134,7 +134,7 @@ const register = () => {
 }
 
 /**
- * 不由布局壳层统一套 `ContentPanel` 的页面：整屏看板类，页面自绘背景。
+ * 不由布局壳层统一套 `ContentPanel` 的页面：整屏看板或自行组合多个内容面板的页面。
  *
  * 键为路由 `name`（即菜单 `code`）。声明在代码侧，改完随代码生效，
  * 不需要把开关写进 `baseMenu.json` 再重新初始化菜单。
@@ -142,6 +142,7 @@ const register = () => {
 const getContentPanelOverrides = () => ({
   'project/Overview': false,
   'resources/Dashboard': false,
+  'system/Announcement': false,
 })
 
 export default {

@@ -22,6 +22,9 @@ const loadHelper = async (locale = 'en') => {
             getLocaleMessage: (target) => ({
               'Announcement.status.published': target === 'zh' ? '已发布' : 'Published',
               'Announcement.status.unpublished': target === 'zh' ? '未发布' : 'Unpublished',
+              'Announcement.type.maintenance': target === 'zh' ? '系统维护' : 'System Maintenance',
+              'Announcement.type.release': target === 'zh' ? '系统升级' : 'System Upgrade',
+              'Announcement.type.emergency': target === 'zh' ? '紧急通知' : 'Emergency Notice',
             }),
           },
         },
@@ -38,16 +41,19 @@ test('resolves the current locale and falls back to the legacy field without cro
   const record = {
     title: '旧标题',
     summary: '旧摘要',
+    type: 'maintenance',
     content: '旧正文',
     i18nMessages: {
       title: { zh: '中文标题', en: 'English title' },
       summary: { zh: '中文摘要' },
+      type: { zh: '维护公告', en: 'Maintenance' },
       content: { zh: '中文正文', en: 'English content' },
     },
   }
 
   assert.equal(resolveAnnouncementText(record, 'title'), 'English title')
   assert.equal(resolveAnnouncementText(record, 'summary'), '旧摘要')
+  assert.equal(resolveAnnouncementText(record, 'type'), 'Maintenance')
   assert.equal(resolveAnnouncementText(record, 'content'), 'English content')
 })
 
@@ -128,15 +134,19 @@ test('supports regional locales and keeps legacy compatibility fields Chinese-fi
     i18nMessages: {
       title: { zh: '中文标题', en: 'English title' },
       summary: { en: 'English summary' },
+      type: { zh: '维护公告', en: 'Maintenance' },
       content: {},
     },
+    type: 'maintenance',
   }), {
     i18nMessages: {
       title: { zh: '中文标题', en: 'English title' },
       summary: { en: 'English summary' },
+      type: { zh: '维护公告', en: 'Maintenance' },
     },
     title: '中文标题',
     summary: 'English summary',
+    type: 'maintenance',
     content: '旧正文',
   })
 
@@ -174,6 +184,7 @@ test('supports regional locales and keeps legacy compatibility fields Chinese-fi
     i18nMessages: undefined,
     title: '',
     summary: '',
+    type: '',
     content: '',
   })
 })
@@ -193,4 +204,16 @@ test('resolves the announcement state label by target language', async () => {
   assert.equal(resolveAnnouncementStateLabel('unknown', 'en'), '')
   assert.equal(resolveAnnouncementStateLabel('', 'en'), '')
   assert.equal(resolveAnnouncementStateLabel(undefined, 'en'), '')
+})
+
+test('localizes fixed bulletin types and preserves historical fallback text', async () => {
+  const { resolveAnnouncementTypeLabel } = await loadHelper('zh')
+  assert.equal(resolveAnnouncementTypeLabel('maintenance', '', 'zh'), '系统维护')
+  assert.equal(resolveAnnouncementTypeLabel('maintenance', '', 'en'), 'System Maintenance')
+  assert.equal(resolveAnnouncementTypeLabel('release', '', 'zh'), '系统升级')
+  assert.equal(resolveAnnouncementTypeLabel('release', '', 'en'), 'System Upgrade')
+  assert.equal(resolveAnnouncementTypeLabel('emergency', '', 'zh'), '紧急通知')
+  assert.equal(resolveAnnouncementTypeLabel('emergency', '', 'en'), 'Emergency Notice')
+  assert.equal(resolveAnnouncementTypeLabel('custom', '历史类型', 'en'), '历史类型')
+  assert.equal(resolveAnnouncementTypeLabel('custom', '', 'en'), 'custom')
 })

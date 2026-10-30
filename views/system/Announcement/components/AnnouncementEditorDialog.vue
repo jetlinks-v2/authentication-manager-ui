@@ -10,79 +10,78 @@
     @cancel="$emit('update:open', false)"
   >
     <a-form layout="vertical">
-      <a-form-item :label="$t('Announcement.editor.title')" required>
-        <a-input
-          v-model:value="form.title"
-          :maxlength="200"
-          show-count
-          :placeholder="$t('Announcement.editor.titlePlaceholder')"
-        >
-          <template #suffix>
-            <AnnouncementI18nTrigger @configure="openI18n('title')" />
-          </template>
-        </a-input>
-      </a-form-item>
-
-      <a-form-item :label="$t('Announcement.editor.summary')">
-        <div class="announcement-i18n-textarea-field">
-          <a-textarea
-            v-model:value="form.summary"
-            class="announcement-summary-input"
-            :maxlength="120"
-            :auto-size="{ minRows: 2, maxRows: 4 }"
-            show-count
-            :placeholder="$t('Announcement.editor.summaryPlaceholder')"
-          />
-          <AnnouncementI18nTrigger
-            class="announcement-i18n-textarea-field__trigger"
-            @configure="openI18n('summary')"
-          />
-        </div>
-      </a-form-item>
-
-      <a-form-item :label="$t('Announcement.editor.type')" required>
-        <a-select
-          v-model:value="form.type"
-          :loading="typeLoading"
-          :options="typeOptions"
-          :field-names="{ label: 'text', value: 'value' }"
-          :placeholder="$t('Announcement.editor.typePlaceholder')"
-          :get-popup-container="getPopupContainer"
-        />
-      </a-form-item>
-
       <a-row :gutter="16">
-        <a-col :span="12">
-          <a-form-item :label="$t('Announcement.editor.users')">
+        <a-col :span="8">
+          <a-form-item :label="$t('Announcement.editor.title')" required>
+            <a-input
+              v-model:value="form.title"
+              :maxlength="200"
+              show-count
+              :placeholder="$t('Announcement.editor.titlePlaceholder')"
+            >
+              <template #suffix>
+                <AnnouncementI18nTrigger @configure="openTextI18n('title')" />
+              </template>
+            </a-input>
+          </a-form-item>
+        </a-col>
+        <a-col :span="8">
+          <a-form-item :label="$t('Announcement.editor.summary')">
+            <a-input
+              v-model:value="form.summary"
+              :maxlength="120"
+              show-count
+              :placeholder="$t('Announcement.editor.summaryPlaceholder')"
+            >
+              <template #suffix>
+                <AnnouncementI18nTrigger @configure="openTextI18n('summary')" />
+              </template>
+            </a-input>
+          </a-form-item>
+        </a-col>
+        <a-col :span="8">
+          <a-form-item :label="$t('Announcement.editor.type')" required>
             <a-select
-              v-model:value="form.userIds"
-              mode="multiple"
-              show-search
-              allow-clear
-              :filter-option="false"
-              :loading="userLoading"
-              :max-tag-count="2"
-              :options="userOptions"
-              :placeholder="$t('Announcement.editor.usersPlaceholder')"
-              :get-popup-container="getPopupContainer"
-              @change="handleUserChange"
-              @search="$emit('search-users', $event)"
+              v-model:value="form.type"
+              :options="typeOptions"
+              :placeholder="$t('Announcement.editor.typePlaceholder')"
             />
           </a-form-item>
         </a-col>
-        <a-col :span="12">
-          <a-form-item :label="$t('Announcement.editor.organizations')">
-            <form-item-org
-              v-model:value="form.organizationIds"
-              :show-add="false"
-              :extra-props="{
-                multiple: true,
-                allowClear: true,
-                maxTagCount: 2,
-                placeholder: $t('Announcement.editor.organizationsPlaceholder'),
-                getPopupContainer,
-              }"
-            />
+      </a-row>
+
+      <a-row :gutter="16">
+        <a-col :span="8">
+          <a-form-item :label="$t('Announcement.editor.popup')">
+            <a-space direction="vertical" :size="4">
+              <a-switch v-model:checked="form.popup" />
+              <span class="announcement-form-hint">{{ $t('Announcement.editor.popupHint') }}</span>
+            </a-space>
+          </a-form-item>
+        </a-col>
+        <a-col :span="16">
+          <a-form-item
+            :label="$t('Announcement.editor.deliveryScope')"
+            required
+            :validate-status="scopeInvalid ? 'error' : undefined"
+            :help="scopeInvalid ? $t('Announcement.editor.deliveryScopeRequired') : undefined"
+          >
+            <a-space direction="vertical" :size="8" class="announcement-delivery-scope">
+              <a-checkbox v-model:checked="form.saas">
+                {{ $t('Announcement.editor.saas') }}
+              </a-checkbox>
+              <a-select
+                v-model:value="form.regionIds"
+                mode="multiple"
+                allow-clear
+                show-search
+                :loading="regionLoading"
+                :options="regionOptions"
+                :max-tag-count="3"
+                :placeholder="$t('Announcement.editor.regionsPlaceholder')"
+              />
+              <span class="announcement-form-hint">{{ $t('Announcement.editor.deliveryScopeHint') }}</span>
+            </a-space>
           </a-form-item>
         </a-col>
       </a-row>
@@ -97,16 +96,25 @@
     </a-form>
 
     <template #footer>
-      <a-button :disabled="loading" @click="$emit('update:open', false)">{{ $t('Announcement.action.cancel') }}</a-button>
+      <a-button :disabled="Boolean(loadingAction)" @click="$emit('update:open', false)">
+        {{ $t('Announcement.action.cancel') }}
+      </a-button>
       <j-permission-button
-        v-if="!publishMode"
         :has-permission="record ? 'system/Announcement:edit' : 'system/Announcement:add'"
-        type="primary"
-        :loading="loading"
-        :disabled="!canSubmit"
+        :loading="loadingAction === 'draft'"
+        :disabled="!canSubmit || Boolean(loadingAction)"
         @click="submit(false)"
       >
-        {{ $t('Announcement.action.save') }}
+        {{ $t('Announcement.action.saveDraft') }}
+      </j-permission-button>
+      <j-permission-button
+        :has-permission="record ? 'system/Announcement:edit' : 'system/Announcement:add'"
+        type="primary"
+        :loading="loadingAction === 'publish'"
+        :disabled="!canSubmit || Boolean(loadingAction)"
+        @click="submit(true)"
+      >
+        {{ $t('Announcement.action.savePublish') }}
       </j-permission-button>
     </template>
   </a-modal>
@@ -114,11 +122,11 @@
   <AnnouncementI18nTextDialog
     :visible="i18nDialogVisible"
     :title="i18nDialogTitle"
-    :data="currentI18nMessages"
-    :max-length="currentI18nField === 'title' ? 200 : 120"
-    :textarea="currentI18nField === 'summary'"
+    :data="i18nDialogData"
+    :max-length="i18nDialogMaxLength"
+    :textarea="i18nField === 'summary'"
     @update:visible="i18nDialogVisible = $event"
-    @confirm="saveI18nMessages"
+    @confirm="saveTextI18n"
   />
 </template>
 
@@ -126,16 +134,14 @@
 import { computed, reactive, ref, watch } from 'vue'
 import type { PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type {
-  AnnouncementDraft,
-  AnnouncementRecord,
-  AnnouncementType,
-  AnnouncementUserOption,
-} from '../types'
+import type { AnnouncementDraft, AnnouncementRecord } from '../types'
+import { BULLETIN_TYPE_VALUES } from '../bulletinTypeIcon'
+import { useAnnouncementRegions } from '../hooks/useAnnouncementRegions'
 import {
   mergeLegacyAnnouncementI18n,
   normalizeAnnouncementI18n,
   resolveCompatibilityText,
+  resolveLocalizedText,
   updateAnnouncementLocaleText,
   type AnnouncementI18n,
   type AnnouncementI18nField,
@@ -147,131 +153,100 @@ import AnnouncementI18nTrigger from './AnnouncementI18nTrigger.vue'
 const props = defineProps({
   open: { type: Boolean, default: false },
   record: { type: Object as PropType<AnnouncementRecord>, default: undefined },
-  loading: { type: Boolean, default: false },
-  publishMode: { type: Boolean, default: false },
-  typeOptions: { type: Array as PropType<AnnouncementType[]>, default: () => [] },
-  typeLoading: { type: Boolean, default: false },
-  userOptions: { type: Array as PropType<AnnouncementUserOption[]>, default: () => [] },
-  userLoading: { type: Boolean, default: false },
+  loadingAction: { type: String as PropType<'draft' | 'publish'>, default: undefined },
 })
 
 const emit = defineEmits<{
   (event: 'update:open', open: boolean): void
   (event: 'save', draft: AnnouncementDraft): void
-  (event: 'search-users', keyword: string): void
-  (event: 'selected-users-change', userIds: string[]): void
 }>()
 
 const { t: $t, locale } = useI18n()
-
-function getPopupContainer(triggerNode: HTMLElement) {
-  return triggerNode.parentElement || document.body
-}
-
-interface AnnouncementEditorForm {
-  title: string
-  summary: string
-  content: string
-  type: string
-  userIds: string[]
-  organizationIds: string[]
-  i18nMessages: AnnouncementI18n
-}
-
-const form = reactive<AnnouncementEditorForm>({
+const form = reactive({
   title: '',
   summary: '',
-  content: '',
   type: '',
-  userIds: [],
-  organizationIds: [],
-  i18nMessages: {},
+  popup: false,
+  saas: true,
+  regionIds: [] as string[],
+  i18nMessages: {} as AnnouncementI18n,
 })
-
+const {
+  options: regionOptions,
+  loading: regionLoading,
+  load: loadRegions,
+} = useAnnouncementRegions()
 const i18nDialogVisible = ref(false)
-const currentI18nField = ref<AnnouncementI18nField>('title')
-const currentI18nMessages = computed<Record<string, string>>(() => {
-  return form.i18nMessages?.[currentI18nField.value] ?? {}
-})
-const currentLanguage = computed(() => {
-  return String(locale.value || 'zh').replace('_', '-').split('-')[0]
-})
-const i18nDialogTitle = computed(() => {
-  const fieldKey = currentI18nField.value === 'title'
-    ? 'Announcement.editor.title'
-    : 'Announcement.editor.summary'
-  return $t('Announcement.i18n.dialogTitle', { field: $t(fieldKey) })
-})
-
+const i18nField = ref<Extract<AnnouncementI18nField, 'title' | 'summary'>>('title')
 let initialTitle = ''
 let initialSummary = ''
+let initialType = ''
 
-const dialogTitle = computed(() => {
-  if (props.publishMode) return $t('Announcement.editor.publishTitle')
-  return props.record ? $t('Announcement.editor.editTitle') : $t('Announcement.editor.createTitle')
-})
-
+const currentLanguage = computed(() => String(locale.value || 'zh').replace('_', '-').split('-')[0])
+const dialogTitle = computed(() => props.record
+  ? $t('Announcement.editor.editTitle')
+  : $t('Announcement.editor.createTitle'))
+const i18nDialogTitle = computed(() => $t('Announcement.i18n.dialogTitle', {
+  field: $t(`Announcement.editor.${i18nField.value}`),
+}))
+const i18nDialogData = computed(() => form.i18nMessages[i18nField.value] ?? {})
+const i18nDialogMaxLength = computed(() => ({ title: 200, summary: 120 })[i18nField.value])
+const typeOptions = computed(() => BULLETIN_TYPE_VALUES.map(value => ({
+  value,
+  label: $t(`Announcement.type.${value}`),
+})))
+const scopeInvalid = computed(() => !form.saas && form.regionIds.length === 0)
 const canSubmit = computed(() => {
   const i18n = normalizeAnnouncementI18n(form.i18nMessages)
   return Boolean(
     resolveCompatibilityText(i18n.title, form.title.trim())
-    && resolveCompatibilityText(i18n.content, form.content.trim())
-    && form.type,
+    && resolveCompatibilityText(i18n.content)
+    && form.type.trim()
+    && !scopeInvalid.value,
   )
 })
 
 watch(() => props.open, (open) => {
-  if (open) resetForm()
+  if (open) {
+    resetForm()
+    void loadRegions()
+  }
 })
 
-/** 弹窗每次打开都从当前记录重新初始化，关闭后不会残留上一次草稿。 */
+/** 每次打开都从当前记录重建草稿；历史公告没有范围时按仅 SaaS 端回显。 */
 function resetForm() {
   const record = props.record
-  const translatedDefaultContent = $t('Announcement.editor.defaultContent')
-  const defaultContent = record?.content || translatedDefaultContent
   const i18n = mergeLegacyAnnouncementI18n(record?.i18nMessages, {
     title: record?.legacyTitle,
     summary: record?.legacySummary,
-    content: record?.legacyContent === translatedDefaultContent ? undefined : record?.legacyContent,
+    type: record?.type,
+    content: record?.legacyContent,
   })
-
-  form.title = record?.title || ''
-  form.summary = record?.summary || ''
-  form.content = defaultContent
+  form.i18nMessages = i18n
+  form.title = resolveLocalizedText(i18n.title, currentLanguage.value) || record?.title || ''
+  form.summary = resolveLocalizedText(i18n.summary, currentLanguage.value) || record?.summary || ''
   initialTitle = form.title
   initialSummary = form.summary
-  form.type = record?.type.value || props.typeOptions[0]?.value || ''
-  form.userIds = [...(record?.userIds || [])]
-  form.organizationIds = [...(record?.organizationIds || [])]
-
-  form.i18nMessages = i18n
+  form.type = record?.type || ''
+  initialType = form.type
+  form.popup = record?.popup === true
+  form.saas = record?.deliveryScope?.saas ?? true
+  form.regionIds = [...(record?.deliveryScope?.regionIds || [])]
 }
 
-function openI18n(field: AnnouncementI18nField) {
-  currentI18nField.value = field
+function openTextI18n(field: typeof i18nField.value) {
+  i18nField.value = field
   i18nDialogVisible.value = true
 }
 
-function saveI18nMessages(messages: Record<string, string>) {
-  form.i18nMessages = {
-    ...(form.i18nMessages ?? {}),
-    [currentI18nField.value]: messages,
-  }
+function saveTextI18n(messages: Record<string, string>) {
+  const field = i18nField.value
+  form.i18nMessages = { ...form.i18nMessages, [field]: messages }
+  form[field] = resolveLocalizedText(messages, currentLanguage.value)
 }
 
-function handleUserChange(value: unknown) {
-  const userIds = Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === 'string')
-    : []
-  form.userIds = userIds
-  emit('selected-users-change', userIds)
-}
-
-/** 将编辑器内容按保存草稿或立即发布意图提交给页面容器。 */
 function submit(publish: boolean) {
   if (!canSubmit.value) return
-  const type = props.typeOptions.find(item => item.value === form.type) || props.record?.type
-  if (!type) return
   let i18n = normalizeAnnouncementI18n(form.i18nMessages)
   if (form.title.trim() !== initialTitle) {
     i18n = updateAnnouncementLocaleText(i18n, 'title', currentLanguage.value, form.title)
@@ -279,52 +254,32 @@ function submit(publish: boolean) {
   if (form.summary.trim() !== initialSummary) {
     i18n = updateAnnouncementLocaleText(i18n, 'summary', currentLanguage.value, form.summary)
   }
-  if (!props.record && form.content.trim() && !Object.keys(i18n.content ?? {}).length) {
-    i18n = updateAnnouncementLocaleText(i18n, 'content', currentLanguage.value, form.content)
-  }
+  // 固定类型改选后不保留旧的逐公告类型翻译，避免隐藏文案覆盖统一语言包。
+  if (form.type !== initialType) delete i18n.type
   emit('save', {
     id: props.record?.id,
     title: form.title.trim(),
     summary: form.summary.trim() || undefined,
-    content: form.content.trim(),
-    type,
-    userIds: [...form.userIds],
-    organizationIds: [...form.organizationIds],
+    content: resolveCompatibilityText(i18n.content),
+    type: form.type.trim(),
+    popup: form.popup,
+    deliveryScope: {
+      saas: form.saas,
+      regionIds: [...form.regionIds],
+    },
     publish,
+    others: props.record?.others,
     i18nMessages: i18n,
   })
 }
 </script>
 
 <style scoped lang="less">
-.announcement-i18n-textarea-field {
-  position: relative;
+.announcement-form-hint {
+  color: var(--jet-theme-text-secondary);
 }
 
-.announcement-i18n-textarea-field__trigger {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  z-index: 1;
-}
-
-.announcement-i18n-textarea-field :deep(textarea.ant-input) {
-  padding-right: var(--space-8);
-}
-
-.announcement-summary-input.ant-input-textarea-show-count {
-  position: relative;
-
-  &::after {
-    position: absolute;
-    inset-inline-end: var(--space-3);
-    inset-block-end: var(--space-2);
-    float: none;
-    line-height: 1;
-  }
-
-  :deep(textarea.ant-input) {
-    padding-bottom: 2rem;
-  }
+.announcement-delivery-scope {
+  width: 100%;
 }
 </style>

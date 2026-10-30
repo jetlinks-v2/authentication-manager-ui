@@ -14,23 +14,23 @@ async function load(path, mocks) {
 }
 const service = await load('../visDashboard/Base/shared/apiAnnouncements.ts', {
   './navigation': 'export const HOME_TARGETS={messages:{}}',
-  '../../../views/system/Announcement/announcementI18n': 'export const resolveAnnouncementText=(d,k)=>d?.[k] || ""',
+  '../../../views/system/Announcement/announcementI18n': 'export const resolveAnnouncementText=(d,k)=>d?.[k] || ""; export const resolveAnnouncementTypeLabel=(value,fallback)=>({maintenance:"系统维护",release:"系统升级"}[value] || fallback || value)',
   '@jetlinks-web-core/layout/components/noticeUtils': 'export const BADGE_OVERFLOW_COUNT=99; export const toBadgeCount=({count,overflow})=>overflow?100:count',
-  '../../../views/system/Announcement/api': `export const SYSTEM_BULLETIN_PROVIDER='SystemBulletin'; export const getAnnouncementTypes=()=>globalThis.ann.types(); export const parseSystemBulletinDetail=r=>{try{return r.detail || JSON.parse(r.detailJson)}catch{return undefined}}`,
+  '../../../views/system/Announcement/api': `export const SYSTEM_BULLETIN_PROVIDER='SystemBulletin'; export const normalizeBulletinType=(value,fallback='')=>String(value?.value ?? value ?? '').trim() || fallback; export const parseSystemBulletinDetail=r=>{try{return r.detail || JSON.parse(r.detailJson)}catch{return undefined}}`,
   '../../../views/system/Announcement/bulletinTypeIcon': 'export const resolveBulletinTypeColor=x=>x',
   '../../../views/system/Announcement/receivedDataSource': 'export const queryAnnouncementInbox=(q)=>globalThis.ann.query(q);export const countAnnouncementUnread=(q)=>globalThis.ann.count(q)',
 })
 const flush = async () => { for (let i=0;i<20;i++) await Promise.resolve() }
 const row = (id,state,type) => ({id, bulletinId:id.split(':')[0], publishVersion:1, state, type, topicName:'标题 '+id, message:'摘要', notifyTime:1793263900506, detailJson:JSON.stringify({type})})
 test('公告类型及实体内容呈现，本地状态保留且自定义类型不丢失', async () => {
-  globalThis.ann={query:async q=>{assert.deepEqual(q.sorts,[{name:'deployTime',order:'desc'}]);return {result:{data:[row('a:1',{value:'read'},'default'),row('b:1',{value:'unread'},'maintenance'),row('c:1','unread','custom')]}}},types:async()=>[{value:'default',text:'普通'},{value:'maintenance',text:'维护'}]}
+  globalThis.ann={query:async q=>{assert.deepEqual(q.sorts,[{name:'deployTime',order:'desc'}]);return {result:{data:[row('a:1',{value:'read'},'release'),row('b:1',{value:'unread'},'maintenance'),row('c:1','unread','custom')]}}}}
   const rows=await service.loadAnnouncements()
   assert.deepEqual(rows.map(x=>x.readState),['read','unread','unread'])
-  assert.deepEqual(rows.map(x=>x.announcementType?.text),['普通','维护','custom'])
+  assert.deepEqual(rows.map(x=>x.announcementType?.text),['系统升级','系统维护','custom'])
   assert.equal(rows[0].label,'标题 a:1');assert.equal(rows[0].description,'摘要');assert.ok(rows[0].date)
 })
-test('字典失败保留自定义标签，未读数来自独立计数并支持99+', async () => {
-  globalThis.ann={query:async()=>({result:{data:[row('a:1','unread','custom')]}}),types:async()=>{throw Error('offline')},count:async q=>{assert.equal(q.pageSize,99);return {result:{count:99,overflow:true}}}}
+test('自定义标签保留，未读数来自独立计数并支持99+', async () => {
+  globalThis.ann={query:async()=>({result:{data:[row('a:1','unread','custom')]}}),count:async q=>{assert.equal(q.pageSize,99);return {result:{count:99,overflow:true}}}}
   assert.equal((await service.loadAnnouncements())[0].announcementType.text,'custom')
   assert.equal((await service.loadAnnouncementUnread())[0].value,100)
   ann.query=async()=>{throw Error('404')};await assert.rejects(service.loadAnnouncements(),/404/)

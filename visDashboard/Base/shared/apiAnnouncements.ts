@@ -3,8 +3,8 @@ import dayjs from 'dayjs'
 import { recordOf, resultOf, rowsOf, textOf } from './apiResult'
 import { HOME_TARGETS } from './navigation'
 import type { HomeRow } from './types'
-import { resolveAnnouncementText } from '../../../views/system/Announcement/announcementI18n'
-import { getAnnouncementTypes, parseSystemBulletinDetail, SYSTEM_BULLETIN_PROVIDER, type AnnouncementType } from '../../../views/system/Announcement/api'
+import { resolveAnnouncementText, resolveAnnouncementTypeLabel } from '../../../views/system/Announcement/announcementI18n'
+import { normalizeBulletinType, parseSystemBulletinDetail, SYSTEM_BULLETIN_PROVIDER } from '../../../views/system/Announcement/api'
 import { resolveBulletinTypeColor } from '../../../views/system/Announcement/bulletinTypeIcon'
 import { countAnnouncementUnread, queryAnnouncementInbox } from '../../../views/system/Announcement/receivedDataSource'
 
@@ -14,24 +14,20 @@ const readStateOf = (row: Record<string, unknown>): HomeRow['readState'] => {
   return value === 'read' || value === 'unread' ? value : undefined
 }
 
-/** 内置类型优先用同源字典文案，自定义字符串保留后端名称，不能丢掉标签。 */
-const announcementTypeOf = (type: unknown, types: AnnouncementType[]): HomeRow['announcementType'] => {
+/** 固定类型使用本地语言包，自定义字符串保留后端名称，不能丢掉标签。 */
+const announcementTypeOf = (type: unknown): HomeRow['announcementType'] => {
   const source = recordOf(type)
-  const value = textOf(source.value || type).trim()
-  const text = textOf(source.text).trim() || types.find(item => item.value === value)?.text || value
+  const value = normalizeBulletinType(source.value || type)
+  const text = textOf(source.text).trim() || resolveAnnouncementTypeLabel(value, value)
   return value && text ? { value, text, color: resolveBulletinTypeColor(value) } : undefined
 }
 
 /** 首页仅查询当前可见公告批次，阅读状态由公告接收数据源按本机确认记录补齐。 */
 export const loadAnnouncements = async (): Promise<HomeRow[]> => {
-  const [result, types] = await Promise.all([
-    queryAnnouncementInbox({
-      paging: true, pageSize: 5, pageIndex: 0,
-      sorts: [{ name: 'deployTime', order: 'desc' }],
-    }),
-    // 类型字典失败时仍可阅读公告；已有枚举 text 继续展示，缺失分类不补假标签。
-    getAnnouncementTypes().catch((): AnnouncementType[] => []),
-  ])
+  const result = await queryAnnouncementInbox({
+    paging: true, pageSize: 5, pageIndex: 0,
+    sorts: [{ name: 'deployTime', order: 'desc' }],
+  })
   return rowsOf(result).map(row => {
     const detail = parseSystemBulletinDetail(row)
     const texts = {
@@ -50,7 +46,7 @@ export const loadAnnouncements = async (): Promise<HomeRow[]> => {
         detail: { ...detail, ...texts, type: row.type ?? detail?.type } },
       readState,
       isNew: readState === 'unread',
-      announcementType: announcementTypeOf(row.type ?? detail?.type, types),
+      announcementType: announcementTypeOf(row.type ?? detail?.type),
       date: timeVal != null && dayjs(timeVal).isValid() ? dayjs(timeVal).format('YYYY.MM.DD') : '',
       target: HOME_TARGETS.messages,
     }
