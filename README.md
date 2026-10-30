@@ -99,6 +99,8 @@ Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/1
 
 概览页的系统公告组件（`visDashboard/Base/Announcements/ProjectHomeAnnouncements.vue`）隐藏标题右侧及空态的整个“更多”入口，包括文字与箭头；公告条目点击打开详情的交互保持不变。`shared/HomeWidget.vue` 的其余组件仍显示原有入口。两个组件的 Vue 模板和脚本编译检查通过，未运行整仓构建。
 
+SaaS 概览公告使用 [notify-manager #81](https://github.com/jetlinks-v2/notify-manager/pull/81) 的独立接收接口 `/system/bulletin/received`，按 `deployTime` 排序，通过 `bulletinId/publishVersion` 读取对应发布版本的详情；类型支持字符串及自定义值。确认状态按 API 服务、认证账号和发布批次保存在本机，只有点击“我知道了”才确认，关闭不确认，重发版本重新未读，并同步同浏览器的其他标签页。未读数量由后端按本地已读批次的补集计数，不用当前列表或本地历史条数推算。该实现与配套前端 PR #118 共享本机确认契约，不提供跨设备同步；接收接口未部署时保留失败与重试，不回退旧通知查询。
+
 ## 角色、组织与数据字典左侧树布局统一计划
 
 状态：已实施并验证；组织树导入入口的后续调整见上方“组织树底部操作菜单”。
@@ -703,13 +705,29 @@ Verification result:
 
 ## 项目概览归属迁移
 
+私有化概览采用独立布局，展示关键指标、首次接入引导或快捷入口、应用、消息与 AI 事件趋势、告警、设备与通道、节点运行状况。模块与菜单授权决定展示和取数范围；引导状态未知时不判为已完成，失败保留未知与重试。私有化不展示 SaaS 套餐、续费、扩容、公告和帮助。
+
+私有化复用资源聚合服务、应用准入、Echarts、设备模块公开的只读监控 hook 和规则模块公开的动态告警等级字典。视频统计与视频资源页使用同一全部来源范围，插件及扩展来源纳入“其他”；今日趋势省略未结束小时，但合计保留当前全部数据。最近告警进入来源列表；目标页未支持单条深链前不拼装无效详情参数。物联卡携带 `type=device` 下钻，SaaS 与私有化共用同口径设备过滤，未指定类型仍进入全部设备。完成引导且无创建权限时隐藏空快捷卡。
+
+SaaS 管理员概览将项目摘要固定在画布上方，最近访问、资源概况、今日概况、套餐用量、应用、公告及帮助按授权装配到 `DashBoardCanvas`。画布使用 `editable=false`、`layoutEditable=true`、`previewMode=false`，开放拖拽缩放并保留真实取数，不开放组件增删和配置。布局按账号、项目、API、应用、容器宽度档及可见组件集合隔离保存；有效个人布局优先，数据刷新不重置坐标，窄屏切为单列。
+
+资源概况仅包含已授权的设备、视频通道、边缘节点与数据看板，不查询空间、场景、算法或 AI 任务统计；今日 AI 识别事件沿用独立授权及既有口径。今日统计固定同次刷新时间，昨日为全天；下钻到业务页时沿用目标页筛选，不传尚未支持的日期参数。
+
+项目摘要只显示真实项目名称与路径编号。名称通过 `api/projectSummary.ts` 读取 `/authorize/me` 的 tenant 维度；缓存存在项目 ID 时严格匹配，否则只接受唯一 tenant，不猜第一个项目或使用品牌标题。资料随账号、项目、API 与页面启停隔离，失败可重试。当前接口不提供项目到期时间，日期保持隐藏，不使用服务 `remainingTime` 代替；不展示版本标签、集团名或“已过期”状态。
+
+最近访问从首次进入概览后开始监听成功到达且有授权的页面，排除概览及路由名含 `Save`、`Create`、`Editor`、`Setting` 段的页面，不回溯监听前历史。记录按账号、项目、API、应用保存在本机，最多 18 项、显示最近 6 项；查询参数使用白名单，不保存令牌。空历史展示已授权起点，不伪造访问时间；权限撤销即过滤旧记录。
+
+续费、升级到企业版与申请扩容均为本地演示：校验后关闭弹窗并提示保存成功，不调用提交接口、不持久化申请、不改写套餐或到期时间。扩容优先使用可扩容的真实额度；空数据、失败或全部不限额时使用独立标识的原型示例，不写入真实套餐卡片。帮助入口使用 `useSaasUtilities.ts` 中的正式文档链接。
+
 概览迁入本模块，保留最新菜单契约 project/Overview、/overview、owner=cloud。页面落点 views/project/Overview，六组件落点 visDashboard/Base，独立查询 api/overview.ts；同步迁移概览菜单、文案及验收脚本。project-side-ui 的其他页面保持不变。迁移后验证菜单单一归属、组件发现范围、相对引用、编译及公告/告警测试。
 
 浏览器核验最新服务端菜单为 `project/Overview`、`/overview`，页面最终落在 `views/project/Overview`；`index.ts` 保留不保留旧菜单别名。BaseMenu 仅迁移概览条目，其余最新系统/开放与集成层级保持不变。旧 overview.theme/types 实际仅被运维任务详情使用，已归位 project-side-ui 的任务详情 theme 目录，避免它反向依赖概览模块。
 
 ## 资源中心仪表盘组件
 
-`visDashboard/ResourceCenter` 提供九个单风格组件，通过新的 `DashBoardCanvas` 自动发现与组装；目录、默认业务配置、真实接口口径及临时浏览器注入方式见 [资源中心仪表盘说明](docs/resource-center-dashboard.md)。正式入口为 `/resources/dashboard`，页面落在 `views/resources/Dashboard/index.vue`，绑定现有菜单 `resources/Dashboard`；允许拖拽和缩放已有组件，仍不允许编辑、添加或删除组件，布局以 `resource-center-dashboard` 为 key 保存在浏览器 localStorage，保留筛选和快捷跳转。本组不修改项目概览六组件，不接入旧 dashboard，不新增菜单。数据采集和物联网卡仅私有化运行时展示。
+正式入口 `/resources/dashboard` 绑定现有菜单 `resources/Dashboard`，实现说明见 [资源中心仪表盘说明](docs/resource-center-dashboard.md)。SaaS 按真实授权显示资源摘要、消息、地图、节点和视觉任务；节点 1–3 台使用表格，超过 3 台使用排行，零台显示空态。
+
+各摘要与业务面板是独立 `DashBoardCanvas` 组件，支持拖拽、缩放和本机个人布局保存。当前缓存键为 `resource-dashboard:saas:v9:<摘要>`，覆盖账号、项目、API、应用、容器宽度档及可见组件集合，保留旧 v8 缓存；刷新数据不覆盖个人几何。私有化入口继续使用 `LegacyResourceDashboard.vue` 的原画布与布局缓存，不接入新版采集、流量辅助面板。
 
 ## 第三方应用运行时入口
 

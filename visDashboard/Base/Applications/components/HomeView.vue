@@ -1,11 +1,11 @@
 <template>
-  <div class="home-content home-apps" :class="{ 'home-apps--cards': chart.displayStyle === 'cards' }">
+  <div ref="host" class="home-content home-apps" :class="{ 'home-apps--cards': chart.displayStyle === 'cards', 'home-apps--saas': chart.displayStyle === 'saas', 'home-apps--private': chart.displayStyle === 'private' }">
     <a-tooltip
-      v-for="row in rows"
+      v-for="(row, index) in rows"
       :key="row.id"
       :title="!canOpenApp(row) && !isOpening(row) ? t('packages.ProjectHome.unavailable') : undefined"
     >
-      <span class="home-app-trigger">
+      <span class="home-app-trigger" :class="{ 'home-app-trigger--hidden': index >= visibleCount }" :aria-hidden="index >= visibleCount || undefined">
         <button
           type="button"
           class="home-app"
@@ -20,9 +20,9 @@
           <span class="home-app-content">
             <strong class="home-app-title">{{ label(row) }}</strong>
             <j-ellipsis v-if="chart.showDescription" class="home-muted home-description">{{ row.description || t('packages.ProjectHome.appNoDescription') }}</j-ellipsis>
-            <span class="home-app-meta">
+            <span v-if="!compact || row.application?.status === 'disabled'" class="home-app-meta">
               <span v-if="row.application">{{ row.application.statusText || t(row.application.status === 'disabled' ? 'packages.ProjectHome.appDisabled' : 'packages.ProjectHome.appEnabled') }}</span>
-              <time v-if="chart.showDate && row.date && Number.isFinite(Date.parse(row.date))">{{ t('packages.ProjectHome.appCreated', { date: row.date.slice(0, 10) }) }}</time>
+              <time v-if="!compact && chart.showDate && row.date && Number.isFinite(Date.parse(row.date))">{{ t('packages.ProjectHome.appCreated', { date: row.date.slice(0, 10) }) }}</time>
             </span>
           </span>
           <RightOutlined class="home-app-arrow" />
@@ -32,11 +32,12 @@
   </div>
 </template>
 <script setup lang="ts" name="ProjectHomeApplicationsView">
-import { type PropType } from 'vue'
+import { computed, toRef, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RightOutlined } from '@ant-design/icons-vue'
 import HomeIcon from '../../shared/HomeIcon.vue'
 import type { HomeRow, HomeChart, HomeTarget } from '../../shared/types'
+import { useVisibleApplications } from '../useVisibleApplications'
 
 const props = defineProps({
   rows: { type: Array as PropType<HomeRow[]>, default: () => [] },
@@ -49,6 +50,8 @@ const emit = defineEmits<{
   open: [row: HomeRow]
 }>()
 const { t } = useI18n()
+const { host, visibleCount } = useVisibleApplications(toRef(props, 'rows'), computed(() => props.chart.displayStyle === 'saas'))
+const compact = computed(() => ['saas', 'private'].includes(props.chart.displayStyle))
 const label = (row: HomeRow) => row.label || (row.labelKey ? t(`packages.ProjectHome.${row.labelKey}`) : '')
 
 const isOpening = (row: HomeRow) => props.openingIds?.includes(row.id) ?? false
@@ -185,4 +188,59 @@ const handleClick = (row: HomeRow) => {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* 首页应用始终保持单列；更多应用通过卡片头部入口访问，避免内嵌列表滚动。 */
+.home-apps.home-apps--saas { display: flex; flex-direction: column; gap: 6px; height: auto; overflow: visible; padding: 4px 0; }
+.home-apps--saas .home-app-trigger { position: relative; flex: 0 0 auto; }
+.home-app-trigger--hidden { visibility: hidden; pointer-events: none; }
+.home-apps--saas .home-app {
+  height: auto;
+  min-height: 56px;
+  gap: 12px;
+  padding: 10px 12px;
+  margin: 0;
+  border: 0;
+  border-radius: var(--r-2, 6px);
+  background: transparent;
+  transition: background-color 0.2s ease;
+  &:hover:not(:disabled) {
+    background: var(--home-card-surface, #f7f9fc);
+    .home-app-content strong { color: var(--business-component-primary, #1677ff); }
+  }
+}
+.home-apps--saas .home-app-trigger:hover > .home-app:not(:disabled) {
+  background: var(--home-card-surface, #f7f9fc);
+  .home-app-content strong { color: var(--business-component-primary, #1677ff); }
+}
+.home-apps--saas .home-app-arrow {
+  font-size: 11px;
+  color: var(--business-component-muted, #86909c);
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+.home-apps--saas .home-app:not(:disabled):hover .home-app-arrow,
+.home-apps--saas .home-app-trigger:hover > .home-app:not(:disabled) .home-app-arrow {
+  color: var(--business-component-primary, #1677ff);
+  transform: translateX(2px);
+}
+.home-apps--saas .home-app-icon { flex: 0 0 32px; width: 32px; height: 32px; border-radius: var(--r-2, 6px); background: var(--business-component-primary, #1677ff); }
+.home-apps--saas .home-app-icon :deep(.home-icon) { width: 18px; height: 18px; }
+.home-apps--saas .home-app-content { gap: 2px; }
+.home-apps--saas .home-app-content strong { font-size: 13px; font-weight: 500; transition: color 0.2s ease; }
+.home-apps--saas .home-app-meta { font-size: 12px; line-height: 16px; }
+.home-apps--saas .home-app-content :deep(.home-description) { -webkit-line-clamp: 1; font-size: 12px; line-height: 16px; color: var(--business-component-muted, #646c73); }
+
+/* 私有化首屏应用保持三条紧凑单列，不呈现创建日期及日常启用状态。 */
+.home-apps.home-apps--private { display: flex; flex-direction: column; gap: 2px; height: auto; overflow: visible; }
+.home-apps--private .home-app { height: auto; min-height: 50px; gap: 10px; padding: 7px 12px; border: 0; background: transparent; }
+.home-apps--private .home-app:not(:disabled):hover,
+.home-apps--private .home-app-trigger:hover > .home-app:not(:disabled) { background: var(--home-card-surface, #f7f9fc); }
+.home-apps--private .home-app-icon { flex: 0 0 32px; width: 32px; height: 32px; background: var(--business-component-primary, #1677ff); }
+.home-apps--private .home-app-icon :deep(.home-icon) { width: 18px; height: 18px; }
+.home-apps--private .home-app:not(:disabled):hover .home-app-icon,
+.home-apps--private .home-app-trigger:hover > .home-app:not(:disabled) .home-app-icon { transform: none; }
+.home-apps--private .home-app-content { gap: 0; }
+.home-apps--private .home-app-content strong { font-size: 13px; line-height: 20px; }
+.home-apps--private .home-app-content :deep(.home-description) { -webkit-line-clamp: 1; line-height: 16px; color: var(--business-component-muted, #646c73); }
+.home-apps--private .home-app-meta { font-size: 12px; line-height: 16px; }
+.home-apps--private .home-app-arrow { font-size: 11px; }
 </style>

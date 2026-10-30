@@ -1,0 +1,43 @@
+.resource-dashboard { width: 100%; min-width: 0; min-height: 0; margin-inline: auto; container: resource-dashboard / inline-size; }
+.resource-dashboard-state { min-height: 400px; display: grid; place-items: center; }
+/* 画布只负责几何，页面滚动仍交给外层；图表在自身内容区保持无滚动。 */
+.resource-dashboard :deep(.dashboard-card-layout),
+.resource-dashboard :deep(.dashboard-card-content) { height: auto; overflow: visible; }
+.resource-dashboard :deep(.dashboard-card-content) { scrollbar-gutter: auto; }
+.resource-dashboard :deep(.dashboard-grid) { min-height: 0; overflow-x: clip; overflow-y: visible; }
+.resource-dashboard :deep(.resource-panel > .ant-card-body) { overflow: auto; }
+.resource-dashboard :deep(.resource-message-panel > .ant-card-body) { overflow: hidden; }
+.resource-dashboard :deep(.resource-panel) { height: 100%; display: flex; flex-direction: column; min-width: 0; border-radius: var(--r-3, 8px); border: 1px solid var(--jet-theme-border-secondary, #e8edf3); background: var(--ant-color-bg-container, #ffffff); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03); overflow: hidden; }
+.resource-dashboard :deep(.resource-panel > .ant-card-head) { flex-shrink: 0; min-height: 54px; padding: 16px 16px 12px; border-bottom: 1px solid #f0f2f5; }
+.resource-dashboard :deep(.resource-panel .ant-card-head-wrapper) { min-height: 28px; }
+.resource-dashboard :deep(.resource-panel .ant-card-head-title) { font-size: 15px; font-weight: 600; line-height: 24px; color: #17243b; padding-block: 0; }
+.resource-dashboard :deep(.resource-panel .ant-card-extra) { padding-block: 0; }
+.resource-dashboard :deep(.resource-panel > .ant-card-body) { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 16px; }
+.resource-dashboard :deep(.resource-message-actions),
+.resource-dashboard :deep(.ranking-toolbar),
+.resource-dashboard :deep(.supplemental-actions) { display: flex; align-items: center; gap: 12px; }
+.resource-dashboard :deep(.resource-panel .ant-card-extra .ant-btn-link) { padding: 0; font-size: 12px; }
+.resource-dashboard :deep(.resource-panel-state) { display: flex; flex: 1; flex-direction: column; gap: 8px; align-items: center; justify-content: center; min-height: 180px; }
+/* 规范本页旧排行的卡头与卡片 */
+.resource-dashboard :deep(.resource-ranking) { border-radius: var(--r-3, 8px); border: 1px solid var(--jet-theme-border-secondary, #e8edf3); background: var(--ant-color-bg-container, #ffffff); padding: 0 16px 16px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03); }
+.resource-dashboard :deep(.ranking-header) { padding: 16px 16px 12px; margin: 0 -16px 12px; min-height: 54px; border-bottom: 1px solid #f0f2f5; box-sizing: border-box; }
+.resource-dashboard :deep(.ranking-header h3) { font-size: 15px; font-weight: 600; line-height: 24px; color: #17243b; }
+.resource-dashboard :deep(.resource-ranking .action-link),
+.resource-dashboard :deep(.resource-panel .action-link) { font-size: 12px; display: inline-flex; align-items: center; gap: 4px; color: var(--ant-color-primary, #1677ff); padding: 0; height: auto; transition: color .18s ease; }
+.resource-dashboard :deep(.action-link:hover) { color: #4096ff; }
+.resource-dashboard :deep(.action-arrow) { font-size: 11px; transition: transform .18s ease; }
+.resource-dashboard :deep(.action-link:hover .action-arrow) { transform: translateX(2px); }
+.resource-dashboard :deep(.resource-rank-row) { min-height: 38px; gap: 10px; padding: 4px 8px; border-radius: 6px; }
+.resource-dashboard :deep(.resource-rank-row .caption) { font-size: 11px; line-height: 15px; color: #86909c; }
+.resource-dashboard :deep(.resource-rank-row .name) { font-size: 12.5px; line-height: 17px; font-weight: 500; color: #1d2939; }
+.resource-dashboard :deep(.resource-rank-row .value) { font-size: 12px; font-variant-numeric: tabular-nums; }
+.resource-dashboard :deep(.resource-rank-row .rank) { width: 20px; height: 20px; font-size: 11px; font-weight: 600; line-height: 1; border-radius: 50%; background: #f1f5f9; color: #64748b; }
+.resource-dashboard :deep(.resource-rank-row .rank-0) { background: #f1f5f9; color: #94a3b8; font-weight: 500; }
+.resource-dashboard :deep(.resource-rank-row .rank-1),
+.resource-dashboard :deep(.resource-rank-row .rank-2),
+.resource-dashboard :deep(.resource-rank-row .rank-3) { background: var(--ant-color-primary, #1677ff); color: #fff; }
+.resource-dashboard :deep(.device-map-card) { padding: 0 16px 16px; border: 1px solid var(--jet-theme-border-secondary, #e8edf3); border-radius: var(--r-3, 8px); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03); background: var(--ant-color-bg-container, #ffffff); overflow: hidden; }
+.resource-dashboard :deep(.device-map-card > .section-header) { flex-shrink: 0; min-height: 54px; margin: 0 -16px 12px; padding: 16px 16px 12px; border-bottom: 1px solid #f0f2f5; box-sizing: border-box; }
+.resource-dashboard :deep(.device-map-card > .section-header::after) { display: none; }
+.resource-dashboard :deep(.device-map-card__body) { min-height: 280px; }
+.resource-dashboard :deep(.device-map-card .section-header .title) { font-size: 15px; font-weight: 600; line-height: 24px; color: #17243b; }
