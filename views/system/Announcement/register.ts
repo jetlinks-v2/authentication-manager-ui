@@ -1,7 +1,19 @@
 import { defineAsyncComponent } from 'vue'
-import { SYSTEM_BULLETIN_PROVIDER } from './api'
+import { subscribeAnnouncementReadChanges } from './localReadStore'
+import { subscribeAnnouncementRealtime } from './realtimeSubscription'
+import i18n from '@jetlinks-web-core/locales'
+import {
+  SYSTEM_BULLETIN_PROVIDER,
+  queryAnnouncementInbox,
+  queryAnnouncementInboxNoPaging,
+  countAnnouncementInbox,
+  countAnnouncementUnread,
+  changeAnnouncementReadState,
+  markAllAnnouncementsRead,
+} from './api'
 import { loadSystemBulletinNoticeList, resolveSystemBulletinNoticeTexts } from './noticeListLoader'
 import { handleSystemBulletinNotice } from './realtimeNotification'
+import { handleSystemBulletinLogin } from './loginPopup'
 import type { NoticeTextResolverContext } from '@jetlinks-web-core/layout/components/noticeTextResolver'
 
 export const getRegisterComponents = () => [
@@ -15,13 +27,41 @@ export const getRegisterComponents = () => [
   {
     targetPage: 'notification-provider',
     code: SYSTEM_BULLETIN_PROVIDER,
-    props: { listHandler: loadSystemBulletinNoticeList, messageCategory: 'announcement' },
+    props: {
+      listHandler: loadSystemBulletinNoticeList,
+      messageCategory: 'announcement',
+      metadata: () => ({
+        provider: SYSTEM_BULLETIN_PROVIDER,
+        name: i18n.global.t('Announcement.inbox.title'),
+        type: {
+          id: SYSTEM_BULLETIN_PROVIDER,
+          name: i18n.global.t('Announcement.inbox.title'),
+        },
+      }),
+      dataSource: {
+        subscribe: subscribeAnnouncementReadChanges,
+        subscribeRealtime: subscribeAnnouncementRealtime,
+        confirmOnDetail: true,
+        query: queryAnnouncementInbox,
+        queryNoPaging: queryAnnouncementInboxNoPaging,
+        count: countAnnouncementInbox,
+        unreadCount: countAnnouncementUnread,
+        changeState: changeAnnouncementReadState,
+        readAll: markAllAnnouncementsRead,
+      },
+    },
   },
   {
     targetPage: 'notification-realtime',
     targetModule: 'handlers',
     code: SYSTEM_BULLETIN_PROVIDER,
     props: { handler: handleSystemBulletinNotice },
+  },
+  {
+    targetPage: 'notification-login',
+    targetModule: 'handlers',
+    code: SYSTEM_BULLETIN_PROVIDER,
+    props: { handler: handleSystemBulletinLogin },
   },
   {
     targetPage: 'notification-text',

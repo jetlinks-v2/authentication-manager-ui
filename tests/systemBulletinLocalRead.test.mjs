@@ -158,6 +158,20 @@ test('an all-read request started without an identity cannot write a later signe
   assert.deepEqual(store.getAnnouncementReadIds(), [])
 })
 
+test('the announcement adapter feeds the generic core capped-count contract without server read endpoints', async () => {
+  const { source, respond, calls } = createEnvironment()
+  respond(() => ({ success: true, status: 200, result: 205 }))
+  const registrations = [{ code: 'SystemBulletin', props: { dataSource: { unreadCount: source.countAnnouncementUnread } } }]
+  const core = loadLogModule('../../jetlinks-web-core/src/layout/components/noticeListHandler.ts', {
+    '@jetlinks-web-core/utils/components-registry': { componentsRegistry: { getRegistry: () => registrations } },
+    '@jetlinks-web-core/api/account/notificationRecord': {},
+  })
+  const response = await core.queryNoticeUnreadSummary(['SystemBulletin'], { pageSize: 99 })
+  assert.deepEqual(response.result.total, { count: 99, overflow: true })
+  assert.deepEqual(response.result.topics, [{ topicProvider: 'SystemBulletin', count: 99, overflow: true }])
+  assert.equal(calls[0].url, '/system/bulletin/received/_count')
+})
+
 test('unread count caps at 99 without server read endpoints', async () => {
   const { source, respond, calls } = createEnvironment()
   respond(() => ({ success: true, status: 200, result: 205 }))
@@ -263,7 +277,6 @@ test('mixed publication versions preserve nested read predicates and realtime lo
   await source.queryAnnouncementInboxNoPaging({ terms: [{ column: 'id', termType: 'eq', value: 'a:2' }] })
   assert.deepEqual(rows.filter(row => matches(row, calls.at(-1).query.terms)), [rows[1]])
 })
-
 test('404 and malformed responses do not fall back to notifications or fabricate counts', async () => {
   const { source, respond, calls } = createEnvironment()
   respond(() => ({ success: false, status: 404 }))

@@ -5,6 +5,7 @@ export type AnnouncementLocalizedText = Record<string, string>
 export interface AnnouncementI18n {
   title?: AnnouncementLocalizedText
   summary?: AnnouncementLocalizedText
+  type?: AnnouncementLocalizedText
   content?: AnnouncementLocalizedText
 }
 
@@ -42,7 +43,7 @@ const normalizeTextMap = (value: unknown) => {
 export const normalizeAnnouncementI18n = (value: unknown): AnnouncementI18n => {
   if (!isRecord(value)) return {}
   const normalized: AnnouncementI18n = {}
-  const fields: AnnouncementI18nField[] = ['title', 'summary', 'content']
+  const fields: AnnouncementI18nField[] = ['title', 'summary', 'type', 'content']
   fields.forEach((field) => {
     const messages = normalizeTextMap(value[field])
     if (messages) normalized[field] = messages
@@ -87,6 +88,24 @@ export const resolveAnnouncementStateLabel = (
   }
 }
 
+/** 固定公告类型由本地语言包统一展示，历史自定义类型继续使用公告内翻译或原始值。 */
+export const resolveAnnouncementTypeLabel = (
+  type: unknown,
+  fallback = '',
+  locale?: string,
+): string => {
+  const value = firstText(type)
+  if (!value) return firstText(fallback)
+  const language = String(locale || currentLocale()).replace('_', '-').split('-')[0]
+  try {
+    const messages = globalI18n.global.getLocaleMessage(language) as Record<string, unknown>
+    const localized = messages?.[`Announcement.type.${value}`]
+    return firstText(localized, fallback, value)
+  } catch {
+    return firstText(fallback, value)
+  }
+}
+
 /** 当前 locale 优先，缺失时只回退旧顶层字段，不跨语言取值。 */
 export const resolveAnnouncementText = (
   record: AnnouncementTextRecord | undefined,
@@ -114,6 +133,7 @@ export const buildAnnouncementI18nFields = (draft: {
   i18nMessages?: unknown
   title?: unknown
   summary?: unknown
+  type?: unknown
   content?: unknown
 }) => {
   const i18n = normalizeAnnouncementI18n(draft.i18nMessages)
@@ -121,6 +141,8 @@ export const buildAnnouncementI18nFields = (draft: {
     i18nMessages: Object.keys(i18n).length > 0 ? i18n : undefined,
     title: resolveCompatibilityText(i18n.title, firstText(draft.title)),
     summary: resolveCompatibilityText(i18n.summary, firstText(draft.summary)),
+    // 顶层类型是稳定语义键，国际化类型仅用于展示，不能反向覆盖图标映射值。
+    type: firstText(draft.type),
     content: resolveCompatibilityText(i18n.content, firstText(draft.content)),
   }
 }
@@ -151,7 +173,7 @@ export const updateAnnouncementLocaleText = (
 
 export const mergeLegacyAnnouncementI18n = (
   i18n: unknown,
-  legacy: { title?: unknown; summary?: unknown; content?: unknown },
+  legacy: { title?: unknown; summary?: unknown; type?: unknown; content?: unknown },
 ) => {
   const normalized = normalizeAnnouncementI18n(i18n)
 
@@ -167,6 +189,8 @@ export const mergeLegacyAnnouncementI18n = (
   if (title) normalized.title = { ...(normalized.title ?? {}), zh: title }
   const summary = resolveLegacyChinese(normalized.summary, legacy.summary)
   if (summary) normalized.summary = { ...(normalized.summary ?? {}), zh: summary }
+  const type = resolveLegacyChinese(normalized.type, legacy.type)
+  if (type) normalized.type = { ...(normalized.type ?? {}), zh: type }
   const content = resolveLegacyChinese(normalized.content, legacy.content)
   if (content) normalized.content = { ...(normalized.content ?? {}), zh: content }
   return normalized

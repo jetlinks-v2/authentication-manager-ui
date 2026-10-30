@@ -13,18 +13,15 @@ const loadLoader = async ({ list, unread, detail }) => {
   }).outputText
   const exports = {}
   const dependency = (id) => {
-    if (id === '@jetlinks-web-core/api/account/notificationRecord') {
-      return {
-        getList_api: async () => ({ result: { data: list } }),
-        getUnreadNoPagingList_api: async () => ({ result: { data: unread } }),
-      }
-    }
     if (id === './api') {
       return {
         SYSTEM_BULLETIN_PROVIDER: 'SystemBulletin',
+        queryAnnouncementInbox: async () => ({ result: { data: list } }),
+        queryAnnouncementInboxNoPaging: async () => ({ result: unread }),
         parseSystemBulletinDetail: (record) => record.detail,
         resolveSystemBulletinReference: (record) => record.detail,
         getSystemBulletinNotificationDetail: async (reference) => detail(reference),
+        normalizeBulletinType: (value, fallback = '') => String(value || '').trim() || fallback,
       }
     }
     if (id === './announcementI18n') {
@@ -32,6 +29,7 @@ const loadLoader = async ({ list, unread, detail }) => {
         getAnnouncementI18n: (i18nMessages) => i18nMessages || {},
         resolveLocalizedText: (messages) => String(messages?.en || '').trim(),
         resolveAnnouncementText: (record, field) => String(record?.i18nMessages?.[field]?.en || record?.[field] || '').trim(),
+        resolveAnnouncementTypeLabel: (type, fallback = '') => String(fallback || type || '').trim(),
       }
     }
     if (id === './bulletinTypeIcon') {
@@ -60,7 +58,7 @@ test('loads bulletin detail when a legacy bell snapshot has no i18n', async () =
     list: [],
     detail: async () => {
       detailCalls += 1
-      return { title: 'English title', summary: 'English summary', type: 'default' }
+      return { title: 'English title', summary: 'English summary', type: 'default', typeText: 'General' }
     },
   })
 
@@ -68,9 +66,10 @@ test('loads bulletin detail when a legacy bell snapshot has no i18n', async () =
   assert.equal(detailCalls, 1)
   assert.equal(rows[0].topicName, 'English title')
   assert.equal(rows[0].message, 'English summary')
+  assert.equal(rows[0].noticeTag, 'General')
 })
 
-test('does not refetch when the notification snapshot already carries both i18n fields', async () => {
+test('does not refetch when the notification snapshot already carries all list i18n fields', async () => {
   let detailCalls = 0
   const load = await loadLoader({
     unread: [{
@@ -82,7 +81,12 @@ test('does not refetch when the notification snapshot already carries both i18n 
       detail: {
         bulletinId: 'bulletin-2',
         publishVersion: 1,
-        i18nMessages: { title: { en: 'English title' }, summary: { en: 'English summary' } },
+        type: 'maintenance',
+        i18nMessages: {
+          title: { en: 'English title' },
+          summary: { en: 'English summary' },
+          type: { en: 'Maintenance' },
+        },
       },
     }],
     list: [],
@@ -96,6 +100,7 @@ test('does not refetch when the notification snapshot already carries both i18n 
   assert.equal(detailCalls, 0)
   assert.equal(rows[0].topicName, 'English title')
   assert.equal(rows[0].message, 'English summary')
+  assert.equal(rows[0].noticeTag, 'Maintenance')
 })
 
 test('refetches when an i18n snapshot is missing the active language', async () => {

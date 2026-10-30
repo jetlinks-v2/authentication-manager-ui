@@ -1,5 +1,14 @@
-import { AIcon } from '@jetlinks-web/components'
-import { h, type VNode } from 'vue'
+import { h, type Component, type VNode } from 'vue'
+import {
+  FileTextOutlined,
+  NotificationOutlined,
+  RocketOutlined,
+  SafetyCertificateOutlined,
+  ToolOutlined,
+  WarningOutlined,
+} from '@ant-design/icons-vue'
+
+export const BULLETIN_TYPE_VALUES = ['maintenance', 'release', 'campaign', 'policy', 'emergency'] as const
 
 /** 平台内置公告类型与统一图标语义；类型只表达内容主题，不承担紧急程度或颜色等级。 */
 export const BULLETIN_TYPE_ICONS: Record<string, string> = {
@@ -7,19 +16,32 @@ export const BULLETIN_TYPE_ICONS: Record<string, string> = {
   maintenance: 'ToolOutlined',
   incident: 'WarningOutlined',
   release: 'RocketOutlined',
+  campaign: 'NotificationOutlined',
   security: 'SafetyCertificateOutlined',
   policy: 'FileTextOutlined',
+  emergency: 'WarningOutlined',
 }
 
 export const DEFAULT_BULLETIN_TYPE_ICON = 'NotificationOutlined'
+
+const BULLETIN_TYPE_ICON_COMPONENTS: Record<string, Component> = {
+  NotificationOutlined,
+  ToolOutlined,
+  WarningOutlined,
+  RocketOutlined,
+  SafetyCertificateOutlined,
+  FileTextOutlined,
+}
 
 export const BULLETIN_TYPE_COLORS: Record<string, string> = {
   default: 'var(--jet-theme-primary)',
   maintenance: '#fa8c16',
   incident: '#f5222d',
   release: '#1677ff',
+  campaign: 'var(--jet-theme-primary)',
   security: '#722ed1',
   policy: '#52c41a',
+  emergency: '#f5222d',
 }
 
 export const resolveBulletinTypeColor = (type?: unknown): string => {
@@ -37,7 +59,8 @@ export const resolveBulletinTypeIcon = (type?: unknown): string => {
   return BULLETIN_TYPE_ICONS[String(value ?? '').trim()] || DEFAULT_BULLETIN_TYPE_ICON
 }
 
-/** 右上角轻提示需要可渲染节点，统一复用 AIcon 保证与页面图标一致。 */
-export const createBulletinTypeIconNode = (type?: unknown): VNode => {
-  return h(AIcon, { type: resolveBulletinTypeIcon(type) })
-}
+/** 程序式通知无法使用模板中的全局 AIcon，统一创建与公告类型一致的图标节点。 */
+export const createBulletinTypeIconNode = (type?: unknown): VNode => h(
+  BULLETIN_TYPE_ICON_COMPONENTS[resolveBulletinTypeIcon(type)] || NotificationOutlined, {
+  style: { color: resolveBulletinTypeColor(type) },
+})

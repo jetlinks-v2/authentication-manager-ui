@@ -12,6 +12,7 @@ import {
   SYSTEM_BULLETIN_PROVIDER,
 } from '../api'
 import NotificationDetail from './NotificationDetail.vue'
+import { subscribeAnnouncementReadChanges } from '../localReadStore'
 import { resolveBulletinTypeIcon } from '../bulletinTypeIcon'
 import { resolveAnnouncementText } from '../announcementI18n'
 
@@ -95,6 +96,7 @@ const incomingNotification = computed(() => {
 })
 
 const reload = () => tableRef.value?.reload?.()
+onUnmounted(subscribeAnnouncementReadChanges(reload))
 
 const markRead = async (record: Record<string, any>) => {
   const response = await changeAnnouncementReadState('_read', [record.id])
@@ -141,6 +143,7 @@ const view = async (record: Record<string, any>) => {
 watch(() => incomingNotification.value?.id, () => {
   if (incomingNotification.value) view(incomingNotification.value)
 }, { immediate: true })
+watch(globalI18n.global.locale, reload)
 
 onUnmounted(() => {
   if (user.messageInfo?.topicProvider === SYSTEM_BULLETIN_PROVIDER) {

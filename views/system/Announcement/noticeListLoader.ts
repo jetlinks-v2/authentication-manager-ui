@@ -1,10 +1,9 @@
-import {
-  getList_api,
-  getUnreadNoPagingList_api,
-} from '@jetlinks-web-core/api/account/notificationRecord'
 import type { NoticeListHandler } from '@jetlinks-web-core/layout/components/noticeListHandler'
 import {
   getSystemBulletinNotificationDetail,
+  normalizeBulletinType,
+  queryAnnouncementInbox,
+  queryAnnouncementInboxNoPaging,
   parseSystemBulletinDetail,
   resolveSystemBulletinReference,
   SYSTEM_BULLETIN_PROVIDER,
@@ -12,6 +11,7 @@ import {
 } from './api'
 import {
   getAnnouncementI18n,
+  resolveAnnouncementTypeLabel,
   resolveAnnouncementText,
   resolveLocalizedText,
 } from './announcementI18n'
@@ -62,12 +62,12 @@ export const loadSystemBulletinNoticeList: NoticeListHandler = async ({
   }
 
   const [unreadResponse, readResponse] = await Promise.all([
-    getUnreadNoPagingList_api({
+    queryAnnouncementInboxNoPaging({
       paging: false,
       sorts: notifyTimeDesc,
-      terms: [providerTerm],
+      terms: [providerTerm, { column: 'state', termType: 'eq', value: 'unread' }],
     }),
-    getList_api({
+    queryAnnouncementInbox({
       pageIndex: 0,
       pageSize: READ_NOTICE_LIMIT,
       sorts: notifyTimeDesc,
@@ -114,15 +114,22 @@ export const resolveSystemBulletinNoticeTexts = async (
     const snapshotI18n = getAnnouncementI18n(snapshot?.i18nMessages)
     const hasCurrentText = (field: 'title' | 'summary') =>
       Boolean(resolveLocalizedText(snapshotI18n[field]))
-    const shouldLoadDetail = !hasCurrentText('title') || !hasCurrentText('summary')
+    const shouldLoadDetail = (['title', 'summary'] as const)
+      .some(field => !hasCurrentText(field))
     const loadedDetail = shouldLoadDetail ? await loadDetail(record) : undefined
     const title = loadedDetail?.title
       || resolveAnnouncementText(snapshot, 'title')
       || String(record.topicName || '').trim()
     const summary = loadedDetail?.summary
+      || loadedDetail?.content
       || resolveAnnouncementText(snapshot, 'summary')
+      || resolveAnnouncementText(snapshot, 'content')
       || String(record.message || '').trim()
-    const type = loadedDetail?.type || snapshot?.type
+    const type = normalizeBulletinType(loadedDetail?.type || snapshot?.type, 'default')
+    const typeText = loadedDetail?.typeText || resolveAnnouncementTypeLabel(
+      type,
+      resolveAnnouncementText(snapshot, 'type'),
+    )
     const localizedDetail = loadedDetail
       ? {
           ...(snapshot || {}),
@@ -136,6 +143,7 @@ export const resolveSystemBulletinNoticeTexts = async (
       ...(localizedDetail ? { detail: localizedDetail, detailJson: JSON.stringify(localizedDetail) } : {}),
       topicName: title,
       message: summary,
+      noticeTag: typeText,
       noticeIcon: resolveBulletinTypeIcon(type),
       noticeIconColor: resolveBulletinTypeColor(type),
     }

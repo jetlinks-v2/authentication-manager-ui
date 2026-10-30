@@ -14,6 +14,18 @@ interface RealtimeAnnouncementContext {
   appContext?: AppContext
 }
 
+type ModalHandle = { destroy: () => void }
+const realtimeDialogs = new Set<ModalHandle>()
+let dialogGeneration = 0
+
+/** 身份或订阅上下文变化时关闭旧公告详情，并使旧确认回调失效。 */
+export const disposeAnnouncementRealtimeDialogs = () => {
+  dialogGeneration += 1
+  const dialogs = [...realtimeDialogs]
+  realtimeDialogs.clear()
+  dialogs.forEach(dialog => dialog.destroy())
+}
+
 const text = (value: unknown) => String(value ?? '').trim()
 
 /** 标题缺省时回退摘要，保证轻提示和公告弹窗都有可读标题。 */
@@ -31,17 +43,22 @@ export const openAnnouncementDetail = ({
   markRead,
   appContext,
 }: RealtimeAnnouncementContext) => {
-  Modal.info({
+  const generation = dialogGeneration
+  let handle: ModalHandle | undefined
+  handle = Modal.info({
     class: 'announcement-notification-modal',
-    title: resolveNoticeTitle(payload) || i18n.global.t('Announcement.inbox.detailTitle'),
     content: h(NotificationDetail, { data: payload }),
-    width: 820,
+    width: 900,
     closable: true,
     icon: null,
     okText: i18n.global.t('Announcement.action.confirm'),
-    onOk: () => markRead(),
+    onOk: () => generation === dialogGeneration ? markRead() : undefined,
+    afterClose: () => {
+      if (handle) realtimeDialogs.delete(handle)
+    },
     appContext,
-  })
+  }) as ModalHandle | undefined
+  if (handle?.destroy) realtimeDialogs.add(handle)
   return true
 }
 
@@ -53,7 +70,9 @@ export const handleSystemBulletinNotice = (context: NoticeRealtimeHandlerContext
   }
   const detail = parseSystemBulletinDetail(payload)
   const title = resolveNoticeTitle(payload)
-  const summary = text(resolveAnnouncementText(detail, 'summary')) || text(payload.message)
+  const summary = text(resolveAnnouncementText(detail, 'summary'))
+    || text(resolveAnnouncementText(detail, 'content'))
+    || text(payload.message)
   showTip({
     icon: createBulletinTypeIconNode(parseSystemBulletinDetail(payload)?.type),
     title,

@@ -7,9 +7,21 @@ import { build } from 'esbuild'
 const require = createRequire(import.meta.url)
 const entry = fileURLToPath(new URL('../views/system/Announcement/register.ts', import.meta.url))
 const fixtures = {
-  './api': 'export const SYSTEM_BULLETIN_PROVIDER="SystemBulletin"',
+  './api': `
+    export const SYSTEM_BULLETIN_PROVIDER="SystemBulletin"
+    export const queryAnnouncementInbox=()=>{}
+    export const queryAnnouncementInboxNoPaging=()=>{}
+    export const countAnnouncementInbox=()=>{}
+    export const countAnnouncementUnread=()=>{}
+    export const changeAnnouncementReadState=()=>{}
+    export const markAllAnnouncementsRead=()=>{}
+  `,
+  './localReadStore': 'export const subscribeAnnouncementReadChanges=()=>{}',
+  './realtimeSubscription': 'export const subscribeAnnouncementRealtime=()=>{}',
   './noticeListLoader': 'export const loadSystemBulletinNoticeList=()=>{};export const resolveSystemBulletinNoticeTexts=()=>{}',
   './realtimeNotification': 'export const handleSystemBulletinNotice=()=>{}',
+  './loginPopup': 'export const handleSystemBulletinLogin=()=>{}',
+  '@jetlinks-web-core/locales': 'export default {global:{t:value=>value}}',
   './components/NotificationDetail.vue': 'export default {}',
 }
 const bundle = await build({

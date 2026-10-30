@@ -1,5 +1,4 @@
 <template>
-
   <DefineEmptyCreate>
     <j-permission-button
       class="authentication-system-list-page__primary-action"
@@ -11,153 +10,142 @@
       {{ $t('Announcement.action.create') }}
     </j-permission-button>
   </DefineEmptyCreate>
-  <FullPage v-bind="$attrs" hasPadding>
-    <j-pro-table
-      ref="tableRef"
-      class="pro-table__no-padding"
-      :columns="columns"
-      :request="queryAnnouncements"
-      :params="queryParams"
-      mode="TABLE"
-      :default-params="{ sorts: [{ name: 'createTime', order: 'desc' }] }"
-      :scroll="{ y: 'calc(100% - 3.75rem)' }"
-    >
-      <template #emptyText>
-        <CloudEmpty :search="queryParams.terms" :search-name="$t('Announcement.inbox.title')">
-          <EmptyCreateButton />
-        </CloudEmpty>
-      </template>
-      <template #headerLeftRender>
-        <div class="announcement-list-toolbar">
-          <h2 class="announcement-list-title">{{ $t('Announcement.title.management') }}</h2>
-        </div>
-      </template>
-      <template #headerRightRender>
-        <a-flex :gap="16">
-          <ConditionFilter
-            class="authentication-system-list-page__filter"
-            :columns="columns"
-            target="system-announcement"
-            @change="handleFilterChange"
-          />
-          <EmptyCreateButton />
-        </a-flex>
-      </template>
 
-      <template #announcementTitle="record">
-        <div class="announcement-title-cell">
-          <AIcon :type="resolveBulletinTypeIcon(record.type)" />
-          <j-ellipsis>{{ record.title }}</j-ellipsis>
-        </div>
-      </template>
-      <template #announcementSummary="record">
-        <j-ellipsis
-          :line-clamp="1"
-          :tooltip="{ placement: 'topLeft' }"
-          class="announcement-summary-cell"
-        >
-          {{ record.summary || $t('comm.table.empty') }}
-        </j-ellipsis>
-      </template>
-      <template #state="record">
-        <j-badge-status
-          :status="record?.state"
-          :text="resolveStateLabel(record)"
-          :status-names="statusNames"
-        />
-      </template>
-      <!-- 公告类型暂不展示，列表字段配置与接口数据继续保留。 -->
-      <!-- <template #type="record">
-        {{ record.type.text }}
-      </template> -->
-      <template #scope="record">
-        {{ audienceText(record) }}
-      </template>
-      <template #deployTime="record">
-        {{ record.deployTime || $t('comm.table.empty-2') }}
-      </template>
-      <template #action="record">
-        <a-space :size="16">
-          <j-permission-button
-            has-permission="system/Announcement:view"
-            type="link"
-            style="padding: 0"
-            :tooltip="{ title: $t('Announcement.action.view') }"
-            @click="$emit('inspect', record)"
-          >
-            <AIcon type="EyeOutlined" />
-          </j-permission-button>
-          <j-permission-button
-            v-if="record.state === 'unpublished'"
-            has-permission="system/Announcement:edit"
-            type="link"
-            style="padding: 0"
-            :tooltip="{ title: $t('Announcement.action.edit') }"
-            @click="$emit('edit', record)"
-          >
-            <AIcon type="EditOutlined" />
-          </j-permission-button>
-          <j-permission-button
-            v-if="record.state === 'unpublished'"
-            has-permission="system/Announcement:publish"
-            type="link"
-            style="padding: 0"
-            :tooltip="{ title: $t('Announcement.action.publish') }"
-            :pop-confirm="{
-              title: $t('Announcement.confirm.publish'),
-              onConfirm: () => $emit('publish', record),
-            }"
-          >
-            <AIcon type="PlayCircleOutlined" />
-          </j-permission-button>
-          <j-permission-button
-            v-else
-            has-permission="system/Announcement:withdraw"
-            type="link"
-            danger
-            style="padding: 0"
-            :tooltip="{ title: $t('Announcement.action.withdraw') }"
-            :pop-confirm="{
-              title: $t('Announcement.confirm.withdraw'),
-              onConfirm: () => $emit('withdraw', record),
-            }"
-          >
-            <AIcon type="StopOutlined" />
-          </j-permission-button>
-          <j-permission-button
-            v-if="record.state === 'unpublished'"
-            has-permission="system/Announcement:delete"
-            type="link"
-            danger
-            style="padding: 0"
-            :tooltip="{ title: $t('Announcement.action.delete') }"
-            :pop-confirm="{
-              title: $t('Announcement.confirm.delete'),
-              onConfirm: () => $emit('remove', record),
-            }"
-          >
-            <AIcon type="DeleteOutlined" />
-          </j-permission-button>
-        </a-space>
-      </template>
-    </j-pro-table>
+  <FullPage v-bind="$attrs" :flex="true" class="announcement-list-page">
+    <AnnouncementListFilters @change="applyFilters" />
+
+    <ContentPanel fill class="announcement-list-page__table-panel">
+      <j-pro-table
+        ref="tableRef"
+        class="pro-table__no-padding announcement-list-page__table"
+        :columns="columns"
+        :request="queryAnnouncements"
+        :params="queryParams"
+        mode="TABLE"
+        :default-params="{ sorts: [{ name: 'createTime', order: 'desc' }] }"
+        :scroll="{ y: 'calc(100% - 3.75rem)' }"
+      >
+        <template #emptyText>
+          <CloudEmpty :search="queryParams.terms" :search-name="$t('Announcement.inbox.title')">
+            <EmptyCreateButton />
+          </CloudEmpty>
+        </template>
+        <template #headerLeftRender>
+          <EmptyCreateButton />
+        </template>
+
+        <template #announcementTitle="record">
+          <div class="announcement-title-cell">
+            <j-ellipsis
+              class="announcement-title-cell__title"
+              :tooltip="{ placement: 'topLeft' }"
+            >
+              {{ record.title }}
+            </j-ellipsis>
+            <j-ellipsis
+              :line-clamp="1"
+              :tooltip="{ placement: 'topLeft' }"
+              class="announcement-title-cell__summary"
+            >
+              {{ record.summary || $t('comm.table.empty') }}
+            </j-ellipsis>
+          </div>
+        </template>
+        <template #state="record">
+          <j-badge-status
+            :status="record?.state"
+            :text="resolveStateLabel(record)"
+            :status-names="statusNames"
+          />
+        </template>
+        <template #type="record">
+          {{ record.typeText || record.type || $t('comm.table.empty-2') }}
+        </template>
+        <template #popup="record">
+          {{ $t(record.popup ? 'Announcement.value.yes' : 'Announcement.value.no') }}
+        </template>
+        <template #createTime="record">
+          {{ record.createTime || $t('comm.table.empty-2') }}
+        </template>
+        <template #deployTime="record">
+          {{ record.deployTime || $t('comm.table.empty-2') }}
+        </template>
+        <template #action="record">
+          <!-- 后端只允许修改和删除未发布公告，行内动作按公告生命周期收口。 -->
+          <a-space :size="16" class="announcement-action-cell">
+            <j-permission-button
+              v-if="record.state === 'published'"
+              has-permission="system/Announcement:view"
+              type="link"
+              class="announcement-action"
+              @click="$emit('inspect', record)"
+            >
+              {{ $t('Announcement.action.view') }}
+            </j-permission-button>
+            <j-permission-button
+              v-if="record.state === 'unpublished'"
+              has-permission="system/Announcement:edit"
+              type="link"
+              class="announcement-action"
+              @click="$emit('edit', record)"
+            >
+              {{ $t('Announcement.action.edit') }}
+            </j-permission-button>
+            <j-permission-button
+              v-if="record.state === 'unpublished'"
+              has-permission="system/Announcement:publish"
+              type="link"
+              class="announcement-action"
+              :pop-confirm="{
+                title: $t('Announcement.confirm.publish'),
+                onConfirm: () => $emit('publish', record),
+              }"
+            >
+              {{ $t('Announcement.action.publish') }}
+            </j-permission-button>
+            <j-permission-button
+              v-if="record.state === 'published'"
+              has-permission="system/Announcement:withdraw"
+              type="link"
+              danger
+              class="announcement-action"
+              :pop-confirm="{
+                title: $t('Announcement.confirm.withdraw'),
+                onConfirm: () => $emit('withdraw', record),
+              }"
+            >
+              {{ $t('Announcement.action.withdraw') }}
+            </j-permission-button>
+            <j-permission-button
+              v-if="record.state === 'unpublished'"
+              has-permission="system/Announcement:delete"
+              type="link"
+              danger
+              class="announcement-action"
+              :pop-confirm="{
+                title: $t('Announcement.confirm.delete'),
+                onConfirm: () => $emit('remove', record),
+              }"
+            >
+              {{ $t('Announcement.action.delete') }}
+            </j-permission-button>
+          </a-space>
+        </template>
+      </j-pro-table>
+    </ContentPanel>
   </FullPage>
 </template>
 
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue'
 import { createReusableTemplate } from '@vueuse/core'
-
-import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { ContentPanel } from '@jetlinks-web-core/components'
 import { FullPage } from '@jetlinks-web-core/layout'
-import type {
-  ConditionFilterChangePayload,
-  ConditionFilterTerm,
-} from '@jetlinks-web-core/components/ConditionFilter'
 import { queryAnnouncements } from '../api'
-import type { AnnouncementRecord } from '../types'
-import { resolveBulletinTypeIcon } from '../bulletinTypeIcon'
+import type { AnnouncementRecord, AnnouncementState } from '../types'
 import { resolveAnnouncementStateLabel } from '../announcementI18n'
+import AnnouncementListFilters from './AnnouncementListFilters.vue'
 
 defineEmits<{
   (event: 'create'): void
@@ -168,12 +156,29 @@ defineEmits<{
   (event: 'remove', record: AnnouncementRecord): void
 }>()
 
-const { t: $t } = useI18n()
+const { t: $t, locale } = useI18n()
 const tableRef = ref<{ reload: () => void }>()
-const queryParams = ref<{ terms: ConditionFilterTerm[] }>({ terms: [] })
+const filters = ref<{ keyword: string; state: 'all' | AnnouncementState }>({ keyword: '', state: 'all' })
 const statusNames = { published: 'success', unpublished: 'default' }
+const queryParams = computed(() => {
+  const terms: Record<string, unknown>[] = []
+  const value = filters.value.keyword
+  if (value) {
+    const likeValue = `%${value}%`
+    terms.push({
+      type: 'and',
+      terms: [
+        { column: 'title', termType: 'like', value: likeValue },
+        { column: 'summary', termType: 'like', value: likeValue, type: 'or' },
+      ],
+    })
+  }
+  if (filters.value.state !== 'all') {
+    terms.push({ column: 'state', termType: 'eq', value: filters.value.state })
+  }
+  return { terms }
+})
 
-/** 优先按界面语言翻译状态，后端单语 stateText 仅兜底；record 可能为空，避免取值报错。 */
 const resolveStateLabel = (record?: AnnouncementRecord) =>
   resolveAnnouncementStateLabel(record?.state) || record?.stateText || ''
 
@@ -182,44 +187,35 @@ const columns = computed(() => [
     title: $t('Announcement.column.title'),
     dataIndex: 'title',
     key: 'announcementTitle',
-    width: 200,
-    ellipsis: true,
+    width: 360,
     scopedSlots: true,
-    search: { type: 'string' },
   },
   {
-    title: $t('Announcement.column.summary'),
-    dataIndex: 'summary',
-    key: 'announcementSummary',
-    width: 280,
-    scopedSlots: true,
-  },
-  /* 公告类型暂不展示，恢复时同时启用上方 type 插槽。 */
-  /* {
     title: $t('Announcement.column.type'),
     dataIndex: 'type',
     key: 'type',
-    width: 110,
+    width: 130,
     scopedSlots: true,
-  }, */
+  },
   {
     title: $t('Announcement.column.state'),
     dataIndex: 'state',
     key: 'state',
     width: 120,
     scopedSlots: true,
-    search: {
-      type: 'select',
-      options: ['published', 'unpublished'].map(value => ({
-        value,
-        label: $t(`Announcement.status.${value}`),
-      })),
-    },
   },
   {
-    title: $t('Announcement.column.scope'),
-    key: 'scope',
-    width: 210,
+    title: $t('Announcement.column.popup'),
+    dataIndex: 'popup',
+    key: 'popup',
+    width: 110,
+    scopedSlots: true,
+  },
+  {
+    title: $t('Announcement.column.createTime'),
+    dataIndex: 'createTime',
+    key: 'createTime',
+    width: 170,
     scopedSlots: true,
   },
   {
@@ -229,64 +225,76 @@ const columns = computed(() => [
     width: 170,
     scopedSlots: true,
   },
-  { title: $t('Announcement.column.creator'), dataIndex: 'creatorName', key: 'creatorName', width: 140 },
-  { title: $t('Announcement.column.action'), key: 'action', fixed: 'right', width: 190, scopedSlots: true },
+  {
+    title: $t('Announcement.column.action'),
+    key: 'action',
+    fixed: 'right',
+    align: 'right',
+    className: 'announcement-action-column',
+    width: 220,
+    scopedSlots: true,
+  },
 ])
 
-function audienceText(record: AnnouncementRecord) {
-  const userCount = record.userIds?.length || 0
-  const organizationCount = record.organizationIds?.length || 0
-  if (!userCount && !organizationCount) return $t('Announcement.scope.platform')
-  return $t('Announcement.scope.selected', { userCount, organizationCount })
+function applyFilters(value: { keyword: string; state: 'all' | AnnouncementState }) {
+  filters.value = value
+  tableRef.value?.reload()
 }
-
-/** 将通用筛选条件作为服务端查询参数提交。 */
-function handleFilterChange(payload: ConditionFilterChangePayload) {
-  queryParams.value = { terms: payload.filter.terms }
-}
-
-/** 供页面容器在写操作完成后刷新公告列表。 */
+watch(locale, () => tableRef.value?.reload())
 defineExpose({ reload: () => tableRef.value?.reload() })
 
 const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
 <style scoped lang="less">
-/* 英文状态（Unpublished / Published）不能换行，否则状态列会被折成两行。 */
+.announcement-list-page {
+  gap: var(--space-4);
+  overflow: hidden;
+}
+
+.announcement-list-page__table-panel {
+  overflow: hidden;
+}
+
+.announcement-list-page__table {
+  min-height: 0;
+  flex: 1;
+}
+
+.announcement-title-cell {
+  min-width: 0;
+}
+
+:deep(.announcement-title-cell__title) {
+  width: fit-content;
+  max-width: 100%;
+  color: var(--text-color);
+  font-size: var(--fs-20);
+  font-weight: 700;
+  line-height: var(--lh-snug);
+}
+
+:deep(.announcement-title-cell__summary) {
+  margin-top: var(--space-1);
+  color: var(--text-color-secondary);
+  font-weight: 400;
+}
+
 :deep(.ant-badge-status-text) {
   white-space: nowrap;
 }
 
-.announcement-summary-cell {
+.announcement-action {
+  padding: 0;
+}
+
+.announcement-action-cell {
+  display: flex;
   width: 100%;
-  min-width: 0;
-  white-space: normal;
-  color: var(--jet-theme-text-secondary);
-}
-.announcement-title-cell {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-
-  :deep(.anticon) {
-    flex: none;
-    color: var(--jet-theme-text-secondary);
-    font-size: var(--fs-14);
-  }
+  justify-content: flex-end;
 }
 
-.announcement-list-toolbar {
-  display: flex;
-  flex: 1;
-  align-items: center;
-}
-
-.announcement-list-title {
-  margin: 0;
-  color: rgba(0, 0, 0, 0.85);
-  font-size: var(--fs-18);
-  font-weight: 600;
-  line-height: 32px;
-  white-space: nowrap;
+:deep(.announcement-action-column) {
+  text-align: right;
 }
 </style>
