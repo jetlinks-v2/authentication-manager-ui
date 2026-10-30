@@ -75,7 +75,7 @@ const modelBuild = await build({
     },
   }],
 })
-const { normalizeTemplate, normalizeApplication } = await import(`data:text/javascript;base64,${Buffer.from(modelBuild.outputFiles[0].text).toString('base64')}`)
+const { normalizeTemplate, normalizeApplication, applicationAvatar } = await import(`data:text/javascript;base64,${Buffer.from(modelBuild.outputFiles[0].text).toString('base64')}`)
 
 const homeBuild = await build({
   entryPoints: [new URL('../visDashboard/Base/shared/api.ts', import.meta.url).pathname],
@@ -258,18 +258,19 @@ test('SaaS overview requests a bounded page and only its associated templates', 
   const calls = []
   globalThis.homeFixture = {
     pagedApplications: async query => { calls.push(['applications', query]); return { result: { data: [
-      { id: 'a', name: 'A', templateId: 'one', description: '应用描述' },
+      { id: 'a', name: 'A', templateId: 'one', description: '应用描述', icon: 'AppstoreOutlined' },
       { id: 'b', name: 'B', templateId: 'one' },
       { id: 'c', name: 'C', templateId: 'two' },
     ] } } },
     templates: async query => { calls.push(['templates', query]); return { result: [
-      { id: 'one', name: 'One', description: '模板描述' },
+      { id: 'one', name: 'One', description: '模板描述', icon: '/template.png' },
       { id: 'two', name: 'Two', description: '另一个模板' },
     ] } },
   }
   try {
     const rows = await loadHomeRows('SaasApplications')
     assert.deepEqual(rows.map(row => row.description), ['应用描述', '模板描述', '另一个模板'])
+    assert.deepEqual(rows.map(row => row.applicationAvatar), [{src:undefined,icon:'AppstoreOutlined',text:'A',tone:'info'},{src:'/template.png',icon:undefined,text:'B',tone:'info'},{src:undefined,icon:undefined,text:'C',tone:'info'}])
     assert.deepEqual(calls[0][1], { pageIndex: 0, pageSize: 20, paging: true, sorts: [{ name: 'createTime', order: 'desc' }] })
     assert.deepEqual(calls[1][1], { paging: false, terms: [{ column: 'id', termType: 'in', value: ['one', 'two'] }] })
     calls.length = 0
@@ -287,4 +288,13 @@ test('detail and shared application list load template information even when app
   assert.match(store, /normalizeApplication\(entity, templates\.find/)
   assert.match(store, /replace\(applications, applications\.map/)
   assert.match(detail, /Promise\.all\(\[store\.loadTemplates\(\), store\.loadApplication\(id\)\]\)/)
+})
+
+
+test('application avatar prefers instance icon, then template, with text fallback', () => {
+ const template={icon:'template-icon.svg'}
+ assert.deepEqual(applicationAvatar({name:'设备应用',icon:'https://example.test/app.png'},template),{src:'https://example.test/app.png',icon:undefined,text:'设',tone:'info'})
+ assert.deepEqual(applicationAvatar({name:'设备应用',icon:'AppstoreOutlined'},template),{src:undefined,icon:'AppstoreOutlined',text:'设',tone:'info'})
+ assert.deepEqual(applicationAvatar({name:'设备应用',icon:'  '},template),{src:'template-icon.svg',icon:undefined,text:'设',tone:'info'})
+ assert.deepEqual(applicationAvatar({name:'设备应用'},{}),{src:undefined,icon:undefined,text:'设',tone:'info'})
 })

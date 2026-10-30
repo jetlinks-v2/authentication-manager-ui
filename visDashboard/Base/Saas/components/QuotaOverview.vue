@@ -16,7 +16,8 @@
           <span v-else>/ {{ formatOverviewNumber(row.limit, locale) }} {{ row.unit }}</span>
         </span>
       </span>
-      <span v-if="quotaPercent(row) !== undefined" class="saas-quota-track">
+      <!-- 不限量保留灰色轨道，但不计算或显示使用百分比。 -->
+      <span v-if="row.limit === -1 || quotaPercent(row) !== undefined" class="saas-quota-track">
         <a-progress
           class="saas-quota-progress"
           :percent="quotaProgress(row)"
@@ -24,7 +25,7 @@
           :stroke-width="6"
           :status="(quotaPercent(row) || 0) > 100 ? 'exception' : 'normal'"
         />
-        <span class="saas-quota-percent">{{ quotaPercent(row) }}%</span>
+        <span v-if="quotaPercent(row) !== undefined" class="saas-quota-percent">{{ quotaPercent(row) }}%</span>
       </span>
       <span v-else-if="!row.failed && (row.limit === null || row.limit === undefined)" class="saas-quota-hint">{{ t('packages.ProjectHome.quotaUnknown') }}</span>
     </button>

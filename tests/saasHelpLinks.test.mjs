@@ -42,7 +42,7 @@ test('help entries open the corresponding provided documents, while preview does
   globalThis.window = { open: (...args) => calls.push(args) }
   try {
     const state = module.exports.useSaasUtilities(() => false)
-    assert.deepEqual(state.documents.value.map(doc => doc.id), expected.map(([id]) => id))
+    assert.deepEqual(state.documents.value.map(doc => doc.id), expected.slice(0, 4).map(([id]) => id))
     for (const [id, documentId] of expected) state.openHelp(id)
     assert.deepEqual(calls, expected.map(([, documentId]) => [`https://hanta.yuque.com/px7kg1/rk46tv/${documentId}?singleDoc#`, '_blank', 'noopener,noreferrer']))
     state.openHelpCenter()

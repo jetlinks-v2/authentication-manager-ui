@@ -1,9 +1,8 @@
 import type { HomeRow } from '../../shared/types'
 
-export interface SaasProjectSummary {
-  name?: string
-  id?: string
-  expiresAt?: string
+export interface SaasUserSummary {
+  welcome: string
+  details: string[]
   updatedAt?: string
 }
 

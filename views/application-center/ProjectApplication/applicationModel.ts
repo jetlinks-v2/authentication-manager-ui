@@ -1,6 +1,7 @@
 import globalI18n from '@jetlinks-web-core/locales'
 import dayjs from 'dayjs'
 import { normalizeBasicLayoutVariant } from '@jetlinks-web-core/layout/runtime/layoutVariant'
+import type { CardAvatarData } from '@jetlinks-web-core/components/CardBox/types'
 import type {
   BusinessApplicationEntity,
   BusinessApplicationRoleEntity,
@@ -66,6 +67,21 @@ const normalizeStatus = (value: string | EnumValue | undefined): ApplicationStat
 // 历史模板可能没有布局配置，新增应用时继续使用应用端默认壳层。
 const normalizeTemplateLayoutVariant = (value: unknown) =>
   normalizeBasicLayoutVariant(value) || 'application'
+
+/** 概览与应用列表共用图标规则：应用优先，其次模板，无图标时显示名称首字。 */
+export function applicationAvatar(
+  application: Pick<ProjectApplication, 'name' | 'icon'>,
+  template?: Pick<ApplicationTemplate, 'icon'>,
+): CardAvatarData {
+  const icon = application.icon?.trim() || template?.icon?.trim()
+  const usesImage = !!icon && (/^(https?:|data:|\/)/.test(icon) || icon.includes('.'))
+  return {
+    src: usesImage ? icon : undefined,
+    icon: icon && !usesImage ? icon : undefined,
+    text: application.name.slice(0, 1),
+    tone: 'info',
+  }
+}
 
 /** 应用类型由关联模板决定，忽略历史实例打开配置。 */
 export const normalizeApplication = (entity: BusinessApplicationEntity, template?: ApplicationTemplate): ProjectApplication => {

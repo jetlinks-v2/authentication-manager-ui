@@ -1,11 +1,11 @@
 <template>
   <div ref="host" class="home-content home-apps" :class="{ 'home-apps--cards': chart.displayStyle === 'cards', 'home-apps--saas': chart.displayStyle === 'saas', 'home-apps--private': chart.displayStyle === 'private' }">
     <a-tooltip
-      v-for="(row, index) in rows"
+      v-for="(row, index) in displayRows"
       :key="row.id"
       :title="!canOpenApp(row) && !isOpening(row) ? t('packages.ProjectHome.unavailable') : undefined"
     >
-      <span class="home-app-trigger" :class="{ 'home-app-trigger--hidden': index >= visibleCount }" :aria-hidden="index >= visibleCount || undefined">
+      <span class="home-app-trigger" :class="{ 'home-app-trigger--hidden': index >= visibleCount, 'home-app-trigger--divided': index < displayRows.length - 1 }" :aria-hidden="index >= visibleCount || undefined">
         <button
           type="button"
           class="home-app"
@@ -15,7 +15,7 @@
         >
           <span class="home-app-icon">
             <a-spin v-if="isOpening(row)" size="small" />
-            <HomeIcon v-else name="applications" neutral />
+            <CardAvatar v-else :avatar="row.applicationAvatar || { text: label(row).slice(0, 1) }" />
           </span>
           <span class="home-app-content">
             <strong class="home-app-title">{{ label(row) }}</strong>
@@ -25,17 +25,17 @@
               <time v-if="!compact && chart.showDate && row.date && Number.isFinite(Date.parse(row.date))">{{ t('packages.ProjectHome.appCreated', { date: row.date.slice(0, 10) }) }}</time>
             </span>
           </span>
-          <RightOutlined class="home-app-arrow" />
+          <span class="home-app-action"><span>{{ t('packages.ProjectHome.appEnter') }}</span><RightOutlined class="home-app-arrow" /></span>
         </button>
       </span>
     </a-tooltip>
   </div>
 </template>
 <script setup lang="ts" name="ProjectHomeApplicationsView">
-import { computed, toRef, type PropType } from 'vue'
+import { computed, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RightOutlined } from '@ant-design/icons-vue'
-import HomeIcon from '../../shared/HomeIcon.vue'
+import CardAvatar from '@jetlinks-web-core/components/CardBox/CardAvatar.vue'
 import type { HomeRow, HomeChart, HomeTarget } from '../../shared/types'
 import { useVisibleApplications } from '../useVisibleApplications'
 
@@ -50,7 +50,13 @@ const emit = defineEmits<{
   open: [row: HomeRow]
 }>()
 const { t } = useI18n()
-const { host, visibleCount } = useVisibleApplications(toRef(props, 'rows'), computed(() => props.chart.displayStyle === 'saas'))
+const displayRows = computed(() => {
+  if (props.chart.displayStyle === 'saas') {
+    return props.rows.slice(0, Math.min(props.chart.maxItems ?? 3, 3))
+  }
+  return props.rows
+})
+const { host, visibleCount } = useVisibleApplications(displayRows, computed(() => false))
 const compact = computed(() => ['saas', 'private'].includes(props.chart.displayStyle))
 const label = (row: HomeRow) => row.label || (row.labelKey ? t(`packages.ProjectHome.${row.labelKey}`) : '')
 
@@ -101,11 +107,11 @@ const handleClick = (row: HomeRow) => {
   font-size: 20px;
   transition: transform .2s ease;
 
-  :deep(.home-icon) {
-    width: 20px;
-    height: 20px;
-    color: #ffffff !important;
-  }
+}
+.home-app-icon :deep(.card-avatar) {
+  width: 100%; height: 100%; line-height: inherit; display: inline-flex;
+  align-items: center; justify-content: center; border: 0; border-radius: inherit;
+  background: transparent; color: inherit; font-size: inherit;
 }
 .home-app:not(:disabled):hover,
 .home-app-trigger:hover > .home-app:not(:disabled) {
@@ -117,10 +123,21 @@ const handleClick = (row: HomeRow) => {
 .home-app-trigger:hover > .home-app:not(:disabled) .home-app-icon {
   transform: scale(1.05);
 }
-.home-app-arrow {
+.home-app-action {
   margin-left: auto;
   flex-shrink: 0;
-  color: #86909c;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  color: var(--business-component-primary, #1677ff);
+  font-size: 12px;
+  line-height: 20px;
+}
+.home-app:disabled .home-app-action { color: #b7bec8; }
+.home-app-arrow {
+  flex-shrink: 0;
+  color: inherit;
   font-size: 14px;
   transition: all 0.2s ease;
 }
@@ -189,45 +206,61 @@ const handleClick = (row: HomeRow) => {
   }
 }
 
-/* 首页应用始终保持单列；更多应用通过卡片头部入口访问，避免内嵌列表滚动。 */
-.home-apps.home-apps--saas { display: flex; flex-direction: column; gap: 6px; height: auto; overflow: visible; padding: 4px 0; }
-.home-apps--saas .home-app-trigger { position: relative; flex: 0 0 auto; }
+/* 首页最多展示三项并保持单列；更多应用通过卡片头部入口访问。 */
+.home-apps.home-apps--saas { display: flex; flex-direction: column; gap: 0; height: auto; overflow: visible; padding: 0; }
+.home-apps--saas .home-app-trigger { position: relative; display: flex; flex: 0 0 auto; }
+/* 三项在默认卡片内均分余量；不足三项时保留自然行高。 */
+.home-apps--saas:has(> .home-app-trigger:nth-child(3)) .home-app-trigger { flex-grow: 1; }
+.home-apps--saas .home-app-trigger--divided,
+.home-apps--saas .home-app-trigger:not(:last-child) { border-bottom: 1px solid #f0f2f5; }
 .home-app-trigger--hidden { visibility: hidden; pointer-events: none; }
 .home-apps--saas .home-app {
   height: auto;
-  min-height: 56px;
+  min-height: 60px;
+  flex: 1;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 6px 18px;
   margin: 0;
   border: 0;
-  border-radius: var(--r-2, 6px);
+  border-radius: 0;
   background: transparent;
   transition: background-color 0.2s ease;
   &:hover:not(:disabled) {
     background: var(--home-card-surface, #f7f9fc);
     .home-app-content strong { color: var(--business-component-primary, #1677ff); }
+    .home-app-arrow { transform: translateX(2px); }
   }
 }
 .home-apps--saas .home-app-trigger:hover > .home-app:not(:disabled) {
   background: var(--home-card-surface, #f7f9fc);
   .home-app-content strong { color: var(--business-component-primary, #1677ff); }
+  .home-app-arrow { transform: translateX(2px); }
+}
+.home-apps--saas .home-app-action {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--business-component-primary, #1677ff);
+  font-size: 12px;
+  line-height: 20px;
 }
 .home-apps--saas .home-app-arrow {
-  font-size: 11px;
-  color: var(--business-component-muted, #86909c);
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-.home-apps--saas .home-app:not(:disabled):hover .home-app-arrow,
-.home-apps--saas .home-app-trigger:hover > .home-app:not(:disabled) .home-app-arrow {
-  color: var(--business-component-primary, #1677ff);
-  transform: translateX(2px);
+  font-size: 8.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  color: inherit;
+  transition: transform 0.2s ease;
 }
 .home-apps--saas .home-app-icon { flex: 0 0 32px; width: 32px; height: 32px; border-radius: var(--r-2, 6px); background: var(--business-component-primary, #1677ff); }
-.home-apps--saas .home-app-icon :deep(.home-icon) { width: 18px; height: 18px; }
-.home-apps--saas .home-app-content { gap: 2px; }
-.home-apps--saas .home-app-content strong { font-size: 13px; font-weight: 500; transition: color 0.2s ease; }
+.home-apps--saas .home-app-content { gap: 2px; min-width: 0; }
+.home-apps--saas .home-app-content strong { font-size: 14px; font-weight: 500; line-height: 20px; color: #1f2329; transition: color 0.2s ease; }
 .home-apps--saas .home-app-meta { font-size: 12px; line-height: 16px; }
-.home-apps--saas .home-app-content :deep(.home-description) { -webkit-line-clamp: 1; font-size: 12px; line-height: 16px; color: var(--business-component-muted, #646c73); }
+.home-apps--saas .home-app-content :deep(.home-description) { -webkit-line-clamp: 1; font-size: 12px; font-weight: 400; line-height: 18px; color: #86909c; }
 
 /* 私有化首屏应用保持三条紧凑单列，不呈现创建日期及日常启用状态。 */
 .home-apps.home-apps--private { display: flex; flex-direction: column; gap: 2px; height: auto; overflow: visible; }
@@ -235,7 +268,6 @@ const handleClick = (row: HomeRow) => {
 .home-apps--private .home-app:not(:disabled):hover,
 .home-apps--private .home-app-trigger:hover > .home-app:not(:disabled) { background: var(--home-card-surface, #f7f9fc); }
 .home-apps--private .home-app-icon { flex: 0 0 32px; width: 32px; height: 32px; background: var(--business-component-primary, #1677ff); }
-.home-apps--private .home-app-icon :deep(.home-icon) { width: 18px; height: 18px; }
 .home-apps--private .home-app:not(:disabled):hover .home-app-icon,
 .home-apps--private .home-app-trigger:hover > .home-app:not(:disabled) .home-app-icon { transform: none; }
 .home-apps--private .home-app-content { gap: 0; }

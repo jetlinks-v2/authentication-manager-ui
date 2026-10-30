@@ -7,7 +7,7 @@ import {
   type BusinessApplicationEntity,
   type BusinessApplicationTemplateEntity,
 } from '@authentication-manager-ui/api/application-center/businessApplication'
-import { normalizeApplication, normalizeTemplate } from '../../../views/application-center/ProjectApplication/applicationModel'
+import { applicationAvatar, normalizeApplication, normalizeTemplate } from '../../../views/application-center/ProjectApplication/applicationModel'
 import { rowsOf, textOf } from './apiResult'
 import { loadAnnouncements, loadAnnouncementUnread } from './apiAnnouncements'
 import { loadResourceRows, loadOperationRows, loadHealthRows } from './apiResources'
@@ -48,6 +48,7 @@ const loadApplications = async (overview = false): Promise<HomeRow[]> => {
       date: createTime,
       icon: 'applications',
       application,
+      applicationAvatar: applicationAvatar(application, template),
       target: { menus: ['application-center/ProjectApplication'] },
     }
   })
@@ -56,7 +57,7 @@ export const loadHomeRows = (feature: HomeFeature): Promise<HomeRow[]> => {
   switch (feature) {
     case 'SaasResources': return loadSaasResourceRows()
     case 'SaasToday': return loadSaasTodayRows()
-    case 'SaasQuotas': return loadQuotaRows(true)
+    case 'SaasQuotas': return loadQuotaRows('usage')
     case 'SaasApplications': return loadApplications(true)
     case 'Applications': return loadApplications()
     case 'Resources': return loadResourceRows()

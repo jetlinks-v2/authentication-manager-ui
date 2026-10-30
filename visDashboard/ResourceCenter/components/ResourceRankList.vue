@@ -24,7 +24,8 @@ const emit = defineEmits<{ select: [row: Row] }>()
 </script>
 <style scoped>
 .resource-rank-list { display: flex; flex-direction: column; gap: 2px; min-height: 0; overflow: auto; }
-.resource-rank-row { display: grid; grid-template-columns: 20px minmax(0, 1fr) minmax(50px, 120px) 56px 12px; align-items: center; gap: 10px; width: 100%; min-height: 38px; padding: 4px 8px; border: 0; border-radius: 6px; background: transparent; color: #1d2939; font: inherit; text-align: left; cursor: pointer; flex-shrink: 0; transition: background-color .18s ease; }
+/* 名称与条形按比例分享剩余宽度；数值列统一宽度，避免长数值改变各行条形的比较尺度。 */
+.resource-rank-row { display: grid; grid-template-columns: 20px minmax(0, 2fr) minmax(0, 3fr) 72px 12px; align-items: center; gap: 10px; width: 100%; min-height: 38px; padding: 4px 8px; border: 0; border-radius: 6px; background: transparent; color: #1d2939; font: inherit; text-align: left; cursor: pointer; flex-shrink: 0; transition: background-color .18s ease; }
 .resource-rank-row:hover:not(:disabled) { background: #f7f9fc; }
 .resource-rank-row:hover:not(:disabled) :deep(.name) { color: #1677ff; }
 .resource-rank-row:hover:not(:disabled) .row-arrow { color: #1677ff; transform: translateX(2px); }
@@ -40,7 +41,7 @@ const emit = defineEmits<{ select: [row: Row] }>()
 .track { height: 6px; border-radius: 3px; overflow: hidden; background: #f1f5f9; }
 .track--empty { background: transparent !important; }
 .track > span { display: block; height: 100%; border-radius: inherit; background: #1677ff; }
-.value { font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; color: #334155; }
+.value { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; color: #334155; }
 /* 状态色由业务 hook 提供，非在线既可能是离线，也可能是禁用。 */
 .value--inactive { font-weight: 500; }
 .row-arrow { font-size: 10px; color: #94a3b8; transition: color .18s ease, transform .18s ease; }

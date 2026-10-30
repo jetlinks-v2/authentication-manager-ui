@@ -12,11 +12,12 @@ function greetingPeriod(hour: number) {
 }
 
 /** 页面停留期间每分钟更新时间；复用 VueUse 时钟的作用域清理。 */
-export function useSaasWelcome() {
+export function useSaasWelcome(name: () => string) {
   const { t } = useI18n()
   const now = useNow({ interval: 60_000 })
-  return computed(() => t('packages.ProjectHome.saasWelcomeTimed', {
-    greeting: t(`packages.ProjectHome.saasGreeting${greetingPeriod(now.value.getHours())}`),
-    welcome: t('packages.ProjectHome.saasWelcome'),
-  }))
+  return computed(() => {
+    const greeting = t(`packages.ProjectHome.saasGreeting${greetingPeriod(now.value.getHours())}`)
+    const userName = name()
+    return userName ? t('packages.ProjectHome.saasWelcomeTimed', { greeting, name: userName }) : greeting
+  })
 }

@@ -31,7 +31,7 @@ function fixture(codes = []) {
   const context = { calls, menu: { initialized: true, loading: false, menuResultCache: [{ code: 'root', children: codes.map(code => ({ code })) }] }, modules: { edge: true, vision: true },
     health: async id => { calls.push({ health: id }); return { total: 0, online: 0 } },
     algorithms: async () => { calls.push({ algorithms: true }); return { algorithm: 0 } },
-    request: { get: async () => context.quotaResponse, post: async (url, body, options) => { calls.push({ url, body, options }); return { success: true, result: url.includes('/dashboard/') || url.includes('/space/') ? [] : 0 } } },
+    request: { get: async (url, params, options) => { calls.push({ url, params, options }); return context.quotaResponse }, post: async (url, body, options) => { calls.push({ url, body, options }); return { success: true, result: url.includes('/dashboard/') || url.includes('/space/') ? [] : 0 } } },
   }
   const module = { exports: {} }
   Function('module', 'exports', 'require', 'context', result.outputFiles[0].text)(module, module.exports, require, context)
@@ -140,15 +140,42 @@ test('one period failure marks its metric unknown without hiding other metrics',
 })
 
 
-test('SaaS quota selects only real core metrics in order and rejects malformed responses', async () => {
- const c=fixture(); const metric=(id,usage,limit)=>({metric:{id,name:id},usage,limit:{limit}})
- c.quotaResponse={result:[{id:'device',metrics:[metric('message_quota',5,10),metric('other',99,100),metric('entityQuota',0,-1)]},{id:'file',metrics:[metric('distUsage',true,0)]}]}
- const rows=await c.api.loadQuotaRows(true)
- assert.deepEqual(rows.map(r=>r.id),['device:entityQuota','file:distUsage','device:message_quota'])
- assert.equal(rows[0].value,0);assert.equal(rows[0].limit,-1);assert.equal(rows[1].failed,true);assert.equal(rows[1].value,undefined);assert.equal(rows[1].limit,0)
- assert.ok((await c.api.loadQuotaRows(false)).some(r=>r.id==='device:other'))
- for(const result of [null,{},[null],[{id:'device',metrics:null}],[{id:'device',metrics:[{}]}]]) { c.quotaResponse={result};await assert.rejects(c.api.loadQuotaRows(true)) }
- c.quotaResponse={success:false};await assert.rejects(c.api.loadQuotaRows(true)); c.quotaResponse={result:[]};assert.deepEqual(await c.api.loadQuotaRows(true),[])
+test('SaaS quota ranks every UAT metric by usage, including unlimited', async () => {
+  const c = fixture()
+  const metric = (id, usage, limit = -1) => ({ metric: { id, name: id }, usage, limit: { limit } })
+  c.quotaResponse = { result: [
+    { id: 'device', name: '设备', metrics: [metric('entityQuota', 31), metric('messages', 19, 20)] },
+    ...[['visResource', '可视化资源', 932], ['aiModel', 'AI模型', 473], ['visClassification', '可视化分类', 129], ['visTemplate', '可视化模板', 73], ['user', '用户', 70]].map(([id, name, usage]) => ({ id, name, metrics: [metric('entityQuota', usage)] })),
+  ] }
+  const rows = await c.api.loadQuotaRows('usage')
+  assert.deepEqual(rows.map(row => row.value), [932, 473, 129, 73, 70])
+  assert.deepEqual(rows.map(row => row.id), ['visResource:entityQuota', 'aiModel:entityQuota', 'visClassification:entityQuota', 'visTemplate:entityQuota', 'user:entityQuota'])
+  assert.ok(rows.every(row => row.limit === -1))
+  assert.deepEqual(c.calls, [{ url: '/tenant/me/limits', params: {}, options: { hiddenError: true } }])
+  const defaultRows = await c.api.loadQuotaRows()
+  assert.equal(defaultRows[0].id, 'device:messages')
+})
+
+test('usage sorting expands metrics, preserves ties and zero, places invalid values last and does not fill missing rows', async () => {
+  const c = fixture()
+  const metric = (id, usage) => ({ metric: { id, name: id }, usage, limit: { limit: -1 } })
+  c.quotaResponse = { result: [{ id: 'scene', name: '场景', metrics: [metric('entityQuota', 12), metric('actions', 19)] }, { id: 'other', metrics: [metric('tie1', 19), metric('zero', 0), metric('invalid', true)] }] }
+  const rows = await c.api.loadQuotaRows('usage')
+  assert.deepEqual(rows.map(row => row.id), ['scene:actions', 'other:tie1', 'scene:entityQuota', 'other:zero', 'other:invalid'])
+  assert.equal(rows[3].value, 0); assert.equal(rows[3].failed, false)
+  assert.equal(rows[4].value, undefined); assert.equal(rows[4].failed, true)
+  c.quotaResponse = { result: [{ id: 'only', metrics: [metric('entityQuota', 3)] }] }
+  assert.equal((await c.api.loadQuotaRows('usage')).length, 1)
+  c.quotaResponse = { result: [] }; assert.deepEqual(await c.api.loadQuotaRows('usage'), [])
+})
+
+test('quota rejects failed and malformed responses', async () => {
+  const c = fixture()
+  for (const result of [null, {}, [null], [{ id: 'device', metrics: null }], [{ id: 'device', metrics: [{}] }]]) {
+    c.quotaResponse = { result }; await assert.rejects(c.api.loadQuotaRows('usage'))
+  }
+  c.quotaResponse = { success: false, status: 403 }; await assert.rejects(c.api.loadQuotaRows('usage'))
+  c.request.get = async () => { throw new Error('403') }; await assert.rejects(c.api.loadQuotaRows('usage'), /403/)
 })
 
 

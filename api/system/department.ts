@@ -2,7 +2,7 @@ import { request } from '@jetlinks-web/core'
 import { ndJson } from '@jetlinks-web/core/src/fetch';
 
 // 获取部门数据
-export const getTreeData_api = (data: object) => request.post(`/organization/_all/tree`, data);
+export const getTreeData_api = (data: object, options?: { hiddenError?: boolean; signal?: AbortSignal }) => request.post(`/organization/_all/tree`, data, options);
 // 新增部门
 export const addDepartment_api = (data: object) => request.post(`/organization`, data);
 // 更新部门

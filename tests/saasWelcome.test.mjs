@@ -14,7 +14,7 @@ const { build } = require('esbuild')
 const root = fileURLToPath(new URL('../', import.meta.url))
 const zh = JSON.parse(readFileSync(path.join(root, 'locales/lang/zh.json'), 'utf8'))
 const en = JSON.parse(readFileSync(path.join(root, 'locales/lang/en.json'), 'utf8'))
-const keys = ['saasWelcomeTimed', 'saasGreetingEarlyMorning', 'saasGreetingMorning', 'saasGreetingNoon', 'saasGreetingAfternoon', 'saasGreetingEvening', 'saasWelcome']
+const keys = ['saasWelcomeTimed', 'saasGreetingEarlyMorning', 'saasGreetingMorning', 'saasGreetingNoon', 'saasGreetingAfternoon', 'saasGreetingEvening']
 const i18n = createI18n({ legacy: false, locale: 'zh', messages: structuredClone({ zh, en }), flatJson: true })
 const context = { now: vue.ref(new Date(2026, 0, 1, 5)), composer: i18n.global, intervals: [] }
 const bundle = await build({
@@ -36,7 +36,7 @@ Function('module', 'exports', 'require', 'context', bundle.outputFiles[0].text)(
 const { useSaasWelcome, ProjectSummary } = mod.exports
 
 function setHour(hour) { context.now.value = new Date(2026, 0, 1, hour) }
-function expected(period) { return i18n.global.t('packages.ProjectHome.saasWelcomeTimed', { greeting: i18n.global.t(`packages.ProjectHome.saasGreeting${period}`), welcome: i18n.global.t('packages.ProjectHome.saasWelcome') }) }
+function expected(period) { return i18n.global.t('packages.ProjectHome.saasWelcomeTimed', { greeting: i18n.global.t(`packages.ProjectHome.saasGreeting${period}`), name: 'Alice' }) }
 
 test('both locales contain every greeting and welcome key', () => {
   for (const messages of [zh, en]) for (const key of keys) assert.ok(messages[`packages.ProjectHome.${key}`], key)
@@ -44,12 +44,13 @@ test('both locales contain every greeting and welcome key', () => {
 
 test('local-hour boundaries update the greeting and locale changes recompute it', () => {
   i18n.global.locale.value = 'zh'
-  const welcome = useSaasWelcome()
+  const welcome = useSaasWelcome(() => 'Alice')
   assert.equal(context.intervals.at(-1), 60_000)
   for (const [hour, period] of [[0,'Evening'],[4,'Evening'],[5,'EarlyMorning'],[8,'EarlyMorning'],[9,'Morning'],[11,'Morning'],[12,'Noon'],[13,'Noon'],[14,'Afternoon'],[17,'Afternoon'],[18,'Evening'],[23,'Evening']]) {
     setHour(hour)
     assert.equal(welcome.value, expected(period), `hour ${hour}`)
   }
+  assert.equal(useSaasWelcome(() => '').value, i18n.global.t('packages.ProjectHome.saasGreetingEvening'))
   setHour(14)
   const chinese = welcome.value
   i18n.global.locale.value = 'en'
@@ -61,7 +62,7 @@ test('ProjectSummary renders translated greeting and welcome in both locales', a
   setHour(12)
   for (const locale of ['zh', 'en']) {
     i18n.global.locale.value = locale
-    const app = vue.createSSRApp({ render: () => vue.h(ProjectSummary, { summary: {} }) })
+    const app = vue.createSSRApp({ render: () => vue.h(ProjectSummary, { summary: { welcome: expected('Noon'), details: [] } }) })
     app.component('a-card', { render() { return vue.h('section', this.$slots.default?.()) } })
     app.component('a-button', { render() { return vue.h('button', this.$slots.default?.()) } })
     const html = await renderToString(app)
