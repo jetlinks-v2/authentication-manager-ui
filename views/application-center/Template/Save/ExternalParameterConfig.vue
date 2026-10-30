@@ -42,6 +42,13 @@
         </div>
         <EmptyCreateButton v-if="canUpdate" />
       </div>
+      <h3>{{ $t('ApplicationTemplate.signature.encryptionTitle') }}</h3>
+      <a-form-item :label="$t('ApplicationTemplate.parameters.notificationKeyId')">
+        <a-input v-model:value="state.credential.keyId" />
+      </a-form-item>
+      <a-form-item :label="$t('ApplicationTemplate.parameters.notificationPublicKey')">
+        <a-textarea v-model:value="state.credential.publicKey" :rows="5" />
+      </a-form-item>
       <a-form-item :label="$t('ApplicationTemplate.parameters.notificationEnabled')">
         <a-switch v-model:checked="state.notification.enabled" />
       </a-form-item>
@@ -50,42 +57,52 @@
         <a-form-item :label="$t('ApplicationTemplate.parameters.notificationAddress')" required>
           <a-input v-model:value="state.notification.address" />
         </a-form-item>
-        <h3>{{ $t('ApplicationTemplate.signature.encryptionTitle') }}</h3>
-        <a-form-item :label="$t('ApplicationTemplate.parameters.notificationKeyId')" required>
-          <a-input v-model:value="state.notification.keyId" />
-        </a-form-item>
-        <a-form-item :label="$t('ApplicationTemplate.parameters.notificationPublicKey')" required>
-          <a-textarea v-model:value="state.notification.publicKey" :rows="5" />
-        </a-form-item>
-        <h3>{{ $t('ApplicationTemplate.signature.title') }}</h3>
-        <p>{{ $t('ApplicationTemplate.signature.tip') }}</p>
-        <a-alert v-if="signature.error.value" type="error" show-icon :message="signature.error.value" />
-        <a-spin :spinning="signature.loading.value">
-          <a-form-item :label="$t('ApplicationTemplate.signature.status')">
-            <a-tag :color="signature.status.value.configured ? 'success' : 'default'">
-              {{ $t(signature.status.value.configured ? 'ApplicationTemplate.signature.configured' : 'ApplicationTemplate.signature.notConfigured') }}
-            </a-tag>
-          </a-form-item>
-          <a-form-item v-if="signature.status.value.configured" :label="$t('ApplicationTemplate.signature.keyId')">
-            <a-typography-text copyable :content="signature.status.value.keyId || ''">{{ signature.status.value.keyId }}</a-typography-text>
-          </a-form-item>
-          <a-button v-if="canUpdate && signature.status.value.configured" :loading="signature.saving.value" :disabled="signature.loading.value" @click="signature.reveal">
-            {{ $t('ApplicationTemplate.signature.reveal') }}
-          </a-button>
-          <a-button v-if="signature.error.value" type="link" :disabled="signature.saving.value" @click="signature.load">{{ $t('ApplicationTemplate.signature.refresh') }}</a-button>
-        </a-spin>
       </template>
+      <h3>{{ $t('ApplicationTemplate.signature.title') }}</h3>
+      <p>{{ $t('ApplicationTemplate.signature.tip') }}</p>
+      <a-alert v-if="signature.error.value" type="error" show-icon :message="signature.error.value" />
+      <a-spin :spinning="signature.loading.value">
+        <a-form-item :label="$t('ApplicationTemplate.signature.status')">
+          <a-tag :color="signature.status.value.configured ? 'success' : 'default'">
+            {{ $t(signature.status.value.configured ? 'ApplicationTemplate.signature.configured' : 'ApplicationTemplate.signature.notConfigured') }}
+          </a-tag>
+        </a-form-item>
+        <a-form-item v-if="signature.status.value.configured" :label="$t('ApplicationTemplate.signature.keyId')">
+          <a-typography-text copyable :content="signature.status.value.keyId || ''">{{ signature.status.value.keyId }}</a-typography-text>
+        </a-form-item>
+        <a-button v-if="canUpdate && signature.status.value.configured" :loading="signature.saving.value" :disabled="signature.loading.value" @click="signature.reveal">
+          {{ $t('ApplicationTemplate.signature.reveal') }}
+        </a-button>
+        <a-button v-if="canUpdate" :disabled="signature.loading.value || signature.saving.value" @click="signature.edit">
+          {{ $t('ApplicationTemplate.signature.edit') }}
+        </a-button>
+        <a-button v-if="signature.error.value" type="link" :disabled="signature.saving.value" @click="signature.load">{{ $t('ApplicationTemplate.signature.refresh') }}</a-button>
+      </a-spin>
     </a-form>
-    <a-modal :open="signature.visible.value" :title="$t('ApplicationTemplate.signature.title')" :footer="null" destroy-on-close @cancel="signature.close">
-      <a-alert type="warning" show-icon :message="$t('ApplicationTemplate.signature.secretTip')" />
-      <a-descriptions v-if="signature.secret.value" :column="1" bordered class="external-parameters__secret">
-        <a-descriptions-item :label="$t('ApplicationTemplate.signature.keyId')">
-          <a-typography-text copyable :content="signature.secret.value.keyId">{{ signature.secret.value.keyId }}</a-typography-text>
-        </a-descriptions-item>
-        <a-descriptions-item label="Secret">
-          <a-typography-text copyable :content="signature.secret.value.secret">{{ signature.secret.value.secret }}</a-typography-text>
-        </a-descriptions-item>
-      </a-descriptions>
+    <a-modal :open="signature.visible.value" :title="$t('ApplicationTemplate.signature.title')" :footer="null" :closable="!signature.saving.value" :mask-closable="!signature.saving.value" :keyboard="!signature.saving.value" destroy-on-close @cancel="signature.close">
+      <a-alert v-if="signature.error.value" type="error" show-icon :message="signature.error.value" />
+      <a-form v-if="signature.draft.value" layout="vertical" :disabled="signature.saving.value">
+        <a-alert type="warning" show-icon :message="$t('ApplicationTemplate.signature.editTip')" />
+        <a-form-item :label="$t('ApplicationTemplate.signature.keyId')" :extra="$t('ApplicationTemplate.signature.keyIdTip')" required>
+          <a-input v-model:value="signature.draft.value.keyId" :maxlength="128" />
+        </a-form-item>
+        <a-form-item :label="$t('ApplicationTemplate.signature.secret')" :extra="$t('ApplicationTemplate.signature.invalidSecret')" required>
+          <a-input-password v-model:value="signature.draft.value.secret" :maxlength="256" autocomplete="new-password" />
+        </a-form-item>
+        <a-button :disabled="signature.saving.value" @click="signature.close">{{ $t('ApplicationTemplate.signature.cancel') }}</a-button>
+        <a-button type="primary" :loading="signature.saving.value" @click="signature.save">{{ $t('ApplicationTemplate.signature.save') }}</a-button>
+      </a-form>
+      <template v-else>
+        <a-alert type="warning" show-icon :message="$t('ApplicationTemplate.signature.secretTip')" />
+        <a-descriptions v-if="signature.secret.value" :column="1" bordered class="external-parameters__secret">
+          <a-descriptions-item :label="$t('ApplicationTemplate.signature.keyId')">
+            <a-typography-text copyable :content="signature.secret.value.keyId">{{ signature.secret.value.keyId }}</a-typography-text>
+          </a-descriptions-item>
+          <a-descriptions-item label="Secret">
+            <a-typography-text copyable :content="signature.secret.value.secret">{{ signature.secret.value.secret }}</a-typography-text>
+          </a-descriptions-item>
+        </a-descriptions>
+      </template>
     </a-modal>
     <a-space v-if="canUpdate">
       <a-button :disabled="state.saving.value" @click="state.reset">{{ $t('ApplicationTemplate.parameters.reset') }}</a-button>
