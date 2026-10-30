@@ -186,6 +186,10 @@ System bulletin pages, API contracts, types, notification detail rendering, and 
 
 公告正文保存和发布均要求非空：编辑器以当前中英文内容为准，至少一种语言有非空白正文才允许保存，不使用隐藏的旧正文或默认模板回填清空结果。后端在保存和发布入口执行相同的正文约束；已有空草稿的发布按钮禁用。
 
+The notification-provider registration also declares the generic messageCategory = announcement metadata. The shared message center discovers the bulletin inbox from this registration even when the subscription channel list omits it. Inbox records are queried through the existing current-user notification endpoint, and the existing text/detail handlers remain in use; no bulletin API or provider constant is imported into core.
+
+The announcement editor loads its supported types from `POST /system/bulletin/type` through `getAnnouncementTypes`; it does not call the legacy `/dictionary/s_bulletin_type/items` dictionary endpoint.
+
 ### Bulletin Tenant Data Access
 
 Announcement management must declare `systemBulletin` as its menu asset type and enable data access, so service grants can apply the existing `tenant` (所在租户) policy. The repair pairs this menu declaration with the notify-manager bulletin entity's support for the framework-managed `tenantId` extension; management queries continue to use the existing AssetsHolder boundary. Verify that saving a tenant grant includes `systemBulletin`, and that project A can read its bulletin while project B cannot.

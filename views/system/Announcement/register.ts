@@ -29,6 +29,7 @@ export const getRegisterComponents = () => [
     code: SYSTEM_BULLETIN_PROVIDER,
     props: {
       listHandler: loadSystemBulletinNoticeList,
+      messageCategory: 'announcement',
       metadata: () => ({
         provider: SYSTEM_BULLETIN_PROVIDER,
         name: i18n.global.t('Announcement.inbox.title'),
