@@ -1146,7 +1146,7 @@ URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显�
 - 目标与 owning module：只调整 `views/system/Announcement/` 的新增/编辑流程，修复国际化弹窗二次打开被父弹窗遮挡、两个提交按钮同时转圈，并将公告类型改成固定下拉。页面壳层、管理列表、发布/撤回与 SaaS/区域投递边界保持不变。
 - 弹窗层级：`AnnouncementI18nTextDialog.vue` 作为编辑弹窗的二级业务弹窗，使用高于普通业务弹窗的稳定层级常量，避免关闭后父弹窗重新取得层级导致二次打开被遮挡；继续复用现有 Ant Design Vue `a-modal`，不新增自定义弹窗组件。
 - 提交状态：父页面把单一 `saving` 改成 `draft/publish` 动作状态。两个按钮在任一提交期间都禁止重复点击，但只有当前点击的“保存草稿”或“保存并发布”显示加载动画；取消按钮在提交期间保持禁用。
-- 公告类型：保存值固定为 `maintenance/release/campaign/policy`，分别显示“系统维护 / 功能更新 / 运营活动 / 政策调整”，英文显示为 “System Maintenance / Feature Update / Campaign / Policy Update”。编辑器改用 `a-select`，选项文案来自模块中英文 locale；管理列表、铃铛标签和通知详情按相同语言包解析，原始值继续用于图标与接口提交。历史自定义类型可原样读取和回退显示，一旦改选固定类型就清除旧的逐公告类型翻译，避免隐藏的旧文案污染新类型。
+- 公告类型：保存值固定为 `maintenance/release/campaign/policy`，分别显示“系统维护 / 系统升级 / 运营活动 / 政策调整”，英文显示为 “System Maintenance / System Upgrade / Campaign / Policy Update”。编辑器改用 `a-select`，选项文案来自模块中英文 locale；管理列表、铃铛标签和通知详情按相同语言包解析，原始值继续用于图标与接口提交。历史自定义类型可原样读取和回退显示，一旦改选固定类型就清除旧的逐公告类型翻译，避免隐藏的旧文案污染新类型。
 - 明确不做：不修改后端字段、数据库、Runtime Command、副本复制、权限、菜单、列表结构和 `runtime-ui/`；不引入类型字典接口，也不恢复自由输入或逐公告自定义类型翻译入口。
 - 实施步骤：先补固定类型常量和统一本地化解析；再调整编辑器类型控件、二级弹窗层级和动作级 loading；随后更新中英文 locale、公告契约测试与 README 实现结果。
 - 风险与验证：保留历史非固定类型的只读回显兼容，新增/改选只能使用四个固定值。执行公告定向 Node 测试、locale JSON 校验、`check:ui-style`、Vue 文件行数、`git diff --check`、目标模块生产构建，并在浏览器重复打开国际化弹窗及分别点击两个提交按钮验证真实层级和加载反馈。

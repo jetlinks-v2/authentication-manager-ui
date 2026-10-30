@@ -1828,7 +1828,7 @@
   "Announcement.status.unpublished": "Unpublished",
   "Announcement.status.published": "Published",
   "Announcement.type.maintenance": "System Maintenance",
-  "Announcement.type.release": "Feature Update",
+  "Announcement.type.release": "System Upgrade",
   "Announcement.type.campaign": "Campaign",
   "Announcement.type.policy": "Policy Update",
   "Announcement.action.create": "New announcement",

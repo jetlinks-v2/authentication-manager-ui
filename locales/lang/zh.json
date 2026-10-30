@@ -1828,7 +1828,7 @@
   "Announcement.status.unpublished": "未发布",
   "Announcement.status.published": "已发布",
   "Announcement.type.maintenance": "系统维护",
-  "Announcement.type.release": "功能更新",
+  "Announcement.type.release": "系统升级",
   "Announcement.type.campaign": "运营活动",
   "Announcement.type.policy": "政策调整",
   "Announcement.action.create": "新建公告",

@@ -23,6 +23,7 @@ const loadHelper = async (locale = 'en') => {
               'Announcement.status.published': target === 'zh' ? '已发布' : 'Published',
               'Announcement.status.unpublished': target === 'zh' ? '未发布' : 'Unpublished',
               'Announcement.type.maintenance': target === 'zh' ? '系统维护' : 'System Maintenance',
+              'Announcement.type.release': target === 'zh' ? '系统升级' : 'System Upgrade',
             }),
           },
         },
@@ -208,6 +209,8 @@ test('localizes fixed bulletin types and preserves historical fallback text', as
   const { resolveAnnouncementTypeLabel } = await loadHelper('zh')
   assert.equal(resolveAnnouncementTypeLabel('maintenance', '', 'zh'), '系统维护')
   assert.equal(resolveAnnouncementTypeLabel('maintenance', '', 'en'), 'System Maintenance')
+  assert.equal(resolveAnnouncementTypeLabel('release', '', 'zh'), '系统升级')
+  assert.equal(resolveAnnouncementTypeLabel('release', '', 'en'), 'System Upgrade')
   assert.equal(resolveAnnouncementTypeLabel('custom', '历史类型', 'en'), '历史类型')
   assert.equal(resolveAnnouncementTypeLabel('custom', '', 'en'), 'custom')
 })
