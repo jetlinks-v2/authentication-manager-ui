@@ -15,7 +15,7 @@ export const getRegisterComponents = () => [
   {
     targetPage: 'notification-provider',
     code: SYSTEM_BULLETIN_PROVIDER,
-    props: { listHandler: loadSystemBulletinNoticeList },
+    props: { listHandler: loadSystemBulletinNoticeList, messageCategory: 'announcement' },
   },
   {
     targetPage: 'notification-realtime',

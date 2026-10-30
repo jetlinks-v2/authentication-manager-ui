@@ -142,6 +142,8 @@ Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/1
 
 System bulletin pages, API contracts, types, notification detail rendering, and provider constants are owned by `views/system/Announcement/`; user-facing copy follows this module's locale convention. The shared web core only exposes generic notification-provider and detail-component registration points; it does not identify `SystemBulletin` or call bulletin APIs. SaaS modules may contribute menu binding metadata, but they do not implement bulletin pages or APIs.
 
+The notification-provider registration also declares the generic messageCategory = announcement metadata. The shared message center discovers the bulletin inbox from this registration even when the subscription channel list omits it. Inbox records are queried through the existing current-user notification endpoint, and the existing text/detail handlers remain in use; no bulletin API or provider constant is imported into core.
+
 The announcement editor loads its supported types from `POST /system/bulletin/type` through `getAnnouncementTypes`; it does not call the legacy `/dictionary/s_bulletin_type/items` dictionary endpoint.
 
 ### Bulletin Tenant Data Access
