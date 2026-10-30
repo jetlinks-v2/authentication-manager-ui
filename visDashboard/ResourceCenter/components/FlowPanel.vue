@@ -10,7 +10,8 @@
   <div v-else class="flow-panel">
   <div class="flow-metrics"><div v-for="item in data.metrics" :key="item.key" :class="{ primary: item.key === 'month' }"><span>{{ t(`resourceDashboard.${item.key}`) }}</span><strong>{{ item.failed ? '—' : formatFlow(item.value).value }} <small v-if="!item.failed">{{ formatFlow(item.value).unit }}</small></strong></div></div>
   <h4 :title="t('resourceDashboard.thisMonth')">{{ t('resourceDashboard.ranking') }}</h4>
-  <ResourceEmpty v-if="data.rankingFailed || !data.ranking.length" :title="t(data.rankingFailed ? 'resourceDashboard.loadError' : 'resourceDashboard.noFlow')" />
+  <div v-if="data.rankingFailed" class="flow-ranking-placeholder">—</div>
+  <ResourceEmpty v-else-if="!data.ranking.length" :title="t('resourceDashboard.noFlow')" />
   <ol v-else>
     <li v-for="(item,index) in data.ranking.slice(0,limit)" :key="item.id">
       <span class="rank" :class="`rank-${index + 1}`">{{ index + 1 }}</span>
@@ -34,10 +35,11 @@ const props = defineProps<{ data: ResourceData; limit: number }>()
 const { t } = useI18n()
 const menuStore = useMenuStore()
 
+// 只有全部成功且用量为零时才显示接入引导，失败项继续用缺省值占位。
 const isFlowEmpty = computed(() => {
   const noRanking = !props.data.ranking?.length
-  const noMetrics = !props.data.metrics?.length || props.data.metrics.every(m => !m.value || m.failed)
-  return noRanking && noMetrics
+  const noMetrics = !props.data.metrics?.length || props.data.metrics.every(m => !m.failed && m.value === 0)
+  return !props.data.rankingFailed && noRanking && noMetrics
 })
 
 function handleAddNetworkCard() {
@@ -56,6 +58,7 @@ function formatFlow(mb = 0) {
 </script>
 <style scoped>
 .flow-panel { display: flex;flex-direction: column;gap: 10px;height: 100%;min-height: 0; }
+.flow-ranking-placeholder { flex: 1; display: grid; place-items: center; color: var(--ant-color-text-tertiary, #bfbfbf); }
 .flow-metrics { display: grid; gap: 8px; flex-shrink: 0; }
 .flow-metrics > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px; background: #f7f8fa; border-radius: 10px; }
 .flow-metrics span { color: #00000073;font-size: 12px;line-height: 13.8px; }

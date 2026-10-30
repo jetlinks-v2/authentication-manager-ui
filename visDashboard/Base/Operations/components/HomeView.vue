@@ -19,7 +19,7 @@
               </span>
               <span class="health-card-title">{{ label(row) }}</span>
             </div>
-            <span class="health-rate">{{ row.value !== undefined && row.online !== undefined ? t('packages.ProjectHome.onlineRate', { value: Math.round(healthPercent(row)) }) : t('packages.ProjectHome.metricUnknown') }}</span>
+            <span class="health-rate">{{ row.value !== undefined && row.online !== undefined ? t('packages.ProjectHome.onlineRate', { value: Math.round(healthPercent(row)) }) : '—' }}</span>
             <div v-if="row.value && row.online !== undefined" class="health-card-progress">
               <div class="health-progress-bar" :style="{ width: `${healthPercent(row)}%` }" />
             </div>

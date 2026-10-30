@@ -25,20 +25,17 @@
           <div v-else class="private-alarm-source-counts">{{ t('privateOverview.yesterday') }} {{ formatOverviewNumber(data.sources[0]?.yesterday, locale) }} {{ t('privateOverview.unitRecords') }}</div>
         </div>
       </div>
-      <div v-if="data.sources.some(source => source.failed || source.levelsFailed)" class="private-alarm-error"><span>{{ t('privateOverview.partialError') }}</span><a-button type="link" size="small" @click="$emit('retry')">{{ t('privateOverview.retry') }}</a-button></div>
       <div class="private-alarm-trend-heading"><span>{{ t('privateOverview.last7Days') }}</span><div v-if="data.sources.length > 1 && hasTrend" class="private-alarm-legend"><span v-for="source in data.sources.filter(source => !source.trendFailed)" :key="source.id"><i :class="`is-${source.id}`" />{{ t(`privateOverview.source.${source.id}`) }}</span></div></div>
-      <div v-if="data.sources.some(source => source.trendFailed)" class="private-alarm-error"><span>{{ t('privateOverview.partialError') }}</span><a-button type="link" size="small" @click="$emit('retry')">{{ t('privateOverview.retry') }}</a-button></div>
       <slot v-if="hasTrend" name="trend" />
-      <div v-else-if="!data.sources.some(source => source.trendFailed)" class="private-alarm-chart-state">{{ t('privateOverview.noRecentAlarms') }}</div>
+      <div v-else class="private-alarm-chart-state">{{ data.sources.some(source => source.trendFailed) ? '—' : t('privateOverview.noRecentAlarms') }}</div>
       <div class="private-alarm-latest-heading">{{ t('privateOverview.latestPending') }}</div>
-      <div v-if="data.sources.some(source => source.latestFailed)" class="private-alarm-error"><span>{{ t('privateOverview.partialError') }}</span><a-button type="link" size="small" @click="$emit('retry')">{{ t('privateOverview.retry') }}</a-button></div>
       <div v-if="data.latest.length" class="private-alarm-list">
         <button v-for="alarm in data.latest" :key="`${alarm.source}:${alarm.id}`" type="button" class="private-alarm-item" :disabled="!canOpen(alarm.target)" @click="$emit('navigate', alarm.target)">
           <span class="private-alarm-line"><i v-if="alarm.level" class="private-alarm-dot" :class="`is-${alarm.tone}`" /><span v-if="alarm.level" class="private-alarm-level">{{ alarm.level }}</span><strong :title="alarm.title">{{ alarm.title }}</strong><time>{{ alarm.time }}</time></span>
           <span class="private-alarm-object" :title="alarm.object">{{ alarm.object ? `${alarm.object} · ` : '' }}{{ t(`privateOverview.source.${alarm.source}`) }}</span>
         </button>
       </div>
-      <div v-else-if="!data.sources.some(source => source.latestFailed)" class="private-alarm-list-empty">{{ t('privateOverview.noPendingAlarms') }}</div>
+      <div v-else class="private-alarm-list-empty">{{ data.sources.some(source => source.latestFailed) ? '—' : t('privateOverview.noPendingAlarms') }}</div>
     </template>
   </PrivatePanel>
 </template>
@@ -88,6 +85,5 @@ const hasTrend = computed(() => props.data?.sources.some(source => source.trend.
 .private-alarm-line time { flex: none; color: var(--business-component-muted, #8f959e); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .private-alarm-object { min-width: 0; padding-left: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--business-component-muted, #646c73); font-size: 12px; line-height: 18px; }
 .private-alarm-list-empty { display: grid; flex: 1; place-items: center; min-height: 78px; color: var(--business-component-muted, #646c73); font-size: 12px; line-height: 18px; text-align: center; }
-.private-alarm-error { display: flex; align-items: center; gap: 6px; padding-top: 5px; font-size: 12px; line-height: 18px; color: var(--business-component-muted, #646c73); }
 @container (max-width: 279px) { .private-alarm-line { flex-wrap: wrap; } .private-alarm-line time { margin-left: 11px; } .private-alarm-line strong { flex-basis: calc(100% - 70px); } }
 </style>

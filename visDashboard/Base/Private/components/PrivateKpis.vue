@@ -8,9 +8,8 @@
         <span class="private-kpi-content">
           <span class="private-kpi-name">{{ t(row.labelKey) }}</span>
           <span class="private-kpi-number"><strong>{{ formatOverviewNumber(row.failed ? undefined : row.value, locale) }}</strong><span v-if="!row.failed && row.value !== undefined">{{ t(row.unitKey) }}</span></span>
-          <span v-if="row.failed" class="private-kpi-description">{{ t('privateOverview.metricUnknown') }}</span>
-          <span v-else-if="row.yesterday !== undefined" class="private-kpi-description">{{ t('privateOverview.yesterday') }} {{ formatOverviewNumber(row.yesterday, locale) }} {{ t(row.unitKey) }}</span>
-          <span v-else-if="row.statuses?.length" class="private-kpi-statuses">
+          <span v-if="row.yesterday !== undefined" class="private-kpi-description">{{ t('privateOverview.yesterday') }} {{ formatOverviewNumber(row.yesterday, locale) }} {{ t(row.unitKey) }}</span>
+          <span v-else-if="!row.failed && row.statuses?.length" class="private-kpi-statuses">
             <span v-for="status in row.statuses" :key="status.labelKey" class="private-kpi-status">
               <a-badge v-if="status.tone" :status="status.tone" />
               {{ status.label || t(status.labelKey) }} {{ formatOverviewNumber(status.value, locale) }}
@@ -19,9 +18,6 @@
         </span>
         <RightOutlined v-if="canOpen(row.target)" class="private-kpi-arrow" />
       </button>
-    </div>
-    <div v-if="rows.some(row => row.failed)" class="private-kpis-error">
-      <span>{{ t('privateOverview.partialError') }}</span><a-button type="link" size="small" @click="$emit('retry')">{{ t('privateOverview.retry') }}</a-button>
     </div>
   </div>
 </template>
@@ -57,7 +53,6 @@ const { t, locale } = useI18n()
 .private-kpi-arrow { position: absolute; top: 16px; right: 12px; color: var(--ink-4, #c9cdd4); font-size: 10px; }
 .private-kpi:hover:not(:disabled) .private-kpi-arrow { color: var(--business-component-primary, #1677ff); }
 .private-kpis-loading { display: grid; place-items: center; min-height: 112px; }
-.private-kpis-error { display: flex; align-items: center; justify-content: flex-end; gap: 8px; color: var(--business-component-muted, #646c73); font-size: 12px; padding-top: 4px; }
 @container (max-width: 1099px) { .private-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @container (max-width: 699px) { .private-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .private-kpi { gap: 8px; } }
 @container (max-width: 399px) { .private-kpis { grid-template-columns: minmax(0, 1fr); } }

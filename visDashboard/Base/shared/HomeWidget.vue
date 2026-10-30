@@ -25,9 +25,7 @@
       </div>
     </slot>
     <template v-else>
-      <a-alert v-if="rows.some(row => row.failed)" type="warning" :message="config.chart.displayStyle === 'saas' ? t('packages.ProjectHome.saasMetricsFailed', { names: failedMetricLabels(rows, t) }) : t('packages.ProjectHome.loadError')" show-icon>
-        <template #action><a-button size="small" @click="retry">{{ t('packages.ProjectHome.alarmRetry') }}</a-button></template>
-      </a-alert>
+      <!-- 局部失败由指标缺省值表示；整卡失败仍使用上方空态和重试入口。 -->
       <slot :rows="visibleRows" :chart="config.chart" :can-open="canOpen" :open="open" />
     </template>
   </a-card>
@@ -42,7 +40,6 @@ import { useHomeRuntime } from './useHomeRuntime'
 import { useHomeNavigation } from './useHomeNavigation'
 import { HOME_MORE_TARGETS } from './navigation'
 import type { HomeFeature, HomeInfo } from './types'
-import { failedMetricLabels } from '../Saas/services/presentation'
 const props = defineProps<{ feature: HomeFeature; info?: HomeInfo; isEdit: boolean; refreshKey?: number; hideMore?: boolean }>()
 const { t, te } = useI18n()
 const description = computed(() => {
@@ -88,7 +85,6 @@ const tokens = computed(() => ({
 .project-home-shell :deep(.ant-card-body) { display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
 .project-home-shell :deep(.ant-card-body::before), .project-home-shell :deep(.ant-card-body::after) { display: none; }
 .project-home-shell :deep(.ant-card-body > .home-content) { flex: 1; height: auto; }
-.project-home-shell :deep(.ant-alert) { flex-shrink: 0; }
 .project-home-shell :deep(.ant-card-extra .ant-btn) { padding: 0; height: auto; font-size: 13px; line-height: 20px; color: #83899f; transition: color 0.2s ease; &:hover { color: #1e72f0; } }
 .home-state { display: grid; place-items: center; height: 100%; overflow: auto; }
 </style>

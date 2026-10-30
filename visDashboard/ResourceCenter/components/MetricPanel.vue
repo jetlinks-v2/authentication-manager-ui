@@ -70,7 +70,8 @@ const metricIconMap: Record<string, string> = {
   Visualization: metricVisualization,
 }
 
-const isCollectionEmpty = computed(() => !props.metrics.length || props.metrics.every(m => !m.value || m.failed))
+// 局部失败不能当成真实零值，否则会隐藏已取得的统计和缺省值。
+const isCollectionEmpty = computed(() => !props.metrics.length || props.metrics.every(m => !m.failed && m.value === 0))
 
 function handleConfigCollection() {
   if (menuStore.getMenu('data-collect')) {

@@ -13,8 +13,7 @@
         <span class="saas-resource-content">
           <span class="saas-resource-name" :title="row.label || t(`packages.ProjectHome.${row.labelKey}`)">{{ row.label || t(`packages.ProjectHome.${row.labelKey}`) }}</span>
           <MetricValue :value="row.value" :unit="row.unitKey ? t(`packages.ProjectHome.${row.unitKey}`) : row.unit" :failed="row.failed" :title="formatOverviewNumber(row.value, locale)" />
-          <span v-if="row.failed" class="saas-resource-statuses">{{ t('packages.ProjectHome.metricUnknown') }}</span>
-          <span v-else-if="row.statuses?.length" class="saas-resource-statuses">
+          <span v-if="!row.failed && row.statuses?.length" class="saas-resource-statuses">
             <span v-for="status in row.statuses" :key="status.labelKey" class="saas-resource-status" :title="`${t(`packages.ProjectHome.${status.labelKey}`)} ${formatOverviewNumber(status.value, locale)}`">
               <a-badge v-if="status.tone" :status="status.tone" />
               <span class="saas-status-label">{{ t(`packages.ProjectHome.${status.labelKey}`) }}</span>

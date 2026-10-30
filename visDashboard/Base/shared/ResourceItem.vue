@@ -17,12 +17,11 @@
           <j-ellipsis v-if="isEmpty || row.description || row.descriptionKey" class="resource-item-description">{{ visibleDescription }}</j-ellipsis>
         </span>
         <div class="resource-item-value-box">
-          <strong class="resource-item-value">{{ number(row.value) }}</strong>
-          <span v-if="row.value !== undefined" class="resource-item-unit">{{ unitText }}</span>
+          <strong class="resource-item-value">{{ number(row.failed ? undefined : row.value) }}</strong>
+          <span v-if="!row.failed && row.value !== undefined" class="resource-item-unit">{{ unitText }}</span>
         </div>
-        <span class="resource-item-detail">
-          <template v-if="row.failed || row.value === undefined">{{ t('packages.ProjectHome.metricUnknown') }}</template>
-          <template v-else-if="isEmpty">
+        <span v-if="!row.failed && row.value !== undefined" class="resource-item-detail">
+          <template v-if="isEmpty">
             <span v-if="!disabled" class="resource-item-action">{{ emptyAction }} ›</span>
             <span v-else class="resource-item-unavailable">{{ unavailableHintText }}</span>
           </template>
