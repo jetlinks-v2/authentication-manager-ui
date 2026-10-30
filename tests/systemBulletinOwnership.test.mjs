@@ -179,12 +179,13 @@ test('shows one typed realtime tip and opens the bulletin detail after clicking 
 })
 
 test('maps fixed and historical bulletin types to one icon vocabulary with a default fallback', () => {
-  assert.match(bulletinTypeIconSource, /BULLETIN_TYPE_VALUES = \['maintenance', 'release', 'campaign', 'policy'\]/)
+  assert.match(bulletinTypeIconSource, /BULLETIN_TYPE_VALUES = \['maintenance', 'release', 'campaign', 'policy', 'emergency'\]/)
   assert.match(bulletinTypeIconSource, /default: 'NotificationOutlined'/)
   assert.match(bulletinTypeIconSource, /maintenance: 'ToolOutlined'/)
   assert.match(bulletinTypeIconSource, /incident: 'WarningOutlined'/)
   assert.match(bulletinTypeIconSource, /release: 'RocketOutlined'/)
   assert.match(bulletinTypeIconSource, /campaign: 'NotificationOutlined'/)
+  assert.match(bulletinTypeIconSource, /emergency: 'WarningOutlined'/)
   assert.match(bulletinTypeIconSource, /security: 'SafetyCertificateOutlined'/)
   assert.match(bulletinTypeIconSource, /policy: 'FileTextOutlined'/)
   assert.match(bulletinTypeIconSource, /DEFAULT_BULLETIN_TYPE_ICON = 'NotificationOutlined'/)
@@ -228,6 +229,8 @@ test('stores localized title, summary, type and Markdown content', async () => {
   assert.equal(JSON.parse(enLocale)['Announcement.i18n.configure'], 'Internationalization')
   assert.equal(JSON.parse(zhLocale)['Announcement.type.campaign'], '运营活动')
   assert.equal(JSON.parse(enLocale)['Announcement.type.campaign'], 'Campaign')
+  assert.equal(JSON.parse(zhLocale)['Announcement.type.emergency'], '紧急通知')
+  assert.equal(JSON.parse(enLocale)['Announcement.type.emergency'], 'Emergency Notice')
 })
 
 test('uses the bulletin title and internal scrolling for management details', () => {

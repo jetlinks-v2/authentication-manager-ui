@@ -1831,6 +1831,7 @@
   "Announcement.type.release": "System Upgrade",
   "Announcement.type.campaign": "Campaign",
   "Announcement.type.policy": "Policy Update",
+  "Announcement.type.emergency": "Emergency Notice",
   "Announcement.action.create": "New announcement",
   "Announcement.action.view": "View",
   "Announcement.action.edit": "Edit",
