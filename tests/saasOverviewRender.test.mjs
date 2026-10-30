@@ -26,7 +26,7 @@ const {Resource,Today,Applications,AppView}=module.exports
 async function render(component,props){const app=vue.createSSRApp({render:()=>vue.h(component,props)}); app.component('a-badge',{render:()=>null}); app.component('a-tooltip',{render(){return this.$slots.default?.()}});app.component('j-ellipsis',{render(){return vue.h('span',this.$slots.default?.())}}); app.component('a-button',{render(){return vue.h('button',this.$slots.default?.())}});return renderToString(app)}
 test('new project renders genuine resource zero and unknown distinctly',async()=>{
  const html=await render(Resource,{canOpen:()=>true,rows:[{id:'devices',label:'设备',value:0,unit:'台',statuses:[{labelKey:'online',value:0}]},{id:'video',label:'视频',value:0,failed:true}]})
- assert.match(html,/设备/);assert.match(html,/<strong>0<\/strong>/);assert.doesNotMatch(html,/saasOpenResource/);assert.match(html,/online 0/);assert.match(html,/metricUnknown/)
+ assert.match(html,/设备/);assert.match(html,/<strong>0<\/strong>/);assert.doesNotMatch(html,/saasOpenResource/);assert.match(html,/online 0/);assert.doesNotMatch(html,/metricUnknown/)
  assert.match(html,/视频[\s\S]*?<strong>—<\/strong>/)
 })
 test('new project today renders zero, existing messages and failed metric distinctly',async()=>{
@@ -94,4 +94,31 @@ test('application creation requires live menu add permission, navigation and non
 test('read-only today metric retains value and is disabled without an arrow', async () => {
  const html=await render(Today,{canOpen:target=>Boolean(target),rows:[{id:'event',label:'识别事件',value:7,yesterday:2,unit:'条'}]})
  assert.match(html,/<button[^>]*disabled/);assert.match(html,/<strong>7<\/strong>/);assert.doesNotMatch(html,/anticon-right/)
+})
+
+test('real HomeWidget hides partial-failure alerts and preserves full-error retry', async () => {
+ const entry=path.join(base,'shared/HomeWidget.vue')
+ const built=await build({entryPoints:[entry],bundle:true,write:false,platform:'node',format:'cjs',packages:'external',external:['vue'],plugins:[{name:'real-home-widget',setup(b){
+  b.onResolve({filter:/\.vue$/},args=>args.path===entry?{path:entry,namespace:'real'}:{path:args.path,namespace:'stub'})
+  b.onLoad({filter:/.*/,namespace:'real'},args=>{const {descriptor}=parse(readFileSync(args.path,'utf8'),{filename:args.path});return {contents:compileScript(descriptor,{id:'home',inlineTemplate:true}).content,loader:'ts',resolveDir:path.dirname(args.path)}})
+  b.onLoad({filter:/.*/,namespace:'stub'},()=>({contents:`import {h} from 'vue'; export default {props:['description'],render(){return h('div',{class:'full-error'},[this.description,this.$slots.default?.()])}}`,loader:'js'}))
+  const stubs={ 'vue-i18n':`export const useI18n=()=>({t:k=>k,te:()=>false})`, 'ant-design-vue':`import {ref} from 'vue';export const theme={useToken:()=>({token:ref({})})}`, config:`export const getHomeConfig=()=>({chart:{displayStyle:'saas',navigation:false}})`,useHomeRuntime:`import {ref} from 'vue';export const useHomeRuntime=()=>({rows:ref(context.error?[]:[{label:'failure',failed:true}]),loading:ref(false),error:ref(context.error),retry:()=>{},available:ref(true),titleKey:ref('title'),updatedAt:ref(0)})`,useHomeNavigation:`export const useHomeNavigation=()=>({canOpen:()=>false,open:()=>{}})`,navigation:`export const HOME_MORE_TARGETS={}`,presentation:`export const failedMetricLabels=()=> 'failure'`}
+  b.onResolve({filter:/^(vue-i18n|ant-design-vue|\.\/config|\.\/useHomeRuntime|\.\/useHomeNavigation|\.\/navigation|\.\.\/Saas\/services\/presentation)$/},args=>({path:args.path.split('/').pop(),namespace:'stub-js'}))
+  b.onLoad({filter:/.*/,namespace:'stub-js'},args=>({contents:stubs[args.path],loader:'js'}))
+ }}]})
+ const context={error:false},mod={exports:{}};Function('module','exports','require','context',built.outputFiles[0].text)(mod,mod.exports,require,context)
+ for(const [feature,alert] of [['SaasResources',false],['SaasToday',false],['Announcements',false]]) {
+  const app=vue.createSSRApp({render:()=>vue.h(mod.exports.default,{feature,isEdit:false},{default:()=>vue.h('span','metric-content')})})
+  app.component('a-card',{render(){return vue.h('section',this.$slots.default?.())}})
+  app.component('a-alert',{render(){return vue.h('aside',{class:'warning'},this.$slots.action?.())}})
+  app.component('a-button',{render(){return vue.h('button',this.$slots.default?.())}})
+  const html=await renderToString(app)
+  assert.match(html,/metric-content/);assert.equal(html.includes('class="warning"'),alert,feature)
+ }
+ context.error=true
+ const app=vue.createSSRApp({render:()=>vue.h(mod.exports.default,{feature:'SaasQuotas',isEdit:false})})
+ app.component('a-card',{render(){return vue.h('section',this.$slots.default?.())}})
+ app.component('a-button',{render(){return vue.h('button',this.$slots.default?.())}})
+ const html=await renderToString(app)
+ assert.match(html,/full-error/);assert.match(html,/loadError/);assert.match(html,/<button>.*alarmRetry.*<\/button>/)
 })

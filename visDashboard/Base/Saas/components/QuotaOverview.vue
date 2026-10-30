@@ -26,8 +26,7 @@
         />
         <span class="saas-quota-percent">{{ quotaPercent(row) }}%</span>
       </span>
-      <span v-else-if="row.failed" class="saas-quota-hint">{{ t('packages.ProjectHome.metricUnknown') }}</span>
-      <span v-else-if="row.limit === null || row.limit === undefined" class="saas-quota-hint">{{ t('packages.ProjectHome.quotaUnknown') }}</span>
+      <span v-else-if="!row.failed && (row.limit === null || row.limit === undefined)" class="saas-quota-hint">{{ t('packages.ProjectHome.quotaUnknown') }}</span>
     </button>
   </div>
 </template>

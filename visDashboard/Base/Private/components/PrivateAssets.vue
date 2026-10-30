@@ -24,13 +24,11 @@
           <span><a-badge status="success" />{{ t('privateOverview.online') }} {{ formatOverviewNumber(group.failed ? undefined : group.online, locale) }}</span>
           <span><a-badge status="error" />{{ t('privateOverview.offline') }} {{ formatOverviewNumber(group.failed ? undefined : group.offline, locale) }}</span>
         </div>
-        <div v-if="group.failed" class="private-asset-error"><span>{{ t('privateOverview.loadError') }}</span><a-button type="link" size="small" @click="$emit('retry')">{{ t('privateOverview.retry') }}</a-button></div>
         <div v-for="item in group.breakdown" :key="item.id" class="private-asset-breakdown">
           <span class="private-asset-kind">{{ t(item.labelKey) }}</span>
           <span class="private-asset-track"><span :style="{ width: `${barPercent(item.failed ? undefined : item.value, group.breakdown)}%` }" /></span>
           <span class="private-asset-count">{{ formatOverviewNumber(item.failed ? undefined : item.value, locale) }} {{ t(group.unitKey) }}<span v-if="item.offline"> · {{ t('privateOverview.offline') }} {{ formatOverviewNumber(item.offline, locale) }}</span></span>
         </div>
-        <div v-if="!group.failed && group.breakdown.some(item => item.failed)" class="private-asset-error"><span>{{ t('privateOverview.partialError') }}</span><a-button type="link" size="small" @click="$emit('retry')">{{ t('privateOverview.retry') }}</a-button></div>
       </section>
     </div>
   </PrivatePanel>
@@ -80,6 +78,5 @@ function barPercent(value: number | undefined, rows: PrivateBreakdown[]): number
 .private-asset-track > span { display: block; height: 100%; border-radius: inherit; background: var(--business-component-primary, #1677ff); }
 .private-asset-count { color: var(--business-component-text, #1f2329); text-align: right; font-variant-numeric: tabular-nums; }
 .private-asset-count > span { color: var(--business-component-muted, #646c73); }
-.private-asset-error { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 8px; color: var(--business-component-muted, #646c73); font-size: 12px; }
 @container (max-width: 439px) { .private-assets-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; } }
 </style>
