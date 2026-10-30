@@ -1,5 +1,7 @@
 # Authentication Manager UI
 
+第三方应用模板的 RSA keyId、公钥保存在 `configuration.credential`，可在关闭通知时独立维护，用于应用凭据主动获取与加密交付。通知开关只维护 `configuration.notification.address`；读取兼容旧 notification 内的 RSA 字段，保存时迁移为统一 credential，关闭通知不会删除公钥。通知 HMAC Secret 也可独立设置：keyId 默认自动准备，也可填写第三方预设的 keyId/Secret，接收端配置后通过专用接口保存切换；未设置时继续原派生算法，普通模板保存不读写 Secret。前后端须配套发布，后端需先增加两个可空通知凭据字段；旧后端不支持新 RSA 配置或自定义通知凭据，回滚需恢复配置格式与接收端信任凭据。
+
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.
 
 ## Application ownership filter
@@ -141,6 +143,8 @@ SaaS 概览公告使用 [notify-manager #81](https://github.com/jetlinks-v2/noti
 验证结果：三个页面均使用一组 `headerLeftRender` 与 `headerRightRender`，访问日志和系统日志的筛选条件仍分别回传 `search-access`、`search-system`，应用模版仍调用原有 `table.handleSearch` 与 `table.openCreateDialog`。`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 构建通过，`git diff --check` 通过。访问日志 362 行、系统日志 288 行、应用模版 179 行；按本次确认范围不拆分既有访问日志页面。
 
 ## System Bulletin Ownership
+
+公告接收列表的类型直接采用接收接口顶层 type，并由现有 normalizeBulletinType/resolveAnnouncementTypeLabel 兼容旧枚举、快照和当前语言；不将 provider 分类“公告”作为内容类型。register.ts 在接收源的 typeFilter 中声明查询列 type，选项与公告编辑页共用 BULLETIN_TYPE_VALUES，core 通过这一通用声明生成筛选，实际类型条件由 receivedDataSource.ts 原样传给接收查询接口。列表和筛选的类型值、文案保持同源，不新增类型接口、后端枚举或本地已读规则。按用户要求直接修正，本轮未运行页面复现、自动检查或构建；更新前端资源即可，无后端重启要求。
 
 System bulletin pages, API contracts, types, notification detail rendering, and provider constants are owned by `views/system/Announcement/`; user-facing copy follows this module's locale convention. The shared web core only exposes generic notification-provider and detail-component registration points; it does not identify `SystemBulletin` or call bulletin APIs. SaaS modules may contribute menu binding metadata, but they do not implement bulletin pages or APIs.
 
@@ -511,12 +515,12 @@ Verification result:
 
 - 创建第三方实例时仅选择 provider=third-party 的模板及填写基本信息，不配置出站 OAuth2、通知 Token 或实例 callback。
 - 模板配置复用 redirectUri、externalParameters 和 notification.address/keyId/publicKey。平台生成 Code 并拼接跳转参数；第三方通过平台现有 /oauth2/token 和 /authorize/context 获取委托身份。
-- notification 的 RSA keyId/publicKey 仅用于应用凭据加密交付；HMAC keyId/Secret 由现有平台／模板密钥按独立通知用途派生。页面只保留 `/notification-signature` 状态查询与 `/_reveal` 受控查看，删除生成／重置及保存前置校验；平台／模板版本变化后重新交付，实例访问凭据轮换不改变模板通知签名。
+- RSA keyId/publicKey 统一保存在 credential，支持凭据主动获取和加密交付。通知 HMAC keyId/Secret 默认由平台／模板材料派生，也可在现有配置区独立编辑；状态和受控查看仍复用 `/notification-signature` 与 `/_reveal`，专用 PUT 保存自定义凭据，不进入普通模板草稿。实例访问凭据轮换不改变模板通知签名。
 - 实例详情保留基本信息、用户和角色。第三方角色只维护基本资料及成员关联，不加载菜单授权区域；普通业务应用的菜单权限编辑保持原行为。
 - 成员、角色及关联查询复用 /user/detail/business_application/{id}/_query、带 applicationId 条件的 /role/_query 和 /business-application/{id}/user-roles/_query。通知使用 application.user.bound/unbound 与 application.sync.changed 的 members/roles 提示，不消费独立 Callback 快照协议。
 - 可靠任务、记录与重投沿用已有模板 /business-application-template/{templateId}/delivery 契约及模板权限，不新增实例运维 API，也不以接口失败后的另一套路径兜底。
 
-主要实现入口为 ProjectApplication/Create、ProjectApplication/Detail 及 Template/Save。普通配置由 useApplicationTemplateParameters 管理，当前派生签名的查看由 useTemplateNotificationSignature 管理，ExternalParameterConfig 展示。Secret 只保留在弹窗短期内存，关闭、切换模板或离开页面即清理。后端复用已有模板快照缓存及失效机制。本轮仅源码与差异检查，未运行前端测试、lint、类型检查、构建或浏览器；当前凭据查看、权限控制和离开页面清理待人工验收。Python 示例保留本地，不随产品仓库交付。
+主要实现入口为 ProjectApplication/Create、ProjectApplication/Detail 及 Template/Save。普通配置由 useApplicationTemplateParameters 管理，通知签名的查看和独立编辑由 useTemplateNotificationSignature 管理，ExternalParameterConfig 展示。Secret 只保留在弹窗短期内存，关闭、切换模板或离开页面即清理。后端复用已有模板快照缓存及失效机制。编辑与清理已通过模板边界测试及生产构建，完整类型检查仍有基线诊断；未执行登录环境浏览器验收。Python 示例保留本地，不随产品仓库交付。
 
 ### Video Gateway Binding Interaction Plan
 

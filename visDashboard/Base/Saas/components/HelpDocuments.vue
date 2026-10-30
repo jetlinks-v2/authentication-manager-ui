@@ -26,6 +26,10 @@ defineEmits<{ open: [id: string] }>()
   gap: 4px;
   min-width: 0;
   padding: 4px 0;
+  /* 四条 38px 列表项、三处 4px 间距及上下留白，更多文档滚动查看。 */
+  max-height: 172px;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 .saas-help-item {
   position: relative;
@@ -33,6 +37,7 @@ defineEmits<{ open: [id: string] }>()
   align-items: center;
   gap: 10px;
   min-height: 38px;
+  flex-shrink: 0;
   padding: 8px 12px;
   margin: 0;
   border: 0;

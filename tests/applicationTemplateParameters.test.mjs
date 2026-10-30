@@ -100,17 +100,37 @@ test('platform identity and the existing notification form save without overwrit
   state.notification.address = ' https://receiver.example/new '
   assert.equal(await state.save(), true)
   assert.equal(writes.at(-1).platformId, 'region-b')
-  assert.deepEqual(writes.at(-1).notification, { ...notification, address: 'https://receiver.example/new' })
+  assert.deepEqual(writes.at(-1).notification, { address: 'https://receiver.example/new' })
+  assert.deepEqual(writes.at(-1).credential, { keyId: notification.keyId, publicKey: notification.publicKey })
   assert.equal(writes.at(-1).retained, 'value')
-  state.notification.publicKey = ''
+  state.credential.publicKey = ''
   assert.equal(await state.save(), false)
   assert.equal(state.error.value, messages.invalidNotification)
   assert.equal(writes.length, 1)
   state.notification.enabled = false
+  state.credential.publicKey = notification.publicKey
   state.platformId.value = 'region-c'
   assert.equal(await state.save(), true)
   assert.equal('notification' in writes.at(-1), false)
   assert.equal(writes.at(-1).platformId, 'region-c')
+  assert.deepEqual(writes.at(-1).credential, { keyId: notification.keyId, publicKey: notification.publicKey })
+})
+
+test('RSA identity persists and reloads while notification is disabled', async () => {
+  const { state, writes } = fixture({ credential: { keyId: 'rsa-1', publicKey: 'public-1' } })
+  assert.equal(state.notification.enabled, false)
+  assert.equal(state.credential.keyId, 'rsa-1')
+  state.credential.publicKey = ' public-2 '
+  assert.equal(await state.save(), true)
+  await nextTick()
+  assert.deepEqual(writes.at(-1).credential, { keyId: 'rsa-1', publicKey: 'public-2' })
+  assert.equal('notification' in writes.at(-1), false)
+  assert.equal(state.credential.publicKey, 'public-2')
+  state.credential.keyId = ''
+  assert.equal(await state.save(), false)
+  state.credential.publicKey = ''
+  assert.equal(await state.save(), true)
+  assert.equal('credential' in writes.at(-1), false)
 })
 
 test('reset discards the address and parameter drafts', () => {
@@ -237,8 +257,8 @@ test('template form keeps the built-in fixed/user sources without a provider met
 
 test('notification configuration saves without a separate signing key generation step', async () => {
   const { state, writes } = fixture()
-  Object.assign(state.notification, { enabled: true, address: 'https://receiver.example/hook',
-    keyId: 'receiver-rsa-key', publicKey: 'receiver-public-key' })
+  Object.assign(state.notification, { enabled: true, address: 'https://receiver.example/hook' })
+  Object.assign(state.credential, { keyId: 'receiver-rsa-key', publicKey: 'receiver-public-key' })
   assert.equal(await state.save(), true)
   assert.equal(state.error.value, '')
   assert.equal(writes.length, 1)

@@ -3,14 +3,11 @@
     :width="560" :ok-text="t('packages.ProjectHome.saasBillingSave')" :cancel-text="t('packages.ProjectHome.saasBillingCancel')"
     @ok="$emit('save')" @cancel="$emit('close')">
     <a-form layout="vertical" class="saas-billing-form">
-      <p v-if="view.project" class="saas-billing-project">{{ view.project }}</p>
       <template v-if="view.kind === 'renew'">
         <a-form-item :label="t('packages.ProjectHome.saasBillingDuration')">
           <a-radio-group :value="view.form.years" @change="$emit('change', { years: $event.target.value })">
             <a-radio-button v-for="years in [1, 2, 3]" :key="years" :value="years">{{ t('packages.ProjectHome.saasBillingYears', { years }) }}</a-radio-button>
           </a-radio-group>
-          <div v-if="view.expiresAt" class="saas-billing-hint">{{ t('packages.ProjectHome.saasBillingCurrentExpiry', { date: view.expiresAt }) }}</div>
-          <div v-if="view.nextExpiresAt" class="saas-billing-hint">{{ t('packages.ProjectHome.saasBillingNextExpiry', { date: view.nextExpiresAt }) }}</div>
         </a-form-item>
       </template>
       <template v-else>
@@ -37,8 +34,6 @@ const { t } = useI18n()
 </script>
 <style scoped>
 .saas-billing-form { padding-top: 8px; }
-.saas-billing-project { margin-bottom: 8px; overflow-wrap: anywhere; }
-.saas-billing-hint { margin: 8px 0 16px; color: var(--ink-3, #646c73); font-size: 12px; line-height: 20px; }
 .saas-billing-comparison { margin-bottom: 20px; }
 .saas-billing-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 9px 12px; border-bottom: 1px solid var(--line, #f0f0f0); }
 .saas-billing-row > :last-child { text-align: right; font-variant-numeric: tabular-nums; }

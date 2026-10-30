@@ -1,7 +1,7 @@
 <template>
   <a-card
     size="small"
-    class="summary-card" :class="{ interactive: card.interactive }"
+    class="resource-summary-card" :class="{ interactive: card.interactive }"
     :role="card.interactive ? 'link' : undefined" :tabindex="card.interactive ? 0 : undefined"
     :aria-label="card.label" :aria-busy="loading"
     @click="$emit('open', card)" @keydown.enter.self.prevent="$emit('open', card)" @keydown.space.self.prevent="$emit('open', card)"
@@ -17,12 +17,6 @@
       <span class="summary-icon"><AIcon :type="card.icon" /></span>
     </div>
     <div class="summary-footer">
-      <div v-if="card.hasError || error" class="summary-error" role="status">
-        <span>{{ card.errorText }}</span>
-        <a-button type="link" size="small" :loading="loading" @click.stop="$emit('retry')" @keydown.stop>
-          {{ t('resourceDashboard.retry') }}
-        </a-button>
-      </div>
       <div v-if="card.statuses.length" class="summary-statuses" :class="{ 'summary-statuses--assets': card.id === 'visualization' }">
         <span v-for="status in card.statuses" :key="status.key" class="summary-status" :title="`${status.label} ${status.valueText}`">
           <i v-if="card.id !== 'visualization' && card.id !== 'message' && card.id !== 'aiEvents'" class="status-dot" :class="status.tone" />
@@ -35,7 +29,6 @@
 </template>
 
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n'
 import type { ResourceSummaryCard } from '../resourceSummary.types'
 import type { useResourceSummary } from '../useResourceSummary'
 
@@ -43,12 +36,13 @@ type SummaryView = ReturnType<typeof useResourceSummary>['cards']['value'][numbe
 // 单张资源卡只渲染共享查询结果；所有卡片共用页面内的一次统计订阅。
 defineProps<{ card: SummaryView; loading: boolean; error: boolean }>()
 defineEmits<{ open: [card: ResourceSummaryCard]; retry: [] }>()
-const { t } = useI18n()
 </script>
 
 <style scoped>
-.summary-card {
+/* 使用资源页专属类名，避免其他业务页的全局 summary-card flex 样式收缩正文。 */
+.resource-summary-card {
   container-type: inline-size;
+  width: 100%;
   height: 100%;
   overflow: hidden;
   min-width: 0;
@@ -58,26 +52,29 @@ const { t } = useI18n()
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.summary-card :deep(.ant-card-body) {
+.resource-summary-card :deep(.ant-card-body) {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   height: 100%;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding: 16px;
 }
-.summary-card.interactive {
+.resource-summary-card.interactive {
   cursor: pointer;
 }
-.summary-card.interactive:hover {
+.resource-summary-card.interactive:hover {
   border-color: var(--jet-theme-primary, #1677ff);
   box-shadow: 0 4px 14px rgba(22, 119, 255, 0.08);
   transform: translateY(-1px);
 }
-.summary-card.interactive:hover .summary-icon {
+.resource-summary-card.interactive:hover .summary-icon {
   transform: scale(1.05);
   background: #e6f4ff;
 }
-.summary-card.interactive:focus-visible {
+.resource-summary-card.interactive:focus-visible {
   outline: 2px solid var(--jet-theme-primary, #1677ff);
   outline-offset: 2px;
 }
@@ -186,25 +183,9 @@ const { t } = useI18n()
   box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.16);
 }
 .summary-statuses--assets {
-  justify-content: space-between;
-  gap: 8px;
   overflow-x: auto;
 }
 .summary-statuses--assets .summary-status {
   flex: none;
-}
-.summary-error {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px;
-  margin-bottom: 4px;
-  color: var(--jet-theme-error, #d46b08);
-  font-size: 12px;
-}
-.summary-error :deep(.ant-btn) {
-  padding: 0;
-  height: auto;
-  font-size: 12px;
 }
 </style>

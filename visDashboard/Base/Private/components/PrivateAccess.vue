@@ -9,16 +9,12 @@
             <RightOutlined v-if="index" class="private-guide-arrow" />
             <button type="button" class="private-guide-step" :class="[`is-${step.state}`, { 'is-next': step.next && step.state === 'incomplete' }]"
               :disabled="!canOpen(step.target)" :aria-current="step.next ? 'step' : undefined" @click="$emit('navigate', step.target)">
-              <span class="private-guide-mark"><CheckOutlined v-if="step.state === 'complete'" /><span v-else>{{ step.state === 'unknown' ? '?' : index + 1 }}</span></span>
+              <span class="private-guide-mark"><CheckOutlined v-if="step.state === 'complete'" /><span v-else>{{ step.state === 'unknown' ? '—' : index + 1 }}</span></span>
               <span>{{ t(step.labelKey) }}</span>
-              <span v-if="step.state === 'unknown'" class="private-guide-unknown">{{ t('privateOverview.metricUnknown') }}</span>
-              <span v-else-if="step.next" class="private-guide-action">{{ t(step.actionKey) }} <RightOutlined /></span>
+              <span v-if="step.next && step.state !== 'unknown'" class="private-guide-action">{{ t(step.actionKey) }} <RightOutlined /></span>
             </button>
           </li>
         </ol>
-      </div>
-      <div v-if="guide.lanes.some(lane => lane.steps.some(step => step.state === 'unknown'))" class="private-guide-retry">
-        <a-button type="link" size="small" @click="$emit('retry')">{{ t('privateOverview.retry') }}</a-button>
       </div>
     </div>
     <div v-else class="private-quick-grid">
@@ -68,8 +64,6 @@ const { t } = useI18n()
 .is-next .private-guide-mark { color: #fff; background: var(--business-component-primary, #1677ff); }
 .private-guide-action { color: var(--business-component-primary, #1677ff); font-size: 12px; }
 .private-guide-action :deep(.anticon) { font-size: 9px; }
-.private-guide-unknown { color: var(--business-component-muted, #646c73); }
-.private-guide-retry { align-self: flex-end; }
 .private-quick-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 10px; }
 .private-quick-action { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 9px 10px; border: 1px solid var(--line, #e5e6eb); border-radius: var(--r-2, 6px); background: transparent; color: var(--business-component-text, #1f2329); font: inherit; text-align: left; cursor: pointer; transition: border-color .2s, background-color .2s; }
 .private-quick-action:hover:not(:disabled) { border-color: var(--business-component-primary, #1677ff); background: var(--home-card-surface, #f7f9fc); }

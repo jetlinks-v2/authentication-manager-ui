@@ -16,9 +16,9 @@ const {outputFiles}=await build({stdin:{contents:['PrivateAccess','PrivateKpis',
 const mod={exports:{}}; Function('module','exports','require',outputFiles[0].text)(mod,mod.exports,require)
 async function render(component,props){const app=vue.createSSRApp({render:()=>vue.h(component,props)});app.component('a-button',{render(){return vue.h('button',this.$slots.default?.())}});return renderToString(app)}
 const step=(id,state,next=false)=>({id,labelKey:id,actionKey:'action-'+id,state,next,target:{menus:[id]}})
-test('fresh iot-only guide renders unknown separately and gives retry',async()=>{
+test('fresh iot-only guide distinguishes unknown without a partial-failure message',async()=>{
  const html=await render(mod.exports.PrivateAccess,{guide:{show:true,complete:0,total:2,lanes:[{id:'iot',labelKey:'iot',steps:[step('protocol','unknown'),step('device','incomplete')]}]},actions:[],canOpen:()=>true})
- assert.match(html,/iot/);assert.match(html,/is-unknown/);assert.match(html,/privateOverview.metricUnknown/);assert.match(html,/privateOverview.retry/);assert.doesNotMatch(html,/action-device/);assert.doesNotMatch(html,/video/)
+ assert.match(html,/iot/);assert.match(html,/is-unknown/);assert.match(html,/—/);assert.doesNotMatch(html,/privateOverview.metricUnknown/);assert.doesNotMatch(html,/privateOverview.retry/);assert.doesNotMatch(html,/action-device/);assert.doesNotMatch(html,/video/)
 })
 test('complete guide changes to real quick actions',async()=>{
  const html=await render(mod.exports.PrivateAccess,{guide:{show:false,lanes:[],complete:2,total:2},actions:[{id:'device',label:'Add device',description:'Connect',target:{menus:['device']}}],canOpen:()=>true})

@@ -23,17 +23,19 @@ function defaultHeight(feature: SaasOverviewFeature, width: number, counts: Saas
   if (feature === 'SaasResources') {
     const columns = contentWidth > 839 ? 4 : contentWidth > 479 ? 2 : 1
     const rows = Math.max(1, Math.ceil(counts.resources / columns))
-    return rowsFor(86 + rows * 124 + (rows - 1) * 16)
+    // 对齐资源卡实际的 56px 标题、32px 正文留白、114px 指标行与 12px 行距。
+    return rowsFor(88 + rows * 114 + (rows - 1) * 12)
   }
   if (feature === 'SaasToday') {
     const columns = contentWidth > 639 ? 4 : contentWidth > 279 ? 2 : 1
     const rows = Math.max(1, Math.ceil(counts.today / columns))
     return rowsFor(86 + rows * 114 + (rows - 1) * 16)
   }
-  return rowsFor({ SaasQuotas: 340, Applications: 302, Announcements: 286, SaasHelp: 390 }[feature])
+  // 帮助文档容纳 56px 标题、32px 正文留白与四条列表，剩余条目在正文内滚动。
+  return rowsFor({ SaasQuotas: 340, Applications: 302, Announcements: 286, SaasHelp: 260 }[feature])
 }
 
-/** 桌面保持主列、侧列与底部区；窄屏单列，用户之后可用同一画布自由调整。 */
+/** 桌面主、侧列按内容连续排布；窄屏单列，用户之后可用同一画布自由调整。 */
 export function buildSaasOverviewLayout(
   features: readonly SaasOverviewFeature[], width: number, counts: SaasOverviewCounts,
 ): SaasOverviewLayoutItem[] {
@@ -41,15 +43,16 @@ export function buildSaasOverviewLayout(
   const visible = new Set(features)
   const items: SaasOverviewLayoutItem[] = []
   const minimumRows: Record<SaasOverviewFeature, number> = {
-    SaasRecent: 5, SaasResources: mode === 'compact' ? 10 : 7, SaasToday: 7,
+    SaasRecent: 5, SaasResources: 7, SaasToday: 7,
     SaasQuotas: 8, Applications: 8, Announcements: 7, SaasHelp: 7,
   }
-  const appendColumn = (column: readonly SaasOverviewFeature[], x: number, w: number, y = 0) => {
+  const appendColumn = (column: readonly SaasOverviewFeature[], x: number, w: number, y = 0, minWidth = 6) => {
     for (const feature of column.filter(feature => visible.has(feature))) {
       const minH = minimumRows[feature]
       const h = Math.max(minH, defaultHeight(feature, cardWidth(width, w), counts))
       items.push({ feature, gridItem: {
-        x, y, w, h, minW: mode === 'compact' ? 24 : mode === 'stacked' ? 12 : Math.min(6, w), minH,
+        // 同一缓存档的最小列数保持不变，避免窄屏恢复时单独扩宽侧栏、挤开主栏。
+        x, y, w, h, minW: mode === 'compact' ? 24 : mode === 'stacked' ? 12 : minWidth, minH,
       } })
       y += h
     }
@@ -65,17 +68,17 @@ export function buildSaasOverviewLayout(
   const sideWidth = Math.max(4, Math.min(9, Math.round(356 * 24 / (width + 16))))
   const hasSide = side.some(feature => visible.has(feature))
   const mainBottom = appendColumn(main, 0, hasSide ? 24 - sideWidth : 24)
-  const lastMain = items.at(-1)
-  const sideBottom = hasSide ? appendColumn(side, 24 - sideWidth, sideWidth) : 0
-  const lastSide = hasSide ? items.at(-1) : undefined
+  const sideBottom = hasSide ? appendColumn(side, 24 - sideWidth, sideWidth, 0, 4) : 0
   const bottom = Math.max(mainBottom, sideBottom)
-  if (lastMain) lastMain.gridItem.h += bottom - mainBottom
-  if (lastSide) lastSide.gridItem.h += bottom - sideBottom
   const footer = (['Announcements', 'SaasHelp'] as const).filter(feature => visible.has(feature))
   if (footer.length === 1) appendColumn(footer, 0, 24, bottom)
   else if (footer.length === 2) {
-    appendColumn(['Announcements'], 0, 24 - sideWidth, bottom)
-    appendColumn(['SaasHelp'], 24 - sideWidth, sideWidth, bottom)
+    appendColumn(['Announcements'], 0, 24 - sideWidth, mainBottom)
+    appendColumn(['SaasHelp'], 24 - sideWidth, sideWidth, hasSide ? sideBottom : mainBottom, 4)
+    // 只延长公告来对齐帮助底边，保留公告最小阅读区，不拉高上方卡片或帮助列表。
+    const announcement = items.find(item => item.feature === 'Announcements')!.gridItem
+    const help = items.find(item => item.feature === 'SaasHelp')!.gridItem
+    announcement.h = Math.max(announcement.h, help.y + help.h - announcement.y)
   }
   return items
 }

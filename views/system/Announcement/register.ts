@@ -1,6 +1,8 @@
 import { defineAsyncComponent } from 'vue'
 import { subscribeAnnouncementReadChanges } from './localReadStore'
 import { subscribeAnnouncementRealtime } from './realtimeSubscription'
+import { BULLETIN_TYPE_VALUES } from './bulletinTypeIcon'
+import { resolveAnnouncementTypeLabel } from './announcementI18n'
 import i18n from '@jetlinks-web-core/locales'
 import {
   SYSTEM_BULLETIN_PROVIDER,
@@ -42,6 +44,12 @@ export const getRegisterComponents = () => [
         subscribe: subscribeAnnouncementReadChanges,
         subscribeRealtime: subscribeAnnouncementRealtime,
         confirmOnDetail: true,
+        typeFilter: {
+          column: 'type',
+          options: () => BULLETIN_TYPE_VALUES.map(value => ({
+            value, label: resolveAnnouncementTypeLabel(value),
+          })),
+        },
         query: queryAnnouncementInbox,
         queryNoPaging: queryAnnouncementInboxNoPaging,
         count: countAnnouncementInbox,

@@ -12,11 +12,7 @@
     </ResourceEmpty>
     <ResourceEmpty v-else-if="!state.hasRows" class="state" icon="FundProjectionScreenOutlined"
       :title="t('resourceDashboard.visionRanking.empty')" :description="t('resourceDashboard.visionRanking.emptyDescription')" />
-    <template v-else>
-      <div v-if="state.directoryIncomplete" class="notice">{{ t('resourceDashboard.visionRanking.incompleteDirectory') }}</div>
-      <div v-else-if="state.metadataFailed" class="notice">{{ t('resourceDashboard.visionRanking.metadataFailed') }}</div>
-      <slot />
-    </template>
+    <slot v-else />
   </div>
 </template>
 <script setup lang="ts">
@@ -29,5 +25,4 @@ const { t } = useI18n()
 <style scoped>
 .vision-ranking-content { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; }
 .state { flex: 1; min-height: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
-.notice { font-size: 12px; color: var(--ant-color-warning-text, #d48806); margin-bottom: 8px; }
 </style>

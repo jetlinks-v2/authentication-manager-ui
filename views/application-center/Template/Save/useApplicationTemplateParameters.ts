@@ -44,14 +44,15 @@ const toDefinition = (draft: ApplicationTemplateParameterDraft) => ({
   configuration: draft.provider === 'user' ? { field: draft.value } : { value: draft.value },
 })
 
-/** 复用第三方 Provider 的跳转参数与签名通知配置，其余模板配置保持不变。 */
+/** 维护第三方 Provider 的跳转参数、RSA 身份与可选通知，其余模板配置保持不变。 */
 export const useApplicationTemplateParameters = (
   getDetail: () => BusinessApplicationTemplate,
   persist: (configuration: ApplicationTemplateConfiguration) => Promise<boolean>,
   messages: ParameterMessages,
 ) => {
   const redirectUri = ref('')
-  const notification = reactive({ enabled: false, address: '', keyId: '', publicKey: '' })
+  const notification = reactive({ enabled: false, address: '' })
+  const credential = reactive({ keyId: '', publicKey: '' })
   const platformId = ref('')
   const parameters = ref<ApplicationTemplateParameterDraft[]>([])
   const saving = ref(false)
@@ -61,10 +62,11 @@ export const useApplicationTemplateParameters = (
   const reset = () => {
     redirectUri.value = String(getDetail().configuration?.redirectUri || '').trim()
     const savedNotification = getDetail().configuration?.notification
+    const savedCredential = getDetail().configuration?.credential ?? savedNotification
     notification.enabled = !!savedNotification
     notification.address = savedNotification?.address || ''
-    notification.keyId = savedNotification?.keyId || ''
-    notification.publicKey = savedNotification?.publicKey || ''
+    credential.keyId = savedCredential?.keyId || ''
+    credential.publicKey = savedCredential?.publicKey || ''
     platformId.value = String(getDetail().configuration?.platformId || '').trim()
     const declared = getDetail().configuration?.externalParameters
     parameters.value = Array.isArray(declared)
@@ -129,8 +131,10 @@ export const useApplicationTemplateParameters = (
       return false
     }
     const notificationAddress = notification.address.trim()
-    if (notification.enabled && (!isHttpExternalApplicationUrl(notificationAddress)
-      || !notification.keyId.trim() || !notification.publicKey.trim())) {
+    const keyId = credential.keyId.trim()
+    const publicKey = credential.publicKey.trim()
+    if ((notification.enabled && !isHttpExternalApplicationUrl(notificationAddress))
+      || ((notification.enabled || keyId || publicKey) && (!keyId || !publicKey))) {
       error.value = messages.invalidNotification
       return false
     }
@@ -142,12 +146,12 @@ export const useApplicationTemplateParameters = (
     if (notification.enabled) {
       configuration.notification = {
         address: notificationAddress,
-        keyId: notification.keyId.trim(),
-        publicKey: notification.publicKey.trim(),
       }
     } else {
       delete configuration.notification
     }
+    if (keyId && publicKey) configuration.credential = { keyId, publicKey }
+    else delete configuration.credential
     // 留空保留后端“默认模板 ID”规则，不把默认值固化到模板。
     if (identity) configuration.platformId = identity
     else delete configuration.platformId
@@ -167,6 +171,7 @@ export const useApplicationTemplateParameters = (
   return {
     redirectUri,
     notification,
+    credential,
     platformId,
     parameters,
     supported,

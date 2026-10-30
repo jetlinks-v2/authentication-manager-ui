@@ -125,10 +125,12 @@ export const resolveSystemBulletinNoticeTexts = async (
       || resolveAnnouncementText(snapshot, 'summary')
       || resolveAnnouncementText(snapshot, 'content')
       || String(record.message || '').trim()
-    const type = normalizeBulletinType(loadedDetail?.type || snapshot?.type, 'default')
-    const typeText = loadedDetail?.typeText || resolveAnnouncementTypeLabel(
+    // 新接收接口直接返回 type；历史通知才回退到正文或快照，避免被统一“公告”分类替代。
+    const type = normalizeBulletinType(record.type || loadedDetail?.type || snapshot?.type, 'default')
+    const typeText = resolveAnnouncementTypeLabel(
       type,
-      resolveAnnouncementText(snapshot, 'type'),
+      String(record.typeText || (typeof record.type === 'object' ? record.type?.text : '')
+        || loadedDetail?.typeText || resolveAnnouncementText(snapshot, 'type') || ''),
     )
     const localizedDetail = loadedDetail
       ? {
@@ -143,6 +145,8 @@ export const resolveSystemBulletinNoticeTexts = async (
       ...(localizedDetail ? { detail: localizedDetail, detailJson: JSON.stringify(localizedDetail) } : {}),
       topicName: title,
       message: summary,
+      type,
+      typeText,
       noticeTag: typeText,
       noticeIcon: resolveBulletinTypeIcon(type),
       noticeIconColor: resolveBulletinTypeColor(type),
