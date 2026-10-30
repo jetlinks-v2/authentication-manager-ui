@@ -61,10 +61,11 @@ export const useApplicationTemplateParameters = (
   const reset = () => {
     redirectUri.value = String(getDetail().configuration?.redirectUri || '').trim()
     const savedNotification = getDetail().configuration?.notification
+    const savedCredential = getDetail().configuration?.credential ?? savedNotification
     notification.enabled = !!savedNotification
     notification.address = savedNotification?.address || ''
-    notification.keyId = savedNotification?.keyId || ''
-    notification.publicKey = savedNotification?.publicKey || ''
+    notification.keyId = savedCredential?.keyId || ''
+    notification.publicKey = savedCredential?.publicKey || ''
     platformId.value = String(getDetail().configuration?.platformId || '').trim()
     const declared = getDetail().configuration?.externalParameters
     parameters.value = Array.isArray(declared)
@@ -129,8 +130,10 @@ export const useApplicationTemplateParameters = (
       return false
     }
     const notificationAddress = notification.address.trim()
-    if (notification.enabled && (!isHttpExternalApplicationUrl(notificationAddress)
-      || !notification.keyId.trim() || !notification.publicKey.trim())) {
+    const keyId = notification.keyId.trim()
+    const publicKey = notification.publicKey.trim()
+    if ((notification.enabled && !isHttpExternalApplicationUrl(notificationAddress))
+      || ((notification.enabled || keyId || publicKey) && (!keyId || !publicKey))) {
       error.value = messages.invalidNotification
       return false
     }
@@ -142,12 +145,12 @@ export const useApplicationTemplateParameters = (
     if (notification.enabled) {
       configuration.notification = {
         address: notificationAddress,
-        keyId: notification.keyId.trim(),
-        publicKey: notification.publicKey.trim(),
       }
     } else {
       delete configuration.notification
     }
+    if (keyId && publicKey) configuration.credential = { keyId, publicKey }
+    else delete configuration.credential
     // 留空保留后端“默认模板 ID”规则，不把默认值固化到模板。
     if (identity) configuration.platformId = identity
     else delete configuration.platformId

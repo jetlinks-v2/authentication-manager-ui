@@ -1,5 +1,7 @@
 # Authentication Manager UI
 
+第三方应用模板的 RSA keyId、公钥保存在 `configuration.credential`，可在关闭通知时独立维护，用于应用凭据主动获取与加密交付。通知开关只维护 `configuration.notification.address`；读取兼容旧 notification 内的 RSA 字段，保存时迁移为统一 credential，关闭通知不会删除公钥。
+
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.
 
 ## Application ownership filter

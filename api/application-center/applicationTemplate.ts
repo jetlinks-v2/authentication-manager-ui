@@ -17,10 +17,12 @@ export type I18nMessages = Record<string, Record<string, string>>
 export interface ApplicationTemplateConfiguration extends Record<string, unknown> {
   redirectUri?: string
   platformId?: string
+  credential?: { keyId: string; publicKey: string }
   notification?: {
     address: string
-    keyId: string
-    publicKey: string
+    /** 历史配置只读兼容，保存时迁移到 credential。 */
+    keyId?: string
+    publicKey?: string
   }
 }
 

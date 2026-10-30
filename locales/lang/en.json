@@ -1542,7 +1542,7 @@
   "ProjectApplication.permission.projectSettings": "Project Settings",
   "ProjectApplication.permission.roleManagement": "Role Management",
   "ApplicationTemplate.signature.title": "Notification signing credentials",
-  "ApplicationTemplate.signature.encryptionTitle": "Application credential encryption (RSA)",
+  "ApplicationTemplate.signature.encryptionTitle": "Application credential access and encryption (RSA, independent of notifications)",
   "ApplicationTemplate.signature.tip": "Notification credentials are derived for a separate purpose from platform and template keys. No separate generation or reset is required. Redistribute current credentials through a trusted channel after platform or template key version changes. Application credential rotation does not change notification signing.",
   "ApplicationTemplate.signature.status": "Credential status",
   "ApplicationTemplate.signature.configured": "Available",
@@ -2658,7 +2658,7 @@
   "ApplicationTemplate.parameters.notificationKeyId": "RSA receiver key ID",
   "ApplicationTemplate.parameters.notificationPublicKey": "RSA receiver public key (SPKI)",
   "ApplicationTemplate.parameters.notificationTip": "Notifications use signed delivery to synchronize users, roles and relations. The RSA public key only encrypts application credentials. Generate HMAC signing credentials separately below and share them with the receiver. No third-party OAuth2 token endpoint is required.",
-  "ApplicationTemplate.parameters.invalidNotification": "Enter a valid HTTP(S) notification URL, credential encryption key ID and RSA public key.",
+  "ApplicationTemplate.parameters.invalidNotification": "Enter both the key ID and RSA public key. A valid HTTP(S) URL is also required when notifications are enabled.",
   "runtimeLog": {
     "wrap": "Wrap lines",
     "noEvents": "No live logs yet. Start a subscription or wait for new events.",

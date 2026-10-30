@@ -42,6 +42,13 @@
         </div>
         <EmptyCreateButton v-if="canUpdate" />
       </div>
+      <h3>{{ $t('ApplicationTemplate.signature.encryptionTitle') }}</h3>
+      <a-form-item :label="$t('ApplicationTemplate.parameters.notificationKeyId')">
+        <a-input v-model:value="state.notification.keyId" />
+      </a-form-item>
+      <a-form-item :label="$t('ApplicationTemplate.parameters.notificationPublicKey')">
+        <a-textarea v-model:value="state.notification.publicKey" :rows="5" />
+      </a-form-item>
       <a-form-item :label="$t('ApplicationTemplate.parameters.notificationEnabled')">
         <a-switch v-model:checked="state.notification.enabled" />
       </a-form-item>
@@ -49,13 +56,6 @@
         <a-alert type="info" show-icon :message="$t('ApplicationTemplate.parameters.notificationTip')" />
         <a-form-item :label="$t('ApplicationTemplate.parameters.notificationAddress')" required>
           <a-input v-model:value="state.notification.address" />
-        </a-form-item>
-        <h3>{{ $t('ApplicationTemplate.signature.encryptionTitle') }}</h3>
-        <a-form-item :label="$t('ApplicationTemplate.parameters.notificationKeyId')" required>
-          <a-input v-model:value="state.notification.keyId" />
-        </a-form-item>
-        <a-form-item :label="$t('ApplicationTemplate.parameters.notificationPublicKey')" required>
-          <a-textarea v-model:value="state.notification.publicKey" :rows="5" />
         </a-form-item>
         <h3>{{ $t('ApplicationTemplate.signature.title') }}</h3>
         <p>{{ $t('ApplicationTemplate.signature.tip') }}</p>
