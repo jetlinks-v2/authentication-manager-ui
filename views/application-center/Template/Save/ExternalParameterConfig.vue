@@ -83,8 +83,8 @@
       <a-alert v-if="signature.error.value" type="error" show-icon :message="signature.error.value" />
       <a-form v-if="signature.draft.value" layout="vertical" :disabled="signature.saving.value">
         <a-alert type="warning" show-icon :message="$t('ApplicationTemplate.signature.editTip')" />
-        <a-form-item :label="$t('ApplicationTemplate.signature.keyId')">
-          <a-typography-text copyable :content="signature.draft.value.keyId">{{ signature.draft.value.keyId }}</a-typography-text>
+        <a-form-item :label="$t('ApplicationTemplate.signature.keyId')" :extra="$t('ApplicationTemplate.signature.keyIdTip')" required>
+          <a-input v-model:value="signature.draft.value.keyId" :maxlength="128" />
         </a-form-item>
         <a-form-item :label="$t('ApplicationTemplate.signature.secret')" :extra="$t('ApplicationTemplate.signature.invalidSecret')" required>
           <a-input-password v-model:value="signature.draft.value.secret" :maxlength="256" autocomplete="new-password" />

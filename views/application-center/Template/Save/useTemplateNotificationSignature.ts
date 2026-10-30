@@ -88,6 +88,10 @@ export const useTemplateNotificationSignature = (getTemplateId: () => string) =>
   const save = async () => {
     const id = getTemplateId()
     if (!id || !draft.value || loading.value || saving.value) return false
+    if (!/^[A-Za-z0-9._:-]{1,128}$/.test(draft.value.keyId) || draft.value.keyId.startsWith('notification-v1:')) {
+      error.value = t('ApplicationTemplate.signature.invalidKeyId')
+      return false
+    }
     if (!/^[\x21-\x7e]{32,256}$/.test(draft.value.secret)) {
       error.value = t('ApplicationTemplate.signature.invalidSecret')
       return false

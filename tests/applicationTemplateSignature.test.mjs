@@ -58,6 +58,16 @@ test('prepares a fresh keyId before switching and saves the exact supplied Secre
   scope.stop()
 })
 
+test('accepts the receivers preconfigured keyId and Secret without replacing either value', async () => {
+  const { state, writes, scope } = await fixture()
+  state.edit()
+  state.draft.value = { keyId: 'partner-prod-key-2026', secret: 'partner-preconfigured-secret-at-least-32-characters' }
+  assert.equal(await state.save(), true)
+  assert.deepEqual(writes, [{ id: 'template-first', credential: { keyId: 'partner-prod-key-2026', secret: 'partner-preconfigured-secret-at-least-32-characters' } }])
+  assert.equal(state.status.value.keyId, 'partner-prod-key-2026')
+  scope.stop()
+})
+
 test('rejects invalid drafts and keeps valid drafts after a failed write', async () => {
   const { state, writes, scope } = await fixture()
   state.edit()
@@ -67,6 +77,14 @@ test('rejects invalid drafts and keeps valid drafts after a failed write', async
   }
   assert.equal(writes.length, 0)
   state.draft.value.secret = 'A'.repeat(32)
+  const validId = state.draft.value.keyId
+  for (const id of ['', 'bad key', 'bad\r\nheader', 'A'.repeat(129), 'notification-v1:1:template:1']) {
+    state.draft.value.keyId = id
+    assert.equal(await state.save(), false)
+    assert.equal(state.error.value, 'ApplicationTemplate.signature.invalidKeyId')
+  }
+  assert.equal(writes.length, 0)
+  state.draft.value.keyId = validId
   globalThis.notificationSignatureFixture.save = async () => { throw new Error('offline') }
   assert.equal(await state.save(), false)
   assert.equal(state.draft.value.secret, 'A'.repeat(32))

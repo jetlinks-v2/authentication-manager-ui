@@ -1555,6 +1555,8 @@
   "ApplicationTemplate.signature.configured": "可查看",
   "ApplicationTemplate.signature.notConfigured": "不可用",
   "ApplicationTemplate.signature.keyId": "通知签名 keyId",
+  "ApplicationTemplate.signature.keyIdTip": "默认自动生成，可改为第三方已配置的标识；修改 Secret 时需使用新 keyId。",
+  "ApplicationTemplate.signature.invalidKeyId": "keyId 需为 1–128 个字母、数字、点、下划线、冒号或连字符，不能以 notification-v1: 开头。",
   "ApplicationTemplate.signature.reveal": "查看当前凭据",
   "ApplicationTemplate.signature.refresh": "刷新状态",
   "ApplicationTemplate.signature.secretTip": "请通过安全渠道将 keyId 和 Secret 交给接收方，并使用 HTTPS 接收通知。不要写入通知正文或日志。关闭弹窗后不保留明文，可再次主动查看。",
