@@ -44,10 +44,10 @@
       </div>
       <h3>{{ $t('ApplicationTemplate.signature.encryptionTitle') }}</h3>
       <a-form-item :label="$t('ApplicationTemplate.parameters.notificationKeyId')">
-        <a-input v-model:value="state.notification.keyId" />
+        <a-input v-model:value="state.credential.keyId" />
       </a-form-item>
       <a-form-item :label="$t('ApplicationTemplate.parameters.notificationPublicKey')">
-        <a-textarea v-model:value="state.notification.publicKey" :rows="5" />
+        <a-textarea v-model:value="state.credential.publicKey" :rows="5" />
       </a-form-item>
       <a-form-item :label="$t('ApplicationTemplate.parameters.notificationEnabled')">
         <a-switch v-model:checked="state.notification.enabled" />
