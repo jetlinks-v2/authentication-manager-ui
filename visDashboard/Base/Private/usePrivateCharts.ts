@@ -32,7 +32,8 @@ export function usePrivateCharts(trend: Ref<PrivateTrend | undefined>, alarms: R
         const values = new Map(series.points.map(point => [dayjs(point.timestamp).format(daily ? 'HH:00' : 'MM-DD'), point.value]))
         return {
           name: t(series.labelKey), type: daily ? 'line' : 'bar',
-          data: labels.map((label, hour) => daily && series.id === 'today' && hour >= now.hour() ? null : values.get(label) ?? 0),
+          // 当前小时的部分统计已经包含在合计中；仅未来小时不显示为零。
+          data: labels.map((label, hour) => daily && series.id === 'today' && hour > now.hour() ? null : values.get(label) ?? 0),
           showSymbol: false, connectNulls: false, barMaxWidth: 36,
           lineStyle: { width: 2 }, itemStyle: { color: series.id === 'yesterday' ? token.value.colorTextQuaternary : token.value.colorPrimary },
           areaStyle: daily && series.id === 'today' ? { opacity: .07 } : undefined,

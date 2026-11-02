@@ -10,14 +10,16 @@
 </template>
 
 <script setup lang="ts">
+import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { HomeInfo } from '../shared/types'
 import HomeView from './components/HomeView.vue'
 import { useQuickGuideSteps } from './useQuickGuideSteps'
+import { quickGuideContextKey } from './quickGuideContext'
 
 const props = withDefaults(defineProps<{ info?: HomeInfo; isEdit?: boolean }>(), { isEdit: false })
 const { t } = useI18n()
-const { available, steps, handleAction } = useQuickGuideSteps(() => props.isEdit)
+const { available, steps, handleAction } = inject(quickGuideContextKey, undefined) ?? useQuickGuideSteps(() => props.isEdit)
 </script>
 
 <style scoped lang="less">

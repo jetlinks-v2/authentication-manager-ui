@@ -10,8 +10,8 @@ const {outputFiles}=await build({stdin:{contents:['PrivateAccess','PrivateKpis',
  b.onResolve({filter:/\.vue$/},a=> /HomeIcon|PrivatePanel/.test(a.path)?{path:a.path,namespace:'stub'}:{path:path.resolve(a.resolveDir,a.path),namespace:'vue'})
  b.onLoad({filter:/.*/,namespace:'vue'},a=>{const {descriptor,errors}=parse(readFileSync(a.path,'utf8'),{filename:a.path});if(errors.length)throw errors[0];return {contents:compileScript(descriptor,{id:a.path,inlineTemplate:true}).content,loader:'ts',resolveDir:path.dirname(a.path)}})
  b.onLoad({filter:/.*/,namespace:'stub'},a=>({contents:a.path.includes('PrivatePanel')?`import {h} from 'vue'; export default {setup(_,{slots}){return ()=>h('section',[slots.title?.(),slots.actions?.(),slots.default?.()])}}`:`export default {render:()=>null}`,loader:'js'}))
- b.onResolve({filter:/^(vue-i18n|@ant-design\/icons-vue)$/},a=>({path:a.path,namespace:'js'}))
- b.onLoad({filter:/.*/,namespace:'js'},a=>({contents:a.path==='vue-i18n'?`export const useI18n=()=>({t:k=>k})`:`export const CheckOutlined={render:()=>null}; export const RightOutlined={render:()=>null}`,loader:'js'}))
+ b.onResolve({filter:/^(vue-i18n|@ant-design\/icons-vue|@jetlinks-web\/components)$/},a=>({path:a.path,namespace:'js'}))
+ b.onLoad({filter:/.*/,namespace:'js'},a=>({contents:a.path==='vue-i18n'?`export const useI18n=()=>({t:k=>k})`:a.path==='@jetlinks-web/components'?`import {h} from 'vue'; export const AIcon={props:['type'],render(){return h('i',{'data-icon':this.type})}}`:`export const CheckOutlined={render:()=>null}; export const RightOutlined={render:()=>null}`,loader:'js'}))
 }}]})
 const mod={exports:{}}; Function('module','exports','require',outputFiles[0].text)(mod,mod.exports,require)
 async function render(component,props){const app=vue.createSSRApp({render:()=>vue.h(component,props)});app.component('a-button',{render(){return vue.h('button',this.$slots.default?.())}});return renderToString(app)}
@@ -21,8 +21,8 @@ test('fresh iot-only guide distinguishes unknown without a partial-failure messa
  assert.match(html,/iot/);assert.match(html,/is-unknown/);assert.match(html,/—/);assert.doesNotMatch(html,/privateOverview.metricUnknown/);assert.doesNotMatch(html,/privateOverview.retry/);assert.doesNotMatch(html,/action-device/);assert.doesNotMatch(html,/video/)
 })
 test('complete guide changes to real quick actions',async()=>{
- const html=await render(mod.exports.PrivateAccess,{guide:{show:false,lanes:[],complete:2,total:2},actions:[{id:'device',label:'Add device',description:'Connect',target:{menus:['device']}}],canOpen:()=>true})
- assert.match(html,/Add device/);assert.match(html,/Connect/);assert.doesNotMatch(html,/private-guide-step/)
+ const html=await render(mod.exports.PrivateAccess,{guide:{show:false,lanes:[],complete:2,total:2},actions:[{id:'device',label:'Add device',description:'Connect',icon:'icon-shebei',target:{menus:['device']}}],canOpen:()=>true})
+ assert.match(html,/data-icon="icon-shebei"/);assert.match(html,/Add device/);assert.match(html,/Connect/);assert.doesNotMatch(html,/private-guide-step/)
 })
 test('zero and failed KPI remain distinguishable in the same row',async()=>{
  const html=await render(mod.exports.PrivateKpis,{rows:[{id:'devices',labelKey:'devices',value:0,unitKey:'units'},{id:'screen',labelKey:'screen',failed:true,unitKey:'units'}],canOpen:()=>true})

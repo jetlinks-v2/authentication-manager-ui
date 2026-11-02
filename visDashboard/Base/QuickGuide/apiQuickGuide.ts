@@ -1,7 +1,9 @@
 import { request } from '@jetlinks-web/core'
 import { countOf, recordOf, rowsOf, textOf } from '../shared/apiResult'
-import type { HomeRow } from '../shared/types'
+import type { HomeRow, HomeTarget } from '../shared/types'
 import { resourceRowAvailable } from '../shared/resources'
+import { HOME_TARGETS } from '../shared/navigation'
+import { getSaasGrantedMenus, hasSaasTarget } from '../Saas/services/access'
 
 const collectSpaceIds = (rows: Record<string, unknown>[]): string[] => rows.flatMap(row => [
   textOf(row.id),
@@ -20,12 +22,13 @@ async function loadSpaceBindings(): Promise<number> {
 
 /** 配置告警按视觉告警工作台的聚合任务判断，不以是否产生过告警作为完成条件。 */
 export async function loadQuickGuideRows(): Promise<HomeRow[]> {
-  const loaders: [string, () => Promise<number>][] = [
-    ['space', loadSpaceBindings],
-    ['alarm', async () => countOf(await request.post('/ai/aggregate/task/_count', {}, { hiddenError: true }))],
+  const menus = getSaasGrantedMenus()
+  const loaders: [string, HomeTarget, () => Promise<number>][] = [
+    ['space', HOME_TARGETS.space, loadSpaceBindings],
+    ['alarm', HOME_TARGETS.visionAlarm, async () => countOf(await request.post('/ai/aggregate/task/_count', {}, { hiddenError: true }))],
   ]
   // 单项失败只影响对应步骤，不能清空另一项已查到的配置状态。
-  return Promise.all(loaders.filter(([id]) => resourceRowAvailable({ id })).map(async ([id, load]) => {
+  return Promise.all(loaders.filter(([id, target]) => resourceRowAvailable({ id }) && hasSaasTarget(menus, target)).map(async ([id, _target, load]) => {
     try { return { id, value: await load() } } catch { return { id, failed: true } }
   }))
 }

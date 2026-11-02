@@ -1,15 +1,19 @@
-import { computed, defineAsyncComponent, markRaw, ref, watch, type Component, type Ref } from 'vue'
+import { computed, defineAsyncComponent, markRaw, provide, ref, watch, type Component, type Ref } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import type { DashboardCatalog, DashboardComponentDefinition, DashboardValue } from '@jetlinks-web-core/components/DashBoardCanvas'
 import { useResourceCapabilities } from '../../../visDashboard/ResourceCenter/hooks/useResourceCapabilities'
 import { getSaasGrantedMenus, getSaasOverviewAccess, hasSaasTarget } from '../../../visDashboard/Base/Saas/services/access'
 import { HOME_TARGETS } from '../../../visDashboard/Base/shared/navigation'
 import { createDefaults } from '../../../visDashboard/Base/shared/config'
+import type { createHomePolling } from '../../../visDashboard/Base/shared/homePolling'
 import type { HomeFeature } from '../../../visDashboard/Base/shared/types'
+import { useQuickGuideSteps } from '../../../visDashboard/Base/QuickGuide/useQuickGuideSteps'
+import { quickGuideContextKey } from '../../../visDashboard/Base/QuickGuide/quickGuideContext'
 import { buildSaasOverviewLayout, migrateSaasOverviewLayout, saasOverviewGrid, saasOverviewLayoutStorageKey, type SaasOverviewFeature } from './saasOverviewLayout'
 
 const componentLoaders = {
   SaasSummary: () => import('./SaasSummary.vue'),
+  QuickGuide: () => import('../../../visDashboard/Base/QuickGuide/ProjectHomeQuickGuide.vue'),
   SaasResources: () => import('../../../visDashboard/Base/Saas/SaasResources.vue'),
   SaasToday: () => import('../../../visDashboard/Base/Saas/SaasToday.vue'),
   SaasQuotas: () => import('../../../visDashboard/Base/Saas/SaasQuotas.vue'),
@@ -20,12 +24,15 @@ const componentLoaders = {
 }
 
 /** 按授权装配实时卡片；欢迎信息和业务卡片统一由画布承接个人布局。 */
-export function useSaasOverviewDashboard(host: Ref<HTMLElement | undefined>) {
+export function useSaasOverviewDashboard(host: Ref<HTMLElement | undefined>, polling?: ReturnType<typeof createHomePolling>) {
   const { width } = useElementSize(host)
   const layoutWidth = ref(0)
   // 首次拿到实际宽度后再挂载；页面暂时隐藏时保留上一宽度，不切换错误的布局缓存。
   watch(width, value => { if (value > 0) layoutWidth.value = Math.round(value) }, { immediate: true })
   const capabilities = useResourceCapabilities(ref(false))
+  // 当前组件无法 inject 自己 provide 的值，显式传入页面轮询以共享资源和应用请求。
+  const guide = useQuickGuideSteps(() => false, polling)
+  provide(quickGuideContextKey, guide)
   const access = computed(() => getSaasOverviewAccess())
   const menus = computed(() => getSaasGrantedMenus())
   const showQuotas = computed(() => hasSaasTarget(menus.value, HOME_TARGETS.usage))
@@ -53,7 +60,9 @@ export function useSaasOverviewDashboard(host: Ref<HTMLElement | undefined>) {
     }),
   ) }
   const features = computed<SaasOverviewFeature[]>(() => [
-      'SaasSummary', 'SaasRecent',
+      'SaasSummary',
+      ...(guide.showGuide.value ? ['QuickGuide' as const] : []),
+      'SaasRecent',
       ...(access.value.showResources ? ['SaasResources' as const] : []),
       ...(access.value.showToday ? ['SaasToday' as const] : []),
       ...(showQuotas.value ? ['SaasQuotas' as const] : []),

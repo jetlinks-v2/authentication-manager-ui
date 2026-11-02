@@ -19,11 +19,11 @@ import { useSaasOverviewDashboard } from './useSaasOverviewDashboard'
 import SaasOverviewLayout from './SaasOverviewLayout.vue'
 import PrivateOverviewLayout from './PrivateOverviewLayout.vue'
 
-provideHomePolling()
+const polling = provideHomePolling()
 const { t } = useI18n()
-// 部署分支在装配前隔离，私有化不启动 SaaS 数据或旧画布的轮询。
+// 部署分支在装配前隔离，私有化不启动 SaaS 数据或旧组件的轮询。
 const overviewHost = ref<HTMLElement>()
-const saas = isSaaS ? useSaasOverviewDashboard(overviewHost) : undefined
+const saas = isSaaS ? useSaasOverviewDashboard(overviewHost, polling) : undefined
 </script>
 <style scoped>
 .project-overview {
@@ -46,16 +46,5 @@ const saas = isSaaS ? useSaasOverviewDashboard(overviewHost) : undefined
   --business-component-primary: var(--accent, #1677ff);
   --home-card-surface: var(--bg-sunken, #f7f9fc);
 }
-/* 概览跟随网格内容自然撑高，由外层页面滚动，不在画布内创建第二个滚动容器。 */
-.project-overview :deep(.dashboard-card-layout),
-.project-overview :deep(.dashboard-card-content) {
-  height: auto;
-  overflow: visible;
-}
-.project-overview :deep(.dashboard-card-content) {
-  scrollbar-gutter: auto;
-}
-.project-overview :deep(.dashboard-grid) {
-  min-height: 0;
-}
 </style>
+<style scoped lang="less" src="./overviewCanvas.less"></style>
