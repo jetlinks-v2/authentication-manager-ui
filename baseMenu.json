@@ -7,7 +7,9 @@
       "name": {
         "zh_CN": "概览",
         "en_US": "Overview",
-        "en": "Overview"
+        "en": "Overview",
+        "ja": "概要",
+        "ja_JP": "概要"
       }
     },
     "id": "project-overview",
@@ -48,7 +50,9 @@
       "name": {
         "zh_CN": "资源中心",
         "en_US": "Resources",
-        "en": "Resources"
+        "en": "Resources",
+        "ja": "リソースセンター",
+        "ja_JP": "リソースセンター"
       }
     },
     "id": "jetlinks-resource",
@@ -66,7 +70,9 @@
           "name": {
             "zh_CN": "仪表盘",
             "en_US": "Dashboard",
-            "en": "Dashboard"
+            "en": "Dashboard",
+            "ja": "ダッシュボード",
+            "ja_JP": "ダッシュボード"
           }
         },
         "id": "resources-dashboard",
@@ -109,7 +115,9 @@
       "name": {
         "zh_CN": "系统设置",
         "en_US": "System Settings",
-        "en": "System Settings"
+        "en": "System Settings",
+        "ja": "システム設定",
+        "ja_JP": "システム設定"
       }
     },
     "id": "fd1670b860ae58cc58bcd01d027ccd35",
@@ -126,7 +134,9 @@
           "name": {
             "zh_CN": "基础配置",
             "en_US": "Basic Info",
-            "en": "Basic Info"
+            "en": "Basic Info",
+            "ja": "基本情報",
+            "ja_JP": "基本情報"
           }
         },
         "owner": "iot",
@@ -150,7 +160,9 @@
             "i18nMessages": {
               "zh_CN": "查看",
               "en_US": "View",
-              "en": "View"
+              "en": "View",
+              "ja": "表示",
+              "ja_JP": "表示"
             },
             "permissions": [
               {
@@ -167,7 +179,9 @@
             "i18nMessages": {
               "zh_CN": "保存",
               "en_US": "Save",
-              "en": "Save"
+              "en": "Save",
+              "ja": "保存",
+              "ja_JP": "保存"
             },
             "permissions": [
               {
@@ -200,7 +214,9 @@
           "name": {
             "zh_CN": "组织与用户",
             "en_US": "Org & Users",
-            "en": "Org & Users"
+            "en": "Org & Users",
+            "ja": "組織とユーザー",
+            "ja_JP": "組織とユーザー"
           }
         },
         "id": "fe2e589bcf09a5353cbb5bebeb0b7f1c",
@@ -215,7 +231,9 @@
               "name": {
                 "zh_CN": "角色管理",
                 "en_US": "Role Management",
-                "en": "Role Management"
+                "en": "Role Management",
+                "ja": "ロール管理",
+                "ja_JP": "ロール管理"
               }
             },
             "owner": "iot",
@@ -241,7 +259,9 @@
                 "i18nMessages": {
                   "zh_CN": "删除",
                   "en_US": "Delete",
-                  "en": "Delete"
+                  "en": "Delete",
+                  "ja": "削除",
+                  "ja_JP": "削除"
                 },
                 "permissions": [
                   {
@@ -258,7 +278,9 @@
                 "i18nMessages": {
                   "zh_CN": "编辑",
                   "en_US": "Edit",
-                  "en": "Edit"
+                  "en": "Edit",
+                  "ja": "編集",
+                  "ja_JP": "編集"
                 },
                 "permissions": [
                   {
@@ -288,7 +310,9 @@
                 "i18nMessages": {
                   "zh_CN": "复制",
                   "en_US": "Copy",
-                  "en": "Copy"
+                  "en": "Copy",
+                  "ja": "コピー",
+                  "ja_JP": "コピー"
                 },
                 "permissions": [
                   {
@@ -318,7 +342,9 @@
                 "i18nMessages": {
                   "zh_CN": "新增",
                   "en_US": "Add",
-                  "en": "Add"
+                  "en": "Add",
+                  "ja": "追加",
+                  "ja_JP": "追加"
                 },
                 "permissions": [
                   {
@@ -348,7 +374,9 @@
                 "i18nMessages": {
                   "zh_CN": "查看",
                   "en_US": "View",
-                  "en": "View"
+                  "en": "View",
+                  "ja": "表示",
+                  "ja_JP": "表示"
                 },
                 "permissions": [
                   {
@@ -380,7 +408,9 @@
               "name": {
                 "zh_CN": "组织管理",
                 "en_US": "Organization Management",
-                "en": "Organization Management"
+                "en": "Organization Management",
+                "ja": "組織管理",
+                "ja_JP": "組織管理"
               }
             },
             "owner": "iot",
@@ -399,7 +429,9 @@
                 "i18nMessages": {
                   "zh_CN": "查看",
                   "en_US": "View",
-                  "en": "View"
+                  "en": "View",
+                  "ja": "表示",
+                  "ja_JP": "表示"
                 },
                 "permissions": [
                   {
@@ -440,7 +472,9 @@
                 "i18nMessages": {
                   "zh_CN": "资产解绑",
                   "en_US": "Assets Unbind",
-                  "en": "Assets Unbind"
+                  "en": "Assets Unbind",
+                  "ja": "資産の関連付けを解除",
+                  "ja_JP": "資産の関連付けを解除"
                 },
                 "permissions": [
                   {
@@ -482,7 +516,9 @@
                 "i18nMessages": {
                   "zh_CN": "绑定用户",
                   "en_US": "Bind User",
-                  "en": "Bind User"
+                  "en": "Bind User",
+                  "ja": "ユーザーを関連付け",
+                  "ja_JP": "ユーザーを関連付け"
                 },
                 "permissions": [
                   {
@@ -525,7 +561,9 @@
                 "i18nMessages": {
                   "zh_CN": "资产分配",
                   "en_US": "Assets Allocation",
-                  "en": "Assets Allocation"
+                  "en": "Assets Allocation",
+                  "ja": "資産の割り当て",
+                  "ja_JP": "資産の割り当て"
                 },
                 "permissions": [
                   {
@@ -570,7 +608,9 @@
                 "i18nMessages": {
                   "zh_CN": "删除",
                   "en_US": "Delete",
-                  "en": "Delete"
+                  "en": "Delete",
+                  "ja": "削除",
+                  "ja_JP": "削除"
                 },
                 "permissions": [
                   {
@@ -611,7 +651,9 @@
                 "i18nMessages": {
                   "zh_CN": "编辑",
                   "en_US": "Edit",
-                  "en": "Edit"
+                  "en": "Edit",
+                  "ja": "編集",
+                  "ja_JP": "編集"
                 },
                 "permissions": [
                   {
@@ -653,7 +695,9 @@
                 "i18nMessages": {
                   "zh_CN": "新增",
                   "en_US": "Add",
-                  "en": "Add"
+                  "en": "Add",
+                  "ja": "追加",
+                  "ja_JP": "追加"
                 },
                 "permissions": [
                   {
@@ -695,7 +739,9 @@
                 "i18nMessages": {
                   "zh_CN": "绑定职位",
                   "en_US": "Bind Position",
-                  "en": "Bind Position"
+                  "en": "Bind Position",
+                  "ja": "役職を関連付け",
+                  "ja_JP": "役職を関連付け"
                 },
                 "permissions": [
                   {
@@ -713,7 +759,9 @@
                 "i18nMessages": {
                   "zh_CN": "删除职位",
                   "en_US": "Delete Position",
-                  "en": "Delete Position"
+                  "en": "Delete Position",
+                  "ja": "役職を削除",
+                  "ja_JP": "役職を削除"
                 },
                 "permissions": [
                   {
@@ -730,7 +778,9 @@
                 "i18nMessages": {
                   "zh_CN": "更新职位",
                   "en_US": "Update Position",
-                  "en": "Update Position"
+                  "en": "Update Position",
+                  "ja": "役職を更新",
+                  "ja_JP": "役職を更新"
                 },
                 "permissions": [
                   {
@@ -766,7 +816,9 @@
               "name": {
                 "zh_CN": "用户管理",
                 "en_US": "User Management",
-                "en": "User Management"
+                "en": "User Management",
+                "ja": "ユーザー管理",
+                "ja_JP": "ユーザー管理"
               }
             },
             "buttons": [
@@ -776,7 +828,9 @@
                 "i18nMessages": {
                   "zh_CN": "查看",
                   "en_US": "View",
-                  "en": "View"
+                  "en": "View",
+                  "ja": "表示",
+                  "ja_JP": "表示"
                 },
                 "permissions": [
                   {
@@ -793,7 +847,9 @@
                 "i18nMessages": {
                   "zh_CN": "启/禁用",
                   "en_US": "Enable/Disable",
-                  "en": "Enable/Disable"
+                  "en": "Enable/Disable",
+                  "ja": "有効化/無効化",
+                  "ja_JP": "有効化/無効化"
                 },
                 "permissions": [
                   {
@@ -812,7 +868,9 @@
                 "i18nMessages": {
                   "zh_CN": "删除",
                   "en_US": "Delete",
-                  "en": "Delete"
+                  "en": "Delete",
+                  "ja": "削除",
+                  "ja_JP": "削除"
                 },
                 "permissions": [
                   {
@@ -830,7 +888,9 @@
                 "i18nMessages": {
                   "zh_CN": "编辑",
                   "en_US": "Edit",
-                  "en": "Edit"
+                  "en": "Edit",
+                  "ja": "編集",
+                  "ja_JP": "編集"
                 },
                 "permissions": [
                   {
@@ -868,7 +928,9 @@
                 "i18nMessages": {
                   "zh_CN": "新增",
                   "en_US": "Add",
-                  "en": "Add"
+                  "en": "Add",
+                  "ja": "追加",
+                  "ja_JP": "追加"
                 },
                 "permissions": [
                   {
@@ -916,7 +978,9 @@
                 "i18nMessages": {
                   "zh_CN": "批量导出",
                   "en_US": "Export",
-                  "en": "Export"
+                  "en": "Export",
+                  "ja": "一括エクスポート",
+                  "ja_JP": "一括エクスポート"
                 },
                 "permissions": [
                   {
@@ -934,7 +998,9 @@
                 "i18nMessages": {
                   "zh_CN": "批量导入",
                   "en_US": "Import",
-                  "en": "Import"
+                  "en": "Import",
+                  "ja": "一括インポート",
+                  "ja_JP": "一括インポート"
                 },
                 "permissions": [
                   {
@@ -970,7 +1036,9 @@
           "name": {
             "zh_CN": "平台设置",
             "en_US": "Platform Settings",
-            "en": "Platform Settings"
+            "en": "Platform Settings",
+            "ja": "プラットフォーム設定",
+            "ja_JP": "プラットフォーム設定"
           }
         },
         "id": "fe2e589bcf09a5353cbb5adrgb0b715l",
@@ -985,7 +1053,9 @@
               "name": {
                 "zh_CN": "权限管理",
                 "en_US": "Permissions",
-                "en": "Permissions"
+                "en": "Permissions",
+                "ja": "権限管理",
+                "ja_JP": "権限管理"
               }
             },
             "owner": "iot",
@@ -1004,7 +1074,9 @@
                 "i18nMessages": {
                   "zh_CN": "查看",
                   "en_US": "View",
-                  "en": "View"
+                  "en": "View",
+                  "ja": "表示",
+                  "ja_JP": "表示"
                 },
                 "permissions": [
                   {
@@ -1021,7 +1093,9 @@
                 "i18nMessages": {
                   "zh_CN": "启/禁用",
                   "en_US": "Enable/Disable",
-                  "en": "Enable/Disable"
+                  "en": "Enable/Disable",
+                  "ja": "有効化/無効化",
+                  "ja_JP": "有効化/無効化"
                 },
                 "permissions": [
                   {
@@ -1039,7 +1113,9 @@
                 "i18nMessages": {
                   "zh_CN": "导出",
                   "en_US": "Export",
-                  "en": "Export"
+                  "en": "Export",
+                  "ja": "エクスポート",
+                  "ja_JP": "エクスポート"
                 },
                 "permissions": [
                   {
@@ -1056,7 +1132,9 @@
                 "i18nMessages": {
                   "zh_CN": "导入",
                   "en_US": "Import",
-                  "en": "Import"
+                  "en": "Import",
+                  "ja": "インポート",
+                  "ja_JP": "インポート"
                 },
                 "permissions": [
                   {
@@ -1080,7 +1158,9 @@
                 "i18nMessages": {
                   "zh_CN": "删除",
                   "en_US": "Delete",
-                  "en": "Delete"
+                  "en": "Delete",
+                  "ja": "削除",
+                  "ja_JP": "削除"
                 },
                 "permissions": [
                   {
@@ -1098,7 +1178,9 @@
                 "i18nMessages": {
                   "zh_CN": "编辑",
                   "en_US": "Edit",
-                  "en": "Edit"
+                  "en": "Edit",
+                  "ja": "編集",
+                  "ja_JP": "編集"
                 },
                 "permissions": [
                   {
@@ -1117,7 +1199,9 @@
                 "i18nMessages": {
                   "zh_CN": "新增",
                   "en_US": "Add",
-                  "en": "Add"
+                  "en": "Add",
+                  "ja": "追加",
+                  "ja_JP": "追加"
                 },
                 "permissions": [
                   {
@@ -1144,7 +1228,9 @@
               "name": {
                 "zh_CN": "菜单管理",
                 "en_US": "Menus",
-                "en": "Menus"
+                "en": "Menus",
+                "ja": "メニュー管理",
+                "ja_JP": "メニュー管理"
               }
             },
             "owner": "iot",
@@ -1163,7 +1249,9 @@
                 "i18nMessages": {
                   "zh_CN": "查看",
                   "en_US": "View",
-                  "en": "View"
+                  "en": "View",
+                  "ja": "表示",
+                  "ja_JP": "表示"
                 },
                 "permissions": [
                   {
@@ -1186,7 +1274,9 @@
                 "i18nMessages": {
                   "zh_CN": "编辑",
                   "en_US": "Edit",
-                  "en": "Edit"
+                  "en": "Edit",
+                  "ja": "編集",
+                  "ja_JP": "編集"
                 },
                 "permissions": [
                   {
@@ -1226,7 +1316,9 @@
                 "i18nMessages": {
                   "zh_CN": "删除",
                   "en_US": "Delete",
-                  "en": "Delete"
+                  "en": "Delete",
+                  "ja": "削除",
+                  "ja_JP": "削除"
                 },
                 "permissions": [
                   {
@@ -1245,7 +1337,9 @@
                 "i18nMessages": {
                   "zh_CN": "新增",
                   "en_US": "Add",
-                  "en": "Add"
+                  "en": "Add",
+                  "ja": "追加",
+                  "ja_JP": "追加"
                 },
                 "permissions": [
                   {
@@ -1293,7 +1387,9 @@
                     "name": {
                         "zh_CN": "应用管理",
                         "en_US": "Application Management",
-                        "en": "Application Management"
+                        "en": "Application Management",
+                        "ja": "アプリケーション管理",
+                        "ja_JP": "アプリケーション管理"
                     }
                 },
                 "owner": "iot",
@@ -1312,7 +1408,9 @@
                         "i18nMessages": {
                             "zh_CN": "删除",
                             "en_US": "Delete",
-                            "en": "Delete"
+                            "en": "Delete",
+                            "ja": "削除",
+                            "ja_JP": "削除"
                         },
                         "permissions": [
                             {
@@ -1330,7 +1428,9 @@
                         "i18nMessages": {
                             "zh_CN": "新增",
                             "en_US": "Add",
-                            "en": "Add"
+                            "en": "Add",
+                            "ja": "追加",
+                            "ja_JP": "追加"
                         },
                         "permissions": [
                             {
@@ -1368,7 +1468,9 @@
                         "i18nMessages": {
                             "zh_CN": "编辑",
                             "en_US": "Edit",
-                            "en": "Edit"
+                            "en": "Edit",
+                            "ja": "編集",
+                            "ja_JP": "編集"
                         },
                         "permissions": [
                             {
@@ -1406,7 +1508,9 @@
                         "i18nMessages": {
                             "zh_CN": "查看",
                             "en_US": "View",
-                            "en": "View"
+                            "en": "View",
+                            "ja": "表示",
+                            "ja_JP": "表示"
                         },
                         "permissions": [
                             {
@@ -1429,7 +1533,9 @@
                         "i18nMessages": {
                             "zh_CN": "启/禁用",
                             "en_US": "Enable/Disable",
-                            "en": "Enable/Disable"
+                            "en": "Enable/Disable",
+                            "ja": "有効化/無効化",
+                            "ja_JP": "有効化/無効化"
                         },
                         "permissions": [
                             {
@@ -1454,7 +1560,9 @@
               "name": {
                 "zh_CN": "数据字典",
                 "en_US": "Data Dict.",
-                "en": "Data Dict."
+                "en": "Data Dict.",
+                "ja": "データ辞書",
+                "ja_JP": "データ辞書"
               }
             },
             "owner": "iot",
@@ -1473,7 +1581,9 @@
                 "i18nMessages": {
                   "zh_CN": "新增",
                   "en_US": "Add",
-                  "en": "Add"
+                  "en": "Add",
+                  "ja": "追加",
+                  "ja_JP": "追加"
                 },
                 "permissions": [
                   {
@@ -1490,7 +1600,9 @@
                 "i18nMessages": {
                   "zh_CN": "删除",
                   "en_US": "Delete",
-                  "en": "Delete"
+                  "en": "Delete",
+                  "ja": "削除",
+                  "ja_JP": "削除"
                 },
                 "permissions": [
                   {
@@ -1507,7 +1619,9 @@
                 "i18nMessages": {
                   "zh_CN": "编辑",
                   "en_US": "Edit",
-                  "en": "Edit"
+                  "en": "Edit",
+                  "ja": "編集",
+                  "ja_JP": "編集"
                 },
                 "permissions": [
                   {
@@ -1524,7 +1638,9 @@
                 "i18nMessages": {
                   "zh_CN": "导入",
                   "en_US": "Import",
-                  "en": "Import"
+                  "en": "Import",
+                  "ja": "インポート",
+                  "ja_JP": "インポート"
                 },
                 "permissions": [
                   {
@@ -1541,7 +1657,9 @@
                 "i18nMessages": {
                   "zh_CN": "下载",
                   "en_US": "Download",
-                  "en": "Download"
+                  "en": "Download",
+                  "ja": "ダウンロード",
+                  "ja_JP": "ダウンロード"
                 },
                 "permissions": [
                   {
@@ -1558,7 +1676,9 @@
                 "i18nMessages": {
                   "zh_CN": "启用/禁用",
                   "en_US": "Enable/Disable",
-                  "en": "Enable/Disable"
+                  "en": "Enable/Disable",
+                  "ja": "有効化/無効化",
+                  "ja_JP": "有効化/無効化"
                 },
                 "permissions": [
                   {
@@ -1583,7 +1703,9 @@
               "name": {
                 "zh_CN": "日历维护",
                 "en_US": "Calendar Maintenance",
-                "en": "Calendar Maintenance"
+                "en": "Calendar Maintenance",
+                "ja": "カレンダーメンテナンス",
+                "ja_JP": "カレンダーメンテナンス"
               }
             },
             "owner": "iot",
@@ -1609,7 +1731,9 @@
                 "i18nMessages": {
                   "zh_CN": "新增",
                   "en_US": "Add",
-                  "en": "Add"
+                  "en": "Add",
+                  "ja": "追加",
+                  "ja_JP": "追加"
                 },
                 "permissions": [
                   {
@@ -1626,7 +1750,9 @@
                 "i18nMessages": {
                   "zh_CN": "编辑",
                   "en_US": "Edit",
-                  "en": "Edit"
+                  "en": "Edit",
+                  "ja": "編集",
+                  "ja_JP": "編集"
                 },
                 "permissions": [
                   {
@@ -1643,7 +1769,9 @@
                 "i18nMessages": {
                   "zh_CN": "删除",
                   "en_US": "Delete",
-                  "en": "Delete"
+                  "en": "Delete",
+                  "ja": "削除",
+                  "ja_JP": "削除"
                 },
                 "permissions": [
                   {
@@ -1676,7 +1804,9 @@
               "name": {
                 "zh_CN": "API配置",
                 "en_US": "API Config",
-                "en": "API Config"
+                "en": "API Config",
+                "ja": "API設定",
+                "ja_JP": "API設定"
               }
             },
             "permissions": [
@@ -1701,7 +1831,9 @@
                 "i18nMessages": {
                   "zh_CN": "编辑",
                   "en_US": "edit",
-                  "en": "edit"
+                  "en": "edit",
+                  "ja": "編集",
+                  "ja_JP": "編集"
                 },
                 "permissions": [
                   {
@@ -1725,7 +1857,9 @@
                 "i18nMessages": {
                   "zh_CN": "查看",
                   "en_US": "see",
-                  "en": "see"
+                  "en": "see",
+                  "ja": "表示",
+                  "ja_JP": "表示"
                 },
                 "permissions": [
                   {
@@ -1754,7 +1888,9 @@
           "name": {
             "zh_CN": "运维中心",
             "en_US": "Infrastructure",
-            "en": "Infrastructure"
+            "en": "Infrastructure",
+            "ja": "運用保守センター",
+            "ja_JP": "運用保守センター"
           }
         },
         "owner": "iot",
@@ -1771,7 +1907,9 @@
               "name": {
                 "zh_CN": "日志管理",
                 "en_US": "Logs",
-                "en": "Logs"
+                "en": "Logs",
+                "ja": "ログ管理",
+                "ja_JP": "ログ管理"
               }
             },
             "owner": "iot",
@@ -1810,7 +1948,9 @@
                   "name": {
                     "zh_CN": "访问日志",
                     "en_US": "Access",
-                    "en": "Access"
+                    "en": "Access",
+                    "ja": "アクセスログ",
+                    "ja_JP": "アクセスログ"
                   }
                 },
                 "code": "system/Log/Access",
@@ -1837,7 +1977,9 @@
                   "name": {
                     "zh_CN": "系统日志",
                     "en_US": "System",
-                    "en": "System"
+                    "en": "System",
+                    "ja": "システムログ",
+                    "ja_JP": "システムログ"
                   }
                 },
                 "showPage": [
@@ -1861,7 +2003,9 @@
                   "name": {
                     "zh_CN": "运行日志",
                     "en_US": "Runtime logs",
-                    "en": "Runtime logs"
+                    "en": "Runtime logs",
+                    "ja": "実行ログ",
+                    "ja_JP": "実行ログ"
                   }
                 },
                 "owner": "iot",
@@ -1891,7 +2035,11 @@
                           "export"
                         ]
                       }
-                    ]
+                    ],
+                    "i18nMessages": {
+                      "ja": "エクスポート",
+                      "ja_JP": "エクスポート"
+                    }
                   }
                 ],
                 "supportDataAccess": false
@@ -1906,7 +2054,9 @@
               "name": {
                 "zh_CN": "应用模版",
                 "en_US": "App Templates",
-                "en": "App Templates"
+                "en": "App Templates",
+                "ja": "アプリケーションテンプレート",
+                "ja_JP": "アプリケーションテンプレート"
               }
             },
             "id": "9b8016a4e7d24af08fa34ab939ef4f5d",
@@ -1927,7 +2077,9 @@
                 "i18nMessages": {
                   "zh_CN": "查看",
                   "en_US": "View",
-                  "en": "View"
+                  "en": "View",
+                  "ja": "表示",
+                  "ja_JP": "表示"
                 },
                 "permissions": [
                   {
@@ -1942,7 +2094,9 @@
                 "i18nMessages": {
                   "zh_CN": "新增",
                   "en_US": "Add",
-                  "en": "Add"
+                  "en": "Add",
+                  "ja": "追加",
+                  "ja_JP": "追加"
                 },
                 "permissions": [
                   {
@@ -1957,7 +2111,9 @@
                 "i18nMessages": {
                   "zh_CN": "编辑",
                   "en_US": "Edit",
-                  "en": "Edit"
+                  "en": "Edit",
+                  "ja": "編集",
+                  "ja_JP": "編集"
                 },
                 "permissions": [
                   {
@@ -1972,7 +2128,9 @@
                 "i18nMessages": {
                   "zh_CN": "删除",
                   "en_US": "Delete",
-                  "en": "Delete"
+                  "en": "Delete",
+                  "ja": "削除",
+                  "ja_JP": "削除"
                 },
                 "permissions": [
                   {
@@ -1987,7 +2145,9 @@
                 "i18nMessages": {
                   "zh_CN": "启用/停用",
                   "en_US": "Enable/Disable",
-                  "en": "Enable/Disable"
+                  "en": "Enable/Disable",
+                  "ja": "有効化/無効化",
+                  "ja_JP": "有効化/無効化"
                 },
                 "permissions": [
                   {
@@ -2013,7 +2173,9 @@
       "name": {
         "zh_CN": "开放与集成",
         "en_US": "Open & Integrate",
-        "en": "Open & Integrate"
+        "en": "Open & Integrate",
+        "ja": "外部連携と統合",
+        "ja_JP": "外部連携と統合"
       }
     },
     "id": "4984e88a42a44b22896c058742d0782d",
@@ -2031,7 +2193,9 @@
           "name": {
             "zh_CN": "应用管理",
             "en_US": "Application Management",
-            "en": "Application Management"
+            "en": "Application Management",
+            "ja": "アプリケーション管理",
+            "ja_JP": "アプリケーション管理"
           }
         },
         "id": "4fbd197474134f7fb947f96d85a5a23d",
@@ -2056,7 +2220,9 @@
             "i18nMessages": {
               "zh_CN": "创建应用",
               "en_US": "Create Application",
-              "en": "Create Application"
+              "en": "Create Application",
+              "ja": "アプリケーションを作成",
+              "ja_JP": "アプリケーションを作成"
             },
             "permissions": [
               {
@@ -2071,7 +2237,9 @@
             "i18nMessages": {
               "zh_CN": "删除应用",
               "en_US": "Remove Application",
-              "en": "Remove Application"
+              "en": "Remove Application",
+              "ja": "アプリを削除",
+              "ja_JP": "アプリを削除"
             },
             "permissions": [
               {
@@ -2086,7 +2254,9 @@
             "i18nMessages": {
               "zh_CN": "编辑",
               "en_US": "Edit",
-              "en": "Edit"
+              "en": "Edit",
+              "ja": "編集",
+              "ja_JP": "編集"
             },
             "permissions": [
               {
@@ -2101,7 +2271,9 @@
             "i18nMessages": {
               "zh_CN": "启用/停用",
               "en_US": "Enable/Disable",
-              "en": "Enable/Disable"
+              "en": "Enable/Disable",
+              "ja": "有効化/無効化",
+              "ja_JP": "有効化/無効化"
             },
             "permissions": [
               {
@@ -2116,7 +2288,9 @@
             "i18nMessages": {
               "zh_CN": "用户管理",
               "en_US": "User Management",
-              "en": "User Management"
+              "en": "User Management",
+              "ja": "ユーザー管理",
+              "ja_JP": "ユーザー管理"
             },
             "permissions": [
               {
@@ -2139,7 +2313,9 @@
             "i18nMessages": {
               "zh_CN": "角色管理",
               "en_US": "Role Management",
-              "en": "Role Management"
+              "en": "Role Management",
+              "ja": "ロール管理",
+              "ja_JP": "ロール管理"
             },
             "permissions": [
               {
@@ -2170,7 +2346,9 @@
             "i18nMessages": {
               "zh_CN": "设备绑定",
               "en_US": "Device Binding",
-              "en": "Device Binding"
+              "en": "Device Binding",
+              "ja": "デバイスの関連付け",
+              "ja_JP": "デバイスの関連付け"
             },
             "permissions": [
               {
@@ -2209,7 +2387,9 @@
           "name": {
             "zh_CN": "开放平台",
             "en_US": "Open Platform",
-            "en": "Open Platform"
+            "en": "Open Platform",
+            "ja": "オープンプラットフォーム",
+            "ja_JP": "オープンプラットフォーム"
           }
         },
         "id": "72e0c36789d44b0baac063cc70b42d18",
@@ -2236,7 +2416,9 @@
           "name": {
             "zh_CN": "API 应用",
             "en_US": "API Applications",
-            "en": "API Applications"
+            "en": "API Applications",
+            "ja": "APIアプリケーション",
+            "ja_JP": "APIアプリケーション"
           }
         },
         "id": "f7cde9e54efc4b23b8b4c84d2e0f6d72",
@@ -2273,7 +2455,9 @@
             "i18nMessages": {
               "zh_CN": "新增 API 应用",
               "en_US": "Add API application",
-              "en": "Add API application"
+              "en": "Add API application",
+              "ja": "APIアプリケーションを追加",
+              "ja_JP": "APIアプリケーションを追加"
             },
             "permissions": [{ "permission": "application", "actions": ["save"] }]
           },
@@ -2283,7 +2467,9 @@
             "i18nMessages": {
               "zh_CN": "权限设置",
               "en_US": "Permissions",
-              "en": "Permissions"
+              "en": "Permissions",
+              "ja": "権限設定",
+              "ja_JP": "権限設定"
             },
             "permissions": [{ "permission": "api_group", "actions": ["grant", "grant_query"] }]
           },
@@ -2293,7 +2479,9 @@
             "i18nMessages": {
               "zh_CN": "接口调试",
               "en_US": "API debugging",
-              "en": "API debugging"
+              "en": "API debugging",
+              "ja": "インターフェースデバッグ",
+              "ja_JP": "インターフェースデバッグ"
             },
             "permissions": [{ "permission": "api_spec", "actions": ["query"] }]
           },
@@ -2303,7 +2491,9 @@
             "i18nMessages": {
               "zh_CN": "接口日志",
               "en_US": "API logs",
-              "en": "API logs"
+              "en": "API logs",
+              "ja": "インターフェースログ",
+              "ja_JP": "インターフェースログ"
             },
             "permissions": [{ "permission": "access-logger", "actions": ["query"] }]
           }
@@ -2332,7 +2522,9 @@
           "name": {
             "zh_CN": "接口分组管理",
             "en_US": "API Groups",
-            "en": "API Groups"
+            "en": "API Groups",
+            "ja": "インターフェースのグループ管理",
+            "ja_JP": "インターフェースのグループ管理"
           }
         },
         "id": "api-group-management",
@@ -2357,7 +2549,9 @@
             "i18nMessages": {
               "zh_CN": "查看",
               "en_US": "View",
-              "en": "View"
+              "en": "View",
+              "ja": "表示",
+              "ja_JP": "表示"
             },
             "permissions": [
               {
@@ -2374,7 +2568,9 @@
             "i18nMessages": {
               "zh_CN": "新增",
               "en_US": "Add",
-              "en": "Add"
+              "en": "Add",
+              "ja": "追加",
+              "ja_JP": "追加"
             },
             "permissions": [
               {
@@ -2392,7 +2588,9 @@
             "i18nMessages": {
               "zh_CN": "编辑",
               "en_US": "Edit",
-              "en": "Edit"
+              "en": "Edit",
+              "ja": "編集",
+              "ja_JP": "編集"
             },
             "permissions": [
               {
@@ -2410,7 +2608,9 @@
             "i18nMessages": {
               "zh_CN": "启用/禁用",
               "en_US": "Enable / Disable",
-              "en": "Enable / Disable"
+              "en": "Enable / Disable",
+              "ja": "有効化/無効化",
+              "ja_JP": "有効化/無効化"
             },
             "permissions": [
               {
@@ -2428,7 +2628,9 @@
             "i18nMessages": {
               "zh_CN": "删除",
               "en_US": "Delete",
-              "en": "Delete"
+              "en": "Delete",
+              "ja": "削除",
+              "ja_JP": "削除"
             },
             "permissions": [
               {
@@ -2446,7 +2648,9 @@
             "i18nMessages": {
               "zh_CN": "选择接口",
               "en_US": "Select APIs",
-              "en": "Select APIs"
+              "en": "Select APIs",
+              "ja": "インターフェースを選択",
+              "ja_JP": "インターフェースを選択"
             },
             "permissions": [
               {
@@ -2472,7 +2676,9 @@
           "name": {
             "zh_CN": "移动端应用",
             "en_US": "Mobile Applications",
-            "en": "Mobile Applications"
+            "en": "Mobile Applications",
+            "ja": "モバイルアプリ",
+            "ja_JP": "モバイルアプリ"
           }
         },
         "id": "a21b71d0b8c34c359064e75f571da6e1",
@@ -2498,7 +2704,9 @@
           "name": {
             "zh_CN": "第三方登录",
             "en_US": "Third-Party Login",
-            "en": "Third-Party Login"
+            "en": "Third-Party Login",
+            "ja": "サードパーティログイン",
+            "ja_JP": "サードパーティログイン"
           }
         },
         "owner": "cloud",
