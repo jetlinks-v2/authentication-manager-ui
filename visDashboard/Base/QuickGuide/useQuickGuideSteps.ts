@@ -3,6 +3,8 @@ import { useI18n } from 'vue-i18n'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { isPrivateDeployment } from '@jetlinks-web-core/utils/deployment'
 import { HOME_TARGETS } from '../shared/navigation'
+import { getSaasGrantedMenus, hasSaasTarget } from '../Saas/services/access'
+import type { HomeFeature } from '../shared/types'
 import { useHomeRuntime } from '../shared/useHomeRuntime'
 import type { createHomePolling } from '../shared/homePolling'
 import type { GuideStep } from './components/HomeView.vue'
@@ -22,14 +24,21 @@ export function useQuickGuideSteps(isEdit: () => boolean, polling?: ReturnType<t
   }
   const { t } = useI18n()
   const menuStore = useMenuStore()
-  const resolveMenu = (step: Pick<GuideStep, 'target'>) => step.target.menus.find(code => menuStore.getMenu(code))
+  const granted = computed(() => getSaasGrantedMenus())
+  const resolveMenu = (step: Pick<GuideStep, 'target'>) => step.target.menus.find(code => granted.value.has(code) && menuStore.getMenu(code))
   const edit = computed(isEdit)
   const modules = useDashboardModules(edit)
   const refreshTime = ref(60)
-  const health = useHomeRuntime('DeviceAccess', edit, refreshTime, undefined, polling)
-  const algorithms = useHomeRuntime('AiCenter', edit, refreshTime, undefined, polling)
-  const configuration = useHomeRuntime('QuickGuide', edit, refreshTime, undefined, polling)
-  const applications = useHomeRuntime('Applications', edit, refreshTime, undefined, polling)
+  const deviceSources = computed(() => (['devices', 'video'] as const).filter(id => hasSaasTarget(granted.value, HOME_TARGETS[id])))
+  // 与新版概览共享已授权的资源及应用查询，避免恢复引导后额外加载旧版全量数据。
+  const health = useHomeRuntime('DeviceAccess', edit, refreshTime, undefined, polling,
+    computed(() => deviceSources.value.length > 0 || modules.value.edge), ref<HomeFeature>('SaasResources'))
+  const algorithms = useHomeRuntime('AiCenter', edit, refreshTime, undefined, polling,
+    computed(() => modules.value.edge && modules.value.vision))
+  const configuration = useHomeRuntime('QuickGuide', edit, refreshTime, undefined, polling,
+    computed(() => hasSaasTarget(granted.value, HOME_TARGETS.space) || (modules.value.vision && hasSaasTarget(granted.value, HOME_TARGETS.visionAlarm))))
+  const applications = useHomeRuntime('Applications', edit, refreshTime, undefined, polling,
+    computed(() => hasSaasTarget(granted.value, HOME_TARGETS.applications)), ref<HomeFeature>('SaasApplications'))
 
   const statuses = computed(() => resolveGuideStatuses(
     { rows: health.rows.value, loading: health.loading.value },
@@ -37,6 +46,7 @@ export function useQuickGuideSteps(isEdit: () => boolean, polling?: ReturnType<t
     { rows: configuration.rows.value, loading: configuration.loading.value },
     { rows: applications.rows.value, loading: applications.loading.value, error: applications.error.value },
     isEdit(),
+    deviceSources.value,
   ))
   const steps = computed<GuideStep[]>(() => {
     // 翻译键保持原有业务含义，编号由当前展示顺序生成。
@@ -60,7 +70,8 @@ export function useQuickGuideSteps(isEdit: () => boolean, polling?: ReturnType<t
         title: t('packages.ProjectHome.QuickGuide_step2'),
         description: t('packages.ProjectHome.QuickGuide_step2_desc'),
         actionText: t('packages.ProjectHome.QuickGuide_step2_action'),
-        target: HOME_TARGETS.addDevice,
+        target: isEdit() || hasSaasTarget(granted.value, HOME_TARGETS.devices)
+          ? { ...HOME_TARGETS.devices, query: { type: 'device', action: 'create' } } : HOME_TARGETS.addVideo,
       },
       {
         key: 'algorithm',
@@ -84,7 +95,8 @@ export function useQuickGuideSteps(isEdit: () => boolean, polling?: ReturnType<t
         target: HOME_TARGETS.applications,
       },
     ]
-    return definitions.filter(step => guideStepAvailable(step.key, modules.value)).map(step => {
+    return definitions.filter(step => guideStepAvailable(step.key, modules.value)
+      && (isEdit() || hasSaasTarget(granted.value, step.target))).map(step => {
       const status = statuses.value[step.key]
       return { ...step, status, statusText: t(`packages.ProjectHome.QuickGuide_status_${status}`), disabled: !isEdit() && !resolveMenu(step) }
     })

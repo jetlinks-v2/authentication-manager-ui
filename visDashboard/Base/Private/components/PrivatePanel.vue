@@ -1,19 +1,23 @@
 <template>
-  <a-card class="private-overview-panel" :bordered="false">
+  <a-card class="private-overview-panel" :bordered="false" :body-style="{ padding: '16px 0', overflow: 'hidden' }">
     <template #title>
       <div class="private-panel-heading"><h2>{{ title }}</h2><slot name="title-extra" /></div>
     </template>
     <template v-if="$slots.extra" #extra><slot name="extra" /></template>
-    <div v-if="state?.loading" class="private-panel-state"><a-spin /></div>
-    <div v-else-if="state?.error" class="private-panel-state">
-      <CloudEmpty :description="t('privateOverview.loadError')" :image-style="{ height: '48px' }">
-        <a-button size="small" @click="$emit('retry')">{{ t('privateOverview.retry') }}</a-button>
-      </CloudEmpty>
+    <div class="private-panel-content">
+      <div class="private-panel-inner">
+        <div v-if="state?.loading" class="private-panel-state"><a-spin /></div>
+        <div v-else-if="state?.error" class="private-panel-state">
+          <CloudEmpty :description="t('privateOverview.loadError')" :image-style="{ height: '48px' }">
+            <a-button size="small" @click="$emit('retry')">{{ t('privateOverview.retry') }}</a-button>
+          </CloudEmpty>
+        </div>
+        <div v-else-if="state?.empty" class="private-panel-state">
+          <slot name="empty"><CloudEmpty :description="t('privateOverview.empty')" :image-style="{ height: '48px' }" /></slot>
+        </div>
+        <slot v-else />
+      </div>
     </div>
-    <div v-else-if="state?.empty" class="private-panel-state">
-      <slot name="empty"><CloudEmpty :description="t('privateOverview.empty')" :image-style="{ height: '48px' }" /></slot>
-    </div>
-    <slot v-else />
   </a-card>
 </template>
 
@@ -28,22 +32,29 @@ const { t } = useI18n()
 
 <style scoped lang="less">
 .private-overview-panel {
-  display: flex; flex-direction: column; min-width: 0; height: 100%;
-  border: 1px solid var(--line, #e5e6eb); border-radius: var(--r-3, 8px);
+  display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; overflow: hidden;
+  border-radius: var(--r-3, 8px); box-shadow: 0 1px 3px rgb(31 35 41 / 4%);
   background: var(--ant-color-bg-container, #fff); container-type: inline-size;
-  :deep(.ant-card-head) { flex: none; min-height: 56px; padding: 16px 16px 8px; border-bottom: 1px solid var(--line, #f2f3f5); }
+  /* 与 SaaS 概览统一卡头尺寸，缩放时标题固定、正文独立滚动。 */
+  :deep(.ant-card-head) { flex: none; min-height: 48px; padding: 8px 16px; border-bottom: 1px solid var(--line, #f2f3f5); }
   :deep(.ant-card-head-wrapper) { gap: 12px; }
   :deep(.ant-card-head-title) { padding: 0; min-width: 0; }
   :deep(.ant-card-extra) { padding: 0; min-width: 0; }
-  :deep(.ant-card-body) { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 16px; }
+  /* 概览画布也会给 Ant Card 正文设置滚动，正文只裁切，由内部区域统一滚动。 */
+  :deep(.ant-card-body) { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
+  /* 滚动视口铺满正文；内容通过外边距收进来，滚动条留在卡片右侧。 */
+  :deep(.ant-card-body > .private-panel-content) { box-sizing: border-box; flex: 1 1 0%; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: auto; }
+  :deep(.private-panel-inner) { display: flex; flex: 1 0 auto; flex-direction: column; min-width: 0; min-height: 0; margin-inline: 16px; }
+  :deep(.private-panel-content > *) { flex-shrink: 0; }
   :deep(.ant-card-body::before), :deep(.ant-card-body::after) { display: none; }
-  :deep(.ant-btn-link) { height: auto; padding: 0; font-size: 12px; line-height: 20px; }
+  :deep(.ant-btn-link) { height: auto; padding: 0; font-size: 13px; line-height: 20px; }
   :deep(.ant-card-extra .ant-btn-link:not(:disabled)) { color: var(--business-component-primary, #1677ff); }
   :deep(.ant-card-extra .ant-btn-link:hover:not(:disabled)) { color: var(--ant-color-primary-hover, #4096ff); }
 }
 .private-panel-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; min-width: 0; }
 .private-panel-heading h2 { margin: 0; color: var(--business-component-text, #1f2329); font-size: 15px; font-weight: 600; line-height: 22px; }
-.private-panel-state { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; min-height: 110px; padding: 8px; color: var(--business-component-muted, #646c73); font-size: 13px; text-align: center; }
-.private-panel-state :deep(.ant-empty) { margin: 0; }
-.private-panel-state :deep(.ant-empty-footer) { margin-top: 10px; }
+/* Ant Card 的正文插槽可能携带调用方的 scope，状态样式从卡片根节点匹配。 */
+.private-overview-panel :deep(.private-panel-state) { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; min-height: 110px; padding: 8px; color: var(--business-component-muted, #646c73); font-size: 13px; text-align: center; }
+.private-overview-panel :deep(.private-panel-state .ant-empty) { margin: 0; }
+.private-overview-panel :deep(.private-panel-state .ant-empty-footer) { margin-top: 10px; }
 </style>

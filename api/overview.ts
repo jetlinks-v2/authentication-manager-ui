@@ -220,6 +220,30 @@ export const queryOverviewGatewaySummary = () => queryDeviceCountSummary(buildGa
 /** 查询项目内物联设备的当前在线数与总数，不包含网关和视频接入产品。 */
 export const queryOverviewIotDeviceSummary = () => queryDeviceCountSummary(buildIotDeviceTerms())
 
+/** 最近访问仅补齐当前项目内已访问设备的名称，不拉取完整详情及运行数据。 */
+export const queryOverviewDeviceNames = async (ids: readonly string[]): Promise<Map<string, string>> => {
+  const deviceIds = [...new Set(ids.filter(id => id.trim()))]
+  if (!deviceIds.length) return new Map()
+  const response = await request.post('/device-instance/_query/no-paging?paging=false', {
+    paging: false,
+    includes: ['id', 'name'],
+    terms: [{ column: 'id', termType: 'in', value: deviceIds }],
+  }, { hiddenError: true })
+  const source = recordOf(response)
+  if ([source, recordOf(source.data)].some(item => item.success === false
+    || (typeof item.status === 'number' && item.status >= 400))) throw new Error('Device names query failed')
+  const result = unwrapResult(response)
+  const page = recordOf(result)
+  const rows: unknown = Array.isArray(result) ? result : page.data
+  if (!Array.isArray(rows) || Number(page.total) > rows.length) throw new Error('Incomplete device names response')
+  return new Map(rows.flatMap(value => {
+    const row = recordOf(value), id = textOf(row.id)
+    if (!id) throw new Error('Missing device identity')
+    const name = typeof row.name === 'string' ? row.name.trim() : ''
+    return deviceIds.includes(id) ? [[id, name] as const] : []
+  }))
+}
+
 /** 设备分布与数量卡、统一设备列表共用同一产品范围。 */
 export const buildOverviewDeviceTerms = (kind: 'edge' | 'iot'): OverviewDeviceTerm[] => (
   kind === 'edge' ? buildGatewayTerms() : buildIotDeviceTerms()

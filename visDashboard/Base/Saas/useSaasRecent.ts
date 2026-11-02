@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, onActivated, onDeactivated, ref, shallowRef, watch } from 'vue'
 import { useRouter, type RouteRecordRaw } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useNow } from '@vueuse/core'
@@ -7,9 +7,12 @@ import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { getSaasGrantedMenus } from './services/access'
 import { HOME_TARGETS } from '../shared/navigation'
 import type { HomeTarget } from '../shared/types'
-import { ensureRecentVisitRecorder, readRecentVisits, recentVisitsRevision, recentVisitStorageKey } from './services/recentVisits'
+import { cacheRecentVisitNames, ensureRecentVisitRecorder, readRecentVisits, recentVisitsRevision, recentVisitStorageKey } from './services/recentVisits'
+import { loadRecentVisitNames } from './services/recentVisitResources'
+import { resourceFromRecentVisit } from './services/recentVisitIdentity'
+import { useRecentVisitNavigation, type RecentVisitLink } from './useRecentVisitNavigation'
 
-interface RecentEntry { id: string; title: string; description: string; icon: string; fullPath: string; target: HomeTarget }
+interface RecentEntry extends RecentVisitLink { title: string; loadingTitle: boolean; description: string; icon: string; fullPath: string }
 interface MenuPresentation { title: string; path: string[]; icon?: string }
 const starts: { id: string; icon: string; target: HomeTarget }[] = [
   { id: 'dashboard', icon: 'DashboardOutlined', target: { menus: ['resources/Dashboard'] } },
@@ -57,20 +60,63 @@ export function useSaasRecent() {
   const history = computed(() => {
     void recentVisitsRevision.value
     const granted = getSaasGrantedMenus()
-    try { return readRecentVisits(localStorage, recentVisitStorageKey())
-      .filter(row => granted.has(row.ownerCode) && !!menu.getMenu(row.menuCode)).slice(0, 6) }
+    try { return readRecentVisits(localStorage, recentVisitStorageKey(), code => String(menu.getMenu(code)?.routeName || code))
+      .filter(row => granted.has(row.ownerCode) && !!menu.getMenu(row.menuCode)) }
     catch { return [] }
   })
-  const isStarting = computed(() => history.value.length === 0)
+  const resources = computed(() => history.value.flatMap(row => {
+    const resource = resourceFromRecentVisit(row, menu.getMenu(row.menuCode)?.routeName || row.menuCode)
+    return resource ? [resource] : []
+  }))
+  const resourceNames = shallowRef<ReadonlyMap<string, string>>(new Map())
+  const unavailableVisits = shallowRef<ReadonlySet<string>>(new Set())
+  const resourceNamesLoading = ref(false)
+  const active = ref(true)
+  const { open, openingId } = useRecentVisitNavigation(active)
+  let resourceNamesScope = ''
+  watch(() => ({ scope: recentVisitStorageKey(), resources: resources.value, active: active.value }), async ({ scope, resources, active: isActive }, _old, onCleanup) => {
+    let current = true
+    onCleanup(() => { current = false })
+    if (scope !== resourceNamesScope || !resources.length) {
+      resourceNames.value = new Map()
+      unavailableVisits.value = new Set()
+      resourceNamesScope = scope
+    }
+    resourceNamesLoading.value = isActive && resources.length > 0
+    if (!resourceNamesLoading.value) return
+    try {
+      const result = await loadRecentVisitNames(resources)
+      if (current && active.value && scope === recentVisitStorageKey()) {
+        resourceNames.value = result.names
+        unavailableVisits.value = result.unavailable
+        try {
+          cacheRecentVisitNames(localStorage, scope, result.names, code => String(menu.getMenu(code)?.routeName || code))
+        } catch { /* 存储不可用不影响本次名称展示，也不清空已知名称。 */ }
+      }
+    } catch { /* 查询失败保留已知名称；首次无快照时以设备 ID 展示，不把菜单标题当成设备名称。 */ }
+    finally { if (current) resourceNamesLoading.value = false }
+  }, { immediate: true, flush: 'sync' })
+  // 首次挂载已由 immediate 查询；缓存页面返回时才再次刷新，离页期间不补查名称。
+  onActivated(() => { active.value = true })
+  onDeactivated(() => { active.value = false })
+  // 先校验保留的历史，再取六项；失效记录不占位置，权限恢复后下次查询可重新显示。
+  const visibleHistory = computed(() => history.value.filter(row => !unavailableVisits.value.has(row.id)).slice(0, 6))
+  const isStarting = computed(() => visibleHistory.value.length === 0)
   const rows = computed<RecentEntry[]>(() => {
-    const recent = history.value.map(row => {
+    const scope = recentVisitStorageKey()
+    const recent = visibleHistory.value.map(row => {
       const current = menu.getMenu(row.menuCode)
       const leaf = presentation(row.menuCode), owner = presentation(row.ownerCode)
-      const title = leaf?.title || t(String(current?.title || row.title || row.menuCode))
+      const resource = resources.value.find(item => item.visitId === row.id)
+      // 已知名称先显示、后台刷新；首次无快照只显示骨架，避免“设备详情 → 设备名称”闪变。
+      const knownName = resourceNames.value.get(row.id) || row.resourceName?.trim()
+      const loadingTitle = !!resource && !knownName && resourceNamesLoading.value
+      const title = resource ? knownName || resource.id : leaf?.title || t(String(current?.title || row.title || row.menuCode))
       // 隐藏详情路由沿用所属菜单的层级和图标，再追加当前详情页名称。
-      const path = leaf?.path || [...(owner?.path || []), title]
-      return { id: row.id, title, fullPath: path.join(' › '),
-        description: `${path[0]} · ${visitTime(row.visitedAt)}`,
+      const path = leaf ? [...leaf.path.slice(0, -1), title] : [...(owner?.path || []), title]
+      const group = resource ? t(`saasRecent.resource.${resource.kind}`) : path[0]
+      return { id: row.id, scope, visit: row, title, loadingTitle, fullPath: path.join(' › '),
+        description: `${group} · ${visitTime(row.visitedAt)}`,
         icon: leaf?.icon || owner?.icon || 'FileOutlined', target: row.target }
     })
     const granted = getSaasGrantedMenus()
@@ -79,21 +125,17 @@ export function useSaasRecent() {
       const code = item.target.menus.find(value => granted.has(value) && !!menu.getMenu(value))
       if (!code) return []
       const routeName = menu.getMenu(code)?.routeName || code
-      if (history.value.some(row => item.target.menus.includes(row.menuCode)
+      if (visibleHistory.value.some(row => item.target.menus.includes(row.menuCode)
         || (menu.getMenu(row.menuCode)?.routeName || row.menuCode) === routeName)) return []
       const current = presentation(code)
       const title = current?.title || t(`saasRecent.start.${item.id}`)
       const group = current?.path[0] || t(`saasRecent.group.${item.id}`)
-      return [{ ...item, target: { ...item.target, menus: [code] },
+      return [{ ...item, scope, loadingTitle: false, target: { ...item.target, menus: [code] },
         title, description: group, icon: current?.icon || item.icon,
         fullPath: current?.path.join(' › ') || `${group} › ${title}`,
       }]
     })
     return [...recent, ...defaults].slice(0, 6)
   })
-  function open(target: HomeTarget) {
-    const code = target.menus.find(value => !!menu.getMenu(value))
-    if (code) menu.jumpPage(code, { params: target.params, query: target.query })
-  }
-  return { rows, isStarting, open }
+  return { rows, isStarting, open, openingId }
 }
