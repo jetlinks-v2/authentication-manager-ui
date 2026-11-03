@@ -58,9 +58,7 @@ export const createMenuDrafts = (base: MenuDefinition[], saved: MenuDefinition[]
   }
   for (const menu of flattenMenus(saved)) {
     const local = configured.get(menu.id)
-    // 当前页只管理 iot/app，其他平台的本地归属不得把已存菜单移出全量载荷。
-    const owner = local?.owner && isMenuOwner(local.owner) ? local.owner : menu.owner
-    merged.set(menu.id, { ...local, ...menu, owner,
+    merged.set(menu.id, { ...local, ...menu, owner: local?.owner ?? menu.owner,
       options: { ...local?.options, ...menu.options, show: menu.options?.show !== false } })
   }
   const hiddenCodes = new Set([USER_CENTER_MENU_CODE, messageSubscribe])

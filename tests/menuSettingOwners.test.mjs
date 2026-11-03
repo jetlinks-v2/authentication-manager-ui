@@ -95,21 +95,6 @@ test('cross-owner children appear in their own tab without losing parent referen
   assert(payloads.iot.every(node => node.owner === 'iot' && !('children' in node) && !('key' in node)))
 })
 
-test('saving keeps an existing runtime menu when its local definition belongs to cloud', () => {
-  const saved = menu('system-third-party-login', 'iot', {
-    parentId: 'system', options: { show: true, appName: 'authentication-manager' },
-    i18nMessages: { name: { zh_CN: '第三方登录', en_US: 'Third-Party Login' } },
-  })
-  const { drafts, preserved } = createMenuDrafts([], [saved], [menu(saved.id, 'cloud')])
-  const payload = buildMenuPayloads(drafts, preserved)
-  assert.equal(payload.iot.length, 1)
-  assert.equal(payload.iot[0].owner, 'iot')
-  assert.equal(payload.iot[0].parentId, saved.parentId)
-  assert.deepEqual(payload.iot[0].options, saved.options)
-  assert.deepEqual(payload.iot[0].i18nMessages, saved.i18nMessages)
-  assert.deepEqual(payload.app, [])
-})
-
 test('keeps hidden system menus and their descendants in the correct owner payload', () => {
   const saved = [menu('center', 'iot', { code: 'account-center', children: [menu('center-child')] }),
     menu('messages', 'app', { code: 'message-subscribe' })]

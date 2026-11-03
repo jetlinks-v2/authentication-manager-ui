@@ -365,7 +365,7 @@ Verification:
 
 保存与同步统一展开节点后按 owner 分别调用 `/menu/{owner}/_all`，每份载荷只含对应 owner 的平铺节点并保留 `parentId`，防止接口递归覆盖不同 owner 的子菜单。本地定义的 owner 不随勾选、拖拽或提交改变；空 owner 兼容为 `iot`。已有菜单保留勾选和排序，新候选默认未选中；个人中心、消息订阅及其子菜单等未展示的系统定义随对应 owner 保留提交。权限同步按菜单和按钮 ID 补充权限动作，并保留当前草稿的选择、层级和排序。
 
-失败与兼容：所有 owner 请求成功后才提示成功并刷新，部分失败保留草稿并提示失败 owner；接口之间没有整体事务，不执行自动回滚。本次不迁移历史 `cloud` 数据。若同 ID 的本地定义属于 `cloud` 等当前页不管理的归属，保留服务端已存的 `iot`/`app` 归属，避免全量保存时丢失既有菜单；新的遗留 `cloud` 候选仍由配置维护者处理。
+失败与兼容：所有 owner 请求成功后才提示成功并刷新，部分失败保留草稿并提示失败 owner；接口之间没有整体事务，不执行自动回滚。本次不迁移历史 `cloud` 数据，遗留前端 `cloud` 定义由配置维护者改为 `iot`。
 
 验证：模块内执行 `node --test tests/menuSettingOwners.test.mjs tests/thirdPartyLoginMenu.test.mjs tests/applicationTemplateMenuPreview.test.mjs`，22 项全部通过，其中 15 项 owner 配置回归覆盖分栏、ID 隔离、新菜单选中/取消选中的保存回显、跨 owner 父子引用、隐藏系统菜单保留与个人中心去重、拖拽层级/环、权限同步及部分失败重试。隔离浏览器使用真实页面、Vue 和 Ant Design Vue，替换请求为测试数据，验证默认项目 Tab、应用 Tab、新页面默认未选中、选中后跨 Tab 保留草稿，以及部分保存失败时保留草稿和确认框、显示失败 owner；未写入真实后端。
 
