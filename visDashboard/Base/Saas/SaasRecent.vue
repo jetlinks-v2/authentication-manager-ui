@@ -2,9 +2,14 @@
   <a-card class="saas-recent-card" :title="t('saasRecent.title')" :bordered="false">
     <template #extra><span v-if="isStarting && rows.length" class="saas-recent-hint">{{ t('saasRecent.startHint') }}</span></template>
     <div v-if="rows.length" class="saas-recent-grid">
-      <button v-for="row in rows" :key="row.id" type="button" class="saas-recent-item" :title="row.fullPath" @click="open(row.target)">
-        <span class="saas-recent-icon"><AIcon :type="row.icon" /></span>
-        <span class="saas-recent-copy"><span class="saas-recent-name">{{ row.title }}</span><span class="saas-recent-meta">{{ row.description }}</span></span>
+      <button v-for="row in rows" :key="row.id" type="button" class="saas-recent-item" :title="row.loadingTitle ? undefined : row.fullPath"
+        :disabled="!!openingId" :aria-busy="openingId === row.id || row.loadingTitle" @click="open(row)">
+        <span class="saas-recent-icon"><a-spin v-if="openingId === row.id" size="small" /><AIcon v-else :type="row.icon" /></span>
+        <span class="saas-recent-copy">
+          <SkeletonInput v-if="row.loadingTitle" class="saas-recent-name-skeleton" size="small" active />
+          <span v-else class="saas-recent-name">{{ row.title }}</span>
+          <span class="saas-recent-meta">{{ row.description }}</span>
+        </span>
       </button>
     </div>
     <div v-else class="saas-recent-empty">{{ t('saasRecent.empty') }}</div>
@@ -12,9 +17,10 @@
 </template>
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { SkeletonInput } from 'ant-design-vue'
 import { useSaasRecent } from './useSaasRecent'
 const { t } = useI18n()
-const { rows, isStarting, open } = useSaasRecent()
+const { rows, isStarting, open, openingId } = useSaasRecent()
 </script>
 <style scoped>
 .saas-recent-card { border-radius: var(--r-3, 8px); container: saas-recent / inline-size; }
@@ -42,7 +48,9 @@ const { rows, isStarting, open } = useSaasRecent()
   font: inherit;
   transition: background-color 0.2s ease, border-color 0.2s ease;
 
-  &:hover {
+  &:disabled { cursor: wait; opacity: .65; }
+
+  &:hover:not(:disabled) {
     background: var(--home-card-surface, #f7f9fc);
     border-color: var(--jet-theme-border-secondary, #e8edf3);
 
@@ -72,7 +80,9 @@ const { rows, isStarting, open } = useSaasRecent()
   background: var(--accent-soft, #e8f3ff);
   transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
-.saas-recent-copy { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.saas-recent-copy { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
+.saas-recent-name-skeleton { display: block; width: 100%; min-width: 0; height: 20px; line-height: 20px; }
+.saas-recent-name-skeleton :deep(.ant-skeleton-input) { width: 100%; min-width: 0; height: 16px; vertical-align: middle; }
 .saas-recent-name {
   font-size: 14px;
   font-weight: 500;

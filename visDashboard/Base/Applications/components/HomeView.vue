@@ -207,14 +207,14 @@ const handleClick = (row: HomeRow) => {
 }
 
 /* 首页最多展示三项并保持单列；更多应用通过卡片头部入口访问。 */
-.home-apps.home-apps--saas { display: flex; flex-direction: column; gap: 0; height: auto; overflow: visible; padding: 0; }
-.home-apps--saas .home-app-trigger { position: relative; display: flex; flex: 0 0 auto; }
+.home-apps:is(.home-apps--saas, .home-apps--private) { display: flex; flex-direction: column; gap: 0; height: auto; overflow: visible; padding: 0; }
+:is(.home-apps--saas, .home-apps--private) .home-app-trigger { position: relative; display: flex; flex: 0 0 auto; }
 /* 三项在默认卡片内均分余量；不足三项时保留自然行高。 */
-.home-apps--saas:has(> .home-app-trigger:nth-child(3)) .home-app-trigger { flex-grow: 1; }
-.home-apps--saas .home-app-trigger--divided,
-.home-apps--saas .home-app-trigger:not(:last-child) { border-bottom: 1px solid #f0f2f5; }
+:is(.home-apps--saas, .home-apps--private):has(> .home-app-trigger:nth-child(3)) .home-app-trigger { flex-grow: 1; }
+:is(.home-apps--saas, .home-apps--private) .home-app-trigger--divided,
+:is(.home-apps--saas, .home-apps--private) .home-app-trigger:not(:last-child) { border-bottom: 1px solid #f0f2f5; }
 .home-app-trigger--hidden { visibility: hidden; pointer-events: none; }
-.home-apps--saas .home-app {
+:is(.home-apps--saas, .home-apps--private) .home-app {
   height: auto;
   min-height: 60px;
   flex: 1;
@@ -231,12 +231,12 @@ const handleClick = (row: HomeRow) => {
     .home-app-arrow { transform: translateX(2px); }
   }
 }
-.home-apps--saas .home-app-trigger:hover > .home-app:not(:disabled) {
+:is(.home-apps--saas, .home-apps--private) .home-app-trigger:hover > .home-app:not(:disabled) {
   background: var(--home-card-surface, #f7f9fc);
   .home-app-content strong { color: var(--business-component-primary, #1677ff); }
   .home-app-arrow { transform: translateX(2px); }
 }
-.home-apps--saas .home-app-action {
+:is(.home-apps--saas, .home-apps--private) .home-app-action {
   margin-left: auto;
   flex-shrink: 0;
   display: inline-flex;
@@ -247,7 +247,7 @@ const handleClick = (row: HomeRow) => {
   font-size: 12px;
   line-height: 20px;
 }
-.home-apps--saas .home-app-arrow {
+:is(.home-apps--saas, .home-apps--private) .home-app-arrow {
   font-size: 8.5px;
   display: inline-flex;
   align-items: center;
@@ -256,23 +256,10 @@ const handleClick = (row: HomeRow) => {
   color: inherit;
   transition: transform 0.2s ease;
 }
-.home-apps--saas .home-app-icon { flex: 0 0 32px; width: 32px; height: 32px; border-radius: var(--r-2, 6px); background: var(--business-component-primary, #1677ff); }
-.home-apps--saas .home-app-content { gap: 2px; min-width: 0; }
-.home-apps--saas .home-app-content strong { font-size: 14px; font-weight: 500; line-height: 20px; color: #1f2329; transition: color 0.2s ease; }
-.home-apps--saas .home-app-meta { font-size: 12px; line-height: 16px; }
-.home-apps--saas .home-app-content :deep(.home-description) { -webkit-line-clamp: 1; font-size: 12px; font-weight: 400; line-height: 18px; color: #86909c; }
+:is(.home-apps--saas, .home-apps--private) .home-app-icon { flex: 0 0 32px; width: 32px; height: 32px; border-radius: var(--r-2, 6px); background: var(--business-component-primary, #1677ff); }
+:is(.home-apps--saas, .home-apps--private) .home-app-content { gap: 2px; min-width: 0; }
+:is(.home-apps--saas, .home-apps--private) .home-app-content strong { font-size: 14px; font-weight: 500; line-height: 20px; color: #1f2329; transition: color 0.2s ease; }
+:is(.home-apps--saas, .home-apps--private) .home-app-meta { font-size: 12px; line-height: 16px; }
+:is(.home-apps--saas, .home-apps--private) .home-app-content :deep(.home-description) { -webkit-line-clamp: 1; font-size: 12px; font-weight: 400; line-height: 18px; color: #86909c; }
 
-/* 私有化首屏应用保持三条紧凑单列，不呈现创建日期及日常启用状态。 */
-.home-apps.home-apps--private { display: flex; flex-direction: column; gap: 2px; height: auto; overflow: visible; }
-.home-apps--private .home-app { height: auto; min-height: 50px; gap: 10px; padding: 7px 12px; border: 0; background: transparent; }
-.home-apps--private .home-app:not(:disabled):hover,
-.home-apps--private .home-app-trigger:hover > .home-app:not(:disabled) { background: var(--home-card-surface, #f7f9fc); }
-.home-apps--private .home-app-icon { flex: 0 0 32px; width: 32px; height: 32px; background: var(--business-component-primary, #1677ff); }
-.home-apps--private .home-app:not(:disabled):hover .home-app-icon,
-.home-apps--private .home-app-trigger:hover > .home-app:not(:disabled) .home-app-icon { transform: none; }
-.home-apps--private .home-app-content { gap: 0; }
-.home-apps--private .home-app-content strong { font-size: 13px; line-height: 20px; }
-.home-apps--private .home-app-content :deep(.home-description) { -webkit-line-clamp: 1; line-height: 16px; color: var(--business-component-muted, #646c73); }
-.home-apps--private .home-app-meta { font-size: 12px; line-height: 16px; }
-.home-apps--private .home-app-arrow { font-size: 11px; }
 </style>

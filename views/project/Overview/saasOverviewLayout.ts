@@ -1,7 +1,7 @@
 import type { DashboardGridItem } from '@jetlinks-web-core/components/DashBoardCanvas'
 import { parseStoredLayout } from '@jetlinks-web-core/components/DashBoardCanvas/utils/layout'
 
-export type SaasOverviewFeature = 'SaasSummary' | 'SaasRecent' | 'SaasResources' | 'SaasToday' | 'SaasQuotas' | 'Applications' | 'Announcements' | 'SaasHelp'
+export type SaasOverviewFeature = 'SaasSummary' | 'QuickGuide' | 'SaasRecent' | 'SaasResources' | 'SaasToday' | 'SaasQuotas' | 'Applications' | 'Announcements' | 'SaasHelp'
 export type SaasOverviewLayoutMode = 'wide' | 'stacked' | 'compact'
 interface SaasOverviewLayoutItem { feature: SaasOverviewFeature; gridItem: DashboardGridItem }
 interface SaasOverviewCounts { resources: number; today: number }
@@ -17,6 +17,7 @@ const cardWidth = (width: number, columns: number) => (width + 16) * columns / 2
 function defaultHeight(feature: SaasOverviewFeature, width: number, counts: SaasOverviewCounts) {
   const contentWidth = width - 32
   if (feature === 'SaasSummary') return width < 700 ? 5 : 4
+  if (feature === 'QuickGuide') return 6
   if (feature === 'SaasRecent') return 5
   if (feature === 'SaasResources') {
     const columns = contentWidth > 839 ? 4 : contentWidth > 479 ? 2 : 1
@@ -42,7 +43,7 @@ export function buildSaasOverviewLayout(
   const visible = new Set(features)
   const items: SaasOverviewLayoutItem[] = []
   const minimumRows: Record<SaasOverviewFeature, number> = {
-    SaasSummary: 3, SaasRecent: 5, SaasResources: 7, SaasToday: 6,
+    SaasSummary: 3, QuickGuide: 6, SaasRecent: 5, SaasResources: 7, SaasToday: 6,
     SaasQuotas: 8, Applications: 8, Announcements: 7, SaasHelp: 7,
   }
   const appendColumn = (column: readonly SaasOverviewFeature[], x: number, w: number, y = 0, minWidth = 6) => {
@@ -57,9 +58,9 @@ export function buildSaasOverviewLayout(
     }
     return y
   }
-  const contentTop = appendColumn(['SaasSummary'], 0, 24)
+  const contentTop = appendColumn(['SaasSummary', 'QuickGuide'], 0, 24)
   if (mode !== 'wide') {
-    appendColumn(features.filter(feature => feature !== 'SaasSummary'), 0, 24, contentTop)
+    appendColumn(features.filter(feature => feature !== 'SaasSummary' && feature !== 'QuickGuide'), 0, 24, contentTop)
     return items
   }
   const main: SaasOverviewFeature[] = ['SaasRecent', 'SaasResources', 'SaasToday']

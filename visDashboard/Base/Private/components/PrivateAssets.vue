@@ -1,9 +1,9 @@
 <template>
   <PrivatePanel class="private-assets" :title="groups.length === 1 ? t(groups[0].labelKey) : t('privateOverview.devicesAndChannels')" :state="state" @retry="$emit('retry')">
     <template #extra>
-      <a-button v-if="groups[0] && canOpen(groups[0].target)" type="link" size="small" @click="$emit('navigate', groups[0].target)">
-        {{ t(groups[0].id === 'video' ? 'privateOverview.channelList' : 'privateOverview.deviceList') }} <RightOutlined />
-      </a-button>
+      <HomeWidgetLink v-if="groups[0] && canOpen(groups[0].target)" @click="$emit('navigate', groups[0].target)">
+        {{ t(groups[0].id === 'video' ? 'privateOverview.channelList' : 'privateOverview.deviceList') }}
+      </HomeWidgetLink>
     </template>
     <div class="private-assets-grid" :class="{ 'is-single': groups.length === 1 }">
       <section v-for="group in groups" :key="group.id" class="private-asset-group">
@@ -24,10 +24,12 @@
           <span><a-badge status="success" />{{ t('privateOverview.online') }} {{ formatOverviewNumber(group.failed ? undefined : group.online, locale) }}</span>
           <span><a-badge status="error" />{{ t('privateOverview.offline') }} {{ formatOverviewNumber(group.failed ? undefined : group.offline, locale) }}</span>
         </div>
-        <div v-for="item in group.breakdown" :key="item.id" class="private-asset-breakdown">
-          <span class="private-asset-kind">{{ t(item.labelKey) }}</span>
-          <span class="private-asset-track"><span :style="{ width: `${barPercent(item.failed ? undefined : item.value, group.breakdown)}%` }" /></span>
-          <span class="private-asset-count">{{ formatOverviewNumber(item.failed ? undefined : item.value, locale) }} {{ t(group.unitKey) }}<span v-if="item.offline"> · {{ t('privateOverview.offline') }} {{ formatOverviewNumber(item.offline, locale) }}</span></span>
+        <div class="private-asset-breakdowns">
+          <div v-for="item in group.breakdown" :key="item.id" class="private-asset-breakdown">
+            <span class="private-asset-kind" :title="t(item.labelKey)">{{ t(item.labelKey) }}</span>
+            <span class="private-asset-track"><span :style="{ width: `${barPercent(item.failed ? undefined : item.value, group.breakdown)}%` }" /></span>
+            <span class="private-asset-count">{{ formatOverviewNumber(item.failed ? undefined : item.value, locale) }} {{ t(group.unitKey) }}<span v-if="item.offline"> · {{ t('privateOverview.offline') }} {{ formatOverviewNumber(item.offline, locale) }}</span></span>
+          </div>
         </div>
       </section>
     </div>
@@ -38,6 +40,7 @@
 import { useI18n } from 'vue-i18n'
 import { RightOutlined } from '@ant-design/icons-vue'
 import PrivatePanel from './PrivatePanel.vue'
+import HomeWidgetLink from '../../shared/HomeWidgetLink.vue'
 import { formatOverviewNumber } from '../../Saas/components/presentation'
 import type { HomeTarget } from '../../shared/types'
 import type { PrivateAssetGroup, PrivateBreakdown } from '../types'
@@ -72,8 +75,9 @@ function barPercent(value: number | undefined, rows: PrivateBreakdown[]): number
 .private-health-bar .is-offline { background: var(--ant-color-error, #f53f3f); }
 .private-asset-statuses { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 7px; color: var(--business-component-muted, #646c73); font-size: 12px; line-height: 18px; }
 .private-asset-statuses > span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
-.private-asset-breakdown { display: grid; grid-template-columns: minmax(48px, 64px) minmax(20px, 1fr) auto; align-items: center; gap: 8px; margin-top: 8px; color: var(--business-component-muted, #646c73); font-size: 12px; line-height: 18px; }
-.private-asset-kind { overflow-wrap: anywhere; }
+.private-asset-breakdowns { display: grid; grid-template-columns: minmax(64px, 30%) minmax(20px, 1fr) max-content; column-gap: 8px; row-gap: 8px; margin-top: 8px; }
+.private-asset-breakdown { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; min-width: 0; color: var(--business-component-muted, #646c73); font-size: 12px; line-height: 18px; }
+.private-asset-kind { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .private-asset-track { height: 5px; overflow: hidden; border-radius: 3px; background: var(--bg-sunken, #f2f3f5); }
 .private-asset-track > span { display: block; height: 100%; border-radius: inherit; background: var(--business-component-primary, #1677ff); }
 .private-asset-count { color: var(--business-component-text, #1f2329); text-align: right; font-variant-numeric: tabular-nums; }
