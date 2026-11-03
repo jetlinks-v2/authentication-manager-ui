@@ -19,19 +19,20 @@ function statusOf(value: number | undefined, loading: boolean): GuideStatus {
   return loading ? 'loading' : value === undefined ? 'unknown' : value > 0 ? 'complete' : 'incomplete'
 }
 
-/** 六步分别使用真实业务配置；查询不可用不等同于尚未配置。 */
+/** 六步分别使用真实业务配置；设备仅检查已授权来源，查询不可用不等同于尚未配置。 */
 export function resolveGuideStatuses(
   health: GuideRowsState,
   algorithms: GuideRowsState,
   configuration: GuideRowsState,
   applications: GuideRowsState,
   isEdit = false,
+  deviceSources: readonly ('devices' | 'video')[] = ['devices', 'video'],
 ): Record<GuideStepKey, GuideStatus> {
   if (isEdit) return { space: 'incomplete', gateway: 'incomplete', device: 'incomplete', algorithm: 'incomplete', alarm: 'incomplete', application: 'incomplete' }
-  const deviceCounts = ['devices', 'video'].map(id => countOf(health.rows, id))
+  const deviceCounts = deviceSources.map(id => countOf(health.rows, id))
   const device: GuideStatus = health.loading ? 'loading'
     : deviceCounts.some(value => value !== undefined && value > 0) ? 'complete'
-    : deviceCounts.every(value => value === 0) ? 'incomplete' : 'unknown'
+    : deviceCounts.length > 0 && deviceCounts.every(value => value === 0) ? 'incomplete' : 'unknown'
   return {
     space: statusOf(countOf(configuration.rows, 'space'), configuration.loading),
     gateway: statusOf(countOf(health.rows, 'gateway'), health.loading),

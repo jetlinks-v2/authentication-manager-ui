@@ -10,9 +10,7 @@
     <template #extra>
       <slot name="extra" :more-target="moreTarget" :can-open="canOpen" :open="open"
         :rows="rows" :loading="loading" :error="error" :updated-at="updatedAt">
-        <a-button v-if="!hideMore && moreTarget && config.chart.navigation && (!compact || canOpen(moreTarget))" type="link" size="small" :disabled="!canOpen(moreTarget)" class="home-widget-more" @click="open(moreTarget)">
-          {{ moreText }}<RightOutlined class="home-widget-arrow" />
-        </a-button>
+        <HomeWidgetLink v-if="!hideMore && moreTarget && config.chart.navigation && (!compact || canOpen(moreTarget))" :disabled="!canOpen(moreTarget)" @click="open(moreTarget)">{{ moreText }}</HomeWidgetLink>
       </slot>
     </template>
     <div v-if="loading && !rows.length" class="home-state"><a-spin /></div>
@@ -34,8 +32,8 @@
 import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import { computed } from 'vue'
 import { theme } from 'ant-design-vue'
-import { RightOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
+import HomeWidgetLink from './HomeWidgetLink.vue'
 import { getHomeConfig } from './config'
 import { useHomeRuntime } from './useHomeRuntime'
 import { useHomeNavigation } from './useHomeNavigation'
@@ -90,13 +88,10 @@ const tokens = computed(() => ({
 .project-home-shell :deep(.ant-card-extra .ant-btn) { padding: 0; height: auto; font-size: 13px; line-height: 20px; transition: color 0.2s ease; }
 .project-home-shell :deep(.ant-card-extra .ant-btn-link:not(:disabled)) { color: var(--business-component-primary, #1677ff); }
 .project-home-shell :deep(.ant-card-extra .ant-btn-link:hover:not(:disabled)) { color: var(--ant-color-primary-hover, #4096ff); }
-.home-widget-more { display: inline-flex; align-items: center; gap: 3px; }
-.home-widget-arrow { font-size: 8.5px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; transition: transform 0.2s ease; }
-.home-widget-more:not(:disabled):hover .home-widget-arrow { transform: translateX(2px); }
 .home-state { display: grid; place-items: center; height: 100%; overflow: auto; }
 </style>
 <style scoped lang="less">
-.project-home-shell--saas {
+.project-home-shell--saas, .project-home-shell--private {
   height: auto; container-type: inline-size; overflow: visible;
   .home-widget-title strong { font-weight: 600; }
   :deep(.ant-card-head) { padding: 0 18px; min-height: 46px; border-bottom: 1px solid var(--line, #f2f3f5); }
@@ -107,18 +102,5 @@ const tokens = computed(() => ({
   .home-state { min-height: 120px; height: auto; overflow: visible; }
   :deep(.home-content) { overflow: visible; }
   :deep(.home-state .ant-empty-image) { height: 64px; }
-}
-/* 私有化应用嵌在固定概览首行，用独立紧凑变体保持三条应用与相邻接入区等高。 */
-.project-home-shell--private {
-  container-type: inline-size; overflow: visible; box-shadow: none;
-  border: 1px solid var(--line, #e5e6eb);
-  :deep(.ant-card-head) { padding: 0 18px; min-height: 44px; border-bottom: 1px solid var(--line, #f2f3f5); }
-  :deep(.ant-card-head-title) { font-size: 15px; line-height: 22px; }
-  :deep(.ant-card-body) { padding: 6px !important; overflow: visible; gap: 4px; }
-  :deep(.ant-card-extra .ant-btn) { font-size: 12px; }
-  :deep(.home-content) { overflow: visible; }
-  .home-state { height: auto; min-height: 110px; overflow: visible; }
-  :deep(.ant-empty-image) { height: 48px; }
-  :deep(.ant-empty) { margin: 0; }
 }
 </style>

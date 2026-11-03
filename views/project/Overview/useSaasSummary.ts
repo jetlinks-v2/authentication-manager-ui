@@ -1,6 +1,7 @@
 import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useNow } from '@vueuse/core'
 import dayjs from 'dayjs'
 import { getProjectCodeFromLocation } from '@jetlinks-web-core/utils/project-runtime'
 import { getRequestBaseApi } from '@jetlinks-web-core/utils/request-context'
@@ -17,6 +18,7 @@ export function useSaasSummary() {
   const route = useRoute()
   const user = useUserStore()
   const { t } = useI18n()
+  const now = useNow({ interval: 60_000 })
   const contextRevision = ref(0)
   const active = ref(true)
   const organization = ref<string>()
@@ -43,10 +45,13 @@ export function useSaasSummary() {
       ? 'components.LayoutSidebarUser.subAccount' : 'components.LayoutSidebarUser.mainAccount')
     const userType = textOf(user.userInfo.type?.name).trim()
     const identity = role || (userType !== accountType ? userType : '')
-    // 此时间会在登录成功后更新，只称为“最近登录”；地点按当前展示要求固定为重庆。
+    // TODO: 最近登录接口更新后改读真实登录记录，并移除当前时间兜底；地点仍按当前展示要求固定为重庆。
     const loginTime = user.userInfo.loginInfo?.loginTime
-    const recentLogin = typeof loginTime === 'number' && Number.isFinite(loginTime) && loginTime > 0 && dayjs(loginTime).isValid()
-      ? t('packages.ProjectHome.saasRecentLogin', { time: dayjs(loginTime).format('YYYY-MM-DD HH:mm') }) : ''
+    const recentLoginTime = typeof loginTime === 'number' && Number.isFinite(loginTime)
+      && loginTime > 0 && dayjs(loginTime).isValid() ? loginTime : now.value.getTime()
+    const recentLogin = t('packages.ProjectHome.saasRecentLogin', {
+      time: dayjs(recentLoginTime).format('YYYY-MM-DD HH:mm'),
+    })
     return {
       welcome: welcome.value,
       details: [organization.value, identity, recentLogin].filter((item): item is string => !!item),

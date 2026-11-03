@@ -1,4 +1,4 @@
-import { computed, ref, toRef, watch } from 'vue'
+import { computed, inject, ref, toRef, watch, type InjectionKey } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@jetlinks-web-core/store/auth'
 import { useResourceCapabilities } from '../../ResourceCenter/hooks/useResourceCapabilities'
@@ -15,6 +15,15 @@ import { usePrivateQuery } from './usePrivateQuery'
 import { usePrivateMonitor } from './usePrivateMonitor'
 import { usePrivateCharts } from './usePrivateCharts'
 import type { PrivateTrendMetric, PrivateTrendRange } from './types'
+
+export const privateOverviewContextKey: InjectionKey<ReturnType<typeof usePrivateOverview>> = Symbol('private-overview')
+
+/** 画布适配器读取页面共享状态，拖拽、缩放不会重新创建查询及监控订阅。 */
+export function usePrivateOverviewContext() {
+  const context = inject(privateOverviewContextKey)
+  if (!context) throw new Error('Missing private overview context')
+  return context
+}
 
 /** 私有化概览独立装配能力、分区查询与导航，不启动 SaaS 配额及旧画布订阅。 */
 export function usePrivateOverview() {
@@ -45,6 +54,13 @@ export function usePrivateOverview() {
 
   // 仅复用目标页面已消费的创建参数，并按所属父菜单校验按钮权限。
   const actions = computed<HomeRow[]>(() => {
+    // 快捷入口复用平台业务图标，与资源统计卡的通用图标分开选择。
+    const icons: Record<string, string> = {
+      devices: 'icon-shebei', video: 'icon-AI-shexiangtou', product: 'icon-chanpin',
+      scene: 'icon-changjingliandong', gateway: 'icon-wangguan', media: 'icon-liumeitifuwu',
+      task: 'PlayCircleOutlined', screen: 'icon-keshihua', protocol: 'CodeOutlined',
+      network: 'DeploymentUnitOutlined', certificate: 'SafetyCertificateOutlined',
+    }
     const sceneMenu = PRIVATE_TARGETS.scene.menus.find(code => navigation.canOpen({ menus: [code] }))
     const items: Array<{ id: string; enabled: boolean; target: HomeTarget; permission?: string }> = [
       { id: 'devices', enabled: access.value.iot, target: HOME_TARGETS.addDevice, permission: 'iot-user-device-list:add' },
@@ -63,7 +79,7 @@ export function usePrivateOverview() {
       { id: 'screen', enabled: access.value.screen, target: { ...PRIVATE_TARGETS.screen, query: { kind: 'screen', action: 'create' } } },
     ]
     return items.filter(item => item.enabled && navigation.canOpen(item.target) && (!item.permission || auth.hasPermission(item.permission)))
-      .map(item => ({ id: item.id, icon: item.id === 'product' ? 'products' : item.id,
+      .map(item => ({ id: item.id, icon: icons[item.id],
         labelKey: `privateOverview.action.${item.id}`, descriptionKey: `privateOverview.actionDesc.${item.id}`, target: item.target }))
   })
   // 只读账号完成引导后没有创建入口时，不保留空的快捷卡或占位列。
