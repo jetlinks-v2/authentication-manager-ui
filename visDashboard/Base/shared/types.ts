@@ -1,6 +1,6 @@
 import type { ProjectApplication } from '../../../views/application-center/ProjectApplication/types'
 import type { CardAvatarData } from '@jetlinks-web-core/components/CardBox/types'
-export type HomeFeature = 'QuickActions' | 'Applications' | 'Resources' | 'Quotas' | 'Operations' | 'Announcements' | 'AnnouncementUnread' | 'QuickGuide' | 'DeviceAccess' | 'Visualization' | 'AiCenter' | 'RuleEngine' | 'Collection' | 'SaasResources' | 'SaasToday' | 'SaasQuotas' | 'SaasApplications'
+export type HomeFeature = 'Applications' | 'Resources' | 'Quotas' | 'Operations' | 'Announcements' | 'AnnouncementUnread' | 'QuickGuide' | 'DeviceAccess' | 'Visualization' | 'AiCenter' | 'RuleEngine' | 'Collection' | 'SaasResources' | 'SaasToday' | 'SaasQuotas' | 'SaasApplications'
 export interface HomeChart {
   maxItems?: number
   titleKey?: string
@@ -31,6 +31,7 @@ export interface HomeRow {
   value?: number
   yesterday?: number
   statuses?: { labelKey: string; value?: number; tone?: 'success' | 'error' | 'default' }[]
+  breakdown?: { id: string; labelKey: string; value?: number; offline?: number; failed?: boolean }[]
   online?: number
   offline?: number
   limit?: number | null

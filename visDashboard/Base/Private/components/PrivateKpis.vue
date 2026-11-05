@@ -54,7 +54,7 @@ const { t, locale } = useI18n()
 .private-kpi-number > span, .private-kpi-description, .private-kpi-statuses { font-size: 12px; line-height: 18px; color: var(--business-component-muted, #646c73); }
 .private-kpi-statuses { display: flex; flex-wrap: wrap; gap: 3px 10px; }
 .private-kpi-status { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
-.private-kpi-arrow { position: absolute; top: 16px; right: 12px; color: var(--ink-4, #c9cdd4); font-size: 10px; }
+.private-kpi-arrow { position: absolute; top: 16px; right: 12px; color: var(--ink-4, #c9cdd4); font-size: 11px; }
 .private-kpi:hover:not(:disabled) .private-kpi-arrow { color: var(--business-component-primary, #1677ff); }
 .private-kpis-loading { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; min-height: 112px; color: var(--business-component-muted); }
 @container (max-width: 1099px) { .private-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

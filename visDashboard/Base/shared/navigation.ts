@@ -8,8 +8,9 @@ const addVideoTarget: HomeTarget = isPrivateDeployment()
 
 /** 菜单编码来自各 owning module，运行时只解析当前项目已授予的菜单。 */
 export const HOME_TARGETS: Record<string, HomeTarget> = {
-  devices: { menus: ['iot-user-device-list', 'iot-user/device/list'], query: { type: 'device' } },
-  addDevice: { menus: ['iot-user-device-list'], query: { type: 'device', action: 'create' } },
+  // 普通设备入口进入“全部”，不通过查询参数给目标页增设分类。
+  devices: { menus: ['iot-user-device-list', 'iot-user/device/list'] },
+  addDevice: { menus: ['iot-user-device-list'], query: { action: 'create' } },
   video: { menus: ['video/resources', 'media/Device', 'video/live'] },
   addVideo: addVideoTarget,
   gateway: { menus: ['iot-user-device-list', 'iot-user/device/list'], query: { type: 'gateway' } },
@@ -45,9 +46,3 @@ export const HOME_TARGETS: Record<string, HomeTarget> = {
 export const HOME_MORE_TARGETS: Partial<Record<HomeFeature, HomeTarget>> = {
   Applications: HOME_TARGETS.applications, Quotas: HOME_TARGETS.usage, SaasQuotas: HOME_TARGETS.usage, Announcements: HOME_TARGETS.announcements,
 }
-export const QUICK_ACTIONS = [
-  { id: 'devices', target: HOME_TARGETS.addDevice },
-  { id: 'video', target: HOME_TARGETS.addVideo },
-  { id: 'gateway', target: HOME_TARGETS.gateway },
-  ...['createApplication', 'space', 'visionAlarm', 'deviceAlarm'].map(id => ({ id, target: HOME_TARGETS[id] })),
-]

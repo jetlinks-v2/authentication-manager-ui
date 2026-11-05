@@ -39,8 +39,9 @@ export function useVisiblePrivateSummaryTags(items: Readonly<Ref<PrivateSummaryT
   const measurement = ref<HTMLElement>()
   const visibleCount = ref(2)
   const visibleItems = computed(() => items.value.slice(0, visibleCount.value))
-  const hiddenCount = computed(() => Math.max(0, items.value.length - visibleCount.value))
-  const accessibleLabel = computed(() => items.value.map(item => item.text).join(', '))
+  const hiddenItems = computed(() => items.value.slice(visibleCount.value))
+  const hiddenCount = computed(() => hiddenItems.value.length)
+  const accessibleLabel = computed(() => hiddenItems.value.map(item => item.text).join(', '))
 
   function measure() {
     const count = items.value.length
@@ -63,5 +64,5 @@ export function useVisiblePrivateSummaryTags(items: Readonly<Ref<PrivateSummaryT
   useResizeObserver([host, measurement], measure)
   watch(items, () => { void nextTick(measure) }, { immediate: true, deep: true, flush: 'post' })
   onMounted(() => { void nextTick(measure) })
-  return { host, measurement, visibleItems, hiddenCount, accessibleLabel }
+  return { host, measurement, visibleItems, hiddenItems, hiddenCount, accessibleLabel }
 }

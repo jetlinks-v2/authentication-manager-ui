@@ -5,7 +5,7 @@
       <div class="ranking-toolbar">
         <a-segmented v-if="!tableMode" v-model:value="metric" :options="tabs" size="small" class="ranking-switch" />
         <a-button v-if="canOpenList" type="link" size="small" class="action-link" @click="openList">
-          {{ t('resourceDashboard.gatewayStatus.nodeList') }}<RightOutlined class="action-arrow" />
+          {{ t('resourceDashboard.EdgeNodes') }}<RightOutlined class="action-arrow" />
         </a-button>
       </div>
     </header>

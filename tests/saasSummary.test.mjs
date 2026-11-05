@@ -62,10 +62,10 @@ test('identity falls back to meaningful account type when roles are empty and re
  f.context.user.userInfo.type={id:'mainAccount',name:'超级管理员'};f.context.user.userInfo.roleList=[{name:'首角色'},{name:'次角色'},{name:'第三角色'}];await tick();assert.deepEqual(identity(),['首角色 等 3 个角色'])
  f.context.user.userInfo.roleList=[];await tick();assert.deepEqual(identity(),['超级管理员'])
 })
-test('invalid and absent login time or role are omitted',async t=>{
+test('invalid and absent login time falls back to current time and absent role is omitted',async t=>{
  const f=fixture();t.after(()=>f.close());f.calls[0].resolve(undefined);await tick()
  f.context.user.userInfo.roleList=[]
- for(const value of [undefined,null,'',true,false,'1793365107369',0,-1,'bad',NaN]) {f.context.user.userInfo.loginInfo.loginTime=value;await tick();assert.deepEqual(f.state.summary.value.details,[])}
+ for(const value of [undefined,null,'',true,false,'1793365107369',0,-1,'bad',NaN]) {f.context.user.userInfo.loginInfo.loginTime=value;await tick();assert.deepEqual(f.state.summary.value.details,['最近登录：2026-10-30 10:00（重庆）'])}
 })
 test('no initialized user does not request; 403 and empty org hide only the organization',async t=>{
  const f=fixture({user:vue.reactive({userInfo:{}})});t.after(()=>f.close());assert.equal(f.calls.length,0)

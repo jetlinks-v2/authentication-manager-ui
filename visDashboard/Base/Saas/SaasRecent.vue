@@ -1,5 +1,5 @@
 <template>
-  <a-card class="saas-recent-card" :title="t('saasRecent.title')" :bordered="false">
+  <a-card class="saas-recent-card" :class="{ 'saas-recent-card--private': variant === 'private' }" :title="t('saasRecent.title')" :bordered="false">
     <template #extra><span v-if="isStarting && rows.length" class="saas-recent-hint">{{ t('saasRecent.startHint') }}</span></template>
     <div v-if="rows.length" class="saas-recent-grid">
       <button v-for="row in rows" :key="row.id" type="button" class="saas-recent-item" :title="row.loadingTitle ? undefined : row.fullPath"
@@ -19,8 +19,9 @@
 import { useI18n } from 'vue-i18n'
 import { SkeletonInput } from 'ant-design-vue'
 import { useSaasRecent } from './useSaasRecent'
+const props = defineProps<{ variant?: 'private' }>()
 const { t } = useI18n()
-const { rows, isStarting, open, openingId } = useSaasRecent()
+const { rows, isStarting, open, openingId } = useSaasRecent(props.variant)
 </script>
 <style scoped>
 .saas-recent-card { border-radius: var(--r-3, 8px); container: saas-recent / inline-size; }
@@ -28,10 +29,9 @@ const { rows, isStarting, open, openingId } = useSaasRecent()
 .saas-recent-card :deep(.ant-card-head-title) { font-weight: 600; padding-block: 12px; }
 .saas-recent-card :deep(.ant-card-body) { display: flex; flex-direction: column; padding: 12px 16px; }
 .saas-recent-hint { font-size: 12px; color: var(--business-component-muted, #646c73); }
-/* 所有入口始终单行均分宽度，长文本省略，不因容器变窄换行或产生横向滚动。 */
-.saas-recent-grid { display: flex; flex-wrap: nowrap; flex-grow: 1; gap: 12px; min-width: 0; }
+/* 按卡片自身宽度分列，保持入口可读；高度不足时由正文容器滚动。 */
+.saas-recent-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px 12px; align-content: start; min-width: 0; }
 .saas-recent-item {
-  flex: 1 1 0;
   box-sizing: border-box;
   border: 1px solid transparent;
   background: transparent;
@@ -41,6 +41,7 @@ const { rows, isStarting, open, openingId } = useSaasRecent()
   align-items: center;
   text-align: left;
   min-width: 0;
+  min-height: 56px;
   overflow: hidden;
   cursor: pointer;
   border-radius: var(--r-2, 6px);
@@ -101,11 +102,15 @@ const { rows, isStarting, open, openingId } = useSaasRecent()
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.saas-recent-empty { color: var(--business-component-muted, #646c73); font-size: 13px; }
-@container saas-recent (max-width: 560px) {
-  .saas-recent-grid { gap: 6px; }
-  .saas-recent-item { padding-inline: 4px; gap: 6px; }
-  .saas-recent-icon { width: 24px; height: 24px; }
+.saas-recent-empty { display: grid; place-items: center; flex: 1 0 auto; min-height: 56px; text-align: center; color: var(--business-component-muted, #646c73); font-size: 13px; }
+@container saas-recent (max-width: 1023px) {
+  .saas-recent-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@container saas-recent (max-width: 639px) {
+  .saas-recent-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .saas-recent-hint { display: none; }
+}
+@container saas-recent (max-width: 359px) {
+  .saas-recent-grid { grid-template-columns: minmax(0, 1fr); }
 }
 </style>

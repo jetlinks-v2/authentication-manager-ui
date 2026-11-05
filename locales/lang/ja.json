@@ -2246,8 +2246,18 @@
         "pools": "現在、トラフィックプールはありません",
         "points": "現在、採集ポイントはありません",
         "protocols": "現在、収集チャンネルはありません",
-        "offline": "現在、オフライン時間付きのIoTデバイスはありません。"
-      }
+        "offline": "現在、オフライン時間付きのIoTデバイスはありません。",
+        "offlineDevices": "オフライン日時のあるデバイスはありません"
+      },
+      "offlineDevices": "最近オフラインになったデバイス",
+      "videoLink": "映像デバイスを表示",
+      "cardLink": "IoT SIM カード一覧",
+      "monthByOperator": "今月 · 通信事業者別",
+      "unknownOperator": "不明な通信事業者",
+      "pointLink": "ポイント",
+      "channelLink": "収集チャネル",
+      "itemCount": "{count} 個",
+      "poolTotal": "合計 {used} / {total} {unit} · {percent}"
     }
   },
   "runtimeLog": {
@@ -3020,6 +3030,33 @@
   "privateOverview.accessGuide": "接続ガイド",
   "privateOverview.quickActions": "クイックエントリー",
   "privateOverview.guideProgress": "{complete} / {total} ステップが完了しました",
+  "privateOverview.guideLane.iot": "IoT 接続",
+  "privateOverview.guideLane.video": "映像接続",
+  "privateOverview.guideLaneProgress": "{complete} / {total} 完了",
+  "privateOverview.guideCurrent": "現在のステップ",
+  "privateOverview.guideUnknown": "状態を確認できません",
+  "privateOverview.guideUnknownDesc": "このステップの状態を取得できません。再試行してください。",
+  "privateOverview.guideLaneComplete": "接続設定が完了しました",
+  "privateOverview.guideLaneCompleteDesc": "上のステップを選択して設定を確認・管理できます。",
+  "privateOverview.guideState.complete": "完了",
+  "privateOverview.guideState.incomplete": "未完了",
+  "privateOverview.guideState.unknown": "状態を確認できません",
+  "privateOverview.guideTitle.protocol": "接続プロトコルをアップロード",
+  "privateOverview.guideTitle.network": "ネットワークコンポーネントを設定",
+  "privateOverview.guideTitle.gateway": "接続ゲートウェイを設定",
+  "privateOverview.guideTitle.product": "IoT 製品を作成",
+  "privateOverview.guideTitle.device": "IoT デバイスを追加",
+  "privateOverview.guideTitle.media": "ストリーミングサーバーを追加",
+  "privateOverview.guideTitle.videoAccess": "映像デバイスを接続",
+  "privateOverview.guideTitle.channels": "映像チャンネルを確認",
+  "privateOverview.guideDescription.protocol": "デバイスのプロトコルをアップロードし、ネットワークとゲートウェイの設定を準備します。",
+  "privateOverview.guideDescription.network": "ネットワークコンポーネントを設定・有効化し、デバイスの通信接続を準備します。",
+  "privateOverview.guideDescription.gateway": "プロトコルとネットワークコンポーネントを関連付け、接続ゲートウェイを設定・有効化します。",
+  "privateOverview.guideDescription.product": "製品を作成・公開し、デバイスの機能と接続方法を定義します。",
+  "privateOverview.guideDescription.device": "作成済みの製品を選択し、接続する IoT デバイスを追加します。",
+  "privateOverview.guideDescription.media": "ストリーミングサーバーを追加・有効化し、映像接続を準備します。",
+  "privateOverview.guideDescription.videoAccess": "映像デバイスを追加し、映像チャンネルの接続を完了します。",
+  "privateOverview.guideDescription.channels": "映像デバイスのチャンネル一覧を開き、チャンネルの接続を完了します。",
   "privateOverview.devicesAndChannels": "デバイスと通路",
   "privateOverview.channelList": "チャンネル一覧",
   "privateOverview.deviceList": "デバイス一覧",
@@ -3163,8 +3200,13 @@
       "loadError": "数量の読み込みに失敗しました",
       "partialError": "一部の数量の読み込みに失敗しました",
       "empty": "現在閲覧できないリソース",
-      "aiEvents": "本日のAI認識イベント"
-    }
+      "aiEvents": "本日のAI認識イベント",
+      "videoDevices": "映像デバイス",
+      "stopped": "停止",
+      "abnormal": "異常"
+    },
+    "title": "ダッシュボード",
+    "updatedAt": "リソース統計の更新日時：{time}"
   },
   "saasRecent": {
     "title": "最近の訪問",
@@ -3178,7 +3220,15 @@
       "alarms": "警告リスト",
       "events": "認識イベント",
       "scenes": "シーン連動",
-      "login": "シングルサインオン"
+      "login": "シングルサインオン",
+      "video": "映像一覧",
+      "visionAlarm": "画像認識アラーム",
+      "alarmDashboard": "アラームダッシュボード",
+      "videoLive": "監視ウォール",
+      "visionTask": "AI タスク",
+      "products": "製品一覧",
+      "offlineDevices": "オフラインのデバイス",
+      "onlineDevices": "オンラインのデバイス"
     },
     "group": {
       "dashboard": "リソースセンター",
@@ -3186,10 +3236,26 @@
       "alarms": "アラームセンター",
       "events": "AIセンター",
       "scenes": "ルールエンジン",
-      "login": "外部連携と統合"
+      "login": "外部連携と統合",
+      "video": "リソースセンター",
+      "visionAlarm": "アラームセンター",
+      "alarmDashboard": "アラームセンター",
+      "videoLive": "映像監視",
+      "visionTask": "AI センター",
+      "products": "リソースセンター",
+      "offlineDevices": "リソースセンター",
+      "onlineDevices": "リソースセンター"
     }
   },
   "packages.ProjectHome.saasResourceDevices": "デバイス",
   "packages.ProjectHome.saasDataBoard": "データダッシュボード",
-  "packages.ProjectHome.saasUnitScreens": "大きな画面"
+  "packages.ProjectHome.saasUnitScreens": "大きな画面",
+  "privateApplication.title": "アプリケーションセンター",
+  "privateApplication.account": "現在のアカウント",
+  "privateApplication.available": "利用可能なアプリケーション",
+  "privateApplication.availableFunctions": "利用可能な機能",
+  "privateApplication.lastLogin": "前回のログイン",
+  "privateApplication.empty": "アクセスできるアプリケーションがありません。管理者に権限の割り当てを依頼してください。",
+  "privateApplication.contactAdmin": "追加の権限が必要な場合は管理者にお問い合わせください。",
+  "privateOverview.edge": "エッジノード"
 }

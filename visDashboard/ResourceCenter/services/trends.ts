@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 import { request } from '@jetlinks-web/core'
 import { recordOf, rowsOf, textOf } from '../../Base/shared/apiResult'
-import type { Datum, Metric, TimeRange } from '../shared'
+import type { TimeRange } from '../shared'
 
 /** 时间范围按本地自然日计算，昨天不包含今天，近 N 天包含今天。 */
 export function rangeOf(range: TimeRange, now = dayjs()) {
@@ -40,36 +40,4 @@ export async function loadMessageTrend(range: TimeRange, now = dayjs()) {
     series.push({ time: cursor.format(format), value: values.get(cursor.valueOf()) ?? 0 })
   }
   return series
-}
-
-/** 后端流量单位为 MB，与物联网卡仪表盘相同；统计和排行榜独立失败。 */
-export async function loadNetworkCards(): Promise<{ metrics: Metric[]; ranking: Datum[]; rankingFailed: boolean }> {
-  const now = dayjs()
-  const windows = [
-    { key: 'yesterday', ...rangeOf('yesterday', now) },
-    { key: 'month', from: now.startOf('month').valueOf(), to: now.valueOf(), time: '1d', format: 'yyyy-MM-dd', limit: 31 },
-    { key: 'year', from: now.startOf('year').valueOf(), to: now.valueOf(), time: '1M', format: 'yyyy-MM', limit: 12 },
-  ]
-  const [totals, ranked] = await Promise.allSettled([
-    request.post('/dashboard/_multi', windows.map(({ key, ...params }) => ({ dashboard: 'flow', object: 'networkCardFlow',
-      measurement: 'trend', dimension: 'agg', group: key, params })), { hiddenError: true }),
-    request.post('/dashboard/_multi', [{ dashboard: 'flow', object: 'networkCardFlow', measurement: 'rank', dimension: 'agg',
-      params: { from: now.startOf('month').valueOf(), to: now.valueOf(), limit: 50 } }], { hiddenError: true }),
-  ])
-  let metrics: Metric[]
-  try {
-    if (totals.status === 'rejected') throw totals.reason
-    const rows = rowsOf(totals.value)
-    metrics = windows.map(({ key }) => ({ key, value: rows.filter(row => row.group === key)
-      .reduce((sum, row) => sum + numberOf(recordOf(row.data).value), 0) }))
-  } catch { metrics = windows.map(({ key }) => ({ key, failed: true })) }
-  try {
-    if (ranked.status === 'rejected') throw ranked.reason
-    const ranking = rowsOf(ranked.value).map(row => {
-      const value = recordOf(recordOf(row.data).value)
-      const id = textOf(value.cardId) || textOf(value.id)
-      return { id, name: textOf(value.id) || id, value: numberOf(value.sum) }
-    }).sort((a, b) => b.value - a.value)
-    return { metrics, ranking, rankingFailed: false }
-  } catch { return { metrics, ranking: [], rankingFailed: true } }
 }

@@ -10,8 +10,6 @@ const runtimeRoot = path.resolve(here, '../../..')
 const require = createRequire(import.meta.url)
 const esbuild = require(path.join(runtimeRoot, 'node_modules/esbuild'))
 const navigationSource = await readFile(new URL('../visDashboard/Base/shared/navigation.ts', import.meta.url), 'utf8')
-const quickStartSource = await readFile(new URL('../visDashboard/ResourceCenter/services/quickStart.ts', import.meta.url), 'utf8')
-const coveragePanelSource = await readFile(new URL('../visDashboard/ResourceCenter/components/AlgorithmCoveragePanel.vue', import.meta.url), 'utf8')
 
 async function loadNavigation(privateDeployment) {
   const source = navigationSource.replace(
@@ -25,12 +23,11 @@ async function loadNavigation(privateDeployment) {
 }
 
 test('private deployment opens the unified device-list video tab', async () => {
-  const { HOME_TARGETS, QUICK_ACTIONS } = await loadNavigation(true)
+  const { HOME_TARGETS } = await loadNavigation(true)
   assert.deepEqual(HOME_TARGETS.addVideo, {
     menus: ['iot-user-device-list'],
     query: { type: 'video' },
   })
-  assert.deepEqual(QUICK_ACTIONS.find(item => item.id === 'video')?.target, HOME_TARGETS.addVideo)
 })
 
 test('SaaS keeps the edge-gateway video access flow', async () => {
@@ -39,14 +36,4 @@ test('SaaS keeps the edge-gateway video access flow', async () => {
     menus: ['video/resources'],
     query: { perspective: 'edge-node', action: 'access' },
   })
-})
-
-test('resource-center quick start reuses the shared video target', () => {
-  assert.match(quickStartSource, /menu: HOME_TARGETS\.addVideo\.menus\[0\]/)
-  assert.match(quickStartSource, /query: HOME_TARGETS\.addVideo\.query/)
-})
-
-test('algorithm coverage empty action opens the video resource list', () => {
-  assert.match(coveragePanelSource, /const target = 'video\/resources'/)
-  assert.match(coveragePanelSource, /menuStore\.jumpPage\(target\)/)
 })

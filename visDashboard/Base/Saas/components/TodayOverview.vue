@@ -1,7 +1,7 @@
 <template>
   <div class="saas-today-container">
     <span v-if="updatedAtLabel" class="saas-today-window">{{ updatedAtLabel }}</span>
-    <div class="saas-today-grid">
+    <div class="saas-today-grid" :class="{ 'is-single': rows.length === 1 }" :style="{ '--today-count': Math.max(rows.length, 1) }">
       <button
         v-for="row in rows"
         :key="row.id"
@@ -60,7 +60,7 @@ const { t, locale } = useI18n()
 .saas-today-grid {
   display: grid;
   flex: 1 0 auto;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--today-count, 4), minmax(0, 1fr));
   gap: 0;
 }
 .saas-today-item {
@@ -134,7 +134,7 @@ const { t, locale } = useI18n()
 }
 .saas-today-arrow {
   flex-shrink: 0;
-  font-size: 8.5px;
+  font-size: 11px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -204,4 +204,5 @@ const { t, locale } = useI18n()
     grid-template-columns: minmax(0, 1fr);
   }
 }
+.saas-today-grid.is-single { grid-template-columns: minmax(0, 1fr); }
 </style>

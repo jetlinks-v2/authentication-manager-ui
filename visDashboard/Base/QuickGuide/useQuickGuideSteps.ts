@@ -71,7 +71,7 @@ export function useQuickGuideSteps(isEdit: () => boolean, polling?: ReturnType<t
         description: t('packages.ProjectHome.QuickGuide_step2_desc'),
         actionText: t('packages.ProjectHome.QuickGuide_step2_action'),
         target: isEdit() || hasSaasTarget(granted.value, HOME_TARGETS.devices)
-          ? { ...HOME_TARGETS.devices, query: { type: 'device', action: 'create' } } : HOME_TARGETS.addVideo,
+          ? { ...HOME_TARGETS.devices, query: HOME_TARGETS.addDevice.query } : HOME_TARGETS.addVideo,
       },
       {
         key: 'algorithm',

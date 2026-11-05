@@ -50,7 +50,7 @@ export function getResourceSummaryKinds(access: ResourcePageAccess): ResourceSum
 export function createResourceSummaryCards(access: ResourcePageAccess, visualizationKeys: VisualizationSummaryKey[] = []): ResourceSummaryCard[] {
   const targets = {
     edge: HOME_TARGETS.gateway,
-    iot: { ...HOME_TARGETS.devices, query: { type: 'device' } },
+    iot: HOME_TARGETS.devices,
     video: HOME_TARGETS.video,
     networkCards: HOME_TARGETS.card,
     collection: HOME_TARGETS.collector,
@@ -60,16 +60,20 @@ export function createResourceSummaryCards(access: ResourcePageAccess, visualiza
   }
   const icons: Record<ResourceSummaryId, string> = { edge: 'ClusterOutlined', iot: 'CloudServerOutlined', video: 'VideoCameraOutlined',
     networkCards: 'CreditCardOutlined', collection: 'PartitionOutlined', visualization: 'FundProjectionScreenOutlined', product: 'AppstoreOutlined', message: 'MessageOutlined', aiEvents: 'ScanOutlined' }
-  return getResourceSummaryKinds(access).map((id): ResourceSummaryCard => {
+  const kinds = getResourceSummaryKinds(access)
+  return kinds.map((id): ResourceSummaryCard => {
+    // 单采集场景展示独立状态明细；其他场景保留原有紧凑摘要。
+    const collectionDetails = !access.saas && kinds.length === 1 && id === 'collection'
     const statusKeys = id === 'edge' ? ['online', 'offline', 'disabled'] : ['iot', 'video'].includes(id) ? ['online', 'offline']
       : id === 'networkCards' ? ['using', 'toBeActivated', 'deactivate']
-        : id === 'collection' ? ['running', 'notRunning'] : id === 'product' ? ['enabled', 'disabled']
+        : id === 'collection' ? collectionDetails ? ['running', 'stopped', 'abnormal'] : ['running', 'notRunning'] : id === 'product' ? ['enabled', 'disabled']
           : id === 'message' || id === 'aiEvents' ? ['yesterdaySameTime'] : visualizationKeys
-    return { id, labelKey: `${prefix}${id}`, icon: icons[id],
-      unitKey: `${prefix}${id === 'video' ? 'unitChannels' : id === 'networkCards' ? 'unitCards' : id === 'message' || id === 'aiEvents' ? 'unitMessages' : id === 'visualization' ? 'unitScreens' : ['edge', 'iot'].includes(id) ? 'unitDevices' : 'unitItems'}`,
+    const videoDevices = id === 'video' && access.saas
+    return { id, labelKey: videoDevices ? `${prefix}videoDevices` : `${prefix}${id}`, icon: icons[id],
+      unitKey: `${prefix}${id === 'video' ? videoDevices ? 'unitDevices' : 'unitChannels' : id === 'networkCards' ? 'unitCards' : id === 'message' || id === 'aiEvents' ? 'unitMessages' : id === 'visualization' ? 'unitScreens' : ['edge', 'iot'].includes(id) ? 'unitDevices' : 'unitItems'}`,
       target: id === 'message' ? undefined : targets[id],
       statuses: statusKeys.map(key => ({ key, labelKey: id === 'edge' && key === 'disabled' ? 'resourceDashboard.disabled' : `${prefix}${key}`,
-        tone: ['online', 'using', 'running', 'enabled'].includes(key) ? 'success' : ['offline', 'deactivate'].includes(key) ? 'error' : 'default' })),
+        tone: ['online', 'using', 'running', 'enabled'].includes(key) ? 'success' : ['offline', 'deactivate', 'abnormal'].includes(key) ? 'error' : 'default' })),
     }
   })
 }
@@ -131,21 +135,24 @@ async function visualizationMetrics(card: ResourceSummaryCard): Promise<Metric[]
   return settleMetrics(loaders)
 }
 
+/** 与地图及离线列表共用设备分类；SaaS 视频统计设备台数，不把通道数当作设备数。 */
+function deviceStateMetrics(kind: 'edge' | 'video'): Promise<Metric[]> {
+  const terms = buildOverviewDeviceTerms(kind)
+  const count = (state?: string) => queryPrivateCount('/device/instance/_count', state
+    ? [...terms, { column: 'state', termType: 'eq', value: state }] : terms)
+  return settleMetrics({ total: () => count(), online: () => count('online'), offline: () => count('offline'),
+    ...(kind === 'edge' ? { disabled: () => count('notActive') } : {}),
+  })
+}
+
 /** 按已选卡片查询其 owning API；可视化分项已在创建阶段按菜单授权裁剪。 */
 export async function loadResourceSummary(card: ResourceSummaryCard, access: ResourcePageAccess): Promise<ResourceSummaryCard> {
   try {
-    if (card.id === 'edge') {
-      const terms = buildOverviewDeviceTerms('edge')
-      const count = (state?: string) => queryPrivateCount('/device/instance/_count', state
-        ? [...terms, { column: 'state', termType: 'eq', value: state }] : terms)
-      // 总数减在线数还包含禁用节点；与设备列表一样分别按原始 state 统计三态。
-      return withMetrics(card, await settleMetrics({
-        total: () => count(), online: () => count('online'), offline: () => count('offline'), disabled: () => count('notActive'),
-      }))
+    if (card.id === 'edge' || (card.id === 'video' && access.saas)) {
+      return withMetrics(card, await deviceStateMetrics(card.id))
     }
-    if (card.id === 'iot' || (card.id === 'video' && access.saas)) {
-      const kind = card.id === 'iot' ? 'IotDevices' : 'VideoDevices'
-      return withMetrics(card, await loadSummary(kind))
+    if (card.id === 'iot') {
+      return withMetrics(card, await loadSummary('IotDevices'))
     }
     if (card.id === 'video') {
       const groups = await queryOverviewChannelBreakdown('all')
@@ -159,9 +166,11 @@ export async function loadResourceSummary(card: ResourceSummaryCard, access: Res
     const path = card.id === 'product' ? '/device-product/_count' : card.id === 'networkCards' ? '/network/card/_count' : '/data-collect/channel/_count'
     const loaders: Record<string, () => Promise<number>> = { total: () => queryPrivateCount(path) }
     for (const { key } of card.statuses) {
+      // 已停止是独立状态；异常只包含限流和熔断，不能把停止归入异常。
       const term = card.id === 'product' ? { column: 'state', termType: 'eq', value: key === 'enabled' ? 1 : 0 }
         : card.id === 'networkCards' ? { column: 'cardStateType', termType: 'eq', value: key }
-          : { column: 'runningState', termType: key === 'running' ? 'eq' : 'not', value: 'running' }
+          : key === 'abnormal' ? { column: 'runningState', termType: 'in', value: ['partialError', 'failed'] }
+            : { column: 'runningState', termType: key === 'notRunning' ? 'not' : 'eq', value: key === 'notRunning' ? 'running' : key }
       loaders[key] = () => queryPrivateCount(path, [term])
     }
     return withMetrics(card, await settleMetrics(loaders))

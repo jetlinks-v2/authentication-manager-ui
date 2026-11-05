@@ -5,7 +5,8 @@ import { HOME_TARGETS } from '../../shared/navigation'
 import type { HomeTarget } from '../../shared/types'
 
 export const PRIVATE_TARGETS = {
-  devices: { ...HOME_TARGETS.devices, query: { type: 'device' } },
+  devices: HOME_TARGETS.devices,
+  edge: HOME_TARGETS.gateway,
   video: HOME_TARGETS.video,
   product: { menus: ['device/Product'] },
   screen: HOME_TARGETS.screen,
@@ -44,6 +45,7 @@ export function getPrivateOverviewAccess() {
   const aiModule = installed('jetlinks-ai-ui')
   return {
     iot: deviceModule && granted(PRIVATE_TARGETS.devices),
+    edge: deviceModule && installed('edge-master-ui') && granted(PRIVATE_TARGETS.edge),
     video: mediaModule && granted(PRIVATE_TARGETS.video),
     product: deviceModule && granted(PRIVATE_TARGETS.product),
     screen: installed('visualization-manager-ui') && granted(PRIVATE_TARGETS.screen),

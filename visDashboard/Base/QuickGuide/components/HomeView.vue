@@ -19,7 +19,7 @@
                 <span class="step-badge">{{ index + 1 }}</span>
                 <strong class="step-title"><j-ellipsis>{{ step.title }}</j-ellipsis></strong>
               </span>
-              <j-ellipsis class="step-card-desc">{{ step.description }}</j-ellipsis>
+              <span class="step-card-desc"><j-ellipsis>{{ step.description }}</j-ellipsis></span>
               <span v-if="step.status === 'loading' || step.status === 'unknown'" class="step-state" aria-live="polite">
                 <LoadingOutlined v-if="step.status === 'loading'" spin />
                 <QuestionCircleOutlined v-else />
@@ -28,7 +28,7 @@
               <span v-else class="step-card-action">
                 {{ step.status === 'complete' ? step.statusText : step.actionText }}
                 <img v-if="step.status === 'complete'" :src="completed" alt="" />
-                <img v-else :src="actionArrow" alt="" />
+                <img v-else class="step-action-arrow" :src="actionArrow" alt="" />
               </span>
             </span>
             <img v-if="step.status === 'complete'" class="step-corner" :src="completedCorner" alt="" />
@@ -87,8 +87,9 @@ const { t } = useI18n()
   display: flex;
   align-items: flex-start;
   gap: var(--space-2, 8px);
-  height: 100%;
-  min-height: 0;
+  /* 内容由外层统一滚动；缩放、恢复矮布局时保留步骤完整高度。 */
+  height: auto;
+  min-height: 100%;
 }
 
 .step-entry { display: flex; flex: 1; min-width: 0; }
@@ -101,6 +102,8 @@ const { t } = useI18n()
   flex: 1;
   min-width: 0;
   height: 96px;
+  min-height: 96px;
+  box-sizing: border-box;
   padding: 12px 16px 8px;
   overflow: hidden;
   border: 1px solid var(--guide-border);
@@ -171,7 +174,7 @@ const { t } = useI18n()
   line-height: 18px;
 }
 .step-title { flex: 1; min-width: 0; font-size: var(--fs-14, 14px); line-height: 20px; font-weight: 500; }
-.step-card-desc { width: 100%; min-width: 0; color: var(--guide-description); font-size: var(--fs-12, 12px); line-height: 18px; }
+.step-card-desc { display: block; width: 100%; min-width: 0; color: var(--guide-description); font-size: var(--fs-12, 12px); line-height: 18px; }
 .step-card-action, .step-state {
   display: inline-flex;
   align-items: center;
@@ -181,19 +184,19 @@ const { t } = useI18n()
   line-height: 18px;
   white-space: nowrap;
 }
-.step-card-action { color: var(--guide-accent); }
+.step-card-action { color: var(--guide-accent); font-size: 13px; }
+.step-action-arrow { width: 11px; height: 11px; object-fit: contain; }
 .step-state { color: var(--guide-secondary); }
 .step-card-action img, .step-separator, .step-corner { flex-shrink: 0; display: block; }
 .step-corner { position: absolute; top: 1px; right: 1px; }
 .step-separator { margin-top: 40px; }
 
 @container project-home (max-width: 1400px) {
-  .quick-guide-view { overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: thin; }
   .step-entry { flex: 1 0 280px; scroll-snap-align: start; }
 }
 
 @container project-home (max-width: 1400px) and (min-height: 320px) {
-  .quick-guide-view { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: start; overflow: auto; }
+  .quick-guide-view { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: start; }
   .step-separator { display: none; }
 }
 
@@ -203,12 +206,5 @@ const { t } = useI18n()
 
 @container project-home (max-width: 600px) and (min-height: 420px) {
   .quick-guide-view { grid-template-columns: minmax(0, 1fr); }
-}
-
-@container project-home (max-height: 140px) {
-  .step-entry { flex: 1 0 150px; }
-  .step-card { height: 36px; padding: 6px 10px; }
-  .step-illustration, .step-card-desc, .step-card-action, .step-state, .step-corner, .step-separator { display: none; }
-  .quick-guide-view { overflow-x: auto; }
 }
 </style>

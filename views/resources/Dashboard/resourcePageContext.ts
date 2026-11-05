@@ -2,10 +2,12 @@ import { inject, type InjectionKey, type Ref } from 'vue'
 import type { DashboardComponentDefinition, DashboardWidget } from '@jetlinks-web-core/components/DashBoardCanvas'
 import type { TimeRange } from '../../../visDashboard/ResourceCenter/shared'
 import type { useResourceSummary } from './useResourceSummary'
+import type { ResourceDeviceScope } from './services/resourceDeviceScope'
 
 export interface ResourcePageContext {
   scope: Readonly<Ref<string>>
   summary: ReturnType<typeof useResourceSummary>
+  deviceScope: Readonly<Ref<ResourceDeviceScope | undefined>>
   messageRange: Readonly<Ref<TimeRange>>
   mapWidget: Readonly<Ref<DashboardWidget | undefined>>
   mapDefinition: Readonly<Ref<DashboardComponentDefinition | undefined>>

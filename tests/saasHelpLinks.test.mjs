@@ -13,14 +13,11 @@ const result = await build({
   plugins: [{ name: 'help-fixture', setup(build) {
     const stubs = {
       'vue-i18n': `export const useI18n = () => ({ t: key => key })`,
-      auth: `export const useAuthStore = () => ({ hasPermission: () => false })`,
-      config: `export const createDefaults = () => ({ chart: {} })`,
-      navigation: `export const HOME_TARGETS = { scene: { menus: [] } }`,
-      useHomeNavigation: `export const useHomeNavigation = () => ({ canOpen: () => false })`,
-      access: `export const getSaasGrantedMenus = () => new Set(); export const hasSaasTarget = () => false`,
-      targets: `export const SAAS_QUICK_ACTIONS = []`,
+      menu: `export const useMenuStore = () => ({})`,
+      user: `export const useUserStore = () => ({ userInfo: {} })`,
+      access: `export const getSaasProjectEntries = () => []`,
     }
-    build.onResolve({ filter: /^(vue-i18n|@jetlinks-web-core\/store\/auth|.*\/shared\/(config|navigation|useHomeNavigation)|\.\/services\/access|\.\/targets)$/ }, args => ({ path: args.path.split('/').pop(), namespace: 'fixture' }))
+    build.onResolve({ filter: /^(vue-i18n|@jetlinks-web-core\/store\/(menu|user)|\.\/services\/access)$/ }, args => ({ path: args.path.split('/').pop(), namespace: 'fixture' }))
     build.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ contents: stubs[args.path], loader: 'js' }))
   } }],
 })
