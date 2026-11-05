@@ -4,6 +4,8 @@
 
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.
 
+第三方登录菜单（`baseMenu.json` 中的 `system-third-party-login`，owner 为 `cloud`）需声明应用管理查询权限 `application/query`，供 `api/system/thirdPartyLogin.ts#queryThirdPartyApplications` 调用 `/application/_query`。更新菜单定义后需同步已保存菜单及相应授权；验收时使用仅拥有该菜单的账号确认应用列表可查询，实际登录环境权限效果待验证。
+
 ## Application ownership filter
 
 Delivery: [PR #119](https://github.com/jetlinks-v2/authentication-manager-ui/pull/119), targeting `2.20`.
