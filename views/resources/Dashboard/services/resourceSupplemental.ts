@@ -3,6 +3,7 @@ import { request } from '@jetlinks-web/core'
 import { buildOverviewDeviceTerms } from '../../../../api/overview'
 import { countOf, recordOf, resultOf, rowsOf, textOf } from '../../../../visDashboard/Base/shared/apiResult'
 import { numberOf, rangeOf } from '../../../../visDashboard/ResourceCenter/services/trends'
+import type { ResourceDeviceScope } from './resourceDeviceScope'
 import {
   emptySupplementalData,
   type ResourceSupplementalData,
@@ -55,15 +56,25 @@ async function queryPages(path: string, query: JsonRecord, signal?: AbortSignal)
   }
 }
 
-/** Pool units are MB, as displayed by the owning pool management page; names are not operator identities. */
+/** 同一运营商可能有多个流量池；使用管理页的 platformType 字典汇总，单位为 MB。 */
 async function loadPools(signal?: AbortSignal): Promise<ResourceSupplementalData> {
   const rows = await queryPages('/network/card/pool/query/_detail', {
     sorts: [{ name: 'createTime', order: 'desc' }],
   }, signal)
-  const pools = rows.map(row => ({
-    id: textOf(row.id), name: textOf(row.alias) || textOf(row.name) || textOf(row.id),
-    used: numberOf(row.usedFlow), total: numberOf(row.totalFlow), cards: numberOf(row.cardTotal),
-  }))
+  const groups = new Map<string, ResourceSupplementalData['pools'][number]>()
+  for (const row of rows) {
+    const platform = recordOf(row.platformType)
+    const code = textOf(platform.value) || textOf(row.platformType)
+    const name = textOf(platform.text) || textOf(row.platformType)
+    const id = code ? `operator:${code}` : 'operator:unclassified'
+    const current = groups.get(id) || { id, name, used: 0, total: 0, cards: 0 }
+    if (!current.name && name) current.name = name
+    current.used += numberOf(row.usedFlow)
+    current.total += numberOf(row.totalFlow)
+    current.cards += numberOf(row.cardTotal)
+    groups.set(id, current)
+  }
+  const pools = [...groups.values()]
   return { ...emptySupplementalData(), pools, total: pools.length }
 }
 
@@ -105,10 +116,11 @@ async function loadProtocols(signal?: AbortSignal): Promise<ResourceSupplemental
 }
 
 /** Offline time is enriched on DeviceDetail, not a sortable entity column: rank the complete authorized offline set locally. */
-async function loadOffline(signal?: AbortSignal): Promise<ResourceSupplementalData> {
+async function loadOffline(signal?: AbortSignal, deviceScope?: ResourceDeviceScope): Promise<ResourceSupplementalData> {
   const rows = await queryPages('/device/instance/detail/_query', {
     sorts: [{ name: 'id', order: 'asc' }],
-    terms: [...buildOverviewDeviceTerms('iot'), { column: 'state', termType: 'eq', value: 'offline' }],
+    // 分类组与离线条件取交集；视频、边缘与物联均使用设备详情的真实 offlineTime。
+    terms: [...(deviceScope?.terms ?? buildOverviewDeviceTerms('iot')), { column: 'state', termType: 'eq', value: 'offline' }],
     context: { includeTags: false, includeRelations: false, includeBind: false, includeFirmwareInfos: false, includeParent: false },
   }, signal)
   const devices = rows.flatMap(row => {
@@ -125,10 +137,11 @@ async function loadOffline(signal?: AbortSignal): Promise<ResourceSupplementalDa
 }
 
 /** Read-only supplemental loaders retain independent empty and error states for each capability. */
-export function loadResourceSupplemental(kind: ResourceSupplementalKind, range: ResourceSupplementalRange, signal?: AbortSignal) {
+export function loadResourceSupplemental(kind: ResourceSupplementalKind, range: ResourceSupplementalRange,
+  signal?: AbortSignal, deviceScope?: ResourceDeviceScope) {
   if (kind === 'online' || kind === 'traffic') return loadTrend(kind, range, signal)
   if (kind === 'pools') return loadPools(signal)
   if (kind === 'points') return loadPoints(signal)
   if (kind === 'protocols') return loadProtocols(signal)
-  return loadOffline(signal)
+  return loadOffline(signal, deviceScope)
 }

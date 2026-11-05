@@ -5,12 +5,14 @@ import { build } from 'esbuild'
 
 const built = await build({
   entryPoints: [fileURLToPath(new URL('../visDashboard/Base/QuickGuide/apiQuickGuide.ts', import.meta.url))],
-  bundle: true, write: false, format: 'esm',
+  bundle: true, write: false, format: 'esm', define: { 'import.meta.env.VITE_APP_ENVIRONMENT': '"saas"' },
   plugins: [{
     name: 'quick-guide-request-fixture',
     setup(plugin) {
       plugin.onResolve({ filter: /^\.\.\/shared\/resources$/ }, args => ({ path: args.path, namespace: 'resources' }))
       plugin.onLoad({ filter: /.*/, namespace: 'resources' }, () => ({ contents: 'export const resourceRowAvailable = row => row.id !== \"alarm\" || globalThis.quickGuideVision !== false' }))
+      plugin.onResolve({ filter: /^\.\.\/Saas\/services\/access$/ }, args => ({ path: args.path, namespace: 'access' }))
+      plugin.onLoad({ filter: /.*/, namespace: 'access' }, () => ({ contents: 'export const getSaasGrantedMenus=()=>new Set(); export const hasSaasTarget=()=>true' }))
       plugin.onResolve({ filter: /^@jetlinks-web\/core$/ }, args => ({ path: args.path, namespace: 'request' }))
       plugin.onLoad({ filter: /.*/, namespace: 'request' }, () => ({
         contents: 'export const request = { post: (...args) => globalThis.quickGuideRequest(...args) }',

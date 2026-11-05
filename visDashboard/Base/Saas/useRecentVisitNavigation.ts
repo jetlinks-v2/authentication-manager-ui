@@ -66,7 +66,7 @@ export function useRecentVisitNavigation(active: Ref<boolean>) {
     // 回退时丢弃详情 ID、页签和旧筛选；网关回到网关列表，普通设备回到设备列表。
     const fallback: HomeTarget | undefined = resource
       ? { menus: [...new Set([...HOME_TARGETS.devices.menus, ...(owner ? [owner] : [])])],
-        query: { type: resource.kind === 'gateway' ? 'gateway' : 'device' } }
+        query: resource.kind === 'gateway' ? HOME_TARGETS.gateway.query : HOME_TARGETS.devices.query }
       : owner ? { menus: [owner] } : undefined
 
     async function recover(notice: Notice) {

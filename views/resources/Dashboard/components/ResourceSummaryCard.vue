@@ -25,17 +25,24 @@
         </span>
       </div>
     </div>
+    <div v-if="!loading && card.hasError" class="summary-error" @click.stop @keydown.stop>
+      <a-tooltip :title="card.errorText">
+        <a-button type="link" size="small" @click="$emit('retry')">{{ t('resourceDashboard.retry') }}</a-button>
+      </a-tooltip>
+    </div>
   </a-card>
 </template>
 
 <script setup lang="ts">
 import type { ResourceSummaryCard } from '../resourceSummary.types'
 import type { useResourceSummary } from '../useResourceSummary'
+import { useI18n } from 'vue-i18n'
 
 type SummaryView = ReturnType<typeof useResourceSummary>['cards']['value'][number]
 // 单张资源卡只渲染共享查询结果；所有卡片共用页面内的一次统计订阅。
 defineProps<{ card: SummaryView; loading: boolean; error: boolean }>()
 defineEmits<{ open: [card: ResourceSummaryCard]; retry: [] }>()
+const { t } = useI18n()
 </script>
 
 <style scoped>
@@ -187,5 +194,19 @@ defineEmits<{ open: [card: ResourceSummaryCard]; retry: [] }>()
 }
 .summary-statuses--assets .summary-status {
   flex: none;
+}
+.summary-error { text-align: right; font-size: 12px; }
+.summary-error :deep(.ant-btn) { padding: 0; height: auto; font-size: 12px; }
+@container (max-width: 225px) {
+  .summary-main { gap: 6px; }
+  .summary-icon { flex-basis: 30px; height: 30px; border-radius: 8px; font-size: 17px; }
+  .summary-statuses { gap: 7px; }
+  .summary-status { gap: 3px; font-size: 11px; }
+}
+@container (max-width: 160px) {
+  .summary-icon { display: none; }
+  .summary-statuses { flex-direction: column; align-items: flex-start; gap: 3px; }
+  .summary-status { width: 100%; }
+  .summary-statuses--assets { overflow-x: visible; }
 }
 </style>

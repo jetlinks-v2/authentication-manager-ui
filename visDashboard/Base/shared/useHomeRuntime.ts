@@ -6,7 +6,6 @@ import { getSaasGrantedMenus } from '../Saas/services/access'
 import { loadHomeRows } from './api'
 import { createHomePolling } from './homePolling'
 import { homePollingKey } from './homePollingContext'
-import { QUICK_ACTIONS } from './navigation'
 import { RESOURCE_ROWS, resourceRowAvailable, homeFeatureAvailable, homeTitleKey } from './resources'
 import { useDashboardModules } from '../../useDashboardModules'
 import type { HomeFeature, HomeRow } from './types'
@@ -31,11 +30,6 @@ export function useHomeRuntime(feature: HomeFeature, isEdit: Ref<boolean>, refre
     stop()
     rows.value = []; error.value = false; loading.value = false; updatedAt.value = undefined
     if (!active.value || !available.value) return
-    if (feature === 'QuickActions') {
-      rows.value = QUICK_ACTIONS.filter(row => isEdit.value || resourceRowAvailable(row))
-        .map(({ id, target }) => ({ id, labelKey: `action_${id}`, descriptionKey: `action_${id}Desc`, icon: id, target }))
-      return
-    }
     if (isEdit.value) return
     const results = new Map<HomeFeature, HomeRow[]>()
     const completed = new Map<HomeFeature, number>()

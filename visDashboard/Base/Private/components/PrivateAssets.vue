@@ -1,28 +1,30 @@
 <template>
-  <PrivatePanel class="private-assets" :title="groups.length === 1 ? t(groups[0].labelKey) : t('privateOverview.devicesAndChannels')" :state="state" @retry="$emit('retry')">
-    <template #extra>
+  <component :is="embedded ? 'div' : PrivatePanel" class="private-assets" :class="{ 'is-embedded': embedded }" :title="embedded ? undefined : groups.length === 1 ? t(groups[0].labelKey) : t('privateOverview.devicesAndChannels')" :state="embedded ? undefined : state" @retry="$emit('retry')">
+    <template v-if="!embedded" #extra>
       <HomeWidgetLink v-if="groups[0] && canOpen(groups[0].target)" @click="$emit('navigate', groups[0].target)">
         {{ t(groups[0].id === 'video' ? 'privateOverview.channelList' : 'privateOverview.deviceList') }}
       </HomeWidgetLink>
     </template>
     <div class="private-assets-grid" :class="{ 'is-single': groups.length === 1 }">
       <section v-for="group in groups" :key="group.id" class="private-asset-group">
-        <div class="private-asset-heading">
-          <button v-if="groups.length > 1" type="button" class="private-asset-link" :disabled="!canOpen(group.target)" @click="$emit('navigate', group.target)">
-            {{ t(group.labelKey) }} <RightOutlined v-if="canOpen(group.target)" />
-          </button>
-          <span v-else class="private-asset-total-label">{{ t('privateOverview.total') }}</span>
-          <span class="private-asset-total"><strong>{{ formatOverviewNumber(group.failed ? undefined : group.total, locale) }}</strong><span>{{ t(group.unitKey) }}</span></span>
-        </div>
-        <div class="private-health-bar" :aria-label="t('privateOverview.healthSummary', { online: formatOverviewNumber(group.failed ? undefined : group.online, locale), offline: formatOverviewNumber(group.failed ? undefined : group.offline, locale) })">
-          <template v-if="!group.failed && group.total">
-            <span v-if="group.online" class="is-online" :style="{ flex: group.online }" />
-            <span v-if="group.offline" class="is-offline" :style="{ flex: group.offline }" />
-          </template>
-        </div>
-        <div class="private-asset-statuses">
-          <span><a-badge status="success" />{{ t('privateOverview.online') }} {{ formatOverviewNumber(group.failed ? undefined : group.online, locale) }}</span>
-          <span><a-badge status="error" />{{ t('privateOverview.offline') }} {{ formatOverviewNumber(group.failed ? undefined : group.offline, locale) }}</span>
+        <div class="private-asset-summary">
+          <div class="private-asset-heading">
+            <button v-if="embedded || groups.length > 1" type="button" class="private-asset-link" :disabled="!canOpen(group.target)" @click="$emit('navigate', group.target)">
+              {{ t(group.labelKey) }} <RightOutlined v-if="canOpen(group.target)" />
+            </button>
+            <span v-else class="private-asset-total-label">{{ t('privateOverview.total') }}</span>
+            <span class="private-asset-total"><strong>{{ formatOverviewNumber(group.failed ? undefined : group.total, locale) }}</strong><span>{{ t(group.unitKey) }}</span></span>
+          </div>
+          <div class="private-health-bar" :aria-label="t('privateOverview.healthSummary', { online: formatOverviewNumber(group.failed ? undefined : group.online, locale), offline: formatOverviewNumber(group.failed ? undefined : group.offline, locale) })">
+            <template v-if="!group.failed && group.total">
+              <span v-if="group.online" class="is-online" :style="{ flex: group.online }" />
+              <span v-if="group.offline" class="is-offline" :style="{ flex: group.offline }" />
+            </template>
+          </div>
+          <div class="private-asset-statuses">
+            <span><a-badge status="success" />{{ t('privateOverview.online') }} {{ formatOverviewNumber(group.failed ? undefined : group.online, locale) }}</span>
+            <span><a-badge status="error" />{{ t('privateOverview.offline') }} {{ formatOverviewNumber(group.failed ? undefined : group.offline, locale) }}</span>
+          </div>
         </div>
         <div class="private-asset-breakdowns">
           <div v-for="item in group.breakdown" :key="item.id" class="private-asset-breakdown">
@@ -33,7 +35,7 @@
         </div>
       </section>
     </div>
-  </PrivatePanel>
+  </component>
 </template>
 
 <script setup lang="ts">
@@ -45,7 +47,7 @@ import { formatOverviewNumber } from '../../Saas/components/presentation'
 import type { HomeTarget } from '../../shared/types'
 import type { PrivateAssetGroup, PrivateBreakdown } from '../types'
 
-defineProps<{ groups: PrivateAssetGroup[]; state?: { loading?: boolean; error?: boolean; empty?: boolean }; canOpen: (target?: HomeTarget) => boolean }>()
+defineProps<{ groups: PrivateAssetGroup[]; state?: { loading?: boolean; error?: boolean; empty?: boolean }; canOpen: (target?: HomeTarget) => boolean; embedded?: boolean }>()
 defineEmits<{ navigate: [target?: HomeTarget]; retry: [] }>()
 const { t, locale } = useI18n()
 /** 构成条只比较当前分组已取得的数量，未知值不补成可见占比。 */
@@ -56,12 +58,20 @@ function barPercent(value: number | undefined, rows: PrivateBreakdown[]): number
 </script>
 
 <style scoped lang="less">
+.private-assets.is-embedded { display: flex; flex: 1 0 auto; flex-direction: column; min-height: 0; }
+.private-assets.is-embedded .private-assets-grid { flex: 1 0 auto; min-height: 0; }
+.private-assets.is-embedded .private-assets-grid.is-single .private-asset-group { align-items: stretch; }
+.private-assets.is-embedded .private-asset-summary { align-self: center; }
+.private-assets.is-embedded .private-asset-breakdowns { grid-auto-rows: minmax(18px, 1fr); }
 .private-assets-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
 .private-assets-grid.is-single { grid-template-columns: minmax(0, 1fr); }
 .private-asset-group { min-width: 0; }
+.private-asset-summary { min-width: 0; }
+.private-assets-grid.is-single .private-asset-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; }
+.private-assets-grid.is-single .private-asset-breakdowns { margin-top: 0; }
 .private-asset-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .private-asset-link { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; color: var(--business-component-text, #1f2329); font: inherit; font-size: 13px; line-height: 20px; text-align: left; cursor: pointer; }
-.private-asset-link :deep(.anticon) { font-size: 9px; color: var(--ink-4, #c9cdd4); }
+.private-asset-link :deep(.anticon) { font-size: 11px; color: var(--ink-4, #c9cdd4); }
 .private-asset-link:hover:not(:disabled) { color: var(--business-component-primary, #1677ff); }
 .private-asset-link:disabled { cursor: default; }
 .private-asset-link:focus-visible { outline: 2px solid var(--business-component-primary, #1677ff); outline-offset: 3px; }
@@ -75,7 +85,7 @@ function barPercent(value: number | undefined, rows: PrivateBreakdown[]): number
 .private-health-bar .is-offline { background: var(--ant-color-error, #f53f3f); }
 .private-asset-statuses { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 7px; color: var(--business-component-muted, #646c73); font-size: 12px; line-height: 18px; }
 .private-asset-statuses > span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
-.private-asset-breakdowns { display: grid; grid-template-columns: minmax(64px, 30%) minmax(20px, 1fr) max-content; column-gap: 8px; row-gap: 8px; margin-top: 8px; }
+.private-asset-breakdowns { display: grid; grid-template-columns: fit-content(120px) minmax(20px, 1fr) max-content; column-gap: 8px; row-gap: 8px; margin-top: 8px; }
 .private-asset-breakdown { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; min-width: 0; color: var(--business-component-muted, #646c73); font-size: 12px; line-height: 18px; }
 .private-asset-kind { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .private-asset-track { height: 5px; overflow: hidden; border-radius: 3px; background: var(--bg-sunken, #f2f3f5); }
@@ -83,4 +93,10 @@ function barPercent(value: number | undefined, rows: PrivateBreakdown[]): number
 .private-asset-count { color: var(--business-component-text, #1f2329); text-align: right; font-variant-numeric: tabular-nums; }
 .private-asset-count > span { color: var(--business-component-muted, #646c73); }
 @container (max-width: 439px) { .private-assets-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; } }
+@container (max-width: 599px) {
+  .private-assets-grid.is-single .private-asset-group { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .private-assets-grid.is-single .private-asset-breakdowns { margin-top: 12px; }
+  .private-assets.is-embedded .private-assets-grid.is-single .private-asset-group { grid-template-rows: auto minmax(min-content, 1fr); }
+  .private-assets.is-embedded .private-asset-summary { align-self: start; }
+}
 </style>

@@ -1,11 +1,14 @@
-import { computed, ref } from 'vue'
+import { computed, inject, type InjectionKey } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@jetlinks-web-core/store/auth'
-import { createDefaults } from '../shared/config'
-import { HOME_TARGETS } from '../shared/navigation'
-import { useHomeNavigation } from '../shared/useHomeNavigation'
-import { getSaasGrantedMenus, hasSaasTarget } from './services/access'
-import { SAAS_QUICK_ACTIONS } from './targets'
+import { useMenuStore } from '@jetlinks-web-core/store/menu'
+import { useUserStore } from '@jetlinks-web-core/store/user'
+import dayjs from 'dayjs'
+import { getSaasProjectEntries } from './services/access'
+import type { PrivateAccountEntry, PrivateAccountProfile } from '../Private/types'
+import type { usePrivateApplicationEntry } from '../Private/usePrivateApplicationEntry'
+
+/** 页面持有唯一的应用授权状态，画布重排不会重复查询角色或个人应用名单。 */
+export const saasApplicationEntryKey: InjectionKey<ReturnType<typeof usePrivateApplicationEntry>> = Symbol('saas-application-entry')
 
 /** 概览帮助文档使用正式文档地址，顺序与用户的接入流程一致。 */
 export const SAAS_HELP_DOCUMENTS = [
@@ -19,21 +22,49 @@ export const SAAS_HELP_DOCUMENTS = [
 ]
 export const SAAS_HELP_CENTER_URL = 'https://hanta.yuque.com/px7kg1/rk46tv/6da59c1ac931da9ee77cdf8e73f56aba?singleDoc#'
 
-/** 快捷动作沿用已授权菜单；创建场景需要父菜单授权和真实编辑子路由同时可用。 */
+/** 账号信息来自当前会话；功能入口只从已授权且可导航的菜单树生成。 */
+export function useSaasAccount(isEdit: () => boolean) {
+  const user = useUserStore(), menu = useMenuStore(), { t } = useI18n()
+  const applicationEntry = inject(saasApplicationEntryKey, undefined)
+  const applicationMode = computed(() => applicationEntry?.mode.value === 'applications')
+  const names = (values: unknown[] = []) => values.flatMap(value => {
+    if (!value || typeof value !== 'object' || !('name' in value)) return []
+    return typeof value.name === 'string' && value.name.trim() ? [value.name.trim()] : []
+  })
+  const profile = computed<PrivateAccountProfile>(() => {
+    if (applicationMode.value && applicationEntry) return applicationEntry.profile.value
+    const info = user.userInfo, time = Number(info.loginInfo?.loginTime)
+    return { name: info.name || info.username || '—', username: info.username || '—',
+      avatar: (info as { avatar?: string }).avatar, roles: [...new Set(names(info.roleList))],
+      organizations: [...new Set(names(info.orgList))],
+      latestLogin: Number.isFinite(time) && time > 0 && dayjs(time).isValid() ? dayjs(time).toISOString() : undefined }
+  })
+  const entries = computed<PrivateAccountEntry[]>(() => {
+    if (applicationMode.value && applicationEntry) return applicationEntry.entries.value
+    return getSaasProjectEntries().map(item => ({ id: item.id, name: t(item.titleKey), disabled: false }))
+  })
+  const openingId = computed(() => applicationMode.value ? applicationEntry?.openingId.value : undefined)
+  function open(id: string) {
+    if (isEdit() || !entries.value.some(item => item.id === id)) return
+    if (applicationMode.value && applicationEntry) void applicationEntry.openApplication(id)
+    else void menu.jumpPage(id)
+  }
+  function openAccount() {
+    if (isEdit()) return
+    if (applicationMode.value && applicationEntry) applicationEntry.openAccount()
+    else void menu.routerPush('account/center', { params: { tabKey: 'BindThirdAccount' }, query: { tab: 'BasicInfo' } })
+  }
+  function openAll() {
+    if (!isEdit() && applicationMode.value) applicationEntry?.openAll()
+  }
+  return { profile, entries, openingId, applicationEntry, open, openAccount, openAll }
+}
+
+/** 帮助文档复用正式地址；编辑态不触发外部导航。 */
 export function useSaasUtilities(isEdit: () => boolean) {
   const { t } = useI18n()
-  const navigation = useHomeNavigation(ref(true), computed(isEdit))
-  const auth = useAuthStore()
-  const rows = computed(() => {
-    const menus = getSaasGrantedMenus()
-    return SAAS_QUICK_ACTIONS.filter(row => hasSaasTarget(menus, row.id === 'scene' ? HOME_TARGETS.scene : row.target)
-      && navigation.canOpen(row.target)
-      && (row.id !== 'scene' || HOME_TARGETS.scene.menus.some(code => menus.has(code) && auth.hasPermission(`${code}:add`))))
-  })
   // 概览仅保留四个常用入口，完整文档由帮助中心承接。
   const documents = computed(() => SAAS_HELP_DOCUMENTS.slice(0, 4).map(doc => ({ id: doc.id, title: t(`packages.ProjectHome.${doc.titleKey}`) })))
-  const hasActions = computed(() => rows.value.length > 0)
-  const chart = { ...createDefaults('QuickActions').chart, displayStyle: 'saas' }
   /** 只打开配置中的正式文档，编辑预览不触发外部跳转。 */
   function openHelp(id: string) {
     if (isEdit()) return
@@ -43,5 +74,5 @@ export function useSaasUtilities(isEdit: () => boolean) {
   function openHelpCenter() {
     if (!isEdit()) window.open(SAAS_HELP_CENTER_URL, '_blank', 'noopener,noreferrer')
   }
-  return { ...navigation, rows, hasActions, documents, chart, openHelp, openHelpCenter }
+  return { documents, openHelp, openHelpCenter }
 }

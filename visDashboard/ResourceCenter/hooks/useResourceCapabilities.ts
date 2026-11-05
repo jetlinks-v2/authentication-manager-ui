@@ -28,7 +28,10 @@ export function useResourceCapabilities(preview: Ref<boolean>): ResourceCapabili
     collection: modules.value.collection,
     networkCards: modules.value.networkCards,
   }))
-  const loading = computed(() => !preview.value && (reloading.value || (!errors.value.length && (!menu.initialized || menu.loading))))
+  // 授权菜单可能早于账号信息就绪，个人画布须等待用户 ID，避免读写多个账号共用的空身份缓存。
+  const loading = computed(() => !preview.value && (reloading.value
+    || (!errors.value.length && (!user.userInfo.id || !menu.initialized || menu.loading))))
+  // 保持已保存 key 的格式；项目 code 隔离不同项目，空项目字段专属于无项目后台，账号/API/应用仍各自隔离。
   const scope = computed(() => JSON.stringify([
     user.userInfo.id || '', getProjectCodeFromLocation() || '', getBaseApi(),
     getApplicationRuntimeEntry().applicationId || '',

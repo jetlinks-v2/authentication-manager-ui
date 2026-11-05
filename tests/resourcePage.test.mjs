@@ -89,7 +89,7 @@ test('message ranges use local natural boundaries and only completed or current 
 test('canvas defaults do not overlap for SaaS capability combinations and width modes', () => {
   for (const width of [360, 600, 800, 1000, 1400]) for (const mask of Array.from({length:32},(_,i)=>i)) {
     const base = access(true)
-    const value = {...base, iot:!!(mask&1), map:!!(mask&1), video:!!(mask&2), edge:!!(mask&4), vision:!!(mask&8), visualization:!!(mask&16)}
+    const value = {...base, iot:!!(mask&1), map:!!(mask&7), video:!!(mask&2), edge:!!(mask&4), vision:!!(mask&8), visualization:!!(mask&16)}
     const summaries = [value.edge&&'edge',value.iot&&'iot',value.video&&'video',value.visualization&&'visualization'].filter(Boolean)
     const widgets=module.exports.buildResourcePageWidgets(summaries, layout(value), width, 2)
     for (const [i,a] of widgets.entries()) for(const b of widgets.slice(i+1)) {

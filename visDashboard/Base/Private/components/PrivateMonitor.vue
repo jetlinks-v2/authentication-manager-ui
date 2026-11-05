@@ -47,14 +47,14 @@ function bytes(value: number) {
 .monitor-meta { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 4px 8px; }
 .monitor-version { color: var(--business-component-muted); font-size: 12px; }
 .private-monitor-table { overflow: auto; max-height: 200px; }
-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+table { width: 100%; min-width: 520px; table-layout: fixed; border-collapse: collapse; font-size: 12px; }
 th { color: var(--business-component-muted); font-weight: 400; text-align: left; padding: 4px 5px 8px; white-space: nowrap; }
 td { padding: 10px 5px; border-top: 1px solid var(--line, #f2f3f5); }
-th:first-child, td:first-child { padding-left: 0; }
-.node-name { display: block; max-width: 145px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+th:first-child, td:first-child { width: 28%; padding-left: 0; }
+.node-name { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .monitor-metric { display: flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.monitor-metric > span { min-width: 42px; text-align: right; }
-.monitor-metric :deep(.ant-progress) { width: 30px; min-width: 20px; margin: 0; line-height: 1; }
+.monitor-metric > span { flex: 0 0 42px; text-align: left; }
+.monitor-metric :deep(.ant-progress) { flex: 1 1 0; width: auto; min-width: 0; margin: 0; line-height: 1; }
 /* 缩窄后版本与节点信息另起一行，保留完整卡名和表格滚动区域。 */
 @container (max-width: 479px) {
   .private-monitor :deep(.ant-card-head-wrapper) { flex-wrap: wrap; gap: 8px; }

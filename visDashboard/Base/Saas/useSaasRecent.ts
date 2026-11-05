@@ -14,17 +14,31 @@ import { useRecentVisitNavigation, type RecentVisitLink } from './useRecentVisit
 
 interface RecentEntry extends RecentVisitLink { title: string; loadingTitle: boolean; description: string; icon: string; fullPath: string }
 interface MenuPresentation { title: string; path: string[]; icon?: string }
-const starts: { id: string; icon: string; target: HomeTarget }[] = [
+interface RecentStart { id: string; icon: string; target: HomeTarget; status?: 'online' | 'offline' }
+const starts: RecentStart[] = [
   { id: 'dashboard', icon: 'DashboardOutlined', target: { menus: ['resources/Dashboard'] } },
-  { id: 'devices', icon: 'UnorderedListOutlined', target: { ...HOME_TARGETS.devices, query: { type: 'device' } } },
+  { id: 'devices', icon: 'UnorderedListOutlined', target: HOME_TARGETS.devices },
   { id: 'alarms', icon: 'AlertOutlined', target: HOME_TARGETS.deviceAlarm },
   { id: 'events', icon: 'ScanOutlined', target: { menus: ['video/event'] } },
   { id: 'scenes', icon: 'ApartmentOutlined', target: HOME_TARGETS.scene },
   { id: 'login', icon: 'KeyOutlined', target: { menus: ['system/ThirdPartyLogin'] } },
 ]
+// 设备运维可从产品与设备状态直接开始；两个状态入口复用统一设备列表的正式筛选参数。
+const privateStarts: RecentStart[] = [
+  { id: 'video', icon: 'VideoCameraOutlined', target: { menus: ['video/resources', 'media/Device'] } },
+  { id: 'visionAlarm', icon: 'AlertOutlined', target: HOME_TARGETS.visionAlarm },
+  { id: 'alarmDashboard', icon: 'DashboardOutlined', target: { menus: ['rule-engine/DashBoard'] } },
+  { id: 'videoLive', icon: 'VideoCameraOutlined', target: { menus: ['video/live'] } },
+  { id: 'visionTask', icon: 'PlayCircleOutlined', target: { menus: ['machine-vision/Task'] } },
+  { id: 'products', icon: 'AppstoreOutlined', target: { menus: ['device/Product'] } },
+  ...(['offline', 'online'] as const).map(status => ({
+    id: `${status}Devices`, icon: 'UnorderedListOutlined', status,
+    target: { ...HOME_TARGETS.devices, query: { status } },
+  })),
+]
 
 /** 真实访问优先，剩余位置用未重复的授权默认入口补齐，不伪造访问时间。 */
-export function useSaasRecent() {
+export function useSaasRecent(variant?: 'private') {
   const router = useRouter(), menu = useMenuStore()
   const { t } = useI18n()
   const now = useNow({ interval: 60_000 })
@@ -111,7 +125,12 @@ export function useSaasRecent() {
       // 已知名称先显示、后台刷新；首次无快照只显示骨架，避免“设备详情 → 设备名称”闪变。
       const knownName = resourceNames.value.get(row.id) || row.resourceName?.trim()
       const loadingTitle = !!resource && !knownName && resourceNamesLoading.value
-      const title = resource ? knownName || resource.id : leaf?.title || t(String(current?.title || row.title || row.menuCode))
+      const status = row.target.query?.status
+      const deviceRoute = HOME_TARGETS.devices.menus.some(code => code === row.menuCode
+        || (menu.getMenu(code)?.routeName && menu.getMenu(code)?.routeName === current?.routeName))
+      const statusTitle = variant === 'private' && deviceRoute && (status === 'online' || status === 'offline')
+        ? t(`saasRecent.start.${status}Devices`) : undefined
+      const title = resource ? knownName || resource.id : statusTitle || leaf?.title || t(String(current?.title || row.title || row.menuCode))
       // 隐藏详情路由沿用所属菜单的层级和图标，再追加当前详情页名称。
       const path = leaf ? [...leaf.path.slice(0, -1), title] : [...(owner?.path || []), title]
       const group = resource ? t(`saasRecent.resource.${resource.kind}`) : path[0]
@@ -120,15 +139,26 @@ export function useSaasRecent() {
         icon: leaf?.icon || owner?.icon || 'FileOutlined', target: row.target }
     })
     const granted = getSaasGrantedMenus()
-    const defaults = starts.flatMap(item => {
+    const defaultRoutes = new Set<string>()
+    const defaults = [...starts, ...(variant === 'private' ? privateStarts : [])].flatMap(item => {
       // 同一入口已有真实访问时，不再展示默认副本；兼容菜单的别名编码。
       const code = item.target.menus.find(value => granted.has(value) && !!menu.getMenu(value))
       if (!code) return []
       const routeName = menu.getMenu(code)?.routeName || code
-      if (visibleHistory.value.some(row => item.target.menus.includes(row.menuCode)
-        || (menu.getMenu(row.menuCode)?.routeName || row.menuCode) === routeName)) return []
+      if (visibleHistory.value.some(row => {
+        const sameRoute = item.target.menus.includes(row.menuCode)
+          || (menu.getMenu(row.menuCode)?.routeName || row.menuCode) === routeName
+        if (!sameRoute) return false
+        if (item.status) return row.target.query?.status === item.status
+        if (variant === 'private' && item.id === 'devices') return !['online', 'offline'].includes(String(row.target.query?.status))
+        return true
+      })) return []
+      // 菜单别名可能指向同一页面；状态筛选入口则保留各自的语义。
+      const identity = JSON.stringify([routeName, item.status || ''])
+      if (defaultRoutes.has(identity)) return []
+      defaultRoutes.add(identity)
       const current = presentation(code)
-      const title = current?.title || t(`saasRecent.start.${item.id}`)
+      const title = item.status ? t(`saasRecent.start.${item.id}`) : current?.title || t(`saasRecent.start.${item.id}`)
       const group = current?.path[0] || t(`saasRecent.group.${item.id}`)
       return [{ ...item, scope, loadingTitle: false, target: { ...item.target, menus: [code] },
         title, description: group, icon: current?.icon || item.icon,

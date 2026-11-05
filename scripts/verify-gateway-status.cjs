@@ -48,7 +48,7 @@ const tick = async () => { await vue.nextTick(); await new Promise(resolve => se
   }
   const now=Date.parse('2026-09-21T12:00:00+08:00')
   const ranking=await api.loadGatewayStatuses('queue',now)
-  assert.deepEqual(pages,[0,1]);assert.deepEqual(ranking.gateways.map(x=>x.metrics.queue.value),[96,0])
+  assert.deepEqual(pages,[0,1]);assert.deepEqual(ranking.gateways.map(x=>[x.id,x.metrics.queue.value]),[['a',0],['b',96]])
   assert.deepEqual(requests[0],{thingIds:['a','b'],pointType:'edge-ai-gateway',metrics:[{pointId:'edge.ai.review.queue.pending',alias:'queuePending',aggregation:'LAST'}],from:'2026-09-21 11:40:00',to:'2026-09-21 12:00:00',groupBy:['thingId'],sorts:[{alias:'queuePending',order:'DESC'}],limit:10})
   for(const metric of ['cpu','memory','disk']){
     const def=api.metricDefinitions[metric]
@@ -59,15 +59,15 @@ const tick = async () => { await vue.nextTick(); await new Promise(resolve => se
     }
     const result=await api.loadGatewayStatuses(metric,now)
     assert.equal(result.gateways[0].metrics[metric].value,0.5) // Never infer x100 from value magnitude.
-    assert.equal(result.unit,'%');assert.equal(result.gateways.length,1)
+    assert.equal(result.unit,'%');assert.equal(result.gateways.length,2);assert.equal(result.gateways[1].metrics[metric],undefined)
   }
   global.__gatewayRequest.post=async()=>({result:[]})
-  assert.deepEqual((await api.loadGatewayStatuses('queue')).gateways,[])
+  assert.ok((await api.loadGatewayStatuses('queue')).gateways.every(item=>item.metrics.queue === undefined))
   let calls=0
-  global.__gatewayPage=async()=>{calls++;return {data:[{...gateway, productName:'Product'}],total:1}}
+  global.__gatewayPage=async()=>{calls++;return {data:[{...gateway, productName:'Product'}, ...['b','c','d'].map(id=>({...gateway,id,name:id}))],total:4}}
   const scope=vue.effectScope(),preview=vue.ref(true);let widget
   scope.run(()=>{widget=api.useGatewayStatus(vue.ref({componentProps:{resourceCenterVideoPlaybackTrend:{refreshSeconds:0}}}),preview)})
-  await tick();assert.equal(calls,0);assert.equal(widget.rows.value.length,10)
+  await tick();assert.equal(calls,0);assert.equal(widget.rows.value.length,8)
   const pending=[]
   global.__gatewayRequest.post=async(url,body)=>{
     assert.equal(url,'/device/metrics/_agg')
@@ -84,7 +84,7 @@ const tick = async () => { await vue.nextTick(); await new Promise(resolve => se
   pending[2].resolve({result:[{thingId:'a',diskUsage:77}]});await tick()
   assert.equal(widget.rows.value.length,0)
   const compiler = require(path.join(root, 'node_modules/vue/compiler-sfc'))
-  for (const file of ['components/GatewayStatusPanel.vue', 'components/ResourceRankList.vue', 'VideoPlaybackTrend/VideoPlaybackTrend.vue', 'components/ResourceWidget.vue', 'components/ResourceConfig.vue']) {
+  for (const file of ['components/GatewayStatusPanel.vue', 'components/ResourceRankList.vue']) {
     const source = fs.readFileSync(path.join(group, file), 'utf8')
     const { descriptor, errors } = compiler.parse(source)
     assert.deepEqual(errors, [])

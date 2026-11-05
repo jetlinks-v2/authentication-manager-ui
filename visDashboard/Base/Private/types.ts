@@ -1,4 +1,23 @@
 import type { HomeTarget } from '../shared/types'
+import type { CardAvatarData } from '@jetlinks-web-core/components/CardBox/types'
+
+export interface PrivateApplicationEntry {
+  id: string
+  name: string
+  description: string
+  avatar: CardAvatarData
+  disabled: boolean
+}
+/** 账号卡片中的入口可以是业务菜单，也可以是已授权应用。 */
+export type PrivateAccountEntry = Pick<PrivateApplicationEntry, 'id' | 'name' | 'disabled'>
+export interface PrivateAccountProfile {
+  name: string
+  username: string
+  avatar?: string
+  roles: string[]
+  organizations: string[]
+  latestLogin?: string
+}
 
 export type PrivateSource = 'iot' | 'video'
 export type PrivateTrendMetric = 'message' | 'ai'

@@ -16,6 +16,7 @@ const {outputFiles}=await build({entryPoints:[path.join(root,'visDashboard/Base/
  stub(/services\/access$/,`export const getPrivateOverviewAccess=()=>({iot:true});export const PRIVATE_TARGETS=new Proxy({}, {get:()=>({menus:['test']})})`)
  stub(/services\/(resources|guide|alarms|trends)$/,`export const loadPrivateResources=()=>{};export const loadPrivateGuide=()=>{};export const loadPrivateAlarms=()=>{};export const loadPrivateTrend=()=>{}`)
  stub(/usePrivateQuery$/,`export const usePrivateQuery=(load)=>({data:load.name==='loadPrivateGuide'?context.guide:undefined,error:false})`)
+ stub(/usePrivateApplicationEntry$/,`export const usePrivateApplicationEntry=()=>({})`)
  stub(/usePrivateMonitor$/,`export const usePrivateMonitor=()=>({})`)
  stub(/usePrivateCharts$/,`export const usePrivateCharts=()=>({})`)
 }}]})

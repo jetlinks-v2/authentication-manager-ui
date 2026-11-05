@@ -2246,8 +2246,18 @@
         "pools": "現在、トラフィックプールはありません",
         "points": "現在、採集ポイントはありません",
         "protocols": "現在、収集チャンネルはありません",
-        "offline": "現在、オフライン時間付きのIoTデバイスはありません。"
-      }
+        "offline": "現在、オフライン時間付きのIoTデバイスはありません。",
+        "offlineDevices": "オフライン日時のあるデバイスはありません"
+      },
+      "offlineDevices": "最近オフラインになったデバイス",
+      "videoLink": "映像デバイスを表示",
+      "cardLink": "IoT SIM カード一覧",
+      "monthByOperator": "今月 · 通信事業者別",
+      "unknownOperator": "不明な通信事業者",
+      "pointLink": "ポイント",
+      "channelLink": "収集チャネル",
+      "itemCount": "{count} 個",
+      "poolTotal": "合計 {used} / {total} {unit} · {percent}"
     }
   },
   "runtimeLog": {
@@ -3190,8 +3200,13 @@
       "loadError": "数量の読み込みに失敗しました",
       "partialError": "一部の数量の読み込みに失敗しました",
       "empty": "現在閲覧できないリソース",
-      "aiEvents": "本日のAI認識イベント"
-    }
+      "aiEvents": "本日のAI認識イベント",
+      "videoDevices": "映像デバイス",
+      "stopped": "停止",
+      "abnormal": "異常"
+    },
+    "title": "ダッシュボード",
+    "updatedAt": "リソース統計の更新日時：{time}"
   },
   "saasRecent": {
     "title": "最近の訪問",
@@ -3205,7 +3220,15 @@
       "alarms": "警告リスト",
       "events": "認識イベント",
       "scenes": "シーン連動",
-      "login": "シングルサインオン"
+      "login": "シングルサインオン",
+      "video": "映像一覧",
+      "visionAlarm": "画像認識アラーム",
+      "alarmDashboard": "アラームダッシュボード",
+      "videoLive": "監視ウォール",
+      "visionTask": "AI タスク",
+      "products": "製品一覧",
+      "offlineDevices": "オフラインのデバイス",
+      "onlineDevices": "オンラインのデバイス"
     },
     "group": {
       "dashboard": "リソースセンター",
@@ -3213,10 +3236,26 @@
       "alarms": "アラームセンター",
       "events": "AIセンター",
       "scenes": "ルールエンジン",
-      "login": "外部連携と統合"
+      "login": "外部連携と統合",
+      "video": "リソースセンター",
+      "visionAlarm": "アラームセンター",
+      "alarmDashboard": "アラームセンター",
+      "videoLive": "映像監視",
+      "visionTask": "AI センター",
+      "products": "リソースセンター",
+      "offlineDevices": "リソースセンター",
+      "onlineDevices": "リソースセンター"
     }
   },
   "packages.ProjectHome.saasResourceDevices": "デバイス",
   "packages.ProjectHome.saasDataBoard": "データダッシュボード",
-  "packages.ProjectHome.saasUnitScreens": "大きな画面"
+  "packages.ProjectHome.saasUnitScreens": "大きな画面",
+  "privateApplication.title": "アプリケーションセンター",
+  "privateApplication.account": "現在のアカウント",
+  "privateApplication.available": "利用可能なアプリケーション",
+  "privateApplication.availableFunctions": "利用可能な機能",
+  "privateApplication.lastLogin": "前回のログイン",
+  "privateApplication.empty": "アクセスできるアプリケーションがありません。管理者に権限の割り当てを依頼してください。",
+  "privateApplication.contactAdmin": "追加の権限が必要な場合は管理者にお問い合わせください。",
+  "privateOverview.edge": "エッジノード"
 }

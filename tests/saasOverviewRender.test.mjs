@@ -29,6 +29,18 @@ test('new project renders genuine resource zero and unknown distinctly',async()=
  assert.match(html,/设备/);assert.match(html,/<strong>0<\/strong>/);assert.doesNotMatch(html,/saasOpenResource/);assert.match(html,/online 0/);assert.doesNotMatch(html,/metricUnknown/)
  assert.match(html,/视频[\s\S]*?<strong>—<\/strong>/)
 })
+test('single device and video render health and source breakdown; multiple resources retain cards',async()=>{
+ const make=(id, kinds)=>({id,labelKey:id==='devices'?'saasResourceDevices':'saasVideo',value:3,unitKey:id==='devices'?'saasUnitDevices':'saasUnitChannels',target:{menus:[id]},statuses:[{labelKey:'saasOnline',value:2},{labelKey:'saasOffline',value:1}],breakdown:kinds.map((kind,index)=>({id:kind,labelKey:`privateOverview.${id==='devices'?'deviceType':'videoProvider'}.${kind}`,value:index===0?3:0}))})
+ const device=make('devices',['device','gateway','childrenDevice']),video=make('video',['gb28181-2016','onvif','agent-media-device-gateway','fixed-media'])
+ for(const [row,count] of [[device,3],[video,4]]) {
+  const html=await render(Resource,{canOpen:()=>true,rows:[row]})
+  assert.match(html,/private-health-bar/);assert.match(html,/is-online/);assert.match(html,/is-offline/)
+  assert.equal((html.match(/class="private-asset-breakdown"/g)||[]).length,count)
+  assert.match(html,/private-asset-count[^>]*>0 /);assert.doesNotMatch(html,/saas-resource-grid/)
+ }
+ const html=await render(Resource,{canOpen:()=>true,rows:[device,video]})
+ assert.match(html,/saas-resource-grid/);assert.equal((html.match(/class="saas-resource"/g)||[]).length,2);assert.doesNotMatch(html,/private-health-bar/)
+})
 test('new project today renders zero, existing messages and failed metric distinctly',async()=>{
  const html=await render(Today,{canOpen:()=>true,rows:[{id:'alarm',label:'告警',value:0,yesterday:0,unit:'条'},{id:'message',label:'消息',value:1248,yesterday:2031,unit:'条'},{id:'failed',label:'失败',value:0,yesterday:0,failed:true}]})
  assert.match(html,/告警[\s\S]*?<strong>0<\/strong>/);assert.match(html,/消息[\s\S]*?<strong>1,248<\/strong>/);assert.match(html,/失败[\s\S]*?<strong>—<\/strong>/)
@@ -48,11 +60,11 @@ test('overview catalog leaves resources and today uncapped and removes unauthori
  const built=await build({entryPoints:[entry],bundle:true,write:false,platform:'node',format:'cjs',packages:'external',external:['vue'],plugins:[{name:'catalog-test',setup(b){
   b.onResolve({filter:/\.vue$/},args=>({path:args.path,namespace:'empty'}))
   b.onLoad({filter:/.*/,namespace:'empty'},()=>({contents:'export default {}',loader:'js'}))
-  const stubs={vueuse:`import {ref} from 'vue'; export const useElementSize=()=>({width:context.width ?? ref(0)})`,useResourceCapabilities:`import {ref} from 'vue'; export const useResourceCapabilities=()=>({scope:context.scope ?? ref('scope'),loading:ref(false),errors:ref([]),reload:()=>{}})`,access:`export const getSaasGrantedMenus=()=>context.menus; export const getSaasOverviewAccess=()=>context.access; export const hasSaasTarget=(menus,target)=>menus.has(target.key)`,navigation:`export const HOME_TARGETS={usage:{key:'usage'},applications:{key:'apps'}}`,config:`export const createDefaults=()=>({chart:{}})`,useHomeRuntime:`import {ref} from 'vue'; export const useHomeRuntime=(feature,edit,refresh,unused,polling,enabled)=>{ context.calls.push({feature,polling,enabled}); return {rows:ref(Array.from({length:feature==='SaasResources'?8:4},()=>({}))),loading:ref(false)} }`,useSaasUtilities:`import {ref} from 'vue'; export const useSaasUtilities=()=>({hasActions:ref(context.actions)})`}
-  b.onResolve({filter:/(useResourceCapabilities|@vueuse\/core|services\/access|shared\/navigation|shared\/config|shared\/useHomeRuntime|useSaasUtilities)$/},args=>({path:args.path === '@vueuse/core' ? 'vueuse' : args.path.split('/').pop(),namespace:'bound'}))
+  const stubs={useQuickGuideSteps:`export const useQuickGuideSteps=()=>({showGuide:context.showGuide})`,user:`export const useUserStore=()=>({isAdmin:context.isAdmin ?? false})`,vueuse:`import {ref} from 'vue'; export const useElementSize=()=>({width:context.width ?? ref(0)})`,useResourceCapabilities:`import {ref} from 'vue'; export const useResourceCapabilities=()=>({scope:context.scope ?? ref('scope'),loading:ref(false),errors:ref([]),reload:()=>{}})`,access:`export const getSaasGrantedMenus=()=>context.menus; export const getSaasOverviewAccess=()=>context.access; export const getSaasProjectEntries=()=>[]; export const hasSaasTarget=(menus,target)=>target.menus.some(code=>menus.has(code))`,navigation:`export const HOME_TARGETS={usage:{menus:['usage']},applications:{menus:['apps']}}`,config:`export const createDefaults=()=>({chart:{}})`,useHomeRuntime:`import {ref} from 'vue'; export const useHomeRuntime=(feature,edit,refresh,unused,polling,enabled)=>{ context.calls.push({feature,polling,enabled}); return {rows:ref(Array.from({length:feature==='SaasResources'?8:4},()=>({}))),loading:ref(false)} }`,useSaasUtilities:`export const saasApplicationEntryKey=Symbol()`,usePrivateApplicationEntry:`import {ref} from 'vue'; export const usePrivateApplicationEntry=()=>({mode:ref('normal')})`}
+  b.onResolve({filter:/(useResourceCapabilities|@vueuse\/core|store\/user|useQuickGuideSteps|services\/access|shared\/navigation|shared\/config|shared\/useHomeRuntime|useSaasUtilities|usePrivateApplicationEntry)$/},args=>({path:args.path === '@vueuse/core' ? 'vueuse' : args.path.split('/').pop(),namespace:'bound'}))
   b.onLoad({filter:/.*/,namespace:'bound'},args=>({contents:stubs[args.path],loader:'js',resolveDir:root}))
  }}]})
- const context={calls:[],menus:new Set(['usage','apps']),access:{showResources:true,showToday:true,resourceIds:['devices','video','gateway','screen'],todayIds:['deviceAlarm','visionAlarm','message','aiEvent']},actions:true}, module={exports:{}}; Function('module','exports','require','context',built.outputFiles[0].text)(module,module.exports,require,context)
+ const context={calls:[],showGuide:vue.ref(false),menus:new Set(['usage','apps']),access:vue.reactive({showResources:true,showToday:true,resourceIds:['devices','video','gateway','screen'],todayIds:['deviceAlarm','visionAlarm','message','aiEvent']})}, module={exports:{}}; Function('module','exports','require','context',built.outputFiles[0].text)(module,module.exports,require,context)
  const state=module.exports.useSaasOverviewDashboard(vue.ref(undefined))
  const chart=feature=>state.catalog.components[`projectHome${feature}`].defaultConfig.componentProps[`projectHome${feature}`].chart
  assert.equal(chart('SaasResources').maxItems,undefined);assert.equal(chart('SaasToday').maxItems,undefined)
@@ -60,7 +72,15 @@ test('overview catalog leaves resources and today uncapped and removes unauthori
  assert.equal(state.dashboard.value.components.length,8)
  assert.deepEqual(state.catalog.components.projectHomeSaasSummary.configs,[])
  assert.equal(state.dashboard.value.components[0].type,'projectHomeSaasSummary')
- context.access.showResources=false; context.access.showToday=false; context.menus.clear(); context.actions=false
+ const hasGuide=()=>state.dashboard.value.components.some(item=>item.type==='projectHomeQuickGuide')
+ assert.equal(hasGuide(),false);context.showGuide.value=true;assert.equal(hasGuide(),true)
+ context.showGuide.value=false;assert.equal(hasGuide(),false)
+ context.menus.clear()
+ const operations=module.exports.useSaasOverviewDashboard(vue.ref(undefined));assert.ok(operations.dashboard.value.components.some(x=>x.type==='projectHomeSaasAccount'))
+ context.isAdmin=true
+ const admin=module.exports.useSaasOverviewDashboard(vue.ref(undefined));assert.ok(!admin.dashboard.value.components.some(x=>x.type==='projectHomeSaasAccount'))
+ context.isAdmin=false
+ context.access.showResources=false; context.access.showToday=false; context.menus.clear()
  const reduced=module.exports.useSaasOverviewDashboard(vue.ref(undefined)); assert.deepEqual(reduced.dashboard.value.components.map(x=>x.type),['projectHomeSaasSummary','projectHomeSaasRecent','projectHomeAnnouncements','projectHomeSaasHelp'])
  assert.equal(context.calls.length,0)
  const original=globalThis.localStorage, map=new Map(), storage={getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)}

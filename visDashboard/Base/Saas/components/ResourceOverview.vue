@@ -1,6 +1,7 @@
 <template>
-  <div class="saas-resource-container">
-    <div class="saas-resource-grid" :style="{ '--resource-count': rows.length }">
+  <div class="saas-resource-container" :class="{ 'is-single-asset': singleAsset }">
+    <PrivateAssets v-if="singleAsset" embedded :groups="[singleAsset]" :can-open="canOpen" @navigate="$emit('navigate', $event)" />
+    <div v-else class="saas-resource-grid" :style="{ '--resource-count': rows.length }">
       <button
         v-for="row in rows"
         :key="row.id"
@@ -28,24 +29,38 @@
 </template>
 
 <script setup lang="ts">
-import { type PropType } from 'vue'
+import { computed, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RightOutlined } from '@ant-design/icons-vue'
 import HomeIcon from '../../shared/HomeIcon.vue'
 import MetricValue from './MetricValue.vue'
+import PrivateAssets from '../../Private/components/PrivateAssets.vue'
+import type { PrivateAssetGroup } from '../../Private/types'
 import type { HomeRow, HomeTarget } from '../../shared/types'
 import { formatOverviewNumber } from './presentation'
 
-defineProps({
+const props = defineProps({
   rows: { type: Array as PropType<HomeRow[]>, default: () => [] },
   canOpen: { type: Function as PropType<(target?: HomeTarget) => boolean>, required: true },
 })
 defineEmits<{ navigate: [target?: HomeTarget] }>()
 const { t, locale } = useI18n()
+/** 单项设备或视频资源使用同一健康分布视图，数据与跳转仍沿用 SaaS 授权。 */
+const singleAsset = computed<PrivateAssetGroup | undefined>(() => {
+  const row = props.rows.length === 1 && ['devices', 'video'].includes(props.rows[0].id) ? props.rows[0] : undefined
+  if (!row) return undefined
+  const video = row.id === 'video'
+  return { id: video ? 'video' : 'iot', labelKey: video ? 'packages.ProjectHome.saasVideo' : 'packages.ProjectHome.saasResourceDevices',
+    unitKey: video ? 'privateOverview.unitChannels' : 'privateOverview.unitDevices',
+    total: row.value, online: row.statuses?.find(item => item.labelKey === 'saasOnline')?.value,
+    offline: row.statuses?.find(item => item.labelKey === 'saasOffline')?.value,
+    failed: row.failed, breakdown: row.breakdown || [], target: row.target }
+})
 </script>
 
 <style scoped lang="less">
 .saas-resource-container { min-width: 0; width: 100%; container-type: inline-size; }
+.saas-resource-container.is-single-asset { display: flex; flex: 1 0 auto; flex-direction: column; min-height: 0; }
 .saas-resource-grid { display: grid; grid-template-columns: repeat(var(--resource-count, 4), minmax(0, 1fr)); gap: 12px; }
 .saas-resource {
   position: relative;

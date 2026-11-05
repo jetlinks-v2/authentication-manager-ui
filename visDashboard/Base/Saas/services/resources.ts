@@ -1,6 +1,7 @@
 import { request } from '@jetlinks-web/core'
 import {
-  queryOverviewGatewaySummary, queryOverviewIotDeviceSummary, queryOverviewChannelSummary,
+  queryOverviewGatewaySummary, queryOverviewIotDeviceSummary, queryOverviewIotDeviceBreakdown,
+  queryOverviewChannelSummary, queryOverviewChannelBreakdown,
   type OverviewCountSummary,
 } from '../../../../api/overview'
 import { countOf } from '../../shared/apiResult'
@@ -8,7 +9,7 @@ import type { HomeRow, HomeTarget } from '../../shared/types'
 import { getSaasOverviewAccess, SAAS_RESOURCE_TARGETS, type SaasResourceId } from './access'
 
 interface QueryTerm { column: string; termType?: string; value: unknown }
-type ResourceValue = Pick<HomeRow, 'value' | 'statuses'>
+type ResourceValue = Pick<HomeRow, 'value' | 'statuses' | 'breakdown'>
 interface ResourceDefinition {
   id: SaasResourceId
   labelKey: string
@@ -55,8 +56,25 @@ export async function loadSaasResourceRows(): Promise<HomeRow[]> {
   const access = getSaasOverviewAccess()
   const targets = SAAS_RESOURCE_TARGETS
   const definitions: ResourceDefinition[] = [
-    { id: 'devices', labelKey: 'saasResourceDevices', icon: 'devices', target: targets.devices, load: () => loadHealth(queryOverviewIotDeviceSummary) },
-    { id: 'video', labelKey: 'saasVideo', icon: 'video', target: targets.video, load: () => loadHealth(queryOverviewChannelSummary) },
+    { id: 'devices', labelKey: 'saasResourceDevices', icon: 'devices', target: targets.devices, load: async () => {
+      const [health, breakdown] = await Promise.all([
+        loadHealth(queryOverviewIotDeviceSummary),
+        access.resourceIds.length === 1 ? queryOverviewIotDeviceBreakdown() : Promise.resolve([]),
+      ])
+      return { ...health, breakdown: breakdown.map(item => ({ ...item, labelKey: `privateOverview.deviceType.${item.id}` })) }
+    } },
+    { id: 'video', labelKey: 'saasVideo', icon: 'video', target: targets.video, load: async () => {
+      if (access.resourceIds.length !== 1) return loadHealth(queryOverviewChannelSummary)
+      // 复用原有视频统计范围和同一次请求，保证分类之和与总量一致。
+      const groups = await queryOverviewChannelBreakdown()
+      const health = await loadHealth(async () => groups.reduce((sum, item) => ({
+        total: sum.total + item.total, online: sum.online + item.online,
+      }), { total: 0, online: 0 }))
+      const providers = ['gb28181-2016', 'onvif', 'agent-media-device-gateway', 'fixed-media']
+      const breakdown = providers.map(id => ({ id, labelKey: `privateOverview.videoProvider.${id}`,
+        value: groups.find(item => item.id === id)?.total ?? 0 }))
+      return { ...health, breakdown }
+    } },
     { id: 'gateway', labelKey: 'saasGateway', icon: 'gateway', target: targets.gateway, load: () => loadHealth(queryOverviewGatewaySummary) },
     { id: 'screen', labelKey: 'saasDataBoard', icon: 'screen', target: targets.screen, load: loadScreens },
   ]

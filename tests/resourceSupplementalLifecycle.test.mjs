@@ -16,9 +16,11 @@ const bundled = await build({
       'ant-design-vue': 'export const theme={useToken:()=>({token:context.vue.ref({})})}',
       'vue-i18n': 'export const useI18n=()=>({t:key=>key})',
       '@jetlinks-web-core/store/menu': 'export const useMenuStore=()=>({getMenu:()=>({}),jumpPage:()=>{}})',
+      '../../../visDashboard/Base/shared/navigation': 'export const HOME_TARGETS={devices:{menus:["iot-user-device-list"]},video:{menus:["video/resources"]}}',
+      './services/resourcePageAccess': 'export const hasGrantedResourceMenu=()=>false',
       './services/resourceSupplemental': 'export const loadResourceSupplemental=(...args)=>context.load(...args)',
     }
-    api.onResolve({ filter: /^(ant-design-vue|vue-i18n|@jetlinks-web-core\/store\/menu|\.\/services\/resourceSupplemental)$/ }, args => ({ path: args.path, namespace: 'fixture' }))
+    api.onResolve({ filter: /^(ant-design-vue|vue-i18n|@jetlinks-web-core\/store\/menu|\.\/services\/(resourceSupplemental|resourcePageAccess)|\.\.\/\.\.\/\.\.\/visDashboard\/Base\/shared\/navigation)$/ }, args => ({ path: args.path, namespace: 'fixture' }))
     api.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ contents: boundaries[args.path], loader: 'js' }))
   } }],
 })

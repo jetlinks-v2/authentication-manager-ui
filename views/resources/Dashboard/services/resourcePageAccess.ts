@@ -8,6 +8,11 @@ interface ResourceAccessSource {
   installed: (module: string) => boolean
 }
 
+/** 仅在服务端授权树中查找入口，避免隐藏详情路由被当成菜单授权。 */
+export function hasGrantedResourceMenu(menus: readonly GrantedMenu[], code: string): boolean {
+  return menus.some(menu => menu.code === code || !!menu.children && hasGrantedResourceMenu(menu.children, code))
+}
+
 /** 只使用授权菜单树判断能力，详情路由和已注册组件不能当作授权。 */
 export function resolveResourcePageAccess(source: ResourceAccessSource): ResourcePageAccess {
   const codes = new Set<string>()
@@ -26,11 +31,12 @@ export function resolveResourcePageAccess(source: ResourceAccessSource): Resourc
   return {
     saas: source.saas, iot, video, edge,
     vision: edge && video && available('jetlinks-ai-ui', ['algorithm-center', 'project/algorithm-center']),
-    aiEvents: available('jetlinks-ai-ui', ['video/event']),
+    aiEvents: (source.saas || video) && available('jetlinks-ai-ui', ['video/event']),
     visualization: available('visualization-manager-ui', HOME_TARGETS.screen.menus),
     product: !source.saas && available('device-manager-ui', ['device/Product']),
     collection: !source.saas && available('data-collector-ui', HOME_TARGETS.collector.menus),
     networkCards: !source.saas && available('network-card-manager-ui', HOME_TARGETS.card.menus),
-    map: iot,
+    networkPools: !source.saas && available('network-card-manager-ui', ['iot-card/TrafficPoolManagement']),
+    map: iot || video || edge,
   }
 }

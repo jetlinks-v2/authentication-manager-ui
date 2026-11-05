@@ -12,12 +12,13 @@ export interface DashboardModules {
 }
 
 const moduleRequirements = {
-  model: { module: 'visualization-model-ui', menu: 'visualization/resource/model' },
+  model: { module: 'visualization-model-ui', menus: ['visualization/resource/model'] },
   // 当前设备列表统一承载物联设备与边缘节点，不再使用旧的独立网关菜单。
-  edge: { module: 'edge-master-ui', menu: 'iot-user-device-list' },
-  vision: { module: 'jetlinks-ai-ui', menu: 'algorithm-center' },
-  collection: { module: 'data-collector-ui', menu: 'data-collect' },
-  networkCards: { module: 'network-card-manager-ui', menu: 'iot-card/CardManagement' },
+  // 与页面准入保留相同的已发布菜单编码；别名也必须来自服务端授权树。
+  edge: { module: 'edge-master-ui', menus: ['iot-user-device-list', 'iot-user/device/list'] },
+  vision: { module: 'jetlinks-ai-ui', menus: ['algorithm-center', 'project/algorithm-center'] },
+  collection: { module: 'data-collector-ui', menus: ['data-collect'] },
+  networkCards: { module: 'network-card-manager-ui', menus: ['iot-card/CardManagement'] },
 } as const
 
 type GrantedMenu = { code?: string; children?: GrantedMenu[] }
@@ -38,7 +39,7 @@ export function getDashboardModules(): DashboardModules {
   // 安装不等于授权：私有化也不能为无菜单权限的用户展示模块统计或触发请求。
   const available = (key: keyof DashboardModules) => {
     const requirement = moduleRequirements[key]
-    return codes.has(requirement.menu) && (isSaaS || moduleRegistry.hasModule(requirement.module))
+    return requirement.menus.some(code => codes.has(code)) && (isSaaS || moduleRegistry.hasModule(requirement.module))
   }
   return {
     model: available('model'), edge: available('edge'), vision: available('vision'),

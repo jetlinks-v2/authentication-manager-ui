@@ -1,6 +1,9 @@
 <template>
   <div class="resource-dashboard-widget" :data-resource-panel="panel.kind" :data-resource-summary="panel.summaryId">
-    <ResourceSummaryCard v-if="panel.kind === 'summary' && card" :card="card"
+    <ResourceCollectionSummary v-if="panel.kind === 'summary' && card && card.expanded" :card="card"
+      :loading="runtime.summary.loading.value" :error="runtime.summary.error.value"
+      @open="runtime.summary.open" @retry="runtime.summary.refresh" />
+    <ResourceSummaryCard v-else-if="panel.kind === 'summary' && card" :card="card"
       :loading="runtime.summary.loading.value" :error="runtime.summary.error.value"
       @open="runtime.summary.open" @retry="runtime.summary.refresh" />
     <ResourceMessagePanel v-else-if="panel.kind === 'message'" :scope="runtime.scope.value" :initial-range="runtime.messageRange.value" />
@@ -14,6 +17,7 @@
         </ResourceEmpty>
       </a-card>
     </template>
+    <ResourceDeviceDistribution v-else-if="panel.kind === 'distribution'" />
     <GatewayStatusPanel v-else-if="panel.kind === 'gateway'" :info="info" :is-edit="false" @count="runtime.onGatewayCount" />
     <VisionTaskRanking v-else-if="panel.kind === 'vision'" :info="info" />
     <ResourceSupplementalPanel v-else-if="panel.kind !== 'summary'" :kind="panel.kind" :scope="runtime.scope.value" />
@@ -28,8 +32,10 @@ import GatewayStatusPanel from '../../../../visDashboard/ResourceCenter/componen
 import VisionTaskRanking from '../../../../visDashboard/ResourceCenter/VisionTaskRanking/VisionTaskRanking.vue'
 import ResourceEmpty from '../../../../visDashboard/ResourceCenter/components/ResourceEmpty.vue'
 import ResourceSummaryCard from './ResourceSummaryCard.vue'
+import ResourceCollectionSummary from './ResourceCollectionSummary.vue'
 import ResourceMessagePanel from './ResourceMessagePanel.vue'
 import ResourceSupplementalPanel from './ResourceSupplementalPanel.vue'
+import ResourceDeviceDistribution from './ResourceDeviceDistribution.vue'
 import { useResourcePageContext } from '../resourcePageContext'
 import type { ResourcePageWidget } from '../resourcePageCanvas'
 

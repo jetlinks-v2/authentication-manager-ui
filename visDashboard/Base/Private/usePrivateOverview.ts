@@ -14,6 +14,7 @@ import { loadPrivateTrend } from './services/trends'
 import { usePrivateQuery } from './usePrivateQuery'
 import { usePrivateMonitor } from './usePrivateMonitor'
 import { usePrivateCharts } from './usePrivateCharts'
+import { usePrivateApplicationEntry } from './usePrivateApplicationEntry'
 import type { PrivateTrendMetric, PrivateTrendRange } from './types'
 
 export const privateOverviewContextKey: InjectionKey<ReturnType<typeof usePrivateOverview>> = Symbol('private-overview')
@@ -34,6 +35,7 @@ export function usePrivateOverview() {
     return getPrivateOverviewAccess()
   })
   const ready = computed(() => !capabilities.loading.value && !capabilities.errors.value.length)
+  const onlyApplications = usePrivateApplicationEntry(access, ready, capabilities.scope)
   const key = computed(() => `${capabilities.scope.value}:${locale.value}:${JSON.stringify(access.value)}`)
   const navigation = useHomeNavigation(ready, ref(false))
   const auth = useAuthStore()
@@ -88,6 +90,6 @@ export function usePrivateOverview() {
   const applicationInfo: HomeInfo = { componentProps: { projectHomeApplications: { ...defaults, chart: {
     ...defaults.chart, displayStyle: 'private', maxItems: 3, showDate: false, showDescription: true,
   } } } }
-  return { capabilities, access, hasResources, hasGuide, hasAlarms, metrics, metric, range,
+  return { capabilities, access, onlyApplications, hasResources, hasGuide, hasAlarms, metrics, metric, range,
     resources, guide, alarms, trend, monitor, charts, actions, showAccess, applicationInfo, navigation, targets: PRIVATE_TARGETS }
 }

@@ -33,7 +33,7 @@ export function useResourceMessage(scope: Ref<string>, initialRange: TimeRange =
       data: (query.data ?? []).map(point => point.value) }],
   }))
   function openDevices() {
-    if (target.value) menu.jumpPage(target.value, { query: { type: 'device' } })
+    if (target.value) menu.jumpPage(target.value)
   }
   return { query, range, ranges, total, hourly, option, target, openDevices }
 }
