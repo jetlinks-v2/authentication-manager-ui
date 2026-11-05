@@ -16,7 +16,7 @@ export const privateOverviewLayoutMode = (width: number) => (
 )
 
 /** 按授权生成稳定组件身份；统计值、请求错误与轮询结果不参与几何计算。 */
-export function buildPrivateOverviewLayout(access: PrivateOverviewAccess, showAccess: boolean, width: number): PrivateOverviewWidget[] {
+export function buildPrivateOverviewLayout(access: PrivateOverviewAccess, showAccess: boolean, width: number, showGuide = false): PrivateOverviewWidget[] {
   const items: PrivateOverviewWidget[] = []
   const mode = privateOverviewLayoutMode(width)
   const stacked = mode === 'compact' || mode === 'stacked'
@@ -45,9 +45,10 @@ export function buildPrivateOverviewLayout(access: PrivateOverviewAccess, showAc
   const side = Math.max(4, Math.min(9, Math.round(356 * 24 / (width + 16))))
   const top = y
   if (showAccess) {
-    // 48px 卡头、32px 正文留白、两行 60px 入口及 8px 行距，共 208px。
-    append('access', 0, y, !stacked && access.applications ? 24 - side : 24, 7, 6)
-    y += 7
+    // 引导预留步骤和任务说明；快捷入口仍保持 208px，个人缩放的小卡由正文滚动。
+    const accessHeight = showGuide ? 10 : 7
+    append('access', 0, y, !stacked && access.applications ? 24 - side : 24, accessHeight, 6)
+    y += accessHeight
   }
   if (access.applications) {
     append('applications', !stacked && showAccess ? 24 - side : 0, stacked ? y : top, !stacked && showAccess ? side : 24, 8, 7)
@@ -69,8 +70,9 @@ export function buildPrivateOverviewLayout(access: PrivateOverviewAccess, showAc
     y += splitBottom ? 9 : 6
   }
   // 告警高度只容纳自身摘要、趋势与三条记录，不为对齐另一列而拉长。
+  // 告警独占整行时必须避开更高的接入引导；仅侧栏告警接在应用卡之后。
   if (hasAlarms) append('alarms', stacked || mainWidth === 24 ? 0 : mainWidth,
-    stacked ? y : access.applications && showAccess ? top + 8 : contentTop,
+    stacked || mainWidth === 24 ? y : access.applications && showAccess ? top + 8 : contentTop,
     stacked || mainWidth === 24 ? 24 : side, 17, 12)
   return items
 }

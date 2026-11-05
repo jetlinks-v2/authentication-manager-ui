@@ -18,7 +18,8 @@ export function usePrivateOverviewDashboard(host: Ref<HTMLElement | undefined>) 
     privateOverview: { component: markRaw(PrivateOverviewWidget), configs: [], groupId: 'private-overview',
       defaultConfig: { type: 'privateOverview', componentProps: {} } },
   } }
-  const widgets = computed(() => buildPrivateOverviewLayout(runtime.access.value, runtime.showAccess.value, layoutWidth.value))
+  const widgets = computed(() => buildPrivateOverviewLayout(runtime.access.value, runtime.showAccess.value, layoutWidth.value,
+    runtime.guide.data?.show || false))
   const storageKey = computed(() => privateOverviewLayoutStorageKey(runtime.capabilities.scope.value, layoutWidth.value, widgets.value))
   // 先迁移已保存的默认高度，再挂载画布；不会清空用户的拖拽记录。
   watch([storageKey, layoutWidth], () => {
