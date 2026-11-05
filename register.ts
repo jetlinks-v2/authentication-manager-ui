@@ -2,8 +2,10 @@ import { defineAsyncComponent } from 'vue'
 import { getTreeData_api } from '@authentication-manager-ui/api/system/department'
 import {exportPermission_api} from "@authentication-manager-ui/api/system/permission";
 import { ownershipDimensionFilters } from './views/application-center/ProjectApplication/ownershipSelectors'
+import objectPresentations from './objectPresentations'
 
 export default {
+  objectPresentations,
   assetDimensionFilters: ownershipDimensionFilters,
   apis: {
     getTreeData_api,
