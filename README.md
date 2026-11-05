@@ -43,6 +43,8 @@ Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/1
 
 ### 用户管理初始化菜单的关联资产范围
 
+- 交付入口：实现提交 `1177515`；[PR #136：补齐角色及分组数据权限声明](https://github.com/jetlinks-v2/authentication-manager-ui/pull/136)，目标分支 `2.20`。
+
 - 目标：仅授予用户管理菜单时，也能为新增、编辑用户所查询的角色与角色分组配置数据范围，避免只有 `user` 策略而缺少 `role`、`roleGroup` 策略。
 - 实现范围：运行时模块 `runtime-ui/modules/authentication-manager-ui/baseMenu.json` 的 `system/User` 菜单已改为 `assetTypes: ["user", "role", "roleGroup"]`，并将旧 `assetType` 清空为 `""`。复用现有多资产菜单授权与后端 AssetsHolder 查询、绑定校验，新增/编辑按钮的功能权限保持原样。
 - 范围之外：不改后端、用户编辑页面、其他菜单或 `ui/`，不写入真实菜单或授权数据。
