@@ -41,6 +41,15 @@ Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/1
 
 待验证：登录环境中打开旧菜单、选择两项后保存重开、删到一项、切换支持/间接/不支持，以及保存后的真实授权效果。本轮自动化测试没有写入真实菜单或授权数据；源码与虚拟组件回归不替代真实接口验收。
 
+### 用户管理初始化菜单的关联资产范围
+
+- 目标：仅授予用户管理菜单时，也能为新增、编辑用户所查询的角色与角色分组配置数据范围，避免只有 `user` 策略而缺少 `role`、`roleGroup` 策略。
+- 实现范围：运行时模块 `runtime-ui/modules/authentication-manager-ui/baseMenu.json` 的 `system/User` 菜单已改为 `assetTypes: ["user", "role", "roleGroup"]`，并将旧 `assetType` 清空为 `""`。复用现有多资产菜单授权与后端 AssetsHolder 查询、绑定校验，新增/编辑按钮的功能权限保持原样。
+- 范围之外：不改后端、用户编辑页面、其他菜单或 `ui/`，不写入真实菜单或授权数据。
+- 生效与风险：已有环境需要同步初始化菜单，并在授权界面为角色及角色分组配置、保存“自己创建”策略，再刷新账号认证；增加资产声明本身不补齐已有独立策略或已授权菜单策略。角色分组同样受控，所属分组不可见时角色树中不会展示该分组下的角色。
+- 验证结果：在运行时模块使用 Node 22 执行 `node --test tests/menuSettingOwners.test.mjs tests/menuAssetTypes.test.mjs`，25 项通过；菜单 JSON 可解析，执行实际 `baseMenu.ts` 转换确认资产数组及按钮定义完整保留。
+- 待验证：本次未运行 lint、全量 typecheck 或生产构建；发布前可在 `runtime-ui/` 使用 Node 22 执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`，并核对产物中的菜单声明。真实账号新增/编辑用户、角色候选及保存权限效果，仍需完成菜单同步及授权后在登录环境验收。
+
 ## 用户表格行操作
 
 交付入口：代码提交 `6cc39dc3174ee51afbef68291efbcb1109914823`；[PR #109：完善角色分组权限与列表操作](https://github.com/jetlinks-v2/authentication-manager-ui/pull/109)，目标分支 `2.20`。
