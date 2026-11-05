@@ -1024,7 +1024,8 @@
               "value": "support"
             },
             "supportDataAccess": true,
-            "assetType": "user"
+            "assetType": "",
+            "assetTypes": ["user", "role", "roleGroup"]
           }
         ]
       },
@@ -2715,7 +2716,12 @@
         "url": "/system/third-party-login",
         "icon": "icon-yingyongguanli",
         "showPage": ["application"],
-        "permissions": [],
+        "permissions": [
+          {
+            "permission": "application",
+            "actions": ["query"]
+          }
+        ],
         "buttons": []
       }
     ]
