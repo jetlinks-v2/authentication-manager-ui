@@ -4,6 +4,16 @@
 
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.
 
+第三方登录菜单（`baseMenu.json` 中的 `system-third-party-login`，owner 为 `cloud`）需声明应用管理查询权限 `application/query`，供 `api/system/thirdPartyLogin.ts#queryThirdPartyApplications` 调用 `/application/_query`。更新菜单定义后需同步已保存菜单及相应授权；验收时使用仅拥有该菜单的账号确认应用列表可查询，实际登录环境权限效果待验证。
+
+## 运行时角色授权详情
+
+角色授权读取统一使用 core 的 `getMenuGrantDetail('role', roleId, query)`，对应 `GET /menu/{targetType}/{targetId}/_grant/detail`。`result.menus` 提供菜单及权限候选，顶层 `result.assetAccesses` 提供该角色的独立资产策略；不把候选列表作为已保存策略，不额外传候选展示域 `owner`。旧 `getPermissionTree_api` 仅保留菜单树返回结构的兼容适配。
+
+`api/system/role.ts` 复用统一详情查询，`PermissionTree.vue` 校验两组数据都是数组后才启用保存；旧 tree 数组、缺少字段或请求失败均不能生成保存载荷。旧树适配器保留错误响应，不把失败转换成空菜单。范围限运行时前端，候选筛选与后端授权规则保持原行为。
+
+验证：模块内 `node --test tests/roleGrantDetail.test.mjs` 的 6 项回归通过，覆盖真实 API、角色页 setup、共享编辑器与初始化角色流程；3 个改动 API 的定向 TypeScript 检查通过（沿用工作区配置并加载 Vue JSX 类型）。`runtime-ui` 中执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 对应的 Vite 模块构建通过，`git diff --check` 通过。未配置独立 lint 脚本；未运行全量类型检查，可执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 复核。尚未对真实后端写入；本地需检查角色加载请求、修改资产范围后保存及刷新回显，本次接口统一不等同于验证所有重复展示问题已修复。
+
 ## Application ownership filter
 
 Delivery: [PR #119](https://github.com/jetlinks-v2/authentication-manager-ui/pull/119), targeting `2.20`.
@@ -40,6 +50,29 @@ Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/1
 - 相邻回归 `node --test tests/menuSettingOwners.test.mjs tests/thirdPartyLoginMenu.test.mjs tests/applicationTemplateMenuPreview.test.mjs` 为 21/22 通过；唯一失败是 `thirdPartyLoginMenu.test.mjs` 仍期望开放平台父节点为 `application-center`，而当前 `baseMenu.json` 为 `platform/settings`，两份文件与 HEAD 均一致，本轮未调整菜单结构。
 
 待验证：登录环境中打开旧菜单、选择两项后保存重开、删到一项、切换支持/间接/不支持，以及保存后的真实授权效果。本轮自动化测试没有写入真实菜单或授权数据；源码与虚拟组件回归不替代真实接口验收。
+
+### 用户管理初始化菜单的关联资产范围
+
+- 交付入口：实现提交 `1177515`；[PR #136：补齐角色及分组数据权限声明](https://github.com/jetlinks-v2/authentication-manager-ui/pull/136)，目标分支 `2.20`。
+
+- 目标：仅授予用户管理菜单时，也能为新增、编辑用户所查询的角色与角色分组配置数据范围，避免只有 `user` 策略而缺少 `role`、`roleGroup` 策略。
+- 实现范围：运行时模块 `runtime-ui/modules/authentication-manager-ui/baseMenu.json` 的 `system/User` 菜单已改为 `assetTypes: ["user", "role", "roleGroup"]`，并将旧 `assetType` 清空为 `""`。复用现有多资产菜单授权与后端 AssetsHolder 查询、绑定校验，新增/编辑按钮的功能权限保持原样。
+- 范围之外：不改后端、用户编辑页面、其他菜单或 `ui/`，不写入真实菜单或授权数据。
+- 生效与风险：已有环境需要同步初始化菜单，并在授权界面为角色及角色分组配置、保存“自己创建”策略，再刷新账号认证；增加资产声明本身不补齐已有独立策略或已授权菜单策略。角色分组同样受控，所属分组不可见时角色树中不会展示该分组下的角色。
+- 验证结果：在运行时模块使用 Node 22 执行 `node --test tests/menuSettingOwners.test.mjs tests/menuAssetTypes.test.mjs`，25 项通过；菜单 JSON 可解析，执行实际 `baseMenu.ts` 转换确认资产数组及按钮定义完整保留。
+- 待验证：本次未运行 lint、全量 typecheck 或生产构建；发布前可在 `runtime-ui/` 使用 Node 22 执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`，并核对产物中的菜单声明。真实账号新增/编辑用户、角色候选及保存权限效果，仍需完成菜单同步及授权后在登录环境验收。
+
+### 组织管理的用户操作权限
+
+目标与范围：仅调整运行时 `runtime-ui/modules/authentication-manager-ui/baseMenu.json` 的 `system/Department` 菜单，使仅获组织管理授权的账号可在授权范围内新增、绑定和解绑用户。沿用现有页面按钮、用户/组织接口及后端 AssetsHolder 校验，不修改页面代码、运营端、后端权限模型或真实环境的授权数据。
+
+实现入口：`baseMenu.json` 的 `bind-user` 与 `bind` 按钮补齐后端额外检查的 `user/save` 与 `organization/save`，查看按钮补充角色筛选查询权限，`bind-user` 补充新增用户表单所需的角色/角色分组查询权限。组织菜单关联资产为 `organization`、`user`、`role`、`roleGroup`，清空旧 `assetType` 并沿用已有多资产授权配置。`views/system/Department/user/index.vue` 保持原有权限标识：新增用户和绑定用户共用 `bind-user`，单条/批量解绑共用 `bind`。
+
+生效与兼容：发布后同步已保存菜单，重新保存对应角色/用户的功能授权与各资产数据范围，再刷新登录认证。现有 `bind-user`（绑定用户）授权继续同时控制新增用户与绑定用户，解绑继续沿用 `bind`（资产解绑）授权，不新增按钮标识。绑定、解绑需要目标用户的数据权限和目标组织的保存权限；新增用户关联的组织、角色也必须在允许范围内。菜单声明不会自动创建或扩大已有授权策略，`user/save` 是现有后端要求的用户保存功能权限。
+
+验证结果：在模块目录使用 Node 22 执行 `node --test tests/departmentUserPermissions.test.mjs tests/menuSettingOwners.test.mjs tests/menuAssetTypes.test.mjs`，28 项通过，覆盖实际菜单转换及同步保存载荷、原有模板权限标识和现有菜单多资产回归。`git diff --check` 通过，组织用户页面与 HEAD 一致。在 `runtime-ui/` 执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过（2 分 39 秒），产物包含 JS 与 manifest，`dist/baseMenu.json` 与源码 JSON 完整一致；存在 Baseline 数据过期和大 chunk 提示。工作区和模块未配置 lint 脚本；执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 未通过，存在 627 项工作区类型诊断，未命中本次菜单配置。
+
+待验证：真实账号仅授组织管理时的允许/拒绝行为、单条及批量解绑效果待登录环境验收；菜单声明与模板契约检查不替代实际接口权限验证。
 
 ## 用户表格行操作
 

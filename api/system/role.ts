@@ -1,4 +1,5 @@
 import { request } from '@jetlinks-web/core'
+import { getMenuGrantDetail } from '@jetlinks-web-core/api/system/menu'
 
 // 获取角色列表
 export const getRoleList_api = (data: any): Promise<any> => request.post(`/role/_query/`, data);
@@ -10,9 +11,13 @@ export const saveRole_api = (data: any): Promise<any> => request.post(`/role`, d
 export const updateRole_api = (data: any): Promise<any> => request.patch(`/role`, data);
 // 获取角色详细信息
 export const getRoleDetails_api = (id: string): Promise<any> => request.get(`/role/${id}`);
-// 获取角色对应的权限树
-export const getPermissionTree_api = (id: string, data?: any): Promise<any> => request.get(`/menu/role/${id}/_grant/tree`, data);
-export const getPermissionDetail_api = (id: string, data?: any): Promise<any> => request.get(`/menu/role/${id}/_grant/detail`, data);
+// 获取角色菜单与独立资产授权，候选和已保存策略由详情接口分别返回。
+export const getPermissionDetail_api = (id: string, data?: Record<string, unknown>) => getMenuGrantDetail('role', id, data);
+/** @deprecated 授权编辑使用 getPermissionDetail_api；旧菜单树读取方保留 result 数组结构。 */
+export const getPermissionTree_api = async (id: string, data?: Record<string, unknown>) => {
+  const response = await getPermissionDetail_api(id, data);
+  return { ...response, result: response.result?.menus };
+};
 export const getGrantableAssetAccesses_api = (menus: any[]): Promise<any> => request.post('/menu/asset-accesses/grantable', menus);
 // 更新角色对应的权限树
 export const updatePermissionTree_api = (id: string, data:any): Promise<any> => request.put(`/menu/role/${id}/_grant`,data);

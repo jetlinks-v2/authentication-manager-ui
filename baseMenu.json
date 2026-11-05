@@ -463,6 +463,12 @@
                     "actions": [
                       "query"
                     ]
+                  },
+                  {
+                    "permission": "role",
+                    "actions": [
+                      "query"
+                    ]
                   }
                 ]
               },
@@ -487,7 +493,8 @@
                   {
                     "permission": "user",
                     "actions": [
-                      "query"
+                      "query",
+                      "save"
                     ]
                   },
                   {
@@ -505,7 +512,9 @@
                   {
                     "permission": "organization",
                     "actions": [
-                      "unbind-user"
+                      "unbind-user",
+                      "query",
+                      "save"
                     ]
                   }
                 ]
@@ -526,13 +535,15 @@
                     "actions": [
                       "unbind-user",
                       "query",
-                      "bind-user"
+                      "bind-user",
+                      "save"
                     ]
                   },
                   {
                     "permission": "user",
                     "actions": [
-                      "query"
+                      "query",
+                      "save"
                     ]
                   },
                   {
@@ -549,6 +560,18 @@
                   },
                   {
                     "permission": "assets-bind",
+                    "actions": [
+                      "query"
+                    ]
+                  },
+                  {
+                    "permission": "role",
+                    "actions": [
+                      "query"
+                    ]
+                  },
+                  {
+                    "permission": "role-group",
                     "actions": [
                       "query"
                     ]
@@ -798,7 +821,13 @@
               "value": "support"
             },
             "supportDataAccess": true,
-            "assetType": "organization"
+            "assetType": "",
+            "assetTypes": [
+              "organization",
+              "user",
+              "role",
+              "roleGroup"
+            ]
           },
           {
             "code": "system/User",
@@ -1024,7 +1053,8 @@
               "value": "support"
             },
             "supportDataAccess": true,
-            "assetType": "user"
+            "assetType": "",
+            "assetTypes": ["user", "role", "roleGroup"]
           }
         ]
       },
@@ -2715,7 +2745,12 @@
         "url": "/system/third-party-login",
         "icon": "icon-yingyongguanli",
         "showPage": ["application"],
-        "permissions": [],
+        "permissions": [
+          {
+            "permission": "application",
+            "actions": ["query"]
+          }
+        ],
         "buttons": []
       }
     ]
