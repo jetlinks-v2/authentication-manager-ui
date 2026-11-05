@@ -1024,7 +1024,8 @@
               "value": "support"
             },
             "supportDataAccess": true,
-            "assetType": "user"
+            "assetType": "",
+            "assetTypes": ["user", "role", "roleGroup"]
           }
         ]
       },
