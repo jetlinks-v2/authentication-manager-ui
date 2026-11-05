@@ -54,6 +54,18 @@ Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/1
 - 验证结果：在运行时模块使用 Node 22 执行 `node --test tests/menuSettingOwners.test.mjs tests/menuAssetTypes.test.mjs`，25 项通过；菜单 JSON 可解析，执行实际 `baseMenu.ts` 转换确认资产数组及按钮定义完整保留。
 - 待验证：本次未运行 lint、全量 typecheck 或生产构建；发布前可在 `runtime-ui/` 使用 Node 22 执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`，并核对产物中的菜单声明。真实账号新增/编辑用户、角色候选及保存权限效果，仍需完成菜单同步及授权后在登录环境验收。
 
+### 组织管理的用户操作权限
+
+目标与范围：仅调整运行时 `runtime-ui/modules/authentication-manager-ui/baseMenu.json` 的 `system/Department` 菜单，使仅获组织管理授权的账号可在授权范围内新增、绑定和解绑用户。沿用现有页面按钮、用户/组织接口及后端 AssetsHolder 校验，不修改页面代码、运营端、后端权限模型或真实环境的授权数据。
+
+实现入口：`baseMenu.json` 的 `bind-user` 与 `bind` 按钮补齐后端额外检查的 `user/save` 与 `organization/save`，查看按钮补充角色筛选查询权限，`bind-user` 补充新增用户表单所需的角色/角色分组查询权限。组织菜单关联资产为 `organization`、`user`、`role`、`roleGroup`，清空旧 `assetType` 并沿用已有多资产授权配置。`views/system/Department/user/index.vue` 保持原有权限标识：新增用户和绑定用户共用 `bind-user`，单条/批量解绑共用 `bind`。
+
+生效与兼容：发布后同步已保存菜单，重新保存对应角色/用户的功能授权与各资产数据范围，再刷新登录认证。现有 `bind-user`（绑定用户）授权继续同时控制新增用户与绑定用户，解绑继续沿用 `bind`（资产解绑）授权，不新增按钮标识。绑定、解绑需要目标用户的数据权限和目标组织的保存权限；新增用户关联的组织、角色也必须在允许范围内。菜单声明不会自动创建或扩大已有授权策略，`user/save` 是现有后端要求的用户保存功能权限。
+
+验证结果：在模块目录使用 Node 22 执行 `node --test tests/departmentUserPermissions.test.mjs tests/menuSettingOwners.test.mjs tests/menuAssetTypes.test.mjs`，28 项通过，覆盖实际菜单转换及同步保存载荷、原有模板权限标识和现有菜单多资产回归。`git diff --check` 通过，组织用户页面与 HEAD 一致。在 `runtime-ui/` 执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过（2 分 39 秒），产物包含 JS 与 manifest，`dist/baseMenu.json` 与源码 JSON 完整一致；存在 Baseline 数据过期和大 chunk 提示。工作区和模块未配置 lint 脚本；执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 未通过，存在 627 项工作区类型诊断，未命中本次菜单配置。
+
+待验证：真实账号仅授组织管理时的允许/拒绝行为、单条及批量解绑效果待登录环境验收；菜单声明与模板契约检查不替代实际接口权限验证。
+
 ## 用户表格行操作
 
 交付入口：代码提交 `6cc39dc3174ee51afbef68291efbcb1109914823`；[PR #109：完善角色分组权限与列表操作](https://github.com/jetlinks-v2/authentication-manager-ui/pull/109)，目标分支 `2.20`。
