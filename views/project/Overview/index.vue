@@ -1,29 +1,21 @@
 <template>
-  <main ref="overviewHost" class="project-overview" :class="isSaaS ? 'project-overview--saas' : 'project-overview--private'">
-    <PrivateOverviewLayout v-if="!isSaaS" />
-    <template v-else-if="saas">
-      <div v-if="saas.loading.value" class="project-overview-state"><a-spin /></div>
-      <a-result v-else-if="saas.errors.value.length" status="error" :title="t('projectOverview.loadError')">
-        <template #extra><a-button @click="saas.reload">{{ t('projectOverview.retry') }}</a-button></template>
-      </a-result>
-      <SaasOverviewLayout v-else :dashboard="saas.dashboard.value" :catalog="saas.catalog" :storage-key="saas.storageKey.value" />
-    </template>
+  <main class="project-overview" :class="isSaaS ? 'project-overview--saas' : 'project-overview--private'">
+    <a-result v-if="failed" status="error" :title="t('projectOverview.loadError')">
+      <template #extra><a-button @click="retry">{{ t('projectOverview.retry') }}</a-button></template>
+    </a-result>
+    <component v-else :is="layoutComponent" />
   </main>
 </template>
 <script setup lang="ts" name="ProjectSideOverview">
 import { useI18n } from 'vue-i18n'
-import { ref } from 'vue'
 import { isSaaS } from '@jetlinks-web-core/utils/consts'
-import { provideHomePolling } from '../../../visDashboard/Base/shared/homePollingContext'
-import { useSaasOverviewDashboard } from './useSaasOverviewDashboard'
-import SaasOverviewLayout from './SaasOverviewLayout.vue'
-import PrivateOverviewLayout from './PrivateOverviewLayout.vue'
+import { useOverviewLayout } from './useOverviewAsync'
 
-const polling = provideHomePolling()
 const { t } = useI18n()
-// 部署分支在装配前隔离，私有化不启动 SaaS 数据或旧组件的轮询。
-const overviewHost = ref<HTMLElement>()
-const saas = isSaaS ? useSaasOverviewDashboard(overviewHost, polling) : undefined
+// 不静态引入另一种部署的页面，避免共享卡片被意外提前加载。
+const { component: layoutComponent, failed, retry } = useOverviewLayout(isSaaS
+  ? () => import('./SaasOverviewPage.vue')
+  : () => import('./PrivateOverviewLayout.vue'))
 </script>
 <style scoped>
 .project-overview {
@@ -39,7 +31,6 @@ const saas = isSaaS ? useSaasOverviewDashboard(overviewHost, polling) : undefine
 .basic-layout-page:not(:has(.ant-layout-sider)):not(:has(.project-secondary-menu .ant-tabs-left)) .project-overview {
   padding: 0 0 var(--space-4, 16px);
 }
-.project-overview-state { min-height: 30rem; display: grid; place-items: center; }
 .project-overview--saas, .project-overview--private {
   --business-component-text: var(--ink-1, #1f2329);
   --business-component-muted: var(--ink-3, #646c73);

@@ -13,8 +13,11 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { DashBoardCanvas } from '@jetlinks-web-core/components/DashBoardCanvas'
 import { usePrivateOverviewDashboard } from './private/usePrivateOverviewDashboard'
+import { provideHomePolling } from '../../../visDashboard/Base/shared/homePollingContext'
 
 const { t } = useI18n()
+// 保留私有部署中共享业务卡片的轮询生命周期，不再依赖入口装配另一种部署。
+provideHomePolling()
 const host = ref<HTMLElement>()
 const { loading, errors, reload, dashboard, catalog, storageKey } = usePrivateOverviewDashboard(host)
 </script>

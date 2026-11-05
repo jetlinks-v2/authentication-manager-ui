@@ -1,4 +1,4 @@
-import { computed, defineAsyncComponent, markRaw, provide, ref, watch, type Component, type Ref } from 'vue'
+import { computed, markRaw, provide, ref, watch, type Ref } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import type { DashboardCatalog, DashboardComponentDefinition, DashboardValue } from '@jetlinks-web-core/components/DashBoardCanvas'
 import { useResourceCapabilities } from '../../../visDashboard/ResourceCenter/hooks/useResourceCapabilities'
@@ -13,6 +13,8 @@ import { quickGuideContextKey } from '../../../visDashboard/Base/QuickGuide/quic
 import { usePrivateApplicationEntry } from '../../../visDashboard/Base/Private/usePrivateApplicationEntry'
 import { saasApplicationEntryKey } from '../../../visDashboard/Base/Saas/useSaasUtilities'
 import { buildSaasOverviewLayout, migrateSaasAccountLayout, migrateSaasOverviewLayout, saasOverviewGrid, saasOverviewLayoutStorageKey, type SaasOverviewFeature } from './saasOverviewLayout'
+import OverviewCardLoading from './OverviewCardLoading.vue'
+import { createOverviewAsyncComponent } from './useOverviewAsync'
 
 const componentLoaders = {
   SaasSummary: () => import('./SaasSummary.vue'),
@@ -50,15 +52,16 @@ export function useSaasOverviewDashboard(host: Ref<HTMLElement | undefined>, pol
   const catalog: DashboardCatalog = { groups: [], components: Object.fromEntries(
     Object.entries(componentLoaders).map(([feature, loader]) => {
       const type = `projectHome${feature}`
+      const component = markRaw(createOverviewAsyncComponent(loader, OverviewCardLoading))
       if (feature === 'SaasSummary') {
         return [type, {
-          component: markRaw(defineAsyncComponent<Component>(loader)), configs: [], groupId: 'saas-overview',
+          component, configs: [], groupId: 'saas-overview',
           defaultConfig: { type, componentProps: {} },
         } satisfies DashboardComponentDefinition]
       }
       const defaults = createDefaults((['SaasHelp', 'SaasRecent', 'SaasAccount', 'SaasMyApplications'].includes(feature) ? 'Applications' : feature) as HomeFeature)
       const definition: DashboardComponentDefinition = {
-        component: markRaw(defineAsyncComponent<Component>(loader)), configs: [], groupId: 'saas-overview',
+        component, configs: [], groupId: 'saas-overview',
         defaultConfig: { type, componentProps: { [type]: { ...defaults, chart: {
           ...defaults.chart, displayStyle: 'saas',
           titleKey: feature === 'SaasQuotas' ? 'saasQuotas' : feature,
