@@ -135,8 +135,8 @@
             "zh_CN": "基础配置",
             "en_US": "Basic Info",
             "en": "Basic Info",
-            "ja": "基本情報",
-            "ja_JP": "基本情報"
+            "ja": "基本設定",
+            "ja_JP": "基本設定"
           }
         },
         "owner": "iot",
@@ -473,8 +473,8 @@
                   "zh_CN": "资产解绑",
                   "en_US": "Assets Unbind",
                   "en": "Assets Unbind",
-                  "ja": "資産の関連付けを解除",
-                  "ja_JP": "資産の関連付けを解除"
+                  "ja": "アセットのバインド解除",
+                  "ja_JP": "アセットのバインド解除"
                 },
                 "permissions": [
                   {
@@ -517,8 +517,8 @@
                   "zh_CN": "绑定用户",
                   "en_US": "Bind User",
                   "en": "Bind User",
-                  "ja": "ユーザーを関連付け",
-                  "ja_JP": "ユーザーを関連付け"
+                  "ja": "ユーザーをバンド",
+                  "ja_JP": "ユーザーをバンド"
                 },
                 "permissions": [
                   {
@@ -562,8 +562,8 @@
                   "zh_CN": "资产分配",
                   "en_US": "Assets Allocation",
                   "en": "Assets Allocation",
-                  "ja": "資産の割り当て",
-                  "ja_JP": "資産の割り当て"
+                  "ja": "アセット割り当て",
+                  "ja_JP": "アセット割り当て"
                 },
                 "permissions": [
                   {
@@ -740,8 +740,8 @@
                   "zh_CN": "绑定职位",
                   "en_US": "Bind Position",
                   "en": "Bind Position",
-                  "ja": "役職を関連付け",
-                  "ja_JP": "役職を関連付け"
+                  "ja": "役職をバインド",
+                  "ja_JP": "役職をバインド"
                 },
                 "permissions": [
                   {
@@ -979,8 +979,8 @@
                   "zh_CN": "批量导出",
                   "en_US": "Export",
                   "en": "Export",
-                  "ja": "一括エクスポート",
-                  "ja_JP": "一括エクスポート"
+                  "ja": "エクスポート",
+                  "ja_JP": "エクスポート"
                 },
                 "permissions": [
                   {
@@ -999,8 +999,8 @@
                   "zh_CN": "批量导入",
                   "en_US": "Import",
                   "en": "Import",
-                  "ja": "一括インポート",
-                  "ja_JP": "一括インポート"
+                  "ja": "インポート",
+                  "ja_JP": "インポート"
                 },
                 "permissions": [
                   {
@@ -1704,8 +1704,8 @@
                 "zh_CN": "日历维护",
                 "en_US": "Calendar Maintenance",
                 "en": "Calendar Maintenance",
-                "ja": "カレンダーメンテナンス",
-                "ja_JP": "カレンダーメンテナンス"
+                "ja": "カレンダー管理",
+                "ja_JP": "カレンダー管理"
               }
             },
             "owner": "iot",
@@ -1889,8 +1889,8 @@
             "zh_CN": "运维中心",
             "en_US": "Infrastructure",
             "en": "Infrastructure",
-            "ja": "運用保守センター",
-            "ja_JP": "運用保守センター"
+            "ja": "運用センター",
+            "ja_JP": "運用センター"
           }
         },
         "owner": "iot",
@@ -2055,8 +2055,8 @@
                 "zh_CN": "应用模版",
                 "en_US": "App Templates",
                 "en": "App Templates",
-                "ja": "アプリケーションテンプレート",
-                "ja_JP": "アプリケーションテンプレート"
+                "ja": "アプリテンプレート",
+                "ja_JP": "アプリテンプレート"
               }
             },
             "id": "9b8016a4e7d24af08fa34ab939ef4f5d",
@@ -2174,8 +2174,8 @@
         "zh_CN": "开放与集成",
         "en_US": "Open & Integrate",
         "en": "Open & Integrate",
-        "ja": "外部連携と統合",
-        "ja_JP": "外部連携と統合"
+        "ja": "オープン連携",
+        "ja_JP": "オープン連携"
       }
     },
     "id": "4984e88a42a44b22896c058742d0782d",
@@ -2347,8 +2347,8 @@
               "zh_CN": "设备绑定",
               "en_US": "Device Binding",
               "en": "Device Binding",
-              "ja": "デバイスの関連付け",
-              "ja_JP": "デバイスの関連付け"
+              "ja": "デバイスバインド",
+              "ja_JP": "デバイスバインド"
             },
             "permissions": [
               {
