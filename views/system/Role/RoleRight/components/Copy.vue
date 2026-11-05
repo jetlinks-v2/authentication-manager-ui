@@ -122,7 +122,7 @@ const queryGrant = async (id) => {
     ]
   }));
   if (resp.success) {
-    const detail = resp.result || {};
+    const detail = resp.result || { menus: [], assetAccesses: [] };
     _data.menu = flattenArray(detail.menus).map(({ children, ...menu }) => menu);
     _data.assetAccesses = Array.isArray(detail.assetAccesses) ? detail.assetAccesses : [];
   }

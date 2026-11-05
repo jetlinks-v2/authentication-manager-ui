@@ -100,8 +100,12 @@ const load = async () => {
       loadAssetTypes(),
     ])
     if (response?.success === false) throw new Error(response.message)
-    const detail = response?.result || {}
-    const menus = filterMenus(detail.menus || [])
+    const detail = response?.result
+    // detail 必须同时返回菜单和独立策略，旧 tree 响应不能被当作空授权后保存。
+    if (!Array.isArray(detail?.menus) || !Array.isArray(detail?.assetAccesses)) {
+      throw new Error($t('Permission.index.071527-3'))
+    }
+    const menus = filterMenus(detail.menus)
     editor.reset({
       menus,
       assetAccesses: detail.assetAccesses,

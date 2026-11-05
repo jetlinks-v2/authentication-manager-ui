@@ -4,6 +4,14 @@
 
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.
 
+## 运行时角色授权详情
+
+角色授权读取统一使用 core 的 `getMenuGrantDetail('role', roleId, query)`，对应 `GET /menu/{targetType}/{targetId}/_grant/detail`。`result.menus` 提供菜单及权限候选，顶层 `result.assetAccesses` 提供该角色的独立资产策略；不把候选列表作为已保存策略，不额外传候选展示域 `owner`。旧 `getPermissionTree_api` 仅保留菜单树返回结构的兼容适配。
+
+`api/system/role.ts` 复用统一详情查询，`PermissionTree.vue` 校验两组数据都是数组后才启用保存；旧 tree 数组、缺少字段或请求失败均不能生成保存载荷。旧树适配器保留错误响应，不把失败转换成空菜单。范围限运行时前端，候选筛选与后端授权规则保持原行为。
+
+验证：模块内 `node --test tests/roleGrantDetail.test.mjs` 的 6 项回归通过，覆盖真实 API、角色页 setup、共享编辑器与初始化角色流程；3 个改动 API 的定向 TypeScript 检查通过（沿用工作区配置并加载 Vue JSX 类型）。`runtime-ui` 中执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 对应的 Vite 模块构建通过，`git diff --check` 通过。未配置独立 lint 脚本；未运行全量类型检查，可执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 复核。尚未对真实后端写入；本地需检查角色加载请求、修改资产范围后保存及刷新回显，本次接口统一不等同于验证所有重复展示问题已修复。
+
 ## Application ownership filter
 
 Delivery: [PR #119](https://github.com/jetlinks-v2/authentication-manager-ui/pull/119), targeting `2.20`.
