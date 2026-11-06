@@ -1,14 +1,11 @@
 <template>
   <j-page-container>
     <FullPage transparentBackground>
-      <div class="third-party-page">
-        <header class="page-heading">
-          <h2>{{ $t('ThirdPartyLogin.title') }}</h2>
-        </header>
-
-        <EqualHeightColumns class="config-layout" height="auto" left-width="14.5rem" right-width="1fr">
+      <div class="third-party-login-page">
+        <EqualHeightColumns class="config-layout" left-width="15rem" right-width="1fr">
           <template #left>
             <QuickFilterSidebar
+              class="method-sidebar"
               :title="$t('ThirdPartyLogin.loginTypes')"
               :sections="methodSections"
               @select="onSelectMethod"
@@ -143,7 +140,6 @@ import ConfigDrawer from './components/ConfigDrawer.vue'
 import { methodIcons } from './methodIcons'
 import { identifierOf, loginMethods, type LoginConfig, type LoginConfigDraft, type LoginMethod, type MethodFilter } from './model'
 import { useThirdPartyLogin } from './useThirdPartyLogin'
-import './index.less'
 
 const { t } = useI18n()
 const {
@@ -231,3 +227,5 @@ function clearFilters() {
   selectedMethod.value = 'all'
 }
 </script>
+
+<style scoped src="./index.less" lang="less"></style>

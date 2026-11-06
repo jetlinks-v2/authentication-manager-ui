@@ -20,7 +20,12 @@
           </template>
           <template #name="row"><a-button class="table-link" type="link" @click="open(row)">{{ row.name }}</a-button></template>
           <template #id="row"><a-typography-text copyable :content="row.id">{{ row.id }}</a-typography-text></template>
-          <template #status="row"><a-badge :status="groupValue(row.status) === 'enabled' ? 'success' : 'default'" :text="groupText(row.status, $t, 'ApiGroupManagement.state.')" /></template>
+          <template #status="row">
+            <j-badge-status
+              :status="groupValue(row.status) === 'enabled' ? 'success' : 'default'"
+              :text="groupText(row.status, $t, 'ApiGroupManagement.state.')"
+            />
+          </template>
           <template #action="row">
             <TableActions>
               <TableActionsItem common>
