@@ -2169,7 +2169,7 @@
     "QuickStart": "Quick start",
     "AlgorithmCoverage": "Vision task coverage",
     "VideoPlaybackTrend": "Edge node metric ranking",
-    "VisionTaskRanking": "Vision task metric ranking",
+    "VisionTaskRanking": "Vision task realtime trend",
     "visionRanking": {
       "latency": "Inference latency",
       "discard": "Recognition drops",
@@ -2371,7 +2371,8 @@
         "offline": "No IoT devices with a recorded offline time",
         "offlineDevices": "No devices with an offline timestamp"
       }
-    }
+    },
+    "visionTrendUnavailable": "Vision trend monitoring is unavailable in this environment"
   },
   "tenantDomain.title": "Custom Domain",
   "tenantDomain.disabled": "Custom domain is not enabled",

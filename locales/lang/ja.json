@@ -2194,7 +2194,7 @@
     "tenantDomain.state.ready": "有効",
     "tenantDomain.state.failed": "設定に失敗しました",
     "tenantDomain.state.deleting": "削除中",
-    "VisionTaskRanking": "ビジュアルタスク指標ランキング",
+    "VisionTaskRanking": "ビジョンタスクのリアルタイム推移",
     "visionRanking": {
       "latency": "推論時間",
       "discard": "廃棄を識別する",
@@ -2258,7 +2258,8 @@
       "channelLink": "収集チャネル",
       "itemCount": "{count} 個",
       "poolTotal": "合計 {used} / {total} {unit} · {percent}"
-    }
+    },
+    "visionTrendUnavailable": "この環境ではビジョン推移を参照できません"
   },
   "runtimeLog": {
     "title": "実行ログ",

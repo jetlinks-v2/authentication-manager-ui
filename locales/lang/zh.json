@@ -2169,7 +2169,7 @@
     "QuickStart": "快速开始",
     "AlgorithmCoverage": "视觉任务覆盖统计",
     "VideoPlaybackTrend": "边缘节点指标排行",
-    "VisionTaskRanking": "视觉任务指标排行",
+    "VisionTaskRanking": "视觉任务实时趋势",
     "visionRanking": {
       "latency": "推理耗时",
       "discard": "识别丢弃",
@@ -2417,7 +2417,8 @@
         "offline": "暂无带离线时间的物联设备",
         "offlineDevices": "暂无带离线时间的设备"
       }
-    }
+    },
+    "visionTrendUnavailable": "当前环境暂未提供视觉趋势观测"
   },
   "ThirdPartyApplication.project.subtitle": "管理当前项目的第三方接入、数据访问授权和运行时凭据。",
   "ThirdPartyApplication.project.connect": "接入应用",
