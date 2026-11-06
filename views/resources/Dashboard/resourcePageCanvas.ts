@@ -45,10 +45,15 @@ export function buildResourcePageWidgets(
     y += summaryHeight
   }
   const small = nodeCount !== undefined && nodeCount <= 3
-  const rankingHeight = small ? (nodeCount === 3 ? 16 : nodeCount === 2 ? 13 : 12) : 20
+  // 边端没有网关表格的节点数；视觉卡沿用云端两节点时的紧凑高度。
+  const localVision = !cells.some(cell => cell.panels.includes('gateway')) && cells.some(cell => cell.panels.includes('vision'))
+  const rankingHeight = localVision ? 13 : small ? (nodeCount === 3 ? 16 : nodeCount === 2 ? 13 : 12) : 20
   let x = 0, rowHeight = 0, rowStart = result.length, stacked = false
   const finishRow = () => {
-    if (!stacked) result.slice(rowStart).forEach(item => { item.gridItem.h = rowHeight })
+    const row = result.slice(rowStart)
+    // 并排时分别保留消息卡和视觉卡在云端的原高度，不把较矮的视觉卡拉伸。
+    const pairedTrends = row.some(item => item.kind === 'message') && row.some(item => item.kind === 'vision')
+    if (!stacked && !pairedTrends) row.forEach(item => { item.gridItem.h = rowHeight })
     y += rowHeight; x = 0; rowHeight = 0; rowStart = result.length; stacked = false
   }
   const append = (kind: ResourcePageWidget['kind'], left: number, top: number, w: number, h: number) => {
