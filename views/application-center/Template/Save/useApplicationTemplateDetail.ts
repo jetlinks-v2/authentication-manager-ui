@@ -1,22 +1,19 @@
-import { computed, ref } from 'vue'
+import { computed, onScopeDispose, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import {
   getApplicationTemplate,
   updateApplicationTemplate,
   type BusinessApplicationTemplate,
-  type I18nMessages,
   type ApplicationTemplateConfiguration,
 } from '@authentication-manager-ui/api/application-center/applicationTemplate'
 import { templateState, unwrapResult } from './menu-config.shared'
+import type { TemplateBasicInfoUpdate } from './useApplicationTemplateBasicInfo'
 
 interface DetailMessages {
   loadFailed: string
-  nameRequired: string
-  nameMaxLength: string
-  descriptionMaxLength: string
-  templateUrlMaxLength: string
   documentMaxLength: string
-  iconMaxLength: string
+  saveFailed: string
   updated: (name: string) => string
 }
 
@@ -24,11 +21,24 @@ export const useApplicationTemplateDetail = (
   getTemplateId: () => string,
   messages: DetailMessages,
 ) => {
+  const { locale } = useI18n()
   const detail = ref<BusinessApplicationTemplate>({} as BusinessApplicationTemplate)
   const documentDraft = ref('')
   const documentI18nDraft = ref<Record<string, string>>({})
   const loading = ref(false)
   const saving = ref(false)
+  let targetRevision = 0
+  let loadRevision = 0
+  const isCurrent = (templateId: string, revision: number) =>
+    revision === targetRevision && templateId === getTemplateId()
+
+  // 详情路由复用时，旧请求不能回填新目标或释放新目标的保存状态。
+  watch(getTemplateId, () => {
+    targetRevision++
+    loading.value = false
+    saving.value = false
+  }, { flush: 'sync' })
+  onScopeDispose(() => { targetRevision++ })
 
   const state = computed(() => templateState(detail.value))
   const displayName = computed(() => detail.value.name || detail.value.code || detail.value.id || '')
@@ -42,57 +52,67 @@ export const useApplicationTemplateDetail = (
   const load = async () => {
     const templateId = getTemplateId()
     if (!templateId) return
+    const revision = targetRevision
+    const request = ++loadRevision
     loading.value = true
     try {
       const detailResponse = await getApplicationTemplate(templateId)
+      if (!isCurrent(templateId, revision) || request !== loadRevision) return
+      if (detailResponse?.success === false) throw new Error(detailResponse.message || messages.loadFailed)
       detail.value = unwrapResult(detailResponse, {} as BusinessApplicationTemplate)
       documentDraft.value = String(detail.value.i18nDocument || detail.value.document || '')
       documentI18nDraft.value = { ...(detail.value.i18nMessages?.document || {}) }
-    } catch (error: any) {
-      onlyMessage(error?.message || messages.loadFailed, 'error')
+    } catch (error) {
+      if (isCurrent(templateId, revision) && request === loadRevision) {
+        onlyMessage(error instanceof Error ? error.message : messages.loadFailed, 'error')
+      }
     } finally {
-      loading.value = false
+      if (isCurrent(templateId, revision) && request === loadRevision) loading.value = false
     }
   }
 
   const patch = async (payload: Partial<BusinessApplicationTemplate>) => {
     const templateId = getTemplateId()
-    if (!templateId) return false
+    if (!templateId || detail.value.id !== templateId || loading.value || saving.value) return false
+    const revision = targetRevision
     saving.value = true
     try {
-      await updateApplicationTemplate(templateId, payload)
+      const response = await updateApplicationTemplate(templateId, payload)
+      if (!isCurrent(templateId, revision)) return false
+      if (response?.success === false) throw new Error(response.message || messages.saveFailed)
       onlyMessage(messages.updated(displayName.value || templateId))
       await load()
       return true
     } finally {
-      saving.value = false
+      if (isCurrent(templateId, revision)) saving.value = false
     }
   }
 
-  const updateName = async (value: string, i18nMessages?: I18nMessages) => {
-    const name = String(value || '').trim()
-    if (!name) return onlyMessage(messages.nameRequired, 'error')
-    if (name.length > 64) return onlyMessage(messages.nameMaxLength, 'error')
-    if (name !== detail.value.name || i18nMessages) await patch({ name, i18nMessages })
-  }
-
-  const updateDescription = async (value: string, i18nMessages?: I18nMessages) => {
-    const description = String(value || '').trim()
-    if (description.length > 512) return onlyMessage(messages.descriptionMaxLength, 'error')
-    if (description !== String(detail.value.description || '') || i18nMessages) {
-      await patch({ description, i18nMessages })
+  /** 基本信息原位合并，保留文档草稿及配置对象引用，避免重载触发其他页签重置。 */
+  const updateBasicInfo = async (payload: TemplateBasicInfoUpdate): Promise<boolean> => {
+    const templateId = getTemplateId()
+    if (!templateId || detail.value.id !== templateId || loading.value || saving.value) return false
+    const revision = targetRevision
+    saving.value = true
+    try {
+      const response = await updateApplicationTemplate(templateId, payload)
+      if (!isCurrent(templateId, revision)) return false
+      if (response?.success === false) throw new Error(response.message || messages.saveFailed)
+      const nextDetail = { ...detail.value, ...payload }
+      const language = String(locale.value || 'zh').replace('_', '-').split('-')[0]
+      // 局部更新后同步后端返回的本地化显示字段，避免摘要仍显示旧名称和说明。
+      if ('name' in payload || 'i18nMessages' in payload) {
+        nextDetail.i18nName = nextDetail.i18nMessages?.name?.[language] || nextDetail.name
+      }
+      if ('description' in payload || 'i18nMessages' in payload) {
+        nextDetail.i18nDescription = nextDetail.i18nMessages?.description?.[language] || nextDetail.description || ''
+      }
+      detail.value = nextDetail
+      onlyMessage(messages.updated(displayName.value || templateId))
+      return true
+    } finally {
+      if (isCurrent(templateId, revision)) saving.value = false
     }
-  }
-
-  const updateTemplateUrl = async (value: string) => {
-    const templateUrl = String(value || '').trim()
-    if (templateUrl.length > 64) return onlyMessage(messages.templateUrlMaxLength, 'error')
-    if (templateUrl !== String(detail.value.templateUrl || '')) await patch({ templateUrl })
-  }
-
-  const updateIcon = async (icon: string) => {
-    if (icon.length > 256) return onlyMessage(messages.iconMaxLength, 'error')
-    if (icon !== String(detail.value.icon || '')) await patch({ icon })
   }
 
   const toggleState = () => patch({ state: state.value === 'enabled' ? 'disabled' : 'enabled' })
@@ -125,10 +145,7 @@ export const useApplicationTemplateDetail = (
     loading,
     saving,
     load,
-    updateName,
-    updateDescription,
-    updateTemplateUrl,
-    updateIcon,
+    updateBasicInfo,
     updateConfiguration,
     toggleState,
     saveDocument,

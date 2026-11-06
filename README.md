@@ -700,7 +700,7 @@ The related shared code is limited to:
 - `views/application-center/ProjectApplication/useProjectApplication.ts`: remote state and mutation orchestration.
 - Ledger/create/detail components: loading, empty, validation, confirmation, submit, and post-mutation refresh behavior.
 - The ledger follows the project-application card design: the shared `PageHeader` carries a `ConditionFilter` whose name and status fields submit the component's standard `terms` model alongside the primary create action, followed by a responsive three-column card wall and an inline create card. Each card shows icon, name, status, template, description, creation time, edit/status actions, and the primary open action. Application cards reuse `jetlinks-web-core/src/components/CardBox/index.vue` (see 应用列表卡片改为 CardBox 壳层 for the bottom toolbar); unsupported gateway/camera metrics and the template filter are not rendered.
-- `views/application-center/Template/`: template ledger, create dialog, tag sidebar, and Save workspace. The Save workspace keeps the top summary as a detail display, then separates document and configuration tabs. Configuration reuses `MenuAssetPermissionEditor` with asset permission batch selection and writes scope strategy to `assetAccesses[].options.scopeStrategy`.
+- `views/application-center/Template/`: template ledger, create dialog, tag sidebar, and Save workspace. The Save workspace keeps the top summary as a detail display, followed by document and permission tabs; third-party templates additionally expose configuration and API authorization tabs. The permission tab reuses `MenuAssetPermissionEditor` with asset permission batch selection and writes scope strategy to `assetAccesses[].options.scopeStrategy`.
   Third-party templates also expose optional `configuration.platformId` in the existing redirect configuration form. An empty value uses the template ID at runtime; regions with identical application IDs should use different platform IDs. Saving preserves unrelated configuration, and only users with update permission can edit the field.
 - `baseMenu.json`: visible name “应用管理” and backend resource actions required by the page.
 - `locales/lang/zh.json` and `locales/lang/en.json`: synchronized user-visible copy.
@@ -720,6 +720,54 @@ Every created or substantially edited Vue file remains at or below 300 lines.
 验证（2026-10-29 交付复核）：页面 Vue 脚本与模板、日志 CSS/Less 编译通过；使用真实 Vue 响应式和平台边界替身的定向检查覆盖确认取消、启用／停用成功、请求失败、请求期间状态、loading 释放和成功刷新。`node --test tests/systemLogPresentation.test.mjs tests/accessLogPresentation.test.mjs` 回归通过（15/15）。在 `jetlinks-web-core` 使用 Vite `build` API 和 `process.argv.push('--module-name', 'authentication-manager-ui')`，将输出目录指定为 `/tmp/codex-authentication-manager-ui-delivery-build-20261029`，模块生产构建通过（11,900 个模块，1 分 40 秒），保留输出选项、CSS 与大分块等现有告警。`git diff --check` 通过；工作区和模块未配置 lint 脚本。在 `runtime-ui` 执行 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json` 报告本次修改文件之外的 617 项类型诊断，修改的页面、hook 及 `TableActions` 没有诊断，需处理项目类型错误后重跑。
 
 此前真实 `9200` 页面七行均展示蓝色只读状态标签，页面无开关；已有更多面板与停用／删除确认、取消验证，取消后仍保留七条模板及原状态。本次交付复核未重跑浏览器或提交真实启停、删除；成功提交、接口失败及停用模板的启用分支仍待后端联调，定向检查中的平台边界替身不代表真实接口验证。
+
+### 应用模板详情布局
+
+目标与范围：运行时 `runtime-ui/modules/authentication-manager-ui/views/application-center/Template/Save/` 对齐设备详情页 `modules/device-manager-ui/views/device/list/components/IotDeviceDetailView.vue`，按「返回按钮 → 模板信息 → SlantedTabs → 页签内容」排列。本次为 S 级局部布局调整，不改运营端 `ui/`、公共布局、接口、菜单、权限和保存逻辑。
+
+实现：`index.vue` 复用 `PageChrome` 将返回入口、独立摘要卡和贴合式 `SlantedTabs` 放到布局内容面板上方；`TemplateSummary.vue` 移除内嵌返回按钮和多余底部间距。文档、配置及条件展示的授权页签继续共用原有活动项和内容实例，避免布局迁移重置编辑状态。
+
+顶部摘要与统一编辑：`TemplateSummary.vue` 参考同一原型将图标放在左侧，右侧内容依次为「名称、状态、模板 ID」「应用类型、模板编码」「说明」，操作区居右提供编辑和原有启停按钮。名称、说明移除单项编辑入口，统一由右侧编辑按钮打开列表新增所用的 `components/ApplicationTemplateCreateDialog.vue`，该组件已扩展编辑模式；图标继续在摘要区域独立点击编辑，不放入基本信息弹窗。顶部与基本信息编辑中均不提供模板地址字段，不实现原型中的眼睛图标。空说明显示「未配置」，长名称、ID、编码和说明支持换行。
+
+实现范围：仅运行时 owning module 的 `views/application-center/Template/Save/`、列表新增弹窗组件、相关中英文资源、定向回归及本文。`useApplicationTemplateBasicInfo.ts` 维护名称／说明多语言和图标的独立草稿，共用提交锁；复用新增弹窗的编辑模式保持应用类型和模板编码只读，第三方跳转地址继续在配置页维护，列表新增字段和创建载荷沿用原有规则。图标入口在 `Save/index.vue` 复用 `IconValueEditor` 独立编辑。两种编辑均保留原有字段长度校验，取消丢弃对应草稿，保存成功关闭，失败保留，模板切换及卸载后忽略旧响应。`useApplicationTemplateDetail.ts` 的 `updateBasicInfo` 使用原更新接口局部合并改动，保留配置对象引用、文档草稿和其他翻译，避免整体重载重置其他页签。
+
+业务边界与风险：模板编码和应用类型目前在详情没有修改入口，本次不扩大可编辑字段，也不迁移或清除历史模板地址数据；第三方应用配置页的 `configuration.redirectUri` 仍是独立的应用跳转地址，保持现有行为。共享弹窗仅增加编辑模式，创建流程、其他页签、后端字段、更新接口、菜单权限、公共组件和运营端 `ui/` 保持原有规则。用户取消 300 行限制继续有效，按职责组织弹窗与状态，不按行数拆分。
+
+验证：`node --test tests/applicationTemplateBasicInfo.test.mjs tests/applicationTemplateApiGrants.test.mjs tests/groupAssetHint.test.mjs tests/applicationTemplateMenuConfig.test.mjs tests/applicationTemplateParameters.test.mjs tests/applicationTemplateSignature.test.mjs tests/applicationTemplateMenuPreview.test.mjs tests/applicationRolePermissionScope.test.mjs` 的 76 项全部通过；新增 17 项使用真实 Vue 状态、公共多语言输入 hook 及 SFC／Vue SSR，覆盖基本信息与独立图标编辑的取消、空提交、长度校验、失败保留、重复提交保护、切换模板／卸载保护、其他页签草稿保留，以及共享弹窗的新增／编辑模式、类型编码只读、图标和跳转配置归属、两类模板创建载荷。仅替换 API、i18n 和基础展示控件边界，不代表真实后端写入联调。Vite 模块生产构建通过（12,116 个模块，33.30 秒，输出到 `/tmp/jetlinks-app-template-basic-info-final-build`）；中英文 JSON 与 `git diff --check` 通过。`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 仍有 633 项既有诊断，忽略行号后与上一轮基线一致，无新增错误；工作区和模块没有 lint 脚本。浏览器复核时本地 `9200` 及同工作区 `9201` 开发页面均为空白，本次真实页面的布局、弹窗及桌面／窄屏交互仍待页面恢复后验收；未提交真实基本信息、图标或状态变更。
+
+语言切换：`DocumentPane.vue` 将独立的中英文页签头改为编辑器工具栏右侧的紧凑切换，位置在预览／全屏按钮之前，复用已有语言文案、各语言独立草稿和编辑器实例。公共 `runtime-ui/jetlinks-web-core/src/components/MarkdownEditor/` 通过 `md-editor-v3` 的公开 `defToolbars` 扩展点提供通用 `toolbar-right` 插槽，并在组件 README 说明自定义索引和只读入口；默认使用方保留当前工具栏。插槽存在时右侧操作区保持完整宽度，窄屏由左侧格式工具承接横向滚动；只读预览与空内容继续保留语言切换入口。保存载荷、权限、后端及运营端 `ui/` 保持原有契约。
+
+语言切换验证：本地页面实际输入中英文草稿后互切，切到配置再返回，两个草稿与所选语言均保留；临时输入已清理。通过真实公共组件的浏览器场景核对关闭上传、无分隔符、自定义索引、只读预览、只读空内容和默认工具栏；全屏工具栏中的语言控件可见且可切换。980px 窄屏下右侧语言与预览操作全部位于工具栏内，键盘可滚动访问左侧格式按钮，无页面横向溢出。最终 Vite 模块生产构建通过（12,113 个模块，33.53 秒，输出到 `/tmp/jetlinks-app-template-toolbar-build`），`git diff --check` 通过；上述类型检查与修改前均为 633 项既有诊断，忽略行号后完全一致，无新增错误。工作区和模块未配置 lint 脚本，完整类型检查仍需清理既有问题后重跑。
+
+配置与权限拆分：同一 owning module 的 `views/application-center/Template/Save/index.vue` 将 `ExternalParameterConfig` 独立留在第三方模板的「配置」页签，将两类模板共用的 `ConfigPane` 移至「权限」页签。业务应用显示「文档 → 权限」，第三方应用显示「文档 → 配置 → 权限 → 接口授权」；业务应用隐藏没有信息配置内容的「配置」页签。`locales/lang/zh.json`、`en.json` 同步提供权限标签；组件、hook、草稿和保存回调继续复用，运营端 `ui/`、后端、权限规则、路由与 API 契约保持原有行为。
+
+拆分验证：真实 `9200` 页面分别核对业务模板与第三方模板的页签顺序、信息配置与菜单权限归属、接口授权入口；第三方信息草稿和菜单勾选在配置／权限间互切后保留，业务模板菜单与数据范围在文档／权限间互切后保留。临时输入和勾选均已还原，未提交真实配置或权限变更。`node --test tests/applicationTemplateMenuConfig.test.mjs tests/applicationTemplateParameters.test.mjs tests/applicationTemplateSignature.test.mjs` 的 23 项回归全部通过；后两份测试使用 `fileURLToPath` 处理本工作区含空格的路径。公共 `MarkdownEditor` 的条件类名改用 `md-editor-v3` 所声明的字符串类型，消除对象类名引发的类型诊断。最终模块构建通过（12,113 个模块，49.12 秒，输出到 `/tmp/jetlinks-app-template-tab-split-build`），中英文 JSON 与 `git diff --check` 通过；模块类型检查仍有 633 项既有诊断，忽略行号后与前一轮基线完全一致，无新增错误。工作区和模块未配置 lint 脚本，完整类型检查仍需清理既有问题后重跑上述 `vue-tsc` 命令。
+
+配置页原型对齐：参考 `https://jetlinks-ai-new.ez7268-453.workers.dev/midhub/ops/template/tpl-1` 的配置页，`ExternalParameterConfig.vue` 默认显示「查看配置」，右上角「编辑配置」进入表单；顶部取消／保存栏固定在内容区内，长表单滚动时仍可操作。查看态复用 Ant Design `Descriptions` 承载单列标签／值、细分隔线和含操作的签名字段，编辑态使用全宽字段、浅色关联配置区域及参数行，沿用本地布局 token。所有空字段和空参数显示「未配置」，不用双连字符占位；平台标识留空仍由后端按模板 ID 处理。
+
+状态与业务边界：运行时 owning module 的 `views/application-center/Template/Save/useApplicationTemplateParameters.ts` 继续管理原有草稿、重置、校验和保存，仅补充进入编辑、取消还原、保存成功退出、失败保留以及切换模板退出编辑。`useTemplateNotificationSignature` 的独立查看／设置弹窗与保存契约继续保留，普通配置页只显示 Secret 掩码，不自动请求明文；RSA 不随通知开关隐藏或清空。业务应用页签、菜单与资产权限页、接口授权、后端接口和运营端 `ui/` 保持原有行为；新展示文案同步维护在中英文资源中。
+
+原型对齐验证：真实 `9200` 页面核对查看／编辑布局、通知条件字段、参数添加、跨页签编辑草稿保留、空地址校验、取消还原及签名独立弹窗取消；滚动至参数区后保存栏仍位于内容区顶部，页面无横向溢出，也没有双连字符占位。临时草稿已清理，未提交真实配置或密钥。上述三份模板回归共 31 项全部通过，新增覆盖取消还原全部字段、保存成功／失败、保存期间取消保护、切换模板、只读用户无法进入编辑、Secret 掩码不自动查看及通知关闭时保留 RSA；展示测试使用真实 SFC 与 Vue SSR，仅替换基础控件和 i18n 边界。成功保存与接口失败由 hook／API 边界回归覆盖，未进行真实后端写入联调。最终模块构建通过（12,113 个模块，57.60 秒，输出到 `/tmp/jetlinks-app-template-config-prototype-build`），中英文 JSON、文案引用与 `git diff --check` 通过；模块类型检查仍有与拆分页签基线一致的 633 项既有诊断，忽略行号后无新增错误。工作区和模块未配置 lint 脚本，完整类型检查需清理既有问题后重跑上述 `vue-tsc` 命令。
+
+验证：本地 `9200` 页面在 1462px、1000px 视口下均按四段顺序排列，无页面横向溢出；文档／配置切换后保留已选文档语言，返回列表和重新进入详情正常，PageDown 滚动由内容区承接。Vite 模块生产构建通过（48.69 秒，输出到 `/tmp/jetlinks-app-template-layout-build`），保留既有构建告警，`git diff --check` 通过。工作区和模块未配置 lint 脚本；在 `runtime-ui` 执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false`，修改前后均有 633 项既有诊断，忽略行号后完全一致，本次两个 Vue 文件均无诊断。完整类型检查仍未通过，需清理工作区既有问题后重跑该命令。
+
+权限页原型对齐：参考同一原型的「权限」页，`views/application-center/Template/Save/ConfigPane.vue` 默认查看菜单与操作授权摘要及资产数据权限；右上角「编辑权限」进入编辑，顶部取消／保存栏固定在内容区内。桌面端为左右贴合的菜单与数据权限两栏，各自滚动；窄屏改为上下分区。查看态展开菜单层级、展示纯文本授权摘要，空值使用「未配置」；编辑态展示菜单／按钮勾选、单项范围及右侧批量配置。影响范围仅为运行时 owning module、现有中英文资源及相关回归，不修改运营端 `ui/`、后端、路由、菜单定义或其他权限编辑页。
+
+实现入口：`useApplicationTemplatePermissionView.ts` 只维护展示派生、菜单展开及批量草稿，通过公共 `MenuAssetPermissionEditorContext` 执行实际授权联动，复用已注册的 `EqualHeightColumns`、Ant Design 控件与本地布局 token。公共权限组件的只读态仍为禁用控件，本页单独组织摘要视图，不改变其他使用方。`useApplicationTemplateMenuConfig.ts` 保存加载时的完整候选和策略，取消时恢复内存草稿，成功保存后退出编辑，失败保留草稿，切换模板清理编辑状态；旧模板的异步保存不会重载新模板。只读用户无法进入编辑或保存，保存期间禁用修改、重复提交和取消；加载失败提供原地重试。`index.vue` 仅向面板传入该权限状态。
+
+业务边界：右侧继续按现有资产类型聚合，保存仍由 `buildFullMenuGrantTree` 与 `buildTemplateAssetAccesses` 生成完整菜单树及资产策略；菜单候选、项目范围裁剪、受保护项、默认范围和字典选项沿用当前规则。批量权限范围只使用公共编辑器计算的可授权交集，批量策略只使用当前可用字典值；应用前重新校验，菜单变化后失效的范围不会套用到新资产。查看／编辑、批量应用和取消仅修改内存草稿，最终保存仍调用原接口。
+
+权限页验证：`node --test tests/applicationTemplateMenuConfig.test.mjs tests/applicationTemplateParameters.test.mjs tests/applicationTemplateSignature.test.mjs tests/applicationTemplateMenuPreview.test.mjs tests/applicationRolePermissionScope.test.mjs` 共 45 项通过，使用真实 Vue 状态、公共权限编辑器及模板 hook，替换 API／消息边界；新增覆盖取消还原完整候选与各类权限、成功／失败、保存期间保护、模板切换、只读、加载重试、父子与操作联动、批量交集和失效候选。真实 `9200` 页面核对业务／第三方模板的查看与编辑、单项范围、批量应用、文档／配置页签切换保留草稿及取消还原；1156px 下两栏等高且独立滚动，880px 下改为上下分区，滚动到资产区后顶部取消／保存仍可用，无页面或面板横向溢出。临时草稿均已取消，未提交真实权限变更；成功保存和失败保留由 API 边界回归覆盖，真实后端写入仍待联调。模块生产构建通过（12,114 个模块，55.22 秒，输出到 `/tmp/jetlinks-app-template-permission-prototype-build`），中英文资源与 `git diff --check` 通过；类型检查仍为 633 项既有诊断，忽略行号后与配置页基线一致，无新增错误。工作区与模块没有 lint 脚本，完整类型检查需清理既有问题后重跑上述 `vue-tsc` 命令。
+
+接口授权页原型对齐：参考同一原型的「接口授权」页，以单个模板的授权查看和维护为主任务，沿用现有详情工作区。默认按分组展示名称、分组 ID、已授权数量及已授权操作；操作名称和说明居左、编码居右，未授权分组只展示分组行。右上提供「接口分组管理」与「编辑授权」；编辑态展示全部候选操作及分组全选／半选，顶部操作为分组管理、刷新、撤销全部授权、保存。模板分支的折叠面板与组内全选／清空链接改为连续分组列表；长列表独立滚动，窄屏操作栏换行。原有授权语义与资产范围说明移至标题和分组的信息提示中，不重复占用列表行。
+
+实现入口与状态：仅运行时 owning module 的 `views/application-center/ThirdPartyApplication/Direct/GrantPanel.vue`、`useDirectGrants.ts`、相关中英文资源和 `tests/applicationTemplateApiGrants.test.mjs`。现有 hook 管理模板查看／编辑状态及展示派生；保存成功回到查看，保存失败保留编辑草稿，刷新重新加载已保存授权、丢弃草稿并保持编辑态。查看或保存期间禁止修改与重复提交，保存期间禁止刷新；切换模板清理编辑状态，旧保存响应不会重载新模板。离开接口授权页签仍按原有条件卸载，返回时重新加载并默认查看。复用 `PageActions`、Ant Design 控件和当前页面样式 token，未新增公共组件或依赖；共享组件的 API 应用表格分支、其他页签、运营端 `ui/`、后端、路由及授权接口契约保持原有行为。
+
+风险与业务边界：原有可授权操作校验、历史不可用操作、目录不可见授权保留、资产范围说明和全量替换载荷保持现有规则；分组全选仅增加当前可授权项，取消整组才显式撤销已有项。「撤销全部」仍经原确认调用原接口（含不可见授权），不改为仅清空草稿；普通保存仍经原确认提交。仅第三方模板展示该页签，业务模板的页签规则不变。
+
+接口授权验证：`node --test tests/applicationTemplateApiGrants.test.mjs tests/groupAssetHint.test.mjs tests/applicationTemplateMenuConfig.test.mjs tests/applicationTemplateParameters.test.mjs tests/applicationTemplateSignature.test.mjs tests/applicationTemplateMenuPreview.test.mjs tests/applicationRolePermissionScope.test.mjs` 共 59 项通过。新增 11 项使用真实 Vue 生命周期、授权 hook 和分组转换，仅替换 API／消息／平台上下文边界，覆盖默认查看、候选与半选、历史不可用项、显式整组撤权、全量载荷的多资产范围及隐藏授权保留、刷新、保存成功／失败、提交保护、旧模板保存响应和 API 应用原有行为。真实 `9200` 页面核对查看／编辑、单项和整组勾选、数量联动、刷新确认与草稿恢复、切换文档后返回查看；1156px 与 880px 下页面和面板均无横向溢出，窄屏顶部操作换行。临时草稿已还原，未提交真实授权变更；真实后端保存／撤销全部写入仍待联调，由 API 边界回归验证载荷与状态。
+
+质量验证：交付前基于最新 `2.20`（`27ef904`）重新执行本节八份模板相关回归，76 项全部通过；中英文资源与 `git diff --check` 通过。模块生产构建通过（11997 个模块，1 分 2 秒，产物放在仓库外的临时目录），保留既有构建告警。`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 仍有 615 项诊断；以相同工作区依赖读取 `27ef904` 的模板源码作基线对比，忽略行列号后完整诊断一致，无新增错误，包括 `GrantPanel.vue` API 应用分支既有的表格 record 类型诊断。工作区和模块没有 lint 脚本，完整类型检查需清理既有问题后重跑上述命令。本次交付未重跑真实页面，配置与授权的真实后端写入仍待联调；文档工具栏插槽所需的 `jetlinks-web-core` PR #223 已合并到 `2.20`。
 
 ### 应用模板数据权限候选一致性
 
