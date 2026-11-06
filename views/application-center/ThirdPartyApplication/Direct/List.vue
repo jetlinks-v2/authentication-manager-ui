@@ -17,7 +17,12 @@
           </CloudEmpty>
         </template>
         <template #name="row"><a-button class="table-link" type="link" @click="openDetail(row)">{{ row.name }}</a-button></template>
-        <template #state="row"><a-badge :status="apiState(row) === 'enabled' ? 'success' : 'default'" :text="$t('ApiApplication.status.' + apiState(row))" /></template>
+        <template #state="row">
+          <j-badge-status
+            :status="apiState(row) === 'enabled' ? 'success' : 'default'"
+            :text="$t('ApiApplication.status.' + apiState(row))"
+          />
+        </template>
         <template #createTime="row">{{ formatTime(row.createTime) }}</template>
         <template #action="row">
           <TableActions>

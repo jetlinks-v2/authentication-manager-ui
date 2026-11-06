@@ -2,6 +2,12 @@
 
 当前页面已复用应用管理 `/application` 接口，支持管理当前登录页使用的微信公众号、钉钉和通用 OAuth2 SSO 应用，登录图标通过应用的 `logoUrl` 保存。企业微信、微信开放平台网站应用、小程序、组织同步和独立登录页展示开关不属于当前登录方式，页面不展示这些入口。
 
+## 顶部与左栏样式对齐
+
+已局部修正本目录 `index.vue` 与 `index.less`：参照产品管理页移除列表上方的独立标题，使用 `EqualHeightColumns` 默认等高布局及 `15rem` 左栏，避免 `height="auto"` 使分隔线只随短列表延伸；登录方式标题使用同款字号、字重和行高，选项统一为 `2.5rem` 行高并对齐图标、计数间距，右侧工具栏从内容顶部开始。继续复用 `QuickFilterSidebar`、`ConditionFilter` 及原表格，未新增分类搜索或改变筛选、计数、配置、启停与删除逻辑，未修改公共组件。样式改为页面级 scoped 引用，移除空分组标题占位，保留现有折叠组件定位。
+
+实际页面的顶部对齐、左栏分隔线及折叠效果待现有运行环境人工验收。
+
 ## 操作列图标按钮
 
 `runtime-ui/modules/authentication-manager-ui/views/system/ThirdPartyLogin/index.vue` 的编辑、删除入口使用 `j-permission-button` 与 `EditOutlined` / `DeleteOutlined`，通过 `tooltip.title` 复用既有国际化文案，并为图标提供中文可访问名称。保留编辑回调、删除确认和已启用时禁止删除的限制，不调整接口、菜单或授权规则；9200 端口对应运行时开发服务，本次仅修改该前端模块。

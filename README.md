@@ -1066,6 +1066,8 @@ SaaS 管理员概览将项目摘要固定在画布上方，最近访问、资源
 
 ### 接口分组列表操作
 
+`views/application-center/ThirdPartyApplication/Direct/List.vue` 的配置状态和 `views/application-center/ApiGroup/index.vue` 的分组状态使用设备列表同款 `j-badge-status`，复用现有表格标签样式，启用为绿色、停用为灰色。状态文案、接口、权限和启停逻辑保持原有约定。
+
 运行时 `views/application-center/ApiGroup/index.vue` 复用 `TableActions` / `TableActionsItem`，三个操作均标记为常用项，行内显示图标并在悬停时展示既有国际化文案。编辑/查看使用 `EditOutlined` / `EyeOutlined`，禁用/启用使用 `StopOutlined` / `PlayCircleOutlined`，删除使用 `DeleteOutlined`。权限按钮、忙碌状态、确认弹窗和业务回调保持原样；启停、删除的文字提示放在下方，避免遮挡上方确认框。`useApiGroupList.ts` 将固定操作列宽收敛为 120；不改接口、授权、菜单、公共组件或运营端。
 
 验证：本地 `http://localhost:9200/#/open/api-group` 已确认三个图标、中文可访问名称及文字提示；禁用和删除均可打开原确认框并通过鼠标取消，记录仍在列表且保持正常状态，没有提交业务变更。`pnpm --config.verify-deps-before-run=false -F jetlinks-web-core build -- --module-name authentication-manager-ui` 最终生产构建通过（1 分 13 秒），`git diff --check` 通过，页面 95 行。工作区与模块无 lint 脚本；`pnpm --config.verify-deps-before-run=false exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 因其他文件的 615 项诊断未通过，本次两个代码文件无诊断，清理工作区类型问题后需重跑同一命令。只读权限和已禁用分组的页面分支未切换真实账号或业务状态验证。

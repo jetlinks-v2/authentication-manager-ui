@@ -1,24 +1,49 @@
-.third-party-page {
+.third-party-login-page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.config-layout {
   height: 100%;
   min-height: 0;
 }
 
-.page-heading h2 {
-  margin: 0;
-  color: var(--ink-1);
-  font-size: var(--fs-18);
-  font-weight: 600;
+.method-sidebar {
+  width: 100%;
+  min-width: 0;
+  gap: var(--space-4);
+
+  :deep(.quick-filter-sidebar__title) {
+    flex: 0 0 auto;
+    color: var(--jet-theme-text-title);
+    font-size: var(--fs-18);
+    font-weight: 600;
+    line-height: var(--lh-24);
+  }
+
+  :deep(.quick-filter-sidebar__section-header) {
+    display: none;
+  }
+
+  :deep(.quick-filter-sidebar__item) {
+    min-height: 2.5rem;
+    padding-inline: var(--space-2);
+  }
 }
 
-.config-layout { flex: 1; min-height: 0; }
-.third-party-page .config-layout .equal-height-columns__toggle { position: absolute; }
-.method-option { display: inline-flex; align-items: center; gap: var(--space-2); min-width: 0; }
-.method-option .anticon { font-size: 1.125rem; }
-.method-option img { width: 1.125rem; height: 1.125rem; object-fit: contain; }
-.method-count { color: var(--ink-4); }
+.method-option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.method-option :deep(.anticon) { font-size: 1.125rem; }
+.method-option img { width: 1.125rem; height: 1.125rem; object-fit: contain; flex: 0 0 auto; }
+.method-count { flex: 0 0 auto; color: var(--ink-4); }
 
 .config-panel {
   height: 100%;
@@ -27,13 +52,15 @@
 }
 
 .config-toolbar {
+  width: 100%;
+  flex: 0 0 auto;
   justify-content: space-between;
   margin-bottom: var(--space-4);
 }
 
 .config-search { flex: 0 1 28rem; max-width: 28rem; min-width: 0; }
 .config-actions { flex: 0 0 auto; }
-.config-table .ant-table { overflow-x: auto; }
+.config-table :deep(.ant-table) { overflow-x: auto; }
 .entry-name { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
 .entry-copy { display: flex; flex-direction: column; min-width: 0; }
 .entry-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
