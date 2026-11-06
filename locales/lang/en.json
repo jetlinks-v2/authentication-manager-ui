@@ -1297,6 +1297,7 @@
   "ProjectApplication.create.success": "Application “{name}” created",
   "ProjectApplication.detail.notFound": "This application was not found. Return to the list and select it again.",
   "ProjectApplication.detail.open": "Open Application",
+  "ProjectApplication.detail.applicationId": "Application ID",
   "ProjectApplication.detail.syncCredential": "Sync Connection Info",
   "ProjectApplication.detail.credentialSyncSubmitted": "Sync submitted",
   "ProjectApplication.detail.accessFailed": "Application access credentials are unavailable. Sign in again and try again.",

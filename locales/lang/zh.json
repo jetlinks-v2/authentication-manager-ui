@@ -1297,6 +1297,7 @@
   "ProjectApplication.create.success": "已创建应用“{name}”",
   "ProjectApplication.detail.notFound": "未找到该应用，请返回应用列表重新选择",
   "ProjectApplication.detail.open": "打开应用",
+  "ProjectApplication.detail.applicationId": "应用ID",
   "ProjectApplication.detail.syncCredential": "同步接入信息",
   "ProjectApplication.detail.credentialSyncSubmitted": "已提交同步",
   "ProjectApplication.detail.accessFailed": "无法获取应用访问凭证，请重新登录后再试",
