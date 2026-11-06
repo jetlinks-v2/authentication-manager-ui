@@ -33,7 +33,6 @@ async function bundle(saas) {
       const boundaries = {
         '@jetlinks-web/core': 'export const request = context.request',
         '@jetlinks-web-core/utils/module-registry': 'export const moduleRegistry = context.moduleRegistry',
-        '@jetlinks-web-core/api/commandSupports': 'export const hasCommandService = id => context.hasCommandService(id)',
         '@jetlinks-web-core/store/menu': 'export const useMenuStore = () => context.menu',
         '@jetlinks-web-core/store/user': 'export const useUserStore = () => context.user',
         '@jetlinks-web-core/router/globModules': 'export const getGlobModules = async () => context.routes',
@@ -95,6 +94,7 @@ async function fixture(saas = false) {
   }
   context.setModules = (...ids) => { context.modules.clear(); ids.forEach(id => context.modules.add(id)); context.listeners.forEach(listener => listener()) }
   context.request = { post: async (endpoint, body) => { calls.push({ endpoint, body }); return { success: true, result: { total: 0, data: [] } } }, get: async endpoint => {
+    if (endpoint === '/command-supports/services') return { success: true, result: await context.hasCommandService('agentService') ? [{ id: 'agentService' }] : [] }
     calls.push({ endpoint })
     return { success: true, result: endpoint.includes('collectorService') ? context.responses.collection : context.responses.networkCards }
   } }
@@ -580,4 +580,20 @@ test('preview transition and scope disposal reject late menu retry effects', asy
       scope.stop()
     }
   }
+})
+
+test('edge service discovery distinguishes absence from failed or malformed responses', async () => {
+  const context = await fixture()
+  let response
+  const calls = []
+  context.request.get = async (...args) => { calls.push(args); return response }
+  for (const [result, expected] of [[[], false], [[{ id: 'agentService' }], true], [[{ id: 'agentService:device' }], true], [[{ id: 'agentServiceExtra:x' }], false]]) {
+    response = { success: true, result }
+    assert.equal(await context.api.hasResourceEdgeService(), expected)
+  }
+  for (const result of [{ success: false, result: [] }, { success: true }, { success: true, result: null }, { success: true, result: {} }]) {
+    response = result
+    await assert.rejects(context.api.hasResourceEdgeService())
+  }
+  assert.deepEqual(calls[0], ['/command-supports/services', undefined, { applicationScope: false, hiddenError: true }])
 })

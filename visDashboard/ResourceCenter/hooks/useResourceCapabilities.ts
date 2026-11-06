@@ -1,11 +1,10 @@
 import { computed, onScopeDispose, provide, ref, shallowRef, watch, type InjectionKey, type Ref } from 'vue'
-import { hasCommandService } from '@jetlinks-web-core/api/commandSupports'
 import { isSaaS } from '@jetlinks-web-core/utils/consts'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { useUserStore } from '@jetlinks-web-core/store/user'
 import { getProjectCodeFromLocation, getApplicationRuntimeEntry } from '@jetlinks-web-core/utils/project-runtime'
 import { getBaseApi } from '@jetlinks-web-core/utils/request-context'
-import type { ResourceCapabilities } from '../services/capabilities'
+import { hasResourceEdgeService, type ResourceCapabilities } from '../services/capabilities'
 import { useDashboardModules } from '../../useDashboardModules'
 
 export interface ResourceCapabilitiesContext {
@@ -62,7 +61,7 @@ export function useResourceCapabilities(preview: Ref<boolean>, checkEdgeService 
     if (!checkEdgeService || isSaaS || isPreview || !edge) return
     edgeLoading.value = true
     try {
-      const supported = await hasCommandService('agentService')
+      const supported = await hasResourceEdgeService()
       if (current) edgeSupported.value = supported
     } catch (error) {
       if (current) edgeError.value = error instanceof Error ? error : new Error('Edge capability unavailable')
