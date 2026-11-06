@@ -78,7 +78,7 @@ export function useResourcePage(width: Readonly<Ref<number>>) {
     mapDefinition: computed(() => mapDiscovery.catalog.value.components.deviceMapCard), mapLoading: mapDiscovery.loading,
     reloadMap: mapDiscovery.reload, onGatewayCount })
   const widgets = computed(() => buildResourcePageWidgets(getResourceSummaryKinds(access.value), cells.value,
-    layoutWidth.value, nodeCount.value, { private: !isSaaS }))
+    layoutWidth.value, nodeCount.value, { private: !access.value.saas }))
   const catalog: DashboardCatalog = { groups: [], components: {
     resourceSaasWidget: { component: markRaw(ResourceDashboardWidget), configs: [], groupId: 'saas-resource-dashboard',
       defaultConfig: { type: 'resourceSaasWidget', componentProps: {} } },
@@ -90,9 +90,9 @@ export function useResourcePage(width: Readonly<Ref<number>>) {
   }))
   /** 新旧组件集合沿用同一范围算法，迁移不会跨账号、部署、宽度或能力组合读取。 */
   function layoutKey(ids: readonly string[]) {
-    return `resource-dashboard:${isSaaS ? 'saas:v9' : 'private:v1'}:${CryptoJS.MD5(JSON.stringify([
+    return `resource-dashboard:${access.value.saas ? 'saas:v9' : access.value.map ? 'private:v1' : 'private:v4'}:${CryptoJS.MD5(JSON.stringify([
       capabilities.scope.value, resourcePageCanvasMode(layoutWidth.value), [...ids].sort(),
-      ...(!isSaaS ? [cells.value.map(cell => [cell.id, cell.panels, cell.offline])] : []),
+      ...(!access.value.saas ? [cells.value.map(cell => [cell.id, cell.panels, cell.offline])] : []),
     ])).toString()}`
   }
   const storageKey = computed(() => layoutKey(widgets.value.map(item => item.id)))
@@ -104,7 +104,7 @@ export function useResourcePage(width: Readonly<Ref<number>>) {
       if (typeof localStorage === 'undefined') return
       const legacyKey = layoutKey(widgets.value.flatMap(item => item.kind === 'distribution'
         ? ['resource-panel-map', 'resource-panel-offline'] : [item.id]))
-      const mapOnlyLegacyKey = isSaaS ? layoutKey(widgets.value.map(item => item.kind === 'distribution'
+      const mapOnlyLegacyKey = access.value.saas ? layoutKey(widgets.value.map(item => item.kind === 'distribution'
         ? 'resource-panel-map' : item.id)) : undefined
       migrateResourceDistributionLayout(localStorage, key, legacyKey, widgets.value, mapOnlyLegacyKey)
     } catch { /* 禁用浏览器存储时使用默认排布。 */ }
@@ -119,5 +119,5 @@ export function useResourcePage(width: Readonly<Ref<number>>) {
     }
   }, { immediate: true })
   return { capabilities, hasContent, catalog, dashboard, storageKey, ready: computed(() => layoutWidth.value > 0), fewNodes,
-    isPrivate: !isSaaS, updatedText, dense: computed(() => getResourceSummaryKinds(access.value).length >= 5) }
+    isPrivate: computed(() => !access.value.saas), updatedText, dense: computed(() => getResourceSummaryKinds(access.value).length >= 5) }
 }

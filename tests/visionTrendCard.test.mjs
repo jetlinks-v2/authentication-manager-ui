@@ -14,7 +14,9 @@ const result = await build({
       '../hooks/useResourceCapabilities': 'export const useResourceCapabilities=()=>context.capabilities;',
       '../services/gatewayStatus': 'export const loadGatewayDirectory=current=>context.load(current);',
       '@vueuse/core': 'export const useDocumentVisibility=()=>context.visibility;',
-      '@jetlinks-web-core/utils/module-registry': 'export const moduleRegistry={getResourceItem:()=>context.component};',
+      '@jetlinks-web-core/utils/module-registry': 'export const moduleRegistry={hasModule:()=>false};',
+      '../monitoring/client': 'export const createMonitorQueryClient=()=>{throw new Error("Local transport unused in cloud fixture")};',
+      '../monitoring/stream': 'export const mbeanRecord=value=>value;',
     }
     api.onResolve({ filter: /.*/ }, args => args.path in mocks ? { path: args.path, namespace: 'fixture' } : undefined)
     api.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ contents: mocks[args.path], loader: 'js' }))
