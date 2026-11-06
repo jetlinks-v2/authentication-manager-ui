@@ -33,6 +33,7 @@ async function bundle(saas) {
       const boundaries = {
         '@jetlinks-web/core': 'export const request = context.request',
         '@jetlinks-web-core/utils/module-registry': 'export const moduleRegistry = context.moduleRegistry',
+        '@jetlinks-web-core/api/commandSupports': 'export const hasCommandService = id => context.hasCommandService(id)',
         '@jetlinks-web-core/store/menu': 'export const useMenuStore = () => context.menu',
         '@jetlinks-web-core/store/user': 'export const useUserStore = () => context.user',
         '@jetlinks-web-core/router/globModules': 'export const getGlobModules = async () => context.routes',
@@ -83,6 +84,7 @@ async function fixture(saas = false) {
     routes: { 'data-collect': () => {}, 'iot-card/CardManagement': () => {} },
     responses: { collection: true, networkCards: true },
   }
+  context.hasCommandService = async id => { calls.push({ service: id }); return context.edgeSupported ?? true }
   context.summary = async id => { calls.push({ summary: id }); return { total: 0, online: 0 } }
   context.homeLoad = async feature => { calls.push({ home: feature }); return [] }
   context.gatewayDirectory = Array.from({ length: 4 }, (_, i) => ({ id: String(i), online: true }))
@@ -458,4 +460,124 @@ test('capability scope follows user, project, API and application and waits for 
   assert.equal(state.scope.value, initial)
   preview.value = true; context.user.userInfo.id = ''
   assert.equal(state.loading.value, false, 'preview may load without an account')
+})
+
+
+test('private resource page checks backend edge service independently of node count', async () => {
+  const context = await fixture(), scope = vue.effectScope()
+  context.edgeSupported = false
+  const state = scope.run(() => context.api.useResourceCapabilities(vue.ref(false), true))
+  assert.equal(state.loading.value, true)
+  await tick()
+  assert.equal(state.modules.value.edge, false)
+  assert.deepEqual(context.calls.filter(call => call.service), [{ service: 'agentService' }])
+  context.edgeSupported = true
+  context.runtime.project = 'project-b'
+  await tick()
+  assert.equal(state.modules.value.edge, true)
+  scope.stop()
+})
+
+test('private resource page discards stale edge capability and reports a retryable failure', async () => {
+  const context = await fixture(), scope = vue.effectScope(), pending = []
+  context.hasCommandService = () => new Promise((resolve, reject) => pending.push({ resolve, reject }))
+  context.menu.queryMenus = async () => {}
+  const state = scope.run(() => context.api.useResourceCapabilities(vue.ref(false), true))
+  context.runtime.project = 'project-b'
+  assert.equal(pending.length, 2)
+  pending[0].resolve(true)
+  await tick()
+  assert.equal(state.modules.value.edge, false)
+  assert.equal(state.loading.value, true)
+  pending[1].reject(new Error('unavailable'))
+  await tick()
+  assert.equal(state.loading.value, false)
+  assert.equal(state.errors.value[0].message, 'unavailable')
+  await state.reload()
+  assert.equal(state.loading.value, true)
+  pending[2].resolve(true)
+  await tick()
+  assert.equal(state.modules.value.edge, true)
+  assert.equal(state.errors.value.length, 0)
+  scope.stop()
+})
+
+test('edge check is skipped without permission or in SaaS', async () => {
+  for (const saas of [false, true]) {
+    const context = await fixture(saas), scope = vue.effectScope()
+    if (!saas) context.menu.menuResultCache = []
+    scope.run(() => context.api.useResourceCapabilities(vue.ref(false), true))
+    await tick()
+    assert.equal(context.calls.some(call => call.service), false)
+    scope.stop()
+  }
+})
+
+test('overlapping menu retries keep the current retry loading and ignore older rejection', async () => {
+  const context = await fixture(), scope = vue.effectScope(), pending = []
+  context.menu.queryMenus = () => new Promise((resolve, reject) => pending.push({ resolve, reject }))
+  const state = scope.run(() => context.api.useResourceCapabilities(vue.ref(false)))
+  const first = state.reload(), second = state.reload()
+  assert.equal(state.loading.value, true)
+  pending[0].reject(new Error('old failure'))
+  await first
+  assert.deepEqual(state.errors.value, [])
+  assert.equal(state.loading.value, true)
+  pending[1].resolve()
+  await second
+  assert.equal(state.loading.value, false)
+  assert.deepEqual(state.errors.value, [])
+  scope.stop()
+})
+
+test('a scope change invalidates an old menu retry without contaminating the new scope', async () => {
+  const context = await fixture(), scope = vue.effectScope(), pending = []
+  context.menu.queryMenus = () => new Promise((resolve, reject) => pending.push({ resolve, reject }))
+  const state = scope.run(() => context.api.useResourceCapabilities(vue.ref(false)))
+  const old = state.reload()
+  context.runtime.project = 'project-b'
+  const current = state.reload()
+  pending[0].reject(new Error('old scope failure'))
+  await old
+  assert.deepEqual(state.errors.value, [])
+  assert.equal(state.loading.value, true)
+  pending[1].resolve()
+  await current
+  assert.equal(state.loading.value, false)
+  assert.deepEqual(state.errors.value, [])
+  scope.stop()
+})
+
+test('scope change releases a pending retry even without another retry', async () => {
+  const context = await fixture(), scope = vue.effectScope(), pending = []
+  context.menu.queryMenus = () => new Promise((resolve, reject) => pending.push({ resolve, reject }))
+  const state = scope.run(() => context.api.useResourceCapabilities(vue.ref(false)))
+  const old = state.reload()
+  assert.equal(state.loading.value, true)
+  context.runtime.project = 'project-b'
+  assert.equal(state.loading.value, false)
+  pending[0].reject(new Error('old scope failure'))
+  await old
+  assert.deepEqual(state.errors.value, [])
+  assert.equal(state.loading.value, false)
+  scope.stop()
+})
+
+test('preview transition and scope disposal reject late menu retry effects', async () => {
+  for (const transition of ['preview', 'dispose']) {
+    const context = await fixture(), scope = vue.effectScope(), pending = [], preview = vue.ref(false)
+    context.menu.queryMenus = () => new Promise((resolve, reject) => pending.push({ resolve, reject }))
+    const state = scope.run(() => context.api.useResourceCapabilities(preview))
+    const old = state.reload()
+    if (transition === 'preview') preview.value = true
+    else scope.stop()
+    pending[0].reject(new Error('late failure'))
+    await old
+    assert.deepEqual(state.errors.value, [])
+    if (transition === 'preview') {
+      preview.value = false
+      assert.equal(state.loading.value, false)
+      scope.stop()
+    }
+  }
 })

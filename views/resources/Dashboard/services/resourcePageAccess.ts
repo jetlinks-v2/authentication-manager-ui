@@ -6,6 +6,7 @@ interface ResourceAccessSource {
   saas: boolean
   menus: readonly GrantedMenu[]
   installed: (module: string) => boolean
+  edgeSupported: boolean
 }
 
 /** 仅在服务端授权树中查找入口，避免隐藏详情路由被当成菜单授权。 */
@@ -27,7 +28,7 @@ export function resolveResourcePageAccess(source: ResourceAccessSource): Resourc
   const available = (module: string, menus: readonly string[]) => granted(menus) && (source.saas || source.installed(module))
   const iot = available('device-manager-ui', HOME_TARGETS.devices.menus)
   const video = available('jetlinks-media-ui', HOME_TARGETS.video.menus)
-  const edge = available('edge-master-ui', HOME_TARGETS.gateway.menus)
+  const edge = source.edgeSupported && available('edge-master-ui', HOME_TARGETS.gateway.menus)
   return {
     saas: source.saas, iot, video, edge,
     vision: edge && video && available('jetlinks-ai-ui', ['algorithm-center', 'project/algorithm-center']),
