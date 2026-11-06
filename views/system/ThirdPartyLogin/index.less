@@ -13,15 +13,11 @@
   font-weight: 600;
 }
 
-.config-layout { flex: 1; min-height: 0; }
-.third-party-page .config-layout .equal-height-columns__toggle { position: absolute; }
-.method-option { display: inline-flex; align-items: center; gap: var(--space-2); min-width: 0; }
-.method-option .anticon { font-size: 1.125rem; }
-.method-option img { width: 1.125rem; height: 1.125rem; object-fit: contain; }
-.method-count { color: var(--ink-4); }
+.third-party-page .method-icon { width: 1.125rem; height: 1.125rem; margin-inline-end: var(--space-2); object-fit: contain; }
 
 .config-panel {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   min-width: 0;
   overflow: auto;
 }
@@ -31,8 +27,8 @@
   margin-bottom: var(--space-4);
 }
 
-.config-search { flex: 0 1 28rem; max-width: 28rem; min-width: 0; }
-.config-actions { flex: 0 0 auto; }
+.config-search { flex: 1 1 20rem; min-width: 0; }
+.config-actions { flex: 0 1 auto; max-width: 100%; margin-inline-start: auto; }
 .config-table .ant-table { overflow-x: auto; }
 .entry-name { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
 .entry-copy { display: flex; flex-direction: column; min-width: 0; }

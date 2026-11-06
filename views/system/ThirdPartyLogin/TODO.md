@@ -2,6 +2,16 @@
 
 当前页面已复用应用管理 `/application` 接口，支持管理当前登录页使用的微信公众号、钉钉和通用 OAuth2 SSO 应用，登录图标通过应用的 `logoUrl` 保存。企业微信、微信开放平台网站应用、小程序、组织同步和独立登录页展示开关不属于当前登录方式，页面不展示这些入口。
 
+## 类型快捷筛选布局
+
+目标与范围：运营端 `ui/modules/authentication-manager-ui` 的管理员通过搜索和类型筛选查找登录配置，列表和类型数量沿用当前 `/application` 数据。将 `views/system/ThirdPartyLogin/index.vue` 的左侧类型栏移至搜索右侧、新增按钮左侧；参考设备列表状态筛选的 `a-button-group`，展示微信、钉钉、OAuth2 及数量，重复点击当前类型恢复全部。列表使用完整内容宽度。
+
+实施：移除左右分栏，保留 `FullPage`、`ConditionFilter`、现有表格、空态和配置抽屉；只在 `index.vue` 与 `index.less` 调整组合和布局，不修改接口、菜单、权限或运行时前端。搜索框占据工具栏剩余空间，窄屏允许操作区换行。主要风险是取消类型筛选及搜索组合回归；验证样式门禁、第三方登录现有测试、模块构建与页面布局。
+
+验证：`pnpm --config.verify-deps-before-run=false check:ui-style -- --files modules/authentication-manager-ui/views/system/ThirdPartyLogin/index.vue modules/authentication-manager-ui/views/system/ThirdPartyLogin/index.less`、Vue SFC 脚本与模板及 LESS 编译、`git diff --check` 通过。隔离浏览器加载实际页面模板、Ant Design Vue、现有 hook 和模型，替换 API、搜索输入、抽屉及页面壳；确认 1362px 宽度下搜索、类型、按钮的顺序和对齐，类型数量、类型与关键词组合筛选、重复点击恢复全部、新增沿用所选类型及 760px 换行通过。完整系统中的真实搜索控件和页面壳仍待联调验证。
+
+模块内 `node --test tests/thirdPartyLoginModel.test.mjs tests/thirdPartyLoginMenu.test.mjs` 为 14/15 通过；唯一失败是未修改的菜单测试期望父节点 `application-center`，现有 `baseMenu.json` 为 `platform/settings`。从 `ui/` 执行 `pnpm --config.verify-deps-before-run=false -F jetlinks-web-core build -- --module-name authentication-manager-ui` 被工作区缺失 `vite-plugin-mkcert` 阻断；`pnpm --config.verify-deps-before-run=false exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 有其他文件的 775 项诊断，第三方登录目录无诊断。工作区依赖和类型错误修复后需重跑以上构建及类型命令；未配置 lint 脚本。
+
 ## 操作列图标按钮
 
 `runtime-ui/modules/authentication-manager-ui/views/system/ThirdPartyLogin/index.vue` 的编辑、删除入口使用 `j-permission-button` 与 `EditOutlined` / `DeleteOutlined`，通过 `tooltip.title` 复用既有国际化文案，并为图标提供中文可访问名称。保留编辑回调、删除确认和已启用时禁止删除的限制，不调整接口、菜单或授权规则；9200 端口对应运行时开发服务，本次仅修改该前端模块。
