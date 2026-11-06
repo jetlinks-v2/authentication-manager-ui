@@ -90,6 +90,16 @@ const fixture = (value = [], config = { loadOptions: async () => tree }) => {
   return { props, api, stop: () => scope.stop() }
 }
 const settle = async () => { await Promise.resolve(); await vue.nextTick() }
+test('a single-target asset selector replaces its draft without selecting descendants', async () => {
+  const h = fixture(['south'], { multiple: false, loadOptions: async () => tree })
+  try {
+    await settle()
+    h.api.onCheck([], { checked: true, node: { key: 'east' } })
+    assert.deepEqual([...h.props.value], ['east'])
+    h.api.onCheck([], { checked: false, node: { key: 'east' } })
+    assert.deepEqual([...h.props.value], [])
+  } finally { h.stop() }
+})
 const deferred = () => {
   let resolve, reject
   const promise = new Promise((yes, no) => { resolve = yes; reject = no })

@@ -4,6 +4,8 @@
 
 组织通过同一注册入口声明 `directory.mode: tree`，复用 `api/system/department.ts#getTreeData_api` 的不分页组织树，不请求成员统计；树的展开、保留祖先搜索及选择由消费方处理，目录行只显示图标与名称。该接口沿用组织原权限范围，身份模块不依赖本体模块，也不根据图关系拼装组织层级。
 
+组织维度选择器通过 core 的 `assetDimensionFilters` 注册，供通用筛选及资产关系维护复用。`config.multiple=false` 时仅保留本次选中的节点，不同时选中后代；未声明单值时维持原独立多选和闭包筛选语义。业务查询及树渲染继续由身份模块维护，本体只消费公共选择协议。
+
 第三方应用模板的 RSA keyId、公钥保存在 `configuration.credential`，可在关闭通知时独立维护，用于应用凭据主动获取与加密交付。通知开关只维护 `configuration.notification.address`；读取兼容旧 notification 内的 RSA 字段，保存时迁移为统一 credential，关闭通知不会删除公钥。通知 HMAC Secret 也可独立设置：keyId 默认自动准备，也可填写第三方预设的 keyId/Secret，接收端配置后通过专用接口保存切换；未设置时继续原派生算法，普通模板保存不读写 Secret。前后端须配套发布，后端需先增加两个可空通知凭据字段；旧后端不支持新 RSA 配置或自定义通知凭据，回滚需恢复配置格式与接收端信任凭据。
 
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.
