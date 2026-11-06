@@ -31,7 +31,7 @@
           <template #title="{ name, data }">
             <div class="department-tree-item-content">
               <div class="title">
-                <AIcon class="title-icon" :type="data.children?.length ? 'icon-zuzhiguanli' : 'icon-zuzhi'" />
+                <ObjectTypeIcon class="title-icon" type-id="org" />
                 <j-ellipsis class="title-text">
                   {{ name }}
                 </j-ellipsis>
@@ -125,6 +125,7 @@
 </template>
 
 <script setup lang="ts" name="LeftTree">
+import ObjectTypeIcon from '@jetlinks-web-core/components/IconValue/ObjectTypeIcon.vue'
 import { getTreeData_api, delDepartment_api, downloadImportTemplate_api, batchImport_api } from '@authentication-manager-ui/api/system/department'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { debounce, cloneDeep, omit } from 'lodash-es'

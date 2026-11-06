@@ -71,7 +71,9 @@ export const useOwnershipOrganizationTree = (
   }
   const onCheck: NonNullable<TreeProps['onCheck']> = (_, info) => {
     const id = String(info.node.key)
-    update(info.checked ? [...new Set([...props.value, id])] : props.value.filter(value => value !== id))
+    update(info.checked
+      ? props.config?.multiple === false ? [id] : [...new Set([...props.value, id])]
+      : props.value.filter(value => value !== id))
   }
   const remove = (id: string) => update(props.value.filter(value => value !== id))
 
