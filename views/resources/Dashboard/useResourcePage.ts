@@ -33,15 +33,14 @@ export function useResourcePage(width: Readonly<Ref<number>>) {
   // 缓存页面暂时隐藏时宽度会归零，保留实际宽度以免切换个人布局或重建业务卡片。
   watch(width, value => { if (value > 0) layoutWidth.value = Math.round(value) }, { immediate: true })
   const menu = useMenuStore()
-  const capabilities = useResourceCapabilities(ref(false))
+  const capabilities = useResourceCapabilities(ref(false), true)
   provideResourceCapabilities(capabilities)
   provideVideoSummary()
   const access = computed(() => {
-    // 模块注册变化复用能力层的响应式版本；不通过请求失败来推测能力。
-    void capabilities.modules.value
     return resolveResourcePageAccess({ saas: isSaaS,
       menus: menu.initialized && !menu.loading ? menu.menuResultCache : [],
       installed: name => moduleRegistry.hasModule(name),
+      edgeSupported: capabilities.modules.value.edge,
     })
   })
   const mapSourceAvailable = computed(() => access.value.map
@@ -112,8 +111,8 @@ export function useResourcePage(width: Readonly<Ref<number>>) {
   // 无资源且有概览权限时返回概览，缓存页面停用时不触发跳转。
   const overviewGranted = computed(() => hasGrantedResourceMenu(menu.menuResultCache, 'project/Overview')
     && !!menu.getMenu('project/Overview'))
-  watch([active, () => menu.initialized, () => menu.loading, hasContent, overviewGranted], ([visible, initialized, loading, content, overview]) => {
-    if (visible && initialized && !loading && !content
+  watch([active, () => menu.initialized, () => menu.loading, hasContent, overviewGranted, capabilities.loading, capabilities.errors], ([visible, initialized, loading, content, overview, checking, errors]) => {
+    if (visible && initialized && !loading && !checking && !errors.length && !content
       && overview) {
       void menu.jumpPage('project/Overview')
     }
