@@ -16,9 +16,14 @@
       <j-ellipsis class="application-card__name">
         <strong>{{ item.application.name }}</strong>
       </j-ellipsis>
-      <j-ellipsis class="application-card__template">
-        {{ item.template.name }}
-      </j-ellipsis>
+      <div class="application-card__meta">
+        <j-ellipsis class="application-card__template">
+          {{ item.template.name }}
+        </j-ellipsis>
+        <a-tag class="application-card__type" :title="$t('ProjectApplication.create.applicationKind')">
+          {{ applicationTypeText }}
+        </a-tag>
+      </div>
       <j-ellipsis class="application-card__description" :line-clamp="2">
         {{ description }}
       </j-ellipsis>
@@ -90,6 +95,14 @@ const STATUS_NAMES: Record<string, string> = { enabled: 'success', disabled: 'de
 
 const avatar = computed(() => applicationAvatar(props.item.application, props.item.template))
 
+// 历史空类型沿用业务应用默认值；显式未知 provider 不推断类型。
+const applicationTypeText = computed(() => {
+  const provider = props.item.application.provider || 'official'
+  if (provider === 'official') return $t('ProjectApplication.create.businessApplication')
+  if (provider === 'third-party') return $t('ProjectApplication.create.thirdPartyApplication')
+  return $t('comm.table.empty')
+})
+
 const description = computed(() =>
   props.item.application.description || props.item.template.description || $t('comm.table.empty'))
 
@@ -145,10 +158,24 @@ const statusActionText = computed(() => $t(props.item.application.status === 'en
   font-size: var(--fs-h4);
 }
 
-.application-card__template {
+.application-card__meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
   margin-top: var(--space-1);
+  gap: var(--space-2);
+}
+
+.application-card__template {
+  flex: 1;
+  min-width: 0;
   color: var(--ink-3);
   font-size: var(--fs-meta);
+}
+
+.application-card__type {
+  flex-shrink: 0;
+  margin-inline-end: 0;
 }
 
 .application-card__description {
