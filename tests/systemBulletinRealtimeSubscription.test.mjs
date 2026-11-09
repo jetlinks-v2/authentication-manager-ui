@@ -13,6 +13,7 @@ test('shared realtime subscription rechecks current qualification and releases s
   const sockets = [], queries = []
   let refreshes = 0, disposals = 0
   const { subscribeAnnouncementRealtime } = loadLogModule('views/system/Announcement/realtimeSubscription.ts', {
+    './bulletinCapability': { isAnnouncementSupported: async () => true },
     vue,
     '@jetlinks-web/core': { wsClient: { getWebSocket(id, topic, parameter) {
       const socket = { id, topic, parameter, releases: 0 }
@@ -32,6 +33,7 @@ test('shared realtime subscription rechecks current qualification and releases s
   let releaseFirst
   owner.run(() => { releaseFirst = subscribeAnnouncementRealtime(payload => first.push(payload)) })
   const releaseSecond = subscribeAnnouncementRealtime(payload => second.push(payload))
+  await Promise.resolve()
   assert.equal(sockets.length, 1)
   assert.equal(sockets[0].topic, '/system/bulletin/received')
   assert.deepEqual(sockets[0].parameter, { tenantDomain: 'one' })
@@ -47,6 +49,7 @@ test('shared realtime subscription rechecks current qualification and releases s
   owner.stop()
   releaseFirst()
   state.project = 'two'
+  await Promise.resolve()
   assert.equal(sockets[0].releases, 1)
   assert.equal(sockets.length, 2, 'remaining consumer retains reactive context watcher')
   assert.deepEqual(sockets[1].parameter, { tenantDomain: 'two' }, 'project selection reaches server authorization')
@@ -65,10 +68,12 @@ test('shared realtime subscription rechecks current qualification and releases s
   assert.equal(sockets.length, 2, 'logged out users must not subscribe')
   state.project = ''
   state.scope = 'service:user2'
+  await Promise.resolve()
   assert.equal(sockets.length, 3)
   assert.deepEqual(sockets[2].parameter, {}, 'platform subscription omits project intent')
   const beforeOnline = disposals
   events.get('online')()
+  await Promise.resolve()
   assert.equal(disposals, beforeOnline, 'online rebuild retains session deduplication')
   assert.equal(sockets[2].releases, 1)
   assert.equal(sockets.length, 4)

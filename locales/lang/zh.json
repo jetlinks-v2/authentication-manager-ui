@@ -1890,6 +1890,7 @@
   "Announcement.action.savePublish": "保存并发布",
   "Announcement.action.confirmPublish": "确认发布",
   "Announcement.action.confirm": "我知道了",
+  "Announcement.notification.historyUnread": "{count} 条未读公告",
   "Announcement.search.keywordPlaceholder": "搜索标题或摘要",
   "Announcement.search.allStatus": "全部状态",
   "Announcement.value.yes": "是",
