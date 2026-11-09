@@ -403,6 +403,13 @@
                 "actions": [
                   "query"
                 ]
+              },
+              {
+                "permission": "role-group",
+                "actions": [
+                  "save",
+                  "delete"
+                ]
               }
             ],
             "buttons": [
@@ -552,7 +559,7 @@
               "value": "support"
             },
             "supportDataAccess": true,
-            "assetType": "role"
+            "assetTypes": ["role", "roleGroup"]
           },
           {
             "code": "system/Department",

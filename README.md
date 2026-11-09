@@ -100,9 +100,11 @@ Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/1
 
 验证：本地 `http://localhost:9200/#/system/ou/role` 的父节点和叶子节点分别显示 `icon-jiaose`、`icon-moren`，点击“默认”后叶节点正常选中，再切回“全局角色”正常选中；`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过（10,799 个模块，38.33 秒），`git diff --check` 通过。构建仅保留现有的 Rollup output option、CSS 注释与大包提示；未触发节点编辑/删除的后端写入验证。
 
-节点操作显示：`views/system/Role/RoleLeft/index.vue` 的编辑、删除入口改为带 Tooltip 的小尺寸图标按钮，操作容器默认 `display: none`，鼠标悬浮当前节点时切换为 `display: flex`。名称使用剩余宽度并允许在操作出现时收缩；保留管理员可见性、默认分组限制、点击隔离与原有回调。登录后仍需复核长名称在悬浮前后的布局以及图标按钮的点击交互。
+节点操作显示：`views/system/Role/RoleLeft/index.vue` 的编辑、删除入口使用带 Tooltip 的小尺寸图标按钮，操作容器默认 `display: none`，鼠标悬浮当前节点时切换为 `display: flex`。名称使用剩余宽度并允许在操作出现时收缩；自定义分组操作不再额外限制管理员身份，默认分组仍隐藏操作，保留点击隔离与原有回调。`baseMenu.json` 的 `system/Role` 菜单声明 `role-group/save`、`role-group/delete`，关联资产为 `role`、`roleGroup`；实际操作仍受后端功能权限与资产数据范围校验。已有环境需同步菜单、保存对应授权并刷新认证，菜单声明不会自动补齐已有数据策略。
 
-验证：模板 AST 与 `2.20` 对照确认管理员/默认分组保护、点击隔离、禁用与删除确认回调保持一致，脚本未变；当前模板和 scoped LESS 编译通过。模块生产构建通过（11,758 个模块，39.79 秒），`git diff --check` 通过。完整类型检查仍有 605 项基线一致诊断，本组件无诊断；模块未配置 lint 脚本。长名称悬浮前后布局和编辑/删除的实际页面交互待登录后验证。
+`views/system/Role/Detail/components/AddUserDialog.vue` 将筛选放入表格 `headerLeftRender`，使用 `ConditionFilter` 的 `search` 事件根分组载荷传递条件，并复用其事件类型；查询保留排除已绑定用户与 admin 的限制。`views/system/User/components/EditUserDialog.vue` 的组织选择不再依赖组织管理菜单是否可见，admin 用户的字段禁用规则保持原样。范围仅限运行时本模块，不调整接口、后端权限或运营端。验证覆盖菜单转换和同步、默认分组保护、用户筛选与绑定载荷；真实账号权限、组织候选和悬浮交互仍需登录环境验收，源码与边界替身检查不替代实际接口验证。
+
+验证结果：上述 5 个定向验收切片、三个 SFC 的脚本/模板/样式编译、UI 样式门禁和差异空白检查通过，模块构建通过（12,011 个模块，53.57 秒）。`node --test tests/menuSettingOwners.test.mjs tests/menuAssetTypes.test.mjs tests/departmentUserPermissions.test.mjs` 中 10 项通过，另两个测试文件分别因宿主未处理 `application-scope` 导入及缺少 `localStorage` 失败，待完善测试宿主后重跑。工作区未配置独立 lint；在 `runtime-ui/` 执行 `pnpm exec vue-tsc --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json` 仍有 609 条诊断（包含用户弹窗原有字段/校验等 5 条诊断），新增筛选回调的隐式 `any` 已修正，完整类型检查待清理相关问题后重跑。
 
 ## 组织树节点图标
 
