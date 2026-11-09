@@ -1715,6 +1715,7 @@
   "Announcement.action.savePublish": "保存して公開",
   "Announcement.action.confirmPublish": "公開を確定",
   "Announcement.action.confirm": "了解しました",
+  "Announcement.notification.historyUnread": "未読のお知らせ {count} 件",
   "Announcement.detail.title": "お知らせタイトル",
   "Announcement.detail.summary": "概要",
   "Announcement.detail.type": "お知らせタイプ",

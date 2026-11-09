@@ -1,5 +1,6 @@
 import { request } from '@jetlinks-web/core'
 import i18n from '@jetlinks-web-core/locales'
+import { isAnnouncementSupported } from './bulletinCapability'
 import {
   changeAnnouncementLocalState,
   getAnnouncementReadIds,
@@ -110,6 +111,11 @@ const injectState = (record: ReceivedRecord, ids: Set<string>) => {
 
 const queryRecords = async (path: string, query: Query) => {
   const scope = getAnnouncementReadScope()
+  if (!await isAnnouncementSupported() || scope !== getAnnouncementReadScope()) {
+    return { status: 200, success: true, result: path.endsWith('/no-paging') ? [] : {
+      data: [], total: 0, pageIndex: query.pageIndex || 0, pageSize: query.pageSize || 20,
+    } }
+  }
   const response = await request.post(`${RECEIVED_PATH}${path}`, localQuery(query, scope), { hiddenError: true })
   if (response.success === false || response.status >= 400) return response
   if (!Array.isArray(response.result) && !Array.isArray(response.result?.data)) {
@@ -126,9 +132,13 @@ const queryRecords = async (path: string, query: Query) => {
 
 export const queryAnnouncementInbox = (query: Query = {}) => queryRecords('/_query', query)
 export const queryAnnouncementInboxNoPaging = (query: Query = {}) => queryRecords('/_query/no-paging', query)
-export const countAnnouncementInbox = (query: Query = {}) => request.post(
-  `${RECEIVED_PATH}/_count`, localQuery(query, getAnnouncementReadScope()), { hiddenError: true },
-)
+export const countAnnouncementInbox = async (query: Query = {}) => {
+  const scope = getAnnouncementReadScope()
+  if (!await isAnnouncementSupported() || scope !== getAnnouncementReadScope()) {
+    return { status: 200, success: true, result: 0 }
+  }
+  return request.post(`${RECEIVED_PATH}/_count`, localQuery(query, scope), { hiddenError: true })
+}
 
 /** 未读统计由后端在当前可见资格内执行，不能减去本地不可见的历史确认数。 */
 export const countAnnouncementUnread = async (query: Query = {}) => {
@@ -156,6 +166,9 @@ export const changeAnnouncementReadState = async (type: '_read' | '_unread', ids
 /** 全部确认只投影当次可见批次 ID，异步期间切换账号不会写入新账号作用域。 */
 export const markAllAnnouncementsRead = async () => {
   const scope = getAnnouncementReadScope()
+  if (!await isAnnouncementSupported() || scope !== getAnnouncementReadScope()) {
+    return { status: 200, success: true, result: [] }
+  }
   const response = await request.post(`${RECEIVED_PATH}/_query/no-paging`, {
     paging: false,
     includes: ['id', 'publishVersion'],

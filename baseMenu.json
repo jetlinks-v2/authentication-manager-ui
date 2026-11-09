@@ -128,6 +128,159 @@
     "buttons": [],
     "children": [
       {
+        "code": "system/Announcement",
+        "name": "系统公告管理",
+        "i18nMessages": {
+          "name": {
+            "zh_CN": "系统公告管理",
+            "en_US": "System Announcement Management",
+            "en": "System Announcement Management",
+            "ja": "システム公告管理",
+            "ja_JP": "システム公告管理"
+          }
+        },
+        "owner": "iot",
+        "id": "system-announcement-runtime",
+        "sortIndex": 15,
+        "url": "/system/ps/Announcement",
+        "icon": "NotificationOutlined",
+        "showPage": [
+          "bulletin"
+        ],
+        "permissions": [
+          {
+            "permission": "bulletin",
+            "actions": [
+              "query",
+              "save",
+              "delete"
+            ]
+          }
+        ],
+        "buttons": [
+          {
+            "id": "add",
+            "name": "新增",
+            "i18nMessages": {
+              "zh_CN": "新增",
+              "en_US": "Add",
+              "en": "Add",
+              "ja": "追加",
+              "ja_JP": "追加"
+            },
+            "permissions": [
+              {
+                "permission": "bulletin",
+                "actions": [
+                  "save"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "view",
+            "name": "查看",
+            "i18nMessages": {
+              "zh_CN": "查看",
+              "en_US": "View",
+              "en": "View",
+              "ja": "表示",
+              "ja_JP": "表示"
+            },
+            "permissions": [
+              {
+                "permission": "bulletin",
+                "actions": [
+                  "query"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "edit",
+            "name": "编辑",
+            "i18nMessages": {
+              "zh_CN": "编辑",
+              "en_US": "Edit",
+              "en": "Edit",
+              "ja": "編集",
+              "ja_JP": "編集"
+            },
+            "permissions": [
+              {
+                "permission": "bulletin",
+                "actions": [
+                  "save"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "publish",
+            "name": "发布",
+            "i18nMessages": {
+              "zh_CN": "发布",
+              "en_US": "Publish",
+              "en": "Publish",
+              "ja": "公開",
+              "ja_JP": "公開"
+            },
+            "permissions": [
+              {
+                "permission": "bulletin",
+                "actions": [
+                  "save"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "withdraw",
+            "name": "撤回",
+            "i18nMessages": {
+              "zh_CN": "撤回",
+              "en_US": "Withdraw",
+              "en": "Withdraw",
+              "ja": "撤回",
+              "ja_JP": "撤回"
+            },
+            "permissions": [
+              {
+                "permission": "bulletin",
+                "actions": [
+                  "save"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "delete",
+            "name": "删除",
+            "i18nMessages": {
+              "zh_CN": "删除",
+              "en_US": "Delete",
+              "en": "Delete",
+              "ja": "削除",
+              "ja_JP": "削除"
+            },
+            "permissions": [
+              {
+                "permission": "bulletin",
+                "actions": [
+                  "delete"
+                ]
+              }
+            ]
+          }
+        ],
+        "accessSupport": {
+          "text": "支持",
+          "value": "support"
+        },
+        "supportDataAccess": true,
+        "assetType": "systemBulletin"
+      },
+      {
         "code": "system/Basis",
         "name": "基础信息",
         "i18nMessages": {

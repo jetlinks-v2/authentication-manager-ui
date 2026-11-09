@@ -1890,6 +1890,7 @@
   "Announcement.action.savePublish": "Save and publish",
   "Announcement.action.confirmPublish": "Publish",
   "Announcement.action.confirm": "Got it",
+  "Announcement.notification.historyUnread": "{count} unread announcements",
   "Announcement.search.keywordPlaceholder": "Search title or summary",
   "Announcement.search.allStatus": "All statuses",
   "Announcement.value.yes": "Yes",
