@@ -25,19 +25,25 @@ export function resolveResourcePageAccess(source: ResourceAccessSource): Resourc
   }
   collect(source.menus)
   const granted = (menus: readonly string[]) => menus.some(code => codes.has(code))
-  const available = (module: string, menus: readonly string[]) => granted(menus) && (source.saas || source.installed(module))
+  // 边端虽沿用 saas 构建标识，资源页仍按已安装的 edge-basic-ui 判定本机能力。
+  const local = source.installed('edge-basic-ui')
+  const saas = source.saas && !local
+  const available = (module: string, menus: readonly string[]) => granted(menus)
+    && (saas || source.installed(module) || local && module === 'data-collector-ui')
   const iot = available('device-manager-ui', HOME_TARGETS.devices.menus)
   const video = available('jetlinks-media-ui', HOME_TARGETS.video.menus)
   const edge = source.edgeSupported && available('edge-master-ui', HOME_TARGETS.gateway.menus)
+  const visionMenus = ['algorithm-center', 'project/algorithm-center', ...(local ? ['machine-vision/Task'] : [])]
   return {
-    saas: source.saas, iot, video, edge,
-    vision: edge && video && available('jetlinks-ai-ui', ['algorithm-center', 'project/algorithm-center']),
-    aiEvents: (source.saas || video) && available('jetlinks-ai-ui', ['video/event']),
+    saas, iot, video, edge,
+    vision: video && (edge || local) && available('jetlinks-ai-ui', visionMenus),
+    aiEvents: (saas || video) && available('jetlinks-ai-ui', ['video/event']),
     visualization: available('visualization-manager-ui', HOME_TARGETS.screen.menus),
-    product: !source.saas && available('device-manager-ui', ['device/Product']),
-    collection: !source.saas && available('data-collector-ui', HOME_TARGETS.collector.menus),
-    networkCards: !source.saas && available('network-card-manager-ui', HOME_TARGETS.card.menus),
-    networkPools: !source.saas && available('network-card-manager-ui', ['iot-card/TrafficPoolManagement']),
-    map: iot || video || edge,
+    product: !saas && available('device-manager-ui', ['device/Product']),
+    collection: !saas && available('data-collector-ui', HOME_TARGETS.collector.menus),
+    networkCards: !saas && available('network-card-manager-ui', HOME_TARGETS.card.menus),
+    networkPools: !saas && available('network-card-manager-ui', ['iot-card/TrafficPoolManagement']),
+    // 边端资源看板不展示设备分布；云端仍沿用设备、视频及网关的地图准入。
+    map: !local && (iot || video || edge),
   }
 }

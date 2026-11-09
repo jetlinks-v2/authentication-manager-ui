@@ -532,3 +532,12 @@ const { catalog, dashboard, loading, errors } = useResourceDashboard(preview)
 - 单位按文档固定：复判积压为“条”，system.*.usage 为“%”。后端配置的系统点位直接映射既有使用率属性，前端不根据值小于1而自动乘100。
 - 聚合结果无采样时显示空态，请求失败提供重试。设计预览独立使用示例数据，不调用接口。
 - 专项验证：node modules/authentication-manager-ui/scripts/verify-gateway-status.cjs。覆盖四项请求契约、分页、单位、空值/零值、排行跳转、预览隔离、迟到响应、卸载与Vue编译。此验证使用契约响应模拟，不代表真实部署联调通过。
+
+
+## 视觉任务实时趋势的归属与部署方式
+
+资源卡片及推理耗时、复判积压、成功累计数的解析、窗口和绘图统一归属本模块 `visDashboard/ResourceCenter/VisionTaskRanking/trend`。文案使用本模块的 `VisionTrend` 分组，不再依赖云端 `edge-master-ui` 的组件注册。
+
+云端根据授权网关目录选择节点，经 `/edge/device/{id}/_` 代理读取任务目录和 MBean；边端从 `/system/monitor/members` 识别本机，直接调用本机接口并隐藏节点选择框。任务与指标选择、图表样式、可见性和账号范围隔离保持一致。边端不展示边缘节点和设备分布卡片；设备上报消息与视觉任务实时趋势在桌面宽度下并排各占半行，分别保持云端消息卡17行、视觉卡13行的高度，窄屏按正常响应式布局换行。点位状态与按采集协议继续沿用原布局。其他资源卡片依据自身模块与菜单授权显示。边端既有 `machine-vision/Task` 授权可作为本机视觉能力入口。
+
+`runtimeMonitor.ts` 是本模块的公开实时监控入口，并通过 `register.ts` 的 `apis.runtimeMonitor` 注册。网关监控复用其批采集、窗口、流式请求和错误规则；具体设备代理路径仍由网关模块提供，不引入对其私有目录的反向依赖。
