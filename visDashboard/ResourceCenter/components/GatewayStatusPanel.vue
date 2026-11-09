@@ -40,6 +40,7 @@ const { title, metric, tabs, rows, loading, error, refresh, available, emptyDesc
 </script>
 <style scoped src="./resourceRanking.css" />
 <style scoped>
+.gateway-status { min-width: 0; min-height: 0; overflow: hidden; }
 .state { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; overflow: auto; }
 /* 排名只表达相对大小，条形与前三名序号不再被错误解释为告警阈值。 */
 .gateway-status :deep(.track > span) { background: var(--ant-color-primary, #1677ff) !important; }

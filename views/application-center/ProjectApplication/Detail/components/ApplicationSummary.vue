@@ -27,7 +27,14 @@
         </MetaChip>
         <AppTag>{{ data.template.name }}</AppTag>
       </div>
-      <p class="summary-description">{{ data.application.description || data.template.description || $t('comm.table.empty') }}</p>
+      <div class="summary-description-row">
+        <p class="summary-description">{{ data.application.description || data.template.description || $t('comm.table.empty') }}</p>
+        <AppTag v-if="data.application.id" class="summary-id">
+          <a-typography-text :copyable="{ text: data.application.id }">
+            {{ $t('ProjectApplication.detail.applicationId') }}: {{ data.application.id }}
+          </a-typography-text>
+        </AppTag>
+      </div>
       <div class="meta-row">
         <span><AIcon type="ClockCircleOutlined" />{{ $t('ProjectApplication.list.createdAt', { time: data.application.createdAt }) }}</span>
       </div>
@@ -186,7 +193,10 @@ const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(ico
 .summary-main { display: flex; min-width: 0; flex-direction: column; gap: var(--space-1); }
 .identity-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
 .identity-row h1 { min-width: 0; margin: 0; color: var(--ink-1); font-size: var(--fs-20); font-weight: 600; }
+.summary-description-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
 .summary-description { max-width: 44rem; margin: 0; overflow: hidden; color: var(--ink-2); line-height: 1.6; text-overflow: ellipsis; white-space: nowrap; }
+.summary-id { min-width: 0; }
+.summary-id :deep(.ant-typography) { color: inherit; font-size: inherit; overflow-wrap: anywhere; }
 
 .meta-row { display: flex; flex-wrap: wrap; gap: var(--space-3); color: var(--ink-4); font-size: var(--fs-12); }
 .meta-row span { display: inline-flex; align-items: center; gap: var(--space-1); }

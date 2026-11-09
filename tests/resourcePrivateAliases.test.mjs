@@ -22,7 +22,7 @@ test('published device and AI menu aliases give page and shared panels consisten
   for (const device of ['iot-user-device-list', 'iot-user/device/list']) for (const ai of ['algorithm-center', 'project/algorithm-center']) {
     context.menu.menuResultCache = [{ code: 'root', children: [device, ai, 'video/resources'].map(code => ({ code })) }]
     const shared = mod.exports.getDashboardModules()
-    const page = mod.exports.resolveResourcePageAccess({ saas: false, menus: context.menu.menuResultCache, installed: name => context.installed.includes(name) })
+    const page = mod.exports.resolveResourcePageAccess({ edgeSupported: true, saas: false, menus: context.menu.menuResultCache, installed: name => context.installed.includes(name) })
     assert.equal(shared.edge, true)
     assert.equal(shared.vision, true)
     assert.equal(page.edge, shared.edge)
@@ -31,7 +31,7 @@ test('published device and AI menu aliases give page and shared panels consisten
   context.menu.menuResultCache = [{ code: 'iot-user/device/list/detail' }, { code: 'project/algorithm-center/detail' }]
   assert.equal(mod.exports.getDashboardModules().edge, false)
   assert.equal(mod.exports.getDashboardModules().vision, false)
-  const page = mod.exports.resolveResourcePageAccess({ saas: false, menus: context.menu.menuResultCache, installed: name => context.installed.includes(name) })
+  const page = mod.exports.resolveResourcePageAccess({ edgeSupported: true, saas: false, menus: context.menu.menuResultCache, installed: name => context.installed.includes(name) })
   assert.equal(page.edge, false)
   assert.equal(page.vision, false)
 })
