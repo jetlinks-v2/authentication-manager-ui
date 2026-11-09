@@ -1259,6 +1259,8 @@ URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显�
 
 实施及验证：同一套 API 和编辑器覆盖 SaaS、私有化、项目和云侧代理，校验保存、发布、撤回请求体、范围必填、旧草稿清理、区域请求次数以及初始化菜单过滤。公告能力、登录弹窗、本地确认与管理回归 76/76 通过，相关菜单/弹窗/发布结构检查 5/5 通过；Web Core 依赖回归 75/75 通过。两端模块类型检查保持原有 757/609 项依赖诊断，修改文件无新增诊断；两端 `pnpm -F jetlinks-web-core build -- -- --module-name authentication-manager-ui` 生产构建通过，修改文件 `git diff --check` 通过。Web Core 可选通知数据源能力在其自身仓库交付，不提交本地配置或父仓库子模块引用。
 
+交付引用：实现提交 `6181aa512f7c5035d27549242f5138e063da0284`，模块 [PR #146](https://github.com/jetlinks-v2/authentication-manager-ui/pull/146)；依赖 [Web Core PR #226](https://github.com/jetlinks-v2/jetlinks-web-core/pull/226)，先合并依赖。
+
 #### 公告多语言内容完善（已完成）
 
 - 目标：新增和编辑公告时，标题、摘要、类型、Markdown 正文均可分别维护中文与英文；管理列表、查看弹窗、顶栏铃铛、实时提示、通知详情和首次登录弹窗按当前界面语言展示，缺少当前语言时继续回退兼容主字段。
