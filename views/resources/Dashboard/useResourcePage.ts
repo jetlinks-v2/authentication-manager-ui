@@ -33,15 +33,14 @@ export function useResourcePage(width: Readonly<Ref<number>>) {
   // 缓存页面暂时隐藏时宽度会归零，保留实际宽度以免切换个人布局或重建业务卡片。
   watch(width, value => { if (value > 0) layoutWidth.value = Math.round(value) }, { immediate: true })
   const menu = useMenuStore()
-  const capabilities = useResourceCapabilities(ref(false))
+  const capabilities = useResourceCapabilities(ref(false), true)
   provideResourceCapabilities(capabilities)
   provideVideoSummary()
   const access = computed(() => {
-    // 模块注册变化复用能力层的响应式版本；不通过请求失败来推测能力。
-    void capabilities.modules.value
     return resolveResourcePageAccess({ saas: isSaaS,
       menus: menu.initialized && !menu.loading ? menu.menuResultCache : [],
       installed: name => moduleRegistry.hasModule(name),
+      edgeSupported: capabilities.modules.value.edge,
     })
   })
   const mapSourceAvailable = computed(() => access.value.map
@@ -78,7 +77,7 @@ export function useResourcePage(width: Readonly<Ref<number>>) {
     mapDefinition: computed(() => mapDiscovery.catalog.value.components.deviceMapCard), mapLoading: mapDiscovery.loading,
     reloadMap: mapDiscovery.reload, onGatewayCount })
   const widgets = computed(() => buildResourcePageWidgets(getResourceSummaryKinds(access.value), cells.value,
-    layoutWidth.value, nodeCount.value, { private: !isSaaS }))
+    layoutWidth.value, nodeCount.value, { private: !access.value.saas }))
   const catalog: DashboardCatalog = { groups: [], components: {
     resourceSaasWidget: { component: markRaw(ResourceDashboardWidget), configs: [], groupId: 'saas-resource-dashboard',
       defaultConfig: { type: 'resourceSaasWidget', componentProps: {} } },
@@ -90,9 +89,9 @@ export function useResourcePage(width: Readonly<Ref<number>>) {
   }))
   /** 新旧组件集合沿用同一范围算法，迁移不会跨账号、部署、宽度或能力组合读取。 */
   function layoutKey(ids: readonly string[]) {
-    return `resource-dashboard:${isSaaS ? 'saas:v9' : 'private:v1'}:${CryptoJS.MD5(JSON.stringify([
+    return `resource-dashboard:${access.value.saas ? 'saas:v9' : access.value.map ? 'private:v1' : 'private:v4'}:${CryptoJS.MD5(JSON.stringify([
       capabilities.scope.value, resourcePageCanvasMode(layoutWidth.value), [...ids].sort(),
-      ...(!isSaaS ? [cells.value.map(cell => [cell.id, cell.panels, cell.offline])] : []),
+      ...(!access.value.saas ? [cells.value.map(cell => [cell.id, cell.panels, cell.offline])] : []),
     ])).toString()}`
   }
   const storageKey = computed(() => layoutKey(widgets.value.map(item => item.id)))
@@ -104,7 +103,7 @@ export function useResourcePage(width: Readonly<Ref<number>>) {
       if (typeof localStorage === 'undefined') return
       const legacyKey = layoutKey(widgets.value.flatMap(item => item.kind === 'distribution'
         ? ['resource-panel-map', 'resource-panel-offline'] : [item.id]))
-      const mapOnlyLegacyKey = isSaaS ? layoutKey(widgets.value.map(item => item.kind === 'distribution'
+      const mapOnlyLegacyKey = access.value.saas ? layoutKey(widgets.value.map(item => item.kind === 'distribution'
         ? 'resource-panel-map' : item.id)) : undefined
       migrateResourceDistributionLayout(localStorage, key, legacyKey, widgets.value, mapOnlyLegacyKey)
     } catch { /* 禁用浏览器存储时使用默认排布。 */ }
@@ -112,12 +111,12 @@ export function useResourcePage(width: Readonly<Ref<number>>) {
   // 无资源且有概览权限时返回概览，缓存页面停用时不触发跳转。
   const overviewGranted = computed(() => hasGrantedResourceMenu(menu.menuResultCache, 'project/Overview')
     && !!menu.getMenu('project/Overview'))
-  watch([active, () => menu.initialized, () => menu.loading, hasContent, overviewGranted], ([visible, initialized, loading, content, overview]) => {
-    if (visible && initialized && !loading && !content
+  watch([active, () => menu.initialized, () => menu.loading, hasContent, overviewGranted, capabilities.loading, capabilities.errors], ([visible, initialized, loading, content, overview, checking, errors]) => {
+    if (visible && initialized && !loading && !checking && !errors.length && !content
       && overview) {
       void menu.jumpPage('project/Overview')
     }
   }, { immediate: true })
   return { capabilities, hasContent, catalog, dashboard, storageKey, ready: computed(() => layoutWidth.value > 0), fewNodes,
-    isPrivate: !isSaaS, updatedText, dense: computed(() => getResourceSummaryKinds(access.value).length >= 5) }
+    isPrivate: computed(() => !access.value.saas), updatedText, dense: computed(() => getResourceSummaryKinds(access.value).length >= 5) }
 }

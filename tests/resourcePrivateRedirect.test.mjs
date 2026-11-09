@@ -52,3 +52,21 @@ test('a granted resource keeps its page even with overview authorization', () =>
   assert.deepEqual(context.calls, [])
   scope.stop()
 })
+
+test('resource capability loading or failure does not redirect to overview', async () => {
+  context.calls = []
+  context.capabilities.loading.value = true
+  context.capabilities.errors.value = []
+  context.menu = vue.reactive({ initialized: true, loading: false, menuResultCache: [{ code: 'project/Overview' }], getMenu: () => true, jumpPage: code => context.calls.push(code) })
+  const scope = vue.effectScope()
+  scope.run(() => mod.exports.useResourcePage(vue.ref(1440)))
+  assert.deepEqual(context.calls, [])
+  context.capabilities.errors.value = [new Error('unavailable')]
+  context.capabilities.loading.value = false
+  await vue.nextTick()
+  assert.deepEqual(context.calls, [])
+  context.capabilities.errors.value = []
+  await vue.nextTick()
+  assert.deepEqual(context.calls, ['project/Overview'])
+  scope.stop()
+})
