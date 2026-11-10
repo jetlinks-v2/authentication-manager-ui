@@ -36,7 +36,7 @@
 								<AIcon class="treeItem__icon" type="icon-moren" />
 								<j-ellipsis style="flex: 1; min-width: 0">{{ item.i18nName || item.name }}</j-ellipsis>
 							</div>
-							<div v-if="item.id !== 'default_group' && isAdmin" class="treeItem__actions" @click="(e) => e.stopPropagation()">
+							<div v-if="item.id !== 'default_group'" class="treeItem__actions" @click="(e) => e.stopPropagation()">
 								<j-permission-button :disabled="item.id === 'default_group'" :popConfirm="{
                                     title: $t('RoleLeft.index.507330-2'),
                                     onConfirm: () => deleteGroup(item.id, item.isNew),

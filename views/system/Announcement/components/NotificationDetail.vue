@@ -257,16 +257,22 @@ watch([() => props.data, locale], loadDetail, { immediate: true })
 
   .ant-modal-confirm-btns {
     display: flex;
-    justify-content: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
     margin-top: 0;
     padding: var(--space-4) var(--space-8) var(--space-6);
     background: var(--jet-theme-bg-container);
   }
 
   .ant-modal-confirm-btns .ant-btn {
-    min-width: 12rem;
-    height: 2.5rem;
+    min-width: 5.5rem;
+    height: 2rem;
     border-radius: var(--r-pill);
+  }
+
+  .announcement-login-footer {
+    align-items: center;
+    flex-wrap: wrap;
   }
 
   @media (max-width: 40rem) {
@@ -276,7 +282,7 @@ watch([() => props.data, locale], loadDetail, { immediate: true })
     }
 
     .ant-modal-confirm-btns .ant-btn {
-      width: 100%;
+      width: auto;
       min-width: 0;
     }
   }

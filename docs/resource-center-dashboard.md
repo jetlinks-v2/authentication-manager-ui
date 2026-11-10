@@ -534,10 +534,12 @@ const { catalog, dashboard, loading, errors } = useResourceDashboard(preview)
 - 专项验证：node modules/authentication-manager-ui/scripts/verify-gateway-status.cjs。覆盖四项请求契约、分页、单位、空值/零值、排行跳转、预览隔离、迟到响应、卸载与Vue编译。此验证使用契约响应模拟，不代表真实部署联调通过。
 
 
-## 视觉任务实时趋势的归属与部署方式
+## 视觉任务指标排行的归属与共享监控边界
 
-资源卡片及推理耗时、复判积压、成功累计数的解析、窗口和绘图统一归属本模块 `visDashboard/ResourceCenter/VisionTaskRanking/trend`。文案使用本模块的 `VisionTrend` 分组，不再依赖云端 `edge-master-ui` 的组件注册。
+资源卡片恢复 `VisionTaskRanking/VisionTaskRanking.vue` 的指标排行入口，复用 `useVisionTaskRanking`、`VisionTaskRankingContent` 和 `ResourceRankList`，提供推理耗时、识别丢弃、复判积压三个指标及任务详情。移除该卡片的实时趋势采样、任务选择和绘图实现；接口及聚合口径沿用原有服务层，查询窗口与刷新周期保持原有设置。
 
-云端根据授权网关目录选择节点，经 `/edge/device/{id}/_` 代理读取任务目录和 MBean；边端从 `/system/monitor/members` 识别本机，直接调用本机接口并隐藏节点选择框。任务与指标选择、图表样式、可见性和账号范围隔离保持一致。边端不展示边缘节点和设备分布卡片；设备上报消息与视觉任务实时趋势在桌面宽度下并排各占半行，分别保持云端消息卡17行、视觉卡13行的高度，窄屏按正常响应式布局换行。点位状态与按采集协议继续沿用原布局。其他资源卡片依据自身模块与菜单授权显示。边端既有 `machine-vision/Task` 授权可作为本机视觉能力入口。
+切换指标时，仅在当前卡片内复用 60 秒以内的能力目录、网关目录及小规模节点的完整任务目录；指标聚合仍按原有在线/离线分组重新请求。手动重试、定时刷新、作用域或可见性变化均重新取目录；过期后不再复用，目录未完整取得时继续显示未知状态。
+
+排行依赖已授权的边缘节点、视频和视觉能力，沿用网关排行旁的原有布局；没有网关能力的本机环境不生成视觉排行卡片。移除本机消息与视觉趋势并排的专用布局，其他资源卡片的部署识别和权限规则保持不变。
 
 `runtimeMonitor.ts` 是本模块的公开实时监控入口，并通过 `register.ts` 的 `apis.runtimeMonitor` 注册。网关监控复用其批采集、窗口、流式请求和错误规则；具体设备代理路径仍由网关模块提供，不引入对其私有目录的反向依赖。

@@ -7,18 +7,30 @@ test('overview loads bulletin reception rows and keeps the publication reference
   const row = { id: 'intent-1', topicName: 'Platform notice', message: 'Summary', state: { value: 'unread' },
     notifyTime: Date.now(), detail: { bulletinId: 'bulletin-1', publishVersion: 2 } }
   const module = loadLogModule('visDashboard/Base/shared/apiAnnouncements.ts', {
-    '../../../views/system/Announcement/api': { queryAnnouncementInbox: async query => {
+    '../../../views/system/Announcement/receivedDataSource': { queryAnnouncementInbox: async query => {
       calls.push(query)
       return { result: { data: [row] } }
     } },
-    '../../../views/system/Announcement/announcementI18n': { resolveAnnouncementText: () => '' },
+    '../../../views/system/Announcement/api': {
+      SYSTEM_BULLETIN_PROVIDER: 'SystemBulletin',
+      parseSystemBulletinDetail: row => row.detail,
+      normalizeBulletinType: value => String(value || ''),
+    },
+    '../../../views/system/Announcement/announcementI18n': {
+      resolveAnnouncementText: (record, key) => record?.[key] || '',
+      resolveAnnouncementTypeLabel: value => value,
+    },
+    '../../../views/system/Announcement/bulletinTypeIcon': { resolveBulletinTypeColor: () => '' },
+    '@jetlinks-web-core/layout/components/noticeUtils': { BADGE_OVERFLOW_COUNT: 99, toBadgeCount: value => value.count },
     './navigation': { HOME_TARGETS: { messages: 'account/center' } },
   })
   const rows = await module.loadAnnouncements()
   assert.equal(calls[0].pageSize, 5)
   assert.equal(rows[0].label, 'Platform notice')
   assert.equal(rows[0].isNew, true)
-  assert.equal(rows[0].notification, row)
+  assert.equal(rows[0].notification.id, row.id)
+  assert.equal(rows[0].notification.detail.bulletinId, row.detail.bulletinId)
+  assert.equal(rows[0].notification.detail.publishVersion, row.detail.publishVersion)
 })
 
 test('the real bulletin registration enables detail confirmation and routes it through its own source', async () => {
@@ -34,6 +46,7 @@ test('the real bulletin registration enables detail confirmation and routes it t
   }
   const registration = loadLogModule('views/system/Announcement/register.ts', {
     './api': api,
+    './bulletinCapability': { isAnnouncementSupported: async () => true },
     './noticeListLoader': {},
     './realtimeNotification': {},
     './loginPopup': {},

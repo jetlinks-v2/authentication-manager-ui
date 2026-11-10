@@ -33,10 +33,10 @@ export function resolveResourcePageAccess(source: ResourceAccessSource): Resourc
   const iot = available('device-manager-ui', HOME_TARGETS.devices.menus)
   const video = available('jetlinks-media-ui', HOME_TARGETS.video.menus)
   const edge = source.edgeSupported && available('edge-master-ui', HOME_TARGETS.gateway.menus)
-  const visionMenus = ['algorithm-center', 'project/algorithm-center', ...(local ? ['machine-vision/Task'] : [])]
   return {
     saas, iot, video, edge,
-    vision: video && (edge || local) && available('jetlinks-ai-ui', visionMenus),
+    // 任务排行依赖授权网关目录，本机视觉能力不单独生成排行卡片。
+    vision: edge && video && available('jetlinks-ai-ui', ['algorithm-center', 'project/algorithm-center']),
     aiEvents: (saas || video) && available('jetlinks-ai-ui', ['video/event']),
     visualization: available('visualization-manager-ui', HOME_TARGETS.screen.menus),
     product: !saas && available('device-manager-ui', ['device/Product']),
