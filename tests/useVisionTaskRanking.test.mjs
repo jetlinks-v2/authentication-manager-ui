@@ -16,7 +16,7 @@ const compiled = await build({
       '@jetlinks-web-core/store/menu': 'export const useMenuStore=()=>context.menu',
       '@jetlinks-web-core/utils/module-registry': 'export const moduleRegistry={getResourceItem:()=>context.detailComponent}',
       './useResourceCapabilities': 'export const useResourceCapabilities=()=>context.capabilities',
-      '../shared': 'export const settingsOf=()=>({limit:5,refreshSeconds:0})',
+      '../shared': 'export const settingsOf=()=>context.settings',
       '../services/visionTaskRanking': `export const visionRankingMetrics=['latency','discard','backlog'];export const loadVisionTaskRanking=(...args)=>context.load(...args)`,
     }
     api.onResolve({ filter: /.*/ }, args => boundaries[args.path] ? { path: args.path, namespace: 'stub' } : undefined)
@@ -25,11 +25,11 @@ const compiled = await build({
 })
 const tick = async () => { await vue.nextTick(); await new Promise(setImmediate) }
 const row = name => ({ id: name, gatewayId: 'g', gatewayName: 'gateway', taskId: name, name, sourceName: '', value: 10, detailAvailable: true })
-function fixture(t, preview = false) {
+function fixture(t, preview = false, refreshSeconds = 0) {
   const calls = [], capabilities = { modules: vue.ref({ edge: true, vision: true }), scope: vue.ref('account-a') }
   const jumps = [], grants = vue.reactive(new Set(['iot-user-device-list/GatewayDetail', 'algorithm-center']))
-  const context = { capabilities, detailComponent: {}, visibility: vue.ref('visible'), menu: { getMenu: code => grants.has(code), jumpPage: (...args) => jumps.push(args) },
-    load: (metric, current) => new Promise((resolve, reject) => calls.push({ metric, current, resolve, reject })) }
+  const context = { settings: vue.reactive({ limit: 5, refreshSeconds }), capabilities, detailComponent: {}, visibility: vue.ref('visible'), menu: { getMenu: code => grants.has(code), jumpPage: (...args) => jumps.push(args) },
+    load: (metric, current, cache) => new Promise((resolve, reject) => calls.push({ metric, current, cache, resolve, reject })) }
   const module = { exports: {} }
   Function('module', 'exports', 'require', 'context', compiled.outputFiles[0].text)(module, module.exports, require, context)
   const scope = vue.effectScope(), edit = vue.ref(preview)
@@ -174,4 +174,39 @@ test('identity shows scene and algorithm only and latency uses ms independently 
   state.metric.value='backlog'
   calls.at(-1).resolve({rows,metadataFailed:false,limited:false,supported:true,unit:'条'}); await tick()
   assert.equal(state.rows.value[0].text,'10 条')
+})
+
+test('metadata cache is reused only for a fresh metric change and reset for expiry, refresh and scope', async t => {
+  let now = 1_000, timerId = 0
+  const timers = new Map()
+  t.mock.method(Date, 'now', () => now)
+  t.mock.method(globalThis, 'setTimeout', fn => { timers.set(++timerId, fn); return timerId })
+  t.mock.method(globalThis, 'clearTimeout', id => { timers.delete(id) })
+  const { state, calls, capabilities } = fixture(t, false, 10)
+  const finish = async () => { resolve(calls.at(-1), 'sample'); await tick() }
+  await finish()
+  const initial = calls[0].cache
+  assert.ok(initial)
+  state.metric.value = 'discard'
+  assert.equal(calls[1].cache, initial)
+  await finish()
+  now += 60_000
+  state.metric.value = 'backlog'
+  assert.notEqual(calls[2].cache, initial)
+  await finish()
+  const expired = calls[2].cache
+  void state.refresh()
+  assert.notEqual(calls[3].cache, expired)
+  await finish()
+  const manual = calls[3].cache
+  assert.equal(timers.size, 1)
+  const runTimer = [...timers.values()][0]
+  runTimer()
+  assert.notEqual(calls[4].cache, manual)
+  await finish()
+  const automatic = calls[4].cache
+  capabilities.scope.value = 'account-b'
+  assert.notEqual(calls[5].cache, automatic)
+  assert.equal(calls[4].current(), false)
+  await finish()
 })

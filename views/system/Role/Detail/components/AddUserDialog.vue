@@ -1,7 +1,5 @@
 <template>
     <a-modal open :title="$t('components.AddUserDialog.659587-0')" :width="1000" @ok="confirm" @cancel="emits('update:visible', false)">
-        <ConditionFilter style="padding: 0" :columns="columns" type="simple" @change="({ filter }) => queryParams = { ...filter }" />
-
         <div style="height: 30rem;">
           <j-pro-table style="padding: 0" ref="tableRef" :columns="columns" :request="getUserList" mode="TABLE" :params="queryParams"
                        :rowSelection="{
@@ -10,6 +8,9 @@
                 onSelectAll: selectAll,
                 onSelectNone: ()=>selectedRowKeys = []
             }">
+		            <template #headerLeftRender>
+			              <ConditionFilter style="padding: 0" :columns="columns" type="simple" @search="(params: ConditionFilterLegacySearchPayload) => queryParams = { ...params }" />
+		            </template>
           </j-pro-table>
         </div>
     </a-modal>
@@ -19,6 +20,7 @@
 import { getUserByRole_api, bindUser_api } from '@authentication-manager-ui/api/system/role';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n';
+import type { ConditionFilterLegacySearchPayload } from '@jetlinks-web-core/components/ConditionFilter';
 
 const { t: $t } = useI18n();
 const emits = defineEmits(['refresh', 'update:visible']);

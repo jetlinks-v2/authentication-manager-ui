@@ -1890,6 +1890,7 @@
   "Announcement.action.savePublish": "Save and publish",
   "Announcement.action.confirmPublish": "Publish",
   "Announcement.action.confirm": "Got it",
+  "Announcement.notification.historyUnread": "{count} unread announcements",
   "Announcement.search.keywordPlaceholder": "Search title or summary",
   "Announcement.search.allStatus": "All statuses",
   "Announcement.value.yes": "Yes",
@@ -2205,7 +2206,7 @@
     "QuickStart": "Quick start",
     "AlgorithmCoverage": "Vision task coverage",
     "VideoPlaybackTrend": "Edge node metric ranking",
-    "VisionTaskRanking": "Vision task realtime trend",
+    "VisionTaskRanking": "Vision task metric ranking",
     "visionRanking": {
       "latency": "Inference latency",
       "discard": "Recognition drops",
@@ -2407,8 +2408,7 @@
         "offline": "No IoT devices with a recorded offline time",
         "offlineDevices": "No devices with an offline timestamp"
       }
-    },
-    "visionTrendUnavailable": "Vision trend monitoring is unavailable in this environment"
+    }
   },
   "tenantDomain.title": "Custom Domain",
   "tenantDomain.disabled": "Custom domain is not enabled",
@@ -3252,38 +3252,5 @@
   },
   "packages.ProjectHome.saasResourceDevices": "Devices",
   "packages.ProjectHome.saasDataBoard": "Data dashboards",
-  "packages.ProjectHome.saasUnitScreens": "screens",
-  "VisionTrend": {
-    "gateway": "Edge node",
-    "task": "Vision task",
-    "metric": "Metric",
-    "latency": "Inference latency",
-    "interval": "Sampling interval",
-    "everySeconds": "Every {seconds}s",
-    "average": "Mean",
-    "p95": "P95",
-    "maximumP95": "Maximum source P95",
-    "offline": "Offline",
-    "noGateway": "No accessible edge nodes",
-    "noSamples": "No valid inference samples",
-    "sampledAt": "Sampled at",
-    "pausedAt": "Paused; last sample at",
-    "accumulating": "Collecting the latest one minute since opening this page",
-    "refresh": "Refresh",
-    "help": "Collects current task metrics after this page opens, retaining at most one minute of this page’s observations without replaying earlier data. Mean latency is inference-weighted; multiple-source P95 uses the maximum. Successful inferences retain the task’s lifetime count. Review backlog stays unavailable when it cannot be attributed exclusively to this task.",
-    "pending": "Review backlog",
-    "times": "count",
-    "items": "items",
-    "noTasks": "No vision tasks",
-    "noReviewSamples": "No review backlog attributable to this task",
-    "success": "Cumulative successful inferences",
-    "errors": {
-      "failed": "Query failed",
-      "forbidden": "Access denied or session expired",
-      "unavailable": "Metric service unavailable",
-      "range": "Choose a valid range of up to 7 days, ending no later than now",
-      "unsupported": "Not supported",
-      "identity": "Runtime device ID unavailable"
-    }
-  }
+  "packages.ProjectHome.saasUnitScreens": "screens"
 }

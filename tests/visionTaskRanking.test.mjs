@@ -270,3 +270,127 @@ test('configuration scene wins and ambiguous source-free task has no invented sc
   assert.equal(byId.ambiguous.sceneName,undefined)
   assert.equal(byId.ambiguous.algorithmName,'算法二')
 })
+
+test('three online gateways reuse complete metadata while every tab requests fresh metrics', async () => {
+  const calls = []
+  globalThis.__visionRankingFixture = {
+    get: async () => { calls.push('supported'); return ok(catalog) },
+    page: async () => { calls.push('gateways'); return { data: ['g1', 'g2', 'g3'].map(gateway), total: 3 } },
+    post: async (url, body) => {
+      if (url === '/device/metrics/_agg') { calls.push('aggregation'); return ok([]) }
+      calls.push('tasks')
+      assert.deepEqual(body.terms, [{ column: 'domain', termType: 'eq', value: 'ComputerVision' }])
+      return ok([{ id: 't', name: 'Task' }])
+    },
+  }
+  const cache = {}
+  for (const [index, metric] of ['latency', 'discard', 'backlog'].entries()) {
+    const before = calls.length
+    const result = await loadVisionTaskRanking(metric, () => true, cache)
+    assert.equal(calls.length - before, index === 0 ? 6 : 1)
+    assert.equal(result.taskCount, 3)
+    assert.equal(result.directoryIncomplete, false)
+  }
+  assert.deepEqual(calls.reduce((counts, key) => ({ ...counts, [key]: (counts[key] || 0) + 1 }), {}),
+    { supported: 1, gateways: 1, aggregation: 3, tasks: 3 })
+})
+
+test('cached mixed online/offline scope still queries both aggregations and remains unknown', async () => {
+  const calls = []
+  globalThis.__visionRankingFixture = {
+    get: async () => { calls.push('supported'); return ok(catalog) },
+    page: async () => { calls.push('gateways'); return { data: [gateway('on'), { id: 'off', name: 'Offline', online: false }], total: 2 } },
+    post: async (url, body) => {
+      if (url === '/device/metrics/_agg') { calls.push(body.thingIds); return ok([]) }
+      calls.push('tasks'); return ok([{ id: 't', name: 'Task' }])
+    },
+  }
+  const cache = {}
+  for (const metric of ['latency', 'backlog']) {
+    const result = await loadVisionTaskRanking(metric, () => true, cache)
+    assert.equal(result.directoryIncomplete, true)
+    assert.equal(result.taskCount, undefined)
+  }
+  assert.deepEqual(calls, ['supported', 'gateways', ['on'], ['off'], 'tasks', ['on'], ['off']])
+})
+
+test('missing metric metadata cannot corrupt the cached directory for another metric', async () => {
+  const calls = []
+  globalThis.__visionRankingFixture = {
+    page: directory(['g1']),
+    post: async (url, body) => {
+      calls.push(url)
+      if (url !== '/device/metrics/_agg') return ok([{ id: 'known', name: 'Known' }])
+      return ok(body.pointType === 'edge-ai-task'
+        ? [latency('g1', 'missing')]
+        : [{ thingId: 'g1', taskId: 'known', dimensionKey: 'k', dimensionType: 'type', value: 3 }])
+    },
+  }
+  const cache = {}
+  const missing = await loadVisionTaskRanking('latency', () => true, cache)
+  assert.equal(missing.directoryIncomplete, true)
+  assert.equal(missing.taskCount, undefined)
+  const known = await loadVisionTaskRanking('backlog', () => true, cache)
+  assert.equal(known.directoryIncomplete, false)
+  assert.equal(known.taskCount, 1)
+  assert.equal(known.metadataFailed, false)
+  assert.equal(calls.filter(url => url !== '/device/metrics/_agg').length, 1)
+})
+
+test('failed task directory remains unknown when reused and a new cache retries it', async () => {
+  let taskCalls = 0
+  globalThis.__visionRankingFixture = {
+    page: directory(['g1']),
+    post: async url => {
+      if (url === '/device/metrics/_agg') return ok([])
+      return ++taskCalls === 1 ? { status: 403 } : ok([{ id: 't', name: 'Task' }])
+    },
+  }
+  const cache = {}
+  for (const metric of ['latency', 'backlog']) {
+    const result = await loadVisionTaskRanking(metric, () => true, cache)
+    assert.equal(result.directoryIncomplete, true)
+    assert.equal(result.taskCount, undefined)
+    assert.equal(result.metadataFailed, true)
+  }
+  assert.equal(taskCalls, 1)
+  const refreshed = await loadVisionTaskRanking('latency', () => true, {})
+  assert.equal(taskCalls, 2)
+  assert.equal(refreshed.taskCount, 1)
+  assert.equal(refreshed.directoryIncomplete, false)
+})
+
+test('failed supported and gateway requests are retried with the same cache', async () => {
+  let gets = 0, pages = 0
+  globalThis.__visionRankingFixture = {
+    get: async () => { if (++gets === 1) throw new Error('supported failed'); return ok(catalog) },
+    page: async () => { if (++pages === 1) throw new Error('gateways failed'); return { data: [], total: 0 } },
+    post: () => assert.fail('no gateways')
+  }
+  const cache = {}
+  await assert.rejects(loadVisionTaskRanking('latency', () => true, cache), /supported failed/)
+  await assert.rejects(loadVisionTaskRanking('latency', () => true, cache), /gateways failed/)
+  const result = await loadVisionTaskRanking('latency', () => true, cache)
+  assert.equal(result.taskCount, 0)
+  assert.equal(gets, 2)
+  assert.equal(pages, 2)
+})
+
+test('a failed aggregation is never reused and the next metric retries it', async () => {
+  let aggregations = 0, taskCalls = 0
+  globalThis.__visionRankingFixture = {
+    page: directory(['g1']),
+    post: async url => {
+      if (url !== '/device/metrics/_agg') { taskCalls++; return ok([{ id: 't', name: 'Task' }]) }
+      aggregations++
+      return aggregations === 2 ? { status: 500 } : ok([])
+    },
+  }
+  const cache = {}
+  await loadVisionTaskRanking('latency', () => true, cache)
+  await assert.rejects(loadVisionTaskRanking('discard', () => true, cache))
+  const result = await loadVisionTaskRanking('backlog', () => true, cache)
+  assert.equal(aggregations, 3)
+  assert.equal(taskCalls, 1)
+  assert.equal(result.taskCount, 1)
+})
