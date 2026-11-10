@@ -2253,6 +2253,7 @@
       "trendDescription": "{metric} · Past 24 hours",
       "empty": "No gateway metrics",
       "emptyDescription": "Connect edge nodes to view review queues and resource usage",
+      "loadEmptyDescription": "Connect edge nodes to view resource usage",
       "unsupported": "Metric is not enabled",
       "unsupportedDescription": "This metric is not listed by the current service",
       "cpuUsage": "CPU usage",
