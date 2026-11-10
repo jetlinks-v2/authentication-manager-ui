@@ -2026,6 +2026,7 @@
       "trendDescription": "{metric} · 直近24時間",
       "empty": "ゲートウェイ指標がありません",
       "emptyDescription": "エッジノードを接続すると、再判定キューと負荷指標を確認できます",
+      "loadEmptyDescription": "エッジノードを接続すると、負荷指標を確認できます",
       "unsupported": "この指標はまだ有効化されていません",
       "unsupportedDescription": "現在のサービスの利用可能な指標カタログにこの指標は含まれていません",
       "cpuUsage": "CPU使用率",

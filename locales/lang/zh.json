@@ -2253,6 +2253,7 @@
       "trendDescription": "{metric} · 近24小时",
       "empty": "暂无网关指标",
       "emptyDescription": "接入边缘节点后可查看复判队列与负载指标",
+      "loadEmptyDescription": "接入边缘节点后可查看负载指标",
       "unsupported": "当前指标尚未启用",
       "unsupportedDescription": "当前服务的可用指标目录中未包含此指标",
       "cpuUsage": "CPU使用率",
