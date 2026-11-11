@@ -3,10 +3,12 @@ import { getTreeData_api } from '@authentication-manager-ui/api/system/departmen
 import {exportPermission_api} from "@authentication-manager-ui/api/system/permission";
 import { ownershipDimensionFilters } from './views/application-center/ProjectApplication/ownershipSelectors'
 import objectPresentations from './objectPresentations'
+import { assetRelationMaintainer } from '@jetlinks-web-core/components/AssetRelationEditor'
 
 export default {
   objectPresentations,
   assetDimensionFilters: ownershipDimensionFilters,
+  objectRelationMaintainers: { 'asset:org': assetRelationMaintainer },
   apis: {
     getTreeData_api,
     exportPermission_api
