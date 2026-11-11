@@ -17,7 +17,7 @@
         <strong>{{ item.application.name }}</strong>
       </j-ellipsis>
       <j-ellipsis class="application-card__template">
-        {{ item.template.name }}
+        {{ applicationType }} · {{ item.template.name }}
       </j-ellipsis>
       <j-ellipsis class="application-card__description" :line-clamp="2">
         {{ description }}
@@ -55,7 +55,7 @@ import { computed, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CardBox from '@jetlinks-web-core/components/CardBox/index.vue'
 import CardAvatar from '@jetlinks-web-core/components/CardBox/CardAvatar.vue'
-import { applicationAvatar } from '../applicationModel'
+import { applicationAvatar, getApplicationProviderOptions } from '../applicationModel'
 import type { ApplicationTemplate, ProjectApplication } from '../types'
 
 interface ApplicationCardItem {
@@ -89,6 +89,11 @@ const { t: $t } = useI18n()
 const STATUS_NAMES: Record<string, string> = { enabled: 'success', disabled: 'default' }
 
 const avatar = computed(() => applicationAvatar(props.item.application, props.item.template))
+
+const applicationType = computed(() => {
+  const provider = props.item.template.provider || props.item.application.provider || 'official'
+  return getApplicationProviderOptions($t).find(option => option.value === provider)?.label || provider
+})
 
 const description = computed(() =>
   props.item.application.description || props.item.template.description || $t('comm.table.empty'))

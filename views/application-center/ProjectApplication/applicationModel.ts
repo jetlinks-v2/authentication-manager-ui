@@ -2,6 +2,7 @@ import globalI18n from '@jetlinks-web-core/locales'
 import dayjs from 'dayjs'
 import { normalizeBasicLayoutVariant } from '@jetlinks-web-core/layout/runtime/layoutVariant'
 import type { CardAvatarData } from '@jetlinks-web-core/components/CardBox/types'
+import type { ConditionTerm } from '@jetlinks-web-core/components/ConditionFilter'
 import type {
   BusinessApplicationEntity,
   BusinessApplicationRoleEntity,
@@ -53,12 +54,39 @@ const recordOf = (value: unknown): Record<string, unknown> =>
 
 const textOf = (value: unknown) => value === undefined || value === null ? '' : String(value)
 
-/** 仅提交用户筛选条件，应用可见范围由后端资产权限控制。 */
-export const buildApplicationTerms = (filters: ApplicationFilters) => {
-  const terms: Array<Record<string, unknown>> = [
-    ...filters.terms.map(term => ({ ...term })),
-  ]
-  return terms
+/** 卡片与筛选共用应用类型选项，语言切换时重新取展示文案。 */
+export const getApplicationProviderOptions = (translate: (key: string) => string) => [
+  { label: translate('ProjectApplication.create.businessApplication'), value: 'official' },
+  { label: translate('ProjectApplication.create.thirdPartyApplication'), value: 'third-party' },
+]
+
+/** 类型是模板属性，包含此条件的查询需要先加载模板。 */
+export const hasApplicationProviderFilter = (terms: readonly ConditionTerm[]): boolean =>
+  terms.some(term => term.terms ? hasApplicationProviderFilter(term.terms) : term.column === 'provider')
+
+/** 将虚拟类型条件转为模板 ID 条件，保留分组逻辑及后端资产权限过滤。 */
+export const buildApplicationTerms = (
+  filters: ApplicationFilters,
+  templates: readonly Pick<ApplicationTemplate, 'id' | 'provider'>[],
+) => {
+  const convertTerm = (term: ConditionTerm): Record<string, unknown> => {
+    if (term.terms) return { ...term, terms: term.terms.map(convertTerm) }
+    if (term.column !== 'provider') return { ...term }
+
+    const providers = Array.isArray(term.value) ? term.value : [term.value]
+    const templateIds = templates
+      .filter(template => providers.includes(template.provider || 'official'))
+      .map(template => template.id)
+    const excluded = term.termType === 'nin'
+    // templateId 必填；空集合用空值条件表达，避免空 IN 被忽略而返回全部应用。
+    return {
+      ...term,
+      column: 'templateId',
+      termType: templateIds.length ? (excluded ? 'nin' : 'in') : (excluded ? 'notnull' : 'isnull'),
+      value: templateIds.length ? templateIds : 1,
+    }
+  }
+  return filters.terms.map(convertTerm)
 }
 
 const normalizeStatus = (value: string | EnumValue | undefined): ApplicationStatus =>

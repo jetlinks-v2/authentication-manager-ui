@@ -548,6 +548,13 @@ Verification result:
 
 应用管理使用同一创建入口，通过模板 provider 区分普通业务应用与第三方应用，不新增后端应用类型或无模板创建接口。实际前端模块为 runtime-ui/modules/authentication-manager-ui；开放平台 API 应用仍使用独立 /api-application 模型。
 
+应用卡片类型展示与筛选（已实现）：
+
+- `/open/application` 卡片在模板名同一行显示“业务应用 / 第三方应用”，顶部 `ConditionFilter` 提供应用类型的“属于 / 不属于”筛选。`applicationModel.ts#getApplicationProviderOptions` 为 `components/ApplicationCard.vue` 和 `useApplicationList.ts` 提供同一组选项及中英文文案；历史空 provider 归为业务应用，未知 provider 保留原值。沿用现有卡片壳层、行高和截断样式。
+- 类型来自关联模板，应用实例没有 `provider` 列。`applicationModel.ts#buildApplicationTerms` 递归将虚拟类型条件转换为标准 `templateId` 的 `in/nin`，保留 AND/OR 分组及名称、状态、归属条件；无匹配模板时利用必填 `templateId` 的 `isnull/notnull` 表达空集合，避免空 IN 被忽略。后端实体、接口、菜单权限及运营端 `ui/` 保持原有契约。
+- `useProjectApplication.ts` 在类型查询前加载完整模板列表；与初次加载共用在途请求，失败传递到现有列表错误态并释放请求以供重试，不误判为空结果。等待模板期间切换或清空筛选时，旧查询不会再请求或替换新列表；没有类型条件时保留原有并行加载。继续复用应用菜单已有的模板查询权限及现有 API。
+- 验证：`node --test tests/applicationTypeFilter.test.mjs` 的 10 项通过，覆盖中英文卡片内容 SSR、真实列表字段与搜索选项、两类模板及空/未知类型、空集合、嵌套分组、失败重试、清空筛选、请求共享及响应顺序；API 与无关展示外壳使用边界替身。原有 `projectApplicationExternalAccess.test.mjs` 的 18 项通过，该脚本通过临时无空格工作区软链接入口和 `--preserve-symlinks-main` 运行，规避既有 `URL.pathname` 对路径空格的处理问题。模块定向生产构建通过（12,041 个模块，51.54 秒；通过 `--outDir` 将产物写入临时目录，命令入口为 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`），`git diff --check` 通过；卡片组件为 218 行。`pnpm exec vue-tsc --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json` 最终分支与最新 `origin/2.20` 基线均有 570 项诊断，归一化行号后完全一致，修改文件无诊断；清理基线后需重跑。工作区没有独立 lint 脚本。真实后端的组合筛选、清空结果及窄屏显示仍待在 `pnpm dev` 对应的 `/open/application` 页面验收。
+
 - 创建第三方实例时仅选择 provider=third-party 的模板及填写基本信息，不配置出站 OAuth2、通知 Token 或实例 callback。
 - 模板配置复用 redirectUri、externalParameters 和 notification.address/keyId/publicKey。平台生成 Code 并拼接跳转参数；第三方通过平台现有 /oauth2/token 和 /authorize/context 获取委托身份。
 - RSA keyId/publicKey 统一保存在 credential，支持凭据主动获取和加密交付。通知 HMAC keyId/Secret 默认由平台／模板材料派生，也可在现有配置区独立编辑；状态和受控查看仍复用 `/notification-signature` 与 `/_reveal`，专用 PUT 保存自定义凭据，不进入普通模板草稿。实例访问凭据轮换不改变模板通知签名。
@@ -716,6 +723,10 @@ Every created or substantially edited Vue file remains at or below 300 lines.
 `views/system/list-page.less` 为表格右侧筛选区补充 `40rem` 最小宽度；`views/system/Log/components/logDetailSections.css` 为访问日志与系统日志共用的详情折叠区增加分组间距、圆角和浅色标题背景，恢复内容区的默认左右内边距。查询、日志数据展示和详情展开逻辑保持原有契约；窄屏筛选区与详情折叠面板的最终视觉效果仍需人工验收。
 
 ### 应用模板列表操作
+
+应用类型：`views/application-center/Template/useApplicationTemplateList.ts` 在模板编码后增加“应用类型”列，并通过同一列配置为 `ConditionFilter` 提供下拉筛选；`official` 对应业务应用，`third-party` 对应第三方应用，复用模板创建和详情已有的中英文文案。`j-pro-table` 的 `bodyCell` 会覆盖列的 `customRender` 结果，因此该列使用 `scopedSlots`，由 `index.vue` 的 `provider` 插槽调用 `getProviderLabel`，直接复用筛选选项的展示文案。未标记类型的历史模板与详情一致，按业务应用展示；查询使用现有 `provider` 字段与标准 `terms`，保留当前列表布局及后端契约。
+
+类型列验证：用真实页面、hook 和已安装组件库的 `ProTable Content` 进行 Vue SSR 渲染，复现原 `customRender` 仍显示编码的问题，验证修复后中英文的业务应用、第三方应用及空类型单元格均与搜索选项标签一致。该验证替换 API 与菜单等无关边界，不代表真实接口联调。`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过（约 1 分钟），`git diff --check` 通过。`pnpm exec vue-tsc --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json` 最终分支与最新 `origin/2.20` 基线均有 570 项诊断，归一化行号后输出一致，修改文件无诊断；需清理既有问题后重跑。工作区未配置独立 lint 脚本；浏览器中的组合筛选及清空后的真实接口结果尚待验收。
 
 运行时应用模板页 `/infrastructure/app-template` 的状态列仅展示状态，复用产品列表 `modules/device-manager-ui/views/device/Product/index.vue` 的 `j-badge-status`，以 `enabled → processing`、`disabled → error` 映射呈现蓝色／红色状态标签。沿用应用模板文案和字符串／枚举对象归一化，标签外观由现有表格公共样式提供，不另写样式。`views/application-center/Template/index.vue` 的操作列复用 core `TableActions`，编辑图标保留行内入口，启用／停用与删除放入更多面板；分别使用菜单已有的 `update`、`action`、`delete` 权限码，并复用现有中英文资源。`useApplicationTemplateList.ts` 移除开关的临时乐观状态，取消确认时保留原状态，接口成功后更新状态并刷新，加载状态在请求结束时释放。后端接口、菜单定义、运营端 `ui/`、产品列表和其他模板配置保持原有契约。
 

@@ -55,6 +55,10 @@
 	              </a>
 	            </template>
 
+	            <template #provider="slotProps">
+	              {{ getProviderLabel(slotProps.provider) }}
+	            </template>
+
 	            <template #description="slotProps">
 	              {{ slotProps.i18nDescription || slotProps.description || $t('comm.table.empty') }}
 	            </template>
@@ -138,6 +142,7 @@ const {
   columns,
   defaultParams,
   requestTable,
+  getProviderLabel,
   normalizeState,
   table,
 } = useApplicationTemplateList()
