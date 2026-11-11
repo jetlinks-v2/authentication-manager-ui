@@ -550,6 +550,8 @@ Verification result:
 
 应用卡片类型展示与筛选（已实现）：
 
+交付：实现提交 `9494f0a2f46b297d1d2a31b3440d510ee8c262f9`；[PR #154](https://github.com/jetlinks-v2/authentication-manager-ui/pull/154)，目标分支 `2.20`，包含本文的应用模板类型列与筛选。
+
 - `/open/application` 卡片在模板名同一行显示“业务应用 / 第三方应用”，顶部 `ConditionFilter` 提供应用类型的“属于 / 不属于”筛选。`applicationModel.ts#getApplicationProviderOptions` 为 `components/ApplicationCard.vue` 和 `useApplicationList.ts` 提供同一组选项及中英文文案；历史空 provider 归为业务应用，未知 provider 保留原值。沿用现有卡片壳层、行高和截断样式。
 - 类型来自关联模板，应用实例没有 `provider` 列。`applicationModel.ts#buildApplicationTerms` 递归将虚拟类型条件转换为标准 `templateId` 的 `in/nin`，保留 AND/OR 分组及名称、状态、归属条件；无匹配模板时利用必填 `templateId` 的 `isnull/notnull` 表达空集合，避免空 IN 被忽略。后端实体、接口、菜单权限及运营端 `ui/` 保持原有契约。
 - `useProjectApplication.ts` 在类型查询前加载完整模板列表；与初次加载共用在途请求，失败传递到现有列表错误态并释放请求以供重试，不误判为空结果。等待模板期间切换或清空筛选时，旧查询不会再请求或替换新列表；没有类型条件时保留原有并行加载。继续复用应用菜单已有的模板查询权限及现有 API。
