@@ -3,7 +3,7 @@ import { Modal } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { onlyMessage } from '@jetlinks-web/utils'
-import type { ConditionFilterChangePayload } from '@jetlinks-web-core/components/ConditionFilter'
+import type { ConditionFilterChangePayload, ConditionFilterField } from '@jetlinks-web-core/components/ConditionFilter'
 import {
   deleteApplicationTemplate,
   queryApplicationTemplates,
@@ -85,6 +85,21 @@ export const useApplicationTemplateList = () => {
       dataIndex: 'action', key: 'action', width: 100, scopedSlots: true,
     },
   ])
+  const filterFields = computed<ConditionFilterField[]>(() => [
+    ...columns.value.filter(column => column.search),
+    {
+      title: $t('ProjectApplication.create.applicationKind'),
+      dataIndex: 'provider',
+      search: {
+        type: 'select',
+        defaultTermType: 'in',
+        options: [
+          { label: $t('ProjectApplication.create.businessApplication'), value: 'official' },
+          { label: $t('ProjectApplication.create.thirdPartyApplication'), value: 'third-party' },
+        ],
+      },
+    },
+  ])
   const defaultParams = {
     sorts: [
       { name: 'sortIndex', order: 'asc' },
@@ -152,6 +167,7 @@ export const useApplicationTemplateList = () => {
     createDialogOpen,
     queryParams,
     columns,
+    filterFields,
     defaultParams,
     requestTable,
     getProviderLabel,
