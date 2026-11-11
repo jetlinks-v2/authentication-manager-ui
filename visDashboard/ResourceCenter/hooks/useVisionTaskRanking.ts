@@ -40,10 +40,13 @@ export function useVisionTaskRanking(info: Ref<ResourceInfo | undefined>, isEdit
     return sorted.map(item => {
       const value = valueOf(item)
       const identity = [item.sceneName, item.algorithmName].filter(Boolean)
+      // 优先显示真实任务名；元数据缺失时保留算法或任务 ID，避免已有指标却只显示横线。
+      const name = item.name.trim()
+      const label = (name && name !== item.taskId ? name : identity.join(' · ')) || item.taskId || '—'
       return { ...item, rank: value === undefined ? 0 : ++rank, width: value === undefined ? 0 : Math.min(100, value / max * 100),
         detailAvailable: item.detailAvailable && item.online !== false && Boolean(item.gatewayId && item.taskId),
-        label: identity.join(' · ') || '—', caption: item.gatewayName,
-        tooltip: [item.gatewayName, ...identity].filter(Boolean).join(' · '),
+        label, caption: item.gatewayName,
+        tooltip: [...new Set([item.gatewayName, label, ...identity].filter(Boolean))].join(' · '),
         text: item.online === false ? t('resourceDashboard.offline') : value === undefined ? t('resourceDashboard.gatewayStatus.metricMissing')
           : `${Number(value.toFixed(2))}${metricUnit.value ? ` ${metricUnit.value === 'percent' ? '%' : metricUnit.value === 'count' ? t('resourceDashboard.visionRanking.records') : metricUnit.value}` : ''}`,
         color: item.online === false ? '#ff4d4f' : value === undefined || value === 0 ? '#bfbfbf' : undefined }
