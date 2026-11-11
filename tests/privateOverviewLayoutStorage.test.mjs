@@ -10,7 +10,7 @@ const mod = { exports: {} }; Function('module', 'exports', 'require', outputFile
 const { buildPrivateOverviewLayout, privateOverviewLayoutStorageKey, migratePrivateOverviewHeights } = mod.exports
 const access = { product:true, iot:true, video:true, screen:true, message:true, ai:true, applications:true, runtime:true, iotAlarm:true, videoAlarm:true }
 const width = 1512, widgets = buildPrivateOverviewLayout(access, true, width), key = privateOverviewLayoutStorageKey('scope', width, widgets), oldKey = key.replace(':canvas:v2:', ':canvas:v1:')
-const heights = { kpi:4, access:9, applications:9, trend:9, assets:10, monitor:10, alarms:19 }
+const heights = { kpi:4, recent:5, access:9, applications:9, trend:9, assets:10, monitor:10, alarms:19 }
 function oldLayout() { return widgets.map(({ id, panel, gridItem }) => ({ i:id, x:gridItem.x, y:gridItem.y, w:gridItem.w, h:heights[panel] })) }
 function store(old) { const values = new Map([[oldKey, old]]); let writes = 0; return { values, getItem:k=>values.has(k)?values.get(k):null, setItem:(k,v)=>{writes++; values.set(k,v)}, get writes(){return writes} } }
 test('migration shrinks untouched defaults, preserves custom geometry and old data, and writes once', () => {

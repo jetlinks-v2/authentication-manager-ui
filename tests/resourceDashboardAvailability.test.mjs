@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict'
 import { createRequire } from 'node:module'
-import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
@@ -8,19 +7,13 @@ import { fileURLToPath } from 'node:url'
 const require = createRequire(import.meta.url)
 const { build } = require('esbuild')
 const vue = require('vue')
-const { renderToString } = require('vue/server-renderer')
 const packageRoot = fileURLToPath(new URL('../', import.meta.url))
 const coreRoot = path.resolve(packageRoot, '../../jetlinks-web-core/src')
 const group = path.join(packageRoot, 'visDashboard/ResourceCenter')
-const dashboard = path.join(packageRoot, 'views/resources/Dashboard')
-const kinds = ['EdgeNodes', 'IotDevices', 'VideoDevices', 'Visualization', 'QuickStart', 'AlgorithmCoverage', 'VideoPlaybackTrend', 'MessageTrend', 'Collection', 'NetworkCards', 'DeviceDistribution', 'VisionTaskRanking']
 const bundles = new Map()
 
 async function bundle(saas) {
   if (bundles.has(saas)) return bundles.get(saas)
-  const overviewKinds = ['QuickGuide','DeviceAccess','Collection','RuleEngine','AiCenter','QuickActions','Applications','Visualization','Operations','Announcements','Quotas']
-  const overviewImports = overviewKinds.map(kind => `import { config as Overview${kind} } from ${JSON.stringify(path.join(group, '../Base', kind, 'config.ts'))}`).join('\n')
-  const configImports = kinds.map(kind => `import { config as ${kind} } from ${JSON.stringify(path.join(group, kind, 'config.ts'))}`).join('\n')
   const result = await build({
     stdin: { contents: `
       export * from ${JSON.stringify(path.join(group, '../useDashboardModules.ts'))}
@@ -29,20 +22,9 @@ async function bundle(saas) {
       export { visualizationGroups, resourceRowAvailable, homeFeatureAvailable, homeTitleKey } from ${JSON.stringify(path.join(group, '../Base/shared/resources.ts'))}
       export * from ${JSON.stringify(path.join(group, '../Base/shared/apiResources.ts'))}
       export * from ${JSON.stringify(path.join(group, '../Base/shared/apiAlgorithms.ts'))}
-      export * from ${JSON.stringify(path.join(group, 'services/quickStart.ts'))}
       export * from ${JSON.stringify(path.join(group, 'services/capabilities.ts'))}
       export * from ${JSON.stringify(path.join(group, 'hooks/useResourceCapabilities.ts'))}
-      export * from ${JSON.stringify(path.join(group, 'hooks/useQuickStart.ts'))}
       export * from ${JSON.stringify(path.join(group, 'hooks/useGatewayStatus.ts'))}
-      export * from ${JSON.stringify(path.join(group, 'hooks/useResourceWidget.ts'))}
-      export * from ${JSON.stringify(path.join(dashboard, '../../project/Overview/overviewDashboardLayout.ts'))}
-      export * from ${JSON.stringify(path.join(dashboard, 'resourceDashboardLayout.ts'))}
-      export * from ${JSON.stringify(path.join(dashboard, 'resourceLayoutStorage.ts'))}
-      export { normalizeGridItem } from '@jetlinks-web-core/components/DashBoardCanvas/utils/layout'
-      ${configImports}
-      ${overviewImports}
-      export const overviewConfigs = { ${overviewKinds.map(kind => `${kind}: Overview${kind}`).join(', ')} }
-      export const configs = { ${kinds.join(', ')} }
     `, resolveDir: packageRoot, loader: 'ts' },
     bundle: true, write: false, platform: 'node', format: 'cjs', target: 'node22', packages: 'external',
     tsconfigRaw: { compilerOptions: {} },
@@ -54,13 +36,13 @@ async function bundle(saas) {
         '@jetlinks-web-core/store/menu': 'export const useMenuStore = () => context.menu',
         '@jetlinks-web-core/store/user': 'export const useUserStore = () => context.user',
         '@jetlinks-web-core/router/globModules': 'export const getGlobModules = async () => context.routes',
-        '@jetlinks-web-core/utils/consts': 'export const isSaaS = context.saas',
-        '@jetlinks-web-core/utils/project-runtime': 'export const getProjectCodeFromLocation = () => context.runtime.project; export const getApplicationRuntimeEntry = () => ({})',
+        '@jetlinks-web-core/utils/consts': 'export const isSaaS = context.saas; export const USER_CENTER_MENU_CODE = "account-center"',
+        '@jetlinks-web-core/utils/project-runtime': 'export const getProjectCodeFromLocation = () => context.runtime.project; export const getApplicationRuntimeEntry = () => ({ applicationId: context.runtime.app })',
         '@jetlinks-web-core/utils/request-context': 'export const getBaseApi = () => context.runtime.api',
         '@jetlinks-web-core/locales': 'export default { global: { t: key => key } }',
       }
       buildApi.onResolve({ filter: /^\.\.\/\.\.\/\.\.\/api\/overview$/ }, args => args.importer.endsWith('/Base/shared/apiResources.ts') ? ({ path: 'overview', namespace: 'overview-test' }) : undefined)
-      buildApi.onLoad({ filter: /.*/, namespace: 'overview-test' }, () => ({ contents: `export const queryOverviewGatewaySummary=()=>context.summary('gateway');export const queryOverviewIotDeviceSummary=()=>context.summary('devices');export const queryOverviewChannelSummary=()=>context.summary('video')`, loader: 'js' }))
+      buildApi.onLoad({ filter: /.*/, namespace: 'overview-test' }, () => ({ contents: `export const queryOverviewGatewaySummary=()=>context.summary('gateway');export const queryOverviewIotDeviceSummary=()=>context.summary('devices');export const queryOverviewIotDeviceBreakdown=async()=>[];export const queryOverviewChannelSummary=()=>context.summary('video')`, loader: 'js' }))
       buildApi.onResolve({ filter: /^\.\/api$/ }, args => /Base\/shared\/(useHomeRuntime|homePollingContext)\.ts$/.test(args.importer)
         ? { path: 'home-loader', namespace: 'home-runtime-test' } : undefined)
       buildApi.onLoad({ filter: /.*/, namespace: 'home-runtime-test' }, () => ({ contents: 'export const loadHomeRows=feature=>context.homeLoad(feature)', loader: 'js' }))
@@ -97,10 +79,11 @@ async function fixture(saas = false) {
     modules: new Set(['edge-master-ui', 'visualization-model-ui']),
     listeners: new Set(),
     user: vue.reactive({ userInfo: { id: 'user-a' } }),
-    runtime: vue.reactive({ project: 'project-a', api: '/api' }),
+    runtime: vue.reactive({ project: 'project-a', api: '/api', app: 'app-a' }),
     routes: { 'data-collect': () => {}, 'iot-card/CardManagement': () => {} },
     responses: { collection: true, networkCards: true },
   }
+  context.hasCommandService = async id => { calls.push({ service: id }); return context.edgeSupported ?? true }
   context.summary = async id => { calls.push({ summary: id }); return { total: 0, online: 0 } }
   context.homeLoad = async feature => { calls.push({ home: feature }); return [] }
   context.gatewayDirectory = Array.from({ length: 4 }, (_, i) => ({ id: String(i), online: true }))
@@ -111,6 +94,7 @@ async function fixture(saas = false) {
   }
   context.setModules = (...ids) => { context.modules.clear(); ids.forEach(id => context.modules.add(id)); context.listeners.forEach(listener => listener()) }
   context.request = { post: async (endpoint, body) => { calls.push({ endpoint, body }); return { success: true, result: { total: 0, data: [] } } }, get: async endpoint => {
+    if (endpoint === '/command-supports/services') return { success: true, result: await context.hasCommandService('agentService') ? [{ id: 'agentService' }] : [] }
     calls.push({ endpoint })
     return { success: true, result: endpoint.includes('collectorService') ? context.responses.collection : context.responses.networkCards }
   } }
@@ -120,122 +104,6 @@ async function fixture(saas = false) {
 }
 
 const tick = async () => { await vue.nextTick(); await new Promise(setImmediate) }
-const error = status => Object.assign(new Error(`HTTP ${status}`), { response: { status } })
-const storage = () => {
-  const values = new Map()
-  return { values, getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) }
-}
-const visibleKinds = (collection, networkCards) => kinds.filter(kind => kind === 'Collection' ? collection : kind === 'NetworkCards' ? networkCards : true)
-const profile = (overrides = {}) => {
-  const capabilities = overrides.capabilities ?? { collection: true, networkCards: true }
-  return { scope: 'user-a/project-a', saas: false, mode: 'wide', capabilities, widgets: visibleKinds(capabilities.collection, capabilities.networkCards), ...overrides }
-}
-
-function assertFilledLayout(api, layout, description, columns = 24) {
-  const boxes = layout.map(([kind, x, y, w, h]) => ({
-    ...api.normalizeGridItem({ ...api.configs[kind].componentProps.gridItem, x, y, w, h }, columns), kind,
-  }))
-  for (const item of boxes) assert.ok(item.x >= 0 && item.x + item.w <= columns)
-  for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
-    const a = boxes[i], b = boxes[j]
-    assert.ok(!(a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y), `${description}:${a.kind}/${b.kind}`)
-  }
-  for (const y of new Set(boxes.map(item => item.y))) {
-    const widths = boxes.filter(item => item.y === y).map(item => item.w)
-    assert.ok(Math.max(...widths) - Math.min(...widths) <= 1, `${description}:equal widths at ${y}`)
-  }
-  const bottom = Math.max(0, ...boxes.map(item => item.y + item.h))
-  for (let y = 0; y < bottom; y++) assert.equal(boxes.filter(item => item.y <= y && item.y + item.h > y).reduce((sum, item) => sum + item.w, 0), columns, `${description}:row ${y}`)
-}
-
-test('all capability combinations produce normalized non-overlapping full-width rows', async () => {
-  const { api } = await fixture()
-  for (const width of [360, 640, 900, 1600]) for (const collection of [false, true]) for (const networkCards of [false, true]) {
-    const layout = api.buildPrivateResourceLayout(visibleKinds(collection, networkCards), width)
-    assert.equal(layout.some(item => item[0] === 'Collection'), collection)
-    assert.equal(layout.some(item => item[0] === 'NetworkCards'), networkCards)
-    assertFilledLayout(api, layout, `${width}:${collection}/${networkCards}`)
-  }
-})
-
-test('any widget subset fills equal-width rows after real grid constraints, including empty rows and singletons', async () => {
-  const { api } = await fixture()
-  for (const width of [360, 640, 900, 1600]) for (let mask = 0; mask < 2 ** kinds.length; mask++) {
-    const visible = kinds.filter((_, index) => mask & (1 << index))
-    const layout = api.buildPrivateResourceLayout(visible, width)
-    assert.deepEqual(layout.map(item => item[0]).sort(), [...visible].sort())
-    assertFilledLayout(api, layout, `${width}:subset ${mask}`)
-  }
-})
-
-test('remaining siblings have equal widths, single widgets fill the row, and empty rows move up', async () => {
-  const { api } = await fixture()
-  const layout = visible => Object.fromEntries(api.buildPrivateResourceLayout(visible, 1600).map(([kind, ...grid]) => [kind, grid]))
-  const metrics = layout(['EdgeNodes', 'VideoDevices', 'Visualization'])
-  assert.deepEqual(Object.values(metrics), [[0, 0, 8, 4], [8, 0, 8, 4], [16, 0, 8, 4]])
-  const body = layout(['QuickStart', 'Collection', 'MessageTrend'])
-  assert.deepEqual(body.QuickStart.slice(0, 3), [0, 0, 12])
-  assert.deepEqual(body.MessageTrend.slice(0, 3), [12, 0, 12])
-  assert.deepEqual(body.Collection.slice(0, 3), [0, body.QuickStart[3], 24])
-  assert.deepEqual(layout(['NetworkCards']).NetworkCards, [0, 0, 24, 14])
-  assert.deepEqual(api.buildPrivateResourceLayout([], 1600), [])
-})
-
-test('the wide profile follows the canvas row order and keeps quick-start height for reduced capabilities', async () => {
-  const { api } = await fixture()
-  const full = Object.fromEntries(api.buildPrivateResourceLayout(kinds, 1600).map(([kind, ...grid]) => [kind, grid]))
-  assert.deepEqual(full.QuickStart, [0, 4, 12, 9])
-  assert.deepEqual(full.MessageTrend, [12, 4, 12, 9])
-  assert.deepEqual(full.VideoPlaybackTrend, [0, 13, 12, 9])
-  assert.deepEqual(full.VisionTaskRanking, [12, 13, 12, 9])
-  assert.deepEqual(full.AlgorithmCoverage, [0, 22, 12, 9])
-  assert.deepEqual(full.DeviceDistribution, [12, 22, 12, 9])
-  assert.deepEqual(full.Collection, [0, 31, 12, 14])
-  assert.deepEqual(full.NetworkCards, [12, 31, 12, 14])
-  const reduced = Object.fromEntries(api.buildPrivateResourceLayout(visibleKinds(false, false), 1600).map(([kind, ...grid]) => [kind, grid]))
-  assert.deepEqual(reduced.QuickStart, [0, 4, 12, 9])
-  assert.deepEqual(reduced.MessageTrend, [12, 4, 12, 9])
-})
-
-test('SaaS fixed layout follows the same requested row order', async () => {
-  const { api } = await fixture(true)
-  assert.deepEqual(api.saasResourceLayout, [
-    ['EdgeNodes', 0, 0, 3, 4], ['IotDevices', 3, 0, 3, 4], ['VideoDevices', 6, 0, 3, 4], ['Visualization', 9, 0, 3, 4],
-    ['QuickStart', 0, 4, 6, 9], ['MessageTrend', 6, 4, 6, 9], ['VideoPlaybackTrend', 0, 13, 6, 9],
-    ['VisionTaskRanking', 6, 13, 6, 9], ['AlgorithmCoverage', 0, 22, 6, 9], ['DeviceDistribution', 6, 22, 6, 9],
-  ])
-})
-
-test('SaaS widget subsets are non-overlapping after actual 12-column normalization at every width', async () => {
-  const { api } = await fixture(true)
-  for (const width of [360, 640, 900, 1600]) for (let mask = 0; mask < 2 ** kinds.length; mask++) {
-    const visible = kinds.filter((_, index) => mask & (1 << index))
-    const layout = api.buildSaasResourceLayout(visible, width)
-    assert.deepEqual(layout.map(item => item[0]).sort(), [...visible].sort())
-    assertFilledLayout(api, layout, `SaaS ${width}:subset ${mask}`, 12)
-  }
-})
-
-test('SaaS layouts retain full geometry and close gaps for every optional-widget subset', async () => {
-  const { api } = await fixture(true)
-  const full = api.saasResourceLayout.map(item => item[0])
-  const sorted = layout => [...layout].sort((a, b) => a[0].localeCompare(b[0]))
-  assert.deepEqual(sorted(api.buildSaasResourceLayout(full)), sorted(api.saasResourceLayout))
-  const optional = ['EdgeNodes', 'AlgorithmCoverage', 'VideoPlaybackTrend']
-  for (let mask = 0; mask < 8; mask++) {
-    const visible = full.filter(kind => !optional.includes(kind) || (mask & (1 << optional.indexOf(kind))))
-    const layout = api.buildSaasResourceLayout(visible)
-    assert.deepEqual([...layout.map(item => item[0])].sort(), [...visible].sort())
-    const bottom = Math.max(...layout.map(([, , y, , h]) => y + h))
-    for (let y = 0; y < bottom; y++) {
-      const row = layout.filter(([, , top, , h]) => top <= y && y < top + h).sort((a, b) => a[1] - b[1])
-      let x = 0
-      for (const [, left, , width] of row) { assert.equal(left, x, `mask ${mask} row ${y}`); x += width }
-      assert.equal(x, 12, `mask ${mask} row ${y}`)
-    }
-  }
-})
-
 const moduleIds = { edge: 'edge-master-ui', model: 'visualization-model-ui', vision: 'jetlinks-ai-ui', collection: 'data-collector-ui', networkCards: 'network-card-manager-ui' }
 const menuCodes = { edge: 'iot-user-device-list', model: 'visualization/resource/model', vision: 'algorithm-center', collection: 'data-collect', networkCards: 'iot-card/CardManagement' }
 const flags = enabled => Object.fromEntries(Object.keys(moduleIds).map(key => [key, enabled.includes(key)]))
@@ -262,10 +130,8 @@ test('private registered modules require granted menus and do not fetch when onl
   context.menu.menusMap = new Map(Object.values(menuCodes).map(code => [code, {}]))
   const scope = vue.effectScope()
   const state = scope.run(() => context.api.useResourceCapabilities(vue.ref(false)))
-  const widgets = ['EdgeNodes', 'AlgorithmCoverage', 'Collection', 'NetworkCards'].map(kind => scope.run(() => context.api.useResourceWidget(kind, vue.ref(undefined), vue.ref(false))))
   await tick()
   assert.deepEqual(state.modules.value, flags([]))
-  assert.ok(widgets.every(widget => widget.unavailable.value))
   assert.equal(context.calls.length, 0)
   context.menu.menuResultCache = Object.values(menuCodes).map(code => ({ code }))
   context.menu.loading = true
@@ -339,15 +205,6 @@ test('preview exposes all capabilities without requests and returns to live stat
     assert.deepEqual(state.modules.value, flags([]))
     assert.equal(context.calls.length, 0)
     scope.stop()
-  }
-})
-
-test('resource widget availability follows its exact dependencies', async () => {
-  const { api } = await fixture()
-  const cases = { EdgeNodes: ['edge'], VideoPlaybackTrend: ['edge'], AlgorithmCoverage: ['vision', 'edge'], Collection: ['collection'], NetworkCards: ['networkCards'] }
-  for (const [kind, required] of Object.entries(cases)) for (let mask = 0; mask < 32; mask++) {
-    const selected = Object.keys(moduleIds).filter((_, i) => mask & (1 << i))
-    assert.equal(api.resourceKindAvailable(kind, flags(selected)), required.every(key => selected.includes(key)), `${kind}/${selected}`)
   }
 })
 
@@ -425,158 +282,6 @@ test('overview polling isolates account and project scopes and ignores previous 
   scope.stop();polling.dispose()
 })
 
-test('overview layouts fill the grid after actual card constraints for every ability combination', async () => {
-  const { api } = await fixture()
-  for (const saas of [false,true]) for (const guide of [false,true]) for (let mask=0; mask<32; mask++) {
-    const modules=flags(Object.keys(moduleIds).filter((_,i)=>mask & (1<<i)))
-    const layout=api.buildOverviewLayout({saas, modules, showGuide:guide, guideAvailable:saas})
-    assert.equal(layout.some(([kind])=>kind==='Collection'), modules.collection || modules.networkCards)
-    assert.equal(layout.some(([kind])=>kind==='AiCenter'), !saas || modules.vision)
-    assert.equal(layout.some(([kind])=>kind==='QuickGuide'), saas && guide)
-    const boxes=layout.map(([kind,x,y,w,h])=>({...api.normalizeGridItem({...api.overviewConfigs[kind].componentProps.gridItem,x,y,w,h},12),kind}))
-    const bottom=Math.max(...boxes.map(box=>box.y+box.h))
-    for(let y=0;y<bottom;y++) {
-      const row=boxes.filter(box=>box.y<=y && y<box.y+box.h).sort((a,b)=>a.x-b.x)
-      let x=0
-      for(const box of row){assert.equal(box.x,x,`${saas}/${guide}/${mask}/${y}/${box.kind}`);x+=box.w}
-      assert.equal(x,12,`${saas}/${guide}/${mask}/${y}`)
-    }
-  }
-})
-
-test('overview storage isolates every capability, deployment, guide and user/project scope', async () => {
-  const {api}=await fixture()
-  const all=flags(Object.keys(moduleIds)), key=(scope,saas,modules,guide)=>api.overviewLayoutStorageKey(scope,saas,modules,guide)
-  const keys=[key('user-a/project-a',false,all,false),key('user-b/project-a',false,all,false),key('user-a/project-b',false,all,false),key('user-a/project-a',true,all,false),key('user-a/project-a',false,all,true), ...Object.keys(moduleIds).map(id=>key('user-a/project-a',false,{...all,[id]:false},false))]
-  assert.equal(new Set(keys).size,keys.length)
-})
-
-test('storage keys isolate users, projects, deployments, widths and every final widget set', async () => {
-  const { api } = await fixture()
-  const profiles = [profile(), profile({ scope: 'user-b/project-a' }), profile({ scope: 'user-a/project-b' }), profile({ saas: true }), profile({ mode: 'medium' }), profile({ saas: true, mode: 'compact' }), profile({ capabilities: { collection: false, networkCards: true } }), profile({ capabilities: { collection: true, networkCards: false } }), profile({ capabilities: { collection: false, networkCards: false } }), profile({ widgets: kinds.filter(kind => kind !== 'EdgeNodes') }), profile({ widgets: [] })]
-  assert.equal(new Set(profiles.map(api.resourceLayoutStorageKey)).size, profiles.length)
-  assert.equal(api.resourceLayoutStorageKey(profile()), api.resourceLayoutStorageKey(profile({ widgets: [...kinds].reverse() })))
-})
-
-test('migration preserves matching v5 user geometry and never deletes the original cache', async () => {
-  const { api } = await fixture()
-  const saved = storage()
-  const previous = [{ i: 'resourceCenterQuickStart', x: 3, y: 7, w: 14, h: 11 }]
-  saved.setItem('resource-center-dashboard-v5', JSON.stringify(previous))
-  const key = api.resourceLayoutStorageKey(profile({ saas: true, widgets: [] }))
-  api.migrateResourceLayout(saved, key, ['resourceCenterQuickStart'], profile({ saas: true, widgets: [] }))
-  assert.deepEqual(JSON.parse(saved.getItem(key)), previous)
-  assert.deepEqual(JSON.parse(saved.getItem('resource-center-dashboard-v5')), previous)
-  saved.setItem(key, 'existing-personal-layout')
-  api.migrateResourceLayout(saved, key, ['resourceCenterQuickStart'], profile({ saas: true, widgets: [] }))
-  assert.equal(saved.getItem(key), 'existing-personal-layout')
-})
-
-test('migration skips missing/duplicate widgets, malformed legacy data and compact layouts', async () => {
-  const { api } = await fixture()
-  const row = { i: 'resourceCenterQuickStart', x: 0, y: 0, w: 12, h: 9 }
-  for (const value of ['bad json', JSON.stringify([row, row]), JSON.stringify([{ ...row, i: 'removed-widget' }]), JSON.stringify([{ ...row, w: '12' }])]) {
-    const saved = storage()
-    saved.setItem('resource-center-dashboard-v5', value)
-    api.migrateResourceLayout(saved, 'new', [row.i], profile({ saas: true, widgets: [] }))
-    assert.equal(saved.getItem('new'), null)
-    assert.equal(saved.getItem('resource-center-dashboard-v5'), value)
-  }
-  const saved = storage()
-  saved.setItem('resource-center-dashboard-v5', JSON.stringify([row]))
-  api.migrateResourceLayout(saved, 'new', [row.i], profile({ saas: true, mode: 'compact', widgets: [] }))
-  assert.equal(saved.getItem('new'), null)
-})
-
-test('v4 gateway compaction is copied to the new profile without modifying the legacy record', async () => {
-  const { api } = await fixture()
-  const saved = storage()
-  const previous = [{ i: 'resourceCenterVideoPlaybackTrend', x: 9, y: 22, w: 15, h: 20 }]
-  saved.setItem('resource-center-dashboard-v4', JSON.stringify(previous))
-  api.migrateResourceLayout(saved, 'new', [previous[0].i], profile({ saas: true, widgets: [] }))
-  assert.equal(JSON.parse(saved.getItem('new'))[0].h, 14)
-  assert.equal(JSON.parse(saved.getItem('resource-center-dashboard-v4'))[0].h, 20)
-})
-
-test('a reduced private profile cannot inherit matching SaaS widget IDs with old 12-column positions', async () => {
-  const { api } = await fixture()
-  const saved = storage()
-  const legacy = api.saasResourceLayout.map(([kind, x, y, w, h]) => ({ i: `resourceCenter${kind}`, x, y, w, h }))
-  saved.setItem('resource-center-dashboard-v5', JSON.stringify(legacy))
-  const reduced = profile({ capabilities: { collection: false, networkCards: false } })
-  api.migrateResourceLayout(saved, 'private-new', legacy.map(item => item.i), reduced)
-  assert.equal(saved.getItem('private-new'), null)
-  assert.deepEqual(JSON.parse(saved.getItem('resource-center-dashboard-v5')), legacy)
-})
-
-test('quick start shares the provided capability state, producing three to six actions without requests', async () => {
-  const context = await fixture()
-  const capabilities = vue.ref({ collection: true, networkCards: true })
-  const modules = vue.ref({ edge: true, model: true })
-  let quickStart
-  const Child = { setup() { quickStart = context.api.useQuickStart(vue.ref(false)); return () => null } }
-  const Parent = { setup() {
-    context.api.provideResourceCapabilities({ capabilities, modules, loading: vue.ref(false), errors: vue.ref([]), scope: vue.ref('test'), reload: async () => {} })
-    return () => vue.h(Child)
-  } }
-  await renderToString(vue.createSSRApp(Parent))
-  assert.equal(quickStart.actions.value.length, 6)
-  capabilities.value = { collection: false, networkCards: true }
-  assert.equal(quickStart.actions.value.length, 5)
-  assert.ok(!quickStart.actions.value.some(item => item.key === 'collector'))
-  quickStart.open('collector')
-  assert.equal(context.calls.length, 0)
-  capabilities.value = { collection: false, networkCards: false }
-  assert.equal(quickStart.actions.value.length, 4)
-  modules.value = { edge: false, model: false }
-  assert.equal(quickStart.actions.value.length, 3)
-  assert.ok(!quickStart.actions.value.some(item => item.key === 'edge'))
-  quickStart.open('edge')
-  assert.equal(context.calls.length, 0)
-})
-
-
-test('every private module combination uses the same quick-start actions for content and layout', async () => {
-  const { api } = await fixture()
-  for (const saas of [false, true]) for (const edge of [false, true]) for (const collection of [false, true]) for (const networkCards of [false, true]) {
-    const actions = api.getQuickStartActions({ edge, collection, networkCards })
-    assert.equal(actions.length, 3 + Number(edge) + Number(collection) + Number(networkCards))
-    assert.equal(actions.some(action => action.key === 'edge'), edge)
-    assert.equal(actions.some(action => action.key === 'collector'), collection)
-    assert.equal(actions.some(action => action.key === 'card'), networkCards)
-    assert.equal(api.getQuickStartActions({ edge, collection, networkCards }, true).length, 6)
-  }
-})
-
-test('visualization keeps SaaS columns and uses only the actual private items as grid cells', async () => {
-  const rows = [
-    ...['image', 'component', 'model'].map(id => ({ id, subgroup: 'assets' })),
-    ...['screen', 'template'].map(id => ({ id, subgroup: 'screens' })),
-  ]
-  const privateApi = (await fixture()).api
-  assert.deepEqual(privateApi.visualizationGroups(rows).map(group => group.map(row => row.id)), [
-    ['image'], ['screen'], ['component'], ['template'], ['model'],
-  ])
-  assert.equal(privateApi.visualizationGroups(rows.filter(row => row.id !== 'model')).length, 4)
-  const saasApi = (await fixture(true)).api
-  assert.deepEqual(saasApi.visualizationGroups(rows).map(group => group.map(row => row.id)), [
-    ['image', 'component', 'model'], ['screen', 'template'],
-  ])
-})
-
-test('new private layouts never inherit fixed-ratio geometry and keep all previous records', async () => {
-  const { api } = await fixture()
-  const saved = storage()
-  const old = JSON.stringify([{ i: 'resourceCenterQuickStart', x: 0, y: 4, w: 12, h: 9 }])
-  for (const key of ['resource-center-dashboard-v4', 'resource-center-dashboard-v5', 'resource-center-dashboard-v6:old']) saved.setItem(key, old)
-  const key = api.resourceLayoutStorageKey(profile())
-  assert.ok(key.startsWith('resource-dashboard:v8:'))
-  api.migrateResourceLayout(saved, key, ['resourceCenterQuickStart'], profile())
-  assert.equal(saved.getItem(key), null)
-  assert.equal([...saved.values.values()].every(value => value === old), true)
-})
-
-
 test('gateway status makes no request without the edge module and rejects a late response after removal', async () => {
   const context = await fixture()
   context.setModules()
@@ -624,26 +329,6 @@ test('revoking SaaS gateway permission discards a late status response', async (
   scope.stop()
 })
 
-test('visualization skips the model query without the model capability', async () => {
-  for (const saas of [false, true]) {
-    const context = await fixture(saas)
-    context.setModules()
-    context.menu.menuResultCache = []
-    const scope = vue.effectScope()
-    const state = scope.run(() => context.api.useResourceWidget('Visualization', vue.ref(undefined), vue.ref(false)))
-    await tick()
-    const modelCalls = () => context.calls.filter(item => JSON.stringify(item.body || {}).includes('visResource:model'))
-    assert.equal(modelCalls().length, 0)
-    assert.ok(context.calls.some(item => item.endpoint?.includes('/visualization/')))
-    if (saas) context.menu.menuResultCache = [{ code: 'visualization/resource/model' }]
-    else { context.setModules('visualization-model-ui'); context.menu.menuResultCache = [{ code: 'visualization/resource/model' }] }
-    await tick()
-    assert.ok(modelCalls().length > 0)
-    assert.ok(!state.error.value)
-    scope.stop()
-  }
-})
-
 test('gateway queue is unavailable without vision and never requested, including after revocation', async () => {
   const context = await fixture()
   context.setModules('edge-master-ui')
@@ -666,42 +351,6 @@ test('gateway queue is unavailable without vision and never requested, including
   await state.refresh()
   assert.equal(context.calls.filter(item => item.gateway === 'queue').length, count)
   scope.stop()
-})
-
-test('overview device health, operations and quick actions share the edge rule and restore it dynamically', async () => {
-  const context = await fixture()
-  context.setModules('edge-master-ui', 'visualization-model-ui', 'jetlinks-ai-ui')
-  context.summary = async id => { calls.push({ summary: id }); return { total: 0, online: 0 } }
-  context.homeLoad = async feature => feature === 'DeviceAccess'
-    ? ['gateway', 'devices', 'video'].map(id => ({ id, group: 'health', value: 3, online: 2, offline: 1 }))
-    : [{ id: 'deviceAlarm', group: 'alarms', value: 0 }]
-  const polling = context.api.createHomePolling(feature => context.homeLoad(feature))
-  const scope = vue.effectScope(), edit = vue.ref(false)
-  const states = scope.run(() => Object.fromEntries(['DeviceAccess', 'Operations', 'QuickActions'].map(feature => [
-    feature, context.api.useHomeRuntime(feature, feature === 'QuickActions' ? edit : vue.ref(false), vue.ref(0), vue.ref(0), polling),
-  ])))
-  await tick()
-  assert.equal(states.DeviceAccess.rows.value.length, 3)
-  assert.ok(states.Operations.rows.value.some(row => row.id === 'gateway'))
-  assert.equal(states.QuickActions.rows.value.length, 7)
-  context.setModules('visualization-model-ui', 'jetlinks-ai-ui')
-  await tick()
-  assert.deepEqual(states.DeviceAccess.rows.value.map(row => row.id), ['devices', 'video'])
-  assert.ok(!states.Operations.rows.value.some(row => row.id === 'gateway'))
-  assert.equal(states.QuickActions.rows.value.length, 6)
-  assert.ok(!states.QuickActions.rows.value.some(row => row.id === 'gateway'))
-  edit.value = true
-  await tick()
-  assert.equal(states.QuickActions.rows.value.length, 7)
-  context.setModules('visualization-model-ui', 'edge-master-ui', 'jetlinks-ai-ui')
-  await tick()
-  assert.equal(states.DeviceAccess.rows.value.length, 3)
-  assert.ok(states.Operations.rows.value.some(row => row.id === 'gateway'))
-  scope.stop(); polling.dispose()
-  assert.equal(context.listeners.size, 0)
-  const saas = await fixture(true)
-  saas.setModules()
-  assert.equal(saas.api.resourceRowAvailable({ id: 'gateway' }), true)
 })
 
 test('gateway ranking navigates by a current row id and respects preview, module and menu guards', async () => {
@@ -788,4 +437,163 @@ test('gateway presentation switches between zero, small table and four-node rank
   }
   assert.deepEqual(counts, [4, 3, 1, 0, 4])
   scope.stop()
+})
+
+
+test('capability scope follows user, project, API and application and waits for identity', async () => {
+  const context = await fixture(), preview = vue.ref(false)
+  const state = context.api.useResourceCapabilities(preview)
+  const initial = state.scope.value
+  assert.equal(state.loading.value, false)
+  for (const [object, field, replacement] of [[context.user.userInfo, 'id', 'user-b'], [context.runtime, 'project', 'project-b'], [context.runtime, 'project', ''], [context.runtime, 'api', '/other-api'], [context.runtime, 'app', 'app-b']]) {
+    const previous = object[field]; object[field] = replacement
+    assert.notEqual(state.scope.value, initial, field)
+    object[field] = previous
+    assert.equal(state.scope.value, initial)
+  }
+  context.user.userInfo.id = ''
+  assert.equal(state.loading.value, true, 'ready menu must not make an unidentified user ready')
+  context.user.userInfo.id = 'user-b'
+  assert.equal(state.loading.value, false)
+  assert.notEqual(state.scope.value, initial)
+  context.user.userInfo.id = 'user-a'
+  assert.equal(state.scope.value, initial)
+  preview.value = true; context.user.userInfo.id = ''
+  assert.equal(state.loading.value, false, 'preview may load without an account')
+})
+
+
+test('private resource page checks backend edge service independently of node count', async () => {
+  const context = await fixture(), scope = vue.effectScope()
+  context.edgeSupported = false
+  const state = scope.run(() => context.api.useResourceCapabilities(vue.ref(false), true))
+  assert.equal(state.loading.value, true)
+  await tick()
+  assert.equal(state.modules.value.edge, false)
+  assert.deepEqual(context.calls.filter(call => call.service), [{ service: 'agentService' }])
+  context.edgeSupported = true
+  context.runtime.project = 'project-b'
+  await tick()
+  assert.equal(state.modules.value.edge, true)
+  scope.stop()
+})
+
+test('private resource page discards stale edge capability and reports a retryable failure', async () => {
+  const context = await fixture(), scope = vue.effectScope(), pending = []
+  context.hasCommandService = () => new Promise((resolve, reject) => pending.push({ resolve, reject }))
+  context.menu.queryMenus = async () => {}
+  const state = scope.run(() => context.api.useResourceCapabilities(vue.ref(false), true))
+  context.runtime.project = 'project-b'
+  assert.equal(pending.length, 2)
+  pending[0].resolve(true)
+  await tick()
+  assert.equal(state.modules.value.edge, false)
+  assert.equal(state.loading.value, true)
+  pending[1].reject(new Error('unavailable'))
+  await tick()
+  assert.equal(state.loading.value, false)
+  assert.equal(state.errors.value[0].message, 'unavailable')
+  await state.reload()
+  assert.equal(state.loading.value, true)
+  pending[2].resolve(true)
+  await tick()
+  assert.equal(state.modules.value.edge, true)
+  assert.equal(state.errors.value.length, 0)
+  scope.stop()
+})
+
+test('edge check is skipped without permission or in SaaS', async () => {
+  for (const saas of [false, true]) {
+    const context = await fixture(saas), scope = vue.effectScope()
+    if (!saas) context.menu.menuResultCache = []
+    scope.run(() => context.api.useResourceCapabilities(vue.ref(false), true))
+    await tick()
+    assert.equal(context.calls.some(call => call.service), false)
+    scope.stop()
+  }
+})
+
+test('overlapping menu retries keep the current retry loading and ignore older rejection', async () => {
+  const context = await fixture(), scope = vue.effectScope(), pending = []
+  context.menu.queryMenus = () => new Promise((resolve, reject) => pending.push({ resolve, reject }))
+  const state = scope.run(() => context.api.useResourceCapabilities(vue.ref(false)))
+  const first = state.reload(), second = state.reload()
+  assert.equal(state.loading.value, true)
+  pending[0].reject(new Error('old failure'))
+  await first
+  assert.deepEqual(state.errors.value, [])
+  assert.equal(state.loading.value, true)
+  pending[1].resolve()
+  await second
+  assert.equal(state.loading.value, false)
+  assert.deepEqual(state.errors.value, [])
+  scope.stop()
+})
+
+test('a scope change invalidates an old menu retry without contaminating the new scope', async () => {
+  const context = await fixture(), scope = vue.effectScope(), pending = []
+  context.menu.queryMenus = () => new Promise((resolve, reject) => pending.push({ resolve, reject }))
+  const state = scope.run(() => context.api.useResourceCapabilities(vue.ref(false)))
+  const old = state.reload()
+  context.runtime.project = 'project-b'
+  const current = state.reload()
+  pending[0].reject(new Error('old scope failure'))
+  await old
+  assert.deepEqual(state.errors.value, [])
+  assert.equal(state.loading.value, true)
+  pending[1].resolve()
+  await current
+  assert.equal(state.loading.value, false)
+  assert.deepEqual(state.errors.value, [])
+  scope.stop()
+})
+
+test('scope change releases a pending retry even without another retry', async () => {
+  const context = await fixture(), scope = vue.effectScope(), pending = []
+  context.menu.queryMenus = () => new Promise((resolve, reject) => pending.push({ resolve, reject }))
+  const state = scope.run(() => context.api.useResourceCapabilities(vue.ref(false)))
+  const old = state.reload()
+  assert.equal(state.loading.value, true)
+  context.runtime.project = 'project-b'
+  assert.equal(state.loading.value, false)
+  pending[0].reject(new Error('old scope failure'))
+  await old
+  assert.deepEqual(state.errors.value, [])
+  assert.equal(state.loading.value, false)
+  scope.stop()
+})
+
+test('preview transition and scope disposal reject late menu retry effects', async () => {
+  for (const transition of ['preview', 'dispose']) {
+    const context = await fixture(), scope = vue.effectScope(), pending = [], preview = vue.ref(false)
+    context.menu.queryMenus = () => new Promise((resolve, reject) => pending.push({ resolve, reject }))
+    const state = scope.run(() => context.api.useResourceCapabilities(preview))
+    const old = state.reload()
+    if (transition === 'preview') preview.value = true
+    else scope.stop()
+    pending[0].reject(new Error('late failure'))
+    await old
+    assert.deepEqual(state.errors.value, [])
+    if (transition === 'preview') {
+      preview.value = false
+      assert.equal(state.loading.value, false)
+      scope.stop()
+    }
+  }
+})
+
+test('edge service discovery distinguishes absence from failed or malformed responses', async () => {
+  const context = await fixture()
+  let response
+  const calls = []
+  context.request.get = async (...args) => { calls.push(args); return response }
+  for (const [result, expected] of [[[], false], [[{ id: 'agentService' }], true], [[{ id: 'agentService:device' }], true], [[{ id: 'agentServiceExtra:x' }], false]]) {
+    response = { success: true, result }
+    assert.equal(await context.api.hasResourceEdgeService(), expected)
+  }
+  for (const result of [{ success: false, result: [] }, { success: true }, { success: true, result: null }, { success: true, result: {} }]) {
+    response = result
+    await assert.rejects(context.api.hasResourceEdgeService())
+  }
+  assert.deepEqual(calls[0], ['/command-supports/services', undefined, { applicationScope: false, hiddenError: true }])
 })

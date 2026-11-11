@@ -242,13 +242,13 @@ const handleClick = (row: HomeRow) => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 4px;
   color: var(--business-component-primary, #1677ff);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 20px;
 }
 :is(.home-apps--saas, .home-apps--private) .home-app-arrow {
-  font-size: 8.5px;
+  font-size: 11px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

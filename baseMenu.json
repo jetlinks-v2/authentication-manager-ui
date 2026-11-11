@@ -128,6 +128,159 @@
     "buttons": [],
     "children": [
       {
+        "code": "system/Announcement",
+        "name": "系统公告管理",
+        "i18nMessages": {
+          "name": {
+            "zh_CN": "系统公告管理",
+            "en_US": "System Announcement Management",
+            "en": "System Announcement Management",
+            "ja": "システム公告管理",
+            "ja_JP": "システム公告管理"
+          }
+        },
+        "owner": "iot",
+        "id": "system-announcement-runtime",
+        "sortIndex": 15,
+        "url": "/system/ps/Announcement",
+        "icon": "NotificationOutlined",
+        "showPage": [
+          "bulletin"
+        ],
+        "permissions": [
+          {
+            "permission": "bulletin",
+            "actions": [
+              "query",
+              "save",
+              "delete"
+            ]
+          }
+        ],
+        "buttons": [
+          {
+            "id": "add",
+            "name": "新增",
+            "i18nMessages": {
+              "zh_CN": "新增",
+              "en_US": "Add",
+              "en": "Add",
+              "ja": "追加",
+              "ja_JP": "追加"
+            },
+            "permissions": [
+              {
+                "permission": "bulletin",
+                "actions": [
+                  "save"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "view",
+            "name": "查看",
+            "i18nMessages": {
+              "zh_CN": "查看",
+              "en_US": "View",
+              "en": "View",
+              "ja": "表示",
+              "ja_JP": "表示"
+            },
+            "permissions": [
+              {
+                "permission": "bulletin",
+                "actions": [
+                  "query"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "edit",
+            "name": "编辑",
+            "i18nMessages": {
+              "zh_CN": "编辑",
+              "en_US": "Edit",
+              "en": "Edit",
+              "ja": "編集",
+              "ja_JP": "編集"
+            },
+            "permissions": [
+              {
+                "permission": "bulletin",
+                "actions": [
+                  "save"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "publish",
+            "name": "发布",
+            "i18nMessages": {
+              "zh_CN": "发布",
+              "en_US": "Publish",
+              "en": "Publish",
+              "ja": "公開",
+              "ja_JP": "公開"
+            },
+            "permissions": [
+              {
+                "permission": "bulletin",
+                "actions": [
+                  "save"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "withdraw",
+            "name": "撤回",
+            "i18nMessages": {
+              "zh_CN": "撤回",
+              "en_US": "Withdraw",
+              "en": "Withdraw",
+              "ja": "撤回",
+              "ja_JP": "撤回"
+            },
+            "permissions": [
+              {
+                "permission": "bulletin",
+                "actions": [
+                  "save"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "delete",
+            "name": "删除",
+            "i18nMessages": {
+              "zh_CN": "删除",
+              "en_US": "Delete",
+              "en": "Delete",
+              "ja": "削除",
+              "ja_JP": "削除"
+            },
+            "permissions": [
+              {
+                "permission": "bulletin",
+                "actions": [
+                  "delete"
+                ]
+              }
+            ]
+          }
+        ],
+        "accessSupport": {
+          "text": "支持",
+          "value": "support"
+        },
+        "supportDataAccess": true,
+        "assetType": "systemBulletin"
+      },
+      {
         "code": "system/Basis",
         "name": "基础信息",
         "i18nMessages": {
@@ -249,6 +402,13 @@
                 "permission": "role",
                 "actions": [
                   "query"
+                ]
+              },
+              {
+                "permission": "role-group",
+                "actions": [
+                  "save",
+                  "delete"
                 ]
               }
             ],
@@ -399,7 +559,7 @@
               "value": "support"
             },
             "supportDataAccess": true,
-            "assetType": "role"
+            "assetTypes": ["role", "roleGroup"]
           },
           {
             "code": "system/Department",
@@ -1410,179 +1570,6 @@
             },
             "supportDataAccess": false
           },
-            {
-                "code": "system/Apply",
-                "name": "应用管理",
-                "i18nMessages": {
-                    "name": {
-                        "zh_CN": "应用管理",
-                        "en_US": "Application Management",
-                        "en": "Application Management",
-                        "ja": "アプリケーション管理",
-                        "ja_JP": "アプリケーション管理"
-                    }
-                },
-                "owner": "iot",
-                "id": "e0640f9621c21078cad62d5646aapp9d",
-                "sortIndex": 10,
-                "url": "/system/application",
-                "icon": "icon-yingyongguanli",
-                "showPage": [
-                    "application"
-                ],
-                "permissions": [],
-                "buttons": [
-                    {
-                        "id": "delete",
-                        "name": "删除",
-                        "i18nMessages": {
-                            "zh_CN": "删除",
-                            "en_US": "Delete",
-                            "en": "Delete",
-                            "ja": "削除",
-                            "ja_JP": "削除"
-                        },
-                        "permissions": [
-                            {
-                                "permission": "application",
-                                "actions": [
-                                    "query",
-                                    "delete"
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "id": "add",
-                        "name": "新增",
-                        "i18nMessages": {
-                            "zh_CN": "新增",
-                            "en_US": "Add",
-                            "en": "Add",
-                            "ja": "追加",
-                            "ja_JP": "追加"
-                        },
-                        "permissions": [
-                            {
-                                "permission": "role",
-                                "actions": [
-                                    "query"
-                                ]
-                            },
-                            {
-                                "permission": "menu",
-                                "actions": [
-                                    "query"
-                                ]
-                            },
-                            {
-                                "permission": "application",
-                                "actions": [
-                                    "query",
-                                    "save"
-                                ]
-                            },
-                            {
-                                "permission": "open-api",
-                                "actions": [
-                                    "query",
-                                    "save",
-                                    "delete"
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "id": "update",
-                        "name": "编辑",
-                        "i18nMessages": {
-                            "zh_CN": "编辑",
-                            "en_US": "Edit",
-                            "en": "Edit",
-                            "ja": "編集",
-                            "ja_JP": "編集"
-                        },
-                        "permissions": [
-                            {
-                                "permission": "role",
-                                "actions": [
-                                    "query"
-                                ]
-                            },
-                            {
-                                "permission": "menu",
-                                "actions": [
-                                    "query"
-                                ]
-                            },
-                            {
-                                "permission": "application",
-                                "actions": [
-                                    "query",
-                                    "save"
-                                ]
-                            },
-                            {
-                                "permission": "open-api",
-                                "actions": [
-                                    "query",
-                                    "save",
-                                    "delete"
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "id": "view",
-                        "name": "查看",
-                        "i18nMessages": {
-                            "zh_CN": "查看",
-                            "en_US": "View",
-                            "en": "View",
-                            "ja": "表示",
-                            "ja_JP": "表示"
-                        },
-                        "permissions": [
-                            {
-                                "permission": "application",
-                                "actions": [
-                                    "query"
-                                ]
-                            },
-                            {
-                                "permission": "role",
-                                "actions": [
-                                    "query"
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "id": "action",
-                        "name": "启/禁用",
-                        "i18nMessages": {
-                            "zh_CN": "启/禁用",
-                            "en_US": "Enable/Disable",
-                            "en": "Enable/Disable",
-                            "ja": "有効化/無効化",
-                            "ja_JP": "有効化/無効化"
-                        },
-                        "permissions": [
-                            {
-                                "permission": "application",
-                                "actions": [
-                                    "save"
-                                ]
-                            }
-                        ]
-                    }
-                ],
-                "accessSupport": {
-                    "text": "不支持",
-                    "value": "unsupported"
-                },
-                "supportDataAccess": false
-            },
           {
             "code": "system/Dictionary",
             "name": "数据字典",
@@ -2024,55 +2011,6 @@
                   "value": "unsupported"
                 },
                 "assetAccesses": []
-              },
-              {
-                "id": "fa61f5e5c86d445c890e2b3a7b9ca8f7",
-                "code": "system/Log/Runtime",
-                "name": "运行日志",
-                "i18nMessages": {
-                  "name": {
-                    "zh_CN": "运行日志",
-                    "en_US": "Runtime logs",
-                    "en": "Runtime logs",
-                    "ja": "実行ログ",
-                    "ja_JP": "実行ログ"
-                  }
-                },
-                "owner": "iot",
-                "sortIndex": 3,
-                "level": 3,
-                "url": "/infrastructure/logs/runtime",
-                "icon": "icon-yuandian",
-                "showPage": [
-                  "system-logger"
-                ],
-                "permissions": [
-                  {
-                    "permission": "system-logger",
-                    "actions": [
-                      "query"
-                    ]
-                  }
-                ],
-                "buttons": [
-                  {
-                    "id": "export",
-                    "name": "导出",
-                    "permissions": [
-                      {
-                        "permission": "system-logger",
-                        "actions": [
-                          "export"
-                        ]
-                      }
-                    ],
-                    "i18nMessages": {
-                      "ja": "エクスポート",
-                      "ja_JP": "エクスポート"
-                    }
-                  }
-                ],
-                "supportDataAccess": false
               }
             ]
           },
@@ -2429,7 +2367,8 @@
         "showPage": ["application"],
         "permissions": [
           { "permission": "application", "actions": ["query", "save", "delete"] },
-          { "permission": "api_group", "actions": ["query", "grant", "grant_query"] }
+          { "permission": "api_group", "actions": ["query", "grant", "grant_query"] },
+          { "permission": "access-logger", "actions": ["query"] }
         ],
         "accessSupport": {
           "text": "支持",

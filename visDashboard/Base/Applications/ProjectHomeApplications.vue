@@ -10,7 +10,7 @@
       />
     </template>
     <template #empty>
-      <CloudEmpty class="home-app-empty">
+      <CloudEmpty class="home-app-empty" :image-style="{ height: '48px' }">
         <template #description>
           <div class="empty-title">{{ t('packages.ProjectHome.ApplicationsEmpty') }}</div>
           <div v-if="canCreateApp" class="empty-desc">{{ t('packages.ProjectHome.ApplicationsEmptyDesc') }}</div>
@@ -43,12 +43,14 @@ const { openingApplicationIds, canOpenApp, canCreateApp, handleOpenApp, handleCr
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  height: auto;
   text-align: center;
   padding: 4px 8px;
   box-sizing: border-box;
 }
 .home-app-empty :deep(.ant-empty) { margin: 0; }
+.home-app-empty :deep(.ant-empty-image) { margin-bottom: 8px; }
+.home-app-empty :deep(.ant-empty-footer) { margin-top: 8px; }
 .empty-title {
   font-size: 13px;
   line-height: 18px;

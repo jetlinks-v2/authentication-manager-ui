@@ -1,28 +1,35 @@
 <template>
+  <PrivateMyApplications v-if="isApplications && account.applicationEntry" :entries="account.applicationEntry.entries.value"
+    :state="{ loading: account.applicationEntry.applicationsLoading.value, error: account.applicationEntry.applicationsError.value, openingId: account.applicationEntry.openingId.value }"
+    :display="{ limit: 0, showAll: account.applicationEntry.canOpenAll.value }"
+    @open="account.open" @retry="account.applicationEntry.retry" @all="account.openAll" />
+  <PrivateAccount v-else-if="isAccount" :profile="account.profile.value" :entries="account.entries.value" :opening-id="account.openingId.value"
+    @account="account.openAccount" @open="account.open" />
   <a-card
-    class="saas-utility-card"
-    :class="{ 'saas-utility-card--help': info?.type === 'projectHomeSaasHelp' }"
+    v-else
+    class="saas-utility-card saas-utility-card--help"
     :bordered="false"
-    :title="$t(`packages.ProjectHome.${info?.type === 'projectHomeSaasHelp' ? 'SaasHelp' : 'saasQuickActions'}`)"
+    :title="$t('packages.ProjectHome.SaasHelp')"
   >
-    <template v-if="info?.type === 'projectHomeSaasHelp'" #extra>
-      <a-button type="link" size="small" class="saas-help-more" @click="openHelpCenter">
-        {{ $t('packages.ProjectHome.saasHelpCenter') }}<RightOutlined class="saas-utility-arrow" />
-      </a-button>
+    <template #extra>
+      <HomeWidgetLink @click="openHelpCenter">{{ $t('packages.ProjectHome.saasHelpCenter') }}</HomeWidgetLink>
     </template>
-    <HelpDocuments v-if="info?.type === 'projectHomeSaasHelp'" :documents="documents" @open="openHelp" />
-    <QuickActions v-else-if="rows.length" :rows="rows" :chart="chart" :can-open="canOpen" @navigate="open" />
-    <a-empty v-else :description="$t('packages.ProjectHome.saasNoActions')" />
+    <HelpDocuments :documents="documents" @open="openHelp" />
   </a-card>
 </template>
 <script setup lang="ts">
-import { RightOutlined } from '@ant-design/icons-vue'
+import { computed } from 'vue'
+import HomeWidgetLink from '../shared/HomeWidgetLink.vue'
+import PrivateAccount from '../Private/components/PrivateAccount.vue'
+import PrivateMyApplications from '../Private/components/PrivateMyApplications.vue'
 import HelpDocuments from './components/HelpDocuments.vue'
-import QuickActions from '../QuickActions/components/HomeView.vue'
-import { useSaasUtilities } from './useSaasUtilities'
+import { useSaasAccount, useSaasUtilities } from './useSaasUtilities'
 import type { HomeInfo } from '../shared/types'
 const props = withDefaults(defineProps<{ info?: HomeInfo & { type?: string }; isEdit?: boolean }>(), { isEdit: false })
-const { rows, documents, chart, canOpen, open, openHelp, openHelpCenter } = useSaasUtilities(() => props.isEdit)
+const isAccount = computed(() => props.info?.type === 'projectHomeSaasAccount')
+const isApplications = computed(() => props.info?.type === 'projectHomeSaasMyApplications')
+const { documents, openHelp, openHelpCenter } = useSaasUtilities(() => props.isEdit)
+const account = useSaasAccount(() => props.isEdit)
 </script>
 <style scoped lang="less">
 .saas-utility-card {
@@ -47,22 +54,10 @@ const { rows, documents, chart, canOpen, open, openHelp, openHelpCenter } = useS
   line-height: 20px;
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   transition: color .2s;
 }
 .saas-utility-card :deep(.ant-card-extra .ant-btn-link:not(:disabled)) { color: var(--business-component-primary, #1677ff); }
 .saas-utility-card :deep(.ant-card-extra .ant-btn-link:hover:not(:disabled)) { color: var(--ant-color-primary-hover, #4096ff); }
-.saas-utility-arrow {
-  font-size: 8.5px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  color: inherit;
-  transition: transform 0.2s ease;
-}
-.saas-utility-card :deep(.ant-card-extra .ant-btn:hover:not(:disabled) .saas-utility-arrow) {
-  transform: translateX(2px);
-}
 .saas-utility-card :deep(.ant-card-body) { flex: 1; min-height: 0; padding: 14px 18px 18px; }
 </style>

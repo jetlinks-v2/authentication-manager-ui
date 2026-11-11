@@ -55,6 +55,7 @@ export const useApplicationTemplateParameters = (
   const credential = reactive({ keyId: '', publicKey: '' })
   const platformId = ref('')
   const parameters = ref<ApplicationTemplateParameterDraft[]>([])
+  const editing = ref(false)
   const saving = ref(false)
   const error = ref('')
   const supported = computed(() => getDetail().provider === 'third-party')
@@ -75,6 +76,18 @@ export const useApplicationTemplateParameters = (
         .filter((item): item is ApplicationTemplateParameterDraft => item !== undefined)
       : []
     error.value = ''
+  }
+
+  /** 页签切换保留草稿，仅显式取消或切换模板时回到已保存配置。 */
+  const edit = () => {
+    if (supported.value && !saving.value) editing.value = true
+  }
+
+  /** 取消只还原本页草稿，通知签名仍由独立编辑器维护。 */
+  const cancel = () => {
+    if (saving.value) return
+    reset()
+    editing.value = false
   }
 
   const addParameter = () => {
@@ -157,7 +170,9 @@ export const useApplicationTemplateParameters = (
     else delete configuration.platformId
     saving.value = true
     try {
-      return await persist(configuration)
+      const saved = await persist(configuration)
+      if (saved) editing.value = false
+      return saved
     } catch {
       error.value = messages.saveFailed
       return false
@@ -167,6 +182,11 @@ export const useApplicationTemplateParameters = (
   }
 
   watch(() => getDetail().configuration, reset, { immediate: true })
+  // 复用详情路由时，上一模板的编辑态和草稿不能带入下一模板。
+  watch(() => getDetail().id, () => {
+    editing.value = false
+    reset()
+  })
 
   return {
     redirectUri,
@@ -175,9 +195,12 @@ export const useApplicationTemplateParameters = (
     platformId,
     parameters,
     supported,
+    editing,
     saving,
     error,
     reset,
+    edit,
+    cancel,
     save,
     addParameter,
     removeParameter,

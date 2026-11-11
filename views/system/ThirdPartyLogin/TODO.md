@@ -12,6 +12,12 @@
 
 模块内 `node --test tests/thirdPartyLoginModel.test.mjs tests/thirdPartyLoginMenu.test.mjs` 为 14/15 通过；唯一失败是未修改的菜单测试期望父节点 `application-center`，现有 `baseMenu.json` 为 `platform/settings`。从 `ui/` 执行 `pnpm --config.verify-deps-before-run=false -F jetlinks-web-core build -- --module-name authentication-manager-ui` 被工作区缺失 `vite-plugin-mkcert` 阻断；`pnpm --config.verify-deps-before-run=false exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 有其他文件的 775 项诊断，第三方登录目录无诊断。工作区依赖和类型错误修复后需重跑以上构建及类型命令；未配置 lint 脚本。
 
+## 顶部与左栏样式对齐
+
+已局部修正本目录 `index.vue` 与 `index.less`：参照产品管理页移除列表上方的独立标题，使用 `EqualHeightColumns` 默认等高布局及 `15rem` 左栏，避免 `height="auto"` 使分隔线只随短列表延伸；登录方式标题使用同款字号、字重和行高，选项统一为 `2.5rem` 行高并对齐图标、计数间距，右侧工具栏从内容顶部开始。继续复用 `QuickFilterSidebar`、`ConditionFilter` 及原表格，未新增分类搜索或改变筛选、计数、配置、启停与删除逻辑，未修改公共组件。样式改为页面级 scoped 引用，移除空分组标题占位，保留现有折叠组件定位。
+
+实际页面的顶部对齐、左栏分隔线及折叠效果待现有运行环境人工验收。
+
 ## 操作列图标按钮
 
 `runtime-ui/modules/authentication-manager-ui/views/system/ThirdPartyLogin/index.vue` 的编辑、删除入口使用 `j-permission-button` 与 `EditOutlined` / `DeleteOutlined`，通过 `tooltip.title` 复用既有国际化文案，并为图标提供中文可访问名称。保留编辑回调、删除确认和已启用时禁止删除的限制，不调整接口、菜单或授权规则；9200 端口对应运行时开发服务，本次仅修改该前端模块。

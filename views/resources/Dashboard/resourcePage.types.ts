@@ -10,6 +10,7 @@ export interface ResourcePageAccess {
   product: boolean
   collection: boolean
   networkCards: boolean
+  networkPools: boolean
   map: boolean
 }
 
@@ -19,6 +20,6 @@ export type ResourcePagePanel = 'message' | 'map' | 'gateway' | 'vision' | 'onli
 export interface ResourcePageCell {
   id: string
   panels: ResourcePagePanel[]
-  span: 2 | 3 | 4 | 6
+  span: 2 | 2.5 | 3 | 3.5 | 4 | 6
   offline?: boolean
 }

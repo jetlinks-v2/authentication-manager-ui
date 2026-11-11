@@ -11,8 +11,9 @@ const result = await build({
   bundle: true, write: false, platform: 'node', format: 'cjs', packages: 'external', define: { 'import.meta.hot': 'false' },
   plugins: [{ name: 'boundaries', setup(api) {
     const boundaries = {
-      'vue-router': 'export const useRouter=()=>context.router',
+      'vue-router': 'export const useRouter=()=>context.router; export const NavigationFailureType={cancelled:8,aborted:4,duplicated:16}; export const isNavigationFailure=(failure,type)=>!!failure && (failure.type & type)!==0',
       'vue-i18n': 'export const useI18n=()=>({t:(key,params)=>{const value=context.translations?.[key] ?? key; return params ? value.replace("{time}",params.time) : value}})',
+      '@jetlinks-web/utils': 'export const onlyMessage=()=>{}',
       '@vueuse/core': 'export const useNow=()=>context.now',
       '@jetlinks-web-core/store/menu': 'export const useMenuStore=()=>context.menu',
       '@jetlinks-web-core/store/user': 'export const useUserStore=()=>context.user',
@@ -20,9 +21,12 @@ const result = await build({
       '@jetlinks-web-core/utils/request-context': 'export const getBaseApi=()=>context.base',
       './access': 'export const getSaasGrantedMenus=()=>context.granted; export const hasSaasTarget=(granted,target)=>target.menus.some(code=>granted.has(code))',
       './services/access': 'export const getSaasGrantedMenus=()=>context.granted; export const hasSaasTarget=(granted,target)=>target.menus.some(code=>granted.has(code))',
+      '@jetlinks-web-core/locales': 'export default {global:{t:key=>key}}',
       '@jetlinks-web-core/utils/deployment': 'export const isPrivateDeployment=()=>false',
     }
-    api.onResolve({ filter: /^(vue-router|vue-i18n|@vueuse\/core|@jetlinks-web-core\/store\/(menu|user)|@jetlinks-web-core\/utils\/(project-runtime|request-context|deployment)|\.\/access|\.\/services\/access)$/ }, args => ({ path: args.path, namespace: 'fixture' }))
+    api.onResolve({ filter: /\/api\/overview$/ }, () => ({ path: 'overview', namespace: 'fixture' }))
+    boundaries.overview = 'export const queryOverviewDeviceNames=async()=>[]'
+    api.onResolve({ filter: /^(vue-router|vue-i18n|@jetlinks-web\/utils|@vueuse\/core|@jetlinks-web-core\/store\/(menu|user)|@jetlinks-web-core\/locales|@jetlinks-web-core\/utils\/(project-runtime|request-context|deployment)|\.\/access|\.\/services\/access)$/ }, args => ({ path: args.path, namespace: 'fixture' }))
     api.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ contents: boundaries[args.path], loader: 'js' }))
   } }],
 })
@@ -32,7 +36,7 @@ const route = (name, query = {}) => ({ name, params: {}, query, meta: { title: '
 test('recorder deduplicates authorized pages, filters sensitive query, rejects edit routes and revocation', () => {
   const saved = globalThis.localStorage; globalThis.localStorage = storage()
   try {
-    const context = { now: vue.ref(new Date()), user: { userInfo: { id: 'a' } }, project: 'p', application: 'app', base: '/api', granted: new Set(['iot-user-device-list']), router: { afterEach(fn) { this.callback = fn; return () => {} } } }
+    const context = { now: vue.ref(new Date()), user: { userInfo: { id: 'a' } }, project: 'p', application: 'app', base: '/api', granted: new Set(['iot-user-device-list']), router: { currentRoute: vue.ref({fullPath:'/overview'}), hasRoute:()=>true, afterEach(fn) { this.callback = fn; return () => {} } } }
     context.menu = { siderMenus: [], getMenu: code => code.startsWith('iot-user-device-list') ? { title: 'Devices', routeName: code, path: `/${code}` } : undefined, jumpPage() {} }
     const module = { exports: {} }; Function('module', 'exports', 'require', 'context', result.outputFiles[0].text)(module, module.exports, require, context)
     const api = module.exports, key = api.recentVisitStorageKey()
@@ -68,7 +72,7 @@ const makeVisit = (code, index = 0, query = {}) => ({ id: `visit-${index}-${code
 function recentFixture(codes = defaultCodes) {
   const store = storage(), granted = new Set(codes), available = new Set(codes)
   const context = { user: { userInfo: { id: 'fixture' } }, project: 'p', application: 'app', base: '/api', granted, now: vue.ref(new Date()),
-    router: { afterEach() { return () => {} } }, menu: { siderMenus: [], getMenu: code => available.has(code) ? { title: code, routeName: code, path: `/${code}` } : undefined, jumpPage(...args) { this.lastJump = args } } }
+    router: { currentRoute: vue.ref({fullPath:'/overview'}), hasRoute:()=>true, afterEach() { return () => {} } }, menu: { siderMenus: [], getMenu: code => available.has(code) ? { title: code, routeName: code, path: `/${code}` } : undefined, jumpPage(...args) { this.lastJump = args } } }
   const module = { exports: {} }
   Function('module', 'exports', 'require', 'context', result.outputFiles[0].text)(module, module.exports, require, context)
   const api = module.exports, key = api.recentVisitStorageKey()
@@ -87,7 +91,7 @@ test('history leads and defaults fill up to six without fabricated timestamps', 
       f.setHistory(visits)
       const rows = f.state.rows.value
       assert.equal(rows.length, 6, `history count ${count}`)
-      assert.deepEqual(rows.slice(0, Math.min(count, 6)).map(row => row.id), visits.slice(0, 6).map(row => row.id))
+      assert.deepEqual(rows.slice(0, Math.min(count, 6)).map(row => row.id), visits.slice().reverse().slice(0, 6).map(row => row.id))
       assert.equal(f.state.isStarting.value, count === 0)
       for (const row of rows.slice(Math.min(count, 6))) {
         assert.equal(row.description, `saasRecent.group.${row.id}`)
@@ -103,7 +107,7 @@ test('history leads and defaults fill up to six without fabricated timestamps', 
   } finally { if (saved === undefined) delete globalThis.localStorage; else globalThis.localStorage = saved }
 })
 
-test('aliases deduplicate defaults and authorized routes preserve query on open', () => {
+test('aliases deduplicate defaults and authorized routes preserve query on open', async () => {
   const saved = globalThis.localStorage
   try {
     const alias = 'iot-user/device/list'
@@ -112,15 +116,15 @@ test('aliases deduplicate defaults and authorized routes preserve query on open'
     f.setHistory([visit])
     assert.equal(f.state.rows.value[0].id, visit.id)
     assert.ok(!f.state.rows.value.some(row => row.id === 'devices'))
-    f.state.open(f.state.rows.value[0].target)
+    await f.state.open(f.state.rows.value[0])
     assert.deepEqual(f.context.menu.lastJump, [alias, { params: undefined, query: visit.target.query }])
     f.setHistory([])
     f.granted.delete('iot-user-device-list')
     f.api.recentVisitsRevision.value++
     const devices = f.state.rows.value.find(row => row.id === 'devices')
-    assert.deepEqual(devices.target, { menus: [alias], query: { type: 'device' } })
-    f.state.open(devices.target)
-    assert.deepEqual(f.context.menu.lastJump, [alias, { params: undefined, query: { type: 'device' } }])
+    assert.deepEqual(devices.target, { menus: [alias] })
+    await f.state.open(devices)
+    assert.deepEqual(f.context.menu.lastJump, [alias, { params: undefined, query: undefined }])
   } finally { if (saved === undefined) delete globalThis.localStorage; else globalThis.localStorage = saved }
 })
 

@@ -1,17 +1,13 @@
 import type { DashboardModules } from '../../useDashboardModules'
-import type { ResourceKind } from '../shared'
+import { request } from '@jetlinks-web/core'
 
 export type ResourceCapabilities = Pick<DashboardModules, 'collection' | 'networkCards'>
 
-/** 布局、独立卡片和请求生命周期共用同一准入规则；无业务数据不代表能力缺失。 */
-export function resourceKindAvailable(kind: ResourceKind, modules: DashboardModules): boolean {
-  switch (kind) {
-    case 'EdgeNodes':
-    case 'VideoPlaybackTrend': return modules.edge
-    case 'AlgorithmCoverage':
-    case 'VisionTaskRanking': return modules.edge && modules.vision
-    case 'Collection': return modules.collection
-    case 'NetworkCards': return modules.networkCards
-    default: return true
-  }
+/** 资源仪表盘按服务声明判断边缘能力，查询失败不能当作未安装。 */
+export async function hasResourceEdgeService(): Promise<boolean> {
+  const response: { success: boolean; result?: { id: string }[] } = await request.get(
+    '/command-supports/services', undefined, { applicationScope: false, hiddenError: true },
+  )
+  if (!response.success || !Array.isArray(response.result)) throw new Error('Edge capability unavailable')
+  return response.result.some(service => service.id === 'agentService' || service.id.startsWith('agentService:'))
 }

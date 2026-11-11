@@ -103,7 +103,7 @@ defineEmits<{ open: [id: string] }>()
 .saas-help-arrow {
   flex-shrink: 0;
   color: var(--business-component-muted, #86909c);
-  font-size: 8.5px;
+  font-size: 11px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

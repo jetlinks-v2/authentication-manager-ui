@@ -1,8 +1,9 @@
 import { request } from '@jetlinks-web/core'
 import dayjs from 'dayjs'
-import { buildOverviewDeviceTerms, queryOverviewIotDeviceSummary, queryOverviewChannelBreakdown } from '../../../../api/overview'
+import { queryOverviewGatewaySummary, queryOverviewIotDeviceSummary, queryOverviewIotDeviceBreakdown, queryOverviewChannelBreakdown } from '../../../../api/overview'
 import { countOf } from '../../shared/apiResult'
 import { getPrivateOverviewAccess, PRIVATE_TARGETS } from './access'
+import { selectPrivateMetricIds } from './metricSelection'
 import { queryPrivateCount, privateWindow } from './query'
 import { loadPrivateTrend } from './trends'
 import type { PrivateAssetGroup, PrivateBreakdown, PrivateMetric, PrivateResources } from '../types'
@@ -34,19 +35,20 @@ async function screenMetric(): Promise<PrivateMetric> {
   } catch { return { ...row, failed: true } }
 }
 
+/** 边缘节点与设备列表共用授权和统计口径。 */
+async function edgeMetric(): Promise<PrivateMetric> {
+  const row: PrivateMetric = { id: 'gateway', labelKey: 'privateOverview.edge', icon: 'gateway', unitKey: 'privateOverview.unitDevices', target: PRIVATE_TARGETS.edge }
+  try {
+    const { total, online } = await queryOverviewGatewaySummary()
+    if (![total, online].every(value => Number.isFinite(value) && value >= 0) || online > total) throw new Error('Invalid gateway summary')
+    return { ...row, value: total, statuses: [{ labelKey: 'privateOverview.online', value: online, tone: 'success' },
+      { labelKey: 'privateOverview.offline', value: total - online, tone: 'error' }] }
+  } catch { return { ...row, failed: true } }
+}
+
 /** 物联类型与设备列表使用同一产品范围，每个类型同时查询总量和离线量。 */
 async function deviceBreakdown(): Promise<PrivateBreakdown[]> {
-  return Promise.all(['device', 'gateway', 'childrenDevice'].map(async id => {
-    const row = { id, labelKey: `privateOverview.deviceType.${id}` }
-    const terms = [...buildOverviewDeviceTerms('iot'), { column: 'deviceType', termType: 'eq', value: id }]
-    try {
-      const [value, offline] = await Promise.all([
-        queryPrivateCount('/device/instance/_count', terms),
-        queryPrivateCount('/device/instance/_count', [...terms, { column: 'state', termType: 'not', value: 'online' }]),
-      ])
-      return { ...row, value, offline }
-    } catch { return { ...row, failed: true } }
-  }))
+  return (await queryOverviewIotDeviceBreakdown()).map(row => ({ ...row, labelKey: `privateOverview.deviceType.${row.id}` }))
 }
 
 /** 设备健康与 KPI 共享同一次查询；失败不影响其他已授权资源。 */
@@ -95,7 +97,7 @@ async function todayMetric(id: 'message' | 'ai'): Promise<PrivateMetric> {
   } catch { return { ...row, failed: true } }
 }
 
-/** 只创建已授权模块请求；有视联时五类 KPI，仅物联时以产品替换视频。 */
+/** 展示与查询共用指标选择规则，设备分布仍独立使用同一资源查询。 */
 export async function loadPrivateResources(): Promise<PrivateResources> {
   const access = getPrivateOverviewAccess()
   const assets = await Promise.all((['iot', 'video'] as const).filter(id => access[id]).map(assetGroup))
@@ -105,11 +107,11 @@ export async function loadPrivateResources(): Promise<PrivateResources> {
     value: asset.total, failed: asset.failed,
     statuses: [{ labelKey: 'privateOverview.online', value: asset.online, tone: 'success' }, { labelKey: 'privateOverview.offline', value: asset.offline, tone: 'error' }],
   })
-  const loaders: Array<() => Promise<PrivateMetric>> = []
-  if (!access.video && access.product) loaders.push(productMetric)
-  assets.forEach(asset => loaders.push(async () => fromAsset(asset)))
-  if (access.screen) loaders.push(screenMetric)
-  if (access.message) loaders.push(() => todayMetric('message'))
-  if (access.ai) loaders.push(() => todayMetric('ai'))
-  return { kpis: await Promise.all(loaders.map(load => load())), assets }
+  const loaders: Record<string, () => Promise<PrivateMetric>> = {
+    product: productMetric, gateway: edgeMetric, screen: screenMetric,
+    message: () => todayMetric('message'), ai: () => todayMetric('ai'),
+  }
+  assets.forEach(asset => { loaders[asset.id === 'iot' ? 'devices' : 'video'] = async () => fromAsset(asset) })
+  const selected = selectPrivateMetricIds(access)
+  return { kpis: await Promise.all(selected.map(id => loaders[id]())), assets }
 }

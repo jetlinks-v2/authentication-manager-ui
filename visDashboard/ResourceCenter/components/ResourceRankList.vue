@@ -44,5 +44,5 @@ const emit = defineEmits<{ select: [row: Row] }>()
 .value { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; color: #334155; }
 /* 状态色由业务 hook 提供，非在线既可能是离线，也可能是禁用。 */
 .value--inactive { font-weight: 500; }
-.row-arrow { font-size: 10px; color: #94a3b8; transition: color .18s ease, transform .18s ease; }
+.row-arrow { font-size: 11px; color: #94a3b8; transition: color .18s ease, transform .18s ease; }
 </style>

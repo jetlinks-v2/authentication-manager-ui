@@ -1,4 +1,6 @@
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
+import { USER_CENTER_MENU_CODE } from '@jetlinks-web-core/utils/consts'
+import type { RouteRecordRaw } from 'vue-router'
 import { getDashboardModules } from '../../../useDashboardModules'
 import { HOME_TARGETS } from '../../shared/navigation'
 import type { HomeTarget } from '../../shared/types'
@@ -17,6 +19,30 @@ export function getSaasGrantedMenus(): ReadonlySet<string> {
   }
   if (menu.initialized && !menu.loading) collect(menu.menuResultCache)
   return codes
+}
+
+/** 概览和个人中心属于基础入口，不能据此认定账号拥有项目业务功能。 */
+export function getSaasProjectEntries(): { id: string; titleKey: string }[] {
+  const menu = useMenuStore()
+  const byRoute = new Map<string, string>()
+  for (const code of getSaasGrantedMenus()) {
+    if (code === 'project/Overview' || code === USER_CENTER_MENU_CODE) continue
+    const current = menu.getMenu(code)
+    const routeName = String(current?.routeName || code)
+    if (current && routeName !== 'account/center') byRoute.set(routeName, code)
+  }
+  const findEntry = (route: RouteRecordRaw): string | undefined => {
+    if (route.meta?.hideInMenu === true) return undefined
+    for (const child of route.children || []) {
+      const found = findEntry(child)
+      if (found) return found
+    }
+    return route.name ? byRoute.get(String(route.name)) : undefined
+  }
+  return menu.siderMenus.flatMap(route => {
+    const id = findEntry(route), titleKey = route.meta?.title
+    return id && typeof titleKey === 'string' ? [{ id, titleKey }] : []
+  })
 }
 
 /** 查询与下钻使用同一菜单准入范围，先过滤再创建异步请求。 */

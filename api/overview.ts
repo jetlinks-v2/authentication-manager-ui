@@ -36,13 +36,13 @@ const GATEWAY_ACCESS_PROVIDERS = [
   'agent-media-device-gateway',
 ] as const
 
+// 与视频模块公开的统一设备分类一致；媒体网关本身仍属于边缘节点。
+const VIDEO_DEVICE_ACCESS_PROVIDERS = ['fixed-media', 'gb28181-2016', 'media-plugin', 'onvif'] as const
+
 const NON_IOT_ACCESS_PROVIDERS = [
   ...GATEWAY_ACCESS_PROVIDERS,
   'official-edge-gateway',
-  'fixed-media',
-  'gb28181-2016',
-  'media-plugin',
-  'onvif',
+  ...VIDEO_DEVICE_ACCESS_PROVIDERS,
 ] as const
 
 const MEDIA_ACCESS_PROVIDERS = new Set([
@@ -220,6 +220,31 @@ export const queryOverviewGatewaySummary = () => queryDeviceCountSummary(buildGa
 /** 查询项目内物联设备的当前在线数与总数，不包含网关和视频接入产品。 */
 export const queryOverviewIotDeviceSummary = () => queryDeviceCountSummary(buildIotDeviceTerms())
 
+export interface OverviewDeviceBreakdown { id: string; value?: number; offline?: number; failed?: boolean }
+
+/** 与原设备类型统计保持相同请求和异常口径，空响应不能当作零。 */
+async function queryOverviewBreakdownCount(terms: DeviceDetailTerm[]): Promise<number> {
+  const response = await request.post('/device/instance/_count', { pageIndex: 0, pageSize: 1, terms }, { hiddenError: true })
+  const source = recordOf(response), raw = unwrapResult(response), value = raw !== null && typeof raw === 'object' ? recordOf(raw).total : raw
+  if (source.success === false || (typeof source.status === 'number' && source.status >= 400)
+    || value === null || value === undefined || value === '') throw new Error('Missing device count')
+  return countOf(response)
+}
+
+/** 设备类型构成与设备总数使用相同的资产范围，单项失败保留未知状态。 */
+export async function queryOverviewIotDeviceBreakdown(): Promise<OverviewDeviceBreakdown[]> {
+  return Promise.all(['device', 'gateway', 'childrenDevice'].map(async id => {
+    const terms = [...buildIotDeviceTerms(), { column: 'deviceType', termType: 'eq', value: id }]
+    try {
+      const [value, offline] = await Promise.all([
+        queryOverviewBreakdownCount(terms),
+        queryOverviewBreakdownCount([...terms, { column: 'state', termType: 'not', value: 'online' }]),
+      ])
+      return { id, value, offline }
+    } catch { return { id, failed: true } }
+  }))
+}
+
 /** 最近访问仅补齐当前项目内已访问设备的名称，不拉取完整详情及运行数据。 */
 export const queryOverviewDeviceNames = async (ids: readonly string[]): Promise<Map<string, string>> => {
   const deviceIds = [...new Set(ids.filter(id => id.trim()))]
@@ -245,8 +270,10 @@ export const queryOverviewDeviceNames = async (ids: readonly string[]): Promise<
 }
 
 /** 设备分布与数量卡、统一设备列表共用同一产品范围。 */
-export const buildOverviewDeviceTerms = (kind: 'edge' | 'iot'): OverviewDeviceTerm[] => (
-  kind === 'edge' ? buildGatewayTerms() : buildIotDeviceTerms()
+export const buildOverviewDeviceTerms = (kind: 'edge' | 'iot' | 'video'): OverviewDeviceTerm[] => (
+  kind === 'edge' ? buildGatewayTerms() : kind === 'video'
+    ? [{ column: 'productId$product-info', value: `accessProvider in (${VIDEO_DEVICE_ACCESS_PROVIDERS.join(',')})` }]
+    : buildIotDeviceTerms()
 )
 
 export interface OverviewChannelBreakdown extends OverviewCountSummary { id: string }

@@ -4,7 +4,7 @@
     <a-popover v-if="hiddenCount" :trigger="['hover', 'focus']" placement="bottomLeft">
       <template #content>
         <div class="private-summary-popover">
-          <PrivateSummaryTag v-for="item in items" :key="item.id" :item="item" />
+          <PrivateSummaryTag v-for="item in hiddenItems" :key="item.id" :item="item" />
         </div>
       </template>
       <button type="button" class="private-summary-more" :aria-label="accessibleLabel">+{{ hiddenCount }}</button>
@@ -24,7 +24,7 @@ import PrivateSummaryTag from './PrivateSummaryTag.vue'
 import { useVisiblePrivateSummaryTags, type PrivateSummaryTag as SummaryTag } from '../usePrivateSummaryTags'
 
 const props = defineProps<{ items: SummaryTag[] }>()
-const { host, measurement, visibleItems, hiddenCount, accessibleLabel } = useVisiblePrivateSummaryTags(toRef(props, 'items'))
+const { host, measurement, visibleItems, hiddenItems, hiddenCount, accessibleLabel } = useVisiblePrivateSummaryTags(toRef(props, 'items'))
 </script>
 
 <style scoped>

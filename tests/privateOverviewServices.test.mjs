@@ -11,7 +11,7 @@ const { outputFiles } = await build({ stdin: { contents: ['resources', 'trends',
   const stub = (filter, content) => { const namespace = `s${Math.random()}`; b.onResolve({ filter }, () => ({ path: 'stub', namespace })); b.onLoad({ filter: /.*/, namespace }, () => ({ contents: content, loader: 'js' })) }
   stub(/^@jetlinks-web\/core$/, 'export const request = { post: (...args) => context.post(...args) }')
   stub(/\/access$/, 'export const getPrivateOverviewAccess = () => context.access; export const PRIVATE_TARGETS = new Proxy({}, {get:(_, key) => ({menus:[String(key)]})})')
-  stub(/api\/overview$/, 'export const queryOverviewIotDeviceSummary=()=>context.summary("iot"); export const queryOverviewChannelBreakdown=(scope)=>context.summary("video",scope); export const buildOverviewDeviceTerms=()=>[]')
+  stub(/api\/overview$/, 'export const queryOverviewGatewaySummary=()=>context.summary("gateway"); export const queryOverviewIotDeviceSummary=()=>context.summary("iot"); export const queryOverviewIotDeviceBreakdown=async()=>[]; export const queryOverviewChannelBreakdown=(scope)=>context.summary("video",scope)')
   stub(/ResourceCenter\/services\/trends$/, 'export const loadMessageTrend = period => context.messages(period)')
   stub(/\/alarmLevels$/, 'export const queryAlarmLevelOptions = () => context.levels(); export const normalizeAlarmLevelValue = v => typeof v === "number" ? v : undefined')
   stub(/Operations\/alarmService$/, 'export const queryQuickAlarms = category => context.latest(category)')
@@ -37,7 +37,7 @@ test('no access performs no resources, trends or alarm requests', async () => {
   assert.deepEqual(context.calls, [])
 })
 test('failed device summary stays unknown without hiding healthy video', async () => {
-  const { api, context } = fixture({ iot: true, video: true })
+  const { api, context } = fixture({ iot: true, video: true, screen: true })
   context.summary = async (id, scope) => { if (id === 'iot') throw Error('offline'); assert.equal(scope, 'all'); return [{ id: 'onvif', total: 3, online: 2 }, { id: 'media-plugin', total: 2, online: 1 }] }
   const result = await api.loadPrivateResources()
   assert.equal(result.assets[0].failed, true)

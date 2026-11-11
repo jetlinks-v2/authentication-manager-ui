@@ -9,6 +9,17 @@ export interface ResourceSupplementalRow {
   tone?: ResourceSupplementalTone
 }
 
+/** 数量分布行的展示契约；失败值不能被绘制成真实零值。 */
+export interface ResourceDistributionBar {
+  id: string
+  name: string
+  color: string
+  valueText: string
+  percentText: string
+  barPercent: number
+  failed: boolean
+}
+
 export interface ResourcePoolRow {
   id: string
   name: string

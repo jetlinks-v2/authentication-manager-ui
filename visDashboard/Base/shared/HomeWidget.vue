@@ -1,5 +1,5 @@
 <template>
-  <a-card v-if="available" class="project-home-shell" :class="{ 'project-home-shell--saas': config.chart.displayStyle === 'saas', 'project-home-shell--private': config.chart.displayStyle === 'private' }" :data-home-feature="feature" :bordered="false"
+  <a-card v-if="available" class="project-home-shell" :class="{ 'project-home-shell--saas': config.chart.displayStyle === 'saas', 'project-home-shell--private': config.chart.displayStyle === 'private', 'project-home-shell--state': error || !rows.length }" :data-home-feature="feature" :bordered="false"
     :style="tokens" :body-style="{ flex: 1, minHeight: 0, padding: '16px 20px 20px' }">
     <template #title>
       <div class="home-widget-title">
@@ -15,13 +15,13 @@
     </template>
     <div v-if="loading && !rows.length" class="home-state"><a-spin /></div>
     <div v-else-if="error" class="home-state"><CloudEmpty :description="t('packages.ProjectHome.loadError')"><a-button @click="retry">{{ t('packages.ProjectHome.alarmRetry') }}</a-button></CloudEmpty></div>
-    <slot v-else-if="!rows.length" name="empty" :can-open="canOpen" :open="open">
-      <div class="home-state">
+    <div v-else-if="!rows.length" class="home-state">
+      <slot name="empty" :can-open="canOpen" :open="open">
         <CloudEmpty :description="emptyDescription">
           <a-button v-if="!hideMore && moreTarget && canOpen(moreTarget)" size="small" @click="open(moreTarget)">{{ moreText }}</a-button>
         </CloudEmpty>
-      </div>
-    </slot>
+      </slot>
+    </div>
     <template v-else>
       <!-- 局部失败由指标缺省值表示；整卡失败仍使用上方空态和重试入口。 -->
       <slot :rows="visibleRows" :chart="config.chart" :can-open="canOpen" :open="open" />
@@ -88,7 +88,9 @@ const tokens = computed(() => ({
 .project-home-shell :deep(.ant-card-extra .ant-btn) { padding: 0; height: auto; font-size: 13px; line-height: 20px; transition: color 0.2s ease; }
 .project-home-shell :deep(.ant-card-extra .ant-btn-link:not(:disabled)) { color: var(--business-component-primary, #1677ff); }
 .project-home-shell :deep(.ant-card-extra .ant-btn-link:hover:not(:disabled)) { color: var(--ant-color-primary-hover, #4096ff); }
-.home-state { display: grid; place-items: center; height: 100%; overflow: auto; }
+/* 自定义空态与默认空态统一撑满正文；过矮时保留内容高度，由卡片正文滚动。 */
+.home-state { display: grid; place-items: center; flex: 1 0 auto; min-height: 120px; height: auto; overflow: visible; }
+.home-state :deep(.ant-empty) { margin: 0; }
 </style>
 <style scoped lang="less">
 .project-home-shell--saas, .project-home-shell--private {
@@ -99,8 +101,9 @@ const tokens = computed(() => ({
   :deep(.ant-card-body) { padding: 14px 18px 18px !important; overflow: visible; }
   &[data-home-feature="Applications"] :deep(.ant-card-body) { padding: 0 !important; }
   &[data-home-feature="Announcements"] :deep(.ant-card-body) { padding-inline: 6px !important; }
-  .home-state { min-height: 120px; height: auto; overflow: visible; }
   :deep(.home-content) { overflow: visible; }
   :deep(.home-state .ant-empty-image) { height: 64px; }
 }
+/* 状态内容只有正文一处滚动，避免 compact 外观覆盖空态的尺寸保护。 */
+.project-home-shell.project-home-shell--state :deep(.ant-card-body) { overflow: auto; }
 </style>

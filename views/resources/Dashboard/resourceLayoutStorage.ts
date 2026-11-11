@@ -1,34 +1,5 @@
-import CryptoJS from 'crypto-js'
-import { normalizeGridItem, parseStoredLayout } from '@jetlinks-web-core/components/DashBoardCanvas/utils/layout'
-import type { DashboardGridItem } from '@jetlinks-web-core/components/DashBoardCanvas'
-import type { ResourceCapabilities } from '../../../visDashboard/ResourceCenter/services/capabilities'
-import type { ResourceKind } from '../../../visDashboard/ResourceCenter/shared'
-import { resourceDeviceMapType, resourceVisionRankingType, type ResourceLayoutMode } from './resourceDashboardLayout'
-
-export interface ResourceLayoutProfile {
-  scope: string
-  saas: boolean
-  mode: ResourceLayoutMode
-  capabilities: ResourceCapabilities
-  widgets: readonly ResourceKind[]
-  deviceMap?: boolean
-}
-
-const layoutWidgets = (profile: ResourceLayoutProfile) => (
-  [...new Set([...profile.widgets, ...(profile.deviceMap ? [resourceDeviceMapType] : [])])].sort()
-)
-
-/** 按账号/运行范围、部署、宽度与最终组件集合隔离；摘要避免把长范围和组件列表拼进键名。 */
-export function resourceLayoutStorageKey(profile: ResourceLayoutProfile) {
-  const identity = JSON.stringify([profile.scope, profile.saas, profile.mode, layoutWidgets(profile)])
-  return `resource-dashboard:v8:${CryptoJS.MD5(identity).toString()}`
-}
-
-/** 已发布的 v6/v7 完整键只用于读取同范围个人布局，迁移后保留原记录。 */
-function legacyScopedKey(profile: ResourceLayoutProfile) {
-  const version = profile.saas ? 'v6' : 'v7'
-  return `resource-center-dashboard-${version}:${encodeURIComponent(profile.scope)}:${profile.saas ? 'saas' : 'private'}:${profile.mode}:${layoutWidgets(profile).join(',')}`
-}
+import { parseStoredLayout } from '@jetlinks-web-core/components/DashBoardCanvas/utils/layout'
+import type { ResourcePageWidget } from './resourcePageCanvas'
 
 function readScopedLayout(storage: Storage, key: string, ids: readonly string[], columns: number) {
   let layout
@@ -42,62 +13,40 @@ function readScopedLayout(storage: Storage, key: string, ids: readonly string[],
   return layout
 }
 
-/** 优先迁移同范围长键；新增地图时复制旧坐标并追加到底部，已有新布局和原记录均保留。 */
-export function migrateResourceLayout(
-  storage: Storage, key: string, ids: readonly string[], profile: ResourceLayoutProfile,
-  deviceMapGrid?: Partial<DashboardGridItem>,
-  visionRankingGrid?: Partial<DashboardGridItem>,
+/** 合并同范围的地图/离线列表坐标，保留其他卡片及旧记录；分散或冲突时将组合卡放到底部。 */
+export function migrateResourceDistributionLayout(
+  storage: Storage, key: string, legacyKey: string, widgets: readonly ResourcePageWidget[], mapOnlyLegacyKey?: string,
 ) {
-  if (storage.getItem(key) !== null) return
-  const columns = profile.saas ? 12 : 24
-  const scopedLayout = readScopedLayout(storage, legacyScopedKey(profile), ids, columns)
-  if (scopedLayout) {
-    storage.setItem(key, JSON.stringify(scopedLayout))
-    return
-  }
-  // 同身份/能力组合只追加新排行，保留所有已有拖拽坐标（包括地图），不覆盖新键和旧键。
-  if (profile.widgets.includes('VisionTaskRanking')) {
-    if (!visionRankingGrid || !ids.includes(resourceVisionRankingType)) return
-    const previousProfile = { ...profile, widgets: profile.widgets.filter(kind => kind !== 'VisionTaskRanking') }
-    const previousKey = resourceLayoutStorageKey(previousProfile)
-    const previousIds = ids.filter(id => id !== resourceVisionRankingType)
-    migrateResourceLayout(storage, previousKey, previousIds, previousProfile, deviceMapGrid)
-    const layout = readScopedLayout(storage, previousKey, previousIds, columns)
-    if (!layout) return
-    const bottom = Math.max(0, ...layout.map(item => item.y + item.h))
-    const { x, y, w, h } = normalizeGridItem({ ...visionRankingGrid, x: 0, y: bottom, w: columns }, columns)
-    storage.setItem(key, JSON.stringify([...layout, { i: resourceVisionRankingType, x, y, w, h }]))
-    return
-  }
-  if (profile.deviceMap) {
-    if (!deviceMapGrid || !ids.includes(resourceDeviceMapType)) return
-    const previousProfile = { ...profile, deviceMap: false }
-    const previousKey = resourceLayoutStorageKey(previousProfile)
-    const previousIds = ids.filter(id => id !== resourceDeviceMapType)
-    migrateResourceLayout(storage, previousKey, previousIds, previousProfile)
-    const layout = readScopedLayout(storage, previousKey, previousIds, columns)
-    if (!layout) return
-    const bottom = Math.max(0, ...layout.map(item => item.y + item.h))
-    const { x, y, w, h } = normalizeGridItem({ ...deviceMapGrid, x: 0, y: bottom, w: columns }, columns)
-    storage.setItem(key, JSON.stringify([...layout, { i: resourceDeviceMapType, x, y, w, h }]))
-    return
-  }
-  // 私有化 v7 已改为同行等宽；保留旧几何记录，但不把更早的固定比例迁入默认布局。
-  if (!profile.saas) return
-  if (profile.mode !== 'wide') return
-  const expected = new Set(ids)
-  for (const legacyKey of ['resource-center-dashboard-v5', 'resource-center-dashboard-v4']) {
-    let layout
-    try {
-      layout = parseStoredLayout(JSON.parse(storage.getItem(legacyKey) || 'null'))
-    } catch { continue }
-    if (!layout || layout.length !== ids.length || new Set(layout.map(item => item.i)).size !== ids.length) continue
-    if (!layout.every(item => expected.has(item.i))) continue
-    const next = legacyKey.endsWith('-v4')
-      ? layout.map(item => item.i === 'resourceCenterVideoPlaybackTrend'
-        ? { ...item, h: Math.min(item.h, 14) } : item)
-      : layout
-    storage.setItem(key, JSON.stringify(next))
-    return
+  const distribution = widgets.find(item => item.kind === 'distribution')
+  if (!distribution || key === legacyKey) return
+  try {
+    if (storage.getItem(key) !== null) return
+    const previousIds = widgets.flatMap(item => item.kind === 'distribution'
+      ? ['resource-panel-map', 'resource-panel-offline'] : [item.id])
+    // SaaS 早期只有独立地图；与已分开的地图/离线列表一样，只复制同账号作用域的坐标。
+    const previous = readScopedLayout(storage, legacyKey, previousIds, 24)
+      || (mapOnlyLegacyKey ? readScopedLayout(storage, mapOnlyLegacyKey,
+        previousIds.filter(id => id !== 'resource-panel-offline'), 24) : undefined)
+    if (!previous) return
+    const map = previous.find(item => item.i === 'resource-panel-map')!
+    const offline = previous.find(item => item.i === 'resource-panel-offline')
+    const others = previous.filter(item => item !== map && item !== offline)
+    const x = Math.min(map.x, offline?.x ?? map.x), y = Math.min(map.y, offline?.y ?? map.y)
+    const bounds = { x, y, w: Math.max(map.x + map.w, offline ? offline.x + offline.w : 0) - x,
+      h: Math.max(map.y + map.h, offline ? offline.y + offline.h : 0) - y }
+    // 单地图不足以容纳组合内容时只扩充新卡，冲突则把新卡放到其他卡片之后。
+    if (!offline) bounds.h = Math.max(bounds.h, distribution.gridItem.minH ?? 1)
+    const adjacent = !offline || (map.y === offline.y && (map.x + map.w === offline.x || offline.x + offline.w === map.x))
+      || (map.x === offline.x && map.w === offline.w && (map.y + map.h === offline.y || offline.y + offline.h === map.y))
+    const overlaps = others.some(item => bounds.x < item.x + item.w && bounds.x + bounds.w > item.x
+      && bounds.y < item.y + item.h && bounds.y + bounds.h > item.y)
+    const fits = bounds.w >= (distribution.gridItem.minW ?? 1) && bounds.h >= (distribution.gridItem.minH ?? 1)
+      && bounds.h <= (distribution.gridItem.maxH ?? 72)
+    const geometry = adjacent && !overlaps && fits ? bounds : {
+      x: 0, y: Math.max(0, ...others.map(item => item.y + item.h)), w: 24, h: distribution.gridItem.h,
+    }
+    storage.setItem(key, JSON.stringify([...others, { i: distribution.id, ...geometry }]))
+  } catch {
+    // 存储不可用或达到容量上限时继续使用默认布局，不删除原个人布局。
   }
 }

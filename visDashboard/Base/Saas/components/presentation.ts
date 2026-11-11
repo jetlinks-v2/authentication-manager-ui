@@ -11,6 +11,13 @@ export interface SaasHelpDocument {
   title: string
 }
 
+/** 最近访问最多六项，按与组件容器断点一致的列数预留默认卡片高度。 */
+export function recentOverviewHeight(width: number): number {
+  const columns = width >= 1024 ? 6 : width >= 640 ? 3 : width >= 360 ? 2 : 1
+  const rows = Math.ceil(6 / columns)
+  return 80 + rows * 56 + (rows - 1) * 8
+}
+
 /** 未知和无效读数显示破折号，真实零值仍展示为 0。 */
 export function formatOverviewNumber(value?: number | null, locale = 'zh-CN'): string {
   return typeof value === 'number' && Number.isFinite(value)

@@ -2,6 +2,14 @@
   <div class="private-overview-widget" :data-private-panel="panel.panel" :data-private-metric="panel.metricId">
     <PrivateKpis v-if="panel.panel === 'kpi'" :rows="rows" single :loading="resources.loading && !resources.data"
       :error="resources.error" :can-open="navigation.canOpen" @navigate="navigation.open" @retry="resources.refresh" />
+    <RecentVisits v-else-if="panel.panel === 'recent'" variant="private" />
+    <PrivateMyApplications v-else-if="panel.panel === 'my-applications'" :entries="onlyApplications.entries.value"
+      :state="{ loading: onlyApplications.applicationsLoading.value, error: onlyApplications.applicationsError.value, openingId: onlyApplications.openingId.value }"
+      :display="{ showAll: onlyApplications.canOpenAll.value }"
+      @open="onlyApplications.openApplication" @retry="onlyApplications.retry" @all="onlyApplications.openAll" />
+    <PrivateAccount v-else-if="panel.panel === 'account'" :profile="onlyApplications.profile.value"
+      :entries="onlyApplications.applicationsError.value || onlyApplications.applicationsLoading.value ? [] : onlyApplications.entries.value" :opening-id="onlyApplications.openingId.value"
+      @open="onlyApplications.openApplication" @account="onlyApplications.openAccount" />
     <PrivateAccess v-else-if="panel.panel === 'access'" :guide="guide.data" :actions="actions"
       :state="{ loading: guide.loading && !guide.data, error: guide.error }" :can-open="navigation.canOpen"
       @navigate="navigation.open" @retry="guide.refresh" />
@@ -29,6 +37,9 @@ import { GridComponent, TooltipComponent } from 'echarts/components'
 import type { DashboardWidget } from '@jetlinks-web-core/components/DashBoardCanvas'
 import Echarts from '@jetlinks-web-core/components/Echarts'
 import ProjectHomeApplications from '../../../../visDashboard/Base/Applications/ProjectHomeApplications.vue'
+import RecentVisits from '../../../../visDashboard/Base/Saas/SaasRecent.vue'
+import PrivateMyApplications from '../../../../visDashboard/Base/Private/components/PrivateMyApplications.vue'
+import PrivateAccount from '../../../../visDashboard/Base/Private/components/PrivateAccount.vue'
 import PrivateKpis from '../../../../visDashboard/Base/Private/components/PrivateKpis.vue'
 import PrivateAccess from '../../../../visDashboard/Base/Private/components/PrivateAccess.vue'
 import PrivateAssets from '../../../../visDashboard/Base/Private/components/PrivateAssets.vue'
@@ -39,7 +50,7 @@ import { usePrivateOverviewContext } from '../../../../visDashboard/Base/Private
 import type { PrivateOverviewWidget } from './layout'
 
 const props = defineProps<{ info: DashboardWidget }>()
-const { metric, range, metrics, resources, guide, alarms, trend, monitor, charts, actions,
+const { metric, range, metrics, resources, guide, alarms, trend, monitor, charts, actions, onlyApplications,
   applicationInfo, navigation, targets } = usePrivateOverviewContext()
 // 重排仅更新画布 info；数据与动作始终来自页面唯一的查询上下文。
 const panel = computed(() => props.info.componentProps.privateOverview as Pick<PrivateOverviewWidget, 'panel' | 'metricId'>)

@@ -36,13 +36,17 @@
  */
 import baseMenu from './baseMenu.json'
 import p from './package.json'
+import { isSaasAnnouncementManagement } from './views/system/Announcement/managementContext'
 
-const handleMenu = (menus: any[]): any[] => menus.map(item => ({
-  ...item,
-  children: item.children ? handleMenu(item.children) : undefined,
-  options: { appName: p.id || p.name, ...item.options },
-  runtime: ['cloud', 'app'].includes(item.owner)
-}))
+// SaaS 复用运营模块已有公告菜单，本模块只补运行时的系统设置入口。
+const handleMenu = (menus: any[]): any[] => menus
+  .filter(item => item.code !== 'system/Announcement' || !isSaasAnnouncementManagement())
+  .map(item => ({
+    ...item,
+    children: item.children ? handleMenu(item.children) : undefined,
+    options: { appName: p.id || p.name, ...item.options },
+    runtime: ['cloud', 'app'].includes(item.owner)
+  }))
 
 export default () => {
   return handleMenu(baseMenu)

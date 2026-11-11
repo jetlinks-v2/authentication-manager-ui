@@ -42,7 +42,7 @@
 		              <a-flex :gap="16">
 				            <ConditionFilter
 					            class="application-template-page__search"
-					            :columns="columns"
+					            :fields="filterFields"
 					            @change="table.handleSearch"
 				            />
 				            <EmptyCreateButton />
@@ -136,6 +136,7 @@ const {
   createDialogOpen,
   queryParams,
   columns,
+  filterFields,
   defaultParams,
   requestTable,
   normalizeState,

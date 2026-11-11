@@ -20,7 +20,7 @@ export interface RecentVisit {
 }
 
 const maximum = 18
-const queryKeys = new Set(['type', 'tab', 'tabKey', 'id', 'gatewayId', 'deviceId', 'productId', 'perspective'])
+const queryKeys = new Set(['type', 'status', 'tab', 'tabKey', 'id', 'gatewayId', 'deviceId', 'productId', 'perspective'])
 const recorders = new WeakMap<Router, () => void>()
 export const recentVisitsRevision = shallowRef(0)
 
@@ -74,7 +74,8 @@ export function visitFromRoute(route: RouteLocationNormalized | RouteLocationNor
   const ownerCode = [...granted].sort((a, b) => b.length - a.length).find(item => code === item || code.startsWith(`${item}/`))
   if (!ownerCode) return undefined
   const params = Object.fromEntries(Object.entries(route.params).filter(([, value]) => typeof value === 'string')) as Record<string, string>
-  const query = Object.fromEntries(Object.entries(route.query).filter(([key, value]) => queryKeys.has(key) && typeof value === 'string')) as Record<string, string>
+  const query = Object.fromEntries(Object.entries(route.query).filter(([key, value]) => queryKeys.has(key)
+    && typeof value === 'string' && (key !== 'status' || ['online', 'offline', 'disabled'].includes(value)))) as Record<string, string>
   const visit: RecentVisit = { id: '', menuCode: code, ownerCode,
     title: String(route.meta.title || ''), visitedAt: now, target: { menus: [code], params, query } }
   visit.id = recentVisitIdentity(visit)

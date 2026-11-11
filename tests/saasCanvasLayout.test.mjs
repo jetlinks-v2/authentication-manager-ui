@@ -8,6 +8,76 @@ const root=fileURLToPath(new URL('../',import.meta.url)),core=path.resolve(root,
 const result=await build({stdin:{contents:`export * from ${JSON.stringify(path.join(root,'views/project/Overview/saasOverviewLayout.ts'))}; export { useDashboardState } from ${JSON.stringify(core)}`,resolveDir:root,loader:'ts'},bundle:true,write:false,platform:'node',format:'cjs',packages:'external'})
 const module={exports:{}};Function('module','exports','require',result.outputFiles[0].text)(module,module.exports,require)
 const api=module.exports,features=['SaasSummary','SaasRecent','SaasResources','SaasToday','SaasQuotas','Applications','Announcements','SaasHelp']
+test('operations account occupies the side without overlapping authorized cards',()=>{
+ const ops=['SaasSummary','SaasRecent','SaasResources','SaasToday','SaasAccount','Announcements','SaasHelp']
+ for(const width of [375,800,1040,1512,1920]){
+  const items=api.buildSaasOverviewLayout(ops,width,{resources:1,today:2})
+  assert.deepEqual(new Set(items.map(x=>x.feature)),new Set(ops))
+  for(const [i,a] of items.entries()) for(const b of items.slice(i+1)){const x=a.gridItem,y=b.gridItem;assert.ok(x.x+x.w<=y.x||y.x+y.w<=x.x||x.y+x.h<=y.y||y.y+y.h<=x.y,`${a.feature}/${b.feature} at ${width}`)}
+  if(width>=1040){const account=items.find(x=>x.feature==='SaasAccount').gridItem, recent=items.find(x=>x.feature==='SaasRecent').gridItem, today=items.find(x=>x.feature==='SaasToday').gridItem; assert.equal(account.y,recent.y);assert.ok(account.y+account.h>=today.y+today.h)}
+ }
+})
+test('single device breakdown gets a compact wide height and enough room when stacked',()=>{
+ const wide=api.buildSaasOverviewLayout(['SaasResources'],1400,{resources:1,today:0,singleDevice:true})[0].gridItem
+ const narrow=api.buildSaasOverviewLayout(['SaasResources'],400,{resources:1,today:0,singleDevice:true})[0].gridItem
+ assert.equal(wide.h,6);assert.ok(narrow.h>=8)
+})
+test('single video fits four source rows and never overlaps other cards',()=>{
+ for(const width of [375,400,800,1040,1400,1920]) {
+  const items=api.buildSaasOverviewLayout(features,width,{resources:1,today:2,singleVideo:true})
+  const grid=items.find(item=>item.feature==='SaasResources').gridItem
+  if(width>=1040) assert.equal(grid.h,6,`compact height at ${width}`)
+  if(width<=400) {
+   const pixels=grid.h*32-16, needed=88+26+8+7+7+18+12+4*18+3*8
+   assert.ok(pixels>=needed,`four stacked source rows at ${width}: ${pixels} < ${needed}`)
+  }
+  for(const [i,a] of items.entries()) for(const b of items.slice(i+1)) {const x=a.gridItem,y=b.gridItem;assert.ok(x.x+x.w<=y.x||y.x+y.w<=x.x||x.y+x.h<=y.y||y.y+y.h<=x.y,`${a.feature}/${b.feature} at ${width}`)}
+ }
+})
+test('single video restores legacy short cached height at its new minimum while retaining custom geometry',()=>{
+ const original=globalThis.localStorage,store=new Map(),key='single-video-legacy'
+ globalThis.localStorage={getItem:k=>store.get(k)??null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)}
+ try {
+  const selected=['SaasResources','SaasToday']
+  const components=api.buildSaasOverviewLayout(selected,400,{resources:1,today:2,singleVideo:true}).map(({feature,gridItem})=>({id:feature,type:feature,componentProps:{gridItem}}))
+  const input={canvas:{gridLayout:{colNum:24}},components}
+  const restore=height=>{
+   const cached=[{i:'SaasResources',x:0,y:2,w:24,h:height},{i:'SaasToday',x:0,y:20,w:24,h:12}]
+   const raw=JSON.stringify(cached);store.set(key,raw)
+   const scope=vue.effectScope(),state=scope.run(()=>api.useDashboardState({value:()=>input,catalog:()=>({components:{}}),editable:()=>false,layoutEditable:()=>true,storageKey:()=>key,onChange:()=>assert.fail('restoration must not modify business config')}))
+   const geometry=state.value.value.components.map(c=>({i:c.id,...Object.fromEntries(['x','y','w','h'].map(k=>[k,c.componentProps.gridItem[k]]))}))
+   assert.equal(store.get(key),raw);scope.stop();return geometry
+  }
+  assert.deepEqual(restore(7),[{i:'SaasResources',x:0,y:2,w:24,h:9},{i:'SaasToday',x:0,y:20,w:24,h:12}])
+  assert.deepEqual(restore(12),[{i:'SaasResources',x:0,y:2,w:24,h:12},{i:'SaasToday',x:0,y:20,w:24,h:12}])
+ } finally {if(original===undefined)delete globalThis.localStorage;else globalThis.localStorage=original}
+})
+test('adding an account preserves customized geometry and never overwrites the previous layout',()=>{
+ const scope='user-a/project-a',width=1512,counts={resources:1,today:2,singleDevice:true}
+ const features=['SaasSummary','SaasRecent','SaasResources','SaasToday','SaasAccount','Announcements','SaasHelp']
+ const previous=features.filter(x=>x!=='SaasAccount'), oldKey=api.saasOverviewLayoutStorageKey(scope,width,previous), key=api.saasOverviewLayoutStorageKey(scope,width,features)
+ const data=new Map(),storage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)}
+ const base=api.buildSaasOverviewLayout(previous,width,counts).map(({feature,gridItem})=>({i:`projectHome${feature}`,x:gridItem.x,y:gridItem.y,w:gridItem.w,h:gridItem.h}))
+ data.set(oldKey,JSON.stringify(base));api.migrateSaasAccountLayout(storage,scope,width,features,counts);assert.equal(data.has(key),false)
+ const customized=base.map(row=>row.i==='projectHomeSaasRecent'?{...row,y:80}:row), raw=JSON.stringify(customized)
+ data.set(oldKey,raw);api.migrateSaasAccountLayout(storage,scope,width,features,counts)
+ const restored=JSON.parse(data.get(key));assert.deepEqual(restored.slice(0,-1),customized)
+ assert.equal(restored.at(-1).i,'projectHomeSaasAccount');assert.equal(restored.at(-1).y,Math.max(...customized.map(x=>x.y+x.h)))
+ assert.equal(data.get(oldKey),raw);api.migrateSaasAccountLayout(storage,'other',width,features,counts);assert.equal(data.has(api.saasOverviewLayoutStorageKey('other',width,features)),false)
+})
+test('legacy single-device default yields to the new account layout while custom geometry migrates',()=>{
+ const scope='legacy-single-device',width=1512,counts={resources:1,today:2,singleDevice:true}
+ const features=['SaasSummary','SaasRecent','SaasResources','SaasToday','SaasAccount','Announcements','SaasHelp']
+ const previous=features.filter(x=>x!=='SaasAccount'),oldKey=api.saasOverviewLayoutStorageKey(scope,width,previous),key=api.saasOverviewLayoutStorageKey(scope,width,features)
+ const data=new Map(),storage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)}
+ const old=api.buildSaasOverviewLayout(previous,width,{resources:1,today:2}).map(({feature,gridItem})=>({i:`projectHome${feature}`,x:gridItem.x,y:gridItem.y,w:gridItem.w,h:gridItem.h}))
+ const raw=JSON.stringify(old);data.set(oldKey,raw)
+ api.migrateSaasAccountLayout(storage,scope,width,features,counts)
+ assert.equal(data.has(key),false);assert.equal(data.get(oldKey),raw)
+ const customized=old.map(row=>row.i==='projectHomeSaasRecent'?{...row,y:80}:row)
+ data.set(oldKey,JSON.stringify(customized));api.migrateSaasAccountLayout(storage,scope,width,features,counts)
+ assert.deepEqual(JSON.parse(data.get(key)).slice(0,-1),customized)
+})
 test('overview default geometry respects visible features without overlap across widths',()=>{
  for(const width of [360,600,1039,1040,1400,2077]) for(const subset of [features,features.filter(x=>!['SaasResources','SaasQuotas'].includes(x)),['SaasSummary','SaasRecent','Announcements','SaasHelp']]){
   const items=api.buildSaasOverviewLayout(subset,width,{resources:4,today:4})

@@ -4,7 +4,7 @@
     <j-permission-button :hasPermission="groupMenu + ':add'" type="primary" @click="create"><template #icon><AIcon type="PlusOutlined" /></template>{{ $t('ApiGroupManagement.create') }}</j-permission-button>
   </DefineEmptyCreate>
   <j-page-container v-bind="$attrs">
-    <ContentPanel fill class="application-list api-group-list">
+    <ContentPanel fill :background="false" :padding="0" class="application-list api-group-list">
       <a-flex align="center" justify="space-between" :gap="16" class="application-list-toolbar">
         <ConditionFilter v-if="canQuery" class="application-list-filter" :columns="columns" target="api-group-management" @change="handleSearch" />
         <EmptyCreateButton class="application-list-create" />
@@ -12,7 +12,7 @@
       <a-alert v-if="!canQuery" type="warning" show-icon :message="$t('ApiGroupManagement.noQueryPermission')" />
       <template v-else>
         <a-alert v-if="error" type="error" show-icon :message="error" class="page-alert" />
-        <j-pro-table ref="tableRef" mode="TABLE" :columns="columns" :request="requestPage" :params="params" :body-style="{ padding: 0 }" :alert-show="false" :pagination="{ size: 'small' }" :scroll="false">
+        <j-pro-table ref="tableRef" mode="TABLE" :columns="columns" :request="requestPage" :params="params" :body-style="{ padding: 0 }" :alert-show="false" :pagination="{ size: 'small' }">
           <template #emptyText>
             <CloudEmpty :search="params.terms" :search-name="$t('components.AddDialog.956922-6')">
               <EmptyCreateButton />
@@ -20,7 +20,12 @@
           </template>
           <template #name="row"><a-button class="table-link" type="link" @click="open(row)">{{ row.name }}</a-button></template>
           <template #id="row"><a-typography-text copyable :content="row.id">{{ row.id }}</a-typography-text></template>
-          <template #status="row"><a-badge :status="groupValue(row.status) === 'enabled' ? 'success' : 'default'" :text="groupText(row.status, $t, 'ApiGroupManagement.state.')" /></template>
+          <template #status="row">
+            <j-badge-status
+              :status="groupValue(row.status) === 'enabled' ? 'success' : 'default'"
+              :text="groupText(row.status, $t, 'ApiGroupManagement.state.')"
+            />
+          </template>
           <template #action="row">
             <TableActions>
               <TableActionsItem common>

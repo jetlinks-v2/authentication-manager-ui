@@ -44,9 +44,6 @@ const { available, steps, handleAction } = inject(quickGuideContextKey, undefine
 }
 .quick-guide-main { display: flex; align-items: baseline; gap: var(--space-2, 8px); min-width: 0; flex-shrink: 0; }
 .guide-title { margin: 0; font-size: var(--fs-18, 18px); line-height: 24px; font-weight: 600; color: var(--guide-title); flex-shrink: 0; }
-.quick-guide-content { flex: 1; min-height: 0; margin-top: var(--space-4, 16px); }
-
-@container project-home (max-height: 140px) {
-  .quick-guide-content { margin-top: var(--space-2, 8px); }
-}
+/* 画布高度与 rem 留白使用不同单位，内容统一滚动，不按外框高度隐藏步骤信息。 */
+.quick-guide-content { flex: 1; min-height: 0; margin-top: var(--space-4, 16px); overflow: auto; scrollbar-width: thin; scroll-snap-type: x proximity; }
 </style>
