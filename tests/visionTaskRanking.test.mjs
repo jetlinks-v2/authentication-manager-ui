@@ -136,7 +136,7 @@ test('queries only authorized gateway scope and batches task names once per gate
   const names = calls.slice(1)
   assert.equal(names.length, ids.length)
   assert.equal(new Set(names.map(call => call.url)).size, ids.length)
-  for (const call of names) assert.deepEqual(call.body, { paging: false, terms: [{ column: 'id', termType: 'in', value: ['t1', 't2'] }] })
+  for (const call of names) assert.deepEqual(call.body, { paging: false, terms: [{ column: 'task.id', termType: 'in', value: ['t1', 't2'] }] })
   assert.equal(result.rows.length, 14)
   assert.equal(result.rows.find(row => row.taskId === 't1').sourceName, '来源一')
   assert.equal(result.rows.find(row => row.taskId === 't1').name, '任务一')
@@ -191,7 +191,9 @@ test('small node directory distinguishes no tasks from missing metrics', async (
   let result = await loadVisionTaskRanking('latency')
   assert.equal(result.taskCount, 1); assert.equal(result.directoryIncomplete, false)
   assert.equal(result.rows[0].value, undefined); assert.equal(result.rows[0].taskId, 't1'); assert.equal(result.rows[0].sourceId, undefined); assert.equal(result.rows[0].detailAvailable, true)
-  assert.deepEqual(calls.find(item=>item.url.includes('/edge/detail/')).body.terms, [{column:'domain',termType:'eq',value:'ComputerVision'}])
+  assert.deepEqual(calls.find(item=>item.url.includes('/edge/detail/')).body.terms, [
+    {column:'task.domain',termType:'eq',value:'ComputerVision'}, {column:'task.id',termType:'notnull',value:''},
+  ])
   globalThis.__visionRankingFixture.post = async () => ok([])
   result = await loadVisionTaskRanking('latency')
   assert.equal(result.taskCount, 0); assert.deepEqual(result.rows, [])
@@ -271,6 +273,62 @@ test('configuration scene wins and ambiguous source-free task has no invented sc
   assert.equal(byId.ambiguous.algorithmName,'算法二')
 })
 
+test('nested task details join metric identities and exclude operation-only records from the directory', async () => {
+  const queries = []
+  globalThis.__visionRankingFixture = {
+    page: directory(['g1']),
+    post: async (url, body) => {
+      if (url === '/device/metrics/_agg') return ok([latency('g1', 'actual-task', 'source', 105.59)])
+      queries.push(body)
+      return ok([
+        { task: { id: 'actual-task', name: '安全帽监管任务', taskTargetDetail: { value: 'HelmetDetection', text: '安全帽检测' },
+          configuration: { sources: [{ id: 'source', name: '边端摄像头' }] } },
+          operation: { id: 'operation-id' }, cloudChannelName: '云端摄像头' },
+        { task: null, operation: { id: 'not-created', executionConfig: { taskName: '待创建任务' } } },
+      ])
+    },
+  }
+  const result = await loadVisionTaskRanking('latency')
+  assert.deepEqual(queries[0].terms, [
+    { column: 'task.domain', termType: 'eq', value: 'ComputerVision' },
+    { column: 'task.id', termType: 'notnull', value: '' },
+  ])
+  assert.equal(result.taskCount, 1)
+  assert.equal(result.rows.length, 1)
+  assert.equal(result.rows[0].taskId, 'actual-task')
+  assert.equal(result.rows[0].name, '安全帽监管任务')
+  assert.equal(result.rows[0].algorithmName, '安全帽检测')
+  assert.equal(result.rows[0].sourceName, '云端摄像头')
+  assert.equal(result.rows[0].value, 105.59)
+  assert.equal(result.rows[0].detailAvailable, true)
+  assert.equal(result.metadataFailed, false)
+  assert.equal(result.directoryIncomplete, false)
+})
+
+test('large gateway scope queries nested task IDs and never associates an operation ID with a metric task', async () => {
+  const ids = ['g1', 'g2', 'g3', 'g4'], queries = []
+  globalThis.__visionRankingFixture = {
+    page: directory(ids),
+    post: async (url, body) => {
+      if (url === '/device/metrics/_agg') return ok([latency('g1', 'real'), latency('g1', 'pending')])
+      queries.push(body)
+      return ok([
+        { task: { id: 'real', name: '实际任务' }, operation: null },
+        { task: null, operation: { id: 'pending', executionConfig: { taskName: '待创建' } } },
+      ])
+    },
+  }
+  const result = await loadVisionTaskRanking('latency')
+  assert.deepEqual(queries, [{ paging: false, terms: [{ column: 'task.id', termType: 'in', value: ['pending', 'real'] }] }])
+  const real = result.rows.find(row => row.taskId === 'real')
+  assert.equal(real.name, '实际任务')
+  assert.equal(real.detailAvailable, true)
+  const pending = result.rows.find(row => row.taskId === 'pending')
+  assert.equal(pending.name, 'pending')
+  assert.equal(pending.detailAvailable, false)
+  assert.equal(result.metadataFailed, true)
+})
+
 test('three online gateways reuse complete metadata while every tab requests fresh metrics', async () => {
   const calls = []
   globalThis.__visionRankingFixture = {
@@ -279,7 +337,10 @@ test('three online gateways reuse complete metadata while every tab requests fre
     post: async (url, body) => {
       if (url === '/device/metrics/_agg') { calls.push('aggregation'); return ok([]) }
       calls.push('tasks')
-      assert.deepEqual(body.terms, [{ column: 'domain', termType: 'eq', value: 'ComputerVision' }])
+      assert.deepEqual(body.terms, [
+        { column: 'task.domain', termType: 'eq', value: 'ComputerVision' },
+        { column: 'task.id', termType: 'notnull', value: '' },
+      ])
       return ok([{ id: 't', name: 'Task' }])
     },
   }

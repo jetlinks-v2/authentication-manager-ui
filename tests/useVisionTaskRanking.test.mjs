@@ -162,15 +162,21 @@ test('no-task state requires a complete zero directory and clears on missing met
 })
 
 
-test('identity shows scene and algorithm only and latency uses ms independently of backend unit', async t => {
+test('identity shows task names with algorithm or ID fallback and latency uses ms independently of backend unit', async t => {
   const {state,calls} = fixture(t)
   const rows = [
     {...row('first'),sceneName:'消防通道',algorithmName:'杂物检测',sourceName:'来源',name:'任务'},
     {...row('second'),algorithmName:'车辆检测',name:'任务二',sourceName:'模型'},
     {...row('third'),name:'任务三',sourceName:'模型三'},
+    {...row('fourth'),algorithmName:'车辆检测'},
+    {...row('fifth'),name:''},
   ]
   calls[0].resolve({rows,metadataFailed:false,limited:false,supported:true,unit:'ms'}); await tick()
-  assert.deepEqual(state.rows.value.map(r=>[r.caption,r.label,r.text]),[['gateway','消防通道 · 杂物检测','10 ms'],['gateway','车辆检测','10 ms'],['gateway','—','10 ms']])
+  assert.deepEqual(state.rows.value.map(r=>[r.caption,r.label,r.text]),[
+    ['gateway','任务','10 ms'], ['gateway','任务二','10 ms'], ['gateway','任务三','10 ms'],
+    ['gateway','车辆检测','10 ms'], ['gateway','fifth','10 ms'],
+  ])
+  assert.equal(state.rows.value[0].tooltip, 'gateway · 任务 · 消防通道 · 杂物检测')
   state.metric.value='backlog'
   calls.at(-1).resolve({rows,metadataFailed:false,limited:false,supported:true,unit:'条'}); await tick()
   assert.equal(state.rows.value[0].text,'10 条')

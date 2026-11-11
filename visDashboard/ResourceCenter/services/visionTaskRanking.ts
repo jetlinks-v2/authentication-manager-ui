@@ -1,7 +1,7 @@
 import { request } from '@jetlinks-web/core'
 import dayjs from 'dayjs'
 import { loadGatewayDirectory, metricNumber } from './gatewayStatus'
-import { loadVisionTaskDirectory, type VisionTaskDirectory } from './visionTaskDirectory'
+import { loadVisionTaskDirectory, visionTasksOf, type VisionTaskDirectory } from './visionTaskDirectory'
 import { recordOf, rowsOf, textOf } from '../../Base/shared/apiResult'
 
 export const visionRankingMetrics = ['latency', 'discard', 'backlog'] as const
@@ -184,8 +184,8 @@ export async function loadVisionTaskRanking(
       const group = rows.filter(item => item.gatewayId === gatewayId)
       try {
         // 与 AI 模块 queryGatewayEdgeTaskDetails 使用同一 CRUD 查询接口及边端任务 ID。
-        const tasks = rowsOf(await request.post(`/edge/device/${encodeURIComponent(gatewayId)}/_/ai/task/edge/detail/_query/no-paging`, {
-          paging: false, terms: [{ column: 'id', termType: 'in', value: [...new Set(group.map(item => item.taskId))] }],
+        const tasks = visionTasksOf(await request.post(`/edge/device/${encodeURIComponent(gatewayId)}/_/ai/task/edge/detail/_query/no-paging`, {
+          paging: false, terms: [{ column: 'task.id', termType: 'in', value: [...new Set(group.map(item => item.taskId))] }],
         }, options))
         if (!isCurrent()) return
         const byId = new Map(tasks.map(task => [textOf(task.id), task]))
