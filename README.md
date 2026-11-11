@@ -1,18 +1,12 @@
 # Authentication Manager UI
 
+对象目录的用户副标题由 `objectPresentations.ts` 经 `register.ts` 注册为已授权行中的 `username`；主行继续显示姓名。保留真实账号的完整用户名以区分同名账号，缺失时隐藏副标题，不新增查询或依赖本体模块。
+
+组织通过同一注册入口声明 `directory.mode: tree`，复用 `api/system/department.ts#getTreeData_api` 的不分页组织树，不请求成员统计；树的展开、保留祖先搜索及选择由消费方处理，目录行只显示图标与名称。该接口沿用组织原权限范围，身份模块不依赖本体模块，也不根据图关系拼装组织层级。
+
 第三方应用模板的 RSA keyId、公钥保存在 `configuration.credential`，可在关闭通知时独立维护，用于应用凭据主动获取与加密交付。通知开关只维护 `configuration.notification.address`；读取兼容旧 notification 内的 RSA 字段，保存时迁移为统一 credential，关闭通知不会删除公钥。通知 HMAC Secret 也可独立设置：keyId 默认自动准备，也可填写第三方预设的 keyId/Secret，接收端配置后通过专用接口保存切换；未设置时继续原派生算法，普通模板保存不读写 Secret。前后端须配套发布，后端需先增加两个可空通知凭据字段；旧后端不支持新 RSA 配置或自定义通知凭据，回滚需恢复配置格式与接收端信任凭据。
 
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.
-
-第三方登录菜单（`baseMenu.json` 中的 `system-third-party-login`，owner 为 `cloud`）需声明应用管理查询权限 `application/query`，供 `api/system/thirdPartyLogin.ts#queryThirdPartyApplications` 调用 `/application/_query`。更新菜单定义后需同步已保存菜单及相应授权；验收时使用仅拥有该菜单的账号确认应用列表可查询，实际登录环境权限效果待验证。
-
-## 运行时角色授权详情
-
-角色授权读取统一使用 core 的 `getMenuGrantDetail('role', roleId, query)`，对应 `GET /menu/{targetType}/{targetId}/_grant/detail`。`result.menus` 提供菜单及权限候选，顶层 `result.assetAccesses` 提供该角色的独立资产策略；不把候选列表作为已保存策略，不额外传候选展示域 `owner`。旧 `getPermissionTree_api` 仅保留菜单树返回结构的兼容适配。
-
-`api/system/role.ts` 复用统一详情查询，`PermissionTree.vue` 校验两组数据都是数组后才启用保存；旧 tree 数组、缺少字段或请求失败均不能生成保存载荷。旧树适配器保留错误响应，不把失败转换成空菜单。范围限运行时前端，候选筛选与后端授权规则保持原行为。
-
-验证：模块内 `node --test tests/roleGrantDetail.test.mjs` 的 6 项回归通过，覆盖真实 API、角色页 setup、共享编辑器与初始化角色流程；3 个改动 API 的定向 TypeScript 检查通过（沿用工作区配置并加载 Vue JSX 类型）。`runtime-ui` 中执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 对应的 Vite 模块构建通过，`git diff --check` 通过。未配置独立 lint 脚本；未运行全量类型检查，可执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 复核。尚未对真实后端写入；本地需检查角色加载请求、修改资产范围后保存及刷新回显，本次接口统一不等同于验证所有重复展示问题已修复。
 
 ## Application ownership filter
 
@@ -21,6 +15,10 @@ Delivery: [PR #119](https://github.com/jetlinks-v2/authentication-manager-ui/pul
 The application list uses `createAssetOwnershipField` for `business_application`. `register.ts` registers organization and tenant capabilities from `ProjectApplication/ownershipSelectors.ts`; creator selectors search users by name or username and resolve selected IDs. Labels display name and username with the suffix after the last `@` removed. Context determines directory availability; the initial page load does not query Context or directories. Tenant targets accept IDs without a directory request.
 
 Organizations use `OwnershipOrganizationTree.vue` and `useOwnershipOrganizationTree.ts`: independent checkbox selection, path labels, default root and selected-ancestor expansion, debounced local search and virtual rows. Clearing search restores expansion; stale responses cannot replace current selections. “Include descendants” submits the backend closure condition. Selected tags occupy at most two rows beside that control; `useSelectedTagOverflow.ts` reserves space for `+N`, whose popover shows all selections in the editor's stacking context.
+
+内嵌 `option-extra` 模式采用名称与操作同一行，右侧固定预留112px，保持44px行高；不在名称下另列权限。搜索路径可在名称下弱化显示。复选框与展开箭头居中对齐。树仅承载插槽，不解释权限或请求资产接口。15项树回归、格式检查及生产构建通过；此前真实浏览器已验证勾选、四项权限、撤销和搜索均不引起挤位或横向溢出。`assetOwnershipCreator.test.mjs` 的6项既有失败来自注册测试替身未处理 `./objectPresentations` 导入，与本次树行样式无关。
+
+状态走查修正：空目录使用 Ant Empty 的简单 SVG，避免 `image=null` 触发渲染错误；读取失败明确显示提示及重试按钮，重试复用原加载器并保留勾选、过期响应与卸载保护。实际组件场景页见 `../jetlinks-ontology-ui/tests/browser/asset-binding-scenarios.html`，覆盖280/320/400px宽度、深层与长名称、零到多项权限、只读/禁用、单选、加载、失败重试、空目录及普通列表。浅色中文及暗色英文的真实DOM布局检查通过；重试后加载成功，单选和搜索勾选顺序正常，未出现横向溢出。全部使用本地数据，不写业务配置。定向类型检查仍有197项共享依赖诊断，修改的组件与hook无诊断。真实工作台恢复后已验证无匹配空态、清空搜索保留草稿、权限与更多菜单Esc返回；已恢复用户原来的未保存选择与三项权限，未提交配置。
 
 Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/186) and the backend Context from [Components #1655](https://github.com/jetlinks-v2/jetlinks-components/pull/1655) / [Tenant #48](https://github.com/jetlinks-v2/jetlinks-tenant/pull/48). Regression command: `node --test tests/assetOwnershipCreator.test.mjs tests/assetOwnershipOrganizationTree.test.mjs`; coverage includes lazy registration, user query mapping, the actual setup-name transform, tag overflow and local filtering of over 20,000 nodes. Full type checking retains existing errors; final visual verification remains pending because the browser connection times out.
 
@@ -50,29 +48,6 @@ Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/1
 - 相邻回归 `node --test tests/menuSettingOwners.test.mjs tests/thirdPartyLoginMenu.test.mjs tests/applicationTemplateMenuPreview.test.mjs` 为 21/22 通过；唯一失败是 `thirdPartyLoginMenu.test.mjs` 仍期望开放平台父节点为 `application-center`，而当前 `baseMenu.json` 为 `platform/settings`，两份文件与 HEAD 均一致，本轮未调整菜单结构。
 
 待验证：登录环境中打开旧菜单、选择两项后保存重开、删到一项、切换支持/间接/不支持，以及保存后的真实授权效果。本轮自动化测试没有写入真实菜单或授权数据；源码与虚拟组件回归不替代真实接口验收。
-
-### 用户管理初始化菜单的关联资产范围
-
-- 交付入口：实现提交 `1177515`；[PR #136：补齐角色及分组数据权限声明](https://github.com/jetlinks-v2/authentication-manager-ui/pull/136)，目标分支 `2.20`。
-
-- 目标：仅授予用户管理菜单时，也能为新增、编辑用户所查询的角色与角色分组配置数据范围，避免只有 `user` 策略而缺少 `role`、`roleGroup` 策略。
-- 实现范围：运行时模块 `runtime-ui/modules/authentication-manager-ui/baseMenu.json` 的 `system/User` 菜单已改为 `assetTypes: ["user", "role", "roleGroup"]`，并将旧 `assetType` 清空为 `""`。复用现有多资产菜单授权与后端 AssetsHolder 查询、绑定校验，新增/编辑按钮的功能权限保持原样。
-- 范围之外：不改后端、用户编辑页面、其他菜单或 `ui/`，不写入真实菜单或授权数据。
-- 生效与风险：已有环境需要同步初始化菜单，并在授权界面为角色及角色分组配置、保存“自己创建”策略，再刷新账号认证；增加资产声明本身不补齐已有独立策略或已授权菜单策略。角色分组同样受控，所属分组不可见时角色树中不会展示该分组下的角色。
-- 验证结果：在运行时模块使用 Node 22 执行 `node --test tests/menuSettingOwners.test.mjs tests/menuAssetTypes.test.mjs`，25 项通过；菜单 JSON 可解析，执行实际 `baseMenu.ts` 转换确认资产数组及按钮定义完整保留。
-- 待验证：本次未运行 lint、全量 typecheck 或生产构建；发布前可在 `runtime-ui/` 使用 Node 22 执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`，并核对产物中的菜单声明。真实账号新增/编辑用户、角色候选及保存权限效果，仍需完成菜单同步及授权后在登录环境验收。
-
-### 组织管理的用户操作权限
-
-目标与范围：仅调整运行时 `runtime-ui/modules/authentication-manager-ui/baseMenu.json` 的 `system/Department` 菜单，使仅获组织管理授权的账号可在授权范围内新增、绑定和解绑用户。沿用现有页面按钮、用户/组织接口及后端 AssetsHolder 校验，不修改页面代码、运营端、后端权限模型或真实环境的授权数据。
-
-实现入口：`baseMenu.json` 的 `bind-user` 与 `bind` 按钮补齐后端额外检查的 `user/save` 与 `organization/save`，查看按钮补充角色筛选查询权限，`bind-user` 补充新增用户表单所需的角色/角色分组查询权限。组织菜单关联资产为 `organization`、`user`、`role`、`roleGroup`，清空旧 `assetType` 并沿用已有多资产授权配置。`views/system/Department/user/index.vue` 保持原有权限标识：新增用户和绑定用户共用 `bind-user`，单条/批量解绑共用 `bind`。
-
-生效与兼容：发布后同步已保存菜单，重新保存对应角色/用户的功能授权与各资产数据范围，再刷新登录认证。现有 `bind-user`（绑定用户）授权继续同时控制新增用户与绑定用户，解绑继续沿用 `bind`（资产解绑）授权，不新增按钮标识。绑定、解绑需要目标用户的数据权限和目标组织的保存权限；新增用户关联的组织、角色也必须在允许范围内。菜单声明不会自动创建或扩大已有授权策略，`user/save` 是现有后端要求的用户保存功能权限。
-
-验证结果：在模块目录使用 Node 22 执行 `node --test tests/departmentUserPermissions.test.mjs tests/menuSettingOwners.test.mjs tests/menuAssetTypes.test.mjs`，28 项通过，覆盖实际菜单转换及同步保存载荷、原有模板权限标识和现有菜单多资产回归。`git diff --check` 通过，组织用户页面与 HEAD 一致。在 `runtime-ui/` 执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过（2 分 39 秒），产物包含 JS 与 manifest，`dist/baseMenu.json` 与源码 JSON 完整一致；存在 Baseline 数据过期和大 chunk 提示。工作区和模块未配置 lint 脚本；执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 未通过，存在 627 项工作区类型诊断，未命中本次菜单配置。
-
-待验证：真实账号仅授组织管理时的允许/拒绝行为、单条及批量解绑效果待登录环境验收；菜单声明与模板契约检查不替代实际接口权限验证。
 
 ## 用户表格行操作
 
@@ -837,7 +812,7 @@ Verification result:
 
 私有化概览采用独立布局，展示关键指标、首次接入引导或快捷入口、应用、消息与 AI 事件趋势、告警、设备与通道、节点运行状况。模块与菜单授权决定展示和取数范围；引导状态未知时不判为已完成，失败保留未知与重试。私有化不展示 SaaS 套餐、续费、扩容、公告和帮助。
 
-私有化复用资源聚合服务、应用准入、Echarts、设备模块公开的只读监控 hook 和规则模块公开的动态告警等级字典。视频统计与视频资源页使用同一全部来源范围，插件及扩展来源纳入“其他”；今日趋势省略未结束小时，但合计保留当前全部数据。最近告警进入来源列表；目标页未支持单条深链前不拼装无效详情参数。概览和资源中心的普通设备入口统一进入设备列表“全部”，共享 `HOME_TARGETS.devices`，不再用 `type=device` 增设物联分类；最近访问状态入口保留 `status`，新增入口保留 `action=create`。设备列表兼容旧类型链接，边缘节点与视频分类仍沿用各自 Provider，概览统计口径不变。完成引导且无创建权限时隐藏空快捷卡。
+私有化复用资源聚合服务、应用准入、Echarts、设备模块公开的只读监控 hook 和规则模块公开的动态告警等级字典。视频统计与视频资源页使用同一全部来源范围，插件及扩展来源纳入“其他”；今日趋势省略未结束小时，但合计保留当前全部数据。最近告警进入来源列表；目标页未支持单条深链前不拼装无效详情参数。物联卡携带 `type=device` 下钻，SaaS 与私有化共用同口径设备过滤，未指定类型仍进入全部设备。完成引导且无创建权限时隐藏空快捷卡。
 
 SaaS 管理员概览将项目摘要固定在画布上方，最近访问、资源概况、今日概况、套餐用量、应用、公告及帮助按授权装配到 `DashBoardCanvas`。画布使用 `editable=false`、`layoutEditable=true`、`previewMode=false`，开放拖拽缩放并保留真实取数，不开放组件增删和配置。布局按账号、项目、API、应用、容器宽度档及可见组件集合隔离保存；有效个人布局优先，数据刷新不重置坐标，窄屏切为单列。
 
