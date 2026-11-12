@@ -10,6 +10,8 @@
 
 ### 巡检与热力图旧资产声明兼容
 
+交付：实现提交 `2e733bcb`；[PR #155](https://github.com/jetlinks-v2/authentication-manager-ui/pull/155)，目标分支 `2.20`。
+
 范围为实际运行于 9100 的运行时前端 `runtime-ui/`。角色页在 `views/system/Role/Detail/components/PermissionTree.vue` 加载详情后，通过相邻 `roleAssetPermissions.ts` 清理菜单及策略中已确认失效的 `inspectionPoint`、`inspectionItem`、`inspectionRule`、`inspectionFinding`、`inspectionReport`、`aiHeatmapFloorRegion`。巡检保留任务与方案，热力图保留点位及原有空间、视频等关联资产；正常资产的原范围、菜单及按钮状态保持。只清理这六个 ID，不依据资产目录缺失删除其他资产。同步修正巡检和 AI 模块的初始化 JSON，不修改后端或运营端前端。
 
 存量菜单初始化可能保留历史声明，角色页兼容在展示和保存快照中清理它们，无需预先写入数据库。只修改初始化 JSON 不会自动迁移已有菜单、模板及角色数据。验证：本模块 `node --test tests/roleAssetPermissions.test.mjs` 的 6 项回归通过；9100 返回的角色组件已调用清理函数，初始化 JSON 也不再含这六个失效声明。定向严格 TypeScript 检查及 Vue SFC 编译零诊断。运行时 core 内执行 `node ../node_modules/vite/bin/vite.js build -- --module-name authentication-manager-ui` 通过（11,588 个模块，2 分 11 秒）；保留既有输出选项、CSS 注释和大包提示。以运行时编辑器执行真实授权响应，全选为 37 项，巡检仅任务/方案、热力图仅点位。三个模块 diff 检查通过；模块无独立 lint 脚本，未运行全量类型检查，可执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json`。完整浏览器页面加载超时，页面显示与真实角色保存回显尚未验收，未提交真实角色授权。
