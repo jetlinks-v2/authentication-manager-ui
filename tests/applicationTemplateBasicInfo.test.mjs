@@ -15,6 +15,8 @@ const { outputFiles } = await build({
       export { useApplicationTemplateDetail } from './views/application-center/Template/Save/useApplicationTemplateDetail';
       export { useApplicationTemplateParameters } from './views/application-center/Template/Save/useApplicationTemplateParameters';
       export { useApplicationTemplateCreate } from './views/application-center/Template/useApplicationTemplateCreate';
+      export { default as TemplateIconEditor } from './views/application-center/Template/components/ApplicationTemplateIconEditor.vue';
+      export { palette } from 'colorpicker-v3';
       export { default as SharedDialog } from './views/application-center/Template/components/ApplicationTemplateCreateDialog.vue';
       export { default as Summary } from './views/application-center/Template/Save/TemplateSummary.vue';
       export { useI18nTextField } from '../../jetlinks-web-core/src/components/I18n/hooks/useI18nTextField';
@@ -36,7 +38,7 @@ const { outputFiles } = await build({
         const script = compileScript(descriptor, { id: args.path, inlineTemplate: true })
         return { contents: script.content, loader: 'ts' }
       })
-      plugin.onResolve({ filter: /^(@authentication-manager-ui\/api\/application-center\/applicationTemplate|@jetlinks-web\/utils|vue-i18n|@jetlinks-web-core\/components(?:\/IconValue)?)$/ }, args => ({ path: args.path, namespace: 'fixture' }))
+      plugin.onResolve({ filter: /^(@authentication-manager-ui\/api\/application-center\/applicationTemplate|@jetlinks-web\/utils|vue-i18n|colorpicker-v3(?:\/style\.css)?|@jetlinks-web-core\/components(?:\/IconValue|\/Upload\/utils)?)$/ }, args => ({ path: args.path, namespace: 'fixture' }))
       plugin.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ contents: args.path === apiModule ? `
         const copy = value => structuredClone(value);
         export const api = { records: {}, reads: [], writes: [], creates: [], get: null, put: null };
@@ -58,18 +60,30 @@ const { outputFiles } = await build({
         import { ref } from 'vue';
         export const locale = ref('zh');
         export const useI18n = () => ({ t: key => key, locale });
+      ` : args.path === 'colorpicker-v3/style.css' ? '' : args.path === 'colorpicker-v3' ? `
+        import { h } from 'vue';
+        export const palette = { choose: null, color: '' };
+        export default { props: ['hex', 'rgba'], emits: ['change'], setup: (props, { emit }) => {
+          palette.color = props.rgba; palette.choose = hex => emit('change', { hex });
+          return () => h('span', { 'data-palette': props.hex });
+        }};
       ` : args.path === '@jetlinks-web-core/components' ? `
         import { h } from 'vue';
         export const I18nTextField = { props: ['value', 'field', 'disabled'], setup: p => () => h('input', { value: p.value, 'data-field': p.field, disabled: p.disabled }) };
+        export const FileUpload = { props: ['value', 'listType', 'disabled'], setup: p => () => h('span', { 'data-cover-upload': p.listType, 'aria-disabled': !!p.disabled }) };
+      ` : args.path.endsWith('/Upload/utils') ? `
+        export const uploadByRequest = () => {};
       ` : args.path.endsWith('/IconValue') ? `
         import { h } from 'vue';
         export const IconValueView = { props: ['value'], setup: p => () => h('span', { 'data-icon': p.value }) };
+        export { parseIconValue, formatIconValueColor } from '../../jetlinks-web-core/src/components/IconValue/iconValue';
+        export const IconValueEditor = { props: ['modelValue'], setup: (p, { slots }) => () => h('span', { 'data-icon-editor': p.modelValue }, slots.color?.()) };
       ` : `export const onlyMessage = () => {};`, resolveDir: fileURLToPath(new URL('..', import.meta.url)) }))
     },
   }],
 })
 const { useApplicationTemplateBasicInfo, useApplicationTemplateDetail, useApplicationTemplateParameters,
-  useApplicationTemplateCreate, SharedDialog, Summary, useI18nTextField, ref, effectScope, nextTick, api, locale } = await import(
+  useApplicationTemplateCreate, TemplateIconEditor, palette, SharedDialog, Summary, useI18nTextField, ref, effectScope, nextTick, api, locale } = await import(
   `data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString('base64')}`,
 )
 const messages = {
@@ -206,14 +220,15 @@ test('the multilingual dialog updates translations without touching the other fi
   assert.equal('icon' in payload, false)
 })
 
-test('clearing a description removes the current translation and persists an empty base value', async t => {
+test('blank descriptions are rejected without removing existing translations or persisted text', async t => {
   const { basic, detail } = await fixture(t)
   basic.edit()
-  inputFor(basic, 'description').handleValueChange('')
-  assert.equal(await basic.save(), true)
-  assert.equal(api.writes[0].payload.description, '')
-  assert.deepEqual(api.writes[0].payload.i18nMessages.description, { en: 'English description' })
-  assert.equal(detail.detail.value.i18nDescription, '')
+  inputFor(basic, 'description').handleValueChange('   ')
+  assert.equal(await basic.save(), false)
+  assert.equal(basic.error.value, 'ApplicationTemplate.message.descriptionRequired')
+  assert.equal(basic.open.value, true)
+  assert.equal(detail.detail.value.i18nDescription, '中文说明')
+  assert.deepEqual(api.writes, [])
 })
 
 test('required names and all field limits apply before persistence, including hidden languages', async t => {
@@ -430,12 +445,15 @@ async function renderComponent(component, props) {
   return renderToString(app)
 }
 
-test('the list dialog renders both modes while editing locks type and code and excludes icon and redirect configuration', async t => {
+test('create and edit both show media and description while editing locks type and code and excludes redirect configuration', async t => {
   const { basic } = await fixture(t)
   const createHtml = await renderComponent(SharedDialog, { open: true })
   assert.match(createHtml, /ApplicationTemplate.list.add/)
   assert.match(createHtml, /role="radiogroup" aria-disabled="false"/)
-  assert.doesNotMatch(createHtml, /data-field="description"|data-icon/)
+  assert.match(createHtml, /ApplicationTemplate.field.icon|data-icon-editor/)
+  assert.match(createHtml, /ApplicationTemplate.field.coverImage/)
+  assert.match(createHtml, /data-cover-upload="picture-card"/)
+  assert.match(createHtml, /data-field="description"/)
   basic.edit()
   const editHtml = await renderComponent(SharedDialog, { editState: basic })
   assert.match(editHtml, /ApplicationTemplate.detail.edit/)
@@ -443,7 +461,9 @@ test('the list dialog renders both modes while editing locks type and code and e
   assert.match(editHtml, /value="unchanged-code" disabled/)
   assert.match(editHtml, /value="中文名称" data-field="name"/)
   assert.match(editHtml, /value="中文说明" data-field="description"/)
-  assert.doesNotMatch(editHtml, /ApplicationTemplate.parameters.redirectUri|ApplicationTemplate.field.icon|data-icon/)
+  assert.match(editHtml, /data-icon-editor="color:#1890ff"/)
+  assert.match(editHtml, /data-cover-upload="picture-card"/)
+  assert.doesNotMatch(editHtml, /ApplicationTemplate.parameters.redirectUri/)
 })
 
 test('the summary exposes its own icon edit button, the common edit action and status without inline fields or a template URL', async t => {
@@ -470,22 +490,231 @@ test('reusing the list dialog retains business and third-party creation payloads
     const state = scope.run(() => useApplicationTemplateCreate({
       open: () => open.value, onOpenChange: value => { open.value = value }, onCreated: id => { created = id },
     }))
-    Object.assign(state.formData, { name: 'New template', code: 'new-code', provider })
+    Object.assign(state.formData, { name: 'New template', description: 'Template description', code: 'new-code', provider })
     await nextTick()
     state.formData.redirectUri = ' https://new.example/app '
     state.formData.i18nMessages = { name: { en: 'New template' } }
+    state.formData.icon = 'color:#1677ff'
+    state.formData.coverImage = '/upload/template-cover.png'
     await state.handleOk()
     assert.equal(created, 'created-template')
     assert.equal(open.value, false)
     assert.deepEqual(api.creates.at(-1), {
-      name: 'New template', code: 'new-code', provider, state: 'enabled', i18nMessages: { name: { en: 'New template' } },
+      name: 'New template', description: 'Template description', code: 'new-code', provider, state: 'enabled', i18nMessages: { name: { en: 'New template' } },
+      icon: 'color:#1677ff', coverImage: '/upload/template-cover.png',
       ...(provider === 'third-party' ? { configuration: { redirectUri: 'https://new.example/app' } } : { layoutVariant: 'application' }),
     })
     open.value = true
     await nextTick()
     assert.equal(state.formData.name, '')
+    assert.equal(state.formData.description, '')
     assert.equal(state.formData.code, '')
+    assert.equal(state.formData.icon, '')
+    assert.equal(state.formData.coverImage, '')
     assert.equal(state.formData.provider, 'official')
     assert.equal(state.formData.redirectUri, '')
   }
+})
+
+test('unfinished media selection blocks creation and clearing the cover does not remove the icon', async t => {
+  await fixture(t)
+  const scope = effectScope()
+  t.after(() => scope.stop())
+  const open = ref(true)
+  const state = scope.run(() => useApplicationTemplateCreate({
+    open: () => open.value, onOpenChange: value => { open.value = value }, onCreated: () => {},
+  }))
+  Object.assign(state.formData, { name: 'Template', description: 'Template description', code: 'media-template', icon: 'font:AppstoreOutlined', coverImage: '/upload/cover.png' })
+  for (const key of Object.keys(state.mediaInteraction)) {
+    state.mediaInteraction[key] = true
+    await state.handleOk()
+    assert.equal(state.busy.value, true)
+    assert.equal(api.creates.length, 0)
+    assert.equal(open.value, true)
+    state.mediaInteraction[key] = false
+  }
+  state.clearCoverImage()
+  await state.handleOk()
+  assert.equal(api.creates.length, 1)
+  assert.equal(api.creates[0].icon, 'font:AppstoreOutlined')
+  assert.equal('coverImage' in api.creates[0], false)
+})
+
+test('cancelling and reopening discards both media drafts and leaves optional fields out of the payload', async t => {
+  await fixture(t)
+  const scope = effectScope()
+  t.after(() => scope.stop())
+  const open = ref(true)
+  const state = scope.run(() => useApplicationTemplateCreate({
+    open: () => open.value, onOpenChange: value => { open.value = value }, onCreated: () => {},
+  }))
+  state.formData.icon = '/upload/icon.png'
+  state.handleCoverUploadChange({ file: { uid: 'cover', name: 'cover.png', status: 'done', response: { result: { accessUrl: '/upload/cover.png' } } }, fileList: [] })
+  open.value = false
+  await nextTick()
+  open.value = true
+  await nextTick()
+  assert.equal(state.formData.icon, '')
+  assert.equal(state.formData.coverImage, '')
+  assert.deepEqual(state.coverFiles.value, [])
+  Object.assign(state.formData, { name: 'Template', description: 'Template description', code: 'without-media' })
+  await state.handleOk()
+  assert.equal('icon' in api.creates[0], false)
+  assert.equal('coverImage' in api.creates[0], false)
+})
+
+test('cover uploading blocks submission and clearing until its access URL is ready, then persists the URL instead of the file ID', async t => {
+  await fixture(t)
+  const scope = effectScope()
+  t.after(() => scope.stop())
+  const open = ref(true)
+  const state = scope.run(() => useApplicationTemplateCreate({
+    open: () => open.value, onOpenChange: value => { open.value = value }, onCreated: () => {},
+  }))
+  Object.assign(state.formData, { name: 'Template', description: 'Template description', code: 'uploaded-cover', icon: 'color:#1677ff' })
+  const file = { uid: 'cover', name: 'original.png', status: 'uploading' }
+  state.handleCoverUploadChange({ file, fileList: [file] })
+  assert.equal(state.busy.value, true)
+  state.clearCoverImage()
+  assert.equal(state.coverFiles.value.length, 1)
+  await state.handleOk()
+  assert.deepEqual(api.creates, [])
+  assert.equal(open.value, true)
+  const accessUrl = '/file/cover?accessKey=original'
+  state.handleCoverUploadChange({ file: { ...file, status: 'done', response: { success: true, result: { id: 'cover-id', accessUrl } } }, fileList: [] })
+  assert.equal(state.busy.value, false)
+  assert.equal(state.formData.coverImage, accessUrl)
+  assert.equal(state.coverFiles.value[0].url, accessUrl)
+  assert.equal(state.coverFiles.value[0].name, 'original.png')
+  await state.handleOk()
+  assert.equal(api.creates[0].coverImage, accessUrl)
+  assert.equal(api.creates[0].icon, 'color:#1677ff')
+})
+
+test('rejected cover files and failed uploads preserve the last successful image, and clearing removes both URL and preview', async t => {
+  await fixture(t)
+  const scope = effectScope()
+  t.after(() => scope.stop())
+  const state = scope.run(() => useApplicationTemplateCreate({
+    open: () => true, onOpenChange: () => {}, onCreated: () => {},
+  }))
+  state.formData.icon = 'font:AppstoreOutlined'
+  const file = { uid: 'cover', name: 'original.png', status: 'done', response: { result: { accessUrl: '/file/original' } } }
+  state.handleCoverUploadChange({ file, fileList: [file] })
+  for (const failed of [
+    { status: undefined }, { status: 'error' },
+    { status: 'done', response: { success: false, result: { accessUrl: '/file/rejected' } } },
+    { status: 'done', response: { success: true, result: { id: 'missing-url' } } },
+  ]) {
+    const replacement = { uid: 'replacement', name: 'replacement.png', status: 'uploading' }
+    state.handleCoverUploadChange({ file: replacement, fileList: [replacement] })
+    state.handleCoverUploadChange({ file: { ...replacement, ...failed }, fileList: [] })
+    assert.equal(state.busy.value, false)
+    assert.equal(state.formData.coverImage, '/file/original')
+    assert.equal(state.coverFiles.value[0].url, '/file/original')
+    assert.equal(state.coverFiles.value[0].name, 'original.png')
+  }
+  state.clearCoverImage()
+  assert.equal(state.formData.coverImage, '')
+  assert.deepEqual(state.coverFiles.value, [])
+  assert.equal(state.formData.icon, 'font:AppstoreOutlined')
+  state.handleCoverUploadChange({ file: { uid: 'failed', name: 'failed.png', status: 'error' }, fileList: [] })
+  assert.deepEqual(state.coverFiles.value, [])
+})
+
+
+test('the palette changes the icon immediately and retains an existing color label', async () => {
+  const updates = []
+  await renderComponent(TemplateIconEditor, { modelValue: 'color:#1890ff:APP', 'onUpdate:modelValue': value => updates.push(value) })
+  assert.equal(palette.color, '#1890ff')
+  assert.deepEqual(updates, [])
+  palette.choose('#ff7875')
+  assert.deepEqual(updates, ['color:#ff7875:APP'])
+})
+
+test('creation requires a nonblank description and validates hidden translations before persistence', async t => {
+  await fixture(t)
+  const scope = effectScope()
+  t.after(() => scope.stop())
+  const state = scope.run(() => useApplicationTemplateCreate({ open: () => true, onOpenChange: () => {}, onCreated: () => {} }))
+  Object.assign(state.formData, { name: 'Required description', code: 'description-required' })
+  for (const description of ['', '   ', 'd'.repeat(513)]) {
+    state.formData.description = description
+    await state.handleOk()
+    assert.deepEqual(api.creates, [])
+    assert.equal(state.loading.value, false)
+  }
+  state.formData.description = 'valid'
+  state.formData.i18nMessages.description = { en: 'd'.repeat(513) }
+  await state.handleOk()
+  assert.deepEqual(api.creates, [])
+  state.formData.i18nMessages.description.en = 'valid translation'
+  await state.handleOk()
+  assert.equal(api.creates[0].description, 'valid')
+  assert.equal(api.creates[0].i18nMessages.description.en, 'valid translation')
+})
+
+test('editing restores media, protects uploads, persists icon and cover changes, and preserves unrelated drafts', async t => {
+  const { basic, detail, parameters } = await fixture(t, { coverImage: '/file/saved-cover' })
+  detail.documentDraft.value = 'unsaved document'
+  parameters.edit()
+  parameters.redirectUri.value = 'https://app.example/unsaved'
+  basic.edit()
+  assert.equal(basic.draft.icon, 'color:#1890ff')
+  assert.equal(basic.coverFiles.value[0].url, '/file/saved-cover')
+  basic.draft.icon = 'font:AppstoreOutlined'
+  const uploading = { uid: 'edit-cover', name: 'new.png', status: 'uploading' }
+  basic.handleCoverUploadChange({ file: uploading, fileList: [uploading] })
+  assert.equal(await basic.save(), false)
+  basic.cancel()
+  assert.equal(basic.open.value, true)
+  assert.equal(basic.busy.value, true)
+  basic.handleCoverUploadChange({ file: { ...uploading, status: 'done', response: { result: { accessUrl: '/file/new-cover' } } }, fileList: [] })
+  api.put = () => ({ success: false })
+  assert.equal(await basic.save(), false)
+  assert.equal(basic.draft.icon, 'font:AppstoreOutlined')
+  assert.equal(basic.draft.coverImage, '/file/new-cover')
+  api.put = null
+  assert.equal(await basic.save(), true)
+  assert.deepEqual(api.writes.at(-1).payload, { icon: 'font:AppstoreOutlined', coverImage: '/file/new-cover' })
+  assert.equal(detail.detail.value.coverImage, '/file/new-cover')
+  assert.equal(detail.documentDraft.value, 'unsaved document')
+  assert.equal(parameters.redirectUri.value, 'https://app.example/unsaved')
+  basic.edit()
+  basic.clearCoverImage()
+  basic.draft.icon = ''
+  basic.cancel()
+  basic.edit()
+  assert.equal(basic.draft.icon, 'font:AppstoreOutlined')
+  assert.equal(basic.coverFiles.value[0].url, '/file/new-cover')
+  basic.clearCoverImage()
+  assert.equal(await basic.save(), true)
+  assert.deepEqual(api.writes.at(-1).payload, { coverImage: '' })
+})
+
+test('legacy templates with no description require it on basic save and enforce media limits', async t => {
+  const { basic } = await fixture(t, { description: '', i18nDescription: '', i18nMessages: {} })
+  basic.edit()
+  assert.equal(await basic.save(), false)
+  assert.equal(basic.error.value, 'ApplicationTemplate.message.descriptionRequired')
+  basic.draft.description = 'Added description'
+  for (const [field, length] of [['icon', 257], ['coverImage', 1025]]) {
+    basic.draft[field] = 'x'.repeat(length)
+    assert.equal(await basic.save(), false)
+    assert.equal(basic.error.value, `ApplicationTemplate.message.${field}MaxLength`)
+    basic.draft[field] = ''
+  }
+  assert.equal(await basic.save(), true)
+  assert.equal(api.writes[0].payload.description, 'Added description')
+})
+
+test('form validation errors keep field feedback without reporting a failed server save', async t => {
+  const { basic } = await fixture(t)
+  basic.edit()
+  basic.formRef.value = { validate: async () => { throw { errorFields: [{ name: ['description'], errors: ['required'] }] } }, clearValidate() {} }
+  assert.equal(await basic.save(), false)
+  assert.equal(basic.error.value, '')
+  assert.equal(basic.open.value, true)
+  assert.equal(basic.busy.value, false)
+  assert.deepEqual(api.writes, [])
 })

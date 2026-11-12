@@ -8,75 +8,55 @@
       role="button"
       :tabindex="item.disabled ? -1 : 0"
       :aria-disabled="item.disabled"
+      :aria-pressed="modelValue === item.id"
       @click="selectTemplate(item)"
       @keydown.enter="selectTemplate(item)"
       @keydown.space.prevent="selectTemplate(item)"
     >
-      <span class="template-icon">
-        <img v-if="isImageIcon(item.icon)" :src="item.icon" :alt="item.name" />
-        <AIcon v-else :type="item.icon || 'AppstoreOutlined'" />
-      </span>
-      <span class="template-copy">
-        <strong>{{ item.name }}</strong>
-        <span>{{ item.description || $t('comm.table.empty') }}</span>
-      </span>
-      <a-button
-        v-if="!item.disabled"
-        type="link"
-        size="small"
-        class="detail-link"
-        @click.prevent.stop="openDetail(item)"
-      >
-        {{ $t('ProjectApplication.template.detail') }}
-        <AIcon type="RightOutlined" />
-      </a-button>
-      <a-tooltip v-else :title="$t('ProjectApplication.template.unavailable')">
-        <span class="unavailable" :aria-label="$t('ProjectApplication.template.unavailable')">
-          <AIcon type="LockOutlined" />
-        </span>
-      </a-tooltip>
-      <AIcon
-        v-if="modelValue === item.id"
-        class="selected-indicator"
-        type="CheckCircleFilled"
+      <AIconValueView
+        :value="item.icon"
+        :size="44"
+        :border-radius="10"
+        :fallback-text="item.name"
       />
-    </div>
-
-    <a-modal
-      :open="!!previewTemplate"
-      :title="previewTemplate?.name || ''"
-      :footer="null"
-      @cancel="previewTemplate = undefined"
-    >
-      <div v-if="previewTemplate" class="template-preview">
-        <span class="preview-icon">
-          <img v-if="isImageIcon(previewTemplate.icon)" :src="previewTemplate.icon" :alt="previewTemplate.name" />
-          <AIcon v-else :type="previewTemplate.icon || 'AppstoreOutlined'" />
+      <div class="template-content">
+        <strong class="template-name" :title="item.name">{{ item.name }}</strong>
+        <p class="template-description" :title="item.description">
+          {{ item.description || $t('comm.table.empty') }}
+        </p>
+        <a-button
+          v-if="!item.disabled"
+          type="link"
+          size="small"
+          class="detail-link"
+          @click.prevent.stop="emits('preview', item)"
+          @keydown.enter.stop
+          @keydown.space.stop
+        >
+          <template #icon><AIcon type="ProfileOutlined" /></template>
+          <span>{{ $t('ProjectApplication.template.detail') }}</span>
+        </a-button>
+        <span v-else class="unavailable">
+          <AIcon type="LockOutlined" />
+          {{ $t('ProjectApplication.template.unavailable') }}
         </span>
-        <div class="preview-copy">
-          <p>{{ previewTemplate.description || $t('comm.table.empty') }}</p>
-          <a-spin :spinning="menusLoading">
-            <div v-if="previewMenus.length" class="preview-menus">
-              <a-tag v-for="menu in previewMenus" :key="menu">{{ menu }}</a-tag>
-            </div>
-            <span v-else-if="!menusLoading" class="preview-empty">{{ $t('ProjectApplication.template.noMenus') }}</span>
-          </a-spin>
-        </div>
       </div>
-    </a-modal>
+      <span v-if="modelValue === item.id" class="selection-mark" aria-hidden="true">
+        <AIcon type="CheckCircleFilled" />
+      </span>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { PropType } from 'vue'
-import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ApplicationTemplate } from '../types'
-import { useProjectApplication } from '../useProjectApplication'
+import { IconValueView as AIconValueView } from '@jetlinks-web-core/components/IconValue'
 
 defineOptions({ name: 'ProjectApplicationTemplateSelector' })
 
-const props = defineProps({
+defineProps({
   templates: {
     type: Array as PropType<ApplicationTemplate[]>,
     default: () => [],
@@ -87,41 +67,14 @@ const props = defineProps({
   },
 })
 
-const emits = defineEmits(['update:modelValue'])
+const emits = defineEmits<{
+  'update:modelValue': [value: string]
+  preview: [template: ApplicationTemplate]
+}>()
 const { t: $t } = useI18n()
-const store = useProjectApplication()
-const previewTemplate = ref<ApplicationTemplate>()
-const previewMenus = ref<string[]>([])
-const menusLoading = ref(false)
 
 const selectTemplate = (item: ApplicationTemplate) => {
   if (!item.disabled) emits('update:modelValue', item.id)
-}
-
-const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(icon) || icon.includes('.'))
-
-const openDetail = (item: ApplicationTemplate) => {
-  const templateUrl = String(item.templateUrl || '').trim()
-  if (templateUrl) {
-    window.open(templateUrl, '_blank', 'noopener,noreferrer')
-    return
-  }
-
-  // 历史模版未配置外部地址时继续展示本地菜单预览。
-  void openPreview(item)
-}
-
-const openPreview = async (item: ApplicationTemplate) => {
-  previewTemplate.value = item
-  previewMenus.value = []
-  menusLoading.value = true
-  try {
-    previewMenus.value = await store.loadTemplateMenus(item.id)
-  } catch {
-    previewMenus.value = []
-  } finally {
-    menusLoading.value = false
-  }
 }
 </script>
 
@@ -129,18 +82,21 @@ const openPreview = async (item: ApplicationTemplate) => {
 .template-selector {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
   gap: var(--space-2);
 }
 
 .template-card {
   position: relative;
-  display: grid;
-  min-height: 7rem;
-  grid-template-columns: 2rem minmax(0, 1fr);
-  gap: var(--space-2);
-  padding: var(--space-3);
+  display: flex;
+  min-width: 0;
+  min-height: 5.5rem;
+  align-items: center;
+  gap: var(--space-3);
+  overflow: hidden;
+  padding: var(--space-3) 0.875rem;
   border: 1px solid var(--line);
-  border-radius: var(--r-3);
+  border-radius: var(--r-5);
   background: var(--bg);
   color: var(--ink-1);
   text-align: left;
@@ -148,13 +104,17 @@ const openPreview = async (item: ApplicationTemplate) => {
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
-.template-card:hover,
+.template-card:not(.disabled):hover,
 .template-card.selected {
   border-color: var(--accent);
 }
 
 .template-card.selected {
   background: var(--accent-soft);
+}
+
+.template-card:focus-visible {
+  outline: none;
   box-shadow: var(--ring-focus);
 }
 
@@ -163,69 +123,74 @@ const openPreview = async (item: ApplicationTemplate) => {
   opacity: 0.72;
 }
 
-.template-icon,
-.preview-icon {
-  display: grid;
-  width: 2rem;
-  height: 2rem;
-  place-items: center;
-  border-radius: var(--r-2);
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: var(--fs-16);
-}
-
-.template-icon img,
-.preview-icon img { width: 100%; height: 100%; object-fit: cover; }
-
-.template-copy {
+.template-content {
   display: flex;
   min-width: 0;
+  flex: 1;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 0.125rem;
 }
 
-.template-copy strong { font-size: var(--fs-14); }
-.template-copy span {
-  display: -webkit-box;
+.template-name {
+  display: block;
+  overflow: hidden;
+  padding-inline-end: var(--space-6);
+  font-size: var(--fs-13);
+  font-weight: 600;
+  line-height: 1.25rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.template-description {
+  margin: 0;
   overflow: hidden;
   color: var(--ink-3);
   font-size: var(--fs-12);
-  line-height: 1.5;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  line-height: 1.125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.detail-link,
-.unavailable {
-  position: absolute;
-  right: var(--space-3);
-  bottom: var(--space-1);
+.detail-link {
+  display: inline-flex;
+  width: fit-content;
+  height: 1.125rem;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  color: var(--accent);
   font-size: var(--fs-12);
+  line-height: 1.125rem;
 }
 
-.unavailable { color: var(--ink-4); }
-.selected-indicator {
+.detail-link :deep(.anticon + span) { margin-inline-start: var(--space-1); }
+
+.unavailable {
+  display: flex;
+  min-height: 1.125rem;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--ink-4);
+  font-size: var(--fs-12);
+  line-height: 1.125rem;
+}
+
+.selection-mark {
   position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
+  top: var(--space-3);
+  inset-inline-end: var(--space-3);
+  display: flex;
   color: var(--accent);
 }
 
-.template-preview {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  color: var(--ink-2);
-  line-height: 1.7;
-}
-
-.template-preview p { margin: 0; }
-.preview-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: var(--space-3); }
-.preview-menus { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-.preview-empty { color: var(--ink-4); font-size: var(--fs-12); }
+.selection-mark :deep(.anticon) { font-size: var(--fs-16); }
 
 @media (max-width: 40rem) {
   .template-selector { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .template-card { transition: none; }
 }
 </style>

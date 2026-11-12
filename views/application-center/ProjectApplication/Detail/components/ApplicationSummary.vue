@@ -1,25 +1,35 @@
 <template>
   <ContentPanel class="application-summary" fill>
-    <DetailHeader variant="summary" :title="data.application.name">
-      <template #icon>
-      <img v-if="data.application.icon" :src="data.application.icon" :alt="data.application.name" />
-      <img v-else-if="isImageIcon(data.template.icon)" :src="data.template.icon" :alt="data.template.name" />
-      <AIcon v-else :type="data.template.icon || 'AppstoreOutlined'" />
-      </template>
-      <template #titleExtra>
-        <StatusTag :status="data.application.status === 'enabled' ? 'success' : 'disabled'" :text="data.application.statusText" />
-        <AppTag :title="data.template.name">{{ data.template.name }}</AppTag>
-      </template>
-      <template #meta>
-        <DetailMetaItem v-if="data.application.id" kind="id" :label="$t('ProjectApplication.detail.applicationId')" :tooltip="$t('DetailMetaItem.copyTooltip', { id: data.application.id })">
-          <a-typography-text :copyable="{ text: data.application.id, tooltip: false }"><span>{{ data.application.id }}</span></a-typography-text>
-        </DetailMetaItem>
-        <DetailMetaItem kind="time" :label="$t('ProjectApplication.settings.createdAt')" :value="data.application.createdAt || $t('comm.table.empty')" :tooltip="data.application.createdAt" />
-        <DetailMetaItem kind="description" :label="$t('ThirdPartyApplication.description')" :tooltip="data.application.description || data.template.description" multiline>
-          <span class="summary-description">{{ data.application.description || data.template.description || $t('comm.table.empty') }}</span>
-        </DetailMetaItem>
-      </template>
-      <template #actions>
+    <AIconValueView
+      :value="data.template.icon"
+      :size="56"
+      :border-radius="12"
+      :fallback-text="data.application.name"
+    />
+
+    <div class="summary-main">
+      <div class="identity-row">
+        <h1>{{ data.application.name }}</h1>
+        <MetaChip :tone="data.application.status === 'enabled' ? 'ok' : 'default'">
+          {{ data.application.statusText }}
+        </MetaChip>
+        <span v-if="data.application.id" class="summary-id">
+          <a-typography-text :copyable="{ text: data.application.id }">
+            {{ $t('ProjectApplication.detail.applicationId') }}: {{ data.application.id }}
+          </a-typography-text>
+        </span>
+      </div>
+      <div class="meta-row">
+        <span><AIcon type="AppstoreOutlined" />{{ data.template.name }}</span>
+        <span><AIcon type="ClockCircleOutlined" />{{ $t('ProjectApplication.list.createdAt', { time: data.application.createdAt }) }}</span>
+      </div>
+      <div class="summary-description-row">
+        <AIcon type="FileTextOutlined" />
+        <p class="summary-description">{{ data.application.description || data.template.description || $t('comm.table.empty') }}</p>
+      </div>
+    </div>
+
+    <div class="summary-actions">
       <j-permission-button
         v-if="data.application.provider === 'third-party'"
         hasPermission="application-center/ProjectApplication:update"
@@ -77,6 +87,7 @@ import DetailHeader from '@jetlinks-web-core/components/DetailHeader/index.vue'
 import DetailMetaItem from '@jetlinks-web-core/components/DetailMetaItem'
 import StatusTag from '@jetlinks-web-core/components/StatusTag/index.vue'
 import { useI18n } from 'vue-i18n'
+import { IconValueView as AIconValueView } from '@jetlinks-web-core/components/IconValue'
 import type { ApplicationTemplate, ProjectApplication } from '../../types'
 
 defineOptions({ name: 'ProjectApplicationSummary' })
@@ -140,11 +151,50 @@ const deleteConfirmText = computed(() => $t('ProjectApplication.detail.deleteCon
   name: props.data.application.name,
 }))
 
-const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(icon) || icon.includes('.'))
 </script>
 
 <style scoped>
-.application-summary { margin-block: var(--space-4); }
-.summary-description { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; white-space: pre-wrap; overflow-wrap: anywhere; }
-.summary-settings-actions { display: flex; align-items: center; }
+.application-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  min-width: 0;
+  gap: var(--space-4);
+}
+
+.summary-main { display: flex; min-width: 0; flex-direction: column; gap: var(--space-1); }
+.identity-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
+.identity-row h1 { min-width: 0; margin: 0; color: var(--ink-1); font-size: var(--fs-18); font-weight: 600; overflow-wrap: anywhere; }
+.summary-description-row { display: flex; align-items: flex-start; gap: var(--space-1); color: var(--ink-3); font-size: var(--fs-12); }
+.summary-description-row > .anticon { flex: none; margin-block-start: 0.25em; }
+.summary-description { min-width: 0; margin: 0; color: var(--ink-2); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.summary-id { min-width: 0; color: var(--ink-4); font-size: var(--fs-12); }
+.summary-id :deep(.ant-typography) { color: inherit; font-size: inherit; overflow-wrap: anywhere; }
+
+.meta-row { display: flex; flex-wrap: wrap; gap: var(--space-3); color: var(--ink-4); font-size: var(--fs-12); }
+.meta-row span { display: inline-flex; align-items: center; min-width: 0; gap: var(--space-1); overflow-wrap: anywhere; }
+.meta-row .anticon { flex: none; }
+.summary-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.summary-settings-actions {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 48rem) {
+  .application-summary {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+
+  .summary-actions {
+    grid-column: 1 / -1;
+  }
+}
 </style>

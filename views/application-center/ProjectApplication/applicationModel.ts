@@ -2,6 +2,7 @@ import globalI18n from '@jetlinks-web-core/locales'
 import dayjs from 'dayjs'
 import { normalizeBasicLayoutVariant } from '@jetlinks-web-core/layout/runtime/layoutVariant'
 import type { CardAvatarData } from '@jetlinks-web-core/components/CardBox/types'
+import type { ConditionTerm } from '@jetlinks-web-core/components/ConditionFilter'
 import type {
   BusinessApplicationEntity,
   BusinessApplicationRoleEntity,
@@ -9,7 +10,6 @@ import type {
   DeviceEntity,
   EnumValue,
   MediaChannelEntity,
-  MenuView,
   UserDetailEntity,
 } from '@authentication-manager-ui/api/application-center/businessApplication'
 import type {
@@ -53,12 +53,39 @@ const recordOf = (value: unknown): Record<string, unknown> =>
 
 const textOf = (value: unknown) => value === undefined || value === null ? '' : String(value)
 
-/** 仅提交用户筛选条件，应用可见范围由后端资产权限控制。 */
-export const buildApplicationTerms = (filters: ApplicationFilters) => {
-  const terms: Array<Record<string, unknown>> = [
-    ...filters.terms.map(term => ({ ...term })),
-  ]
-  return terms
+/** 卡片与筛选共用应用类型选项，语言切换时重新取展示文案。 */
+export const getApplicationProviderOptions = (translate: (key: string) => string) => [
+  { label: translate('ProjectApplication.create.businessApplication'), value: 'official' },
+  { label: translate('ProjectApplication.create.thirdPartyApplication'), value: 'third-party' },
+]
+
+/** 类型是模板属性，包含此条件的查询需要先加载模板。 */
+export const hasApplicationProviderFilter = (terms: readonly ConditionTerm[]): boolean =>
+  terms.some(term => term.terms ? hasApplicationProviderFilter(term.terms) : term.column === 'provider')
+
+/** 将虚拟类型条件转为模板 ID 条件，保留分组逻辑及后端资产权限过滤。 */
+export const buildApplicationTerms = (
+  filters: ApplicationFilters,
+  templates: readonly Pick<ApplicationTemplate, 'id' | 'provider'>[],
+) => {
+  const convertTerm = (term: ConditionTerm): Record<string, unknown> => {
+    if (term.terms) return { ...term, terms: term.terms.map(convertTerm) }
+    if (term.column !== 'provider') return { ...term }
+
+    const providers = Array.isArray(term.value) ? term.value : [term.value]
+    const templateIds = templates
+      .filter(template => providers.includes(template.provider || 'official'))
+      .map(template => template.id)
+    const excluded = term.termType === 'nin'
+    // templateId 必填；空集合用空值条件表达，避免空 IN 被忽略而返回全部应用。
+    return {
+      ...term,
+      column: 'templateId',
+      termType: templateIds.length ? (excluded ? 'nin' : 'in') : (excluded ? 'notnull' : 'isnull'),
+      value: templateIds.length ? templateIds : 1,
+    }
+  }
+  return filters.terms.map(convertTerm)
 }
 
 const normalizeStatus = (value: string | EnumValue | undefined): ApplicationStatus =>
@@ -68,7 +95,7 @@ const normalizeStatus = (value: string | EnumValue | undefined): ApplicationStat
 const normalizeTemplateLayoutVariant = (value: unknown) =>
   normalizeBasicLayoutVariant(value) || 'application'
 
-/** 概览与应用列表共用图标规则：应用优先，其次模板，无图标时显示名称首字。 */
+/** 应用图标规则：应用优先，其次模板，无图标时显示名称首字。 */
 export function applicationAvatar(
   application: Pick<ProjectApplication, 'name' | 'icon'>,
   template?: Pick<ApplicationTemplate, 'icon'>,
@@ -81,6 +108,14 @@ export function applicationAvatar(
     text: application.name.slice(0, 1),
     tone: 'info',
   }
+}
+
+/** 详情图片沿用应用的图片地址；未配置图片时展示模板封面，不使用模板图标。 */
+export function applicationImage(
+  application: Pick<ProjectApplication, 'name' | 'icon'>,
+  template?: Pick<ApplicationTemplate, 'coverImage'>,
+): string {
+  return applicationAvatar(application).src || template?.coverImage?.trim() || ''
 }
 
 /** 应用类型由关联模板决定，忽略历史实例打开配置。 */
@@ -111,6 +146,7 @@ export const normalizeTemplate = (
     name: entity.i18nName || entity.name,
     code: entity.code,
     icon: entity.icon,
+    coverImage: textOf(entity.coverImage).trim(),
     description: entity.i18nDescription || entity.description || '',
     templateUrl: textOf(entity.templateUrl).trim(),
     status,
@@ -214,23 +250,4 @@ export const normalizeCamera = (entity: MediaChannelEntity): ApplicationCameraRe
     supportsPtz: features.includes('ptz') || ['1', '2', '4', 'ball', 'hemisphere', 'remoteControl'].includes(ptzType),
     previewUrl,
   }
-}
-
-const menuName = (menu: MenuView) => String(menu.i18nName || menu.name || menu.code || menu.id || '')
-
-export const flattenMenuNames = (menus: MenuView[] = []) => {
-  const result: string[] = []
-  const visit = (items: MenuView[]) => items.forEach(item => {
-    const name = menuName(item)
-    if (name) result.push(name)
-    visit(Array.isArray(item.children) ? item.children : [])
-  })
-  visit(menus)
-  return [...new Set(result)]
-}
-
-/** 从模板菜单授权详情中提取用于创建预览的菜单名称。 */
-export const templateMenuNames = (response: unknown) => {
-  const detail = resultOf<{ menus?: MenuView[] }>(response)
-  return flattenMenuNames(Array.isArray(detail?.menus) ? detail.menus : [])
 }

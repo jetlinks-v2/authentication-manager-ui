@@ -29,7 +29,7 @@
           <ResponsiveGrid
             v-else-if="cardItems.length"
             class="application-grid"
-            :cols="3"
+            :cols="4"
             gap="var(--space-3)"
           >
             <ApplicationCard
@@ -99,7 +99,7 @@ const {
 <style scoped>
 .project-application-page {
   /* 应用卡片与内联「创建应用」卡片共用同一高度，避免两者落在不同栅格行时高度不一致。 */
-  --application-card-block-size: 14rem;
+  --application-card-block-size: 16rem;
 
   min-height: 100%;
 }
@@ -116,12 +116,13 @@ const {
 
 .create-card {
   display: grid;
-  height: var(--application-card-block-size);
+  height: 100%;
+  min-height: var(--application-card-block-size);
   place-items: center;
   align-content: center;
   gap: var(--space-3);
   border: var(--jet-theme-stroke-width) solid var(--card-shell-border);
-  border-radius: var(--card-shell-radius);
+  border-radius: var(--r-4);
   background: var(--bg);
   color: var(--ink-1);
   font-size: var(--fs-body);
@@ -132,6 +133,10 @@ const {
 .create-card:hover {
   border-color: var(--card-shell-border-hover);
   box-shadow: var(--card-shell-shadow-hover);
+}
+
+.application-grid {
+  grid-auto-rows: 1fr;
 }
 
 .create-card:focus-visible {
