@@ -49,6 +49,7 @@ export interface BusinessApplicationTemplateEntity {
   code: string
   provider?: string
   icon?: string
+  coverImage?: string | null
   description?: string
   i18nName?: string
   i18nDescription?: string
@@ -172,14 +173,6 @@ export interface PagerResult<T> {
   pageSize?: number
 }
 
-export interface MenuView {
-  id?: string
-  code?: string
-  name?: string
-  i18nName?: string
-  children?: MenuView[]
-}
-
 export const queryBusinessApplications = (data: QueryPayload) =>
   apiRequest.post<BusinessApplicationEntity[]>('/business-application/_query/no-paging?paging=false', data)
 
@@ -255,7 +248,7 @@ export const saveBusinessApplicationRoleMenuGrant = (applicationId: string, role
   )
 
 export const getBusinessApplicationTemplateMenus = (id: string) =>
-  apiRequest.get<MenuView[]>(`/business-application-template/${id}/menus`)
+  apiRequest.get<{ menus: MenuPermissionNode[] }>(`/business-application-template/${encodeURIComponent(id)}/menus`)
 
 export const queryBusinessApplicationRoles = (
   applicationId: string,
