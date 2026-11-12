@@ -1,29 +1,36 @@
 <template>
   <j-page-container>
     <div class="detail-page">
+      <PageChrome>
+        <PageBack :label="$t('ProjectApplication.detail.backToList')" @back="backToList" />
+      </PageChrome>
       <a-spin :spinning="loading">
       <template v-if="application && detail && template">
-        <ApplicationSummary
-          :data="{ application, template }"
-          :deleting="deleting"
-          :syncing-credential="syncingCredential"
-          :settings-editing="settingsEditing"
-          :settings-saving="settingsSaving"
-          :show-settings-actions="activeTab === 'settings'"
-          :opening="openingApplicationIds.includes(application.id)"
-          @back="backToList"
-          @cancel-settings="cancelSettings"
-          @delete="deleteApplication"
-          @edit-settings="editSettings"
-          @save-settings="saveSettings"
-          @toggle-status="toggleStatus"
-          @open="openApplication"
-          @sync-credential="syncCredential"
-        />
+        <PageChrome flush>
+          <a-spin :spinning="loading">
+            <ApplicationSummary
+              :data="{ application, template }"
+              :deleting="deleting"
+              :syncing-credential="syncingCredential"
+              :settings-editing="settingsEditing"
+              :settings-saving="settingsSaving"
+              :show-settings-actions="activeTab === 'settings'"
+              :opening="openingApplicationIds.includes(application.id)"
+              @cancel-settings="cancelSettings"
+              @delete="deleteApplication"
+              @edit-settings="editSettings"
+              @save-settings="saveSettings"
+              @toggle-status="toggleStatus"
+              @open="openApplication"
+              @sync-credential="syncCredential"
+            />
 
+            <SlantedTabs :active-key="activeTab" :options="tabOptions" @change="changeTab" />
+          </a-spin>
+        </PageChrome>
         <FullPage hasPadding>
-          <a-tabs v-model:active-key="activeTab" class="detail-tabs">
-            <a-tab-pane key="settings" :tab="$t('ProjectApplication.detail.tab.settings')">
+          <div :key="application.id" class="detail-workspace">
+            <div v-if="visitedTabs.has('settings')" v-show="activeTab === 'settings'">
               <ApplicationSettings
                 ref="settingsRef"
                 v-model:editing="settingsEditing"
@@ -31,16 +38,16 @@
                 :saving="settingsSaving"
                 @save="updateSettings"
               />
-            </a-tab-pane>
-            <a-tab-pane key="users" :tab="$t('ProjectApplication.detail.tab.users')">
+            </div>
+            <div v-if="visitedTabs.has('users')" v-show="activeTab === 'users'">
               <UserManagement
                 :data="{ users: detail.users, roles: detail.roles }"
                 @add="addUsers"
                 @unbind="unbindUser"
                 @update="updateUser"
               />
-            </a-tab-pane>
-            <a-tab-pane key="roles" :tab="$t('ProjectApplication.detail.tab.roles')">
+            </div>
+            <div v-if="visitedTabs.has('roles')" v-show="activeTab === 'roles'">
               <RoleManagement
                 :roles="detail.roles"
                 :users="detail.users"
@@ -48,8 +55,8 @@
                 @save-role="saveRole"
                 @delete-role="removeRole"
               />
-            </a-tab-pane>
-          </a-tabs>
+            </div>
+          </div>
         </FullPage>
       </template>
 
@@ -75,6 +82,9 @@ import ApplicationSummary from './components/ApplicationSummary.vue'
 import ApplicationSettings from './components/ApplicationSettings.vue'
 import RoleManagement from './components/RoleManagement.vue'
 import UserManagement from './components/UserManagement.vue'
+import SlantedTabs from '@jetlinks-web-core/components/SlantedTabs'
+import PageBack from '@jetlinks-web-core/components/PageBack/index.vue'
+import { useApplicationDetailTabs } from './useApplicationDetailTabs'
 import { useApplicationOpenGuard } from '../useApplicationOpenGuard'
 import { useProjectApplication } from '../useProjectApplication'
 import type {
@@ -89,7 +99,6 @@ const route = useRoute()
 const menuStore = useMenuStore()
 const store = useProjectApplication()
 const { t: $t } = useI18n()
-const activeTab = ref(route.query.tab === 'roles' ? 'roles' : 'settings')
 const loading = ref(false)
 const settingsEditing = ref(false)
 const settingsSaving = ref(false)
@@ -98,6 +107,7 @@ const deleting = ref(false)
 const syncingCredential = ref(false)
 
 const applicationId = computed(() => String(route.params.id || ''))
+const { activeTab, tabOptions, visitedTabs, changeTab } = useApplicationDetailTabs(applicationId, () => route.query.tab)
 const application = computed(() => store.applications.find((item) => item.id === applicationId.value))
 const detail = computed(() => store.details[applicationId.value])
 const template = computed(() => store.templates.find((item) => item.id === application.value?.templateId))
@@ -113,7 +123,6 @@ const {
 watch(applicationId, async id => {
   const version = ++detailLoadVersion
   if (!id) return
-  activeTab.value = route.query.tab === 'roles' ? 'roles' : 'settings'
   settingsEditing.value = false
   loading.value = true
   try {
@@ -228,12 +237,7 @@ const removeRole = async (role: { id: string; name: string }) => {
   min-height: 100%;
 }
 
-.detail-tabs {
-  margin-top: var(--space-4);
-  padding: 0 var(--space-4) var(--space-4);
-  border: 1px solid var(--line);
-  border-radius: var(--r-3);
-}
+.detail-workspace { min-width: 0; padding-block: var(--space-4); }
 
 .detail-page :deep(.section),
 .detail-page :deep(.section .ic),
@@ -248,6 +252,6 @@ const removeRole = async (role: { id: string; name: string }) => {
 
 @media (max-width: 48rem) {
   .detail-page { padding: var(--space-3); }
-  .detail-tabs { padding: 0 var(--space-3) var(--space-3); }
+  .detail-workspace { padding-block: var(--space-3); }
 }
 </style>

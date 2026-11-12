@@ -1242,6 +1242,7 @@
   "ProjectApplication.common.search": "搜索",
   "ProjectApplication.common.close": "关闭",
   "ProjectApplication.list.title": "项目应用",
+  "ProjectApplication.detail.backToList": "返回应用列表",
   "ProjectApplication.list.description": "管理面向最终用户的应用",
   "ProjectApplication.list.create": "创建应用",
   "ProjectApplication.list.searchPlaceholder": "搜索应用名称",

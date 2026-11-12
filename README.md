@@ -1,5 +1,19 @@
 # Authentication Manager UI
 
+## 统一应用与接口分组详情摘要
+
+当前实现：`ProjectApplication/Detail`、`ThirdPartyApplication/Direct/Detail.vue` 与 `ApiGroup/Save/index.vue` 的现有详情使用 core `DetailHeader` 摘要模式、`DetailMetaItem` 和 `StatusTag`。保留并统一 56px 对象图标，ID/时间采用相同语义图标；说明与 ID、时间在同一摘要行内按可用宽度换行，不再强制独占一行。保留返回入口、业务动作、权限、名称/说明自动保存及失败重试。接口分组仅调整带 ID 的详情分支，不新增主导航，不改创建表单。
+
+摘要同行验证：操作区只占名称行右侧，摘要使用图标右侧完整宽度；1920/1280px 普通说明同行，768/390/320px 随空间自动换行。长说明、缺失字段、中英文、保存失败及重试检查通过；core 21 项回归、严格组件类型检查、5 个文件样式检查与认证模块构建通过。浏览器使用模拟业务数据，真实登录环境待验收。
+
+返回入口调整：三类详情的返回按钮从摘要内部移至卡片上方的独立 `PageChrome`，使用共享 `PageBack` 显示左箭头与返回列表文字，保留各页面原有跳转目标；加载和未找到详情时仍可返回。接口分组新增分支保留原返回方式。
+
+返回调整验证：三页在中英文、1920/1280/390/320px、PageChrome 原地及头部传送模式下的 48 组位置/原跳转目标检查通过；缺失详情仍有返回入口，新增分支无重复返回。24 项认证回归、公共组件类型检查、样式门禁与三个相关模块联合构建通过；浏览器业务数据与导航服务为替身，真实登录环境待验收。
+
+业务应用主导航改为 `PageChrome flush` / `SlantedTabs`，正文首次访问才挂载、切换后保留实例，并在应用 ID 变化时清理访问记录；保持设置表单 ref 与页头保存动作关联，头部移入 PageChrome 后仍保留加载遮罩。开放平台继续使用原主导航和条件卸载策略，避免保留凭据明文。其他正文与内层页签保持现状。
+
+验证：应用页签/同步凭据/外部接入的 24 项测试通过；认证模块单独构建、三个相关模块联合构建和样式门禁通过。浏览器以真实页面/保存 hook 配合模拟接口确认名称与说明保存失败保留草稿、重试后消除反馈；接口分组无 ID 时仍显示原新增表单；真实业务应用页的替身正文面板首次访问挂载，切卡返回保留草稿和实例。ID 复制保留完整 19 位字符串；长模板名不撑出卡片，业务应用长说明展示三行并提供完整 Tooltip。定向检查中改动页面/hook 无类型诊断，全模块依赖仍有既有诊断。独立浏览器被登录页拦截，六个真实 ID 的权限/后端联调、真实凭据清理仍待验收；命令与公共契约见 core `src/components/DetailHeader/README.md`。
+
 第三方应用模板的 RSA keyId、公钥保存在 `configuration.credential`，可在关闭通知时独立维护，用于应用凭据主动获取与加密交付。通知开关只维护 `configuration.notification.address`；读取兼容旧 notification 内的 RSA 字段，保存时迁移为统一 credential，关闭通知不会删除公钥。通知 HMAC Secret 也可独立设置：keyId 默认自动准备，也可填写第三方预设的 keyId/Secret，接收端配置后通过专用接口保存切换；未设置时继续原派生算法，普通模板保存不读写 Secret。前后端须配套发布，后端需先增加两个可空通知凭据字段；旧后端不支持新 RSA 配置或自定义通知凭据，回滚需恢复配置格式与接收端信任凭据。
 
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.
