@@ -75,22 +75,16 @@
         <template #icon><AIcon type="ExportOutlined" /></template>
         {{ $t('ProjectApplication.detail.open') }}
       </a-button>
-      </template>
-    </DetailHeader>
+    </div>
   </ContentPanel>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" name="ProjectApplicationSummary">
 import type { PropType } from 'vue'
 import { computed } from 'vue'
-import DetailHeader from '@jetlinks-web-core/components/DetailHeader/index.vue'
-import DetailMetaItem from '@jetlinks-web-core/components/DetailMetaItem'
-import StatusTag from '@jetlinks-web-core/components/StatusTag/index.vue'
 import { useI18n } from 'vue-i18n'
 import { IconValueView as AIconValueView } from '@jetlinks-web-core/components/IconValue'
 import type { ApplicationTemplate, ProjectApplication } from '../../types'
-
-defineOptions({ name: 'ProjectApplicationSummary' })
 
 interface SummaryData {
   application: ProjectApplication
