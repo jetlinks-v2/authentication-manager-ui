@@ -24,6 +24,7 @@ import {
   getPermissionDetail_api,
 } from '@authentication-manager-ui/api/system/role'
 import { getAssetsType } from '@authentication-manager-ui/api/system/menu'
+import { cleanRoleAssetPermissions } from './roleAssetPermissions'
 
 const { t: $t } = useI18n()
 const route = useRoute()
@@ -106,11 +107,11 @@ const load = async () => {
       throw new Error($t('Permission.index.071527-3'))
     }
     const menus = filterMenus(detail.menus)
-    editor.reset({
+    editor.reset(cleanRoleAssetPermissions({
       menus,
       assetAccesses: detail.assetAccesses,
       assetTypes,
-    })
+    }))
     initialized.value = true
   } catch (error: any) {
     onlyMessage(error?.message || $t('Permission.index.071527-3'), 'error')
