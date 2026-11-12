@@ -31,6 +31,7 @@ export interface BusinessApplicationTemplate {
   name: string
   code: string
   icon?: string
+  coverImage?: string | null
   description?: string
   templateUrl?: string
   document?: string
