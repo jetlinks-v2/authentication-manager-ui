@@ -1214,7 +1214,7 @@
             },
             "supportDataAccess": true,
             "assetType": "",
-            "assetTypes": ["user", "role", "roleGroup"]
+            "assetTypes": ["user", "role", "roleGroup", "organization"]
           }
         ]
       },

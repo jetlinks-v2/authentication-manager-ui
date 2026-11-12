@@ -70,6 +70,14 @@ Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/1
 - 验证结果：在运行时模块使用 Node 22 执行 `node --test tests/menuSettingOwners.test.mjs tests/menuAssetTypes.test.mjs`，25 项通过；菜单 JSON 可解析，执行实际 `baseMenu.ts` 转换确认资产数组及按钮定义完整保留。
 - 待验证：本次未运行 lint、全量 typecheck 或生产构建；发布前可在 `runtime-ui/` 使用 Node 22 执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`，并核对产物中的菜单声明。真实账号新增/编辑用户、角色候选及保存权限效果，仍需完成菜单同步及授权后在登录环境验收。
 
+### 用户管理的组织候选范围
+
+- 目标与入口：在运营端 `ui/modules/authentication-manager-ui/baseMenu.json` 的 `system/User.assetTypes` 中补充 `organization`，保留 `user`、`role`、`roleGroup`，使只勾选用户管理时也能独立配置组织数据范围。
+- 实施方式：复用现有多资产菜单授权编辑器、组织树接口的数据权限过滤和新增/编辑用户的组织资产保存权限校验；不调整页面、按钮功能权限、后端或其他前端工作区。
+- 生效方式：已有环境需定向同步并保存用户管理菜单，再为角色配置、保存组织数据范围并刷新账号认证；新增声明不会自动补齐已有组织策略，也不会自动授予组织管理菜单。
+- 验证：菜单 JSON 可解析，和 Git 基线对照仅增加该资产；通过 esbuild 执行实际 `baseMenu.ts`、共享 `useMenuAssetPermissionEditor` 和菜单设置工具，确认只勾选用户管理时显示组织候选、用户与组织范围独立、授权快照携带组织策略，旧菜单定向同步后保留按钮及排序配置。脚本仅替换部署上下文，不写入服务端数据；差异空白检查通过。
+- 验证限制：`node --test tests/menuAssetTypes.test.mjs` 在 Node 25.1.0 下因测试宿主将 Vue 的 `module.exports` 导出用作 `new Function` 参数而报 `SyntaxError: Arg string terminates parameters early`，尚未进入用例。本次仅调整 JSON 配置和说明，未运行全量类型检查及生产构建，工作区无 lint 脚本；需要完整门禁时，在 `ui/` 执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 与 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`。真实登录环境的组织候选过滤与越权组织提交仍待完成菜单同步及授权后验收。
+
 ### 组织管理的用户操作权限
 
 目标与范围：仅调整运行时 `runtime-ui/modules/authentication-manager-ui/baseMenu.json` 的 `system/Department` 菜单，使仅获组织管理授权的账号可在授权范围内新增、绑定和解绑用户。沿用现有页面按钮、用户/组织接口及后端 AssetsHolder 校验，不修改页面代码、运营端、后端权限模型或真实环境的授权数据。
