@@ -72,6 +72,7 @@ Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/1
 
 ### 用户管理的组织候选范围
 
+- 交付：实现提交 `272fd4b`；[PR #156](https://github.com/jetlinks-v2/authentication-manager-ui/pull/156)，目标分支 `2.20`。
 - 目标与入口：在运营端 `ui/modules/authentication-manager-ui/baseMenu.json` 的 `system/User.assetTypes` 中补充 `organization`，保留 `user`、`role`、`roleGroup`，使只勾选用户管理时也能独立配置组织数据范围。
 - 实施方式：复用现有多资产菜单授权编辑器、组织树接口的数据权限过滤和新增/编辑用户的组织资产保存权限校验；不调整页面、按钮功能权限、后端或其他前端工作区。
 - 生效方式：已有环境需定向同步并保存用户管理菜单，再为角色配置、保存组织数据范围并刷新账号认证；新增声明不会自动补齐已有组织策略，也不会自动授予组织管理菜单。
