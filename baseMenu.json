@@ -1214,7 +1214,7 @@
             },
             "supportDataAccess": true,
             "assetType": "",
-            "assetTypes": ["user", "role", "roleGroup"]
+            "assetTypes": ["user", "role", "roleGroup", "organization"]
           }
         ]
       },
@@ -2367,7 +2367,8 @@
         "showPage": ["application"],
         "permissions": [
           { "permission": "application", "actions": ["query", "save", "delete"] },
-          { "permission": "api_group", "actions": ["query", "grant", "grant_query"] }
+          { "permission": "api_group", "actions": ["query", "grant", "grant_query"] },
+          { "permission": "access-logger", "actions": ["query"] }
         ],
         "accessSupport": {
           "text": "支持",

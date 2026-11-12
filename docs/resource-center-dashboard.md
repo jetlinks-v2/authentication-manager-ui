@@ -513,6 +513,7 @@ const { catalog, dashboard, loading, errors } = useResourceDashboard(preview)
 
 - 组件 `resourceCenterVisionTaskRanking` 沿用边缘节点与视觉能力准入规则、原卡头和指标切换，默认展示前 8 项。按最新确认移除右上角“任务列表”入口，不恢复“查看更多”分组弹窗。
 - 条目恢复使用 AI 模块公开的 `GatewayVisionTaskDetail` 展示原任务详情，点击不离开仪表盘。仅在线且已取得任务元数据的条目可打开，预览、能力不可用或缺少详情组件时禁用；切换作用域、指标或离页时清理选中任务。空态的“配置视觉任务”仍进入已授权的 `algorithm-center`（或 `project/algorithm-center`）。
+- 任务详情查询沿用 `/edge/device/{gatewayId}/_/ai/task/edge/detail/_query/no-paging` 的组合响应：真实任务从 `task` 读取，云端来源名称取外层 `cloudChannelName`，仅有 `operation` 的记录不计入任务目录。完整目录使用 `task.domain = ComputerVision` 和 `task.id notnull`；入榜补名使用相同领域及 `task.id in`，场景配置和算法名称分别取 `task.configuration` 与 `task.taskTargetDetail.text`。
 - `GET /device/metrics/_supported` 校验指标及标签能力，`POST /device/metrics/_agg` 使用 20 分钟窗口。耗时为 `edge.ai.cv.task.inference.latency.avg / LAST`；积压为 `edge.ai.review.dimension.pending / LAST`；丢弃为 `edge.ai.cv.task.slot_reject.total / SUM`，同时用 `MIN` 判定增量有效性，不将空桶补零当成真实采样。
 - 在线与离线网关分别按完整维度降序取 Top50，使用同一查询时刻，合并时在线有效指标优先。离线历史只保留身份，不参与排名或显示旧值；任一组达到上限即提示部分结果。只有完整任务目录才显示任务总数，其他场景显示已获取的指标条目数。
 - 两类排行复用 `ResourceRankList`。明确离线才显示红色；在线缺指标显示灰色。视觉排行上方为节点名，下方为“场景名称 · 算法名称”，算法使用 `taskTargetDetail.text`；场景取配置或匹配来源的 `sceneName` / `headers.sceneName` / `others.sceneName`，缺失时省略，均缺失时显示“—”。不使用任务名、通道名或模型包名称冒充场景和算法，任务原始身份继续供详情弹窗使用；元数据查询失败时保留指标和提示，对应详情不可打开。

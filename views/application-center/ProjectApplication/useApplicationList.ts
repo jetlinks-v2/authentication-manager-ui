@@ -10,6 +10,7 @@ import type { ProjectApplication } from './types'
 import { createAssetOwnershipField } from '@jetlinks-web-core/components/AssetOwnershipCondition'
 import { useUserStore } from '@jetlinks-web-core/store/user'
 import { createOwnershipCreatorSelector } from './ownershipSelectors'
+import { getApplicationProviderOptions } from './applicationModel'
 
 /** 编排应用列表、筛选和创建后的刷新，复用现有应用服务及访问检查。 */
 export const useApplicationList = () => {
@@ -48,6 +49,16 @@ export const useApplicationList = () => {
         componentProps: {
           placeholder: $t('ProjectApplication.list.searchPlaceholder'),
         },
+      },
+    },
+    {
+      title: $t('ProjectApplication.create.applicationKind'),
+      dataIndex: 'provider',
+      search: {
+        type: 'select',
+        defaultTermType: 'in',
+        termTypeOptions: ['in', 'nin'],
+        options: getApplicationProviderOptions($t),
       },
     },
     {

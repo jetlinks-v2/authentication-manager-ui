@@ -102,7 +102,7 @@ export function useQuickGuideSteps(isEdit: () => boolean, polling?: ReturnType<t
     })
   })
 
-  // 只根据仍展示的步骤判断，已隐藏能力的 unknown 不能让引导永久停留。
+  // 只根据当前账号可见的步骤判断，未开放或无权限的能力不触发引导。
   const showGuide = computed(() => shouldShowGuide(Object.fromEntries(
     steps.value.map(step => [step.key, step.status]),
   )))

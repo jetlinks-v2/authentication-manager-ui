@@ -42,7 +42,7 @@
 		              <a-flex :gap="16">
 				            <ConditionFilter
 					            class="application-template-page__search"
-					            :columns="columns"
+					            :fields="filterFields"
 					            @change="table.handleSearch"
 				            />
 				            <EmptyCreateButton />
@@ -53,6 +53,10 @@
 	              <a class="application-template-page__link" @click="table.viewDetail(slotProps)">
 	                {{ slotProps.i18nName || slotProps.name || $t('comm.table.empty') }}
 	              </a>
+	            </template>
+
+	            <template #provider="slotProps">
+	              {{ getProviderLabel(slotProps.provider) }}
 	            </template>
 
 	            <template #description="slotProps">
@@ -136,8 +140,10 @@ const {
   createDialogOpen,
   queryParams,
   columns,
+  filterFields,
   defaultParams,
   requestTable,
+  getProviderLabel,
   normalizeState,
   table,
 } = useApplicationTemplateList()

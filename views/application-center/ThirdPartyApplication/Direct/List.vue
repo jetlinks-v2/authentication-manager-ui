@@ -4,13 +4,13 @@
     <a-button type="primary" @click="openCreate"><template #icon><AIcon type="PlusOutlined" /></template>{{ $t('ThirdPartyApplication.direct.create') }}</a-button>
   </DefineEmptyCreate>
   <j-page-container v-bind="$attrs">
-    <ContentPanel fill class="application-list direct-page">
+    <ContentPanel fill :background="false" :padding="0" class="application-list direct-page">
       <a-flex align="center" justify="space-between" :gap="16" class="application-list-toolbar">
         <ConditionFilter class="application-list-filter" :columns="filterColumns" target="third-party-direct" @change="search" />
         <EmptyCreateButton class="application-list-create" />
       </a-flex>
       <a-alert v-if="error" type="error" show-icon :message="error" class="page-alert" />
-      <j-pro-table ref="tableRef" mode="TABLE" :columns="columns" :request="query" :params="filters" :body-style="{ padding: 0 }" :alert-show="false" :pagination="{ size: 'small' }" :scroll="false">
+      <j-pro-table ref="tableRef" mode="TABLE" :columns="columns" :request="query" :params="filters" :body-style="{ padding: 0 }" :alert-show="false" :pagination="{ size: 'small' }">
         <template #emptyText>
           <CloudEmpty :search="filters.terms" :search-name="$t('components.EditForm.949962-3')">
             <EmptyCreateButton />

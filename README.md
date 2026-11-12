@@ -8,6 +8,14 @@
 
 ## 运行时角色授权详情
 
+### 巡检与热力图旧资产声明兼容
+
+交付：实现提交 `2e733bcb`；[PR #155](https://github.com/jetlinks-v2/authentication-manager-ui/pull/155)，目标分支 `2.20`。
+
+范围为实际运行于 9100 的运行时前端 `runtime-ui/`。角色页在 `views/system/Role/Detail/components/PermissionTree.vue` 加载详情后，通过相邻 `roleAssetPermissions.ts` 清理菜单及策略中已确认失效的 `inspectionPoint`、`inspectionItem`、`inspectionRule`、`inspectionFinding`、`inspectionReport`、`aiHeatmapFloorRegion`。巡检保留任务与方案，热力图保留点位及原有空间、视频等关联资产；正常资产的原范围、菜单及按钮状态保持。只清理这六个 ID，不依据资产目录缺失删除其他资产。同步修正巡检和 AI 模块的初始化 JSON，不修改后端或运营端前端。
+
+存量菜单初始化可能保留历史声明，角色页兼容在展示和保存快照中清理它们，无需预先写入数据库。只修改初始化 JSON 不会自动迁移已有菜单、模板及角色数据。验证：本模块 `node --test tests/roleAssetPermissions.test.mjs` 的 6 项回归通过；9100 返回的角色组件已调用清理函数，初始化 JSON 也不再含这六个失效声明。定向严格 TypeScript 检查及 Vue SFC 编译零诊断。运行时 core 内执行 `node ../node_modules/vite/bin/vite.js build -- --module-name authentication-manager-ui` 通过（11,588 个模块，2 分 11 秒）；保留既有输出选项、CSS 注释和大包提示。以运行时编辑器执行真实授权响应，全选为 37 项，巡检仅任务/方案、热力图仅点位。三个模块 diff 检查通过；模块无独立 lint 脚本，未运行全量类型检查，可执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json`。完整浏览器页面加载超时，页面显示与真实角色保存回显尚未验收，未提交真实角色授权。
+
 角色授权读取统一使用 core 的 `getMenuGrantDetail('role', roleId, query)`，对应 `GET /menu/{targetType}/{targetId}/_grant/detail`。`result.menus` 提供菜单及权限候选，顶层 `result.assetAccesses` 提供该角色的独立资产策略；不把候选列表作为已保存策略，不额外传候选展示域 `owner`。旧 `getPermissionTree_api` 仅保留菜单树返回结构的兼容适配。
 
 `api/system/role.ts` 复用统一详情查询，`PermissionTree.vue` 校验两组数据都是数组后才启用保存；旧 tree 数组、缺少字段或请求失败均不能生成保存载荷。旧树适配器保留错误响应，不把失败转换成空菜单。范围限运行时前端，候选筛选与后端授权规则保持原行为。
@@ -61,6 +69,15 @@ Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/1
 - 生效与风险：已有环境需要同步初始化菜单，并在授权界面为角色及角色分组配置、保存“自己创建”策略，再刷新账号认证；增加资产声明本身不补齐已有独立策略或已授权菜单策略。角色分组同样受控，所属分组不可见时角色树中不会展示该分组下的角色。
 - 验证结果：在运行时模块使用 Node 22 执行 `node --test tests/menuSettingOwners.test.mjs tests/menuAssetTypes.test.mjs`，25 项通过；菜单 JSON 可解析，执行实际 `baseMenu.ts` 转换确认资产数组及按钮定义完整保留。
 - 待验证：本次未运行 lint、全量 typecheck 或生产构建；发布前可在 `runtime-ui/` 使用 Node 22 执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`，并核对产物中的菜单声明。真实账号新增/编辑用户、角色候选及保存权限效果，仍需完成菜单同步及授权后在登录环境验收。
+
+### 用户管理的组织候选范围
+
+- 交付：实现提交 `272fd4b`；[PR #156](https://github.com/jetlinks-v2/authentication-manager-ui/pull/156)，目标分支 `2.20`。
+- 目标与入口：在运营端 `ui/modules/authentication-manager-ui/baseMenu.json` 的 `system/User.assetTypes` 中补充 `organization`，保留 `user`、`role`、`roleGroup`，使只勾选用户管理时也能独立配置组织数据范围。
+- 实施方式：复用现有多资产菜单授权编辑器、组织树接口的数据权限过滤和新增/编辑用户的组织资产保存权限校验；不调整页面、按钮功能权限、后端或其他前端工作区。
+- 生效方式：已有环境需定向同步并保存用户管理菜单，再为角色配置、保存组织数据范围并刷新账号认证；新增声明不会自动补齐已有组织策略，也不会自动授予组织管理菜单。
+- 验证：菜单 JSON 可解析，和 Git 基线对照仅增加该资产；通过 esbuild 执行实际 `baseMenu.ts`、共享 `useMenuAssetPermissionEditor` 和菜单设置工具，确认只勾选用户管理时显示组织候选、用户与组织范围独立、授权快照携带组织策略，旧菜单定向同步后保留按钮及排序配置。脚本仅替换部署上下文，不写入服务端数据；差异空白检查通过。
+- 验证限制：`node --test tests/menuAssetTypes.test.mjs` 在 Node 25.1.0 下因测试宿主将 Vue 的 `module.exports` 导出用作 `new Function` 参数而报 `SyntaxError: Arg string terminates parameters early`，尚未进入用例。本次仅调整 JSON 配置和说明，未运行全量类型检查及生产构建，工作区无 lint 脚本；需要完整门禁时，在 `ui/` 执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 与 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`。真实登录环境的组织候选过滤与越权组织提交仍待完成菜单同步及授权后验收。
 
 ### 组织管理的用户操作权限
 
@@ -548,6 +565,15 @@ Verification result:
 
 应用管理使用同一创建入口，通过模板 provider 区分普通业务应用与第三方应用，不新增后端应用类型或无模板创建接口。实际前端模块为 runtime-ui/modules/authentication-manager-ui；开放平台 API 应用仍使用独立 /api-application 模型。
 
+应用卡片类型展示与筛选（已实现）：
+
+交付：实现提交 `9494f0a2f46b297d1d2a31b3440d510ee8c262f9`；[PR #154](https://github.com/jetlinks-v2/authentication-manager-ui/pull/154)，目标分支 `2.20`，包含本文的应用模板类型列与筛选。
+
+- `/open/application` 卡片在模板名同一行显示“业务应用 / 第三方应用”，顶部 `ConditionFilter` 提供应用类型的“属于 / 不属于”筛选。`applicationModel.ts#getApplicationProviderOptions` 为 `components/ApplicationCard.vue` 和 `useApplicationList.ts` 提供同一组选项及中英文文案；历史空 provider 归为业务应用，未知 provider 保留原值。沿用现有卡片壳层、行高和截断样式。
+- 类型来自关联模板，应用实例没有 `provider` 列。`applicationModel.ts#buildApplicationTerms` 递归将虚拟类型条件转换为标准 `templateId` 的 `in/nin`，保留 AND/OR 分组及名称、状态、归属条件；无匹配模板时利用必填 `templateId` 的 `isnull/notnull` 表达空集合，避免空 IN 被忽略。后端实体、接口、菜单权限及运营端 `ui/` 保持原有契约。
+- `useProjectApplication.ts` 在类型查询前加载完整模板列表；与初次加载共用在途请求，失败传递到现有列表错误态并释放请求以供重试，不误判为空结果。等待模板期间切换或清空筛选时，旧查询不会再请求或替换新列表；没有类型条件时保留原有并行加载。继续复用应用菜单已有的模板查询权限及现有 API。
+- 验证：`node --test tests/applicationTypeFilter.test.mjs` 的 10 项通过，覆盖中英文卡片内容 SSR、真实列表字段与搜索选项、两类模板及空/未知类型、空集合、嵌套分组、失败重试、清空筛选、请求共享及响应顺序；API 与无关展示外壳使用边界替身。原有 `projectApplicationExternalAccess.test.mjs` 的 18 项通过，该脚本通过临时无空格工作区软链接入口和 `--preserve-symlinks-main` 运行，规避既有 `URL.pathname` 对路径空格的处理问题。模块定向生产构建通过（12,041 个模块，51.54 秒；通过 `--outDir` 将产物写入临时目录，命令入口为 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`），`git diff --check` 通过；卡片组件为 218 行。`pnpm exec vue-tsc --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json` 最终分支与最新 `origin/2.20` 基线均有 570 项诊断，归一化行号后完全一致，修改文件无诊断；清理基线后需重跑。工作区没有独立 lint 脚本。真实后端的组合筛选、清空结果及窄屏显示仍待在 `pnpm dev` 对应的 `/open/application` 页面验收。
+
 - 创建第三方实例时仅选择 provider=third-party 的模板及填写基本信息，不配置出站 OAuth2、通知 Token 或实例 callback。
 - 模板配置复用 redirectUri、externalParameters 和 notification.address/keyId/publicKey。平台生成 Code 并拼接跳转参数；第三方通过平台现有 /oauth2/token 和 /authorize/context 获取委托身份。
 - RSA keyId/publicKey 统一保存在 credential，支持凭据主动获取和加密交付。通知 HMAC keyId/Secret 默认由平台／模板材料派生，也可在现有配置区独立编辑；状态和受控查看仍复用 `/notification-signature` 与 `/_reveal`，专用 PUT 保存自定义凭据，不进入普通模板草稿。实例访问凭据轮换不改变模板通知签名。
@@ -716,6 +742,10 @@ Every created or substantially edited Vue file remains at or below 300 lines.
 `views/system/list-page.less` 为表格右侧筛选区补充 `40rem` 最小宽度；`views/system/Log/components/logDetailSections.css` 为访问日志与系统日志共用的详情折叠区增加分组间距、圆角和浅色标题背景，恢复内容区的默认左右内边距。查询、日志数据展示和详情展开逻辑保持原有契约；窄屏筛选区与详情折叠面板的最终视觉效果仍需人工验收。
 
 ### 应用模板列表操作
+
+应用类型筛选与卡片展示：本模块 `views/application-center/Template/useApplicationTemplateList.ts` 为现有 `ConditionFilter` 独立配置 `provider` 搜索字段，选项复用“业务应用”（`official`）和“第三方应用”（`third-party`）的中、英、日文资源；默认使用 `in` 多选条件，请求提交类型编码，模板表格列保持不变。`views/application-center/ProjectApplication/components/ApplicationCard.vue` 在模板名称旁展示类型标签，读取应用模型中由关联模板确定的 `provider`，历史空值按业务应用展示，未知值使用现有空值占位。仅修改运行时应用模板搜索及应用管理列表卡片，不改创建弹窗、后端接口、权限或运营端。
+
+应用类型验证（2026-11-07）：在 `runtime-ui` 执行 `pnpm -F jetlinks-web-core build --outDir /tmp/app-type-build-20261107 -- --module-name authentication-manager-ui` 通过（28.43 秒），保留既有大分块等告警；`node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json` 修改前后均有 609 条既有诊断，忽略行号后无新增，三个修改文件无诊断。工作区与模块无独立 lint 脚本，`git diff --check` 通过。独立浏览器预览挂载真实 `ConditionFilter`、列表 hook 和 `ApplicationCard`，以接口替身验证两种类型、名称／状态组合筛选、清空、三种语言、空值／未知值、模板异步更新及 320px／380px 卡片类型与模板名称无重叠，共 15 项通过；手工点击类型单选、多选和清空，查询分别提交 `third-party`、两种类型数组和空条件。此验证不替代登录后完整页面与真实后端结果验收，需在 `/infrastructure/app-template` 和应用管理页补充真实筛选结果／空结果联调；修复既有类型问题后重跑上述 typecheck。
 
 运行时应用模板页 `/infrastructure/app-template` 的状态列仅展示状态，复用产品列表 `modules/device-manager-ui/views/device/Product/index.vue` 的 `j-badge-status`，以 `enabled → processing`、`disabled → error` 映射呈现蓝色／红色状态标签。沿用应用模板文案和字符串／枚举对象归一化，标签外观由现有表格公共样式提供，不另写样式。`views/application-center/Template/index.vue` 的操作列复用 core `TableActions`，编辑图标保留行内入口，启用／停用与删除放入更多面板；分别使用菜单已有的 `update`、`action`、`delete` 权限码，并复用现有中英文资源。`useApplicationTemplateList.ts` 移除开关的临时乐观状态，取消确认时保留原状态，接口成功后更新状态并刷新，加载状态在请求结束时释放。后端接口、菜单定义、运营端 `ui/`、产品列表和其他模板配置保持原有契约。
 
@@ -1007,6 +1037,17 @@ SaaS 管理员概览将项目摘要固定在画布上方，最近访问、资源
 - 实施结果：`AccessDebug.vue` 的接口调用模式改为左请求/右结果，发送按钮移至请求标题操作位并保留写接口 Popconfirm；`DebugApiDocument` 复用于单层无遮罩只读文档侧栏。结果正文独立限高滚动，请求中与 HTTP 响应状态即时展示，窄屏发送后定位并聚焦结果且尊重减少动态效果设置。新请求开始先清除旧响应和旧日志快捷条件，避免校验/网络错误时误读上一次结果；模式切换、重置与发送时关闭文档侧栏。`CallLogs.vue` 的时间、耗时和动作采用列插槽，继续复用现有格式化函数。
 - 源码与差异检查：已核对原始路径等值、HTTP 方法、前后一分钟毫秒范围、时间到秒的预览/提示、固定应用归属与用户条件嵌套 AND；核对 SectionCard/actions、JlDrawerShell、表格列插槽及 ConditionFilter 的实际组件契约。修改的 Vue 文件均低于 300 行，差异格式检查通过，未修改公共组件或后端。前端 lint/typecheck/build、自动测试、浏览器和服务操作均按用户约束未执行，不声称页面已验收；本轮后端未变，不重复执行已有后端测试。
 - 待人工验收与交付边界：在现有环境验证调试后带条件定位同应用同路径同方法的日志、可读时间与耗时、请求中/成功/失败状态、长响应、文档侧栏和窄屏结果定位。本轮在现有 `codex/open-platform-call-logs-20261028` 分支提交推送；继续遵守不创建 PR、不丢弃已有改动、不提交新生成文档的约束。
+
+##### 应用国际化、日志权限与接口分组底色修复（已实施，待人工验收）
+
+- 目标与归属：修复开放平台应用详情文案缺失、调用日志查询返回 `access-logger.query` 权限不足，以及接口分组列表重复底色；仅涉及 `runtime-ui/modules/authentication-manager-ui`，已按用户确认的方案实施。
+- 实施结果：`locales/lang/zh.json`、`en.json` 从 `14441634^` 恢复被公告提交误删、仍由应用详情及其关联页签使用的 26 个语言键，`ja.json` 补齐同名日语键；`views/application-center/ApiGroup/index.vue` 的已有 `ContentPanel` 配置 `background=false`、`padding=0`，取消重复面板底色及内边距，保留公共外层标准留白；`j-pro-table` 移除 `scroll=false`，与设备列表使用相同的默认横纵滚动和表格结构，有数据与空态统一沿用公共表头、背景、行分隔线及悬停样式，保留原有工具栏、表格根内边距为 0 及分页配置；`baseMenu.json` 的 `application-center/ThirdPartyApplication` 顶层 `permissions` 增加 `access-logger/query`，供该菜单初始化时绑定调用日志查询权限。
+- 边界与已有环境：不修改公共组件、后端 Java、其他前端或应用资产数据权限，未执行菜单初始化或实际业务写入。新环境使用更新后的菜单种子；已有环境需通过菜单配置的“同步系统菜单权限”保存新定义，再刷新认证信息或重新登录，单改本地种子不会更新数据库菜单或已有授权。
+- 源码检查结果：三语言 JSON 均可解析且无重复键，应用相关各恢复相同的 26 个键，接口分组相关各恢复/补齐 37 个键；中英文恢复值与历史原文一致，既有键值、UTF-8 和 CRLF 保持不变。应用页面的完整字面量文案键均可解析，新增键均有源码引用。菜单 JSON 解析及与原结构的增量比对通过，仅增加日志查询权限，保留原有权限和应用资产声明。列表样式以 `device-manager-ui/views/device/Instance/index.vue` 实际使用的同一全局 `JProTable` 为依据：设备页未关闭 `scroll`，组件默认转为 `{ x: '100%', y: '100%' }`；接口分组此前显式关闭滚动，改变了表头与表身的组织方式。现恢复相同默认结构，并移除局部表格背景、空态悬停及空态底边线覆盖。有数据和空态均使用公共 Ant Design Table 主题，默认行分隔线继续保留，不给接口分组增加单独的去线规则；未复制设备卡片模式、字段或额外布局，定向差异格式检查通过。
+- 接口分组文案恢复：`ApiGroup/Save`、授权项编辑、`SpecPicker` 权限/详细配置/已授权接口页签及直接业务 hooks 实际引用的 37 个缺失键，中文和英文均从 `14441634^` 恢复原文，日语无历史原文则按现有术语补齐。覆盖名称/说明占位、权限资源及选择提示、保存/删除反馈和计数；静态及条件表达式引用无缺失，动态状态和字段名沿用已有键，新增译文非空且 `{field}`、`{name}`、`{actions}`、`{count}` 等插值变量集合一致；仅修改语言资源与本文，未调整页面、接口、权限或样式。
+- 开放平台列表样式：`ThirdPartyApplication/Direct/List.vue` 同步采用透明且 `padding=0` 的局部面板与标准 `JProTable` 默认滚动，有数据和空态共同沿用平台公共主题；两页均取消局部面板默认 16px 与公共外层 16px 的叠加，只保留平台标准 16px 留白；保留原工具栏、列、分页、权限和行操作，仅完成源码与定向差异检查，页面效果待现有环境人工验收。
+- 待人工验收项：未运行前端构建、lint、类型检查、测试、浏览器或服务操作。应用详情及相关页签、接口分组详情和接口选择器的中英日文案，初始化/同步后的日志权限和实际日志查询、接口分组列表底色仍由用户在现有运行环境人工验收；源码检查不代表页面或真实权限验收通过。
+- 交付入口：功能提交 `2fbf5579`，合入基线 `2.20`；PR：https://github.com/jetlinks-v2/authentication-manager-ui/pull/149，待审核。
 
 #### 接口授权表格化重设计（已实现）
 

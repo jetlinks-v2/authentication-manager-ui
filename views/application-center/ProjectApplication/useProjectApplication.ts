@@ -14,6 +14,7 @@ import {
 } from '@authentication-manager-ui/api/application-center/businessApplication'
 import {
   buildApplicationTerms,
+  hasApplicationProviderFilter,
   listOf,
   normalizeApplication,
   normalizeRole,
@@ -55,6 +56,7 @@ const applicationEntities = new Map<string, BusinessApplicationEntity>()
 const roleEntities = new Map<string, BusinessApplicationRoleEntity>()
 const userEntities = new Map<string, UserDetailEntity>()
 let applicationQuerySequence = 0
+let templateQuery: Promise<ApplicationTemplate[]> | undefined
 
 const replace = <T>(target: T[], values: T[]) => target.splice(0, target.length, ...values)
 
@@ -82,9 +84,13 @@ export const useProjectApplication = () => {
   const loadApplications = async (filters: ApplicationFilters) => {
     // Only the latest filter request may replace the shared ledger state.
     const sequence = ++applicationQuerySequence
+    if (hasApplicationProviderFilter(filters.terms)) {
+      await loadTemplates()
+      if (sequence !== applicationQuerySequence) return applications
+    }
     const response = await queryBusinessApplications({
       paging: false,
-      terms: buildApplicationTerms(filters),
+      terms: buildApplicationTerms(filters, templates),
       sorts: [{ name: 'createTime', order: 'desc' }],
     })
     const nextApplications = rememberApplications(listOf<BusinessApplicationEntity>(response))
@@ -92,21 +98,27 @@ export const useProjectApplication = () => {
     return applications
   }
 
-  const loadTemplates = async () => {
-    const response = await queryBusinessApplicationTemplates({
-      paging: false,
-      sorts: [{ name: 'sortIndex', order: 'asc' }],
-    })
-    const values = listOf<BusinessApplicationTemplateEntity>(response)
-      .map(normalizeTemplate)
-      .sort((left, right) => left.sortIndex - right.sortIndex)
-    replace(templates, values)
-    // 模板与应用并行加载时，模板完成后补齐现有列表的实现类型。
-    replace(applications, applications.map(application => {
-      const entity = applicationEntities.get(application.id)
-      return entity ? normalizeApplication(entity, values.find(item => item.id === entity.templateId)) : application
-    }))
-    return templates
+  /** 初次加载与类型筛选共用在途模板请求；失败释放后允许重试。 */
+  const loadTemplates = (): Promise<ApplicationTemplate[]> => {
+    if (templateQuery) return templateQuery
+    const refreshTemplates = async () => {
+      const response = await queryBusinessApplicationTemplates({
+        paging: false,
+        sorts: [{ name: 'sortIndex', order: 'asc' }],
+      })
+      const values = listOf<BusinessApplicationTemplateEntity>(response)
+        .map(normalizeTemplate)
+        .sort((left, right) => left.sortIndex - right.sortIndex)
+      replace(templates, values)
+      // 模板与应用并行加载时，模板完成后补齐现有列表的实现类型。
+      replace(applications, applications.map(application => {
+        const entity = applicationEntities.get(application.id)
+        return entity ? normalizeApplication(entity, values.find(item => item.id === entity.templateId)) : application
+      }))
+      return templates
+    }
+    templateQuery = refreshTemplates().finally(() => { templateQuery = undefined })
+    return templateQuery
   }
 
   const loadTemplateMenus = async (templateId: string) => {
