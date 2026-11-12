@@ -140,6 +140,7 @@ const register = () => {
  * 不需要把开关写进 `baseMenu.json` 再重新初始化菜单。
  */
 const getContentPanelOverrides = () => ({
+  'system/Basis': { background: false, padding: 0 },
   'project/Overview': false,
   'resources/Dashboard': false,
   'system/Announcement': false,

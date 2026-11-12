@@ -14,6 +14,8 @@
 
 验证：应用页签/同步凭据/外部接入的 24 项测试通过；认证模块单独构建、三个相关模块联合构建和样式门禁通过。浏览器以真实页面/保存 hook 配合模拟接口确认名称与说明保存失败保留草稿、重试后消除反馈；接口分组无 ID 时仍显示原新增表单；真实业务应用页的替身正文面板首次访问挂载，切卡返回保留草稿和实例。ID 复制保留完整 19 位字符串；长模板名不撑出卡片，业务应用长说明展示三行并提供完整 Tooltip。定向检查中改动页面/hook 无类型诊断，全模块依赖仍有既有诊断。独立浏览器被登录页拦截，六个真实 ID 的权限/后端联调、真实凭据清理仍待验收；命令与公共契约见 core `src/components/DetailHeader/README.md`。
 
+运行时工作台 `visDashboard/Base/shared/navigation.ts` 的消息通知快捷入口使用 `system/MessageNotification/Channels`，统一进入 `/system/notification/channels`；按当前菜单授权显示。迁移范围与验证见 [通知模块说明](../notify-manager-ui/README.md#旧菜单退役与个人中心入口统一)。
+
 第三方应用模板的 RSA keyId、公钥保存在 `configuration.credential`，可在关闭通知时独立维护，用于应用凭据主动获取与加密交付。通知开关只维护 `configuration.notification.address`；读取兼容旧 notification 内的 RSA 字段，保存时迁移为统一 credential，关闭通知不会删除公钥。通知 HMAC Secret 也可独立设置：keyId 默认自动准备，也可填写第三方预设的 keyId/Secret，接收端配置后通过专用接口保存切换；未设置时继续原派生算法，普通模板保存不读写 Secret。前后端须配套发布，后端需先增加两个可空通知凭据字段；旧后端不支持新 RSA 配置或自定义通知凭据，回滚需恢复配置格式与接收端信任凭据。
 
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.

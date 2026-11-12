@@ -282,7 +282,7 @@
       },
       {
         "code": "system/Basis",
-        "name": "基础信息",
+        "name": "基础配置",
         "i18nMessages": {
           "name": {
             "zh_CN": "基础配置",
