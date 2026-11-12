@@ -410,11 +410,9 @@ Verification:
 
 ## System Basis Navigation Layout
 
-The system basis form stores the selected menu layout in `front.layout`. The selector supports `side`, `mix`, and `top` with CSS-only layout previews. During application startup or page refresh, `jetlinks-web-core/src/store/system.ts` validates the configured value and applies it to the shared shell layout; missing or invalid legacy values fall back to `side`.
+运行时基础配置通过 `views/system/Basis/Form.vue` 使用 core 的 `PlatformSettingsEditor`，与初始化页共享外观设置、草稿预览、地图和接口基础地址卡片。设置页逐项保存，`system/Basis:update` 控制编辑；字段注册由 core 公共入口提供，原 `fieldRegistry.ts` 兼容转导出。SaaS 自定义域名继续追加到外层 `system/basis:basic`。
 
-The owning UI files are `views/system/Basis/Form.vue`, `views/system/Basis/components/LayoutModeSelector.vue`, and `views/system/Basis/typing.ts`. The shared refresh-time state boundary remains `jetlinks-web-core/src/store/system.ts`.
-
-Verification: the `authentication-manager-ui` production build through the `jetlinks-web-core` Vite entry passes. Workspace-wide Vue type-checking is currently blocked by the existing `modules/device-manager-ui/views/link/Certificate/type.d.ts` syntax error and other legacy core diagnostics; the two new Basis components and their form-data type add no targeted diagnostics.
+已有 `front.layout`、`layoutVariant`、`headerTheme` 以及扩展配置在保存时保留。当前页面不再提供菜单布局和主题编辑器；共享 system store 仍按既有规则应用布局，缺失或非法值回退 `side`。契约与验证结果集中维护于 [core 页面说明](../../jetlinks-web-core/src/views/README.md#基础配置与初始化共享布局)。
 
 ## Application Center
 
