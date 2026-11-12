@@ -50,8 +50,10 @@
     </a-input-group>
 </template>
 
-<script lang="ts" setup name='NotifyBuildIn'>
+<script lang="ts" setup>
 import { queryConfigVariables } from '@authentication-manager-ui/api/system/noticeRule';
+
+defineOptions({ name: 'NotifyBuildIn' })
 
 const props = defineProps({
     value: {

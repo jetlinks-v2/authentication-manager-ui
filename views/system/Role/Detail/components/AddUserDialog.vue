@@ -16,11 +16,13 @@
     </a-modal>
 </template>
 
-<script setup lang="ts" name="RoleAddUser">
+<script setup lang="ts">
 import { getUserByRole_api, bindUser_api } from '@authentication-manager-ui/api/system/role';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n';
 import type { ConditionFilterLegacySearchPayload } from '@jetlinks-web-core/components/ConditionFilter';
+
+defineOptions({ name: 'RoleAddUser' })
 
 const { t: $t } = useI18n();
 const emits = defineEmits(['refresh', 'update:visible']);

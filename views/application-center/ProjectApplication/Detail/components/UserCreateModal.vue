@@ -35,7 +35,7 @@
   </a-modal>
 </template>
 
-<script setup lang="ts" name="ProjectApplicationUserCreateModal">
+<script setup lang="ts">
 import type { PropType } from 'vue'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -49,6 +49,8 @@ import {
   loadProjectApplicationUserCandidates,
   type ProjectApplicationUserQuery,
 } from '../../applicationUserService'
+
+defineOptions({ name: 'ProjectApplicationUserCreateModal' })
 
 const props = defineProps({
   open: { type: Boolean, default: false },

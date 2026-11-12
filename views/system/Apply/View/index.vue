@@ -18,9 +18,11 @@
     </j-page-container>
 </template>
 
-<script setup lang="ts" name="apiPage">
+<script setup lang="ts">
 import { getAppInfo_api } from '@authentication-manager-ui/api/system/apply';
 import Api from '../../Platforms/Api/index.vue';
+
+defineOptions({ name: 'apiPage' })
 
 const route = useRoute();
 const clientId = route.query.code as string;

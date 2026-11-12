@@ -90,11 +90,13 @@
   </ContentPanel>
 </template>
 
-<script setup lang="ts" name="ProjectApplicationSummary">
+<script setup lang="ts">
 import type { PropType } from 'vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ApplicationTemplate, ProjectApplication } from '../../types'
+
+defineOptions({ name: 'ProjectApplicationSummary' })
 
 interface SummaryData {
   application: ProjectApplication

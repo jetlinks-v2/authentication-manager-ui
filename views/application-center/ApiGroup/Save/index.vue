@@ -99,13 +99,15 @@
     </div>
   </j-page-container>
 </template>
-<script setup lang="ts" name="ApiGroupSave">
+<script setup lang="ts">
 import { createReusableTemplate } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useApiGroupEditor, type GroupTextField } from '../useApiGroupEditor'
 import { groupText, groupValue } from '../groupUtils'
 import OperationsEditor from '../components/OperationsEditor.vue'
 import SpecPicker from '../components/SpecPicker.vue'
+
+defineOptions({ name: 'ApiGroupSave' })
 const { t: $t } = useI18n()
 const { groupMenu, id, group, draft, operations, newItem, loading, saving, ready, error, specError, canUpdate, editable,
   busy, textState, statusOptions, unavailable, specs, operationContext, picker,

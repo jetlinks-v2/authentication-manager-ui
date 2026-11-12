@@ -92,7 +92,7 @@
     </a-form>
 </template>
 
-<script setup lang="ts" name="ProjectApplicationSettings">
+<script setup lang="ts">
 import type { PropType } from 'vue'
 import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance } from 'ant-design-vue'
@@ -100,6 +100,8 @@ import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { createApplicationAccessDisplayUrl } from '@jetlinks-web-core/utils/application-access'
 import type { ApplicationTemplate, ProjectApplication } from '../../types'
+
+defineOptions({ name: 'ProjectApplicationSettings' })
 
 interface SettingsData {
   application: ProjectApplication

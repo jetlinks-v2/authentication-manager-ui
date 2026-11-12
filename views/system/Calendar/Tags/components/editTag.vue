@@ -45,13 +45,15 @@
     </a-modal>
 </template>
 
-<script setup name="EditTag">
+<script setup>
 import { saveTag, saveTagsColor, getTagsColor } from '@authentication-manager-ui/api/system/calendar';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { randomString } from '@jetlinks-web/utils';
 import ColorPicker from 'colorpicker-v3';
 import 'colorpicker-v3/style.css';
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'EditTag' })
 
 const { t: $t } = useI18n();
 const props = defineProps({

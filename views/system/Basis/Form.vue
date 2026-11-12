@@ -221,7 +221,7 @@
   </a-form>
 </template>
 
-<script lang="ts" name="BasicForm" setup>
+<script lang="ts" setup>
 import Upload from '@jetlinks-web-core/views/init-home/Basic/components/upload/upload.vue'
 import MapSettings from './components/MapSettings.vue'
 import BasisSection from './components/BasisSection.vue'
@@ -231,6 +231,8 @@ import BasisImagePreview from './components/BasisImagePreview.vue'
 import { BASIS_FORM_FIELD, BASIS_FORM_MODULE_CODE, BASIS_FORM_PAGE_CODE } from './fieldRegistry'
 import { BASIS_SECTION_ICON } from './sectionIcons'
 import { useBasisForm } from './useBasisForm'
+
+defineOptions({ name: 'BasicForm' })
 
 const props = defineProps({
   hideSubmitBtn: {

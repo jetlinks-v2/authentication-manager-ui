@@ -25,12 +25,14 @@
         </full-page>
     </j-page-container>
 </template>
-<script lang="ts" setup name="SystemLog">
+<script lang="ts" setup>
 import { useI18n } from 'vue-i18n';
 import { querySystem } from '@authentication-manager-ui/api/log';
 import { useSystemLog } from './useSystemLog';
 import SystemLogCell from './components/SystemLogCell.vue';
 import SystemLogDetail from './components/SystemLogDetail.vue';
+
+defineOptions({ name: 'SystemLog' })
 const { t: $t } = useI18n();
 const { columns, params, defaultParams, open, selected, handleRecordClick,
     customRow, rowClassName, handleSearch } = useSystemLog();

@@ -69,12 +69,14 @@
   </j-page-container>
 </template>
 
-<script setup lang="ts" name="ProjectApplication">
+<script setup lang="ts">
 import ConditionFilter from '@jetlinks-web-core/components/ConditionFilter'
 import PageHeader from '@jetlinks-web-core/components/PageHeader'
 import ApplicationCreateDialog from './Create/index.vue'
 import ApplicationCard from './components/ApplicationCard.vue'
 import { useApplicationList } from './useApplicationList'
+
+defineOptions({ name: 'ProjectApplication' })
 
 const {
   loading,

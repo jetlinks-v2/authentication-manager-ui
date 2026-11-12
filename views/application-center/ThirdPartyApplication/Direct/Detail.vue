@@ -82,7 +82,7 @@
     </div>
   </j-page-container>
 </template>
-<script setup lang="ts" name="DirectThirdPartyDetail">
+<script setup lang="ts">
 import { createReusableTemplate } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import SlantedTabs from '@jetlinks-web-core/components/SlantedTabs'
@@ -95,6 +95,8 @@ import GrantPanel from './GrantPanel.vue'
 import AccessGuide from './AccessGuide.vue'
 import AccessDebug from './AccessDebug.vue'
 import CallLogs from './CallLogs.vue'
+
+defineOptions({ name: 'DirectThirdPartyDetail' })
 const { t: $t } = useI18n()
 const { application, loading, saving, textSaving, textState, error, form, activeTab, tabOptions, debugMode, logFilter, openDebug, openLogs, load, back, saveText, toggle, remove } = useDirectDetail()
 const [DefineTextFeedback, TextFeedback] = createReusableTemplate<{ field: ApplicationTextField }>()

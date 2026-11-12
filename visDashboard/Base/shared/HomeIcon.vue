@@ -1,7 +1,7 @@
 <template>
   <component :is="icon.component" class="home-icon" :style="{ color: neutral ? 'currentColor' : icon.color }" aria-hidden="true" />
 </template>
-<script setup lang="ts" name="ProjectHomeIcon">
+<script setup lang="ts">
 import { computed, type Component } from 'vue'
 import {
   AlertOutlined, ApiOutlined, AppstoreAddOutlined, AppstoreOutlined, BlockOutlined,
@@ -10,6 +10,8 @@ import {
   CodeOutlined, HddOutlined, MessageOutlined, PlayCircleOutlined, SafetyCertificateOutlined,
   VideoCameraAddOutlined, VideoCameraOutlined, WifiOutlined,
 } from '@ant-design/icons-vue'
+
+defineOptions({ name: 'ProjectHomeIcon' })
 const props = withDefaults(defineProps<{ name?: string; neutral?: boolean }>(), { name: '', neutral: false })
 // 以原型业务含义匹配标准图标；新增图标优先 Ant Design，再检查已接入的私有图标库。
 const icons: Record<string, { component: Component; color: string }> = {

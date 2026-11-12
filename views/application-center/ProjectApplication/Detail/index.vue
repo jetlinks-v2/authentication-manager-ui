@@ -64,7 +64,7 @@
   </j-page-container>
 </template>
 
-<script setup lang="ts" name="ProjectApplicationDetail">
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -82,6 +82,8 @@ import type {
   ApplicationUser,
   ProjectApplication,
 } from '../types'
+
+defineOptions({ name: 'ProjectApplicationDetail' })
 
 const route = useRoute()
 const menuStore = useMenuStore()

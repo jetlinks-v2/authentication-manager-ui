@@ -64,10 +64,12 @@
   </a-modal>
 </template>
 
-<script setup lang="ts" name="ProjectApplicationCreate">
+<script setup lang="ts">
 import TemplateSelector from './TemplateSelector.vue'
 import { useApplicationCreate } from './useApplicationCreate'
 import type { ProjectApplication } from '../types'
+
+defineOptions({ name: 'ProjectApplicationCreate' })
 
 const props = defineProps({
   open: { type: Boolean, default: false },

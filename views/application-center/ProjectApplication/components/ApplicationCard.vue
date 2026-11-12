@@ -55,13 +55,15 @@
   </CardBox>
 </template>
 
-<script setup lang="ts" name="ProjectApplicationCard">
+<script setup lang="ts">
 import { computed, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CardBox from '@jetlinks-web-core/components/CardBox/index.vue'
 import CardAvatar from '@jetlinks-web-core/components/CardBox/CardAvatar.vue'
 import { applicationAvatar } from '../applicationModel'
 import type { ApplicationTemplate, ProjectApplication } from '../types'
+
+defineOptions({ name: 'ProjectApplicationCard' })
 
 interface ApplicationCardItem {
   application: ProjectApplication

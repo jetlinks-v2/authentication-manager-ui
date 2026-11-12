@@ -24,11 +24,13 @@
     </j-page-container>
 </template>
 
-<script setup lang="ts" name="RegionMange">
+<script setup lang="ts">
 import LeftTree from './LeftTree/index.vue'
 import Map from './MapTool/map.vue'
 import {REGION_KEY} from "./hooks";
 import {MAP_TOOL} from "./util";
+
+defineOptions({ name: 'RegionMange' })
 
 const selectCode = ref('')
 const mapRef = ref()

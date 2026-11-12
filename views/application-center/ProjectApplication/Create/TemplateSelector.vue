@@ -67,12 +67,14 @@
   </div>
 </template>
 
-<script setup lang="ts" name="ProjectApplicationTemplateSelector">
+<script setup lang="ts">
 import type { PropType } from 'vue'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ApplicationTemplate } from '../types'
 import { useProjectApplication } from '../useProjectApplication'
+
+defineOptions({ name: 'ProjectApplicationTemplateSelector' })
 
 const props = defineProps({
   templates: {

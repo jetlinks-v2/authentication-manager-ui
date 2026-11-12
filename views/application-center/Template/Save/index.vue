@@ -75,7 +75,7 @@
   </a-modal>
 </template>
 
-<script setup lang="ts" name="ApplicationTemplateSave">
+<script setup lang="ts">
 import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -92,6 +92,8 @@ import { useApplicationTemplateBasicInfo } from './useApplicationTemplateBasicIn
 import { useApplicationTemplateMenuConfig } from './useApplicationTemplateMenuConfig'
 import { useApplicationTemplateParameters } from './useApplicationTemplateParameters'
 import { useTemplateNotificationSignature } from './useTemplateNotificationSignature'
+
+defineOptions({ name: 'ApplicationTemplateSave' })
 
 const ExternalParameterConfig = defineAsyncComponent(() => import('./ExternalParameterConfig.vue'))
 const GrantPanel = defineAsyncComponent(() => import('../../ThirdPartyApplication/Direct/GrantPanel.vue'))

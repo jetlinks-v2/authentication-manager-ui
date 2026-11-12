@@ -14,7 +14,10 @@
   </div>
 </template>
 
-<script setup name="ApiMonaco">
+<script setup>
+
+defineOptions({ name: 'ApiMonaco' })
+
 
 defineProps({
   tips: {

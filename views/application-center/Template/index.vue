@@ -121,13 +121,15 @@
   </j-page-container>
 </template>
 
-<script setup lang="ts" name="ApplicationTemplateManage">
+<script setup lang="ts">
 import { createReusableTemplate } from '@vueuse/core'
 
 import ConditionFilter from '@jetlinks-web-core/components/ConditionFilter'
 import TableActions, { TableActionsItem } from '@jetlinks-web-core/components/TableActions'
 import ApplicationTemplateCreateDialog from './components/ApplicationTemplateCreateDialog.vue'
 import { useApplicationTemplateList } from './useApplicationTemplateList'
+
+defineOptions({ name: 'ApplicationTemplateManage' })
 
 const {
   permission,
