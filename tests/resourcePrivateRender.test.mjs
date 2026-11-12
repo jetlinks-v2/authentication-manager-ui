@@ -14,9 +14,13 @@ test('distribution renders embedded map and passes the video scope to offline li
     api.onResolve({ filter: /^vue-i18n$/ }, () => ({ path: 'locale', namespace: 'stub' }))
     api.onResolve({ filter: /^@jetlinks-web-core\/components\/DashBoardCanvas$/ }, () => ({ path: 'canvas', namespace: 'stub' }))
     api.onResolve({ filter: /resourcePageContext$/ }, () => ({ path: 'context', namespace: 'stub' }))
+    api.onResolve({ filter: /^\.\/ResourceDeviceMap\.vue$/ }, args => ({ path: fileURLToPath(new URL('../views/resources/Dashboard/components/ResourceDeviceMap.vue', import.meta.url)), namespace: 'map-sfc' }))
     api.onResolve({ filter: /\.vue$/ }, args => ({ path: args.path, namespace: 'stub' }))
+    api.onResolve({ filter: /^ant-design-vue$/ }, () => ({ path: 'ant', namespace: 'stub' }))
+    api.onLoad({ filter: /.*/, namespace: 'map-sfc' }, args => ({ contents: compileScript(parse(readFileSync(args.path, 'utf8'), { filename: args.path }).descriptor, { id: args.path, inlineTemplate: true }).content, loader: 'ts', resolveDir: fileURLToPath(new URL('../views/resources/Dashboard/components/', import.meta.url)) }))
     api.onLoad({ filter: /.*/, namespace: 'stub' }, args => ({ loader: 'js', contents:
       args.path === 'locale' ? 'export const useI18n=()=>({t:key=>key})'
+      : args.path === 'ant' ? 'export const Skeleton={render(){return null}}'
       : args.path === 'canvas' ? 'import {h} from "vue";export const DashboardWidgetRenderer={props:["widget"],render(){return h("div",{"data-embedded":this.widget.componentProps.deviceMapCard.embedded,"data-term":this.widget.componentProps.deviceMapCard.deviceTerms[0]})}}'
       : args.path === 'context' ? 'export const useResourcePageContext=()=>context.runtime'
       : args.path.includes('ResourceOfflineDevices') ? 'import {h} from "vue";export default {props:["deviceScope"],render(){return h("div",{"data-scope":this.deviceScope.listType})}}'

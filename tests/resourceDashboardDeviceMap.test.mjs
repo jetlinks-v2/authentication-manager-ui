@@ -96,7 +96,7 @@ test('resource page discovers only an authorized map and retries a failed entry'
         '@jetlinks-web-core/utils/consts': `export const isSaaS=true`,
         '@jetlinks-web-core/utils/deployment': `export const isPrivateDeployment=()=>false`,
         '@jetlinks-web-core/store/menu': `export const useMenuStore=()=>context.menu`,
-        '@jetlinks-web-core/utils/module-registry': `export const moduleRegistry={hasModule:()=>true}`,
+        '@jetlinks-web-core/utils/module-registry': `export const moduleRegistry={hasModule:name=>name !== 'edge-basic-ui'}`,
         '@jetlinks-web-core/components/DashBoardCanvas/dashboard-sources': `export const dashboardSources=context.sources`,
         '../../../visDashboard/ResourceCenter/hooks/useResourceCapabilities': `export const useResourceCapabilities=()=>context.capabilities; export const provideResourceCapabilities=()=>{}`,
         '../../../visDashboard/ResourceCenter/hooks/videoSummaryContext': `export const provideVideoSummary=()=>{}`,
