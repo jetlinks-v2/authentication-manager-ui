@@ -50,7 +50,7 @@
             {{ $t('ProjectApplication.common.save') }}
           </a-button>
         </div>
-        <a-spin :spinning="permissionLoading">
+        <a-spin :spinning="permissionLoading || savingPermissions">
           <a-alert v-if="permissionError" type="error" show-icon :message="$t('ProjectApplication.role.permissionLoadFailed')">
             <template #action><a-button size="small" @click="loadPermissions">{{ $t('ProjectApplication.list.retry') }}</a-button></template>
           </a-alert>
