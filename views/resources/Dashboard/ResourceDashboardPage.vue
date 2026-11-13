@@ -13,12 +13,14 @@
   </main>
 </template>
 
-<script setup lang="ts" name="ResourceCenterDashboard">
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useElementSize } from '@vueuse/core'
 import { DashBoardCanvas } from '@jetlinks-web-core/components/DashBoardCanvas'
 import { useResourcePage } from './useResourcePage'
+
+defineOptions({ name: 'ResourceCenterDashboard' })
 
 const { t } = useI18n()
 const host = ref<HTMLElement>()

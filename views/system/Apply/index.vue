@@ -242,7 +242,7 @@
   </j-page-container>
 </template>
 
-<script setup lang="ts" name="Apply">
+<script setup lang="ts">
 import type { ConditionTerm } from '@jetlinks-web-core/components/ConditionFilter'
 
 import { createReusableTemplate } from '@vueuse/core'
@@ -260,6 +260,8 @@ import {onlyMessage} from '@jetlinks-web/utils';
 import {useMenuStore} from '@jetlinks-web-core/store/menu';
 import {systemImg} from "@authentication-manager-ui/assets";
 import {useI18n} from 'vue-i18n';
+
+defineOptions({ name: 'Apply' })
 
 const {t: $t} = useI18n();
 const menuStory = useMenuStore();

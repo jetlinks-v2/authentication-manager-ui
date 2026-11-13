@@ -70,7 +70,7 @@
     </div>
 </template>
 
-<script setup name="FullCalendar">
+<script setup>
 import FullCalendar from '@fullcalendar/vue3';
 import interactionPlugin from '@fullcalendar/interaction';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -84,6 +84,8 @@ import { inject } from 'vue';
 import { useMenuStore } from '@jetlinks-web-core/store/menu';
 import { useSystemStore } from '@jetlinks-web-core/store/system';
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'FullCalendar' })
 
 const { t: $t } = useI18n();
 const props = defineProps({

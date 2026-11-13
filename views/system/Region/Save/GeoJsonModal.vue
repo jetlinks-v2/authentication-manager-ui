@@ -18,9 +18,11 @@
   </a-modal>
 </template>
 
-<script setup name="GeoJsonModal">
+<script setup>
 
 import {onlyMessage} from "@jetlinks-web/utils";
+
+defineOptions({ name: 'GeoJsonModal' })
 
 const props = defineProps({
   value: {

@@ -1,67 +1,76 @@
 <template>
-  <j-page-container>
-    <div class="detail-page">
+  <PageChrome>
+    <a-button class="detail-page__back" type="text" @click="backToList">
+      <template #icon><AIcon type="LeftOutlined" /></template>
+      {{ $t('ProjectApplication.detail.back') }}
+    </a-button>
+  </PageChrome>
+
+  <main class="detail-page">
+    <PageChrome v-if="application && detail && template" flush>
+      <ApplicationSummary
+        class="detail-page__summary"
+        :data="{ application, template }"
+        :deleting="deleting"
+        :syncing-credential="syncingCredential"
+        :settings-editing="settingsEditing"
+        :settings-saving="settingsSaving"
+        :show-settings-actions="activeTab === 'settings'"
+        :opening="openingApplicationIds.includes(application.id)"
+        @cancel-settings="cancelSettings"
+        @delete="deleteApplication"
+        @edit-settings="editSettings"
+        @save-settings="saveSettings"
+        @toggle-status="toggleStatus"
+        @open="openApplication"
+        @sync-credential="syncCredential"
+      />
+      <SlantedTabs
+        :active-key="activeTab"
+        :options="tabOptions"
+        @change="activeTab = String($event)"
+      />
+    </PageChrome>
+
+    <FullPage has-padding show-scroll>
       <a-spin :spinning="loading">
-      <template v-if="application && detail && template">
-        <ApplicationSummary
-          :data="{ application, template }"
-          :deleting="deleting"
-          :syncing-credential="syncingCredential"
-          :settings-editing="settingsEditing"
-          :settings-saving="settingsSaving"
-          :show-settings-actions="activeTab === 'settings'"
-          :opening="openingApplicationIds.includes(application.id)"
-          @back="backToList"
-          @cancel-settings="cancelSettings"
-          @delete="deleteApplication"
-          @edit-settings="editSettings"
-          @save-settings="saveSettings"
-          @toggle-status="toggleStatus"
-          @open="openApplication"
-          @sync-credential="syncCredential"
-        />
+        <a-tabs v-if="application && detail && template" v-model:active-key="activeTab" class="detail-tabs">
+          <a-tab-pane key="settings" :tab="$t('ProjectApplication.detail.tab.settings')">
+            <ApplicationSettings
+              ref="settingsRef"
+              v-model:editing="settingsEditing"
+              :data="{ application, template }"
+              :saving="settingsSaving"
+              @save="updateSettings"
+            />
+          </a-tab-pane>
+          <a-tab-pane key="users" :tab="$t('ProjectApplication.detail.tab.users')">
+            <UserManagement
+              :data="{ users: detail.users, roles: detail.roles }"
+              @add="addUsers"
+              @unbind="unbindUser"
+              @update="updateUser"
+            />
+          </a-tab-pane>
+          <a-tab-pane key="roles" :tab="$t('ProjectApplication.detail.tab.roles')">
+            <RoleManagement
+              :roles="detail.roles"
+              :users="detail.users"
+              :scope="{ applicationId: application.id, templateId: application.templateId, isExternal: application.provider === 'third-party' }"
+              @save-role="saveRole"
+              @delete-role="removeRole"
+            />
+          </a-tab-pane>
+        </a-tabs>
 
-        <FullPage hasPadding>
-          <a-tabs v-model:active-key="activeTab" class="detail-tabs">
-            <a-tab-pane key="settings" :tab="$t('ProjectApplication.detail.tab.settings')">
-              <ApplicationSettings
-                ref="settingsRef"
-                v-model:editing="settingsEditing"
-                :data="{ application, template }"
-                :saving="settingsSaving"
-                @save="updateSettings"
-              />
-            </a-tab-pane>
-            <a-tab-pane key="users" :tab="$t('ProjectApplication.detail.tab.users')">
-              <UserManagement
-                :data="{ users: detail.users, roles: detail.roles }"
-                @add="addUsers"
-                @unbind="unbindUser"
-                @update="updateUser"
-              />
-            </a-tab-pane>
-            <a-tab-pane key="roles" :tab="$t('ProjectApplication.detail.tab.roles')">
-              <RoleManagement
-                :roles="detail.roles"
-                :users="detail.users"
-                :scope="{ applicationId: application.id, templateId: application.templateId, isExternal: application.provider === 'third-party' }"
-                @save-role="saveRole"
-                @delete-role="removeRole"
-              />
-            </a-tab-pane>
-          </a-tabs>
-        </FullPage>
-      </template>
-
-      <CloudEmpty v-else-if="!loading" type="page" :description="$t('ProjectApplication.detail.notFound')">
-        <a-button type="primary" @click="backToList">
-          {{ $t('ProjectApplication.list.title') }}
-        </a-button>
-      </CloudEmpty>
+        <CloudEmpty v-else-if="!loading" type="page" :description="$t('ProjectApplication.detail.notFound')">
+          <a-button type="primary" @click="backToList">
+            {{ $t('ProjectApplication.detail.back') }}
+          </a-button>
+        </CloudEmpty>
       </a-spin>
-
-    </div>
-  </j-page-container>
+    </FullPage>
+  </main>
 </template>
 
 <script setup lang="ts" name="ProjectApplicationDetail">
@@ -69,6 +78,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
+import { PageChrome, SlantedTabs } from '@jetlinks-web-core/components'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { syncBusinessApplicationCredential } from '@authentication-manager-ui/api/application-center/businessApplication'
 import ApplicationSummary from './components/ApplicationSummary.vue'
@@ -88,6 +98,11 @@ const menuStore = useMenuStore()
 const store = useProjectApplication()
 const { t: $t } = useI18n()
 const activeTab = ref(route.query.tab === 'roles' ? 'roles' : 'settings')
+const tabOptions = computed(() => [
+  { key: 'settings', label: $t('ProjectApplication.detail.tab.settings') },
+  { key: 'users', label: $t('ProjectApplication.detail.tab.users') },
+  { key: 'roles', label: $t('ProjectApplication.detail.tab.roles') },
+])
 const loading = ref(false)
 const settingsEditing = ref(false)
 const settingsSaving = ref(false)
@@ -223,29 +238,27 @@ const removeRole = async (role: { id: string; name: string }) => {
 
 <style scoped>
 .detail-page {
-  min-height: 100%;
+  min-width: 0;
+  min-height: 0;
 }
 
-.detail-tabs {
-  margin-top: var(--space-4);
-  padding: 0 var(--space-4) var(--space-4);
-  border: 1px solid var(--line);
-  border-radius: var(--r-3);
+.detail-page__back.ant-btn {
+  height: auto;
+  padding: 0;
+  color: var(--jet-theme-text-secondary);
 }
 
-.detail-page :deep(.section),
-.detail-page :deep(.section .ic),
-.detail-page :deep(.section-sub code),
-.detail-page :deep(.ant-table),
-.detail-page :deep(.ant-table-container),
-.detail-page :deep(.ant-table-thead > tr > th),
-.detail-page :deep(.ant-table-tbody > tr > td),
-.detail-page :deep(.ant-table-cell-fix-right) {
-  background: transparent !important;
+.detail-page__back.ant-btn:hover,
+.detail-page__back.ant-btn:focus {
+  color: var(--jet-theme-primary);
+  background: transparent;
 }
 
-@media (max-width: 48rem) {
-  .detail-page { padding: var(--space-3); }
-  .detail-tabs { padding: 0 var(--space-3) var(--space-3); }
+.detail-page__summary { margin-block: var(--space-4); }
+.detail-tabs { min-height: 100%; }
+
+/* 与模板详情共用导航布局，仅隐藏原页签头以保留内容的懒挂载和编辑草稿。 */
+.detail-tabs :deep(> .ant-tabs-nav) {
+  display: none;
 }
 </style>

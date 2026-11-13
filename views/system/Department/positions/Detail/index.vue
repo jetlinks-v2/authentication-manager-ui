@@ -1,4 +1,4 @@
-<script setup lang="ts" name="Detail">
+<script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import User from './User.vue'
 import PageChrome from '@jetlinks-web-core/components/PageChrome/index.vue'
@@ -11,6 +11,8 @@ import {clearPositionTreeCache, usePositionList} from "../data";
 import {getDepartmentList_api} from "@jetlinks-web-core/api/system/user";
 import {cloneDeep} from "lodash-es";
 import {filterSelectNode} from "@jetlinks-web-core/utils";
+
+defineOptions({ name: 'Detail' })
 
 const { t: $t } = useI18n();
 

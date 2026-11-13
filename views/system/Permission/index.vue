@@ -148,7 +148,7 @@
   </j-page-container>
 </template>
 
-<script setup lang="ts" name="Permission">
+<script setup lang="ts">
 import { createReusableTemplate } from '@vueuse/core'
 
 import EditDialog from './components/EditDialog.vue'
@@ -165,6 +165,8 @@ import {downloadJson} from '@jetlinks-web-core/utils/comm'
 import {columns} from './util'
 import {useI18n} from 'vue-i18n';
 import {FullPage} from "@jetlinks-web-core/layout";
+
+defineOptions({ name: 'Permission' })
 
 const {t: $t} = useI18n();
 const permission = 'system/Permission'

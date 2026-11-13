@@ -153,7 +153,7 @@
   </a-modal>
 </template>
 
-<script lang="ts" setup name="Save">
+<script lang="ts" setup>
 import type {PropType} from 'vue';
 import {reactive, ref, watch} from 'vue';
 import BuildIn from './BuildIn.vue';
@@ -165,6 +165,8 @@ import GeoJsonModal from './GeoJsonModal.vue'
 import {useRegion} from "../hooks";
 import {syncChildren} from "../util";
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'Save' })
 
 const { t: $t } = useI18n();
 const emit = defineEmits(['close', 'save']);

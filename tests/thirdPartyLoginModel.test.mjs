@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import { build } from 'esbuild'
 import { coreI18nPlugin } from '../../../jetlinks-web-core/tests/helpers/coreI18nPlugin.mjs'
@@ -29,7 +28,8 @@ test('only exposes login methods backed by existing providers', () => {
   assert.equal(draft.logoUrl, '')
   assert.equal(draft.enabled, false)
   assert.equal(draft.showOnLogin, true)
-  assert.equal('autoCreateUser' in draft, false)
+  assert.equal(draft.autoCreateUser, true)
+  assert.equal(draft.defaultPasswd, '')
   assert.equal(draft.usernamePrefix, '')
   assert.deepEqual(draft.roleIdList, [])
   assert.deepEqual(draft.orgIdList, [])
@@ -96,6 +96,7 @@ test('maps supported login providers to page records without list secrets', () =
       integrationModes: ['ssoClient'],
       sso: {
         autoCreateUser: true,
+        defaultPasswd: 'ExistingPass123',
         usernamePrefix: 'external-',
         roleIdList: ['role-1'],
         orgIdList: ['org-1'],
@@ -110,11 +111,12 @@ test('maps supported login providers to page records without list secrets', () =
     assert.equal(record?.logoUrl, 'https://example.com/icon.png')
     assert.equal(record?.enabled, true)
     assert.equal(record?.showOnLogin, true)
-    assert.equal('autoCreateUser' in record, false)
+    assert.equal(record?.autoCreateUser, true)
     assert.equal(record?.usernamePrefix, 'external-')
     assert.deepEqual(record?.roleIdList, ['role-1'])
     assert.deepEqual(record?.orgIdList, ['org-1'])
     assert.equal(record?.secret, '')
+    assert.equal(record?.defaultPasswd, '')
   }
 })
 
@@ -152,6 +154,7 @@ test('builds existing application payloads without prototype-only fields', () =>
     appId: 'wx-id',
     secret: 'wx-secret',
     showOnLogin: true,
+    defaultPasswd: 'WechatPass123',
     usernamePrefix: 'wechat-',
     roleIdList: ['role-1'],
     orgIdList: ['org-1'],
@@ -165,7 +168,7 @@ test('builds existing application payloads without prototype-only fields', () =>
   assert.equal(wechat.sso.usernamePrefix, 'wechat-')
   assert.deepEqual(wechat.sso.roleIdList, ['role-1'])
   assert.deepEqual(wechat.sso.orgIdList, ['org-1'])
-  assert.equal('defaultPasswd' in wechat.sso, false)
+  assert.equal(wechat.sso.defaultPasswd, 'WechatPass123')
 
   const dingTalk = toApplicationPayload({
     ...createDraft('dingtalk'),
@@ -209,7 +212,7 @@ test('builds existing application payloads without prototype-only fields', () =>
   }
 })
 
-test('always enables auto-create without replacing existing user provisioning settings', () => {
+test('saves the selected auto-create and password while retaining unrelated SSO settings', () => {
   const current = {
     id: 'oauth-app',
     name: 'OAuth2 登录',
@@ -222,6 +225,7 @@ test('always enables auto-create without replacing existing user provisioning se
       defaultPasswd: 'ExistingPass123',
       roleIdList: ['role-1'],
       orgIdList: ['org-1'],
+      retained: { value: 'keep' },
     },
   }
   const payload = toApplicationPayload({
@@ -233,14 +237,17 @@ test('always enables auto-create without replacing existing user provisioning se
     clientId: 'client-id',
     secret: 'client-secret',
     userIdField: 'id',
+    autoCreateUser: false,
+    defaultPasswd: 'UpdatedPass456!',
     usernamePrefix: 'gitee-',
     roleIdList: ['role-2'],
     orgIdList: ['org-2'],
   }, current)
 
-  assert.equal(payload.sso.autoCreateUser, true)
+  assert.equal(payload.sso.autoCreateUser, false)
   assert.equal(payload.sso.usernamePrefix, 'gitee-')
-  assert.equal(payload.sso.defaultPasswd, 'ExistingPass123')
+  assert.equal(payload.sso.defaultPasswd, 'UpdatedPass456!')
+  assert.deepEqual(payload.sso.retained, { value: 'keep' })
   assert.deepEqual(payload.sso.roleIdList, ['role-2'])
   assert.deepEqual(payload.sso.orgIdList, ['org-2'])
 
@@ -254,7 +261,34 @@ test('always enables auto-create without replacing existing user provisioning se
   assert.deepEqual(cleared.sso.orgIdList, [])
 })
 
-test('does not expose auto-create as a configurable drawer option', () => {
-  const drawer = readFileSync(new URL('../views/system/ThirdPartyLogin/components/ConfigDrawer.vue', import.meta.url), 'utf8')
-  assert.doesNotMatch(drawer, /draft\.autoCreateUser|ThirdPartyLogin\.autoCreateUser/)
+test('editing each provider preserves disabled auto-create and existing password, roles and organizations', () => {
+  for (const provider of ['wechat-official-account', 'dingtalk-ent-app', 'third-party']) {
+    const current = {
+      id: provider, name: provider, provider, integrationModes: ['ssoClient'],
+      sso: {
+        autoCreateUser: false, defaultPasswd: 'ExistingPass123', usernamePrefix: 'external-',
+        roleIdList: ['role-1'], orgIdList: ['org-1'],
+        configuration: { type: 'oauth2', oauth2: { redirectUri: 'https://example.com/callback' } },
+      },
+    }
+    const draft = fromApplication(current, true)
+    assert.equal(draft.autoCreateUser, false)
+    assert.equal(draft.defaultPasswd, current.sso.defaultPasswd)
+    const payload = toApplicationPayload({ ...draft, name: 'renamed' }, current)
+    for (const key of ['autoCreateUser', 'defaultPasswd', 'usernamePrefix', 'roleIdList', 'orgIdList']) {
+      assert.deepEqual(payload.sso[key], current.sso[key], `${provider}: ${key}`)
+    }
+    assert.equal(payload.sso.configuration.oauth2.redirectUri, 'https://example.com/callback')
+    const enabled = toApplicationPayload({ ...draft, autoCreateUser: true, defaultPasswd: 'NewPass123!' }, current)
+    assert.equal(enabled.sso.autoCreateUser, true)
+    assert.equal(enabled.sso.defaultPasswd, 'NewPass123!')
+  }
+})
+
+test('missing legacy auto-create is false and a missing password is never generated in the draft or payload', () => {
+  const application = { id: 'legacy', name: 'legacy', provider: 'wechat-official-account' }
+  const draft = fromApplication(application, true)
+  assert.equal(draft.autoCreateUser, false)
+  assert.equal(draft.defaultPasswd, '')
+  assert.equal(toApplicationPayload(draft, application).sso.defaultPasswd, '')
 })
