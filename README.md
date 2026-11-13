@@ -443,7 +443,7 @@ Verification:
 
 ## System Basis Navigation Layout
 
-运行时基础配置通过 `views/system/Basis/Form.vue` 使用 core 的 `PlatformSettingsEditor`，与初始化页共享外观设置、草稿预览、地图和接口基础地址卡片。设置页逐项保存，`system/Basis:update` 控制编辑；字段注册由 core 公共入口提供，原 `fieldRegistry.ts` 兼容转导出。SaaS 自定义域名继续追加到外层 `system/basis:basic`。
+运行时基础配置通过 `views/system/Basis/Form.vue` 使用 core 的 `PlatformSettingsEditor`，与初始化页共享外观设置、草稿预览、地图和接口基础地址卡片。设置页外观和地图按区块页内编辑、取消和保存，接口基础地址继续逐项保存；`system/Basis:update` 控制编辑；字段注册由 core 公共入口提供，原 `fieldRegistry.ts` 兼容转导出。SaaS 自定义域名继续追加到外层 `system/basis:basic`。
 
 已有 `front.layout`、`layoutVariant`、`headerTheme` 以及扩展配置在保存时保留。当前页面不再提供菜单布局和主题编辑器；共享 system store 仍按既有规则应用布局，缺失或非法值回退 `side`。契约与验证结果集中维护于 [core 页面说明](../../jetlinks-web-core/src/views/README.md#基础配置与初始化共享布局)。
 
