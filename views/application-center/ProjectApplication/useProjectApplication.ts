@@ -208,7 +208,7 @@ export const useProjectApplication = () => {
   const loadDetail = async (applicationId: string) => {
     ensureDetail(applicationId)
     await loadRoles(applicationId)
-    // The detail workspace only exposes settings, members, and roles; defer unrelated asset queries.
+    // 设备资产由独立页签按需加载，基础详情只加载角色和成员。
     await loadUsers(applicationId)
     return details[applicationId]
   }
