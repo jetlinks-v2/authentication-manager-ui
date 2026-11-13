@@ -7,9 +7,6 @@ import {
 import { listOf, normalizeDevice, resultOf } from './applicationModel'
 import type { ResourcePickerPage, ResourcePickerQuery } from './types'
 
-const DEVICE_PROVIDER_EXCLUSION =
-  'accessProvider nin (agent-device-gateway,agent-media-device-gateway,official-edge-gateway,fixed-media,gb28181-2016,media-plugin,onvif)'
-
 /**
  * Load devices already bound to one application.
  *
@@ -39,10 +36,7 @@ export const loadBusinessApplicationAvailableDevices = async (
     pageIndex,
     pageSize,
     sorts: [{ name: 'createTime', order: 'desc' }],
-    terms: [
-      { column: 'productId$product-info', value: DEVICE_PROVIDER_EXCLUSION },
-      ...(query.terms || []),
-    ],
+    terms: query.terms || [],
     context: {
       includeTags: true,
       includeRelations: true,

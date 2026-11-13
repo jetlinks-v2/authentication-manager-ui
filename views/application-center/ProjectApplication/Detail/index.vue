@@ -44,6 +44,14 @@
               @save="updateSettings"
             />
           </a-tab-pane>
+          <a-tab-pane key="devices" :tab="$t('ProjectApplication.detail.tab.devices')">
+            <DeviceBinding
+              :key="applicationId"
+              :data="deviceBindingData"
+              @bind="bindDevices"
+              @unbind="unbindDevice"
+            />
+          </a-tab-pane>
           <a-tab-pane key="users" :tab="$t('ProjectApplication.detail.tab.users')">
             <UserManagement
               :data="{ users: detail.users, roles: detail.roles }"
@@ -83,8 +91,10 @@ import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { syncBusinessApplicationCredential } from '@authentication-manager-ui/api/application-center/businessApplication'
 import ApplicationSummary from './components/ApplicationSummary.vue'
 import ApplicationSettings from './components/ApplicationSettings.vue'
+import DeviceBinding from './components/DeviceBinding.vue'
 import RoleManagement from './components/RoleManagement.vue'
 import UserManagement from './components/UserManagement.vue'
+import { useApplicationDeviceBinding } from './useApplicationDeviceBinding'
 import { useApplicationOpenGuard } from '../useApplicationOpenGuard'
 import { useProjectApplication } from '../useProjectApplication'
 import type {
@@ -97,9 +107,13 @@ const route = useRoute()
 const menuStore = useMenuStore()
 const store = useProjectApplication()
 const { t: $t } = useI18n()
-const activeTab = ref(route.query.tab === 'roles' ? 'roles' : 'settings')
+const getInitialTab = () => route.query.tab === 'roles' || route.query.tab === 'devices'
+  ? route.query.tab
+  : 'settings'
+const activeTab = ref(getInitialTab())
 const tabOptions = computed(() => [
   { key: 'settings', label: $t('ProjectApplication.detail.tab.settings') },
+  { key: 'devices', label: $t('ProjectApplication.detail.tab.devices') },
   { key: 'users', label: $t('ProjectApplication.detail.tab.users') },
   { key: 'roles', label: $t('ProjectApplication.detail.tab.roles') },
 ])
@@ -114,6 +128,10 @@ const applicationId = computed(() => String(route.params.id || ''))
 const application = computed(() => store.applications.find((item) => item.id === applicationId.value))
 const detail = computed(() => store.details[applicationId.value])
 const template = computed(() => store.templates.find((item) => item.id === application.value?.templateId))
+const { data: deviceBindingData, bindDevices, unbindDevice } = useApplicationDeviceBinding(
+  applicationId,
+  computed(() => activeTab.value === 'devices' && Boolean(application.value)),
+)
 let detailLoadVersion = 0
 const {
   openingApplicationIds,
@@ -126,7 +144,7 @@ const {
 watch(applicationId, async id => {
   const version = ++detailLoadVersion
   if (!id) return
-  activeTab.value = route.query.tab === 'roles' ? 'roles' : 'settings'
+  activeTab.value = getInitialTab()
   settingsEditing.value = false
   loading.value = true
   try {
