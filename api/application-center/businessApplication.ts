@@ -247,8 +247,10 @@ export const saveBusinessApplicationRoleMenuGrant = (applicationId: string, role
     { applicationScope: false },
   )
 
+/** 模板菜单与独立资产策略一并返回，供角色加载及保存前刷新授权上限。 */
 export const getBusinessApplicationTemplateMenus = (id: string) =>
-  apiRequest.get<{ menus: MenuPermissionNode[] }>(`/business-application-template/${encodeURIComponent(id)}/menus`)
+  apiRequest.get<{ menus: MenuPermissionNode[]; assetAccesses: AssetAccessPolicy[] }>(
+    `/business-application-template/${encodeURIComponent(id)}/menus`)
 
 export const queryBusinessApplicationRoles = (
   applicationId: string,
