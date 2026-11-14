@@ -64,23 +64,29 @@
     :mask-closable="!basicInfo.busy.value"
     :keyboard="!basicInfo.busy.value"
     :cancel-button-props="{ disabled: basicInfo.busy.value }"
-    :ok-button-props="{ disabled: basicInfo.disabled.value }"
+    :ok-button-props="{ disabled: basicInfo.disabled.value || basicInfo.busy.value }"
     @ok="basicInfo.icon.save"
     @cancel="basicInfo.icon.cancel"
   >
     <a-alert v-if="basicInfo.icon.error.value" type="error" show-icon :message="basicInfo.icon.error.value" />
     <div :inert="basicInfo.disabled.value || undefined">
-      <AIconValueEditor v-model="basicInfo.icon.draft.value" :preview-size="56" :preview-fallback="detailState.displayName.value" />
+      <ApplicationTemplateIconEditor
+        v-model="basicInfo.icon.draft.value"
+        :fallback="detailState.displayName.value"
+        @crop-visible-change="basicInfo.mediaInteraction.iconCrop = $event"
+        @crop-interact-busy="basicInfo.mediaInteraction.iconBusy = $event"
+        @library-visible-change="basicInfo.mediaInteraction.iconLibrary = $event"
+      />
     </div>
   </a-modal>
 </template>
 
-<script setup lang="ts" name="ApplicationTemplateSave">
+<script setup lang="ts">
 import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ContentPanel, PageChrome, SlantedTabs } from '@jetlinks-web-core/components'
-import { IconValueEditor as AIconValueEditor } from '@jetlinks-web-core/components/IconValue'
+import ApplicationTemplateIconEditor from '../components/ApplicationTemplateIconEditor.vue'
 import { useAuthStore } from '@jetlinks-web-core/store'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { TEMPLATE_GRANT_TARGET } from '@authentication-manager-ui/api/application-center/apiApplication'
@@ -92,6 +98,8 @@ import { useApplicationTemplateBasicInfo } from './useApplicationTemplateBasicIn
 import { useApplicationTemplateMenuConfig } from './useApplicationTemplateMenuConfig'
 import { useApplicationTemplateParameters } from './useApplicationTemplateParameters'
 import { useTemplateNotificationSignature } from './useTemplateNotificationSignature'
+
+defineOptions({ name: 'ApplicationTemplateSave' })
 
 const ExternalParameterConfig = defineAsyncComponent(() => import('./ExternalParameterConfig.vue'))
 const GrantPanel = defineAsyncComponent(() => import('../../ThirdPartyApplication/Direct/GrantPanel.vue'))

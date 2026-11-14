@@ -117,7 +117,7 @@
   />
 </template>
 
-<script setup lang="ts" name="user">
+<script setup lang="ts">
 import type { ConditionQueryTerm } from '@authentication-manager-ui/views/system/conditionFilterUtils'
 
 import { createReusableTemplate } from '@vueuse/core'
@@ -132,6 +132,8 @@ import {useI18n} from 'vue-i18n';
 import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
 import type {ConditionFilterChangePayload} from '@jetlinks-web-core/components/ConditionFilter'
 import {transformConditionTerms} from '@authentication-manager-ui/views/system/conditionFilterUtils'
+
+defineOptions({ name: 'user' })
 // import PageHeader from '@jetlinks-web-core/components/PageHeader'
 
 const {t: $t} = useI18n();

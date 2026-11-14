@@ -10,7 +10,6 @@ import type {
   DeviceEntity,
   EnumValue,
   MediaChannelEntity,
-  MenuView,
   UserDetailEntity,
 } from '@authentication-manager-ui/api/application-center/businessApplication'
 import type {
@@ -96,7 +95,7 @@ const normalizeStatus = (value: string | EnumValue | undefined): ApplicationStat
 const normalizeTemplateLayoutVariant = (value: unknown) =>
   normalizeBasicLayoutVariant(value) || 'application'
 
-/** 概览与应用列表共用图标规则：应用优先，其次模板，无图标时显示名称首字。 */
+/** 应用图标规则：应用优先，其次模板，无图标时显示名称首字。 */
 export function applicationAvatar(
   application: Pick<ProjectApplication, 'name' | 'icon'>,
   template?: Pick<ApplicationTemplate, 'icon'>,
@@ -109,6 +108,14 @@ export function applicationAvatar(
     text: application.name.slice(0, 1),
     tone: 'info',
   }
+}
+
+/** 详情图片沿用应用的图片地址；未配置图片时展示模板封面，不使用模板图标。 */
+export function applicationImage(
+  application: Pick<ProjectApplication, 'name' | 'icon'>,
+  template?: Pick<ApplicationTemplate, 'coverImage'>,
+): string {
+  return applicationAvatar(application).src || template?.coverImage?.trim() || ''
 }
 
 /** 应用类型由关联模板决定，忽略历史实例打开配置。 */
@@ -139,6 +146,7 @@ export const normalizeTemplate = (
     name: entity.i18nName || entity.name,
     code: entity.code,
     icon: entity.icon,
+    coverImage: textOf(entity.coverImage).trim(),
     description: entity.i18nDescription || entity.description || '',
     templateUrl: textOf(entity.templateUrl).trim(),
     status,
@@ -242,23 +250,4 @@ export const normalizeCamera = (entity: MediaChannelEntity): ApplicationCameraRe
     supportsPtz: features.includes('ptz') || ['1', '2', '4', 'ball', 'hemisphere', 'remoteControl'].includes(ptzType),
     previewUrl,
   }
-}
-
-const menuName = (menu: MenuView) => String(menu.i18nName || menu.name || menu.code || menu.id || '')
-
-export const flattenMenuNames = (menus: MenuView[] = []) => {
-  const result: string[] = []
-  const visit = (items: MenuView[]) => items.forEach(item => {
-    const name = menuName(item)
-    if (name) result.push(name)
-    visit(Array.isArray(item.children) ? item.children : [])
-  })
-  visit(menus)
-  return [...new Set(result)]
-}
-
-/** 从模板菜单授权详情中提取用于创建预览的菜单名称。 */
-export const templateMenuNames = (response: unknown) => {
-  const detail = resultOf<{ menus?: MenuView[] }>(response)
-  return flattenMenuNames(Array.isArray(detail?.menus) ? detail.menus : [])
 }

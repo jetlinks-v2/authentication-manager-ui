@@ -21,10 +21,12 @@
   </a-modal>
 </template>
 
-<script setup lang="ts" name="PositionsAddUser">
+<script setup lang="ts">
 import { getUser, bindUser } from '@authentication-manager-ui/api/system/positions';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'PositionsAddUser' })
 
 const { t: $t } = useI18n();
 const emits = defineEmits(['refresh', 'update:visible']);

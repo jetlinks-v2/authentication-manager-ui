@@ -27,7 +27,7 @@ export const HOME_TARGETS: Record<string, HomeTarget> = {
   members: { menus: [] },
   space: { menus: ['space/AreaManagement'] },
   search: { menus: [] },
-  notifications: { menus: ['notice/channel'] },
+  notifications: { menus: ['system/MessageNotification/Channels'] },
   messages: { menus: ['account/center'], params: { tabKey: 'StationMessage' } },
   announcements: { menus: ['system/Announcement'] },
   usage: { menus: ['system/ProjectUsage', 'system/Operations/Quota'] },

@@ -89,7 +89,7 @@
   />
 </template>
 
-<script setup lang="ts" name="RoleUser">
+<script setup lang="ts">
 import type { ConditionTerm } from '@jetlinks-web-core/components/ConditionFilter'
 
 import { createReusableTemplate } from '@vueuse/core'
@@ -100,6 +100,8 @@ import { onlyMessage } from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n';
 import dayjs from "dayjs";
 import PageHeader from '@jetlinks-web-core/components/PageHeader';
+
+defineOptions({ name: 'RoleUser' })
 
 const { t: $t } = useI18n();
 const roleId = useRoute().params.id as string

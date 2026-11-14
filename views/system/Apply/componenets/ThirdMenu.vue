@@ -228,7 +228,7 @@
     </a-modal>
 </template>
 
-<script name="ThirdMenu" setup lang="ts">
+<script setup lang="ts">
 import {
     getMenuTree_api,
     validCode_api,
@@ -242,6 +242,8 @@ import ChooseIconDialog from '../../Menu/components/ChooseIconDialog.vue';
 import { Rule } from 'ant-design-vue/lib/form';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'ThirdMenu' })
 
 const { t: $t } = useI18n();
 const props = defineProps({

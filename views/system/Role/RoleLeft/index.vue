@@ -69,11 +69,13 @@
 		</div>
 </template>
 
-<script lang="ts" name="RoleLeft" setup>
+<script lang="ts" setup>
 import { onlyMessage, randomString } from '@jetlinks-web/utils';
 import { queryRoleGroup, saveRoleGroup, deleteRoleGroup } from '@authentication-manager-ui/api/system/role';
 import { useUserStore } from '@jetlinks-web-core/store/user'
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'RoleLeft' })
 
 const { t: $t } = useI18n();
 const emit = defineEmits(['selectData'])

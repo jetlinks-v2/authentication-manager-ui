@@ -6,10 +6,12 @@
     <component v-else :is="layoutComponent" />
   </main>
 </template>
-<script setup lang="ts" name="ProjectSideOverview">
+<script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { isSaaS } from '@jetlinks-web-core/utils/consts'
 import { useOverviewLayout } from './useOverviewAsync'
+
+defineOptions({ name: 'ProjectSideOverview' })
 
 const { t } = useI18n()
 // 不静态引入另一种部署的页面，避免共享卡片被意外提前加载。

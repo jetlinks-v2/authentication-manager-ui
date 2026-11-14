@@ -92,7 +92,7 @@
     </div>
 </template>
 
-<script setup lang="ts" name="APIDoes">
+<script setup lang="ts">
 import 'vue3-json-viewer/dist/index.css';
 import type { apiDetailsType } from '../typing';
 import InputCard from './InputCard.vue';
@@ -101,6 +101,8 @@ import { findData, getCodeText, dealNoRef } from '../utils';
 import { randomString } from "@jetlinks-web/utils";
 import Monaco from './monaco.vue';
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'APIDoes' })
 
 const { t: $t } = useI18n();
 type cardType = {

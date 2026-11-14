@@ -72,12 +72,14 @@
     </a-modal>
   </j-page-container>
 </template>
-<script setup lang="ts" name="ApiGroupManagement">
+<script setup lang="ts">
 import { createReusableTemplate } from '@vueuse/core'
 
 import { useI18n } from 'vue-i18n'
 import { useApiGroupList } from './useApiGroupList'
 import { groupText, groupValue } from './groupUtils'
+
+defineOptions({ name: 'ApiGroupManagement' })
 const { t: $t } = useI18n()
 const { groupMenu, canQuery, tableRef, params, columns, error, busyId, editOpen, editForm, editError, saving,
   requestPage, handleSearch, create, open, openEdit, saveEdit, toggle, remove } = useApiGroupList()

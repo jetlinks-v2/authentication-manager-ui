@@ -3,7 +3,6 @@ import {
   createBusinessApplication,
   deleteBusinessApplication,
   getBusinessApplication,
-  getBusinessApplicationTemplateMenus,
   queryBusinessApplications,
   queryBusinessApplicationTemplates,
   updateBusinessApplication,
@@ -21,7 +20,6 @@ import {
   normalizeTemplate,
   normalizeUser,
   resultOf,
-  templateMenuNames,
 } from './applicationModel'
 import {
   buildApplicationConfiguration,
@@ -51,7 +49,6 @@ import type {
 const applications = reactive<ProjectApplication[]>([])
 const templates = reactive<ApplicationTemplate[]>([])
 const details = reactive<Record<string, ApplicationDetailState>>({})
-const templateMenus = reactive<Record<string, string[]>>({})
 const applicationEntities = new Map<string, BusinessApplicationEntity>()
 const roleEntities = new Map<string, BusinessApplicationRoleEntity>()
 const userEntities = new Map<string, UserDetailEntity>()
@@ -119,14 +116,6 @@ export const useProjectApplication = () => {
     }
     templateQuery = refreshTemplates().finally(() => { templateQuery = undefined })
     return templateQuery
-  }
-
-  const loadTemplateMenus = async (templateId: string) => {
-    if (Object.prototype.hasOwnProperty.call(templateMenus, templateId)) return templateMenus[templateId]
-    const response = await getBusinessApplicationTemplateMenus(templateId)
-    const names = templateMenuNames(response)
-    templateMenus[templateId] = names
-    return names
   }
 
   const loadApplication = async (id: string) => {
@@ -219,7 +208,7 @@ export const useProjectApplication = () => {
   const loadDetail = async (applicationId: string) => {
     ensureDetail(applicationId)
     await loadRoles(applicationId)
-    // The detail workspace only exposes settings, members, and roles; defer unrelated asset queries.
+    // 设备资产由独立页签按需加载，基础详情只加载角色和成员。
     await loadUsers(applicationId)
     return details[applicationId]
   }
@@ -264,10 +253,8 @@ export const useProjectApplication = () => {
     applications,
     templates,
     details,
-    templateMenus,
     loadApplications,
     loadTemplates,
-    loadTemplateMenus,
     loadApplication,
     createApplication,
     updateApplication,

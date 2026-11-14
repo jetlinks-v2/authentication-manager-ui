@@ -31,13 +31,15 @@
     </a-tooltip>
   </div>
 </template>
-<script setup lang="ts" name="ProjectHomeApplicationsView">
+<script setup lang="ts">
 import { computed, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RightOutlined } from '@ant-design/icons-vue'
 import CardAvatar from '@jetlinks-web-core/components/CardBox/CardAvatar.vue'
 import type { HomeRow, HomeChart, HomeTarget } from '../../shared/types'
 import { useVisibleApplications } from '../useVisibleApplications'
+
+defineOptions({ name: 'ProjectHomeApplicationsView' })
 
 const props = defineProps({
   rows: { type: Array as PropType<HomeRow[]>, default: () => [] },

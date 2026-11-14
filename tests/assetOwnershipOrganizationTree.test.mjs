@@ -5,7 +5,6 @@ import { resolve } from 'node:path'
 import test from 'node:test'
 import * as vue from 'vue'
 import { compileScript, parse } from 'vue/compiler-sfc'
-import setupNameSupport from 'vite-plugin-vue-setup-extend'
 
 const require = createRequire(import.meta.url)
 const { transformSync } = require('esbuild')
@@ -32,10 +31,12 @@ test('long labels and changing available width change the visible prefix without
   assert.deepEqual(getSelectedTagLayout([60, 60, 60, 60, 60], 192, 22, 4), { count: 5, left: 0, line: 0 })
 })
 
-test('organization selector compiles through the actual development setup-name plugin', async () => {
+test('organization selector compiles with its real filename and Vue compiler', async () => {
   const filename = resolve(import.meta.dirname, '../views/application-center/ProjectApplication/OwnershipOrganizationTree.vue')
-  const result = await setupNameSupport().transform(readFileSync(filename, 'utf8'), filename)
-  assert.ok(result.code.includes('useOwnershipOrganizationTree'))
+  const { descriptor, errors } = parse(readFileSync(filename, 'utf8'), { filename })
+  assert.deepEqual(errors, [])
+  const result = compileScript(descriptor, { id: 'ownership-organization-tree', inlineTemplate: true })
+  assert.ok(result.content.includes('useOwnershipOrganizationTree'))
 })
 
 test('the rendered selector mounts its overflow popover outside the clipped tags and enables virtual tree rows', async () => {

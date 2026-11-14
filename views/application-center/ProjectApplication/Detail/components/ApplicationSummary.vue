@@ -1,23 +1,11 @@
 <template>
-  <ContentPanel class="application-summary">
-    <div class="summary-back">
-      <a-tooltip :title="$t('ProjectApplication.list.title')">
-        <a-button
-          type="text"
-          shape="circle"
-          :aria-label="$t('ProjectApplication.list.title')"
-          @click="emits('back')"
-        >
-          <template #icon><AIcon type="ArrowLeftOutlined" /></template>
-        </a-button>
-      </a-tooltip>
-    </div>
-
-    <div class="summary-icon">
-      <img v-if="data.application.icon" :src="data.application.icon" :alt="data.application.name" />
-      <img v-else-if="isImageIcon(data.template.icon)" :src="data.template.icon" :alt="data.template.name" />
-      <AIcon v-else :type="data.template.icon || 'AppstoreOutlined'" />
-    </div>
+  <ContentPanel class="application-summary" fill>
+    <AIconValueView
+      :value="data.template.icon"
+      :size="56"
+      :border-radius="12"
+      :fallback-text="data.application.name"
+    />
 
     <div class="summary-main">
       <div class="identity-row">
@@ -25,18 +13,19 @@
         <MetaChip :tone="data.application.status === 'enabled' ? 'ok' : 'default'">
           {{ data.application.statusText }}
         </MetaChip>
-        <AppTag>{{ data.template.name }}</AppTag>
-      </div>
-      <div class="summary-description-row">
-        <p class="summary-description">{{ data.application.description || data.template.description || $t('comm.table.empty') }}</p>
-        <AppTag v-if="data.application.id" class="summary-id">
+        <span v-if="data.application.id" class="summary-id">
           <a-typography-text :copyable="{ text: data.application.id }">
             {{ $t('ProjectApplication.detail.applicationId') }}: {{ data.application.id }}
           </a-typography-text>
-        </AppTag>
+        </span>
       </div>
       <div class="meta-row">
+        <span><AIcon type="AppstoreOutlined" />{{ data.template.name }}</span>
         <span><AIcon type="ClockCircleOutlined" />{{ $t('ProjectApplication.list.createdAt', { time: data.application.createdAt }) }}</span>
+      </div>
+      <div class="summary-description-row">
+        <AIcon type="FileTextOutlined" />
+        <p class="summary-description">{{ data.application.description || data.template.description || $t('comm.table.empty') }}</p>
       </div>
     </div>
 
@@ -94,6 +83,7 @@
 import type { PropType } from 'vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { IconValueView as AIconValueView } from '@jetlinks-web-core/components/IconValue'
 import type { ApplicationTemplate, ProjectApplication } from '../../types'
 
 interface SummaryData {
@@ -133,7 +123,6 @@ const props = defineProps({
 })
 
 const emits = defineEmits<{
-  back: []
   'cancel-settings': []
   delete: []
   'edit-settings': []
@@ -156,58 +145,35 @@ const deleteConfirmText = computed(() => $t('ProjectApplication.detail.deleteCon
   name: props.data.application.name,
 }))
 
-const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(icon) || icon.includes('.'))
 </script>
 
 <style scoped>
 .application-summary {
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: var(--space-3);
-	margin-bottom: var(--space-4);
+  min-width: 0;
+  gap: var(--space-4);
 }
 
-.summary-back {
-  display: flex;
-  align-items: center;
-}
-
-.summary-back :deep(.ant-btn) {
-  color: var(--ink-2);
-}
-
-.summary-icon {
-  display: grid;
-  width: var(--space-11);
-  height: var(--space-11);
-  place-items: center;
-  flex: none;
-  overflow: hidden;
-  border-radius: var(--r-3);
-  color: var(--accent);
-  font-size: var(--fs-20);
-}
-
-.summary-icon img { width: 100%; height: 100%; object-fit: cover; }
 .summary-main { display: flex; min-width: 0; flex-direction: column; gap: var(--space-1); }
 .identity-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
-.identity-row h1 { min-width: 0; margin: 0; color: var(--ink-1); font-size: var(--fs-20); font-weight: 600; }
-.summary-description-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
-.summary-description { max-width: 44rem; margin: 0; overflow: hidden; color: var(--ink-2); line-height: 1.6; text-overflow: ellipsis; white-space: nowrap; }
-.summary-id { min-width: 0; }
+.identity-row h1 { min-width: 0; margin: 0; color: var(--ink-1); font-size: var(--fs-18); font-weight: 600; overflow-wrap: anywhere; }
+.summary-description-row { display: flex; align-items: flex-start; gap: var(--space-1); color: var(--ink-3); font-size: var(--fs-12); }
+.summary-description-row > .anticon { flex: none; margin-block-start: 0.25em; }
+.summary-description { min-width: 0; margin: 0; color: var(--ink-2); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.summary-id { min-width: 0; color: var(--ink-4); font-size: var(--fs-12); }
 .summary-id :deep(.ant-typography) { color: inherit; font-size: inherit; overflow-wrap: anywhere; }
 
 .meta-row { display: flex; flex-wrap: wrap; gap: var(--space-3); color: var(--ink-4); font-size: var(--fs-12); }
-.meta-row span { display: inline-flex; align-items: center; gap: var(--space-1); }
+.meta-row span { display: inline-flex; align-items: center; min-width: 0; gap: var(--space-1); overflow-wrap: anywhere; }
+.meta-row .anticon { flex: none; }
 .summary-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: var(--space-2);
-  padding-left: var(--space-3);
-  border-left: 1px solid var(--line);
 }
 
 .summary-settings-actions {
@@ -217,14 +183,12 @@ const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(ico
 
 @media (max-width: 48rem) {
   .application-summary {
-    grid-template-columns: auto auto minmax(0, 1fr);
-    padding: var(--space-3);
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--space-3);
   }
 
   .summary-actions {
     grid-column: 1 / -1;
-    padding-left: 0;
-    border-left: 0;
   }
 }
 </style>

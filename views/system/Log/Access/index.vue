@@ -32,12 +32,14 @@
         </full-page>
     </j-page-container>
 </template>
-<script lang="ts" setup name="AccessLog">
+<script lang="ts" setup>
 import { useI18n } from 'vue-i18n';
 import { queryAccess } from '@authentication-manager-ui/api/log';
 import { useAccessLog } from './useAccessLog';
 import AccessLogCell from './components/AccessLogCell.vue';
 import AccessLogDetail from './components/AccessLogDetail.vue';
+
+defineOptions({ name: 'AccessLog' })
 const { t: $t } = useI18n();
 const { columns, params, defaultParams, filterTerms, open, selected, handleRecordClick,
     customRow, rowClassName, handleSearch, searchSameValue } = useAccessLog();
