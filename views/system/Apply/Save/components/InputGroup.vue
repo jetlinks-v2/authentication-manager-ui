@@ -18,7 +18,10 @@
     </div>
 </template>
 
-<script setup name="InputGroup">
+<script setup>
+
+defineOptions({ name: 'InputGroup' })
+
 const props = defineProps({
     value: {
         type: String,

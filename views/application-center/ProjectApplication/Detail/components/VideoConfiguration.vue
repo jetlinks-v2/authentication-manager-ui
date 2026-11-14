@@ -74,7 +74,7 @@
   </SectionCard>
 </template>
 
-<script setup lang="ts" name="ProjectApplicationVideoConfiguration">
+<script setup lang="ts">
 import type { PropType } from 'vue'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -85,6 +85,8 @@ import type {
   ResourcePickerQuery,
 } from '../../types'
 import ResourcePickerDrawer from './ResourcePickerDrawer.vue'
+
+defineOptions({ name: 'ProjectApplicationVideoConfiguration' })
 
 interface CameraBindingData {
   bound: ApplicationCameraResource[]

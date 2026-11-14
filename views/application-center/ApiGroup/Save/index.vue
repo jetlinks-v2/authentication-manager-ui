@@ -11,45 +11,48 @@
   </DefineTextFeedback>
   <j-page-container>
     <div class="group-detail">
+      <PageChrome v-if="id">
+        <PageBack :label="$t('ApiGroupManagement.back')" @back="back" />
+      </PageChrome>
       <PageChrome>
-        <DetailHeader :title="group?.name || $t(id ? 'ApiGroupManagement.viewTitle' : 'ApiGroupManagement.createTitle')"
-          show-back :back-title="$t('ApiGroupManagement.back')" @back="back">
-          <template v-if="group && canUpdate" #title>
-            <Editable class="group-name" :value="draft.name"
-              :component-props="{ maxlength: 64, disabled: saving || textState.name.saving, 'aria-label': $t('ApiGroupManagement.name') }"
-              @change="saveText('name', $event)" />
-          </template>
-          <template v-if="group" #titleExtra>
-            <a-tag :color="groupValue(group.status) === 'enabled' ? 'green' : 'default'">
-              {{ groupText(group.status, $t, 'ApiGroupManagement.state.') }}
-            </a-tag>
-          </template>
-          <template v-if="group && (textState.name.saving || textState.name.error)" #description><TextFeedback field="name" /></template>
-          <template v-if="group" #info>
-            <a-descriptions size="small" :column="1">
-              <a-descriptions-item :label="$t('ApiGroupManagement.groupId')">
-                <a-typography-text copyable :content="group.id">{{ group.id }}</a-typography-text>
-              </a-descriptions-item>
-              <a-descriptions-item :label="$t('ApiGroupManagement.description')">
-                <div class="description-field">
-                  <a-textarea v-if="canUpdate" v-model:value="draft.description" class="group-description" :bordered="false"
-                    :auto-size="{ minRows: 1, maxRows: 4 }" :disabled="saving || textState.description.saving"
-                    :placeholder="$t('ApiGroupManagement.addDescription')" :aria-label="$t('ApiGroupManagement.description')"
-                    @blur="saveText('description', draft.description || '')" />
-                  <span v-else class="group-description">{{ group.description || '—' }}</span>
-                  <TextFeedback field="description" />
-                </div>
-              </a-descriptions-item>
-            </a-descriptions>
-          </template>
-          <template v-if="group" #actions>
-            <j-permission-button :hasPermission="groupMenu + ':action'" :loading="saving" :disabled="busy || loading"
-              :popConfirm="{ title: $t(groupValue(group.status) === 'enabled' ? 'ApiGroupManagement.disableConfirm' : 'ApiGroupManagement.enableConfirm'), onConfirm: toggle }">
-              <AIcon :type="groupValue(group.status) === 'enabled' ? 'StopOutlined' : 'CheckCircleOutlined'" />
-              {{ $t(groupValue(group.status) === 'enabled' ? 'ApiGroupManagement.disable' : 'ApiGroupManagement.enable') }}
-            </j-permission-button>
-          </template>
-        </DetailHeader>
+        <DetailHeader v-if="!group" :title="$t(id ? 'ApiGroupManagement.viewTitle' : 'ApiGroupManagement.createTitle')"
+          :show-back="!id" :back-title="$t('ApiGroupManagement.back')" @back="back" />
+        <ContentPanel v-else class="group-summary" fill>
+          <DetailHeader variant="summary" :title="draft.name || group.name">
+            <template #icon><AIcon type="FolderOutlined" /></template>
+            <template v-if="canUpdate" #title>
+              <Editable class="group-name" :value="draft.name"
+                :component-props="{ maxlength: 64, disabled: saving || textState.name.saving, 'aria-label': $t('ApiGroupManagement.name') }"
+                @change="saveText('name', $event)" />
+            </template>
+            <template #titleExtra>
+              <StatusTag :status="groupValue(group.status) === 'enabled' ? 'success' : 'disabled'" :text="groupText(group.status, $t, 'ApiGroupManagement.state.')" />
+            </template>
+            <template #meta>
+              <DetailMetaItem kind="id" :label="$t('ApiGroupManagement.groupId')" :tooltip="$t('DetailMetaItem.copyTooltip', { id: group.id })">
+                <a-typography-text :copyable="{ text: group.id, tooltip: false }" :content="group.id"><span>{{ group.id }}</span></a-typography-text>
+              </DetailMetaItem>
+              <DetailMetaItem kind="description" :label="$t('ApiGroupManagement.description')" multiline>
+                <a-textarea v-if="canUpdate" v-model:value="draft.description" class="group-description" :bordered="false"
+                  :auto-size="{ minRows: 1, maxRows: 4 }" :disabled="saving || textState.description.saving"
+                  :placeholder="$t('ApiGroupManagement.addDescription')" :aria-label="$t('ApiGroupManagement.description')"
+                  @blur="saveText('description', draft.description || '')" />
+                <span v-else class="group-description">{{ group.description || '—' }}</span>
+                <TextFeedback field="description" />
+              </DetailMetaItem>
+            </template>
+            <template v-if="textState.name.saving || textState.name.error" #description>
+              <TextFeedback field="name" />
+            </template>
+            <template #actions>
+              <j-permission-button :hasPermission="groupMenu + ':action'" :loading="saving" :disabled="busy || loading"
+                :popConfirm="{ title: $t(groupValue(group.status) === 'enabled' ? 'ApiGroupManagement.disableConfirm' : 'ApiGroupManagement.enableConfirm'), onConfirm: toggle }">
+                <AIcon :type="groupValue(group.status) === 'enabled' ? 'StopOutlined' : 'CheckCircleOutlined'" />
+                {{ $t(groupValue(group.status) === 'enabled' ? 'ApiGroupManagement.disable' : 'ApiGroupManagement.enable') }}
+              </j-permission-button>
+            </template>
+          </DetailHeader>
+        </ContentPanel>
       </PageChrome>
       <a-alert v-if="error && !picker.open" type="error" show-icon :message="error" class="detail-alert" />
       <a-spin :spinning="loading">
@@ -99,13 +102,19 @@
     </div>
   </j-page-container>
 </template>
-<script setup lang="ts" name="ApiGroupSave">
+<script setup lang="ts">
 import { createReusableTemplate } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
+import DetailHeader from '@jetlinks-web-core/components/DetailHeader/index.vue'
+import PageBack from '@jetlinks-web-core/components/PageBack/index.vue'
+import DetailMetaItem from '@jetlinks-web-core/components/DetailMetaItem'
+import StatusTag from '@jetlinks-web-core/components/StatusTag/index.vue'
 import { useApiGroupEditor, type GroupTextField } from '../useApiGroupEditor'
 import { groupText, groupValue } from '../groupUtils'
 import OperationsEditor from '../components/OperationsEditor.vue'
 import SpecPicker from '../components/SpecPicker.vue'
+
+defineOptions({ name: 'ApiGroupSave' })
 const { t: $t } = useI18n()
 const { groupMenu, id, group, draft, operations, newItem, loading, saving, ready, error, specError, canUpdate, editable,
   busy, textState, statusOptions, unavailable, specs, operationContext, picker,
@@ -114,8 +123,8 @@ const [DefineTextFeedback, TextFeedback] = createReusableTemplate<{ field: Group
 </script>
 <style scoped>
 .group-detail { min-width: 0; min-height: 100%; }
-.group-name { min-width: 12rem; max-width: 36rem; padding: 0; overflow-wrap: anywhere; }
-.description-field { width: 100%; }
+.group-summary { margin-block: var(--space-4); }
+.group-name { min-width: 0; max-width: 100%; overflow: hidden; padding: 0; text-overflow: ellipsis; white-space: nowrap; }
 .group-description { width: 100%; margin: 0; padding: 0; color: var(--ink-2); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
 .group-description:not(:disabled):hover { background: var(--bg-sunken); }
 .group-description:focus { box-shadow: 0 0 0 1px var(--accent); }

@@ -13,6 +13,7 @@ export interface ApplicationTemplate {
   description: string
   templateUrl?: string
   icon?: string
+  coverImage?: string
   status: ApplicationStatus
   statusText: string
   sortIndex: number

@@ -4,8 +4,10 @@
     </j-page-container>
 </template>
 
-<script setup lang="ts" name="apiPage">
+<script setup lang="ts">
 import Api from '../../Platforms/Api/index.vue';
+
+defineOptions({ name: 'apiPage' })
 const route = useRoute()
 const code = route.query.code as string
 </script>

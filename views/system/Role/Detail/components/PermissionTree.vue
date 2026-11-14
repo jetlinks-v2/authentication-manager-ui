@@ -9,7 +9,7 @@
   </a-spin>
 </template>
 
-<script setup lang="ts" name="RolePermissionTree">
+<script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { MenuAssetPermissionEditor } from '@jetlinks-web-core/components'
@@ -25,6 +25,8 @@ import {
 } from '@authentication-manager-ui/api/system/role'
 import { getAssetsType } from '@authentication-manager-ui/api/system/menu'
 import { cleanRoleAssetPermissions } from './roleAssetPermissions'
+
+defineOptions({ name: 'RolePermissionTree' })
 
 const { t: $t } = useI18n()
 const route = useRoute()

@@ -53,35 +53,7 @@
         <a-switch v-model:checked="draft.showOnLogin" />
         <span>{{ $t('ThirdPartyLogin.showOnLogin') }}</span>
       </div>
-      <a-form-item
-        :label="$t('ThirdPartyLogin.usernamePrefix')"
-        name="usernamePrefix"
-        :rules="usernamePrefixRules"
-      >
-        <a-input
-          v-model:value="draft.usernamePrefix"
-          :placeholder="$t('ThirdPartyLogin.usernamePrefixPlaceholder')"
-          :maxlength="64"
-        />
-        <div class="form-help">{{ $t('ThirdPartyLogin.usernamePrefixHint') }}</div>
-      </a-form-item>
-      <a-form-item
-        :label="$t('ThirdPartyLogin.defaultRole')"
-        name="roleIdList"
-        :rules="roleRules"
-      >
-        <form-item-role
-          v-model:value="draft.roleIdList"
-          :extra-props="{ multiple: true }"
-          :show-add="false"
-        />
-      </a-form-item>
-      <a-form-item
-        :label="$t('ThirdPartyLogin.organization')"
-        name="orgIdList"
-      >
-        <form-item-org v-model:value="draft.orgIdList" :extra-props="{ multiple: true }" :show-add="false" />
-      </a-form-item>
+      <UserCreationFields :draft="draft" />
       <a-form-item class="callback-field" :label="$t('ThirdPartyLogin.callbackAddress')">
         <div class="callback-row">
           <a-input
@@ -111,6 +83,7 @@ import { message, type FormInstance, type UploadChangeParam, type UploadProps } 
 import { useI18n } from 'vue-i18n'
 import { fileUpload } from '@jetlinks-web-core/api/comm'
 import ProviderFields from './ProviderFields.vue'
+import UserCreationFields from './UserCreationFields.vue'
 import { methodIcons } from '../methodIcons'
 import {
   createDraft, loginMethods, type LoginConfig,
@@ -134,16 +107,6 @@ const formRef = ref<FormInstance>()
 const draft = reactive<LoginConfigDraft>(createDraft('wechat'))
 const iconUploading = ref(false)
 const requiredRules = computed(() => [{ required: true, whitespace: true, message: t('ThirdPartyLogin.required') }])
-const usernamePrefixRules = computed(() => [{
-  pattern: /^[^\u4e00-\u9fa5]*$/,
-  message: t('ThirdPartyLogin.usernamePrefixInvalid'),
-}])
-const roleRules = computed(() => [{
-  required: true,
-  type: 'array' as const,
-  min: 1,
-  message: t('ThirdPartyLogin.defaultRoleRequired'),
-}])
 const callbackUrl = computed(() => props.editing?.id && props.callbackBasePath
   ? `${props.callbackBasePath}/application/sso/${props.editing.id}/notify`
   : '')

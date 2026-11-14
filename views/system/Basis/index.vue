@@ -10,8 +10,10 @@
   </j-page-container>
 </template>
 
-<script setup name="Basis" lang="ts">
+<script setup lang="ts">
 import BasicForm from './Form.vue'
+
+defineOptions({ name: 'Basis' })
 </script>
 
 <style scoped lang="less" src="./index.less"></style>

@@ -95,6 +95,7 @@ export const useApplicationList = () => {
       statusText: '',
       sortIndex: 0,
       layoutVariant: 'application' as const,
+      layout: 'side',
       disabled: true,
     },
   })))

@@ -104,7 +104,7 @@
   </j-page-container>
 </template>
 
-<script setup lang="ts" name="Menu">
+<script setup lang="ts">
 import { createReusableTemplate } from '@vueuse/core'
 
 import { getMenuTree, delMenu } from '@authentication-manager-ui/api/system/menu'
@@ -115,6 +115,8 @@ import { useI18n } from 'vue-i18n';
 import { useUserStore } from '@jetlinks-web-core/store/user';
 import { storeToRefs } from 'pinia'
 import type {ConditionFilterChangePayload} from '@jetlinks-web-core/components/ConditionFilter'
+
+defineOptions({ name: 'Menu' })
 
 const { t: $t } = useI18n();
 const permission = 'system/Menu'

@@ -44,9 +44,11 @@
 .method-option :deep(.anticon) { font-size: 1.125rem; }
 .method-option img { width: 1.125rem; height: 1.125rem; object-fit: contain; flex: 0 0 auto; }
 .method-count { flex: 0 0 auto; color: var(--ink-4); }
+.third-party-page .method-icon { width: 1.125rem; height: 1.125rem; margin-inline-end: var(--space-2); object-fit: contain; }
 
 .config-panel {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   min-width: 0;
   overflow: auto;
 }
@@ -59,8 +61,8 @@
 }
 
 .config-search { flex: 0 1 28rem; max-width: 28rem; min-width: 0; }
-.config-actions { flex: 0 0 auto; }
-.config-table :deep(.ant-table) { overflow-x: auto; }
+.config-actions { flex: 0 1 auto; max-width: 100%; margin-inline-start: auto; }
+.config-table .ant-table { overflow-x: auto; }
 .entry-name { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
 .entry-copy { display: flex; flex-direction: column; min-width: 0; }
 .entry-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

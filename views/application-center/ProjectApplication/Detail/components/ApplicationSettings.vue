@@ -6,7 +6,7 @@
           <div v-if="editingModel" class="icon-edit">
             <div class="application-icon-upload">
               <ImageUpload
-                v-model:value="draft.icon"
+                v-model:value="imageModel"
                 accept="image/png,image/jpeg"
                 :types="iconTypes"
                 :border-style="iconUploadBorderStyle"
@@ -17,8 +17,14 @@
             <span>{{ $t('ProjectApplication.settings.iconEditHint') }}</span>
           </div>
           <div v-else class="application-icon">
-            <img v-if="isImageIcon(visibleIcon)" :src="visibleIcon" :alt="application.name" />
-            <AIcon v-else :type="visibleIcon || 'AppstoreOutlined'" />
+            <a-image
+              :src="visibleImage || defaultCover"
+              :fallback="defaultCover"
+              :alt="application.name"
+              :preview="false"
+              width="100%"
+              height="100%"
+            />
           </div>
         </div>
 
@@ -92,14 +98,18 @@
     </a-form>
 </template>
 
-<script setup lang="ts" name="ProjectApplicationSettings">
+<script setup lang="ts">
 import type { PropType } from 'vue'
 import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { createApplicationAccessDisplayUrl } from '@jetlinks-web-core/utils/application-access'
+import defaultCover from '@authentication-manager-ui/assets/application-cover.png'
+import { applicationImage } from '../../applicationModel'
 import type { ApplicationTemplate, ProjectApplication } from '../../types'
+
+defineOptions({ name: 'ProjectApplicationSettings' })
 
 interface SettingsData {
   application: ProjectApplication
@@ -162,7 +172,12 @@ const fallbackDomainUrl = computed(() => createApplicationAccessDisplayUrl(appli
 const domainDisplayValue = computed(() => template.value.provider === 'third-party'
   ? `${window.location.origin}/${encodeURIComponent(application.value.id)}/`
   : application.value.domain || fallbackDomainUrl.value)
-const visibleIcon = computed(() => application.value.icon || template.value.icon)
+const visibleImage = computed(() => applicationImage(application.value, template.value))
+// 模板图片仅用于回显；只有上传新图片才更新应用草稿，避免保存其他字段时固化模板封面。
+const imageModel = computed({
+  get: () => applicationImage({ name: application.value.name, icon: draft.icon }, template.value) || defaultCover,
+  set: value => { draft.icon = value },
+})
 const rules = computed(() => ({
   name: [
     { required: true, message: $t('ProjectApplication.create.nameRequired') },
@@ -219,8 +234,6 @@ const copyApplicationUrl = async () => {
   }
 }
 
-const isImageIcon = (icon?: string) => !!icon && (/^(https?:|data:|\/)/.test(icon) || icon.includes('.'))
-
 defineExpose({
   startEdit,
   cancelEdit,
@@ -247,7 +260,7 @@ defineExpose({
 .application-icon,
 .application-icon-upload { display: grid; width: 3.5rem; height: 3.5rem; place-items: center; overflow: hidden; border-radius: var(--r-2); background: var(--bg-sunken); color: var(--accent); font-size: var(--fs-20); }
 
-.application-icon img { width: 100%; height: 100%; object-fit: cover; }
+.application-icon :deep(.ant-image-img) { width: 100%; height: 100%; object-fit: contain; }
 .application-icon-upload :deep(.ant-upload-wrapper),
 .application-icon-upload :deep(.ant-upload.ant-upload-select) {
   display: block;
