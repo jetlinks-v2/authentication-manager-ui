@@ -61,6 +61,7 @@
 import { computed, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import defaultCover from '@authentication-manager-ui/assets/application-cover.png'
+import { applicationImage } from '../applicationModel'
 import type { ApplicationTemplate, ProjectApplication } from '../types'
 
 defineOptions({ name: 'ProjectApplicationCard' })
@@ -95,8 +96,7 @@ const { t: $t } = useI18n()
 // 只有 enabled 需要绿色状态位；disabled 交给 BadgeStatus 回退为灰色。
 const STATUS_NAMES: Record<string, string> = { enabled: 'success', disabled: 'default' }
 
-// 列表封面来自模板基础图片，独立于应用和模板的图标。
-const cover = computed(() => props.item.template.coverImage || defaultCover)
+const cover = computed(() => applicationImage(props.item.application, props.item.template) || defaultCover)
 
 // 历史空类型沿用业务应用默认值；显式未知 provider 不推断类型。
 const applicationTypeText = computed(() => {
@@ -156,7 +156,7 @@ const statusActionText = computed(() => $t(props.item.application.status === 'en
   flex: 1;
   flex-direction: column;
   min-width: 0;
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-4);
 }
 
 .application-card__heading {
