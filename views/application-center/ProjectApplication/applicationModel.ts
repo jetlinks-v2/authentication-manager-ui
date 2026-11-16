@@ -110,7 +110,7 @@ export function applicationAvatar(
   }
 }
 
-/** 详情图片沿用应用的图片地址；未配置图片时展示模板封面，不使用模板图标。 */
+/** 列表与详情优先显示应用图片；未配置图片时展示模板封面，不使用模板图标。 */
 export function applicationImage(
   application: Pick<ProjectApplication, 'name' | 'icon'>,
   template?: Pick<ApplicationTemplate, 'coverImage'>,
