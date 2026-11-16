@@ -32,12 +32,14 @@
   </a-modal>
 </template>
 
-<script lang="ts" setup name="DictionaryItemEdit">
+<script lang="ts" setup>
 import type { Rule } from "ant-design-vue/es/form";
 import { saveDicItem, verifyValue } from "@authentication-manager-ui/api/system/dictionary";
 import { onlyMessage } from "@jetlinks-web/utils";
 import { cloneDeep } from "lodash-es";
 import { useI18n } from "vue-i18n";
+
+defineOptions({ name: 'DictionaryItemEdit' })
 
 const { t: $t } = useI18n();
 const props = defineProps({

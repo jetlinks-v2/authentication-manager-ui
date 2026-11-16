@@ -4,11 +4,12 @@ import { readFile } from 'node:fs/promises'
 import { build } from 'esbuild'
 import { parse, compileScript, compileTemplate } from 'vue/compiler-sfc'
 
-const root = new URL('..', import.meta.url).pathname
 const source = await readFile(new URL('../views/application-center/ProjectApplication/Detail/index.vue', import.meta.url), 'utf8')
 const { descriptor } = parse(source)
+// 这里独立执行 setup 逻辑，组件命名宏由 Vue 编译器处理，不参与业务测试。
+const setupSource = descriptor.scriptSetup.content.replace(/^defineOptions\(\{ name:.*\}\)\s*$/m, '')
 const { outputFiles } = await build({
-  stdin: { contents: descriptor.scriptSetup.content + '\nexport { syncCredential, syncingCredential };', resolveDir: root, loader: 'ts' },
+  stdin: { contents: setupSource + '\nexport { syncCredential, syncingCredential };', resolveDir: new URL('../views/application-center/ProjectApplication/Detail/', import.meta.url).pathname, loader: 'ts' },
   bundle: true, write: false, format: 'esm',
   plugins: [{
     name: 'credential-sync-fixture',
@@ -16,7 +17,7 @@ const { outputFiles } = await build({
       plugin.onResolve({ filter: /vue-router|vue-i18n|@jetlinks|@authentication|useProjectApplication|useApplicationOpenGuard|\.vue$/ }, args => ({ path: args.path, namespace: 'fixture' }))
       plugin.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ contents: `
         export default {};
-        export const useRoute = () => ({ params: { id: 'app-1' } });
+        export const useRoute = () => ({ params: { id: 'app-1' }, query: {} });
         export const useI18n = () => ({ t: key => key });
         export const onlyMessage = text => globalThis.syncFixture.messages.push(text);
         export const useMenuStore = () => ({});

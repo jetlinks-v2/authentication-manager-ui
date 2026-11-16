@@ -72,11 +72,13 @@
     </div>
 </template>
 
-<script setup name="Calendar">
+<script setup>
 import { inject } from 'vue';
 import { clearAll } from '@authentication-manager-ui/api/system/calendar';
 import { onlyMessage } from '@jetlinks-web/utils';
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'Calendar' })
 
 const { t: $t } = useI18n();
 const Calendar = ref();

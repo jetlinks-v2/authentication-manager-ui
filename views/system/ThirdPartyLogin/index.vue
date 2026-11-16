@@ -131,7 +131,7 @@
   </j-page-container>
 </template>
 
-<script setup lang="ts" name="ThirdPartyLogin">
+<script setup lang="ts">
 import { computed } from 'vue'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
@@ -140,6 +140,8 @@ import ConfigDrawer from './components/ConfigDrawer.vue'
 import { methodIcons } from './methodIcons'
 import { identifierOf, loginMethods, type LoginConfig, type LoginConfigDraft, type LoginMethod, type MethodFilter } from './model'
 import { useThirdPartyLogin } from './useThirdPartyLogin'
+
+defineOptions({ name: 'ThirdPartyLogin' })
 
 const { t } = useI18n()
 const {

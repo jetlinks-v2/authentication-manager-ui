@@ -20,9 +20,11 @@
     </j-page-container>
 </template>
 
-<script lang="ts" setup name="Dictionary">
+<script lang="ts" setup>
 import Left from './components/Left/index.vue'
 import Right from './components/Right/index.vue'
+
+defineOptions({ name: 'Dictionary' })
 const data = ref()
 const selectData = (i: any) => {
     data.value = i

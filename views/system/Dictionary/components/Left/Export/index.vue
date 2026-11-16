@@ -33,11 +33,13 @@
     </a-modal>
 </template>
 
-<script lang="ts" setup name="DictionaryExport">
+<script lang="ts" setup>
 import { getDic_page , downDic} from '@authentication-manager-ui/api/system/dictionary';
 import { onlyMessage , downloadFileByUrl } from '@jetlinks-web/utils';
 import dayjs from 'dayjs';
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'DictionaryExport' })
 
 const { t: $t } = useI18n();
 const emit = defineEmits(['closeDown'])

@@ -93,12 +93,14 @@
   </div>
 </template>
 
-<script name="RegionMap" setup>
+<script setup>
 import {useHistory, useRegion} from "../hooks";
 import { MAP_TOOL } from '../util'
 import { DistrictSearch, GeoJson } from '@jetlinks-web-core/components/AMapComponent'
 import { randomNumber,onlyMessage } from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'RegionMap' })
 
 const { t: $t } = useI18n();
 const regionState = useRegion()

@@ -105,7 +105,7 @@
   />
 </template>
 
-<script setup lang="ts" name="PositionsUser">
+<script setup lang="ts">
 import type { ConditionTerm } from '@jetlinks-web-core/components/ConditionFilter'
 
 import { createReusableTemplate } from '@vueuse/core'
@@ -115,6 +115,8 @@ import BindUserDialog from './BindUserDialog.vue'
 import AddUserDialog from './AddUserDialog.vue'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'PositionsUser' })
 
 const { t: $t } = useI18n();
 

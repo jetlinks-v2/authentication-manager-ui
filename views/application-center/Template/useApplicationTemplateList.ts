@@ -33,6 +33,13 @@ export const useApplicationTemplateList = () => {
     { label: $t('ApplicationTemplate.common.enabled'), value: 'enabled' },
     { label: $t('ApplicationTemplate.common.disabled'), value: 'disabled' },
   ])
+  const providerOptions = computed(() => [
+    { label: $t('ProjectApplication.create.businessApplication'), value: 'official' },
+    { label: $t('ProjectApplication.create.thirdPartyApplication'), value: 'third-party' },
+  ])
+  // 与详情保持一致，未标记类型的历史模板按业务应用展示。
+  const getProviderLabel = (provider?: string) =>
+    providerOptions.value.find(option => option.value === (provider || 'official'))?.label || provider
 
   const columns = computed(() => [
     {
@@ -52,6 +59,10 @@ export const useApplicationTemplateList = () => {
         defaultTermType: 'like',
         componentProps: { placeholder: $t('ApplicationTemplate.field.codePlaceholder') },
       },
+    },
+    {
+      title: $t('ProjectApplication.create.applicationKind'),
+      dataIndex: 'provider', key: 'provider', width: 140, scopedSlots: true,
     },
     {
       title: $t('ApplicationTemplate.field.description'),
@@ -155,6 +166,7 @@ export const useApplicationTemplateList = () => {
     filterFields,
     defaultParams,
     requestTable,
+    getProviderLabel,
     normalizeState: stateValue,
     table,
   }

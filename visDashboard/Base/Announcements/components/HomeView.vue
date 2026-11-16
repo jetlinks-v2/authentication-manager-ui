@@ -29,10 +29,12 @@
     </button>
   </div>
 </template>
-<script setup lang="ts" name="ProjectHomeAnnouncementsView">
+<script setup lang="ts">
 import { type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { HomeRow, HomeChart, HomeTarget } from '../../shared/types'
+
+defineOptions({ name: 'ProjectHomeAnnouncementsView' })
 const props = defineProps({
   rows: { type: Array as PropType<HomeRow[]>, default: () => [] },
   chart: { type: Object as PropType<HomeChart>, required: true },

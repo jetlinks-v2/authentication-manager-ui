@@ -63,7 +63,7 @@
     </a-modal>
   </j-page-container>
 </template>
-<script setup lang="ts" name="DirectThirdPartyApplications">
+<script setup lang="ts">
 import { createReusableTemplate } from '@vueuse/core'
 
 import { computed, ref } from 'vue'
@@ -73,6 +73,8 @@ import type { ApiApplication } from '@authentication-manager-ui/api/application-
 import { useDirectApplications } from './useDirectApplications'
 import { apiState } from '../applicationUtils'
 import { formatTime } from '../integrationUtils'
+
+defineOptions({ name: 'DirectThirdPartyApplications' })
 const { t: $t } = useI18n()
 const tableRef = ref<{ reload: () => void }>()
 const filters = ref<{ terms: Array<Record<string, unknown>> }>({ terms: [] })

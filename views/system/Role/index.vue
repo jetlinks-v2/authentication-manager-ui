@@ -19,9 +19,11 @@
     </j-page-container>
 </template>
 
- <script lang="ts" setup name="Role">
+ <script lang="ts" setup>
  import Left from './RoleLeft/index.vue'
  import Right from './RoleRight/index.vue'
+
+defineOptions({ name: 'Role' })
  const groupId = ref()
  const selectData = (data:any)=>{
     groupId.value = data[0]

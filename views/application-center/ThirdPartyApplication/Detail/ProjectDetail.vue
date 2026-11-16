@@ -72,7 +72,7 @@
     <IntegrationStateModal :action="action" @close="action = undefined" @saved="stateSaved" />
   </j-page-container>
 </template>
-<script setup lang="ts" name="ProjectThirdPartyDetail">
+<script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { useThirdPartyDetail } from './useThirdPartyDetail'
 import { apiState } from '../applicationUtils'
@@ -81,6 +81,8 @@ import CredentialPanel from './CredentialPanel.vue'
 import AuthorizationPanel from './AuthorizationPanel.vue'
 import SubscriptionPanel from '../components/SubscriptionPanel.vue'
 import IntegrationStateModal from '../components/IntegrationStateModal.vue'
+
+defineOptions({ name: 'ProjectThirdPartyDetail' })
 const { t: $t } = useI18n()
 const { contextError, relation, profile, application, runtimeApplicationId, title, loading, runtimeLoading,
   error, catalogError, runtimeError, runtimeReady, canEnable, activeTab, action, load, back,

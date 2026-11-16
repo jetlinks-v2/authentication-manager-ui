@@ -6,6 +6,7 @@ import { onlyMessage } from '@jetlinks-web/utils'
 import { createApplicationTemplate, type I18nMessages } from '@authentication-manager-ui/api/application-center/applicationTemplate'
 import { isHttpExternalApplicationUrl } from '../ProjectApplication/applicationConfiguration'
 import { unwrapResult } from './Save/menu-config.shared'
+import { useApplicationTemplateMedia } from './useApplicationTemplateMedia'
 
 interface TemplateCreateOptions {
   open: () => boolean
@@ -15,7 +16,10 @@ interface TemplateCreateOptions {
 
 interface TemplateCreateDraft {
   name: string
+  description: string
   code: string
+  icon: string
+  coverImage: string
   provider: 'official' | 'third-party'
   redirectUri: string
   i18nMessages: I18nMessages
@@ -29,22 +33,33 @@ export const useApplicationTemplateCreate = (options: TemplateCreateOptions) => 
   const dialogOpen = computed({ get: options.open, set: options.onOpenChange })
   const formData = reactive<TemplateCreateDraft>({
     name: '',
+    description: '',
     code: '',
+    icon: '',
+    coverImage: '',
     provider: 'official',
     redirectUri: '',
     i18nMessages: {},
   })
+  const media = useApplicationTemplateMedia(formData, () => loading.value)
+  const busy = computed(() => loading.value || media.mediaBusy.value)
   const thirdParty = computed(() => formData.provider === 'third-party')
   const rules = computed<Record<string, RuleObject[]>>(() => ({
     name: [
       { required: true, message: t('ApplicationTemplate.message.nameRequired'), trigger: 'blur' },
       { max: 64, message: t('ApplicationTemplate.message.nameMaxLength'), trigger: 'blur' },
     ],
+    description: [
+      { required: true, whitespace: true, message: t('ApplicationTemplate.message.descriptionRequired'), trigger: 'blur' },
+      { max: 512, message: t('ApplicationTemplate.message.descriptionMaxLength'), trigger: 'blur' },
+    ],
     code: [
       { required: true, message: t('ApplicationTemplate.message.codeRequired'), trigger: 'blur' },
       { max: 64, message: t('ApplicationTemplate.message.codeMaxLength'), trigger: 'blur' },
       { pattern: /^[a-zA-Z0-9_-]+$/, message: t('ApplicationTemplate.message.codeFormat'), trigger: 'blur' },
     ],
+    icon: [{ max: 256, message: t('ApplicationTemplate.message.iconMaxLength'), trigger: 'change' }],
+    coverImage: [{ max: 1024, message: t('ApplicationTemplate.message.coverImageMaxLength'), trigger: 'change' }],
     redirectUri: thirdParty.value ? [
       { required: true, whitespace: true, message: t('ApplicationTemplate.parameters.redirectUriRequired'), trigger: 'blur' },
       {
@@ -64,10 +79,14 @@ export const useApplicationTemplateCreate = (options: TemplateCreateOptions) => 
 
   const resetForm = () => {
     formData.name = ''
+    formData.description = ''
     formData.code = ''
+    formData.icon = ''
+    formData.coverImage = ''
     formData.provider = 'official'
     formData.redirectUri = ''
     formData.i18nMessages = {}
+    media.resetMedia()
   }
 
   watch(() => formData.provider, () => {
@@ -82,17 +101,25 @@ export const useApplicationTemplateCreate = (options: TemplateCreateOptions) => 
   }, { immediate: true })
 
   const handleOk = async () => {
-    if (loading.value) return
-    try {
-      await formRef.value?.validate()
-    } catch {
-      return
-    }
+    if (busy.value) return
     loading.value = true
     try {
+      try {
+        await formRef.value?.validate()
+      } catch {
+        return
+      }
+      const description = formData.description.trim()
+      if (!description || description.length > 512 || Object.values(formData.i18nMessages.description || {}).some(value => value.length > 512)) {
+        onlyMessage(t(!description ? 'ApplicationTemplate.message.descriptionRequired' : 'ApplicationTemplate.message.descriptionMaxLength'), 'error')
+        return
+      }
       const response: unknown = await createApplicationTemplate({
         name: formData.name,
+        description,
         code: formData.code,
+        ...(formData.icon ? { icon: formData.icon } : {}),
+        ...(formData.coverImage ? { coverImage: formData.coverImage } : {}),
         provider: formData.provider,
         i18nMessages: formData.i18nMessages,
         ...(thirdParty.value
@@ -111,5 +138,7 @@ export const useApplicationTemplateCreate = (options: TemplateCreateOptions) => 
     }
   }
 
-  return { dialogOpen, formRef, formData, thirdParty, rules, loading, handleOk }
+  return {
+    dialogOpen, formRef, formData, thirdParty, rules, loading, busy, ...media, handleOk,
+  }
 }

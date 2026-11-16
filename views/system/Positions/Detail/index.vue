@@ -1,10 +1,12 @@
-<script setup name="Detail">
+<script setup>
 import { useI18n } from 'vue-i18n';
 import User from './User.vue'
 import {onlyMessage} from "@jetlinks-web/utils";
 import {detail, save, update} from '@authentication-manager-ui/api/system/positions'
 import { useRequest } from '@jetlinks-web/hooks'
 import {usePositionList} from "../data";
+
+defineOptions({ name: 'Detail' })
 
 const { t: $t } = useI18n();
 

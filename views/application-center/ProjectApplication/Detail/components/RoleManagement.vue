@@ -50,7 +50,7 @@
             {{ $t('ProjectApplication.common.save') }}
           </a-button>
         </div>
-        <a-spin :spinning="permissionLoading">
+        <a-spin :spinning="permissionLoading || savingPermissions">
           <a-alert v-if="permissionError" type="error" show-icon :message="$t('ProjectApplication.role.permissionLoadFailed')">
             <template #action><a-button size="small" @click="loadPermissions">{{ $t('ProjectApplication.list.retry') }}</a-button></template>
           </a-alert>
@@ -88,11 +88,13 @@
   </div>
 </template>
 
-<script setup lang="ts" name="ProjectApplicationRoleManagement">
+<script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { MenuAssetPermissionEditor } from '@jetlinks-web-core/components'
 import type { ApplicationRole, ApplicationRoleDraft, ApplicationUser } from '../../types'
 import { useApplicationRoleManagement, type ApplicationRoleScope } from './useApplicationRoleManagement'
+
+defineOptions({ name: 'ProjectApplicationRoleManagement' })
 const props = defineProps<{ roles: ApplicationRole[]; users: ApplicationUser[]; scope: ApplicationRoleScope }>()
 const emits = defineEmits<{
   'save-role': [draft: ApplicationRoleDraft, id?: string]

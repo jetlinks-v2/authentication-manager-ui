@@ -55,6 +55,10 @@
 	              </a>
 	            </template>
 
+	            <template #provider="slotProps">
+	              {{ getProviderLabel(slotProps.provider) }}
+	            </template>
+
 	            <template #description="slotProps">
 	              {{ slotProps.i18nDescription || slotProps.description || $t('comm.table.empty') }}
 	            </template>
@@ -121,13 +125,15 @@
   </j-page-container>
 </template>
 
-<script setup lang="ts" name="ApplicationTemplateManage">
+<script setup lang="ts">
 import { createReusableTemplate } from '@vueuse/core'
 
 import ConditionFilter from '@jetlinks-web-core/components/ConditionFilter'
 import TableActions, { TableActionsItem } from '@jetlinks-web-core/components/TableActions'
 import ApplicationTemplateCreateDialog from './components/ApplicationTemplateCreateDialog.vue'
 import { useApplicationTemplateList } from './useApplicationTemplateList'
+
+defineOptions({ name: 'ApplicationTemplateManage' })
 
 const {
   permission,
@@ -139,6 +145,7 @@ const {
   filterFields,
   defaultParams,
   requestTable,
+  getProviderLabel,
   normalizeState,
   table,
 } = useApplicationTemplateList()

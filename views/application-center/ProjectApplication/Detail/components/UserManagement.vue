@@ -70,12 +70,14 @@
   </section>
 </template>
 
-<script setup lang="ts" name="ProjectApplicationUserManagement">
+<script setup lang="ts">
 import type { PropType } from 'vue'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UserCreateModal from './UserCreateModal.vue'
 import type { ApplicationRole, ApplicationUser } from '../../types'
+
+defineOptions({ name: 'ProjectApplicationUserManagement' })
 
 interface UserManagementData {
   users: ApplicationUser[]

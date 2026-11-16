@@ -1,4 +1,4 @@
-<script setup name="Positions">
+<script setup>
 import { createReusableTemplate } from '@vueuse/core'
 
 import { useI18n } from 'vue-i18n';
@@ -9,6 +9,8 @@ import {useRoute} from "vue-router";
 import {onlyMessage} from "@jetlinks-web/utils";
 import {transformConditionTerms} from '@authentication-manager-ui/views/system/conditionFilterUtils';
 import PageHeader from '@jetlinks-web-core/components/PageHeader';
+
+defineOptions({ name: 'Positions' })
 
 const { t: $t } = useI18n();
 const params = ref({});

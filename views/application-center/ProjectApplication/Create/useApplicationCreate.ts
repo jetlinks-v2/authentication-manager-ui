@@ -5,6 +5,7 @@ import { onlyMessage } from '@jetlinks-web/utils'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { useProjectApplication } from '../useProjectApplication'
 import type { ApplicationKind, ProjectApplication, ProjectApplicationDraft } from '../types'
+import { useTemplatePreview } from './useTemplatePreview'
 
 interface ApplicationCreateOptions {
   open: () => boolean
@@ -42,11 +43,13 @@ export const useApplicationCreate = (options: ApplicationCreateOptions) => {
       else if (!value) menuStore.jumpPage('application-center/ProjectApplication', {})
     },
   })
+  const templatePreview = useTemplatePreview(() => dialogOpen.value)
 
   const visibleTemplates = computed(() => store.templates.filter(item =>
     applicationKind.value === 'third-party' ? item.provider === 'third-party' : item.provider !== 'third-party',
   ))
   watch(applicationKind, () => {
+    templatePreview.closePreview()
     form.templateId = ''
     formRef.value?.clearValidate('templateId')
   })
@@ -97,6 +100,12 @@ export const useApplicationCreate = (options: ApplicationCreateOptions) => {
     dialogOpen.value = false
   }
 
+  /** 预览复用创建弹窗，关闭与 Escape 先退回表单，避免丢失草稿。 */
+  const cancelDialog = () => {
+    if (templatePreview.preview.template) templatePreview.closePreview()
+    else closeDialog()
+  }
+
   /** 校验并创建应用，完成后通知列表或进入详情。 */
   const submit = async () => {
     if (submitting.value || !canSubmit.value) return
@@ -123,6 +132,7 @@ export const useApplicationCreate = (options: ApplicationCreateOptions) => {
   }
 
   return {
+    ...templatePreview,
     store,
     applicationKind,
     visibleTemplates,
@@ -137,6 +147,7 @@ export const useApplicationCreate = (options: ApplicationCreateOptions) => {
     canSubmit,
     rules,
     closeDialog,
+    cancelDialog,
     submit,
   }
 }

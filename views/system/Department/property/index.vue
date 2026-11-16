@@ -16,11 +16,13 @@
   </CloudEmpty>
 </template>
 
-<script setup lang="ts" name="property">
+<script setup lang="ts">
 import {productIcon, deviceIcon} from '@authentication-manager-ui/assets';
 import {useMenuStore} from '@jetlinks-web-core/store';
 import {getDeviceCount, getProductCount} from "@authentication-manager-ui/api/system/department";
 import {useI18n} from 'vue-i18n';
+
+defineOptions({ name: 'property' })
 
 const Product = defineAsyncComponent(() => import('../product/index.vue'))
 const Device = defineAsyncComponent(() => import('../device/index.vue'))

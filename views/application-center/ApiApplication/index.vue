@@ -77,7 +77,7 @@
   </j-page-container>
 </template>
 
-<script setup lang="ts" name="ApiApplication">
+<script setup lang="ts">
 import { createReusableTemplate } from '@vueuse/core'
 
 import { ref } from 'vue'
@@ -92,6 +92,8 @@ import CreateDialog from './components/CreateDialog.vue'
 import PermissionDrawer from './components/PermissionDrawer.vue'
 import DebugDrawer from './components/DebugDrawer.vue'
 import LogDrawer from './components/LogDrawer.vue'
+
+defineOptions({ name: 'ApiApplication' })
 
 const { t: $t } = useI18n()
 const tableRef = ref<any>()

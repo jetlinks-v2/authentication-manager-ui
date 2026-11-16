@@ -124,7 +124,7 @@
   </div>
 </template>
 
-<script setup lang="ts" name="LeftTree">
+<script setup lang="ts">
 import { getTreeData_api, delDepartment_api, downloadImportTemplate_api, batchImport_api } from '@authentication-manager-ui/api/system/department'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { debounce, cloneDeep, omit } from 'lodash-es'
@@ -134,6 +134,8 @@ import { ArrayToTree } from '../util'
 import { useI18n } from 'vue-i18n';
 import { useTabSaveSuccessBack } from '@jetlinks-web-core/hooks'
 import { usePermission } from '@jetlinks-web/hooks'
+
+defineOptions({ name: 'LeftTree' })
 
 const { t: $t } = useI18n();
 const permission = 'system/Department'

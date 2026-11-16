@@ -49,7 +49,7 @@
         @refresh="refresh" />
 </template>
 
-<script lang="ts" setup name="DictionaryItem">
+<script lang="ts" setup>
 import { createReusableTemplate } from '@vueuse/core'
 
 import dayjs from 'dayjs';
@@ -58,6 +58,8 @@ import Save from './Save/index.vue'
 import { onlyMessage } from '@jetlinks-web/utils';
 import { cloneDeep } from 'lodash-es';
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'DictionaryItem' })
 
 const { t: $t } = useI18n();
 const props = defineProps({

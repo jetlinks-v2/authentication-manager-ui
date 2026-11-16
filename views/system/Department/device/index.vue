@@ -255,7 +255,7 @@
   </div>
 </template>
 
-<script setup lang="ts" name="device">
+<script setup lang="ts">
 import type { ConditionTerm } from '@jetlinks-web-core/components/ConditionFilter'
 
 import { createReusableTemplate } from '@vueuse/core'
@@ -283,6 +283,8 @@ import { useI18n } from 'vue-i18n';
 import { downloadFileByUrl } from '@jetlinks-web/utils';
 import { watch } from 'vue'
 import PageHeader from '@jetlinks-web-core/components/PageHeader';
+
+defineOptions({ name: 'device' })
 
 const { t: $t } = useI18n();
 const departmentStore = useDepartmentStore();

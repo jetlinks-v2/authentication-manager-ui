@@ -18,7 +18,7 @@
     </j-page-container>
 </template>
 
-<script setup lang="ts" name="RoleDetail">
+<script setup lang="ts">
 import Permission from './Permission/index.vue';
 import User from './User/index.vue';
 import FullPage from "@jetlinks-web-core/layout/FullPage.vue";
@@ -26,6 +26,8 @@ import PageChrome from "@jetlinks-web-core/components/PageChrome/index.vue";
 import SlantedTabs from "@jetlinks-web-core/components/SlantedTabs";
 import type { SlantedTabOption } from "@jetlinks-web-core/components/SlantedTabs";
 import {useI18n} from "vue-i18n";
+
+defineOptions({ name: 'RoleDetail' })
 
 const { t: $t } = useI18n();
 const activeKey = ref('permission');

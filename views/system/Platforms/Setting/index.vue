@@ -14,6 +14,8 @@
   </j-page-container>
 </template>
 
-<script setup lang="ts" name="Api">
+<script setup lang="ts">
 import Api from '../Api/index.vue';
+
+defineOptions({ name: 'Api' })
 </script>
