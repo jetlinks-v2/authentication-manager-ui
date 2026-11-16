@@ -82,10 +82,13 @@ test('route heading uses the visible menu hierarchy and falls back to the regist
   }])
   state.scope.value = 'route:page/a'
   assert.equal(state.title.value, '设备管理 / 设备')
+  assert.equal(state.routePath.value, '/device')
   state.scope.value = 'route:page/b'
   assert.equal(state.title.value, '告警')
+  assert.equal(state.routePath.value, '')
   state.scope.value = 'all'
   assert.equal(state.title.value, 'DocumentManagement.all')
+  assert.equal(state.routePath.value, '')
 })
 
 test('load failure is distinct from unconfigured; retry loads persisted content', async () => {

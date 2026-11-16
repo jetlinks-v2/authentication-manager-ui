@@ -30,22 +30,28 @@ export function useDocumentManagement() {
       count: rows.value.filter(row => row.code === code).length,
     })).filter(node => `${node.title} ${node.code}`.toLocaleLowerCase().includes(routeKeyword.value.trim().toLocaleLowerCase())),
   ])
-  function menuTitlePath(menus: RouteRecordRaw[], code: string, parents: string[] = []): string | undefined {
+  function findMenuLocation(menus: RouteRecordRaw[], code: string, parents: string[] = []): { title: string; path: string } | undefined {
     for (const menu of menus) {
       const label = menu.meta?.title
       const path = label && menu.meta?.hideInMenu !== true ? [...parents, t(String(label))] : parents
-      if (menu.name === code && path.length) return path.join(' / ')
-      const nested = menu.children && menuTitlePath(menu.children, code, path)
+      if (menu.name === code) return { title: path.join(' / '), path: menu.path }
+      const nested = menu.children && findMenuLocation(menu.children, code, path)
       if (nested) return nested
     }
   }
+  const menuLocation = computed(() => {
+    locale.value
+    return scope.value.startsWith('route:')
+      ? findMenuLocation(menuStore.siderMenus as RouteRecordRaw[], scope.value.slice(6)) : undefined
+  })
+  const routePath = computed(() => menuLocation.value?.path || '')
   const title = computed(() => {
     if (!scope.value.startsWith('route:')) {
       return t(`DocumentManagement.${scope.value === 'ready' ? 'configured' : scope.value === 'missing' ? 'missing' : 'all'}`)
     }
     locale.value
     const code = scope.value.slice(6)
-    return menuTitlePath(menuStore.siderMenus as RouteRecordRaw[], code)
+    return menuLocation.value?.title
       || points.value.find(point => point.code === code)?.page
   })
 
@@ -114,6 +120,6 @@ export function useDocumentManagement() {
     finally { updating.value = '' }
   }
   onMounted(() => load())
-  return { rows, filteredRows, scope, routeKeyword, terms, nodes, title, loading, failed, loaded,
+  return { rows, filteredRows, scope, routeKeyword, terms, nodes, title, routePath, loading, failed, loaded,
     current, draft, draftEnabled, saving, updating, selectedKeys, saveFailed, load, edit, close, save, toggleEnabled, batchToggle }
 }

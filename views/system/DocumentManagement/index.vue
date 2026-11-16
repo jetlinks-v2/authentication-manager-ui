@@ -13,7 +13,13 @@
         </template>
         <template #right>
           <section class="document-list">
-            <div class="document-list__heading"><a-typography-text strong>{{ title }}</a-typography-text><a-typography-text v-if="loaded && !failed" type="secondary">{{ t('DocumentManagement.count', { count: filteredRows.length }) }}</a-typography-text></div>
+            <div class="document-list__heading">
+              <a-flex vertical :gap="4">
+                <a-typography-text strong>{{ title }}</a-typography-text>
+                <a-typography-text v-if="routePath" type="secondary">{{ routePath }}</a-typography-text>
+              </a-flex>
+              <a-typography-text v-if="loaded && !failed" type="secondary">{{ t('DocumentManagement.count', { count: filteredRows.length }) }}</a-typography-text>
+            </div>
             <a-alert v-if="failed" type="error" show-icon :message="t('DocumentManagement.loadFailed')">
               <template #action><a-button size="small" @click="load()">{{ t('DocumentManagement.retry') }}</a-button></template>
             </a-alert>
@@ -86,7 +92,7 @@ import { sanitizeHelpMarkdown } from '@jetlinks-web-core/utils/documentHelpMarkd
 import { useDocumentManagement } from './useDocumentManagement'
 
 const { t } = useI18n()
-const { rows, filteredRows, scope, routeKeyword, terms, nodes, title, loading, failed, loaded,
+const { rows, filteredRows, scope, routeKeyword, terms, nodes, title, routePath, loading, failed, loaded,
   current, draft, draftEnabled, saving, updating, selectedKeys, saveFailed, load, edit, close, save, toggleEnabled, batchToggle } = useDocumentManagement()
 const treeData = computed(() => nodes.value.map(node => ({
   key: node.key, title: loaded.value && !failed.value ? `${node.title} (${node.count})` : node.title,

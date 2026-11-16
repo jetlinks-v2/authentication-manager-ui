@@ -1494,7 +1494,7 @@ core 的 `DocumentHelp` 支持纯说明、复杂内容插槽与按 `code/helpKey
 
 ### 标准树与扩展帮助点位验收
 
-左侧使用空间、设备页相同的 `AutoTree` 和 `show-line={showLeafIcon:false}`，避开全局无连线树的渐变规则；无页面自定义节点插槽或树样式覆盖，名称和数量由 treeData 提供，不展示路由 code；右侧标题显示实际菜单的中文层级路径，菜单不可见时使用点位注册的页面名称。真实 `192.168.32.183:9200/#/system/ps/documents` 已显示 16 个点位（原概览 6 个，本次新增/替换 10 个），已验证已配置、未配置和资源仪表盘分组筛选。新增点位未配置时不显示业务问号；设备接入弹窗的设备库模板/产品标签及产品批量菜单正常显示，三种设备类型旧问号已替换且未配置时隐藏。未改写这些新点位的帮助正文。
+左侧使用空间、设备页相同的 `AutoTree` 和 `show-line={showLeafIcon:false}`，避开全局无连线树的渐变规则；无页面自定义节点插槽或树样式覆盖，名称和数量由 treeData 提供，不展示路由 code；右侧标题显示实际菜单的中文层级路径，菜单不可见时使用点位注册的页面名称。选中页面分组时，中文路径下方另行显示实际菜单路由地址（例如 `/resources/devices/products`）；全部、已配置、未配置或没有对应菜单时不显示地址。真实 `192.168.32.183:9200/#/system/ps/documents` 已显示 16 个点位（原概览 6 个，本次新增/替换 10 个），已验证已配置、未配置和资源仪表盘分组筛选。新增点位未配置时不显示业务问号；设备接入弹窗的设备库模板/产品标签及产品批量菜单正常显示，三种设备类型旧问号已替换且未配置时隐藏。未改写这些新点位的帮助正文。
 
 新增点位：资源仪表盘 `resources/Dashboard` 下 `dashboard.deviceDistribution`、`dashboard.deviceMessages`、`dashboard.visionRanking`；空间配置 `space/AreaManagement` 下 `floorplan.publish`；空间态势 `space/Situation` 下 `device.keyProperties`；产品 `device/Product` 下 `deviceType.device`、`deviceType.childrenDevice`、`deviceType.gateway`、`syncCache`；设备列表 `iot-user-device-list` 下 `onboarding.libraryTemplate`。点位由各模块入口注册。
 
