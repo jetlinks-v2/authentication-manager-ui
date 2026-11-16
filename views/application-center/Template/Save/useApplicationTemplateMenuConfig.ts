@@ -46,7 +46,7 @@ interface MenuConfigMessages {
   missingMenus: (count: number) => string
 }
 
-/** 维护模板菜单与资产权限草稿，编辑流程不改变公共编辑器的授权规则。 */
+/** 维护模板菜单与资产权限草稿；接口错误由全局 notification 提示，本地仅维护失败状态。 */
 export const useApplicationTemplateMenuConfig = (
   getTemplateId: () => string,
   messages: MenuConfigMessages,
@@ -79,9 +79,8 @@ export const useApplicationTemplateMenuConfig = (
     try {
       const response = await getAssetScopeStrategies()
       scopeStrategyOptions.value = normalizeScopeStrategyOptions(response)
-    } catch (error: any) {
+    } catch {
       scopeStrategyOptions.value = []
-      onlyMessage(error?.message || messages.loadFailed, 'error')
     } finally {
       loadingOptions.value = false
     }
@@ -133,7 +132,8 @@ export const useApplicationTemplateMenuConfig = (
         assertSuccess<MenuPermissionNode[]>(menuResponse, []),
       )
       const sourceMenus = normalizeCandidateMenus(ownMenus)
-      const grantableResponse = await getGrantableAssetAccesses(ownMenus)
+      // 无应用菜单时直接使用空候选，避免空数组请求被接口判为缺少请求体。
+      const grantableResponse = ownMenus.length ? await getGrantableAssetAccesses(ownMenus) : []
       if (sequence !== loadSequence) return
 
       const savedMenus = filterApplicationMenuInterfacePermissions(
@@ -164,7 +164,6 @@ export const useApplicationTemplateMenuConfig = (
       if (sequence === loadSequence) {
         clearEditor()
         loadError.value = error?.message || messages.loadFailed
-        onlyMessage(loadError.value, 'error')
       }
     } finally {
       if (sequence === loadSequence) loadingEditor.value = false
@@ -209,8 +208,7 @@ export const useApplicationTemplateMenuConfig = (
       onlyMessage(messages.saved)
       await loadEditor()
       return true
-    } catch (error: any) {
-      onlyMessage(error?.message || messages.loadFailed, 'error')
+    } catch {
       return false
     } finally {
       saving.value = false

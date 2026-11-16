@@ -14,7 +14,7 @@
         :deleting="deleting"
         :syncing-credential="syncingCredential"
         :settings-editing="settingsEditing"
-        :settings-saving="settingsSaving"
+        :settings-saving="settingsSaving || settingsRef?.imageUploading"
         :show-settings-actions="activeTab === 'settings'"
         :opening="openingApplicationIds.includes(application.id)"
         @cancel-settings="cancelSettings"

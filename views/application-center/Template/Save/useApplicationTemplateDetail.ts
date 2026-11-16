@@ -62,10 +62,8 @@ export const useApplicationTemplateDetail = (
       detail.value = unwrapResult(detailResponse, {} as BusinessApplicationTemplate)
       documentDraft.value = String(detail.value.i18nDocument || detail.value.document || '')
       documentI18nDraft.value = { ...(detail.value.i18nMessages?.document || {}) }
-    } catch (error) {
-      if (isCurrent(templateId, revision) && request === loadRevision) {
-        onlyMessage(error instanceof Error ? error.message : messages.loadFailed, 'error')
-      }
+    } catch {
+      // 接口错误由全局 notification 提示，页面只负责结束当前加载状态。
     } finally {
       if (isCurrent(templateId, revision) && request === loadRevision) loading.value = false
     }

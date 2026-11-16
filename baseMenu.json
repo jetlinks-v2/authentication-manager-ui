@@ -2053,6 +2053,10 @@
                   {
                     "permission": "business-application-template",
                     "actions": ["query"]
+                  },
+                  {
+                    "permission": "menu",
+                    "actions": ["query"]
                   }
                 ]
               },
@@ -2087,6 +2091,10 @@
                   {
                     "permission": "business-application-template",
                     "actions": ["query", "save", "grant"]
+                  },
+                  {
+                    "permission": "menu",
+                    "actions": ["grant"]
                   }
                 ]
               },
