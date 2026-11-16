@@ -1244,7 +1244,7 @@
             "showPage": ["system_config"],
             "sortIndex": 90,
             "url": "/system/ps/documents",
-            "icon": "ReadOutlined",
+            "icon": "icon-yuandian",
             "i18nMessages": { "name": { "zh_CN": "文档管理", "en_US": "Documentation", "en": "Documentation", "ja": "ドキュメント管理", "ja_JP": "ドキュメント管理" } },
             "permissions": [{ "permission": "system_config", "actions": ["query"] }],
             "buttons": [
