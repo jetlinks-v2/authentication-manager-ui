@@ -63,10 +63,6 @@ export const useApplicationTemplateList = () => {
     {
       title: $t('ProjectApplication.create.applicationKind'),
       dataIndex: 'provider', key: 'provider', width: 140, scopedSlots: true,
-      search: {
-        type: 'select',
-        options: providerOptions.value,
-      },
     },
     {
       title: $t('ApplicationTemplate.field.description'),
