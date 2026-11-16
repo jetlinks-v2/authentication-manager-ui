@@ -52,7 +52,7 @@ test('nested and/or terms and exact identifiers exclude unrelated rows', () => {
   ] }, { column: 'key', termType: 'eq', value: 'shared' }]).length, 1)
 })
 
-function fixture() {
+function fixture(menus = []) {
   const calls = [], notices = []
   const api = {
     getDocumentHelpConfigurations: () => new Promise((resolve, reject) => calls.push({ kind: 'get', resolve, reject })),
@@ -62,6 +62,7 @@ function fixture() {
   const hook = load('../views/system/DocumentManagement/useDocumentManagement.ts', {
     vue: { ...vue, onMounted: () => {} },
     'vue-i18n': { useI18n: () => ({ t: key => key, locale: vue.ref('zh') }) },
+    '@jetlinks-web-core/store/menu': { useMenuStore: () => ({ siderMenus: menus }) },
     '@jetlinks-web/utils': { onlyMessage: value => notices.push(value) },
     '@jetlinks-web-core/hooks/useConfiguredDocumentHelp': { notifyDocumentHelpConfigurationChanged: () => notices.push('changed') },
     '@jetlinks-web-core/utils/documentHelpRegistry': { getDocumentHelpPoints: () => points },
@@ -70,6 +71,22 @@ function fixture() {
   })
   return { state: hook.useDocumentManagement(), calls, notices }
 }
+
+test('route heading uses the visible menu hierarchy and falls back to the registered page name', () => {
+  const { state } = fixture([{
+    name: 'root', path: '/root', meta: { title: '设备管理' }, children: [{
+      name: 'hidden', path: '/hidden', meta: { title: '隐藏目录', hideInMenu: true }, children: [
+        { name: 'page/a', path: '/device', meta: { title: '设备' } },
+      ],
+    }],
+  }])
+  state.scope.value = 'route:page/a'
+  assert.equal(state.title.value, '设备管理 / 设备')
+  state.scope.value = 'route:page/b'
+  assert.equal(state.title.value, '告警')
+  state.scope.value = 'all'
+  assert.equal(state.title.value, 'DocumentManagement.all')
+})
 
 test('load failure is distinct from unconfigured; retry loads persisted content', async () => {
   const { state, calls } = fixture()

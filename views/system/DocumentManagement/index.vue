@@ -88,10 +88,9 @@ import { useDocumentManagement } from './useDocumentManagement'
 const { t } = useI18n()
 const { rows, filteredRows, scope, routeKeyword, terms, nodes, title, loading, failed, loaded,
   current, draft, draftEnabled, saving, updating, selectedKeys, saveFailed, load, edit, close, save, toggleEnabled, batchToggle } = useDocumentManagement()
-const treeData = computed(() => nodes.value.map(node => {
-  const label = 'code' in node ? `${node.title} · ${node.code}` : node.title
-  return { key: node.key, title: loaded.value && !failed.value ? `${label} (${node.count})` : label }
-}))
+const treeData = computed(() => nodes.value.map(node => ({
+  key: node.key, title: loaded.value && !failed.value ? `${node.title} (${node.count})` : node.title,
+})))
 const configuredCount = computed(() => rows.value.filter(row => row.configured).length)
 const selectedConfiguredCount = computed(() => rows.value.filter(row => row.configured && selectedKeys.value.includes(row.id)).length)
 const isCheck = ref(false)

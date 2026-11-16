@@ -1,5 +1,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import type { RouteRecordRaw } from 'vue-router'
+import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { notifyDocumentHelpConfigurationChanged } from '@jetlinks-web-core/hooks/useConfiguredDocumentHelp'
 import { getDocumentHelpPoints } from '@jetlinks-web-core/utils/documentHelpRegistry'
@@ -9,6 +11,7 @@ import { filterHelpPoints, mergeHelpPoints, type DocumentHelpRow } from './model
 
 export function useDocumentManagement() {
   const { t, locale } = useI18n()
+  const menuStore = useMenuStore()
   const configurations = ref<DocumentHelpConfiguration[]>([])
   const revision = ref(0), loaded = ref(false), loading = ref(false), failed = ref(false)
   const scope = ref('all'), routeKeyword = ref(''), terms = ref<ConditionTerm[]>([])
@@ -27,8 +30,24 @@ export function useDocumentManagement() {
       count: rows.value.filter(row => row.code === code).length,
     })).filter(node => `${node.title} ${node.code}`.toLocaleLowerCase().includes(routeKeyword.value.trim().toLocaleLowerCase())),
   ])
-  const title = computed(() => scope.value.startsWith('route:') ? scope.value.slice(6)
-    : t(`DocumentManagement.${scope.value === 'ready' ? 'configured' : scope.value === 'missing' ? 'missing' : 'all'}`))
+  function menuTitlePath(menus: RouteRecordRaw[], code: string, parents: string[] = []): string | undefined {
+    for (const menu of menus) {
+      const label = menu.meta?.title
+      const path = label && menu.meta?.hideInMenu !== true ? [...parents, t(String(label))] : parents
+      if (menu.name === code && path.length) return path.join(' / ')
+      const nested = menu.children && menuTitlePath(menu.children, code, path)
+      if (nested) return nested
+    }
+  }
+  const title = computed(() => {
+    if (!scope.value.startsWith('route:')) {
+      return t(`DocumentManagement.${scope.value === 'ready' ? 'configured' : scope.value === 'missing' ? 'missing' : 'all'}`)
+    }
+    locale.value
+    const code = scope.value.slice(6)
+    return menuTitlePath(menuStore.siderMenus as RouteRecordRaw[], code)
+      || points.value.find(point => point.code === code)?.page
+  })
 
   // 失败时不把已有配置当作空配置，也不允许从错误状态继续编辑。
   async function load() {

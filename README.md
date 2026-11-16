@@ -39,7 +39,7 @@
 
 验证：覆盖线上 JSON 读取、修改后重新读取、保存失败保留草稿和原文件、权限及原帮助功能；前端定向测试、类型检查和模块构建，后端干净编译。多人覆盖与部署持久性按所选文件服务的实际能力说明，不默认增加额外存储机制。
 
-已确认方案：运行时「系统设置 → 平台设置 → 文档管理」采用左侧范围筛选、右侧埋点表格。左侧复用空间、设备页的 `AutoTree`，开启 `show-line={showLeafIcon:false}`，通过节点标题展示名称、路由 code 与数量，不定制 title 插槽或覆盖树样式；顶部并列全部 / 已配置 / 未配置，下方按路由 code 分组，不把路由嵌套在配置状态下。点位由模块启动时显式注册，扫描读取所有已加载模块的注册清单，不依赖先访问业务页面。右侧支持筛选、配置与真实 helper 气泡预览。
+已确认方案：运行时「系统设置 → 平台设置 → 文档管理」采用左侧范围筛选、右侧埋点表格。左侧复用空间、设备页的 `AutoTree`，开启 `show-line={showLeafIcon:false}`，通过节点标题展示名称与数量；右侧分组标题按侧边菜单显示从一级菜单到当前页面的中文路径，不定制 title 插槽或覆盖树样式；顶部并列全部 / 已配置 / 未配置，下方按路由 code 分组，不把路由嵌套在配置状态下。点位由模块启动时显式注册，扫描读取所有已加载模块的注册清单，不依赖先访问业务页面。右侧支持筛选、配置与真实 helper 气泡预览。
 
 范围：`runtime-ui/modules/authentication-manager-ui` 负责页面、菜单、概览六个点位注册、全局搜索移除文档扩展；`runtime-ui/jetlinks-web-core` 提供点位注册和配置内容渲染；后端 auth 复用既有系统配置能力持久化并校验保存权限，本次没有后端模块代码变更。读取与保存沿用同一 scope 的既有 GET/POST 接口，平台级配置不绑定当前项目。沿用现有文档中心入口，不改运营端 `ui/`，不修改文档站或 API Key。
 
@@ -1494,13 +1494,13 @@ core 的 `DocumentHelp` 支持纯说明、复杂内容插槽与按 `code/helpKey
 
 ### 标准树与扩展帮助点位验收
 
-左侧使用空间、设备页相同的 `AutoTree` 和 `show-line={showLeafIcon:false}`，避开全局无连线树的渐变规则；无页面自定义节点插槽或树样式覆盖，名称、路由 code 和数量由 treeData 提供。真实 `192.168.32.183:9200/#/system/ps/documents` 已显示 16 个点位（原概览 6 个，本次新增/替换 10 个），已验证已配置、未配置和资源仪表盘分组筛选。新增点位未配置时不显示业务问号；设备接入弹窗的设备库模板/产品标签及产品批量菜单正常显示，三种设备类型旧问号已替换且未配置时隐藏。未改写这些新点位的帮助正文。
+左侧使用空间、设备页相同的 `AutoTree` 和 `show-line={showLeafIcon:false}`，避开全局无连线树的渐变规则；无页面自定义节点插槽或树样式覆盖，名称和数量由 treeData 提供，不展示路由 code；右侧标题显示实际菜单的中文层级路径，菜单不可见时使用点位注册的页面名称。真实 `192.168.32.183:9200/#/system/ps/documents` 已显示 16 个点位（原概览 6 个，本次新增/替换 10 个），已验证已配置、未配置和资源仪表盘分组筛选。新增点位未配置时不显示业务问号；设备接入弹窗的设备库模板/产品标签及产品批量菜单正常显示，三种设备类型旧问号已替换且未配置时隐藏。未改写这些新点位的帮助正文。
 
 新增点位：资源仪表盘 `resources/Dashboard` 下 `dashboard.deviceDistribution`、`dashboard.deviceMessages`、`dashboard.visionRanking`；空间配置 `space/AreaManagement` 下 `floorplan.publish`；空间态势 `space/Situation` 下 `device.keyProperties`；产品 `device/Product` 下 `deviceType.device`、`deviceType.childrenDevice`、`deviceType.gateway`、`syncCache`；设备列表 `iot-user-device-list` 下 `onboarding.libraryTemplate`。点位由各模块入口注册。
 
 最终检查：auth 管理/概览/文档中心 24 项、core helper 13 项及设备地图配置/范围 9 项测试通过；修改 Vue 的模板、脚本与样式编译及差异检查通过。auth 单模块生产构建通过（39.26 秒），类型检查仍有 577 项既有诊断，本次帮助 API 新增诊断已修正。三模块联合构建被产品详情既有引用的 `jetlinks-web-core/src/components/PageBack/index.vue` 缺失阻断；资源地图发现回归有 1 项失败，测试将所有模块模拟为已安装，触发边端地图排除，移除本次 documentHelp 配置字段后仍同样失败，未修改无关行为。后续完整发布前需解决上述基线问题，再执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui,device-manager-ui,jetlinks-space-ui` 与全量类型检查。新点位逐项配置后的真实 hover 尚未逐个验证；共用组件已通过显隐、预加载与事件隔离回归。
 
-树组件纠偏验证：复用空间/设备页 `AutoTree` 及 show-line 参数后，真实选中节点与行的 computed background-image 均为 none，路由分组筛选正常；树标题恢复完整 code，表格增加自定义埋点 key 列。未覆盖页面树样式，未改全局主题。此次仅模板/展示字段变动，Vue 编译及差异检查通过，不重复全量构建。
+树组件纠偏验证：复用空间/设备页 `AutoTree` 及 show-line 参数后，真实选中节点与行的 computed background-image 均为 none，路由分组筛选正常；树标题仅显示名称与数量，路由 code 保留用于筛选和配置匹配；右侧标题显示中文菜单路径，表格保留自定义埋点 key 列。未覆盖页面树样式，未改全局主题。此次仅模板/展示字段变动，Vue 编译及差异检查通过，不重复全量构建。
 
 文档管理工具栏沿用产品列表的 `BatchDropdown`：页面挂载时自动读取注册点位与配置，移除手动扫描按钮；“启用全部已配置文档 / 批量启用 / 批量禁用”统一放入批量操作下拉菜单。未选择已配置项时批量启禁置灰，请求期间所有批量动作禁用，继续沿用原保存权限和单次 Map 写回。验证自动展示清单、菜单状态及已有批量回归。
 
