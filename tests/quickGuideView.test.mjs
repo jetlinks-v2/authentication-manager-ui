@@ -22,6 +22,10 @@ const exports = {}
 new Function('exports', 'require', output)(exports, id => {
   if (id === 'vue') return vue
   if (id === 'vue-i18n') return { useI18n: () => ({ t: key => translations[locale][key] ?? key }) }
+  if (id === '@jetlinks-web-core/components/DocumentHelp') return {
+    props: ['code', 'helpKey'],
+    setup: (props) => () => vue.h('button', { class: 'help-trigger', 'data-code': props.code, 'data-help-key': props.helpKey }, '?'),
+  }
   if (id === '@ant-design/icons-vue') return {
     LoadingOutlined: () => vue.h('span', 'loading'),
     QuestionCircleOutlined: () => vue.h('span', 'unknown'),
@@ -63,7 +67,7 @@ async function render(steps) {
 }
 
 function card(html, key) {
-  const match = html.match(new RegExp(`<button[^>]*data-step="${key}"[^>]*>([\\s\\S]*?)</button>`))
+  const match = html.match(new RegExp(`<div[^>]*data-step="${key}"[^>]*>([\\s\\S]*?)</div>`))
   assert.ok(match, `The ${key} card must be rendered`)
   return match[1]
 }
@@ -114,7 +118,7 @@ test('loading and unavailable states never imply a completed connection, and dis
   assert.match(card(html, 'device'), /状态暂不可用/)
   assert.doesNotMatch(card(html, 'space'), /completed-corner\.svg|step-card-action/)
   assert.doesNotMatch(card(html, 'device'), /completed-corner\.svg|step-card-action/)
-  assert.match(html, /<button[^>]*data-step="device"[^>]*disabled/)
+  assert.match(card(html, 'device'), /<button[^>]*class="step-card-target"[^>]*disabled/)
   assert.ok(html.includes(translations.zh['packages.ProjectHome.unavailable']))
   assert.deepEqual(arrows(html), Array(5).fill('../assets/arrow-pending.svg'))
 })
@@ -128,4 +132,17 @@ test('original step illustrations retain the sprite while alarm and application 
   }
   assert.match(card(html, 'alarm'), /assets\/alarm\.png/)
   assert.match(card(html, 'application'), /assets\/application\.png/)
+})
+
+// Card navigation and help must be independently focusable native controls.
+test('all step titles have help without nesting interactive buttons', async () => {
+  const steps = makeSteps(stepKeys.map(() => 'incomplete'))
+  const html = await render(steps)
+  for (const step of steps) {
+    const content = card(html, step.key)
+    assert.equal([...content.matchAll(/<button\b/g)].length, 2)
+    assert.doesNotMatch(content, /<button\b[^>]*>(?:(?!<\/button>)[\s\S])*<button\b/)
+    assert.ok(content.includes('data-code="project/Overview"'))
+    assert.ok(content.includes(`data-help-key="quickGuide.${step.key}"`))
+  }
 })

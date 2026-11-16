@@ -1,5 +1,9 @@
 <template>
-  <a-card class="resource-panel resource-device-distribution" :title="t('resourceDashboard.DeviceDistribution')">
+  <a-card class="resource-panel resource-device-distribution">
+    <template #title>
+      {{ t('resourceDashboard.DeviceDistribution') }}
+      <DocumentHelp code="resources/Dashboard" help-key="dashboard.deviceDistribution" />
+    </template>
     <div class="resource-device-distribution__content">
       <div class="resource-device-distribution__map" data-resource-section="map">
         <DashboardWidgetRenderer v-if="embeddedMap" :widget="embeddedMap"
@@ -17,6 +21,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import { DashboardWidgetRenderer, type DashboardWidget } from '@jetlinks-web-core/components/DashBoardCanvas'
 import ResourceEmpty from '../../../../visDashboard/ResourceCenter/components/ResourceEmpty.vue'
 import ResourceOfflineDevices from './ResourceOfflineDevices.vue'

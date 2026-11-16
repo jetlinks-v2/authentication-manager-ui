@@ -6,6 +6,54 @@
 
 第三方登录菜单（`baseMenu.json` 中的 `system-third-party-login`，owner 为 `cloud`）需声明应用管理查询权限 `application/query`，供 `api/system/thirdPartyLogin.ts#queryThirdPartyApplications` 调用 `/application/_query`。更新菜单定义后需同步已保存菜单及相应授权；验收时使用仅拥有该菜单的账号确认应用列表可查询，实际登录环境权限效果待验证。
 
+
+## 文档管理（已实现，待运行环境联调）
+
+### 在线 JSON 存储方案（待确定文件写入入口）
+
+目标：保留文档管理页面编辑和预览，读取线上 JSON，保存时写回同一文件；帮助内容不再保存到数据库。沿用 `code/key/content` 标识与 Markdown 清洗、渲染规则。
+
+当前能力核查：本地 2.20 io-component 依赖源码中的 `POST /file/upload` 新建文件；`PUT /file/update/{id}` 只更新属性；系统文件上传使用 `CREATE_NEW`，已有文件不能覆盖。现有上传接口不能直接完成同一 JSON 的内容更新，此结论来自依赖源码，未验证运行中服务。
+
+范围与步骤：确定支持覆盖的文件写入入口（复用部署已有可写文件地址，或增加最小受控 JSON 文件读写接口）。之后改接管理页和 helper 的读写链路，删除 auth 模块帮助配置 Entity、数据库 Service、Controller、DTO、专用测试和文案，更新对应文档。
+
+边界与待决项：浏览器可修改 JSON 内容，但服务器必须提供写入能力才能覆盖线上文件；普通静态 GET 地址不代表支持保存。保留运营端 `ui/`、文档中心浮窗、静态说明/链接及 Markdown 清洗规则。文件存放位置、稳定地址和写入权限待核查后确定；已存数据库内容若需保留，应先导出，当前未读取或删除部署数据。
+
+验证：覆盖线上 JSON 读取、修改后重新读取、保存失败保留草稿和原文件、权限及原帮助功能；前端定向测试、类型检查和模块构建，后端干净编译。多人覆盖与部署持久性按所选文件服务的实际能力说明，不默认增加额外存储机制。
+
+已确认方案：运行时「系统设置 → 平台设置 → 文档管理」采用左侧范围筛选、右侧埋点表格。左侧复用空间、设备页的 `AutoTree`，开启 `show-line={showLeafIcon:false}`，通过节点标题展示名称、路由 code 与数量，不定制 title 插槽或覆盖树样式；顶部并列全部 / 已配置 / 未配置，下方按路由 code 分组，不把路由嵌套在配置状态下。点位由模块启动时显式注册，扫描读取所有已加载模块的注册清单，不依赖先访问业务页面。右侧支持筛选、配置与真实 helper 气泡预览。
+
+范围：`runtime-ui/modules/authentication-manager-ui` 负责页面、菜单、概览六个点位注册、全局搜索移除文档扩展；`runtime-ui/jetlinks-web-core` 提供点位注册和配置内容渲染；`modules/authentication-manager` 持久化配置并校验管理权限。管理接口与普通用户读取分离，平台级配置不绑定当前项目。沿用现有文档中心入口，不改运营端 `ui/`，不修改文档站或 API Key。
+
+步骤与验证：先确定 code + key 唯一标识和接口字段，再配套实现配置保存 / 列表合并 / helper 读取。帮助说明保存 Markdown，链接直接嵌入说明，不提供单独文档地址；HTML 输出净化后渲染。空说明视为未配置。验证扫描不覆盖内容、保存失败保留草稿、保存后刷新和 helper 重开显示新内容、菜单筛选不再发起文档搜索、未授权用户不能管理但能读取帮助。最后运行定向回归、类型检查、模块构建与真实浏览器验收，回填结果。
+
+主页搜索仅检索功能菜单：已移除关键词搜索组件 `DocumentSearch.vue`、`useDocumentSearch.ts`、`api/system/document.ts` 及专用文案，后端对应的关键词和标签搜索入口同步清理。顶栏文档中心浮窗、`DocumentHelp` 的平台配置说明与静态内容继续保留，core 三语占位文案仅说明功能搜索。
+
+清理验证：core `node --test tests/documentHelp.test.mjs` 11 项通过，auth `node --test tests/documentCenter.test.mjs` 9 项通过，覆盖平台配置帮助、静态说明与文档浮窗。运行时旧搜索接口、hook 及函数无残留引用，三语 JSON 与差异空白检查通过；模块构建 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过；`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 仍有 577 项工作区诊断，修改的帮助组件及 API 无诊断。未配置独立 lint 脚本；服务未重启，真实页面待部署后复验。
+
+启用状态与批量操作：配置列表继续扫描完整注册表，已配置/未配置筛选仅依据说明是否为空；表格展示功能位置、埋点 key、所属页面、配置状态和操作，状态显示未配置/已启用/已禁用，正文只通过预览查看；保存 `{code,key,content,enabled}`，支持禁用保留说明和再次启用。业务 helper 在挂载时预加载配置，仅在有说明且启用时显示问号；静态说明和管理页预览保持可用。保存后通知已挂载 helper 更新。支持勾选批量启用/禁用及启用全部已配置文档，批量接口一次更新单条 Map；未配置项不可勾选。左右布局、表格零水平内边距与上留白对齐数据字典页面。提前加载正文，避免首次悬停从加载文案切换到正文造成位置跳变。验证未配置/禁用隐藏、扫描保留、编辑保存和状态切换，以及真实页面首次 hover。
+
+## 文档中心浮窗
+
+目标与范围：运行时 `runtime-ui/modules/authentication-manager-ui` 在右上角语言切换右侧增加书本图标与“文档”，点击后以无蒙层右侧浮窗嵌入文档站，底部左侧“打开文档中心”在新标签页打开同一地址。参考阿里云帮助浮窗，复用 `JlDrawerShell`；不新增菜单或站内路由，不修改运营端 `ui/`、共享 core 或文档站。iframe 使用文档站提供的 `embed=1` 模式，并携带当前语言，暂不传版本。底部链接仍打开完整文档中心。
+
+实现：`index.ts` 在原公告注册之外，向 `layout/headerRight` 的 `Language` 节点后插入入口。`components/DocumentCenter/index.vue` 负责浮窗和 iframe 展示，`useDocumentCenter.ts` 负责状态与配置地址；文案走现有 locale。auth 的 `system.config.scopes` 中为 `paths` 增加 `document-url`，前端读取既有 `useSystemStore().systemInfo.paths['document-url']`，不新增接口，不向文档站传递平台 Token。
+
+本地部署：`runtime/authentication-service/src/main/resources/application.yml` 声明 `${SYSTEM_CONFIG_PATHS_DOCUMENT_URL:}`，本机被忽略的 `application-local.yml` 设置 `SYSTEM_CONFIG_PATHS_DOCUMENT_URL` 为 `http://192.168.33.76:4313/s/9169ec06-15dd-4253-b132-415b264918fc`。修改文件需重启 auth 并刷新前端；数据库已有同名配置优先于默认值。其他部署需显式提供自己的文档地址。
+
+验证结果：
+
+- 模块目录 `node --test tests/documentCenter.test.mjs` 5/5 通过，覆盖配置地址、非法/缺失配置、关闭重开、配置变化、失败重试，以及实际模块注册与共享 VNode 合并后的语言/文档/通知/用户顺序。
+- 在 `runtime-ui/` 执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过；`git diff --check`、三种 locale JSON 校验通过。工作区未配置独立 lint 或 `check:ui-style` 脚本。
+- `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 仍有 577 条工作区诊断，本次新增组件、hook 及修改的模块入口没有诊断；全量类型检查未通过。
+- `mvn -pl runtime/authentication-service -DskipTests compile` 通过；实际 Spring Boot YAML Loader、Binder 与依赖中的 `ConfigScopeProperties` 验证 5/5 通过，覆盖空默认、本地地址解析、原有 6 个 paths 字段保留及环境变量覆盖。当前本机 `GET http://localhost:8100/system/config/paths` 已返回最终 `9169ec06` 地址。
+- 隔离浏览器页面加载实际生产组件并从本机 auth 接口读取地址，确认真实文档渲染、浮窗关闭销毁、背景交互、未配置提示、左下外链与 iframe 地址一致；外链能打开文档站。随后在真实运行时 `http://192.168.32.183:9200/#/overview` 验证书本图标与“文档”位于语言右侧，点击后实际渲染“物联网云平台”文档，底部链接可见。Vue 文件 76 行，hook 51 行。
+
+正文嵌入：`useDocumentCenter.ts` 为中心首页和帮助文章 iframe 统一添加 `embed=1` 与 `language`，暂不携带 `version`（已有 URL 中的该参数也移除），保留其他查询参数与锚点。文档站当前无法将平台版本号解析为发布版本，携带 `version=2.20.0-SNAPSHOT` 会显示“未找到”，待上游支持匹配后再恢复。语言从当前 i18n locale 转为 `zh-CN/en-US/ja-JP`，切换语言时更新 iframe。完整中心外链保留原配置地址。帮助文章打开兼容配置为 `/s/{share}`、`/jetlinks/{share}` 或其文章页：按分享中心根路径校验结果，不把配置的文章路径当成中心根；仍拒绝外站和其他分享范围。验证：搜索与浮窗 14 项测试通过，目标模块构建通过（38.93 秒），`git diff --check` 通过。实际运行时 `192.168.32.183:9200/#/overview` 打开文档浮窗，iframe 地址仅携带 `embed=1&language=zh-CN`，已正常显示“物联网云平台”正文，不再显示“未找到”。本次删除版本读取与 URL 参数，沿用前次类型检查边界（577 项既有诊断，修改文件无诊断）。
+
+
+状态：入口、浮窗、配置与图标已实施；正文嵌入参数已接入，前端按 Draft PR 进入评审。
+
 ## 运行时角色授权详情
 
 角色授权读取统一使用 core 的 `getMenuGrantDetail('role', roleId, query)`，对应 `GET /menu/{targetType}/{targetId}/_grant/detail`。`result.menus` 提供菜单及权限候选，顶层 `result.assetAccesses` 提供该角色的独立资产策略；不把候选列表作为已保存策略，不额外传候选展示域 `owner`。旧 `getPermissionTree_api` 仅保留菜单树返回结构的兼容适配。
@@ -1319,3 +1367,39 @@ URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显�
 验证入口为 `tests/systemBulletin*.test.mjs`、`tests/homeAnnouncements.test.mjs` 及 Web Core 命令能力/数据源/铃铛/个人中心测试。公告行为回归 76/76、相关结构检查 5/5、Web Core 回归 75/75 通过，覆盖关闭时无公告 HTTP/WS、无发布权限的接收者仍可使用公告，以及确认最新后刷新不补弹历史。模块 `pnpm exec vue-tsc -p modules/authentication-manager-ui/tsconfig.json --noEmit --pretty false` 仍有既有诊断（runtime-ui 609 项、ui 757 项），本次修改文件无诊断；没有独立 lint 脚本。历史跨工作区菜单/Core 结构正则与订阅宿主断言存在既有失败，未为这些断言修改无关业务。两端目标模块生产构建通过（ui 4m04s，runtime-ui 3m57s），修改文件 `git diff --check` 通过；真实账号的开启/关闭、发布接收和刷新交互仍待浏览器验收。
 
 实时订阅使用共享 wsClient 订阅 `/system/bulletin/received`，收到消息后按发布批次回查当前资格和撤回状态，再刷新角标与列表。实时到达仅显示带公告类型图标的轻提示，点击后打开详情；只有详情确认按钮写入本地已读。账号、服务或项目上下文变化时释放旧逻辑订阅、销毁旧详情弹窗并使旧确认回调失效，避免上一身份的迟到消息污染当前账号。
+
+
+## 功能点文档帮助
+
+core 的 `DocumentHelp` 支持纯说明、复杂内容插槽与按 `code/helpKey` 读取平台配置。模块在启动入口调用 `registerDocumentHelpPoints` 声明点位；管理页面读取完整注册表，按 `code + key` 合并已保存配置，不依赖业务页面是否已打开。概览六个点位见 `docs/project-overview.md`。
+
+`views/system/DocumentManagement/` 复用 `EqualHeightColumns`、`AutoTree`、`JProTable`、`ConditionFilter`、`JlDrawerShell`、`MarkdownEditor`。帮助说明只保存 Markdown，链接直接嵌入正文；预览复用 helper 的 `MarkdownPreview`，净化 HTML 后显示列表、表格与蓝色链接。表格和正文使用相同字号。保存失败保留草稿；空白说明清除配置，挂载和返回页面时预加载配置，管理保存后通知已挂载 helper 重新读取。未配置或已禁用的业务入口不显示问号。
+
+读写直接复用 auth 已有 `GET /system/config/document-help`、`POST /system/config/document-help`。配置为一份 `{[id]: {code,key,content,enabled}}` Map，存放在既有 `s_config` 的 `document-help` scope 一条记录中；保存先读取最新 Map，保留其他点位与已有存储 key，再一次写回。批量启禁同样只更新 Map 中的 enabled 字段。管理保存沿用 `system_config:save` 权限；页面菜单为 `system/DocumentManagement`，已有环境需同步菜单权限映射。普通 helper 从同一配置读取并按 code/key 匹配，前端决定显隐。平台配置不随项目或租户域切换，正文不经过文档搜索服务，不新增帮助专用后端接口、表或启禁接口，无需为此次启禁改造重启 auth。
+
+验证结果：auth UI 的 `tests/documentManagement.test.mjs`、`tests/quickGuideView.test.mjs`、`tests/documentCenter.test.mjs` 合计 22 项通过；core 的 `tests/documentHelp.test.mjs` 11 项通过。目标模块生产构建通过；全量类型检查仍有 577 项工作区既有诊断，本次新增文件无诊断，未配置独立 lint 脚本。后端原始 POM 的生产与测试源码编译及 7 项配置服务 / Controller 定向测试通过。真实运行时已保存文档管理菜单，用户菜单树已返回该入口；随后本地 auth 停止，概览和菜单接口也不可用，用户将自行重启。后续实际环境复验：菜单接口恢复后仍出现内容区空白，读取 Vite 实际返回的 authentication-manager-ui/index.ts 发现 import.meta.glob 的缓存清单没有新增的 DocumentManagement 页面；触发模块入口重新编译后清单包含新页面，刷新同一路径已显示左侧全部/已配置/未配置/概览分组及右侧 6 个埋点，控制台无错误。此问题为开发服务路由清单未更新，不涉及后端配置或权限。保存回读、刷新保留、概览 helper 渲染和筛选交互仍待进一步验收。
+
+当前配置链路验证：auth UI 24 项、core helper 13 项定向测试通过。实际运行环境通过既有配置接口完成勾选批量禁用，概览问号变为 0；启用全部已配置文档后状态恢复，正文保留，未配置的点位仍可扫描。无需重启 auth。此前专用帮助后端测试及待重启验收结论已被现有通用配置方案替代。实际悬停直接呈现正文及蓝色链接，未验证逐帧动画。
+
+
+### 标准树与扩展帮助点位验收
+
+左侧使用空间、设备页相同的 `AutoTree` 和 `show-line={showLeafIcon:false}`，避开全局无连线树的渐变规则；无页面自定义节点插槽或树样式覆盖，名称、路由 code 和数量由 treeData 提供。真实 `192.168.32.183:9200/#/system/ps/documents` 已显示 16 个点位（原概览 6 个，本次新增/替换 10 个），已验证已配置、未配置和资源仪表盘分组筛选。新增点位未配置时不显示业务问号；设备接入弹窗的设备库模板/产品标签及产品批量菜单正常显示，三种设备类型旧问号已替换且未配置时隐藏。未改写这些新点位的帮助正文。
+
+新增点位：资源仪表盘 `resources/Dashboard` 下 `dashboard.deviceDistribution`、`dashboard.deviceMessages`、`dashboard.visionRanking`；空间配置 `space/AreaManagement` 下 `floorplan.publish`；空间态势 `space/Situation` 下 `device.keyProperties`；产品 `device/Product` 下 `deviceType.device`、`deviceType.childrenDevice`、`deviceType.gateway`、`syncCache`；设备列表 `iot-user-device-list` 下 `onboarding.libraryTemplate`。点位由各模块入口注册。
+
+最终检查：auth 管理/概览/文档中心 24 项、core helper 13 项及设备地图配置/范围 9 项测试通过；修改 Vue 的模板、脚本与样式编译及差异检查通过。auth 单模块生产构建通过（39.26 秒），类型检查仍有 577 项既有诊断，本次帮助 API 新增诊断已修正。三模块联合构建被产品详情既有引用的 `jetlinks-web-core/src/components/PageBack/index.vue` 缺失阻断；资源地图发现回归有 1 项失败，测试将所有模块模拟为已安装，触发边端地图排除，移除本次 documentHelp 配置字段后仍同样失败，未修改无关行为。后续完整发布前需解决上述基线问题，再执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui,device-manager-ui,jetlinks-space-ui` 与全量类型检查。新点位逐项配置后的真实 hover 尚未逐个验证；共用组件已通过显隐、预加载与事件隔离回归。
+
+树组件纠偏验证：复用空间/设备页 `AutoTree` 及 show-line 参数后，真实选中节点与行的 computed background-image 均为 none，路由分组筛选正常；树标题恢复完整 code，表格增加自定义埋点 key 列。未覆盖页面树样式，未改全局主题。此次仅模板/展示字段变动，Vue 编译及差异检查通过，不重复全量构建。
+
+文档管理工具栏沿用产品列表的 `BatchDropdown`：页面挂载时自动读取注册点位与配置，移除手动扫描按钮；“启用全部已配置文档 / 批量启用 / 批量禁用”统一放入批量操作下拉菜单。未选择已配置项时批量启禁置灰，请求期间所有批量动作禁用，继续沿用原保存权限和单次 Map 写回。验证自动展示清单、菜单状态及已有批量回归。
+
+工具栏验收：文档管理 9 项定向测试、Vue 编译、差异检查通过。真实页面自动展示 16 个点位且无扫描按钮；未勾选时批量启禁置灰，勾选唯一已配置项后两项均可用，下拉外观复用 BatchDropdown；此次只验证菜单状态，未执行配置写入。
+
+批量交互调整：默认不传 rowSelection，不显示勾选框；通过 BatchDropdown 的 isCheck/selected 契约，选择批量启用或禁用后再显示勾选框和执行按钮，未选择项时执行按钮禁用，重置退出并清空选择。启用全部已配置文档仍直接执行，无需进入勾选模式。
+
+管理表格仅已配置项显示预览；禁用不清除正文，因此仍可预览。未配置项只显示配置操作，编辑抽屉的草稿预览保留。
+
+最终交互验收：默认 0 个勾选框，仅已配置项显示预览；选择批量禁用后显示勾选框，未选择时执行按钮禁用，勾选后可用，重选退出后恢复 0 个勾选框。真实产品分组已显示三种设备类型属于“产品 / 新增、编辑”，同步缓存属于“产品 / 列表”；左树分组和已有配置身份保持不变。管理 10 项及 core helper 13 项测试通过，未操作实际启禁。
+
+交付复核（2026-11-16）：认证、公共帮助、设备接入/地图与空间相关定向回归合计 126 项通过；三模块联合生产构建通过（54.17 秒），此前 PageBack 缺失阻塞未复现。点位注册表的位置标签类型已修正，公共帮助 13 项复验通过。全量类型检查仍未通过，保留 Draft；未配置独立 lint 脚本，新点位真实悬停仍未逐项验收。线上 JSON 写回方案仍未实施，当前交付继续使用既有系统配置 Map。

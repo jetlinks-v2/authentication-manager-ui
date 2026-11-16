@@ -2,6 +2,8 @@
 
 ## 当前入口与组件边界
 
+资源仪表盘帮助埋点：在设备分布、设备上报消息、视觉任务指标排行标题后复用 `DocumentHelp`，对应 `code=resources/Dashboard`、`key=dashboard.deviceDistribution / dashboard.deviceMessages / dashboard.visionRanking`。模块启动时由 `views/resources/Dashboard/documentHelpPoints.ts` 注册三项，文档管理不必先访问该页面即可扫描；说明与启用状态沿用平台配置，未配置或禁用不显示问号。仅增加帮助入口，不改变指标取数、地图和筛选行为。设备消息及视觉排行 SFC 编译、三点位注册标识检查通过，`node --test tests/visionTaskRanking.test.mjs tests/documentManagement.test.mjs` 共 34 项通过；地图标题与真实页面由主任务继续验收，真实说明需在文档管理中配置并启用。
+
 `views/resources/Dashboard/index.vue` 统一进入 `ResourceDashboardPage.vue`，由 `useResourcePage.ts` 根据部署与授权装配显式组件目录。页面只对设备地图复用 core 的按需 discovery；旧 `LegacyResourceDashboard.vue`、`useResourceDashboard.ts`、旧默认布局、未被现用页面复用的组件及其注册清单、配置面板和素材已移除。
 
 `visDashboard/ResourceCenter` 保留新页面实际复用的节点状态、节点表格、视觉任务排行、空态和相应查询/样式。历史数字卡、快速开始、静态分布与流量排行不再提供独立组件入口。当前按账号/项目/API/应用隔离的布局键保持不变；`resourceLayoutStorage.ts` 仅维护地图与离线列表组合卡的同范围迁移，不读取旧版整页画布缓存。下文历史章节中的旧组件路径及当时验证记录不代表当前实现。
