@@ -15,7 +15,7 @@
 
 当前能力核查：本地 2.20 io-component 依赖源码中的 `POST /file/upload` 新建文件；`PUT /file/update/{id}` 只更新属性；系统文件上传使用 `CREATE_NEW`，已有文件不能覆盖。现有上传接口不能直接完成同一 JSON 的内容更新，此结论来自依赖源码，未验证运行中服务。
 
-范围与步骤：确定支持覆盖的文件写入入口（复用部署已有可写文件地址，或增加最小受控 JSON 文件读写接口）。之后改接管理页和 helper 的读写链路，删除 auth 模块帮助配置 Entity、数据库 Service、Controller、DTO、专用测试和文案，更新对应文档。
+范围与步骤：确定支持覆盖的文件写入入口（复用部署已有可写文件地址，或增加最小受控 JSON 文件读写接口）。之后改接管理页和 helper 的读写链路，更新对应文档。当前复用系统配置，不存在本次新增的专用后端 Entity、Service、Controller 或数据表需要删除。
 
 边界与待决项：浏览器可修改 JSON 内容，但服务器必须提供写入能力才能覆盖线上文件；普通静态 GET 地址不代表支持保存。保留运营端 `ui/`、文档中心浮窗、静态说明/链接及 Markdown 清洗规则。文件存放位置、稳定地址和写入权限待核查后确定；已存数据库内容若需保留，应先导出，当前未读取或删除部署数据。
 
@@ -23,13 +23,13 @@
 
 已确认方案：运行时「系统设置 → 平台设置 → 文档管理」采用左侧范围筛选、右侧埋点表格。左侧复用空间、设备页的 `AutoTree`，开启 `show-line={showLeafIcon:false}`，通过节点标题展示名称、路由 code 与数量，不定制 title 插槽或覆盖树样式；顶部并列全部 / 已配置 / 未配置，下方按路由 code 分组，不把路由嵌套在配置状态下。点位由模块启动时显式注册，扫描读取所有已加载模块的注册清单，不依赖先访问业务页面。右侧支持筛选、配置与真实 helper 气泡预览。
 
-范围：`runtime-ui/modules/authentication-manager-ui` 负责页面、菜单、概览六个点位注册、全局搜索移除文档扩展；`runtime-ui/jetlinks-web-core` 提供点位注册和配置内容渲染；`modules/authentication-manager` 持久化配置并校验管理权限。管理接口与普通用户读取分离，平台级配置不绑定当前项目。沿用现有文档中心入口，不改运营端 `ui/`，不修改文档站或 API Key。
+范围：`runtime-ui/modules/authentication-manager-ui` 负责页面、菜单、概览六个点位注册、全局搜索移除文档扩展；`runtime-ui/jetlinks-web-core` 提供点位注册和配置内容渲染；后端 auth 复用既有系统配置能力持久化并校验保存权限，本次没有后端模块代码变更。读取与保存沿用同一 scope 的既有 GET/POST 接口，平台级配置不绑定当前项目。沿用现有文档中心入口，不改运营端 `ui/`，不修改文档站或 API Key。
 
 步骤与验证：先确定 code + key 唯一标识和接口字段，再配套实现配置保存 / 列表合并 / helper 读取。帮助说明保存 Markdown，链接直接嵌入说明，不提供单独文档地址；HTML 输出净化后渲染。空说明视为未配置。验证扫描不覆盖内容、保存失败保留草稿、保存后刷新和 helper 重开显示新内容、菜单筛选不再发起文档搜索、未授权用户不能管理但能读取帮助。最后运行定向回归、类型检查、模块构建与真实浏览器验收，回填结果。
 
-主页搜索仅检索功能菜单：已移除关键词搜索组件 `DocumentSearch.vue`、`useDocumentSearch.ts`、`api/system/document.ts` 及专用文案，后端对应的关键词和标签搜索入口同步清理。顶栏文档中心浮窗、`DocumentHelp` 的平台配置说明与静态内容继续保留，core 三语占位文案仅说明功能搜索。
+主页搜索仅检索功能菜单：已移除关键词搜索组件 `DocumentSearch.vue`、`useDocumentSearch.ts`、`api/system/document.ts` 及专用文案；这些是开发过程中放弃的前端搜索方案，本次交付不包含后端搜索代码删除。顶栏文档中心浮窗、`DocumentHelp` 的平台配置说明与静态内容继续保留，core 三语占位文案仅说明功能搜索。
 
-清理验证：core `node --test tests/documentHelp.test.mjs` 11 项通过，auth `node --test tests/documentCenter.test.mjs` 9 项通过，覆盖平台配置帮助、静态说明与文档浮窗。运行时旧搜索接口、hook 及函数无残留引用，三语 JSON 与差异空白检查通过；模块构建 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过；`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 仍有 577 项工作区诊断，修改的帮助组件及 API 无诊断。未配置独立 lint 脚本；服务未重启，真实页面待部署后复验。
+清理验证：core `node --test tests/documentHelp.test.mjs` 11 项通过，auth `node --test tests/documentCenter.test.mjs` 9 项通过，覆盖平台配置帮助、静态说明与文档浮窗。运行时前端旧文档搜索请求、hook 及函数无残留引用，三语 JSON 与差异空白检查通过；模块构建 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过；`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 仍有 577 项工作区诊断，修改的帮助组件及 API 无诊断。未配置独立 lint 脚本；服务未重启，真实页面待部署后复验。
 
 启用状态与批量操作：配置列表继续扫描完整注册表，已配置/未配置筛选仅依据说明是否为空；表格展示功能位置、埋点 key、所属页面、配置状态和操作，状态显示未配置/已启用/已禁用，正文只通过预览查看；保存 `{code,key,content,enabled}`，支持禁用保留说明和再次启用。业务 helper 在挂载时预加载配置，仅在有说明且启用时显示问号；静态说明和管理页预览保持可用。保存后通知已挂载 helper 更新。支持勾选批量启用/禁用及启用全部已配置文档，批量接口一次更新单条 Map；未配置项不可勾选。左右布局、表格零水平内边距与上留白对齐数据字典页面。提前加载正文，避免首次悬停从加载文案切换到正文造成位置跳变。验证未配置/禁用隐藏、扫描保留、编辑保存和状态切换，以及真实页面首次 hover。
 
@@ -1371,13 +1371,23 @@ URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显�
 
 ## 功能点文档帮助
 
+### 配置接口与后端边界
+
+文档管理复用平台图标（`front`）和 base-path（`paths`）使用的既有系统配置能力，全部帮助说明和启用状态以 Map 保存在 `scope=document-help` 的单条 `s_config` 记录中。读写入口为 `GET /system/config/document-help` 与 `POST /system/config/document-help`；保存沿用 `system_config:save` 权限，读取沿用系统配置接口的登录访问规则，不新增项目资产授权。
+
+本认证前端仓库维护管理页面和保存流程，Web Core 仓库维护帮助配置读取与显隐；单点编辑和批量启禁均由前端更新 Map 后一次保存，不改变 `front/paths` 的配置。后端 `authentication-manager` 本次没有代码变更，不新增 Entity、Service、Controller、DTO、专用数据表或测试；启禁帮助配置不要求重启 auth。文档中心地址的部署配置仍按上文单独处理。
+
+此前专用后端配置、搜索实现及其测试和搜索返回数量属于已放弃方案，不作为当前功能或验证证据。当前方案以前端配置读写契约测试及页面验收为准；没有操作数据库或删除可能存在的历史表。文档系统说明统一维护在本前端仓库，后端不保留本次文档改动。
+
+### 帮助显示与管理
+
 core 的 `DocumentHelp` 支持纯说明、复杂内容插槽与按 `code/helpKey` 读取平台配置。模块在启动入口调用 `registerDocumentHelpPoints` 声明点位；管理页面读取完整注册表，按 `code + key` 合并已保存配置，不依赖业务页面是否已打开。概览六个点位见 `docs/project-overview.md`。
 
 `views/system/DocumentManagement/` 复用 `EqualHeightColumns`、`AutoTree`、`JProTable`、`ConditionFilter`、`JlDrawerShell`、`MarkdownEditor`。帮助说明只保存 Markdown，链接直接嵌入正文；预览复用 helper 的 `MarkdownPreview`，净化 HTML 后显示列表、表格与蓝色链接。表格和正文使用相同字号。保存失败保留草稿；空白说明清除配置，挂载和返回页面时预加载配置，管理保存后通知已挂载 helper 重新读取。未配置或已禁用的业务入口不显示问号。
 
 读写直接复用 auth 已有 `GET /system/config/document-help`、`POST /system/config/document-help`。配置为一份 `{[id]: {code,key,content,enabled}}` Map，存放在既有 `s_config` 的 `document-help` scope 一条记录中；保存先读取最新 Map，保留其他点位与已有存储 key，再一次写回。批量启禁同样只更新 Map 中的 enabled 字段。管理保存沿用 `system_config:save` 权限；页面菜单为 `system/DocumentManagement`，已有环境需同步菜单权限映射。普通 helper 从同一配置读取并按 code/key 匹配，前端决定显隐。平台配置不随项目或租户域切换，正文不经过文档搜索服务，不新增帮助专用后端接口、表或启禁接口，无需为此次启禁改造重启 auth。
 
-验证结果：auth UI 的 `tests/documentManagement.test.mjs`、`tests/quickGuideView.test.mjs`、`tests/documentCenter.test.mjs` 合计 22 项通过；core 的 `tests/documentHelp.test.mjs` 11 项通过。目标模块生产构建通过；全量类型检查仍有 577 项工作区既有诊断，本次新增文件无诊断，未配置独立 lint 脚本。后端原始 POM 的生产与测试源码编译及 7 项配置服务 / Controller 定向测试通过。真实运行时已保存文档管理菜单，用户菜单树已返回该入口；随后本地 auth 停止，概览和菜单接口也不可用，用户将自行重启。后续实际环境复验：菜单接口恢复后仍出现内容区空白，读取 Vite 实际返回的 authentication-manager-ui/index.ts 发现 import.meta.glob 的缓存清单没有新增的 DocumentManagement 页面；触发模块入口重新编译后清单包含新页面，刷新同一路径已显示左侧全部/已配置/未配置/概览分组及右侧 6 个埋点，控制台无错误。此问题为开发服务路由清单未更新，不涉及后端配置或权限。保存回读、刷新保留、概览 helper 渲染和筛选交互仍待进一步验收。
+验证结果：auth UI 的 `tests/documentManagement.test.mjs`、`tests/quickGuideView.test.mjs`、`tests/documentCenter.test.mjs` 合计 22 项通过；core 的 `tests/documentHelp.test.mjs` 11 项通过。目标模块生产构建通过；全量类型检查仍有 577 项工作区既有诊断，本次新增文件无诊断，未配置独立 lint 脚本。此前专用后端方案的编译和 7 项定向测试不再作为当前交付证据；当前复用通用系统配置，本次没有后端模块代码变更。真实运行时已保存文档管理菜单，用户菜单树已返回该入口；随后本地 auth 停止，概览和菜单接口也不可用，用户将自行重启。后续实际环境复验：菜单接口恢复后仍出现内容区空白，读取 Vite 实际返回的 authentication-manager-ui/index.ts 发现 import.meta.glob 的缓存清单没有新增的 DocumentManagement 页面；触发模块入口重新编译后清单包含新页面，刷新同一路径已显示左侧全部/已配置/未配置/概览分组及右侧 6 个埋点，控制台无错误。此问题为开发服务路由清单未更新，不涉及后端配置或权限。保存回读、刷新保留、概览 helper 渲染和筛选交互仍待进一步验收。
 
 当前配置链路验证：auth UI 24 项、core helper 13 项定向测试通过。实际运行环境通过既有配置接口完成勾选批量禁用，概览问号变为 0；启用全部已配置文档后状态恢复，正文保留，未配置的点位仍可扫描。无需重启 auth。此前专用帮助后端测试及待重启验收结论已被现有通用配置方案替代。实际悬停直接呈现正文及蓝色链接，未验证逐帧动画。
 
