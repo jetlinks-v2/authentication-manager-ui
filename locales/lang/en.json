@@ -3342,7 +3342,6 @@
   "Role.application.templateLoadFailed": "Failed to load the application template. Permission configuration is unavailable.",
   "Role.application.rolesLoadFailed": "Failed to load roles",
   "Role.application.saveFailed": "Failed to save the role. Please try again.",
-  "Role.application.permissionContext": "Application: {application} · Role: {role}",
   "Role.application.inheritedDataPermissions": "Inherited from application template (read-only)",
   "Role.application.externalPermissions": "Menu permissions are unavailable for third-party applications",
   "Role.application.applicationData": "Current application's data",

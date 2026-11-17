@@ -16,9 +16,6 @@
             </a-alert>
             <a-spin v-else-if="loading" />
             <template v-else-if="detail">
-              <p v-if="application" class="role-detail__application">
-                {{ $t('Role.application.permissionContext', { application: application.application.name, role: application.role.name }) }}
-              </p>
               <User v-if="activeKey === 'user'" :key="detail.kind === 'global' ? detail.role.id : detail.context.role.id"
                 :role-id="detail.kind === 'global' ? detail.role.id : detail.context.role.id" :application-id="application?.scope.applicationId" />
               <Permission v-else :key="detail.kind === 'global' ? detail.role.id : detail.context.role.id" :application="application" />
@@ -51,11 +48,6 @@ const { detail, application, loading, error, activeKey, tabs, load } = useRoleDe
    */
   flex: 0 1 auto;
   overflow: hidden;
-
-  &__application {
-    margin: 0 0 var(--space-3);
-    color: var(--text-color-secondary);
-  }
 
   &__content {
     display: flex;

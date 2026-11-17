@@ -3342,7 +3342,6 @@
   "Role.application.templateLoadFailed": "アプリのテンプレートを読み込めないため、権限を設定できません",
   "Role.application.rolesLoadFailed": "ロール一覧を読み込めませんでした",
   "Role.application.saveFailed": "ロールを保存できませんでした。もう一度お試しください。",
-  "Role.application.permissionContext": "所属アプリ：{application} · ロール：{role}",
   "Role.application.inheritedDataPermissions": "アプリテンプレートから継承（読み取り専用）",
   "Role.application.externalPermissions": "サードパーティアプリではメニュー権限を設定できません",
   "Role.application.applicationData": "現在のアプリケーションのデータ",
