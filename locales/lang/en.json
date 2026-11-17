@@ -2810,6 +2810,7 @@
   "EmptyCreate.names.dictionaries": "dictionaries",
   "EmptyCreate.names.regions": "regions",
   "ProjectApplication.role.permissionLoadFailed": "Failed to load menu permissions. Please retry.",
+  "ProjectApplication.role.excludedMenus": "These pages were excluded because their template asset permissions exceed your grantable scope: {names}",
   "ThirdPartyApplication.direct.credentialsTab": "Credentials",
   "ThirdPartyApplication.direct.guideTab": "Integration guide",
   "ThirdPartyApplication.direct.debugTab": "Integration debugger",

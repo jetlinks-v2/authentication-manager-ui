@@ -2822,6 +2822,7 @@
   "EmptyCreate.names.dictionaries": "辞書",
   "EmptyCreate.names.regions": "エリア",
   "ProjectApplication.role.permissionLoadFailed": "メニューの権限の読み込みに失敗しました。再試行してください。",
+  "ProjectApplication.role.excludedMenus": "次のページは、テンプレートのアセット権限が付与可能な範囲を超えているため、権限の対象から除外されました：{names}",
   "ThirdPartyApplication.direct.credentialsTab": "認証情報へのアクセス",
   "ThirdPartyApplication.direct.guideTab": "接続説明",
   "ThirdPartyApplication.direct.debugTab": "接続デバッグ",

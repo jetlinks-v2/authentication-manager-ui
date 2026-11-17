@@ -54,13 +54,17 @@
           <a-alert v-if="permissionError" type="error" show-icon :message="$t('ProjectApplication.role.permissionLoadFailed')">
             <template #action><a-button size="small" @click="loadPermissions">{{ $t('ProjectApplication.list.retry') }}</a-button></template>
           </a-alert>
-          <MenuAssetPermissionEditor v-else
-            class="permission-editor"
-            :context="editor"
-            :columns="columns"
-            :show-asset-permissions="false"
-            height="32rem"
-          />
+          <template v-else>
+            <a-alert v-if="excludedMenuNames" class="permission-exclusions" type="warning" show-icon
+              :message="$t('ProjectApplication.role.excludedMenus', { names: excludedMenuNames })" />
+            <MenuAssetPermissionEditor
+              class="permission-editor"
+              :context="editor"
+              :columns="columns"
+              :show-asset-permissions="false"
+              height="32rem"
+            />
+          </template>
         </a-spin>
       </main>
     </div>
@@ -102,7 +106,7 @@ const emits = defineEmits<{
 }>()
 const { t: $t } = useI18n()
 const { activeRoleId, roleModalOpen, editingRoleId, formRef, form, permissionLoading, permissionError,
-  savingPermissions, initialized, editor, activeRole, memberCount, columns, rules, savePermissions,
+  savingPermissions, initialized, excludedMenuNames, editor, activeRole, memberCount, columns, rules, savePermissions,
   openRole, confirmRole, loadPermissions } = useApplicationRoleManagement(props, (draft, id) => emits('save-role', draft, id))
 </script>
 
@@ -132,6 +136,7 @@ const { activeRoleId, roleModalOpen, editingRoleId, formRef, form, permissionLoa
 .permission-title h3 { margin: 0; color: var(--ink-1); font-size: var(--fs-15); }
 .permission-title span { color: var(--ink-3); font-size: var(--fs-12); }
 .permission-editor { flex: 1; min-height: 0; }
+.permission-exclusions { margin: 0 var(--space-4) var(--space-3); }
 .permission-panel :deep(.equal-height-columns) { gap: 0; }
 .permission-panel :deep(.permission-pane) { border: 0; border-radius: 0; }
 .permission-panel :deep(.equal-height-columns__pane + .equal-height-columns__pane) { border-left: 1px solid var(--line); }

@@ -2810,6 +2810,7 @@
   "EmptyCreate.names.dictionaries": "字典",
   "EmptyCreate.names.regions": "区域",
   "ProjectApplication.role.permissionLoadFailed": "菜单权限加载失败，请重试",
+  "ProjectApplication.role.excludedMenus": "以下页面的模板资产权限超出当前可授权范围，已从授权范围排除：{names}",
   "ThirdPartyApplication.direct.credentialsTab": "接入凭据",
   "ThirdPartyApplication.direct.guideTab": "接入说明",
   "ThirdPartyApplication.direct.debugTab": "接入调试",

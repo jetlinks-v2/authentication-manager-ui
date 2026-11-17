@@ -7,20 +7,23 @@ import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
 import { getAssetsType as queryAssetTypes } from '@authentication-manager-ui/api/system/menu'
 import {
   normalizeAssetTypeNames,
+  normalizeGrantableAssets,
   unwrapResult,
 } from '../../../Template/Save/menu-config.shared'
 import {
   buildApplicationRoleMenuQuery,
   buildApplicationRolePermissionGrant,
+  resolveApplicationRoleMenuCandidates,
   resolveApplicationRolePermissionScope,
 } from '../../applicationRolePermissionScope'
+import type { ApplicationRolePermissionScopeInput } from '../../applicationRolePermissionScope'
 import type { ApplicationRole, ApplicationRoleDraft, ApplicationUser } from '../../types'
 import {
   getBusinessApplicationTemplateMenus,
   getBusinessApplicationRoleMenuGrantDetail,
   saveBusinessApplicationRoleMenuGrant,
 } from '@authentication-manager-ui/api/application-center/businessApplication'
-import { getCurrentUserMenuTree } from '@authentication-manager-ui/api/application-center/applicationTemplate'
+import { getCurrentUserMenuTree, getGrantableAssetAccesses } from '@authentication-manager-ui/api/application-center/applicationTemplate'
 
 interface GrantDetail {
   menus?: MenuPermissionNode[]
@@ -32,7 +35,7 @@ export interface ApplicationRoleScope { applicationId: string; templateId: strin
 /**
  * 管理应用内角色及其授权编辑器。
  *
- * 菜单候选取用户与模板交集，资产策略继承模板；保存前再次读取，避免页面长期打开后提交过期策略。
+ * 菜单及资产策略均受模板和操作者可授权范围限制；保存前再次读取，避免提交过期策略。
  */
 export function useApplicationRoleManagement(
   props: { roles: ApplicationRole[]; users: ApplicationUser[]; scope: ApplicationRoleScope },
@@ -48,6 +51,8 @@ export function useApplicationRoleManagement(
   const permissionError = ref(false)
   const savingPermissions = ref(false)
   const initialized = ref(false)
+  const excludedMenus = ref<Pick<MenuPermissionNode, 'id' | 'name' | 'i18nName'>[]>([])
+  const excludedMenuNames = computed(() => excludedMenus.value.map(menu => menu.i18nName || menu.name || menu.id).join(', '))
   const editor = useMenuAssetPermissionEditor({ defaultSupportIds: ['creator'] })
 
   const activeRole = computed(() => props.roles.find(item => item.id === activeRoleId.value))
@@ -60,11 +65,14 @@ export function useApplicationRoleManagement(
   let loadSequence = 0
   let disposed = false
   let loadedAssetTypes: AssetTypeName[] = []
+  let loadedRoleMenus: MenuPermissionNode[] = []
   onScopeDispose(() => { disposed = true; loadSequence++ })
 
   const clearPermissions = () => {
     initialized.value = false
     permissionLoading.value = false
+    loadedRoleMenus = []
+    excludedMenus.value = []
     editor.reset({ menus: [], assetTypes: [] })
   }
 
@@ -80,6 +88,14 @@ export function useApplicationRoleManagement(
     return normalizeAssetTypeNames(response)
   }
 
+  /** 可授权范围必须来自独立接口；空菜单跳过请求，空响应保持显式无权限。 */
+  const loadPermissionScope = async (input: Omit<ApplicationRolePermissionScopeInput, 'grantableAssets'>) => {
+    const menus = resolveApplicationRoleMenuCandidates(input).filter(menu => menu.granted)
+    const response = menus.length ? await getGrantableAssetAccesses(menus) : []
+    assertSuccess(response, [])
+    return resolveApplicationRolePermissionScope({ ...input, grantableAssets: normalizeGrantableAssets(response) })
+  }
+
   const loadPermissions = async () => {
     const sequence = ++loadSequence
     if (props.scope.isExternal || !activeRoleId.value || !props.scope.applicationId || !props.scope.templateId) {
@@ -89,6 +105,7 @@ export function useApplicationRoleManagement(
     initialized.value = false
     permissionLoading.value = true
     permissionError.value = false
+    excludedMenus.value = []
     try {
       const [templateResponse, userMenuResponse, detailResponse, assetTypes] = await Promise.all([
         getBusinessApplicationTemplateMenus(props.scope.templateId),
@@ -100,15 +117,20 @@ export function useApplicationRoleManagement(
 
       const templateDetail = assertSuccess<GrantDetail>(templateResponse, {})
       const roleDetail = assertSuccess<GrantDetail>(detailResponse, {})
-      const permissionScope = resolveApplicationRolePermissionScope({
+      const roleMenus = Array.isArray(roleDetail.menus) ? roleDetail.menus : []
+      const permissionScope = await loadPermissionScope({
         isExternal: props.scope.isExternal,
         currentUserMenus: assertSuccess<MenuPermissionNode[]>(userMenuResponse, []),
         templateMenus: templateDetail.menus,
-        roleMenus: Array.isArray(roleDetail.menus) ? roleDetail.menus : [],
+        roleMenus,
         templateAssetAccesses: templateDetail.assetAccesses,
       })
+      if (sequence !== loadSequence) return
 
       loadedAssetTypes = assetTypes
+      // 保存原始绑定，首次加载就被排除的菜单也必须携带 owner 撤销标记。
+      loadedRoleMenus = roleMenus
+      excludedMenus.value = permissionScope.excludedMenus
       editor.reset({ ...permissionScope, assetTypes })
       initialized.value = true
     } catch {
@@ -135,7 +157,7 @@ export function useApplicationRoleManagement(
     const roleName = activeRole.value?.name || ''
     const sequence = loadSequence
     const draft = editor.getSnapshot()
-    const previousMenus = editor.flatMenus.value
+    const previousMenus = [...loadedRoleMenus, ...editor.flatMenus.value]
     // 请求期间切换角色、应用或卸载后，不把旧草稿写给新目标，也不覆盖新角色的回显。
     const isCurrent = () => !disposed && sequence === loadSequence && roleId === activeRoleId.value
       && scope.applicationId === props.scope.applicationId && scope.templateId === props.scope.templateId
@@ -148,13 +170,15 @@ export function useApplicationRoleManagement(
       ])
       if (!isCurrent()) return
       const template = assertSuccess<GrantDetail>(templateResponse, {})
-      const permissionScope = resolveApplicationRolePermissionScope({
+      const permissionScope = await loadPermissionScope({
         isExternal: scope.isExternal,
         currentUserMenus: assertSuccess<MenuPermissionNode[]>(userMenuResponse, []),
         templateMenus: template.menus,
         templateAssetAccesses: template.assetAccesses,
         roleMenus: draft.menus,
       })
+      if (!isCurrent()) return
+      excludedMenus.value = permissionScope.excludedMenus
       editor.reset({ ...permissionScope, assetTypes: loadedAssetTypes })
       const payload = buildApplicationRolePermissionGrant(editor.getSnapshot(), permissionScope, previousMenus)
       const response = await saveBusinessApplicationRoleMenuGrant(
@@ -188,6 +212,6 @@ export function useApplicationRoleManagement(
   }
 
   return { activeRoleId, roleModalOpen, editingRoleId, formRef, form, permissionLoading, permissionError,
-    savingPermissions, initialized, editor, activeRole, memberCount, columns, rules, savePermissions,
+    savingPermissions, initialized, excludedMenuNames, editor, activeRole, memberCount, columns, rules, savePermissions,
     openRole, confirmRole, loadPermissions }
 }
