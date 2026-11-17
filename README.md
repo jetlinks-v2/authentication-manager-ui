@@ -37,7 +37,9 @@
 
 当前实现与范围：运行时文档配置支持中文、English、日本語正文，配套接通编辑、预览、保存与业务帮助展示。`views/system/DocumentManagement/` 和 `api/system/documentHelp.ts` 负责配置管理，`runtime-ui/jetlinks-web-core/src/api/document.ts` 与 `src/hooks/useConfiguredDocumentHelp.ts` 负责配置契约和按界面语言展示。
 
-参考与交互：沿用 `views/application-center/Template/Save/DocumentPane.vue` 的 Markdown 编辑器工具栏语言切换方式，扩展为 `zh/en/ja`。三语保留独立草稿，切换不丢内容，预览当前编辑语言，一次保存所有语言；启用状态仍按点位统一控制。
+参考与交互：参照公告正文编辑的 Ant Design 语言页签，在 Markdown 编辑器上方独立展示中文、English、日本語（`zh/en/ja`），语言选择不占用编辑器格式工具栏。三语保留独立编辑器和草稿，切换不丢内容，预览当前编辑语言，一次保存所有语言；保存期间禁用语言页签，启用状态仍按点位统一控制。
+
+页签位置调整验证：文档管理 23 项定向回归、页面模板/脚本/样式编译及 `git diff --check` 通过。此次仅移除工具栏语言插槽、恢复编辑器上方原生页签，不改变三语草稿和保存链路；未重复全量构建或类型检查，真实页面外观待验收。
 
 存储与兼容：沿用现有 `GET/POST /system/config/document-help` 配置 Map，增加可选的 `i18nMessages.content.{zh,en,ja}`，保留 `content` 作为兼容默认正文。旧正文在打开配置抽屉时的界面语言编辑框中回显，该语言正文修改时同步默认正文，不自动认定旧正文属于中文或生成翻译。业务帮助优先当前界面语言，兼容 `zh-CN/zh_CN` 等主语言写法，缺译时回退默认正文；切换语言直接解析已加载配置，不重复请求。任一语言或默认正文非空即为已配置；全部清空才移除配置。编辑、单点启禁与批量启禁均保留其他语言及其他点位内容。
 

@@ -62,13 +62,9 @@
             <a-switch v-model:checked="draftEnabled" :disabled="saving" :checked-children="t('DocumentManagement.enabled')" :un-checked-children="t('DocumentManagement.disabled')" />
           </a-form-item>
           <a-form-item :label="t('DocumentManagement.description')" :help="t('DocumentManagement.markdownHint')">
-            <a-tabs v-model:active-key="activeLanguage" class="document-language-panes">
-              <a-tab-pane v-for="language in languages" :key="language.value" :tab="language.label">
-                <MarkdownEditor :model-value="draftContent(language.value)" :sanitize="sanitizeHelpMarkdown" :disabled="saving" :show-upload-file-toolbar="false" :rows="8" :toolbars="toolbars" @update:model-value="updateDraft(language.value, $event)">
-                  <template #toolbar-right>
-                    <a-segmented v-model:value="activeLanguage" :options="languages" :disabled="saving" size="small" />
-                  </template>
-                </MarkdownEditor>
+            <a-tabs v-model:active-key="activeLanguage" size="small">
+              <a-tab-pane v-for="language in languages" :key="language.value" :tab="language.label" :disabled="saving">
+                <MarkdownEditor :model-value="draftContent(language.value)" :sanitize="sanitizeHelpMarkdown" :disabled="saving" :show-upload-file-toolbar="false" :rows="8" :toolbars="toolbars" @update:model-value="updateDraft(language.value, $event)" />
               </a-tab-pane>
             </a-tabs>
           </a-form-item>
@@ -177,7 +173,6 @@ async function queryRows(params: { pageIndex?: number; pageSize?: number }) {
 .document-list__body { flex: 1; min-height: 0; }
 .document-list__body :deep(.ant-spin-container) { height: 100%; }
 .document-filter { width: 15rem; max-width: 100%; }
-.document-language-panes :deep(> .ant-tabs-nav) { display: none; }
 .help-preview { margin-block: var(--space-6); }
 .help-preview__sample { display: flex; align-items: center; gap: var(--space-1); margin-top: var(--space-3); padding: var(--space-4); background: var(--jet-theme-bg-layout); border-radius: var(--r-2); }
 </style>
