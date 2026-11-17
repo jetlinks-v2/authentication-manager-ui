@@ -45,6 +45,8 @@
 
 存储契约核查：本地 `common-component:2.20.0-SNAPSHOT` 依赖源码的 `SystemConfigManagerController#saveConfig` 接收 `Map<String,Object>`，`SimpleConfigManager#setProperties` 原样保存，`ConfigEntity.properties` 使用 JSON 编解码，未筛除嵌套语言字段；本轮无需修改后端。此为本地依赖事实，部署版本与实际保存回读仍需环境验收。
 
+三语交付入口：core 实现 `622424d`，延续 [Web Core #243](https://github.com/jetlinks-v2/jetlinks-web-core/pull/243)；管理实现 `c1bf007`，延续 [认证 #165](https://github.com/jetlinks-v2/authentication-manager-ui/pull/165)。两者目标均为 `2.20`，保持 Draft，不新增聚合仓库指针 PR。
+
 验证结果：认证模块 `node --test tests/documentManagement.test.mjs tests/quickGuideView.test.mjs tests/documentCenter.test.mjs` 38 项、core `node --test tests/documentHelp.test.mjs` 16 项通过，覆盖三语草稿切换与失败保留、配置 Map 序列化回读、语言归一及缺译回退、全部清空、仅翻译有内容、单点/批量启禁保留翻译、helper 保存刷新及原静态说明。`pnpm --config.verify-deps-before-run=false -F jetlinks-web-core build --outDir /private/tmp/jetlinks-document-help-i18n-build -- --module-name authentication-manager-ui` 通过（34.26 秒），保留原分块体积警告；`pnpm --config.verify-deps-before-run=false exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 仍有 543 项工作区诊断，本次帮助及配置管理边界无诊断。未配置独立 lint 脚本；真实浏览器三语切换、预览与部署配置服务保存回读待验收，保持 Draft。
 
 ### 在线 JSON 存储方案（待确定文件写入入口）
