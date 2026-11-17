@@ -499,7 +499,7 @@ Verification:
 
 ## System Basis Navigation Layout
 
-运行时基础配置通过 `views/system/Basis/Form.vue` 使用 core 的 `PlatformSettingsEditor`，与初始化页共享外观设置、草稿预览、地图和接口基础地址卡片。设置页逐项保存，`system/Basis:update` 控制编辑；字段注册由 core 公共入口提供，原 `fieldRegistry.ts` 兼容转导出。SaaS 自定义域名继续追加到外层 `system/basis:basic`。
+运行时基础配置通过 `views/system/Basis/Form.vue` 使用 core 的 `PlatformSettingsEditor`，与初始化页共享外观设置、草稿预览、地图和接口基础地址卡片。设置页外观和地图按区块页内编辑、取消和保存，接口基础地址继续逐项保存；`system/Basis:update` 控制编辑；字段注册由 core 公共入口提供，原 `fieldRegistry.ts` 兼容转导出。SaaS 自定义域名继续追加到外层 `system/basis:basic`。
 
 已有 `front.layout`、`layoutVariant`、`headerTheme` 以及扩展配置在保存时保留。当前页面不再提供菜单布局和主题编辑器；共享 system store 仍按既有规则应用布局，缺失或非法值回退 `side`。契约与验证结果集中维护于 [core 页面说明](../../jetlinks-web-core/src/views/README.md#基础配置与初始化共享布局)。
 
@@ -886,6 +886,10 @@ Every created or substantially edited Vue file remains at or below 300 lines.
 
 ### 应用模板详情布局
 
+接口错误提示去重：`Save/useApplicationTemplateDetail.ts` 和 `Save/useApplicationTemplateMenuConfig.ts` 的详情加载、权限选项加载、权限加载及保存失败均由 Web Core 请求层的右上角 notification 展示，不再调用 `onlyMessage` 重复弹出居中错误。保留成功反馈、本地校验、权限页错误状态与重试、保存失败草稿及 loading 复位；公共请求层和其他业务页面保持原行为。
+
+去重验证：本模块执行 `node --test tests/applicationTemplateBasicInfo.test.mjs tests/applicationTemplateMenuConfig.test.mjs tests/applicationTemplateParameters.test.mjs`，57 项通过；`git diff --check` 通过。在 `runtime-ui` 执行 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false`，与空菜单修复后的基线均为 543 项既有诊断，归一化行列号后完全一致，两个修改的 hook 无诊断；完整类型检查仍需清理既有问题后重跑。工作区和模块无独立 lint 脚本。在 `runtime-ui/jetlinks-web-core` 执行 `node --max_old_space_size=8192 ../node_modules/vite/bin/vite.js build --outDir /tmp/jetlinks-template-error-notification-build -- --module-name authentication-manager-ui`，生产构建通过（56.65 秒），保留既有构建告警。真实 403 场景本轮未重新触发，仍需在对应账号验证仅显示统一 notification；未提交真实配置或授权变更。
+
 目标与范围：运行时 `runtime-ui/modules/authentication-manager-ui/views/application-center/Template/Save/` 对齐设备详情页 `modules/device-manager-ui/views/device/list/components/IotDeviceDetailView.vue`，按「返回按钮 → 模板信息 → SlantedTabs → 页签内容」排列。本次为 S 级局部布局调整，不改运营端 `ui/`、公共布局、接口、菜单、权限和保存逻辑。
 
 实现：`index.vue` 复用 `PageChrome` 将返回入口、独立摘要卡和贴合式 `SlantedTabs` 放到布局内容面板上方；`TemplateSummary.vue` 移除内嵌返回按钮和多余底部间距。文档、配置及条件展示的授权页签继续共用原有活动项和内容实例，避免布局迁移重置编辑状态。
@@ -934,6 +938,9 @@ Every created or substantially edited Vue file remains at or below 300 lines.
 
 ### 应用模板数据权限候选一致性
 
+- 菜单权限声明：`baseMenu.json` 的 `application-center/Template` 查看按钮补充 `menu/query`，编辑按钮补充 `menu/grant`，供模板权限配置查询与授权使用。发布后需同步已保存菜单及对应角色授权，再使用受限账号验证查看、编辑与保存；仅更新前端菜单定义不会自动修正既有授权。
+- 空候选加载：`views/application-center/Template/Save/useApplicationTemplateMenuConfig.ts#loadEditor` 在当前用户没有 `owner=app` 的候选菜单时跳过 `/menu/asset-accesses/grantable`，按空候选继续初始化并显示已有空状态，避免空数组请求导致 400。非空菜单及真实请求失败沿用现有流程；后端接口、授权规则和公共编辑器保持原行为。
+- 空候选验证：真实 `9201` 页面使用仅有应用模板菜单的账号，修复前权限 Tab 显示 HTTP 400，修复后刷新并切换权限 Tab，正常显示「当前项目没有可授权的应用菜单」。本模块执行 `node --test tests/applicationTemplateMenuConfig.test.mjs tests/applicationTemplateMenuPreview.test.mjs tests/applicationRolePermissionScope.test.mjs`，35 项通过；`git diff --check` 通过。在 `runtime-ui` 执行 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false`，修改前后均为 543 项既有诊断，归一化行列号后完全一致，修改的 hook 无诊断；完整类型检查仍需清理既有问题后重跑。工作区和模块无独立 lint 脚本。在 `runtime-ui/jetlinks-web-core` 执行 `node --max_old_space_size=8192 ../node_modules/vite/bin/vite.js build --outDir /tmp/jetlinks-template-empty-menus-build -- --module-name authentication-manager-ui`，生产构建通过（1 分 17 秒），保留既有构建告警；本轮未提交真实授权保存。
 - 从项目进入 runtime-ui 时，应用模板的数据权限候选以当前项目菜单为上限，首次配置、保存回显及重新打开保持一致。模板接口补齐的候选不会额外引入「全部数据」；项目菜单本身允许 `all` 时仍正常提供该选项。
 - 实现归属：`runtime-ui/modules/authentication-manager-ui/views/application-center/Template/Save/useApplicationTemplateMenuConfig.ts`。模板菜单在进入 `normalizeGrantedMenus` 前复用 `menu-config.shared.ts` 的 `filterGrantedMenuAssetAccessesByMenuScope`，已选资产权限在进入编辑器前复用 `filterAssetAccessPoliciesByMenuScope`，防止公共编辑器合并回显时扩大项目候选。公共权限编辑器、应用角色、后端接口、菜单定义及运营端 `ui/` 未改动。
 - 历史模板若已选择当前项目菜单不支持的范围，编辑器回退到当前合法的默认选项，在用户下次保存时持久化；读取模板不自动写回。`options.scopeStrategy` 从原始策略独立回显，因此过滤越界选项不会重置数据范围策略。
@@ -966,20 +973,27 @@ node --max_old_space_size=8192 --max-semi-space-size=64 -e "process.argv.push('-
 
 ### 应用列表封面与详情布局
 
+列表图片优先级修复（S，已完成）：运行时 `ProjectApplication/components/ApplicationCard.vue` 复用 `applicationModel.ts#applicationImage`，按应用配置图片 → 模板 `coverImage` → 默认封面的顺序显示；卡片正文内边距统一使用 `var(--space-4)`。失效图片沿用现有默认封面 fallback。
+
+详情图片免裁剪（S，已完成）：`ProjectApplication/Detail/components/ApplicationSettings.vue` 复用 core `FileUpload` 与现有 `uploadByRequest` 直接上传原文件，保留 JPG/PNG、2 MB 校验、草稿回显及保存字段，取消 256×256 裁剪。相邻 `useApplicationImageUpload.ts` 仅在上传成功后使用 `result.accessUrl` 更新图片，失败保留原图，取消编辑后忽略旧上传结果；`Detail/index.vue` 在上传期间显示保存等待状态，避免提交旧图片地址。共享上传组件和其他页面保持原行为。
+
 顶部图标局部调整（S，已完成）：`ApplicationSummary.vue` 从 `@jetlinks-web-core/components/IconValue` 导入 `IconValueView`，展示关联模板 `icon`，沿用模板详情的 56px 尺寸、12px 圆角与名称缺省值；下方应用图片及编辑回显保持原规则。组件契约、SFC 编译、类型增量和真实页面回显已验证。
 
-详情图片局部调整（S，已完成）：详情设置统一显示「应用图片」。`applicationModel.ts#applicationImage` 供设置查看和编辑回显共用：应用自身图片地址（沿用现有 `icon` 字段）优先，其次模板 `coverImage`，都未配置时显示现有默认封面；旧字体图标不作为图片地址。查看态复用 Ant Design Vue Image 的默认图片 fallback，并以 contain 保留完整图像。编辑态继续使用 ImageUpload，`ApplicationSettings.vue#imageModel` 的 getter 提供继承图片，setter 只在上传后更新 `draft.icon`，避免仅保存其他字段时把模板封面固化到应用。详情专属中英文／日文文案同步更新，原上传与裁剪流程保持原样，列表规则保持模板封面优先。
+详情图片局部调整（S，已完成）：详情设置统一显示「应用图片」。`applicationModel.ts#applicationImage` 供列表封面、设置查看和编辑回显共用：应用自身图片地址（沿用现有 `icon` 字段）优先，其次模板 `coverImage`，都未配置时显示现有默认封面；旧字体图标不作为图片地址。查看态复用 Ant Design Vue Image 的默认图片 fallback，并以 contain 保留完整图像。编辑态使用 FileUpload 直接上传原图，`ApplicationSettings.vue#imageModel` 的 getter 提供继承图片，setter 只在上传后更新 `draft.icon`，避免仅保存其他字段时把模板封面固化到应用。详情专属中英文／日文文案同步更新。
 
 目标与范围：运行时 `modules/authentication-manager-ui` 的 `/open/application` 列表与 `/open/application/Detail/:id` 详情。`9201` 开发服务实际运行于 `runtime-ui/jetlinks-web-core`；本轮 M 级方案已确认并实施，只调整运行时应用展示，不改变运营端 `ui/`、后端接口与数据库、公共组件、路由、菜单、权限或模板编辑流程。
 
 列表复用 Ant Design Vue Card 的封面布局：顶部图片，正文为名称、类型和单行描述，右侧复用 `TableActions` 收纳编辑与启停，底部复用 `j-badge-status` 展示状态及进入应用按钮。卡片主体和编辑菜单继续进入详情，进入应用与启停沿用原有事件和业务编排；更多菜单及底栏点击与卡片点击隔离。`ProjectApplication/index.vue` 的栅格统一行高，创建卡片随行拉伸；封面保持 2.1:1 比例并裁剪填充，名称与描述通过现有省略组件截断。
 
-封面规则：`api/application-center/businessApplication.ts` 的模板返回类型接收可空 `coverImage`，`views/application-center/ProjectApplication/applicationModel.ts#normalizeTemplate` 去除地址首尾空白后传给 `types.ts` 的模板视图。`components/ApplicationCard.vue` 只使用关联模板的 `coverImage`，缺失／空值时使用 `assets/application-cover.png`；图片加载失败继续由 Ant Design Vue Image 的 fallback 显示同一默认封面。应用与模板的 `icon` 仍用于图标，不再作为列表封面。缺失模板时，`useApplicationList.ts` 的展示兜底补齐 `layout`，保持 `ApplicationTemplate` 类型完整。默认封面沿用已有建筑插图，描述优先应用、其次模板，状态展示后端枚举 text，类型沿用 provider 规则。
+封面规则：`api/application-center/businessApplication.ts` 的模板返回类型接收可空 `coverImage`，`views/application-center/ProjectApplication/applicationModel.ts#normalizeTemplate` 去除地址首尾空白后传给 `types.ts` 的模板视图。`components/ApplicationCard.vue` 通过 `applicationImage` 优先读取应用 `icon` 中的图片地址，未配置图片或为旧字体图标时使用关联模板的 `coverImage`，两者都缺失／为空时使用 `assets/application-cover.png`；图片加载失败继续由 Ant Design Vue Image 的 fallback 显示同一默认封面。模板 `icon` 不作为列表封面。缺失模板时，`useApplicationList.ts` 的展示兜底补齐 `layout`，保持 `ApplicationTemplate` 类型完整。默认封面沿用已有建筑插图，描述优先应用、其次模板，状态展示后端枚举 text，类型沿用 provider 规则。
 
 详情参考同模块 `views/application-center/Template/Save/index.vue`，采用「独立返回入口 → 应用摘要卡 → SlantedTabs → 内容区」。`ProjectApplication/Detail/index.vue` 通过 `PageChrome` 承载返回入口、摘要和贴合式页签，下方 `FullPage` 承接滚动；复用原有 `a-tabs` 内容容器并隐藏其导航头，保留设置、成员、角色的懒挂载及切换后实例，`?tab=roles` 继续直达角色页。`Detail/components/ApplicationSummary.vue` 使用 `ContentPanel`，按名称／状态／可复制应用 ID、模板／创建时间、说明分行组织，窄屏操作区自动换行。编辑、取消、保存、同步接入信息、启停、删除和打开应用沿用原有业务处理；返回文案同步到中英文资源。相关 Vue 文件均保持在 300 行以内。
 
 验证结果：
 
+- 交付复核（2026-11-16）：本次应用图片、模板权限与错误提示改动基于 `origin/2.20` 的 `43ba5ea`，通过 `codex/application-images-template-permissions-2.20` 分支交付。在 `runtime-ui/jetlinks-web-core` 执行 `node --max_old_space_size=8192 ../node_modules/vite/bin/vite.js build --outDir /tmp/authentication-manager-ui-pr-2.20-build -- --module-name authentication-manager-ui`，最终生产构建通过（12,165 个模块，1 分 17 秒），保留既有构建告警；三个改动 SFC 的 script/template/style、四份 JSON 解析及差异空白检查通过。复用本文详情免裁剪、图片优先级及模板错误提示去重的验证记录，其中模板定向测试 57/57 通过；最后仅卡片样式发生变化，已由本次编译和构建覆盖。复核已有类型日志与基线均为 543 条诊断，归一化行列号后完全一致，改动文件无诊断；完整类型检查未通过，待清理既有问题后在 `runtime-ui` 重跑 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false`。工作区无独立 lint 脚本。真实图片上传保存、受限账号权限保存及 403 提示去重仍待登录环境验收，菜单定义发布后需同步既有菜单和角色授权。
+- 详情免裁剪验证：执行实际设置 SFC、`FileUpload`、上传工具和上传 hook，模拟文件服务确认原文件字节／文件名保持不变、访问地址回填并进入保存载荷、上传期间阻止保存、失败／异常响应保留原图、取消后重开忽略旧结果，以及类型和 2 MB 校验。两个改动 SFC 的 script/template/style 编译、差异空白检查通过，分别为 297／282 行。模块类型检查沿用下条 `vue-tsc` 命令，前后均为 543 条既有诊断，归一化行号后完全一致，改动文件无诊断；完整类型检查仍未通过。`runtime-ui/jetlinks-web-core` 中执行 `node --max_old_space_size=8192 ../node_modules/vite/bin/vite.js build --outDir /tmp/jetlinks-application-image-original-build -- --module-name authentication-manager-ui` 通过（12,165 个模块，1 分 29 秒），保留既有构建告警；无独立 lint 脚本。`9200` 浏览器提示会话过期，真实选图、预览及保存尚待重新登录后验收；本轮未上传或保存真实业务数据。
+- 列表图片优先级验证：真实 `9200` 页面中「wusl-测试」封面已从默认图片切换为应用配置图片，与详情图片地址一致，16 张卡片图片均加载成功。执行实际 `applicationImage` 确认应用图片优先、应用图片缺失／空白／旧字体图标时继承模板、两者均缺失时默认兜底五种情况；当前真实列表没有非空模板封面的继承样本。卡片 SFC 的 script/template/style 编译与 `git diff --check` 通过。`runtime-ui/` 中执行 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false`，修改前后均为 543 条既有诊断，归一化行号后完全一致，修改文件无诊断；清理既有问题后可重跑同一命令。`runtime-ui/jetlinks-web-core` 中执行 `node --max_old_space_size=8192 ../node_modules/vite/bin/vite.js build --outDir /tmp/jetlinks-application-card-image-build -- --module-name authentication-manager-ui` 通过（12,165 个模块，43.93 秒），保留原有输出选项、CSS 注释和大包告警。工作区无独立 lint 脚本；未上传或保存真实应用配置，失效远程图片的 fallback 未另外构造样本。
 - 顶部模板图标验证：`ApplicationSummary.vue` 的 script/template/scoped-style 编译及差异空白检查通过，组件为 194 行。真实 `9201` 测试应用详情顶部正常显示模板图标，下方「应用图片」继续显示模板封面。模块 `vue-tsc` 与上一轮均为 569 条既有诊断，归一化行号后完全一致，摘要组件没有诊断；完整类型检查仍未通过。本轮局部组件替换未重跑完整生产构建，上一轮构建结果见下一条；独立 lint 脚本未配置。
 - 详情图片验证：上一轮两个 SFC 的 script/template/scoped-style 编译、三种语言 JSON 及差异空白检查通过，设置组件为 289 行。真实 `9201` 测试应用的设置图片加载为 276×132 的模板图片，编辑预览也显示同一张图片。一次性执行真实 model 与设置 SFC 的脚本，验证应用图片优先、空白值／旧字体图标继承模板封面、双空值、编辑回显不改草稿、保存其他字段不固化封面、上传更新草稿及取消还原，均通过；没有提交真实保存或上传文件。`pnpm --config.verify-deps-before-run=false exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 修改前后均为 569 条既有诊断，归一化行号后完全一致。`runtime-ui/jetlinks-web-core` 中执行 `pnpm --config.verify-deps-before-run=false exec vite build --outDir /tmp/jetlinks-detail-image-build -- --module-name authentication-manager-ui` 通过（2 分 7 秒），保留原有构建告警；独立 lint 脚本仍未配置。图片失效 fallback 沿用 Ant Design Vue，未构造真实失效文件或做真实上传保存。
 - 三个 Vue 文件的 script/template/scoped-style 编译、中英文 JSON 解析及 `git diff --check` 通过。使用真实 `normalizeTemplate`、卡片 SFC、Vue SSR 和 Ant Design Vue 组件进行一次性渲染检查，覆盖模板封面与应用／模板图标同时存在、首尾空白、历史字段缺失、显式 null 及空白地址五种情况，均通过；只隔离无关的全局 i18n 和装饰组件，不请求后端，不新增持久测试文件。

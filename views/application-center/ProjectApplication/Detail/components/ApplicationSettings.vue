@@ -5,14 +5,21 @@
           <div class="setting-label">{{ $t('ProjectApplication.settings.icon') }}</div>
           <div v-if="editingModel" class="icon-edit">
             <div class="application-icon-upload">
-              <ImageUpload
-                v-model:value="imageModel"
+              <FileUpload
                 accept="image/png,image/jpeg"
                 :types="iconTypes"
-                :border-style="iconUploadBorderStyle"
-                :style="iconUploadContentStyle"
-                :cropper-props="iconCropperProps"
-              />
+                :size="2"
+                :multiple="false"
+                :max-count="1"
+                :disabled="saving || imageUploading"
+                :custom-request="uploadByRequest"
+                @upload-change="handleImageUploadChange"
+              >
+                <img :src="imageModel" :alt="application.name" class="application-image-preview" />
+              </FileUpload>
+              <div v-if="imageUploading" class="application-image-loading">
+                <AIcon type="LoadingOutlined" />
+              </div>
             </div>
             <span>{{ $t('ProjectApplication.settings.iconEditHint') }}</span>
           </div>
@@ -104,10 +111,13 @@ import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
+import { FileUpload } from '@jetlinks-web-core/components'
+import { uploadByRequest } from '@jetlinks-web-core/components/Upload/utils'
 import { createApplicationAccessDisplayUrl } from '@jetlinks-web-core/utils/application-access'
 import defaultCover from '@authentication-manager-ui/assets/application-cover.png'
 import { applicationImage } from '../../applicationModel'
 import type { ApplicationTemplate, ProjectApplication } from '../../types'
+import { useApplicationImageUpload } from '../useApplicationImageUpload'
 
 defineOptions({ name: 'ProjectApplicationSettings' })
 
@@ -142,15 +152,6 @@ const draft = reactive<SettingsDraft>({
   defaultLanguage: 'zh-CN',
 })
 const iconTypes = ['image/jpeg', 'image/png']
-const iconUploadBorderStyle = {
-  border: '1px dashed var(--line-strong)',
-  borderRadius: 'var(--r-2)',
-}
-const iconUploadContentStyle = {
-  padding: 0,
-  backgroundColor: 'var(--bg-sunken)',
-}
-const iconCropperProps = { fixedNumber: [1, 1], autoCropWidth: 256, autoCropHeight: 256 }
 
 const application = computed(() => props.data.application)
 const template = computed(() => props.data.template)
@@ -178,6 +179,7 @@ const imageModel = computed({
   get: () => applicationImage({ name: application.value.name, icon: draft.icon }, template.value) || defaultCover,
   set: value => { draft.icon = value },
 })
+const { imageUploading, handleImageUploadChange } = useApplicationImageUpload(imageModel, () => props.editing)
 const rules = computed(() => ({
   name: [
     { required: true, message: $t('ProjectApplication.create.nameRequired') },
@@ -208,6 +210,7 @@ const cancelEdit = () => {
 }
 
 const saveSettings = async () => {
+  if (imageUploading.value) return
   try {
     await formRef.value?.validate()
   } catch {
@@ -235,6 +238,7 @@ const copyApplicationUrl = async () => {
 }
 
 defineExpose({
+  imageUploading,
   startEdit,
   cancelEdit,
   saveSettings,
@@ -261,18 +265,20 @@ defineExpose({
 .application-icon-upload { display: grid; width: 3.5rem; height: 3.5rem; place-items: center; overflow: hidden; border-radius: var(--r-2); background: var(--bg-sunken); color: var(--accent); font-size: var(--fs-20); }
 
 .application-icon :deep(.ant-image-img) { width: 100%; height: 100%; object-fit: contain; }
+.application-icon-upload { position: relative; border: 1px dashed var(--line-strong); }
+.application-icon-upload :deep(.upload-file-container),
 .application-icon-upload :deep(.ant-upload-wrapper),
 .application-icon-upload :deep(.ant-upload.ant-upload-select) {
   display: block;
+  width: 100%;
+  height: 100%;
   margin: 0;
   border: 0;
   background: transparent;
 }
-.application-icon-upload :deep(.upload-image-content),
-.application-icon-upload :deep(.upload-image) {
-  border-radius: var(--r-2);
-}
-.application-icon-upload :deep(.upload-image) { object-fit: cover; }
+.application-icon-upload :deep(.ant-upload-list) { display: none; }
+.application-image-preview { display: block; width: 100%; height: 100%; object-fit: contain; cursor: pointer; }
+.application-image-loading { position: absolute; inset: 0; display: grid; place-items: center; background: var(--bg-sunken); opacity: 0.8; }
 .icon-edit { display: flex; align-items: center; gap: var(--space-3); }
 .icon-edit > span { color: var(--ink-4); font-size: var(--fs-12); }
 
