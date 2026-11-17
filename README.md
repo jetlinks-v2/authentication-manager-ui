@@ -27,6 +27,12 @@
 
 文档管理菜单使用与平台设置同级子菜单一致的 `icon-yuandian` 圆点图标，不单独显示书本图标。已有环境需同步已保存的菜单图标配置后刷新页面。
 
+列表使用说明：在 `views/system/DocumentManagement/index.vue` 的右侧范围标题下复用信息提示条，说明自动扫描文档帮助埋点、统一配置帮助内容与启用状态，以及禁用后对应页面隐藏帮助入口和文档。提示仅在“全部”（`scope === 'all'`）显示，其他分组隐藏，沿用中英日国际化，不改变扫描、保存或启禁逻辑；验证页面编译及分组切换时的提示显隐。
+
+提示条验证：`node --test tests/documentManagement.test.mjs` 11 项通过；在 `runtime-ui/` 执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过（42.29 秒），保留分块体积警告。真实运行时页面确认提示位于“全部”标题下、筛选工具栏上，蓝色信息样式及换行正常，原 16 个埋点继续显示；`git diff --check` 通过。本次仅增加提示和三语文案，未重复全量类型检查，工作区无独立 lint 脚本。
+
+显隐调整验证：真实页面逐一切换“已配置”“未配置”及六个页面分组，提示均隐藏；切回“全部”后恢复显示。此次仅增加模板条件，使用实际页面编译及九次分组切换验证，未重复全量构建与类型检查。
+
 ### 在线 JSON 存储方案（待确定文件写入入口）
 
 目标：保留文档管理页面编辑和预览，读取线上 JSON，保存时写回同一文件；帮助内容不再保存到数据库。沿用 `code/key/content` 标识与 Markdown 清洗、渲染规则。
@@ -39,7 +45,7 @@
 
 验证：覆盖线上 JSON 读取、修改后重新读取、保存失败保留草稿和原文件、权限及原帮助功能；前端定向测试、类型检查和模块构建，后端干净编译。多人覆盖与部署持久性按所选文件服务的实际能力说明，不默认增加额外存储机制。
 
-已确认方案：运行时「系统设置 → 平台设置 → 文档管理」采用左侧范围筛选、右侧埋点表格。左侧复用空间、设备页的 `AutoTree`，开启 `show-line={showLeafIcon:false}`，通过节点标题展示名称与数量；右侧分组标题按侧边菜单显示从一级菜单到当前页面的中文路径，不定制 title 插槽或覆盖树样式；顶部并列全部 / 已配置 / 未配置，下方按路由 code 分组，不把路由嵌套在配置状态下。点位由模块启动时显式注册，扫描读取所有已加载模块的注册清单，不依赖先访问业务页面。右侧支持筛选、配置与真实 helper 气泡预览。
+已确认方案：运行时「系统设置 → 平台设置 → 文档管理」采用左侧范围筛选、右侧埋点表格。左侧复用空间、设备页的 `AutoTree`，开启 `show-line={showLeafIcon:false}`，通过节点标题展示名称与数量；右侧分组标题按侧边菜单显示从一级菜单到当前页面的中文路径，不定制 title 插槽或覆盖树样式；顶部并列全部 / 已配置 / 未配置，下方按实际菜单的一级目录、二级目录、页面及登记的位置分组组织树，例如“概览 → 快速上手”。具体按钮/埋点仅在右侧表格展示，左树不展示；目录只保留含埋点的分支，页面无菜单映射时归入“其他页面”。目录、页面和位置分组显示去重后的点位数量，选中后汇总对应点位。搜索名称、路由 code 或埋点标识时保留其所属分组路径，匹配目录时保留整个分组子树。点位由模块启动时显式注册，扫描读取所有已加载模块的注册清单，不依赖先访问业务页面。右侧支持筛选、配置与真实 helper 气泡预览。
 
 范围：`runtime-ui/modules/authentication-manager-ui` 负责页面、菜单、概览六个点位注册、全局搜索移除文档扩展；`runtime-ui/jetlinks-web-core` 提供点位注册和配置内容渲染；后端 auth 复用既有系统配置能力持久化并校验保存权限，本次没有后端模块代码变更。读取与保存沿用同一 scope 的既有 GET/POST 接口，平台级配置不绑定当前项目。沿用现有文档中心入口，不改运营端 `ui/`，不修改文档站或 API Key。
 
@@ -1494,6 +1500,12 @@ core 的 `DocumentHelp` 支持纯说明、复杂内容插槽与按 `code/helpKey
 
 ### 标准树与扩展帮助点位验收
 
+当前左树展示调整：`index.vue` 生成展示节点时排除具体埋点，保留目录、页面和位置分组及计数；右侧仍按所选分组汇总点位。内部点位索引保留用于名称和标识搜索，搜索只在左树呈现所属分组路径。管理页 17 项回归、页面 Vue 脚本/模板/样式编译及差异检查通过。本次仅调整树节点展示，未重复全量类型检查或构建；浏览器工具当前不可用，实际树展开效果待页面复核。下列叶子点位展示记录属于调整前验收。
+
+页面内位置分组：概览的六个帮助点登记在“快速上手”位置，树显示“概览 → 快速上手 → 配置空间”等节点。`helpTree.ts` 在菜单页面下按注册的 `location` 聚合，位置节点沿用页面路由和后代点位筛选；不拆分展示字符串推测位置，不改变 code/key 配置身份。管理页 17 项回归通过，覆盖位置层级、计数、搜索和已有目录树；三语 JSON 解析、差异检查通过。真实页面已验证搜索 `quickGuide.space` 保留“概览 → 快速上手 → 配置空间”，选中后右侧显示完整中文路径、`/overview` 和对应单个点位。类型检查仍有 542 项工作区诊断，本次修改的文档管理及概览注册源文件无诊断；本次为位置分组调整，未重复模块构建。
+
+目录树验收：`views/system/DocumentManagement/helpTree.ts` 按实际菜单生成目录、页面和点位；`useDocumentManagement.ts` 按子树点位集合筛选，`index.vue` 负责递归展示和搜索展开。管理页 16 项定向测试通过，包含层级、计数、同名点位区分、无菜单映射和搜索保留祖先；认证模块生产构建通过。类型检查仍有 542 项工作区诊断，文档管理目录无诊断；模块未配置独立 lint 脚本，差异检查通过。真实页面已验证“资源中心 → 设备管理 → 产品列表 → 直连设备”四级树、目录汇总 76 个点位、叶子定位单行和正确编辑内容，以及按 `metadata.types.geoPoint` 搜索后保留祖先、清空恢复目录；未写入或切换实际帮助配置。当前交付验证与评审入口见本节末尾。
+
 左侧使用空间、设备页相同的 `AutoTree` 和 `show-line={showLeafIcon:false}`，避开全局无连线树的渐变规则；无页面自定义节点插槽或树样式覆盖，名称和数量由 treeData 提供，不展示路由 code；右侧标题显示实际菜单的中文层级路径，菜单不可见时使用点位注册的页面名称。选中页面分组时，中文路径下方另行显示实际菜单路由地址（例如 `/resources/devices/products`）；全部、已配置、未配置或没有对应菜单时不显示地址。真实 `192.168.32.183:9200/#/system/ps/documents` 已显示 16 个点位（原概览 6 个，本次新增/替换 10 个），已验证已配置、未配置和资源仪表盘分组筛选。新增点位未配置时不显示业务问号；设备接入弹窗的设备库模板/产品标签及产品批量菜单正常显示，三种设备类型旧问号已替换且未配置时隐藏。未改写这些新点位的帮助正文。
 
 新增点位：资源仪表盘 `resources/Dashboard` 下 `dashboard.deviceDistribution`、`dashboard.deviceMessages`、`dashboard.visionRanking`；空间配置 `space/AreaManagement` 下 `floorplan.publish`；空间态势 `space/Situation` 下 `device.keyProperties`；产品 `device/Product` 下 `deviceType.device`、`deviceType.childrenDevice`、`deviceType.gateway`、`syncCache`；设备列表 `iot-user-device-list` 下 `onboarding.libraryTemplate`。点位由各模块入口注册。
@@ -1512,6 +1524,6 @@ core 的 `DocumentHelp` 支持纯说明、复杂内容插槽与按 `code/helpKey
 
 最终交互验收：默认 0 个勾选框，仅已配置项显示预览；选择批量禁用后显示勾选框，未选择时执行按钮禁用，勾选后可用，重选退出后恢复 0 个勾选框。真实产品分组已显示三种设备类型属于“产品 / 新增、编辑”，同步缓存属于“产品 / 列表”；左树分组和已有配置身份保持不变。管理 10 项及 core helper 13 项测试通过，未操作实际启禁。
 
-交付复核（2026-11-16）：认证、公共帮助、设备接入/地图与空间相关定向回归合计 126 项通过；三模块联合生产构建通过（54.17 秒），此前 PageBack 缺失阻塞未复现。点位注册表的位置标签类型已修正，公共帮助 13 项复验通过。全量类型检查仍有 550 项诊断，保留 Draft；未配置独立 lint 脚本，新点位真实悬停仍未逐项验收。线上 JSON 写回方案仍未实施，当前交付继续使用既有系统配置 Map。
+交付复核（2026-11-17）：公共帮助 13 项、页签溢出 17 项、认证管理/概览/文档中心 32 项、设备接入/地图 26 项、设备详情/批量操作 31 项、告警 200 项、网关引导 45 项、录像来源 4 项、空间 62 项，共 430 项定向回归通过。六模块联合生产构建通过（1 分 14 秒），命令为 `pnpm --config.verify-deps-before-run=false -F jetlinks-web-core build --outDir /private/tmp/jetlinks-document-help-delivery-build -- --module-name authentication-manager-ui,device-manager-ui,edge-master-ui,jetlinks-ai-ui,jetlinks-media-ui,jetlinks-space-ui`。六模块启动注册共 100 个点位，code/key 无重复，三语标签键均存在；补齐了设备公式点位的日文标签。认证模块 `pnpm --config.verify-deps-before-run=false exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 仍有 542 项诊断，文档管理、公共帮助及注册文件无诊断；其他模块完整类型检查未重跑。当前工作区包含其他本地模块与依赖改动，联合构建不能代替干净检出的 CI。未配置独立 lint 脚本，新点位真实悬停未逐项验收，保持 Draft。线上 JSON 写回方案尚未实施，当前仍使用既有系统配置 Map。
 
 交付引用：认证实现 `4761c1f`，[认证 #165](https://github.com/jetlinks-v2/authentication-manager-ui/pull/165)；依赖 [Web Core #243](https://github.com/jetlinks-v2/jetlinks-web-core/pull/243)（`d09afe7`）；点位接入见 [设备 #404](https://github.com/jetlinks-v2/device-manager-ui/pull/404)（`ca3d9ddb`）和 [空间 #100](https://github.com/jetlinks-v2/jetlinks-space-ui/pull/100)（`6bc2971`）。均为目标 `2.20` 的 Draft PR，先集成公共能力再集成消费者。

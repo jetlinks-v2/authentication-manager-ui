@@ -8,6 +8,7 @@ import { getDocumentHelpPoints } from '@jetlinks-web-core/utils/documentHelpRegi
 import type { ConditionTerm } from '@jetlinks-web-core/components/ConditionFilter'
 import { getDocumentHelpConfigurations, saveDocumentHelpConfiguration, updateDocumentHelpEnabled, type DocumentHelpConfiguration } from '../../../api/system/documentHelp'
 import { filterHelpPoints, mergeHelpPoints, type DocumentHelpRow } from './model'
+import { buildHelpTree, filterHelpTree, findHelpTreeNode } from './helpTree'
 
 export function useDocumentManagement() {
   const { t, locale } = useI18n()
@@ -20,15 +21,19 @@ export function useDocumentManagement() {
   const current = ref<DocumentHelpRow>(), draft = ref(''), saving = ref(false), saveFailed = ref(false)
   const points = computed(() => { locale.value; revision.value; return getDocumentHelpPoints() })
   const rows = computed(() => loaded.value ? mergeHelpPoints(points.value, configurations.value) : [])
-  const filteredRows = computed(() => filterHelpPoints(rows.value, scope.value, terms.value))
+  const menuTree = computed(() => {
+    locale.value
+    return buildHelpTree(rows.value, menuStore.siderMenus as RouteRecordRaw[], t, t('DocumentManagement.otherPages'))
+  })
+  const activeNode = computed(() => findHelpTreeNode(menuTree.value, scope.value))
+  const filteredRows = computed(() => activeNode.value
+    ? filterHelpPoints(rows.value.filter(row => activeNode.value!.rowIds.includes(row.id)), 'all', terms.value)
+    : filterHelpPoints(rows.value, scope.value, terms.value))
   const nodes = computed(() => [
     { key: 'all', title: t('DocumentManagement.all'), count: rows.value.length },
     { key: 'ready', title: t('DocumentManagement.configured'), count: rows.value.filter(row => row.configured).length },
     { key: 'missing', title: t('DocumentManagement.missing'), count: rows.value.filter(row => !row.configured).length },
-    ...[...new Set(rows.value.map(row => row.code))].map(code => ({
-      key: `route:${code}`, title: points.value.find(point => point.code === code)!.page, code,
-      count: rows.value.filter(row => row.code === code).length,
-    })).filter(node => `${node.title} ${node.code}`.toLocaleLowerCase().includes(routeKeyword.value.trim().toLocaleLowerCase())),
+    ...filterHelpTree(menuTree.value, routeKeyword.value),
   ])
   function findMenuLocation(menus: RouteRecordRaw[], code: string, parents: string[] = []): { title: string; path: string } | undefined {
     for (const menu of menus) {
@@ -44,8 +49,9 @@ export function useDocumentManagement() {
     return scope.value.startsWith('route:')
       ? findMenuLocation(menuStore.siderMenus as RouteRecordRaw[], scope.value.slice(6)) : undefined
   })
-  const routePath = computed(() => menuLocation.value?.path || '')
+  const routePath = computed(() => activeNode.value?.path || menuLocation.value?.path || '')
   const title = computed(() => {
+    if (activeNode.value) return activeNode.value.breadcrumb
     if (!scope.value.startsWith('route:')) {
       return t(`DocumentManagement.${scope.value === 'ready' ? 'configured' : scope.value === 'missing' ? 'missing' : 'all'}`)
     }

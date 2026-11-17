@@ -14,6 +14,7 @@ function load(path, dependencies = {}) {
 }
 const registry = load('../../../jetlinks-web-core/src/utils/documentHelpRegistry.ts')
 const model = load('../views/system/DocumentManagement/model.ts', { '@jetlinks-web-core/utils/documentHelpRegistry': registry })
+const helpTree = load('../views/system/DocumentManagement/helpTree.ts')
 const points = [
   { code: 'page/a', key: 'shared', name: '设备接入', page: '设备' },
   { code: 'page/b', key: 'shared', name: '接入告警', page: '告警' },
@@ -68,6 +69,7 @@ function fixture(menus = []) {
     '@jetlinks-web-core/utils/documentHelpRegistry': { getDocumentHelpPoints: () => points },
     '../../../api/system/documentHelp': api,
     './model': model,
+    './helpTree': helpTree,
   })
   return { state: hook.useDocumentManagement(), calls, notices }
 }
@@ -134,6 +136,8 @@ test('module registers all six overview helpers without mounting overview', () =
   assert.equal(registered.length, 6)
   assert.deepEqual(registered.map(item => item.key), ['space', 'gateway', 'device', 'algorithm', 'alarm', 'application'].map(key => `quickGuide.${key}`))
   assert.ok(registered.every(item => item.code === 'project/Overview'))
+  assert.ok(registered.every(item => item.page() === 'DocumentManagement.overview'))
+  assert.ok(registered.every(item => item.location() === 'packages.ProjectHome.QuickGuide'))
 })
 
 test('configuration API reuses one system config Map and preserves legacy keys and other points', async () => {
@@ -203,4 +207,108 @@ test('batch changes use one request, preserve selection on failure, and refresh 
   assert.deepEqual(calls[3].state, { enabled: true, allConfigured: true, points: undefined })
   calls[3].resolve({ success: true, result: configurations }); await task
   assert.equal(state.rows.value[0].enabled, true)
+})
+
+
+const hierarchyMenus = [{
+  name: 'resources', path: '/resources', meta: { title: '资源中心' }, children: [
+    { name: 'devices', path: '/resources/devices', meta: { title: '设备管理' }, children: [
+      { name: 'page/a', path: '/resources/devices/list', meta: { title: '设备' } },
+    ] },
+    { name: 'alarms', path: '/resources/alarms', meta: { title: '告警管理' }, children: [
+      { name: 'page/b', path: '/resources/alarms/list', meta: { title: '设备' } },
+    ] },
+    { name: 'empty', path: '/resources/empty', meta: { title: '无埋点页面' } },
+  ],
+}]
+const walkTree = nodes => nodes.flatMap(node => [node, ...walkTree(node.children || [])])
+const leafIds = nodes => walkTree(nodes).filter(node => !node.children?.length).flatMap(node => node.rowIds)
+const makeHelpTree = (entries = points, menus = hierarchyMenus) => helpTree.buildHelpTree(model.mergeHelpPoints(entries, []), menus, value => value, '其它页面')
+
+test('help tree follows directory / directory / page / point with unique descendant counts', () => {
+  const tree = makeHelpTree()
+  assert.equal(tree.length, 1)
+  assert.equal(tree[0].title, '资源中心')
+  assert.equal(tree[0].count, 3)
+  assert.equal(new Set(tree[0].rowIds).size, 3)
+  assert.deepEqual(tree[0].children.map(node => node.title), ['设备管理', '告警管理'])
+  const page = tree[0].children[0].children[0]
+  assert.equal(page.title, '设备')
+  assert.equal(page.count, 2)
+  assert.equal(page.path, '/resources/devices/list')
+  assert.equal(page.breadcrumb, '资源中心 / 设备管理 / 设备')
+  assert.deepEqual(page.children.map(node => node.title), ['设备接入', '设备状态'])
+  assert.deepEqual(page.children.map(node => node.key), points.filter(point => point.code === 'page/a').map(point => `point:${registry.documentHelpPointId(point.code, point.key)}`))
+  assert.ok(page.children.every(node => node.count === 1 && node.rowIds.length === 1))
+})
+
+test('same page label and point key under different menu paths remain distinct', () => {
+  const tree = makeHelpTree()
+  const pages = walkTree(tree).filter(node => node.title === '设备')
+  assert.equal(pages.length, 2)
+  assert.notEqual(pages[0].key, pages[1].key)
+  assert.equal(pages[0].count, 2)
+  assert.equal(pages[1].count, 1)
+  assert.equal(new Set(leafIds(tree)).size, 3)
+  assert.equal(leafIds(tree).length, 3)
+})
+
+test('overview groups quick-start help below its registered location without changing point identities', () => {
+  const entries = [
+    { code: 'project/Overview', key: 'quickGuide.space', name: '配置空间', page: '概览', location: '快速上手' },
+    { code: 'project/Overview', key: 'quickGuide.gateway', name: '接入网关', page: '概览', location: '快速上手' },
+    { code: 'project/Overview', key: 'summary', name: '概览说明', page: '概览' },
+  ]
+  const tree = makeHelpTree(entries, [{ name: 'project/Overview', path: '/overview', meta: { title: '概览' } }])
+  const overview = tree[0]
+  assert.equal(overview.count, 3)
+  const quickStart = overview.children[0]
+  assert.equal(quickStart.title, '快速上手')
+  assert.equal(quickStart.count, 2)
+  assert.equal(quickStart.path, '/overview')
+  assert.deepEqual(quickStart.children.map(node => node.title), ['配置空间', '接入网关'])
+  const space = quickStart.children[0]
+  assert.equal(space.breadcrumb, '概览 / 快速上手 / 配置空间')
+  assert.equal(space.key, `point:${registry.documentHelpPointId('project/Overview', 'quickGuide.space')}`)
+  assert.deepEqual(quickStart.rowIds, quickStart.children.flatMap(node => node.rowIds))
+  assert.equal(overview.children[1].title, '概览说明')
+  const found = helpTree.filterHelpTree(tree, 'quickGuide.space')
+  assert.equal(found[0].children[0].title, '快速上手')
+  assert.deepEqual(leafIds(found), [space.rowIds[0]])
+  assert.deepEqual(leafIds(helpTree.filterHelpTree(tree, '快速上手')), quickStart.rowIds)
+})
+
+test('unmatched routes remain available under a fallback page group', () => {
+  const tree = makeHelpTree([...points, { code: 'unmatched', key: 'save', name: '保存', page: '未挂菜单的页面' }])
+  const fallback = tree.find(node => node.title === '其它页面')
+  assert.ok(fallback)
+  assert.equal(fallback.count, 1)
+  assert.equal(fallback.children[0].title, '未挂菜单的页面')
+  assert.equal(fallback.children[0].children[0].title, '保存')
+  assert.equal(leafIds(tree).length, 4)
+})
+
+test('tree search matches point names and identifiers while retaining ancestors', () => {
+  const tree = makeHelpTree()
+  const matched = helpTree.filterHelpTree(tree, '  SECOND  ')
+  assert.equal(matched.length, 1)
+  assert.equal(matched[0].title, '资源中心')
+  assert.equal(matched[0].children[0].title, '设备管理')
+  assert.deepEqual(leafIds(matched), [registry.documentHelpPointId('page/a', 'second')])
+  assert.deepEqual(leafIds(helpTree.filterHelpTree(tree, '接入告警')), [registry.documentHelpPointId('page/b', 'shared')])
+  assert.deepEqual(leafIds(helpTree.filterHelpTree(tree, 'page/b')), [registry.documentHelpPointId('page/b', 'shared')])
+  assert.equal(helpTree.filterHelpTree(tree, '不存在').length, 0)
+  assert.equal(leafIds(tree).length, 3, 'search does not mutate the complete tree')
+})
+
+test('a matching directory retains its entire subtree and hidden wrappers are omitted', () => {
+  const tree = makeHelpTree()
+  assert.deepEqual(leafIds(helpTree.filterHelpTree(tree, '设备管理')), [
+    registry.documentHelpPointId('page/a', 'shared'), registry.documentHelpPointId('page/a', 'second'),
+  ])
+  assert.equal(leafIds(helpTree.filterHelpTree(tree, '')).length, 3)
+  const hiddenMenus = [{ name: 'hidden', path: '/hidden', meta: { title: '隐藏目录', hideInMenu: true }, children: hierarchyMenus }]
+  const hiddenTree = makeHelpTree(points, hiddenMenus)
+  assert.equal(hiddenTree[0].title, '资源中心')
+  assert.ok(!walkTree(hiddenTree).some(node => node.title === '隐藏目录'))
 })

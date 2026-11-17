@@ -12,5 +12,6 @@ export function registerOverviewHelpPoints() {
     key: `quickGuide.${key}`,
     name: () => i18n.global.t(`packages.ProjectHome.${title}`),
     page: () => i18n.global.t('DocumentManagement.overview'),
+    location: () => i18n.global.t('packages.ProjectHome.QuickGuide'),
   })))
 }

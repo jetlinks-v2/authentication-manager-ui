@@ -8,6 +8,7 @@ export interface DocumentHelpRow {
   key: string
   name: string
   page: string
+  location?: string
   content: string
   enabled: boolean
   configured: boolean

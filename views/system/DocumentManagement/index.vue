@@ -8,7 +8,7 @@
             <a-input v-model:value="routeKeyword" :placeholder="t('DocumentManagement.routeSearch')" allow-clear>
               <template #prefix><AIcon type="SearchOutlined" /></template>
             </a-input>
-            <AutoTree block-node :show-line="{ showLeafIcon: false }" :tree-data="treeData" :selected-keys="[scope]" @select="selectScope" />
+            <AutoTree block-node :show-line="{ showLeafIcon: false }" :tree-data="treeData" :selected-keys="[scope]" :expanded-keys="expandedKeys" @expand="onExpand" @select="selectScope" />
           </aside>
         </template>
         <template #right>
@@ -20,6 +20,7 @@
               </a-flex>
               <a-typography-text v-if="loaded && !failed" type="secondary">{{ t('DocumentManagement.count', { count: filteredRows.length }) }}</a-typography-text>
             </div>
+            <a-alert v-if="scope === 'all'" type="info" show-icon :message="t('DocumentManagement.usageHint')" />
             <a-alert v-if="failed" type="error" show-icon :message="t('DocumentManagement.loadFailed')">
               <template #action><a-button size="small" @click="load()">{{ t('DocumentManagement.retry') }}</a-button></template>
             </a-alert>
@@ -94,9 +95,24 @@ import { useDocumentManagement } from './useDocumentManagement'
 const { t } = useI18n()
 const { rows, filteredRows, scope, routeKeyword, terms, nodes, title, routePath, loading, failed, loaded,
   current, draft, draftEnabled, saving, updating, selectedKeys, saveFailed, load, edit, close, save, toggleEnabled, batchToggle } = useDocumentManagement()
-const treeData = computed(() => nodes.value.map(node => ({
-  key: node.key, title: loaded.value && !failed.value ? `${node.title} (${node.count})` : node.title,
-})))
+type ScopeNode = { key: string; title: string; count: number; children?: ScopeNode[] }
+type DisplayNode = { key: string; title: string; children?: DisplayNode[] }
+function displayNodes(items: ScopeNode[]): DisplayNode[] {
+  return items.filter(node => !node.key.startsWith('point:')).map(node => {
+    const children = displayNodes(node.children || [])
+    return { key: node.key,
+      title: loaded.value && !failed.value ? `${node.title} (${node.count})` : node.title,
+      children: children.length ? children : undefined,
+    }
+  })
+}
+const treeData = computed(() => displayNodes(nodes.value))
+const expandedKeys = ref<string[]>([])
+function onExpand(keys: (string | number)[]) { expandedKeys.value = keys.map(String) }
+function branchKeys(items: DisplayNode[]): string[] {
+  return items.flatMap(node => node.children?.length ? [node.key, ...branchKeys(node.children)] : [])
+}
+watch(routeKeyword, value => { if (value.trim()) expandedKeys.value = branchKeys(treeData.value) })
 const configuredCount = computed(() => rows.value.filter(row => row.configured).length)
 const selectedConfiguredCount = computed(() => rows.value.filter(row => row.configured && selectedKeys.value.includes(row.id)).length)
 const isCheck = ref(false)

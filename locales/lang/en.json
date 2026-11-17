@@ -1,5 +1,6 @@
 {
   "DocumentManagement": {
+    "usageHint": "The system automatically discovers document help points. Configure their help content and enabled status here. When disabled, a help point's entry and documentation are hidden on the corresponding page.",
     "enableStatus": "Enabled status",
     "enabled": "Enabled",
     "disabled": "Disabled",
@@ -13,12 +14,13 @@
     "batchEnable": "Enable selected",
     "batchDisable": "Disable selected",
     "title": "Documentation",
-    "overview": "Overview / Quick start",
+    "overview": "Overview",
     "all": "All",
     "configured": "Configured",
     "missing": "Not configured",
     "groups": "Feature groups",
-    "routeSearch": "Search page or route code",
+    "routeSearch": "Search folders, pages or help points",
+    "otherPages": "Other pages",
     "count": "{count} help points",
     "loadFailed": "Unable to load help settings. Please retry.",
     "retry": "Retry",

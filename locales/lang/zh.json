@@ -1,5 +1,6 @@
 {
   "DocumentManagement": {
+    "usageHint": "系统自动扫描文档帮助埋点，您可在此统一配置帮助内容和启用状态。禁用后，对应页面将不再显示该埋点的帮助入口及文档。",
     "enableStatus": "启用状态",
     "enabled": "已启用",
     "disabled": "已禁用",
@@ -13,12 +14,13 @@
     "batchEnable": "批量启用",
     "batchDisable": "批量禁用",
     "title": "文档管理",
-    "overview": "概览 / 快速上手",
+    "overview": "概览",
     "all": "全部",
     "configured": "已配置",
     "missing": "未配置",
     "groups": "功能分组",
-    "routeSearch": "搜索页面名称或路由 code",
+    "routeSearch": "搜索目录、页面或埋点",
+    "otherPages": "其他页面",
     "count": "共 {count} 个埋点",
     "loadFailed": "帮助配置加载失败，请重试",
     "retry": "重试",

@@ -1,5 +1,6 @@
 {
   "DocumentManagement": {
+    "usageHint": "システムはドキュメントのヘルプポイントを自動検出します。ここでヘルプ内容と有効状態を一括管理できます。無効にすると、該当ページのヘルプ入口とドキュメントは表示されなくなります。",
     "enableStatus": "有効状態",
     "enabled": "有効",
     "disabled": "無効",
@@ -13,12 +14,13 @@
     "batchEnable": "選択項目を有効化",
     "batchDisable": "選択項目を無効化",
     "title": "ドキュメント管理",
-    "overview": "概要 / クイックスタート",
+    "overview": "概要",
     "all": "すべて",
     "configured": "設定済み",
     "missing": "未設定",
     "groups": "機能グループ",
-    "routeSearch": "ページ名またはルートコードを検索",
+    "routeSearch": "ディレクトリ・ページ・ヘルプを検索",
+    "otherPages": "その他のページ",
     "count": "{count} 件のヘルプ",
     "loadFailed": "ヘルプ設定を読み込めません。再試行してください。",
     "retry": "再試行",
