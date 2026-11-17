@@ -13,7 +13,11 @@ function load(path, dependencies = {}) {
   return module.exports
 }
 const registry = load('../../../jetlinks-web-core/src/utils/documentHelpRegistry.ts')
-const model = load('../views/system/DocumentManagement/model.ts', { '@jetlinks-web-core/utils/documentHelpRegistry': registry })
+const content = load('../../../jetlinks-web-core/src/utils/documentHelpContent.ts')
+const model = load('../views/system/DocumentManagement/model.ts', {
+  '@jetlinks-web-core/utils/documentHelpRegistry': registry,
+  '@jetlinks-web-core/utils/documentHelpContent': content,
+})
 const helpTree = load('../views/system/DocumentManagement/helpTree.ts')
 const points = [
   { code: 'page/a', key: 'shared', name: '设备接入', page: '设备' },
@@ -53,8 +57,9 @@ test('nested and/or terms and exact identifiers exclude unrelated rows', () => {
   ] }, { column: 'key', termType: 'eq', value: 'shared' }]).length, 1)
 })
 
-function fixture(menus = []) {
+function fixture(menus = [], initialLanguage = 'zh') {
   const calls = [], notices = []
+  const locale = vue.ref(initialLanguage)
   const api = {
     getDocumentHelpConfigurations: () => new Promise((resolve, reject) => calls.push({ kind: 'get', resolve, reject })),
     updateDocumentHelpEnabled: state => new Promise((resolve, reject) => calls.push({ kind: 'batch', state, resolve, reject })),
@@ -62,16 +67,17 @@ function fixture(menus = []) {
   }
   const hook = load('../views/system/DocumentManagement/useDocumentManagement.ts', {
     vue: { ...vue, onMounted: () => {} },
-    'vue-i18n': { useI18n: () => ({ t: key => key, locale: vue.ref('zh') }) },
+    'vue-i18n': { useI18n: () => ({ t: key => key, locale }) },
     '@jetlinks-web-core/store/menu': { useMenuStore: () => ({ siderMenus: menus }) },
     '@jetlinks-web/utils': { onlyMessage: value => notices.push(value) },
     '@jetlinks-web-core/hooks/useConfiguredDocumentHelp': { notifyDocumentHelpConfigurationChanged: () => notices.push('changed') },
     '@jetlinks-web-core/utils/documentHelpRegistry': { getDocumentHelpPoints: () => points },
+    '@jetlinks-web-core/utils/documentHelpContent': content,
     '../../../api/system/documentHelp': api,
     './model': model,
     './helpTree': helpTree,
   })
-  return { state: hook.useDocumentManagement(), calls, notices }
+  return { state: hook.useDocumentManagement(), calls, notices, locale }
 }
 
 test('route heading uses the visible menu hierarchy and falls back to the registered page name', () => {
@@ -116,7 +122,8 @@ test('save failure keeps draft; retry updates its point only; blank content clea
   assert.equal(state.draft.value, '**编辑后的说明**')
   assert.equal(state.rows.value[0].configured, false)
   saving = state.save()
-  assert.deepEqual(calls[2].configuration, { code: 'page/a', key: 'shared', content: '**编辑后的说明**', enabled: true })
+  assert.deepEqual(calls[2].configuration, { code: 'page/a', key: 'shared', content: '**编辑后的说明**',
+    i18nMessages: { content: { zh: '**编辑后的说明**' } }, enabled: true })
   calls[2].resolve({ success: true }); await saving
   assert.equal(state.current.value, undefined)
   assert.equal(state.rows.value[0].configured, true)
@@ -146,6 +153,7 @@ test('configuration API reuses one system config Map and preserves legacy keys a
   const api = load('../api/system/documentHelp.ts', {
     '@jetlinks-web/core': { request: { post: async (...args) => { calls.push(args); settings = structuredClone(args[1]); return { success: true } } } },
     '@jetlinks-web-core/api/document': { getDocumentHelpSettings: async () => ({ success: true, result: structuredClone(settings) }) },
+    '@jetlinks-web-core/utils/documentHelpContent': content,
   })
   assert.equal((await api.getDocumentHelpConfigurations()).result.length, 2)
   await api.saveDocumentHelpConfiguration({ code: 'page/a', key: 'shared', content: '修改', enabled: true })
@@ -311,4 +319,131 @@ test('a matching directory retains its entire subtree and hidden wrappers are om
   const hiddenTree = makeHelpTree(points, hiddenMenus)
   assert.equal(hiddenTree[0].title, '资源中心')
   assert.ok(!walkTree(hiddenTree).some(node => node.title === '隐藏目录'))
+})
+
+test('translation-only points stay configured regardless of the current preview language', () => {
+  const i18nMessages = { content: { en: '**English**', ja: '日本語' } }
+  const [row] = model.mergeHelpPoints(points, [{ ...points[0], content: '', i18nMessages, enabled: false }])
+  assert.equal(row.configured, true)
+  assert.equal(row.enabled, false)
+  assert.deepEqual(row.i18nMessages, i18nMessages)
+  assert.equal(model.filterHelpPoints([row], 'ready', []).length, 1)
+  assert.equal(model.filterHelpPoints([row], 'missing', []).length, 0)
+})
+
+test('three language drafts survive switching and failed saves without changing persisted rows', async () => {
+  const { state, calls, notices } = fixture()
+  const original = { code: 'page/a', key: 'shared', content: '旧正文',
+    i18nMessages: { content: { zh: '中文', en: 'English', ja: '日本語' }, title: { en: 'Keep' } }, enabled: true }
+  const loaded = state.load(); calls[0].resolve({ success: true, result: [original] }); await loaded
+  state.edit(state.rows.value[0])
+  assert.deepEqual(state.languages.value.map(item => item.value), ['zh', 'en', 'ja'])
+  assert.equal(state.draft.value, '中文')
+  state.draft.value = '新的中文'
+  state.activeLanguage.value = 'en'; state.draft.value = '**New English**'
+  state.activeLanguage.value = 'ja'; state.draft.value = '新しい日本語'
+  state.activeLanguage.value = 'zh'; assert.equal(state.draft.value, '新的中文')
+  state.activeLanguage.value = 'en'; assert.equal(state.draft.value, '**New English**')
+  const saving = state.save()
+  assert.deepEqual(calls[1].configuration, { code: 'page/a', key: 'shared', content: '新的中文', enabled: true,
+    i18nMessages: { content: { zh: '新的中文', en: '**New English**', ja: '新しい日本語' }, title: { en: 'Keep' } } })
+  calls[1].reject(new Error('network')); await saving
+  assert.equal(state.saveFailed.value, true)
+  assert.equal(state.draftContent('ja'), '新しい日本語')
+  assert.deepEqual(state.rows.value[0].i18nMessages, original.i18nMessages)
+  assert.equal(state.rows.value[0].content, '旧正文')
+  assert.ok(!notices.includes('changed'))
+  const retry = state.save(); calls[2].resolve({ success: true }); await retry
+  assert.equal(state.current.value, undefined)
+  assert.equal(state.rows.value[0].i18nMessages.content.ja, '新しい日本語')
+  assert.ok(notices.includes('changed'))
+})
+
+test('legacy body follows the editing locale without being copied into every translation', async () => {
+  const { state, calls, locale } = fixture([], 'ja_JP')
+  const loaded = state.load(); calls[0].resolve({ success: true, result: [{ ...points[0], content: 'Legacy body', enabled: true }] }); await loaded
+  state.edit(state.rows.value[0])
+  assert.equal(state.activeLanguage.value, 'ja')
+  assert.equal(state.draft.value, 'Legacy body')
+  assert.equal(state.draftContent('zh'), '')
+  assert.equal(state.draftContent('en'), '')
+  state.activeLanguage.value = 'en'; state.draft.value = 'Translated body'
+  const saving = state.save()
+  assert.equal(calls[1].configuration.content, 'Legacy body')
+  assert.deepEqual(calls[1].configuration.i18nMessages.content, { en: 'Translated body' })
+  calls[1].resolve({ success: true }); await saving
+  assert.equal(state.previewContent(state.rows.value[0]), 'Legacy body')
+  locale.value = 'en-US'; assert.equal(state.previewContent(state.rows.value[0]), 'Translated body')
+  locale.value = 'zh-CN'; assert.equal(state.previewContent(state.rows.value[0]), 'Legacy body')
+})
+
+test('saving and toggling a point with only a foreign translation preserves its content', async () => {
+  const { state, calls } = fixture()
+  const loaded = state.load(); calls[0].resolve({ success: true, result: [] }); await loaded
+  state.edit(state.rows.value[0])
+  state.activeLanguage.value = 'ja'; state.draft.value = '日本語だけ'
+  let task = state.save()
+  assert.equal(calls[1].configuration.content, '')
+  assert.equal(calls[1].configuration.enabled, true)
+  calls[1].resolve({ success: true }); await task
+  const row = state.rows.value[0]
+  assert.equal(row.configured, true)
+  assert.equal(state.previewContent(row), '')
+  task = state.toggleEnabled(row)
+  assert.deepEqual(calls[2].configuration.i18nMessages.content, { ja: '日本語だけ' })
+  assert.equal(calls[2].configuration.enabled, false)
+  calls[2].resolve({ success: true }); await task
+  assert.equal(state.rows.value[0].enabled, false)
+  assert.equal(state.rows.value[0].i18nMessages.content.ja, '日本語だけ')
+})
+
+test('clearing every language clears the legacy fallback as well', async () => {
+  const { state, calls } = fixture()
+  const original = { ...points[0], content: 'Default body', enabled: true,
+    i18nMessages: { content: { zh: '', en: 'English', ja: '日本語' } } }
+  const loaded = state.load(); calls[0].resolve({ success: true, result: [original] }); await loaded
+  state.edit(state.rows.value[0])
+  assert.equal(state.draft.value, 'Default body', 'an empty translation still exposes the editable legacy fallback')
+  for (const language of ['zh', 'en', 'ja']) {
+    state.activeLanguage.value = language; state.draft.value = ''
+  }
+  const saving = state.save()
+  assert.equal(calls[1].configuration.content, '')
+  assert.equal(calls[1].configuration.enabled, false)
+  calls[1].resolve({ success: true }); await saving
+  assert.equal(state.rows.value[0].configured, false)
+})
+
+test('config Map roundtrip and batch changes preserve all translations and unrelated fields', async () => {
+  const calls = []
+  let settings = {
+    legacy: { code: 'page/a', key: 'shared', content: '', enabled: true,
+      i18nMessages: { content: { ja: '日本語' }, title: { en: 'Title' } } },
+    other: { code: 'page/b', key: 'shared', content: 'Other', enabled: false,
+      i18nMessages: { content: { zh: '其他', en: 'Other' } } },
+  }
+  const other = structuredClone(settings.other)
+  const api = load('../api/system/documentHelp.ts', {
+    '@jetlinks-web/core': { request: { post: async (...args) => {
+      calls.push(args); settings = JSON.parse(JSON.stringify(args[1])); return { success: true }
+    } } },
+    '@jetlinks-web-core/api/document': { getDocumentHelpSettings: async () => ({ success: true, result: structuredClone(settings) }) },
+    '@jetlinks-web-core/utils/documentHelpContent': content,
+  })
+  assert.equal((await api.getDocumentHelpConfigurations()).result.length, 2)
+  const changed = { ...settings.legacy, i18nMessages: { ...settings.legacy.i18nMessages, content: { en: 'English', ja: '更新' } } }
+  await api.saveDocumentHelpConfiguration(changed)
+  assert.deepEqual(settings.legacy, changed)
+  assert.deepEqual(settings.other, other)
+  assert.deepEqual((await api.getDocumentHelpConfigurations()).result[0], changed)
+  await api.updateDocumentHelpEnabled({ enabled: false, points: [{ code: 'page/a', key: 'shared' }] })
+  assert.deepEqual(settings.legacy.i18nMessages, changed.i18nMessages)
+  assert.equal(settings.legacy.enabled, false)
+  assert.deepEqual(settings.other, other)
+  await api.updateDocumentHelpEnabled({ enabled: true, allConfigured: true })
+  assert.ok(Object.values(settings).every(item => item.enabled))
+  assert.deepEqual(settings.legacy.i18nMessages, changed.i18nMessages)
+  assert.equal(calls.length, 3)
+  await api.saveDocumentHelpConfiguration({ code: 'page/a', key: 'shared', content: '', i18nMessages: { content: { zh: '', en: ' ', ja: '' } }, enabled: false })
+  assert.deepEqual(Object.keys(settings), ['other'])
 })

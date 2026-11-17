@@ -33,6 +33,20 @@
 
 显隐调整验证：真实页面逐一切换“已配置”“未配置”及六个页面分组，提示均隐藏；切回“全部”后恢复显示。此次仅增加模板条件，使用实际页面编译及九次分组切换验证，未重复全量构建与类型检查。
 
+### 文档正文三语配置
+
+当前实现与范围：运行时文档配置支持中文、English、日本語正文，配套接通编辑、预览、保存与业务帮助展示。`views/system/DocumentManagement/` 和 `api/system/documentHelp.ts` 负责配置管理，`runtime-ui/jetlinks-web-core/src/api/document.ts` 与 `src/hooks/useConfiguredDocumentHelp.ts` 负责配置契约和按界面语言展示。
+
+参考与交互：沿用 `views/application-center/Template/Save/DocumentPane.vue` 的 Markdown 编辑器工具栏语言切换方式，扩展为 `zh/en/ja`。三语保留独立草稿，切换不丢内容，预览当前编辑语言，一次保存所有语言；启用状态仍按点位统一控制。
+
+存储与兼容：沿用现有 `GET/POST /system/config/document-help` 配置 Map，增加可选的 `i18nMessages.content.{zh,en,ja}`，保留 `content` 作为兼容默认正文。旧正文在打开配置抽屉时的界面语言编辑框中回显，该语言正文修改时同步默认正文，不自动认定旧正文属于中文或生成翻译。业务帮助优先当前界面语言，兼容 `zh-CN/zh_CN` 等主语言写法，缺译时回退默认正文；切换语言直接解析已加载配置，不重复请求。任一语言或默认正文非空即为已配置；全部清空才移除配置。编辑、单点启禁与批量启禁均保留其他语言及其他点位内容。
+
+实现边界：core 统一正文解析与配置状态判断，管理页沿用同一规则进行保存和启禁；原静态说明、HTML 清洗、帮助点位身份与权限保持原有链路。不改运营端 `ui/`、公告、应用模板及各业务点位，不增加自动翻译、专用后端接口或存储迁移，不提交聚合仓库子模块指针 PR；线上 JSON 写回仍按下一节单独待定。
+
+存储契约核查：本地 `common-component:2.20.0-SNAPSHOT` 依赖源码的 `SystemConfigManagerController#saveConfig` 接收 `Map<String,Object>`，`SimpleConfigManager#setProperties` 原样保存，`ConfigEntity.properties` 使用 JSON 编解码，未筛除嵌套语言字段；本轮无需修改后端。此为本地依赖事实，部署版本与实际保存回读仍需环境验收。
+
+验证结果：认证模块 `node --test tests/documentManagement.test.mjs tests/quickGuideView.test.mjs tests/documentCenter.test.mjs` 38 项、core `node --test tests/documentHelp.test.mjs` 16 项通过，覆盖三语草稿切换与失败保留、配置 Map 序列化回读、语言归一及缺译回退、全部清空、仅翻译有内容、单点/批量启禁保留翻译、helper 保存刷新及原静态说明。`pnpm --config.verify-deps-before-run=false -F jetlinks-web-core build --outDir /private/tmp/jetlinks-document-help-i18n-build -- --module-name authentication-manager-ui` 通过（34.26 秒），保留原分块体积警告；`pnpm --config.verify-deps-before-run=false exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 仍有 543 项工作区诊断，本次帮助及配置管理边界无诊断。未配置独立 lint 脚本；真实浏览器三语切换、预览与部署配置服务保存回读待验收，保持 Draft。
+
 ### 在线 JSON 存储方案（待确定文件写入入口）
 
 目标：保留文档管理页面编辑和预览，读取线上 JSON，保存时写回同一文件；帮助内容不再保存到数据库。沿用 `code/key/content` 标识与 Markdown 清洗、渲染规则。
@@ -49,13 +63,13 @@
 
 范围：`runtime-ui/modules/authentication-manager-ui` 负责页面、菜单、概览六个点位注册、全局搜索移除文档扩展；`runtime-ui/jetlinks-web-core` 提供点位注册和配置内容渲染；后端 auth 复用既有系统配置能力持久化并校验保存权限，本次没有后端模块代码变更。读取与保存沿用同一 scope 的既有 GET/POST 接口，平台级配置不绑定当前项目。沿用现有文档中心入口，不改运营端 `ui/`，不修改文档站或 API Key。
 
-步骤与验证：先确定 code + key 唯一标识和接口字段，再配套实现配置保存 / 列表合并 / helper 读取。帮助说明保存 Markdown，链接直接嵌入说明，不提供单独文档地址；HTML 输出净化后渲染。空说明视为未配置。验证扫描不覆盖内容、保存失败保留草稿、保存后刷新和 helper 重开显示新内容、菜单筛选不再发起文档搜索、未授权用户不能管理但能读取帮助。最后运行定向回归、类型检查、模块构建与真实浏览器验收，回填结果。
+步骤与验证：先确定 code + key 唯一标识和接口字段，再配套实现配置保存 / 列表合并 / helper 读取。帮助说明保存 Markdown，链接直接嵌入说明，不提供单独文档地址；HTML 输出净化后渲染。默认正文及所有语言正文均为空时视为未配置。验证扫描不覆盖内容、保存失败保留草稿、保存后刷新和 helper 重开显示新内容、菜单筛选不再发起文档搜索、未授权用户不能管理但能读取帮助。最后运行定向回归、类型检查、模块构建与真实浏览器验收，回填结果。
 
 主页搜索仅检索功能菜单：已移除关键词搜索组件 `DocumentSearch.vue`、`useDocumentSearch.ts`、`api/system/document.ts` 及专用文案；这些是开发过程中放弃的前端搜索方案，本次交付不包含后端搜索代码删除。顶栏文档中心浮窗、`DocumentHelp` 的平台配置说明与静态内容继续保留，core 三语占位文案仅说明功能搜索。
 
 清理验证：core `node --test tests/documentHelp.test.mjs` 11 项通过，auth `node --test tests/documentCenter.test.mjs` 9 项通过，覆盖平台配置帮助、静态说明与文档浮窗。运行时前端旧文档搜索请求、hook 及函数无残留引用，三语 JSON 与差异空白检查通过；模块构建 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过；`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 仍有 577 项工作区诊断，修改的帮助组件及 API 无诊断。未配置独立 lint 脚本；服务未重启，真实页面待部署后复验。
 
-启用状态与批量操作：配置列表继续扫描完整注册表，已配置/未配置筛选仅依据说明是否为空；表格展示功能位置、埋点 key、所属页面、配置状态和操作，状态显示未配置/已启用/已禁用，正文只通过预览查看；保存 `{code,key,content,enabled}`，支持禁用保留说明和再次启用。业务 helper 在挂载时预加载配置，仅在有说明且启用时显示问号；静态说明和管理页预览保持可用。保存后通知已挂载 helper 更新。支持勾选批量启用/禁用及启用全部已配置文档，批量接口一次更新单条 Map；未配置项不可勾选。左右布局、表格零水平内边距与上留白对齐数据字典页面。提前加载正文，避免首次悬停从加载文案切换到正文造成位置跳变。验证未配置/禁用隐藏、扫描保留、编辑保存和状态切换，以及真实页面首次 hover。
+启用状态与批量操作：配置列表继续扫描完整注册表，已配置/未配置筛选依据默认正文或任一语言正文是否非空；表格展示功能位置、埋点 key、所属页面、配置状态和操作，状态显示未配置/已启用/已禁用，正文只通过预览查看；保存 `{code,key,content,enabled,i18nMessages?}`，支持禁用保留各语说明和再次启用。业务 helper 在挂载时预加载配置，仅在当前语言解析有正文且启用时显示问号；静态说明和管理页预览保持可用。保存后通知已挂载 helper 更新。支持勾选批量启用/禁用及启用全部已配置文档，批量接口一次更新单条 Map；未配置项不可勾选。左右布局、表格零水平内边距与上留白对齐数据字典页面。提前加载正文，避免首次悬停从加载文案切换到正文造成位置跳变。验证未配置/禁用隐藏、扫描保留、编辑保存和状态切换，以及真实页面首次 hover。
 
 ## 文档中心浮窗
 

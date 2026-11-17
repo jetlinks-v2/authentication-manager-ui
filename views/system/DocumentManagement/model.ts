@@ -1,15 +1,13 @@
 import type { ConditionTerm } from '@jetlinks-web-core/components/ConditionFilter'
 import { documentHelpPointId } from '@jetlinks-web-core/utils/documentHelpRegistry'
+import { hasDocumentHelpContent } from '@jetlinks-web-core/utils/documentHelpContent'
 import type { DocumentHelpConfiguration } from '../../../api/system/documentHelp'
 
-export interface DocumentHelpRow {
+export interface DocumentHelpRow extends DocumentHelpConfiguration {
   id: string
-  code: string
-  key: string
   name: string
   page: string
   location?: string
-  content: string
   enabled: boolean
   configured: boolean
 }
@@ -21,7 +19,9 @@ export function mergeHelpPoints(points: (Pick<DocumentHelpRow, 'code' | 'key' | 
     const id = documentHelpPointId(point.code, point.key)
     const configuration = contents.get(id)
     const content = configuration?.content || ''
-    return { ...point, page: point.location ? `${point.page} / ${point.location}` : point.page, id, content, enabled: Boolean(content.trim()) && configuration?.enabled !== false, configured: Boolean(content.trim()) }
+    const configured = hasDocumentHelpContent(configuration)
+    return { ...point, page: point.location ? `${point.page} / ${point.location}` : point.page, id, content,
+      i18nMessages: configuration?.i18nMessages, enabled: configured && configuration?.enabled !== false, configured }
   })
 }
 

@@ -38,7 +38,7 @@
                   <a-space :size="4">
                     <j-permission-button type="link" size="small" :disabled="Boolean(updating)" has-permission="system/DocumentManagement:save" @click="edit(row)">{{ t(row.configured ? 'DocumentManagement.edit' : 'DocumentManagement.configure') }}</j-permission-button>
                     <j-permission-button v-if="row.configured" type="link" size="small" :loading="updating === row.id" :disabled="Boolean(updating) && updating !== row.id" has-permission="system/DocumentManagement:save" @click="toggleEnabled(row)">{{ t(row.enabled ? 'DocumentManagement.disable' : 'DocumentManagement.enable') }}</j-permission-button>
-                    <DocumentHelp v-if="row.configured" placement="left" :width="420"><span>{{ t('DocumentManagement.preview') }}</span><template #content><MarkdownPreview v-if="row.content.trim()" :content="row.content" /><a-typography-text v-else type="secondary">{{ t('DocumentManagement.emptyDescription') }}</a-typography-text></template></DocumentHelp>
+                    <DocumentHelp v-if="row.configured" placement="left" :width="420"><span>{{ t('DocumentManagement.preview') }}</span><template #content><MarkdownPreview v-if="previewContent(row).trim()" :content="previewContent(row)" /><a-typography-text v-else type="secondary">{{ t('DocumentManagement.emptyDescription') }}</a-typography-text></template></DocumentHelp>
                   </a-space>
                 </template>
                 <template #emptyText><CloudEmpty :description="t('DocumentManagement.emptyPoints')" /></template>
@@ -62,7 +62,15 @@
             <a-switch v-model:checked="draftEnabled" :disabled="saving" :checked-children="t('DocumentManagement.enabled')" :un-checked-children="t('DocumentManagement.disabled')" />
           </a-form-item>
           <a-form-item :label="t('DocumentManagement.description')" :help="t('DocumentManagement.markdownHint')">
-            <MarkdownEditor v-model="draft" :sanitize="sanitizeHelpMarkdown" :disabled="saving" :show-upload-file-toolbar="false" :rows="8" :toolbars="toolbars" />
+            <a-tabs v-model:active-key="activeLanguage" class="document-language-panes">
+              <a-tab-pane v-for="language in languages" :key="language.value" :tab="language.label">
+                <MarkdownEditor :model-value="draftContent(language.value)" :sanitize="sanitizeHelpMarkdown" :disabled="saving" :show-upload-file-toolbar="false" :rows="8" :toolbars="toolbars" @update:model-value="updateDraft(language.value, $event)">
+                  <template #toolbar-right>
+                    <a-segmented v-model:value="activeLanguage" :options="languages" :disabled="saving" size="small" />
+                  </template>
+                </MarkdownEditor>
+              </a-tab-pane>
+            </a-tabs>
           </a-form-item>
         </a-form>
         <div class="help-preview">
@@ -94,7 +102,8 @@ import { useDocumentManagement } from './useDocumentManagement'
 
 const { t } = useI18n()
 const { rows, filteredRows, scope, routeKeyword, terms, nodes, title, routePath, loading, failed, loaded,
-  current, draft, draftEnabled, saving, updating, selectedKeys, saveFailed, load, edit, close, save, toggleEnabled, batchToggle } = useDocumentManagement()
+  current, draft, activeLanguage, languages, draftContent, updateDraft, previewContent, draftEnabled, saving, updating,
+  selectedKeys, saveFailed, load, edit, close, save, toggleEnabled, batchToggle } = useDocumentManagement()
 type ScopeNode = { key: string; title: string; count: number; children?: ScopeNode[] }
 type DisplayNode = { key: string; title: string; children?: DisplayNode[] }
 function displayNodes(items: ScopeNode[]): DisplayNode[] {
@@ -168,6 +177,7 @@ async function queryRows(params: { pageIndex?: number; pageSize?: number }) {
 .document-list__body { flex: 1; min-height: 0; }
 .document-list__body :deep(.ant-spin-container) { height: 100%; }
 .document-filter { width: 15rem; max-width: 100%; }
+.document-language-panes :deep(> .ant-tabs-nav) { display: none; }
 .help-preview { margin-block: var(--space-6); }
 .help-preview__sample { display: flex; align-items: center; gap: var(--space-1); margin-top: var(--space-3); padding: var(--space-4); background: var(--jet-theme-bg-layout); border-radius: var(--r-2); }
 </style>

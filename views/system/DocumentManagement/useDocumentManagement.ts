@@ -5,6 +5,7 @@ import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { notifyDocumentHelpConfigurationChanged } from '@jetlinks-web-core/hooks/useConfiguredDocumentHelp'
 import { getDocumentHelpPoints } from '@jetlinks-web-core/utils/documentHelpRegistry'
+import { hasDocumentHelpContent, resolveDocumentHelpContent } from '@jetlinks-web-core/utils/documentHelpContent'
 import type { ConditionTerm } from '@jetlinks-web-core/components/ConditionFilter'
 import { getDocumentHelpConfigurations, saveDocumentHelpConfiguration, updateDocumentHelpEnabled, type DocumentHelpConfiguration } from '../../../api/system/documentHelp'
 import { filterHelpPoints, mergeHelpPoints, type DocumentHelpRow } from './model'
@@ -18,7 +19,25 @@ export function useDocumentManagement() {
   const scope = ref('all'), routeKeyword = ref(''), terms = ref<ConditionTerm[]>([])
   const draftEnabled = ref(true), updating = ref('')
   const selectedKeys = ref<string[]>([])
-  const current = ref<DocumentHelpRow>(), draft = ref(''), saving = ref(false), saveFailed = ref(false)
+  const current = ref<DocumentHelpRow>(), saving = ref(false), saveFailed = ref(false)
+  const activeLanguage = ref('zh'), defaultLanguage = ref('zh'), defaultDraft = ref('')
+  const draftMessages = ref<NonNullable<DocumentHelpConfiguration['i18nMessages']>>({})
+  const languages = computed(() => [
+    { value: 'zh', label: t('DocumentManagement.languageZh') },
+    { value: 'en', label: t('DocumentManagement.languageEn') },
+    { value: 'ja', label: t('DocumentManagement.languageJa') },
+  ])
+  // 旧正文没有语言标记，仅在打开抽屉时的界面语言回显，不复制到其他语言。
+  function draftContent(language: string): string {
+    const translated = draftMessages.value.content?.[language]
+    return translated?.trim() ? translated : language === defaultLanguage.value ? defaultDraft.value : translated || ''
+  }
+  function updateDraft(language: string, content: string) {
+    draftMessages.value = { ...draftMessages.value, content: { ...draftMessages.value.content, [language]: content } }
+    if (language === defaultLanguage.value) defaultDraft.value = content
+  }
+  const draft = computed({ get: () => draftContent(activeLanguage.value), set: value => updateDraft(activeLanguage.value, value) })
+  const previewContent = (row: DocumentHelpRow) => resolveDocumentHelpContent(row, locale.value)
   const points = computed(() => { locale.value; revision.value; return getDocumentHelpPoints() })
   const rows = computed(() => loaded.value ? mergeHelpPoints(points.value, configurations.value) : [])
   const menuTree = computed(() => {
@@ -76,7 +95,10 @@ export function useDocumentManagement() {
   }
   function edit(row: DocumentHelpRow) {
     current.value = row
-    draft.value = row.content
+    const language = String(locale.value).replace('_', '-').toLowerCase().split('-')[0]
+    activeLanguage.value = defaultLanguage.value = ['zh', 'en', 'ja'].includes(language) ? language : 'zh'
+    defaultDraft.value = row.content
+    draftMessages.value = { ...row.i18nMessages, content: { ...row.i18nMessages?.content } }
     draftEnabled.value = row.configured ? row.enabled : true
     saveFailed.value = false
   }
@@ -84,7 +106,9 @@ export function useDocumentManagement() {
   // 仅在保存成功后更新列表；失败保留抽屉、草稿和原配置。
   async function save() {
     if (!current.value || saving.value || updating.value) return
-    const configuration = { code: current.value.code, key: current.value.key, content: draft.value, enabled: draftEnabled.value && Boolean(draft.value.trim()) }
+    const configuration: DocumentHelpConfiguration = { code: current.value.code, key: current.value.key,
+      content: defaultDraft.value, i18nMessages: draftMessages.value }
+    configuration.enabled = draftEnabled.value && hasDocumentHelpContent(configuration)
     saving.value = true
     saveFailed.value = false
     try {
@@ -99,7 +123,7 @@ export function useDocumentManagement() {
   async function toggleEnabled(row: DocumentHelpRow) {
     if (!row.configured || saving.value || updating.value) return
     updating.value = row.id
-    const configuration = { code: row.code, key: row.key, content: row.content, enabled: !row.enabled }
+    const configuration = { code: row.code, key: row.key, content: row.content, i18nMessages: row.i18nMessages, enabled: !row.enabled }
     try {
       const response = await saveDocumentHelpConfiguration(configuration)
       if (!response.success) throw new Error('save')
@@ -127,5 +151,6 @@ export function useDocumentManagement() {
   }
   onMounted(() => load())
   return { rows, filteredRows, scope, routeKeyword, terms, nodes, title, routePath, loading, failed, loaded,
-    current, draft, draftEnabled, saving, updating, selectedKeys, saveFailed, load, edit, close, save, toggleEnabled, batchToggle }
+    current, draft, activeLanguage, languages, draftContent, updateDraft, previewContent, draftEnabled, saving, updating,
+    selectedKeys, saveFailed, load, edit, close, save, toggleEnabled, batchToggle }
 }
