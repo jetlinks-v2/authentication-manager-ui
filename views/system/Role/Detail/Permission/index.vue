@@ -4,9 +4,6 @@
       <div>
         <TitleComponent :data="$t('Permission.index.071527-0')" />
       </div>
-      <p v-if="application" class="application-context">
-        {{ $t('Role.application.permissionContext', { application: application.application.name, role: application.role.name }) }}
-      </p>
       <a-alert v-if="application?.scope.isExternal" type="info" show-icon :message="$t('Role.application.externalPermissions')" />
       <ApplicationRolePermissions v-else-if="application" :state="permissions" :show-asset-permissions="isNoCommunity" height="60vh" />
       <PermissionTree v-else ref="permissionTreeRef" />
@@ -40,10 +37,6 @@ const { permissionTreeRef, permissions, loading, canSave, clickSave, isNoCommuni
 
 <style lang="less" scoped>
 .role-permiss-container {
-  .application-context {
-    margin: var(--space-3) 0;
-    color: var(--text-color-secondary);
-  }
   .card {
     margin-bottom: 1.5rem;
 

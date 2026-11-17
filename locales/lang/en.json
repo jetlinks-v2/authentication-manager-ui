@@ -3345,5 +3345,7 @@
   "Role.application.permissionContext": "Application: {application} · Role: {role}",
   "Role.application.inheritedDataPermissions": "Inherited from application template (read-only)",
   "Role.application.externalPermissions": "Menu permissions are unavailable for third-party applications",
-  "Role.application.applicationData": "Current application's data"
+  "Role.application.applicationData": "Current application's data",
+  "Role.users.loadFailed": "Failed to load users. Please try again.",
+  "Role.users.saveFailed": "Failed to update role users. Please try again."
 }

@@ -13,6 +13,7 @@ const { outputFiles } = await build({
     export * from './views/system/Role/RoleRight/useRoleTable';
     export * from './views/system/Role/RoleRight/components/useRoleForm';
     export * from './views/system/Role/Detail/useRoleDetail';
+    export * from './views/system/Role/Detail/User/useRoleUsers';
     export { default as Left } from './views/system/Role/RoleLeft/index.vue';
     export { default as AddDialog } from './views/system/Role/RoleRight/components/AddDialog.vue';
     export { reactive, ref, watch, nextTick, effectScope, createRenderer, h, defineComponent } from 'vue';
@@ -45,7 +46,7 @@ const { outputFiles } = await build({
     }[args.path] }))
   } }],
 })
-const { buildRoleNavigation, buildRoleQuery, roleScopeKey, useRoleNavigation, useRoleTable, useRoleForm, useRoleDetail, route,
+const { buildRoleNavigation, buildRoleQuery, roleScopeKey, useRoleNavigation, useRoleTable, useRoleForm, useRoleDetail, useRoleUsers, buildRoleUserQuery, route,
   Left, AddDialog, reactive, ref, watch, nextTick, effectScope, createRenderer, h, defineComponent,
   useProTableRequest, http, navigation } = await import(`data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString('base64')}`)
 const flush = async () => { await new Promise(resolve => setImmediate(resolve)); await nextTick() }
@@ -253,6 +254,7 @@ test('role menu declares the application read/write and template grant dependenc
   const role = flatten(Array.isArray(menus) ? menus : [menus]).find(item => item.code === 'system/Role')
   assert(role.assetTypes.includes('business_application'))
   assert(role.permissions.some(item => item.permission === 'business-application' && item.actions.includes('query')))
+  assert(role.assetTypes.includes('user'))
   const update = role.buttons.find(button => button.id === 'update')
   assert(update.permissions.some(item => item.permission === 'business-application' && item.actions.includes('save')))
   assert(update.permissions.some(item => item.permission === 'business-application-template' && item.actions.includes('grant')))
@@ -303,7 +305,7 @@ test('global group creation, cancellation, editing and deleted selection retain 
   assert.equal(props.scope.kind, 'global')
 })
 
-test('role details resolve application ownership and show only the permission tab', async t => {
+test('role details resolve application ownership and retain permission and user tabs', async t => {
   fixture(); route.params.id = 'app-role'
   http.handler = async (_method, url) => {
     if (url === '/role/app-role') return success({ id: 'app-role', name: '应用管理员', applicationId: 'a' })
@@ -315,7 +317,7 @@ test('role details resolve application ownership and show only the permission ta
   assert.equal(state.application.value.application.name, '应用a')
   assert.equal(state.application.value.role.name, '应用管理员')
   assert.deepEqual(state.application.value.scope, { applicationId: 'a', templateId: 'template-a', isExternal: false })
-  assert.deepEqual(state.tabs.value.map(tab => tab.key), ['permission'])
+  assert.deepEqual(state.tabs.value.map(tab => tab.key), ['permission', 'user'])
 })
 
 test('role detail failures block the page until a successful retry without a global fallback', async t => {
@@ -329,7 +331,7 @@ test('role detail failures block the page until a successful retry without a glo
   assert.equal(state.error.value, true); assert.equal(state.detail.value, undefined)
   fail = false; await state.load()
   assert.equal(state.error.value, false); assert.equal(state.application.value.scope.isExternal, true)
-  assert.deepEqual(state.tabs.value.map(tab => tab.key), ['permission'])
+  assert.deepEqual(state.tabs.value.map(tab => tab.key), ['permission', 'user'])
 })
 
 test('switching the detail route discards stale application data and restores global tabs', async t => {
@@ -347,4 +349,115 @@ test('switching the detail route discards stale application data and restores gl
   assert.equal(state.application.value, undefined)
   assert.deepEqual(state.tabs.value.map(tab => tab.key), ['permission', 'user'])
   assert(!http.calls.some(call => call.url.startsWith('/business-application-template/')))
+})
+
+test('application role users and candidates query only current application members with AND search boundaries', async t => {
+  fixture()
+  const target = { roleId: 'role-a', applicationId: 'app-a' }
+  const filter = { terms: [{ column: 'name', value: '张' }, { type: 'or', column: 'username', value: 'li' }] }
+  const { state: bound } = mount(t, () => useRoleUsers(() => target))
+  const { state: candidates } = mount(t, () => useRoleUsers(() => target, true))
+  await bound.requestUsers({ ...filter, pageIndex: 2, pageSize: 10 })
+  await candidates.requestUsers(filter)
+  assert(http.calls.every(call => call.url === '/user/detail/business_application/app-a/_query'))
+  assert.deepEqual(http.calls[0].data, { pageIndex: 2, pageSize: 10, terms: [
+    { column: 'id$in-dimension$role', value: 'role-a' }, { type: 'and', terms: filter.terms },
+  ] })
+  assert.deepEqual(http.calls[1].data.terms, [
+    { column: 'id$in-dimension$role$not', value: 'role-a' },
+    { column: 'username', termType: 'not', value: 'admin' }, { type: 'and', terms: filter.terms },
+  ])
+})
+
+test('global role users retain their endpoint and cross-page selection semantics', async t => {
+  fixture()
+  const target = { roleId: 'global-role' }
+  const { state } = mount(t, () => useRoleUsers(() => target))
+  await state.requestUsers({ terms: [] })
+  assert.equal(http.calls[0].url, '/user/_query/')
+  assert.deepEqual(http.calls[0].data, buildRoleUserQuery(target, { terms: [] }, false))
+  state.rowSelection.value.onSelect({ id: 'first' }, true)
+  state.rowSelection.value.onSelectAll(true, [], [{ id: 'second' }, { id: 'third' }])
+  state.rowSelection.value.onSelectAll(false, [], [{ id: 'second' }])
+  assert.deepEqual(state.selectedRowKeys.value, ['first', 'third'])
+  assert.equal(state.isEnabled(0), false)
+  assert.equal(state.isEnabled({ value: '1', text: '正常' }), true)
+})
+
+test('binding and unbinding application role users preserve membership and other role bindings', async t => {
+  fixture()
+  const member = { applications: ['app-a', 'app-b'], roles: ['global-role', 'other-app-role'] }
+  http.handler = async (_method, url, ids) => {
+    assert.deepEqual(ids, ['user-a'])
+    if (url === '/role/role-a/users/_bind') member.roles.push('role-a')
+    else if (url === '/role/role-a/users/_unbind') member.roles = member.roles.filter(id => id !== 'role-a')
+    else throw new Error(`Unexpected membership or full-user update: ${url}`)
+    return success(undefined)
+  }
+  const target = { roleId: 'role-a', applicationId: 'app-a' }
+  let refreshes = 0
+  const { state: picker } = mount(t, () => useRoleUsers(() => target, true, () => refreshes++))
+  picker.selectedRowKeys.value = ['user-a']
+  await picker.save()
+  assert.deepEqual(member.roles, ['global-role', 'other-app-role', 'role-a'])
+  assert.equal(refreshes, 1)
+  const { state: table } = mount(t, () => useRoleUsers(() => target))
+  await table.save(['user-a'])
+  assert.deepEqual(member.roles, ['global-role', 'other-app-role'])
+  assert.deepEqual(member.applications, ['app-a', 'app-b'])
+  assert(http.calls.every(call => call.method === 'post' && call.url.startsWith('/role/role-a/users/')))
+})
+
+test('user loading and saves keep failures retryable and ignore duplicate submissions', async t => {
+  fixture(); let succeed = false; let saved = 0
+  http.handler = async () => succeed ? success({ data: [] }) : { success: false }
+  const { state } = mount(t, () => useRoleUsers(() => ({ roleId: 'r', applicationId: 'a' }), true, () => saved++))
+  await assert.rejects(state.requestUsers({ terms: [] }), /unavailable/)
+  assert.equal(state.loadError.value, true)
+  state.selectedRowKeys.value = ['user']
+  await state.save()
+  assert.equal(http.calls.length, 1)
+  succeed = true; await state.requestUsers({ terms: [] })
+  assert.equal(state.loadError.value, false)
+  succeed = false; await state.save()
+  assert.equal(saved, 0); assert.deepEqual(state.selectedRowKeys.value, ['user'])
+  const pending = deferred(); http.handler = () => pending.promise
+  const first = state.save(); await state.save()
+  assert.equal(http.calls.length, 4)
+  pending.resolve(success(undefined)); await first
+  assert.equal(saved, 1); assert.deepEqual(state.selectedRowKeys.value, [])
+})
+
+test('switching application role isolates pending writes, selection, rows and notifications', async t => {
+  fixture(); const pending = deferred(); let saved = 0
+  const target = reactive({ roleId: 'old-role', applicationId: 'old-app' })
+  const { state, stop } = mount(t, () => useRoleUsers(() => target, true, () => saved++))
+  const rows = [{ id: 'old-user' }]
+  state.tableRef.value = { dataSource: rows, reload: () => saved++ }
+  state.selectedRowKeys.value = ['old-user']
+  http.handler = () => pending.promise
+  const saving = state.save()
+  target.roleId = 'new-role'; target.applicationId = 'new-app'
+  assert.equal(rows.length, 0); assert.deepEqual(state.selectedRowKeys.value, [])
+  pending.resolve(success(undefined)); await saving
+  assert.equal(saved, 0)
+  assert.equal(http.calls[0].url, '/role/old-role/users/_bind')
+  assert.deepEqual(http.calls[0].data, ['old-user'])
+  stop(); await state.save(['new-user'])
+  assert.equal(http.calls.length, 1)
+})
+
+test('a late user query failure does not replace the current application loading state', async t => {
+  fixture(); const late = deferred()
+  const target = reactive({ roleId: 'old-role', applicationId: 'old-app' })
+  http.handler = async (_method, url) => url.includes('old-app') ? late.promise : success({ data: [], total: 0 })
+  const { state } = mount(t, () => useRoleUsers(() => target))
+  const oldRequest = state.requestUsers({ terms: [] })
+  const rejected = assert.rejects(oldRequest, /unavailable/)
+  target.roleId = 'new-role'; target.applicationId = 'new-app'
+  await state.requestUsers({ terms: [] })
+  late.resolve({ success: false }); await rejected
+  assert.equal(state.loadError.value, false)
+  assert.equal(http.calls[1].url, '/user/detail/business_application/new-app/_query')
+  assert.equal(http.calls[1].data.terms[0].value, 'new-role')
 })

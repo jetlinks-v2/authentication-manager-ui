@@ -3345,5 +3345,7 @@
   "Role.application.permissionContext": "所属アプリ：{application} · ロール：{role}",
   "Role.application.inheritedDataPermissions": "アプリテンプレートから継承（読み取り専用）",
   "Role.application.externalPermissions": "サードパーティアプリではメニュー権限を設定できません",
-  "Role.application.applicationData": "現在のアプリケーションのデータ"
+  "Role.application.applicationData": "現在のアプリケーションのデータ",
+  "Role.users.loadFailed": "ユーザー一覧を読み込めませんでした。もう一度お試しください。",
+  "Role.users.saveFailed": "ロールのユーザーを更新できませんでした。もう一度お試しください。"
 }

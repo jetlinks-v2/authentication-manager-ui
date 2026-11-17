@@ -575,7 +575,7 @@
               "value": "support"
             },
             "supportDataAccess": true,
-            "assetTypes": ["role", "roleGroup", "business_application"]
+            "assetTypes": ["role", "roleGroup", "business_application", "user"]
           },
           {
             "code": "system/Department",

@@ -29,7 +29,7 @@ export function useRoleDetail() {
   const application = computed(() => detail.value?.kind === 'application' ? detail.value.context : undefined)
   const tabs = computed(() => [
     { key: 'permission', label: t('Detail.index.386725-0') },
-    ...(detail.value?.kind === 'global' ? [{ key: 'user', label: t('Detail.index.386725-1') }] : []),
+    { key: 'user', label: t('Detail.index.386725-1') },
   ])
 
   const load = async () => {

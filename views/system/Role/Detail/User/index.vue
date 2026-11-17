@@ -1,43 +1,42 @@
 <template>
 
   <DefineEmptyCreate>
-    <a-button
+    <j-permission-button
+        has-permission="system/Role:update"
         class="authentication-system-list-page__primary-action"
         type="primary"
         @click="dialogVisible = true"
     >
       <AIcon type="PlusOutlined" />{{ $t('User.index.667995-0') }}
-    </a-button>
+    </j-permission-button>
   </DefineEmptyCreate>
   <div class="role-user-container">
+    <a-alert v-if="loadError" type="error" show-icon :message="$t('Role.users.loadFailed')">
+      <template #action><a-button size="small" @click="refresh">{{ $t('ProjectApplication.list.retry') }}</a-button></template>
+    </a-alert>
 
     <div style="min-height: 0; flex: 1">
       <j-pro-table
           ref="tableRef"
           :columns="columns"
           style="padding: 0"
-          :request="table.getList"
+          :request="requestUsers"
           mode="TABLE"
           :params="queryParams"
-          :rowSelection="{
-                selectedRowKeys: selectedRowKeys,
-                onSelect: onSelect,
-                onSelectAll: onSelectAll,
-                onSelectNone: cancelSelect,
-            }"
+          :rowSelection="rowSelection"
           :defaultParams="{
                         sorts: [{ name: 'createTime', order: 'desc' }],
                     }"
       >
         <template #emptyText>
-          <CloudEmpty :search="queryParams?.terms" :search-name="$t('Department.index.945805-2')">
-            <EmptyCreateButton />
+          <CloudEmpty :search="Boolean(queryParams.terms?.length)" :search-name="$t('Department.index.945805-2')">
+            <EmptyCreateButton v-if="!loadError" />
           </CloudEmpty>
         </template>
         <template #status="slotProps">
           <j-badge-status
-              :status="slotProps.status"
-              :text="slotProps.status ? $t('User.index.667995-3') : $t('User.index.667995-4')"
+              :status="isEnabled(slotProps.status) ? 1 : 0"
+              :text="isEnabled(slotProps.status) ? $t('User.index.667995-3') : $t('User.index.667995-4')"
               :statusNames="{
             1: 'success',
             0: 'error',
@@ -50,13 +49,16 @@
                 class="authentication-system-list-page__filter"
                 :columns="columns"
                 target="system-role-user"
-                @change="({filter})=> queryParams = {...filter}"
+                @change="search"
             />
             <EmptyCreateButton />
             <j-permission-button
+                has-permission="system/Role:update"
+                :loading="saving"
+                :disabled="!selectedRowKeys.length || loadError"
                 :popConfirm="{
               title: $t('User.index.667995-1'),
-              onConfirm: () => table.unbind(),
+              onConfirm: () => save(),
             }"
             >
               <AIcon type="DisconnectOutlined" />{{ $t('User.index.667995-2') }}
@@ -64,15 +66,17 @@
           </a-space>
         </template>
         <template #createTime="slotProps">
-          {{ slotProps.createTime ? dayjs(slotProps.createTime).format("YYYY-MM-DD HH:mm:ss") : $t('comm.table.empty-2') }}
+          {{ formatTime(slotProps.createTime) }}
         </template>
         <template #action="slotProps">
           <j-permission-button
+              has-permission="system/Role:update"
+              :disabled="saving || loadError"
               type="link"
               :tooltip="{ title: $t('User.index.667995-5') }"
               :pop-confirm="{
               title: $t('User.index.667995-6'),
-              onConfirm: () => table.unbind([slotProps.id]),
+              onConfirm: () => save([slotProps.id]),
             }"
           >
             <AIcon type="DisconnectOutlined" />
@@ -85,155 +89,22 @@
       v-if="dialogVisible"
       v-model:visible="dialogVisible"
       :role-id="roleId"
-      @refresh="table.refresh"
+      :application-id="applicationId"
+      @refresh="refresh"
   />
 </template>
 
 <script setup lang="ts">
-import type { ConditionTerm } from '@jetlinks-web-core/components/ConditionFilter'
-
+import { ref } from 'vue'
 import { createReusableTemplate } from '@vueuse/core'
-
 import AddUserDialog from '../components/AddUserDialog.vue'
-import { getUserByRole_api, unbindUser_api } from '@authentication-manager-ui/api/system/role'
-import { onlyMessage } from '@jetlinks-web/utils'
-import { useI18n } from 'vue-i18n';
-import dayjs from "dayjs";
-import PageHeader from '@jetlinks-web-core/components/PageHeader';
+import { useRoleUsers } from './useRoleUsers'
 
 defineOptions({ name: 'RoleUser' })
-
-const { t: $t } = useI18n();
-const roleId = useRoute().params.id as string
-
-const columns = [
-  {
-    title: $t('User.index.667995-7'),
-    dataIndex: 'name',
-    key: 'name',
-    ellipsis: true,
-    search: {
-      type: 'string',
-    },
-  },
-  {
-    title: $t('User.index.667995-8'),
-    dataIndex: 'username',
-    key: 'username',
-    ellipsis: true,
-    search: {
-      type: 'string',
-    },
-  },
-  {
-    title: $t('User.index.667995-9'),
-    dataIndex: 'createTime',
-    key: 'createTime',
-    search: {
-      type: 'date',
-    },
-    scopedSlots: true,
-  },
-  {
-    title: $t('User.index.667995-10'),
-    dataIndex: 'status',
-    key: 'status',
-    search: {
-      type: 'select',
-      options: [
-        {
-          label: $t('User.index.667995-3'),
-          value: 1,
-        },
-        {
-          label: $t('User.index.667995-4'),
-          value: 0,
-        },
-      ],
-    },
-    scopedSlots: true,
-  },
-  {
-    title: $t('User.index.667995-11'),
-    dataIndex: 'action',
-    key: 'action',
-    width: '12.5rem',
-    scopedSlots: true,
-  },
-]
-const queryParams = ref<{ terms?: ConditionTerm[] }>({})
-
-const tableRef = ref<Record<string, any>>({})
-const selectedRowKeys = ref<string[]>([])
-const table = {
-  getList: (oParams: any) => {
-    const params = {
-      ...oParams,
-      terms: [
-        {
-          terms: [
-            {
-              column: 'id$in-dimension$role',
-              value: roleId,
-            },
-          ],
-        },
-        ...oParams.terms,
-      ],
-    }
-    return getUserByRole_api(params)
-  },
-  // 批量解绑
-  unbind: (ids?: string[]) => {
-    const data = ids ? ids : selectedRowKeys.value
-    if (!data.length) {
-      onlyMessage($t('User.index.667995-12'), 'warning')
-      return
-    }
-    unbindUser_api(roleId, data).then((resp) => {
-      if (resp.status === 200) {
-        onlyMessage($t('User.index.667995-13'))
-        table.refresh()
-      }
-    })
-  },
-  // 刷新表格
-  refresh: () => {
-    tableRef.value.reload()
-    selectedRowKeys.value = []
-  },
-}
-
-// 弹窗相关
+const props = defineProps<{ roleId: string; applicationId?: string }>()
+const { columns, queryParams, tableRef, rowSelection, selectedRowKeys, saving, loadError,
+  requestUsers, search, refresh, save, formatTime, isEnabled } = useRoleUsers(() => props)
 const dialogVisible = ref(false)
-
-const cancelSelect = () => {
-  selectedRowKeys.value = [];
-};
-
-const onSelect = (record: any, selected: boolean) => {
-  const _set = new Set([...selectedRowKeys.value])
-  if (selected) {
-    _set.add(record.id)
-  } else {
-    _set.delete(record.id)
-  }
-  selectedRowKeys.value = [..._set]
-};
-
-const onSelectAll = (selected: boolean, _: any, keys: any[]) => {
-  const _keys = keys.map(item => item.id) || []
-  const _set = new Set([...selectedRowKeys.value])
-  _keys.map((i: any) => {
-    if (selected) {
-      _set.add(i)
-    } else {
-      _set.delete(i)
-    }
-  });
-  selectedRowKeys.value = [..._set]
-};
-
 const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
