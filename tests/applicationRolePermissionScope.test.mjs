@@ -71,6 +71,7 @@ const flatten = menus => menus.flatMap(item => [item, ...flatten(item.children |
 function resolve(input = {}) {
   return resolveApplicationRolePermissionScope({
     isExternal: false, currentUserMenus: [deviceMenu()], templateMenus: [deviceMenu()],
+    applicationMenus: input.templateMenus || [deviceMenu()],
     roleMenus: [deviceMenu()], templateAssetAccesses: [policy('tenant')], ...input,
   })
 }
@@ -85,6 +86,7 @@ function fixture(t, { external = false } = {}) {
   notifications.length = 0
   const api = {
     template: { menus: [deviceMenu()], assetAccesses: [policy('all')] },
+    applicationMenus: null, applicationFailure: false,
     userMenus: [deviceMenu()],
     roles: { a: { menus: [deviceMenu({ buttons: [button('view')] })], assetAccesses: [policy('all')] },
       b: { menus: [deviceMenu({ buttons: [button('save')] })], assetAccesses: [policy('all')] } },
@@ -98,6 +100,11 @@ function fixture(t, { external = false } = {}) {
       return { success: true, result: copy(api.template) }
     }
     if (method === 'post' && url === '/menu/user-own/tree') return { success: true, result: copy(api.userMenus) }
+    if (method === 'post' && url === '/menu/asset-accesses/grantable') return { success: true, result: [
+      { assetType: 'device', accesses: [{ supportId: 'all', name: '全部数据' }, { supportId: 'tenant', name: '当前租户' }] },
+    ] }
+    if (method === 'get' && url === '/business-application/app/menus') return api.applicationFailure
+      ? { success: false } : { success: true, result: { menus: copy(api.applicationMenus || api.template.menus) } }
     const role = url.match(/^\/business-application\/app\/roles\/(a|b)\/menus\/_grant(\/detail)?$/)
     if (method === 'get' && role?.[2]) return { success: true, result: copy(api.roles[role[1]]) }
     if (method === 'put' && role && !role[2]) {
@@ -148,6 +155,39 @@ test('intersects menu IDs and buttons while retaining template metadata and mixe
   assert.deepEqual(input, before)
 })
 
+test('current application menus exclude other candidates even when user and template both allow them', () => {
+  const result = resolve({ templateMenus: [deviceMenu(), menu('other-app')],
+    currentUserMenus: [deviceMenu(), menu('other-app')], applicationMenus: [deviceMenu()] })
+  assert.deepEqual(flatten(result.menus).map(item => item.id), ['device'])
+  assert.deepEqual(resolve({ applicationMenus: [] }).menus, [])
+})
+
+test('inherited data display uses template values and never editor defaults or unsaved role changes', async t => {
+  const { api, state } = fixture(t); await flush()
+  assert.equal(state.inheritedAssetOptions.value.device[0].value, 'all')
+  assert.equal(state.inheritedAssetOptions.value.device[0].label, '全部数据')
+  state.editor.setAssetAccess('device', 'creator')
+  assert.equal(state.inheritedAssetOptions.value.device[0].value, 'all')
+  api.template.assetAccesses = [policy('business_application')]
+  await state.loadPermissions()
+  assert.equal(state.inheritedAssetOptions.value.device[0].label, 'Role.application.applicationData')
+  api.template.assetAccesses = []
+  await state.loadPermissions()
+  assert.deepEqual(state.inheritedAssetOptions.value.device, [])
+})
+
+test('application scope is refreshed before saving and application query failure blocks grants', async t => {
+  const { api, state } = fixture(t); await flush()
+  api.applicationFailure = true
+  await state.savePermissions()
+  assert.equal(api.writes.length, 0)
+  await state.loadPermissions()
+  assert.equal(state.initialized.value, false); assert.equal(state.permissionError.value, true)
+  api.applicationFailure = false; api.applicationMenus = []
+  await state.loadPermissions()
+  assert.equal(state.initialized.value, true); assert.deepEqual(state.editor.flatMenus.value, [])
+})
+
 test('template asset strategies override user and old role candidates without losing extension configuration', () => {
   const templatePolicies = [policy('tenant', { options: { scopeStrategy: 'SELECT' } }),
     { assetType: 'space', accesses: [{ supportId: 'tenant', configuration: { id: 'project' } }] }]
@@ -194,7 +234,9 @@ test('role A is saved with tenant after the template changes from all while the 
   assert.equal(state.editor.visibleAssets.value[0].selectedSupportId, 'tenant')
   assert.equal(notifications.length, 1)
   assert.equal(http.calls.filter(call => call.url.endsWith('/template/menus')).length, 3)
-  assert.equal(http.calls.some(call => call.url === '/business-application/app/menus'), false)
+  const applicationCalls = http.calls.filter(call => call.url === '/business-application/app/menus')
+  assert.equal(applicationCalls.length, 3)
+  assert.ok(applicationCalls.every(call => call.config.applicationScope === false))
   assert.deepEqual(http.calls.find(call => call.url === '/menu/user-own/tree').data,
     { paging: false, terms: [{ column: 'owner', value: 'app' }] })
   assert.deepEqual(http.calls.find(call => call.method === 'put').config, { applicationScope: false })

@@ -44,8 +44,6 @@
     </div>
     <AddDialog v-if="dialog" :context="dialog" @close="dialog = undefined" @save="onSave" />
     <Copy v-if="copy.visible" :data="copy.data" @close="copy.visible = false" @save="onCopySave" />
-    <ApplicationPermissionDrawer v-if="permissionRole && applicationScope" :scope="applicationScope"
-      :role="permissionRole" :application-name="applicationName" @close="permissionRole = undefined" />
   </div>
 </template>
 
@@ -58,11 +56,10 @@ import { useRoleTable } from './useRoleTable'
 
 const AddDialog = defineAsyncComponent(() => import('./components/AddDialog.vue'))
 const Copy = defineAsyncComponent(() => import('./components/Copy.vue'))
-const ApplicationPermissionDrawer = defineAsyncComponent(() => import('./components/ApplicationPermissionDrawer.vue'))
 defineOptions({ name: 'RoleRight' })
 const props = defineProps({ scope: { type: Object as PropType<RoleScope>, required: true } })
-const { queryParams, emptyCreateSearch, tableRef, tableError, dialog, permissionRole, copy,
-  templateError, applicationName, applicationScope, loadTemplate, requestRoles,
+const { queryParams, emptyCreateSearch, tableRef, tableError, dialog, copy,
+  templateError, loadTemplate, requestRoles,
   search, addRole, onSave, onCopySave, columns, getActions } = useRoleTable(props)
 const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>

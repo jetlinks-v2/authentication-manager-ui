@@ -4,7 +4,12 @@
       <div>
         <TitleComponent :data="$t('Permission.index.071527-0')" />
       </div>
-      <PermissionTree ref="permissionTreeRef" />
+      <p v-if="application" class="application-context">
+        {{ $t('Role.application.permissionContext', { application: application.application.name, role: application.role.name }) }}
+      </p>
+      <a-alert v-if="application?.scope.isExternal" type="info" show-icon :message="$t('Role.application.externalPermissions')" />
+      <ApplicationRolePermissions v-else-if="application" :state="permissions" :show-asset-permissions="isNoCommunity" height="60vh" />
+      <PermissionTree v-else ref="permissionTreeRef" />
       <div class="role-bottom">
         <a-button @click="goBack">
           {{ $t('Api.index.558884-1') }}
@@ -12,6 +17,7 @@
         <a-button
             type="primary"
             :loading="loading"
+            :disabled="!canSave"
             @click="clickSave"
         >{{ $t('Permission.index.071527-1') }}</a-button>
       </div>
@@ -21,38 +27,23 @@
 
 <script setup lang="ts">
 import PermissionTree from '../components/PermissionTree.vue'
-import { updatePermissionTree_api } from '@authentication-manager-ui/api/system/role'
-import { onlyMessage } from '@jetlinks-web/utils'
-import { useI18n } from 'vue-i18n';
+import ApplicationRolePermissions from '@authentication-manager-ui/components/ApplicationRolePermissions/index.vue'
+import type { PropType } from 'vue'
+import type { ApplicationRoleDetail } from '../useRoleDetail'
+import { useRolePermission } from './useRolePermission'
 
 defineOptions({ name: 'RolePermission' })
 
-const { t: $t } = useI18n();
-const route = useRoute()
-const router = useRouter()
-const roleId = route.params.id as string
-const loading = ref(false)
-const permissionTreeRef = ref<any>()
-const clickSave = () => {
-  const snapshot = permissionTreeRef.value?.onSave();
-  if (!snapshot) return
-  loading.value = true
-  updatePermissionTree_api(roleId, snapshot).then((res:any)=>{
-    if(res.success){
-        onlyMessage($t('Permission.index.071527-2'))
-    }
-  }).finally(()=>{
-    loading.value = false
-  })
-}
-
-const goBack = () => {
-  router.go(-1)
-}
+const props = defineProps({ application: { type: Object as PropType<ApplicationRoleDetail>, default: undefined } })
+const { permissionTreeRef, permissions, loading, canSave, clickSave, isNoCommunity, goBack } = useRolePermission(props)
 </script>
 
 <style lang="less" scoped>
 .role-permiss-container {
+  .application-context {
+    margin: var(--space-3) 0;
+    color: var(--text-color-secondary);
+  }
   .card {
     margin-bottom: 1.5rem;
 

@@ -123,16 +123,16 @@ Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/1
 
 导航与查询：左侧保留“全局角色 → 分组”，新增“应用角色 → 当前账号可见的业务应用”，包括普通业务应用与第三方应用，不查询开放平台 API 应用。应用根仅展开收起，各应用为可选叶子，没有子分组、重命名或删除入口；选中应用时隐藏底部新增分组。`RoleLeft/useRoleNavigation.ts` 独立加载分组与应用、提供失败重试，搜索同时匹配分组名和应用名。`roleScope.ts` 用全局、分组、应用联合类型及带类型的节点 key 隔离同 ID；全局保留 `applicationId isnull`，分组追加 `groupId`，应用使用 `applicationId eq`，用户搜索以独立 AND 条件组追加。`RoleRight/useRoleTable.ts` 切换范围时保留筛选、重置分页、关闭旧弹窗并清空旧行，沿用 ProTable 的取消及过期请求隔离。筛选工具栏在双栏可用宽度内收缩，避免新增按钮被挤出。
 
-角色与授权：`RoleRight/components/useRoleForm.ts` 让应用角色只填写名称、说明，创建提交当前 `applicationId`，编辑不提交该字段；保存后留在当前应用并刷新。删除沿用现有接口与确认，应用角色不提供复制或成员分配，全局操作保留。普通应用使用 `ApplicationPermissionDrawer.vue`，与应用详情 `RoleManagement.vue` 共用 `components/ApplicationRolePermissions/useApplicationRolePermissions.ts` 和 `MenuAssetPermissionEditor`。菜单与按钮取用户和模板交集，资产策略继承最新模板，保存前重新读取模板与用户授权，并使用应用角色专用授权接口；第三方应用隐藏菜单授权入口，模板读取失败禁止保存，切换角色或卸载后忽略旧请求。
+角色与授权：`RoleRight/components/useRoleForm.ts` 让应用角色只填写名称、说明，创建提交当前 `applicationId`，编辑不提交该字段；保存后留在当前应用并刷新。删除沿用现有接口与确认，应用角色不提供复制或成员分配，全局操作保留。普通应用进入原有 `system/Role/Detail` 权限配置页，保留菜单权限与数据权限双栏、返回和保存操作，并标明所属应用及角色。`Detail/useRoleDetail.ts` 根据角色真实的 `applicationId` 解析应用与模板，直接访问、刷新和切换角色均隔离过期响应，失败可重试且不会退回全局授权。`Detail/Permission/useRolePermission.ts` 按归属分流保存，与应用详情 `RoleManagement.vue` 共用 `components/ApplicationRolePermissions/useApplicationRolePermissions.ts` 和 `MenuAssetPermissionEditor`。菜单限定当前应用，并继续与用户和模板权限取交集；数据权限只读展示模板原值，模板没有配置时不显示编辑器默认策略。策略名称沿用授权目录，应用范围显示为“当前应用的数据”。保存前重新读取当前应用菜单、模板及用户授权，完整继承最新模板资产策略，并使用应用角色专用授权接口；第三方应用隐藏菜单授权入口，模板读取失败禁止保存，切换角色或卸载后忽略旧请求。应用详情保留原有菜单授权布局。
 
 权限生效：`system/Role` 补齐应用和模板查询，编辑按钮补齐应用保存及模板授权读取依赖，资产类型增加 `business_application`。既有环境需同步菜单、重新保存对应功能授权与资产数据范围并刷新认证；声明不会自动扩大已有账号权限，仍由后端校验数据权限。
 
 验证结果（2026-11-17）：
 
-- 在模块目录执行 `node --test tests/systemRoleApplications.test.mjs tests/applicationRolePermissionScope.test.mjs tests/roleAssetPermissions.test.mjs tests/menuAssetTypes.test.mjs`，47 项全部通过。新增 16 项覆盖树层级、应用操作限制、同 ID、查询隔离、搜索保留、分页与过期响应、失败重试、CRUD 载荷、表单重复提交及卸载；原有授权用例继续通过，覆盖模板限制、第三方应用、读取失败、保存期间切换角色及应用详情共享授权行为。
-- 模块构建通过（29.14 秒）。在 `runtime-ui/jetlinks-web-core` 执行 `node --max-old-space-size=8192 ../node_modules/vite/bin/vite.js build --outDir /tmp/jetlinks-role-app-validation/build -- --module-name authentication-manager-ui`；保留既有构建警告。工作区和模块没有独立 lint 脚本，`git diff --check` 通过。
-- 在 `runtime-ui` 执行 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json`，完整类型检查仍未通过；修改前 543 项、修改后 541 项，忽略行号位移后没有新增诊断，修复角色表格原有的 2 项。清理既有错误后需重跑同一命令。
-- 本地登录页面验证了全局与应用切换、应用空列表、导航搜索、应用根折叠展开、从全局第二页切换后回到第一页、筛选条件保留、新增/编辑表单不显示分组、删除确认和授权抽屉加载；新增按钮在 1280px 窗口可见。表单及删除确认均取消，未提交真实角色或授权数据。
+- 在模块目录执行 `node --test tests/systemRoleApplications.test.mjs tests/applicationRolePermissionScope.test.mjs tests/roleAssetPermissions.test.mjs tests/menuAssetTypes.test.mjs`，53 项全部通过，覆盖树层级、应用操作限制、同 ID、查询隔离、搜索保留、分页与过期响应、失败重试、CRUD 载荷、表单重复提交及卸载、详情页真实归属及页签、路由切换隔离、应用菜单过滤与模板继承展示；原有授权用例继续通过，覆盖模板限制、第三方应用、读取失败、保存期间切换角色及应用详情共享授权行为。
+- 模块构建通过。在 `runtime-ui/jetlinks-web-core` 执行 `node --max-old-space-size=8192 ../node_modules/vite/bin/vite.js build --outDir /tmp/jetlinks-role-app-validation/build -- --module-name authentication-manager-ui`；保留既有构建警告。工作区和模块没有独立 lint 脚本，`git diff --check` 通过。
+- 在 `runtime-ui` 执行 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json`，完整类型检查仍未通过；最初修改前 543 项、修改后 541 项，修复角色表格原有的 2 项；本次恢复权限页前后均为 541 项，忽略行号位移后没有新增诊断。清理既有错误后需重跑同一命令。
+- 本地登录页面验证了全局与应用切换、应用空列表、导航搜索、应用根折叠展开、从全局第二页切换后回到第一页、筛选条件保留、新增/编辑表单不显示分组、删除确认；新增按钮在 1280px 窗口可见。应用授权入口已改回原有详情页，检查了应用/角色名称、当前应用菜单、勾选后的只读继承策略、刷新归属保持及全局角色原有权限/用户分配页签。表单及删除确认均取消，未提交真实角色或授权数据。
 
 待验证：当前登录态为管理员，尚未提供受限账号；菜单同步后需验证可见应用范围、按钮授权和后端拒绝行为。应用角色 CRUD 与授权持久化、本次抽取后应用详情的实际浏览器授权保存仍待登录环境验证；行为测试不替代实际接口验收。
 

@@ -36,7 +36,6 @@ export function useRoleTable(props: { scope: RoleScope }) {
   const tableRef = ref<{ reload: () => void; dataSource?: BusinessApplicationRoleEntity[] }>()
   const tableError = ref(false)
   const dialog = ref<RoleFormContext>()
-  const permissionRole = ref<BusinessApplicationRoleEntity>()
   const copy = reactive<{ visible: boolean; data?: BusinessApplicationRoleEntity }>({ visible: false })
   const template = ref<BusinessApplicationTemplateEntity>()
   const templateLoading = ref(false)
@@ -44,7 +43,6 @@ export function useRoleTable(props: { scope: RoleScope }) {
   let templateSequence = 0
   let disposed = false
   onScopeDispose(() => { disposed = true; templateSequence++ })
-  const applicationName = computed(() => props.scope.kind === 'application' ? props.scope.application.name : '')
   const applicationScope = computed<ApplicationRoleScope | undefined>(() => props.scope.kind === 'application' && template.value
     ? { applicationId: props.scope.application.id, templateId: template.value.id, isExternal: template.value.provider === 'third-party' }
     : undefined)
@@ -78,9 +76,8 @@ export function useRoleTable(props: { scope: RoleScope }) {
   const addRole = () => { dialog.value = { scope: props.scope, mode: 'add' } }
   const editRole = (role: BusinessApplicationRoleEntity) => { dialog.value = { scope: props.scope, mode: 'edit', current: role } }
   const configureRole = (role: BusinessApplicationRoleEntity) => {
-    if (props.scope.kind === 'application') {
-      if (applicationScope.value && !applicationScope.value.isExternal) permissionRole.value = role
-    } else jumpPage('system/Role/Detail', { params: { id: role.id } })
+    if (props.scope.kind === 'application' && (!applicationScope.value || applicationScope.value.isExternal)) return
+    jumpPage('system/Role/Detail', { params: { id: role.id } })
   }
   const onSave = (id: string) => {
     const context = dialog.value
@@ -126,14 +123,13 @@ export function useRoleTable(props: { scope: RoleScope }) {
   watch(() => roleScopeKey(props.scope), () => {
     dialog.value = undefined
     copy.visible = false
-    permissionRole.value = undefined
     tableError.value = false
     // ProTable 失败时保留旧行；跨范围时先清空，避免新请求失败仍展示上一应用的角色。
     tableRef.value?.dataSource?.splice(0)
     void loadTemplate()
   }, { immediate: true, flush: 'sync' })
   if (route.query.save) addRole()
-  return { queryParams, emptyCreateSearch, tableRef, tableError, dialog, permissionRole, copy,
-    templateError, templateLoading, applicationName, applicationScope, loadTemplate, requestRoles,
+  return { queryParams, emptyCreateSearch, tableRef, tableError, dialog, copy,
+    templateError, templateLoading, applicationScope, loadTemplate, requestRoles,
     search, addRole, onSave, onCopySave, columns, getActions }
 }

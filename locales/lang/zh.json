@@ -3341,5 +3341,9 @@
   "Role.application.loadFailed": "应用加载失败",
   "Role.application.templateLoadFailed": "应用模板加载失败，暂时无法配置权限",
   "Role.application.rolesLoadFailed": "角色列表加载失败",
-  "Role.application.saveFailed": "角色保存失败，请重试"
+  "Role.application.saveFailed": "角色保存失败，请重试",
+  "Role.application.permissionContext": "所属应用：{application} · 角色：{role}",
+  "Role.application.inheritedDataPermissions": "继承应用模板（只读）",
+  "Role.application.externalPermissions": "第三方应用不支持菜单权限配置",
+  "Role.application.applicationData": "当前应用的数据"
 }

@@ -12,12 +12,14 @@ const { outputFiles } = await build({
     export * from './views/system/Role/RoleLeft/useRoleNavigation';
     export * from './views/system/Role/RoleRight/useRoleTable';
     export * from './views/system/Role/RoleRight/components/useRoleForm';
+    export * from './views/system/Role/Detail/useRoleDetail';
     export { default as Left } from './views/system/Role/RoleLeft/index.vue';
     export { default as AddDialog } from './views/system/Role/RoleRight/components/AddDialog.vue';
     export { reactive, ref, watch, nextTick, effectScope, createRenderer, h, defineComponent } from 'vue';
     export { useProTableRequest } from '../../node_modules/@jetlinks-web/components/es/ProTable/hooks/useProTableRequest.js';
     export { http } from '@jetlinks-web/core';
     export { navigation } from '@jetlinks-web-core/store/menu';
+    export { route } from 'vue-router';
   ` },
   bundle: true, write: false, format: 'esm', platform: 'node',
   plugins: [{ name: 'role-page-boundaries', setup(plugin) {
@@ -36,14 +38,14 @@ const { outputFiles } = await build({
         }]));`,
       '@jetlinks-web/utils': `export const onlyMessage = () => {}; export const randomString = () => 'new-group';`,
       'vue-i18n': `export const useI18n = () => ({ t: key => key });`,
-      'vue-router': `export const useRoute = () => ({ query: {} });`,
+      'vue-router': `import { reactive } from 'vue'; export const route = reactive({ query: {}, params: { id: '' } }); export const useRoute = () => route;`,
       '@jetlinks-web-core/hooks': `export const useTabSaveSuccessBack = () => ({ onBack: () => {} });`,
       '@jetlinks-web-core/store/menu': `export const navigation = []; export const useMenuStore = () => ({ jumpPage: (...args) => navigation.push(args) });`,
       '@jetlinks-web-core/api/system/menu': `export const getMenuGrantDetail = () => { throw new Error('Global grant must not load in this fixture'); };`,
     }[args.path] }))
   } }],
 })
-const { buildRoleNavigation, buildRoleQuery, roleScopeKey, useRoleNavigation, useRoleTable, useRoleForm,
+const { buildRoleNavigation, buildRoleQuery, roleScopeKey, useRoleNavigation, useRoleTable, useRoleForm, useRoleDetail, route,
   Left, AddDialog, reactive, ref, watch, nextTick, effectScope, createRenderer, h, defineComponent,
   useProTableRequest, http, navigation } = await import(`data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString('base64')}`)
 const flush = async () => { await new Promise(resolve => setImmediate(resolve)); await nextTick() }
@@ -53,6 +55,7 @@ const appScope = (id = 'a') => ({ kind: 'application', application: app(id) })
 const success = result => ({ success: true, status: 200, result })
 function fixture() {
   http.calls = []; navigation.length = 0
+  route.params.id = ''
   http.handler = async (method, url, data) => {
     if (url.startsWith('/business-application/_query')) return success([app('a'), app('b')])
     if (url === '/role/group/_query/no-paging') return success([{ id: 'default_group', name: '默认' }, { id: 'same', name: '自定义分组' }])
@@ -154,11 +157,10 @@ test('switching scope preserves search, clears dialogs and resolves third-party 
   assert(!actions.some(action => action.id === 'copy'))
   assert(actions.some(action => action.id === 'grant' && !action.disabled))
   actions.find(action => action.id === 'grant').onClick()
-  assert.equal(state.permissionRole.value.id, 'r')
+  assert.deepEqual(navigation.at(-1), ['system/Role/Detail', { params: { id: 'r' } }])
   const handler = http.handler
   http.handler = (method, url, data) => url.includes('/business-application-template/') ? success({ id: 'template-b', provider: 'third-party' }) : handler(method, url, data)
   props.scope = appScope('b'); await flush()
-  assert.equal(state.permissionRole.value, undefined)
   assert(!state.getActions({ id: 'r', name: 'role' }).some(action => action.id === 'grant'))
 })
 
@@ -299,4 +301,50 @@ test('global group creation, cancellation, editing and deleted selection retain 
   http.handler = (method, url, data) => url === '/role/group/_query/no-paging' ? success([defaultGroup]) : handler(method, url, data)
   await state.removeGroup({ id: 'same', name: '自定义分组' })
   assert.equal(props.scope.kind, 'global')
+})
+
+test('role details resolve application ownership and show only the permission tab', async t => {
+  fixture(); route.params.id = 'app-role'
+  http.handler = async (_method, url) => {
+    if (url === '/role/app-role') return success({ id: 'app-role', name: '应用管理员', applicationId: 'a' })
+    if (url === '/business-application/a') return success(app())
+    if (url === '/business-application-template/template-a') return success({ id: 'template-a', provider: 'official' })
+    throw new Error(url)
+  }
+  const { state } = mount(t, useRoleDetail); await flush()
+  assert.equal(state.application.value.application.name, '应用a')
+  assert.equal(state.application.value.role.name, '应用管理员')
+  assert.deepEqual(state.application.value.scope, { applicationId: 'a', templateId: 'template-a', isExternal: false })
+  assert.deepEqual(state.tabs.value.map(tab => tab.key), ['permission'])
+})
+
+test('role detail failures block the page until a successful retry without a global fallback', async t => {
+  fixture(); route.params.id = 'r'; let fail = true
+  http.handler = async (_method, url) => {
+    if (url === '/role/r') return success({ id: 'r', applicationId: 'a' })
+    if (url === '/business-application/a') return success(app())
+    return fail ? { success: false } : success({ id: 'template-a', provider: 'third-party' })
+  }
+  const { state } = mount(t, useRoleDetail); await flush()
+  assert.equal(state.error.value, true); assert.equal(state.detail.value, undefined)
+  fail = false; await state.load()
+  assert.equal(state.error.value, false); assert.equal(state.application.value.scope.isExternal, true)
+  assert.deepEqual(state.tabs.value.map(tab => tab.key), ['permission'])
+})
+
+test('switching the detail route discards stale application data and restores global tabs', async t => {
+  fixture(); route.params.id = 'old'; const late = deferred()
+  http.handler = async (_method, url) => {
+    if (url === '/role/old') return success({ id: 'old', applicationId: 'a' })
+    if (url === '/business-application/a') return late.promise
+    if (url === '/role/new') return success({ id: 'new', name: '全局角色' })
+    throw new Error(url)
+  }
+  const { state } = mount(t, useRoleDetail); await flush()
+  route.params.id = 'new'; await flush()
+  late.resolve(success(app())); await flush()
+  assert.equal(state.detail.value.kind, 'global'); assert.equal(state.detail.value.role.id, 'new')
+  assert.equal(state.application.value, undefined)
+  assert.deepEqual(state.tabs.value.map(tab => tab.key), ['permission', 'user'])
+  assert(!http.calls.some(call => call.url.startsWith('/business-application-template/')))
 })
