@@ -405,6 +405,14 @@
                 ]
               },
               {
+                "permission": "business-application",
+                "actions": ["query"]
+              },
+              {
+                "permission": "business-application-template",
+                "actions": ["query"]
+              },
+              {
                 "permission": "role-group",
                 "actions": [
                   "save",
@@ -455,6 +463,14 @@
                       "query",
                       "save"
                     ]
+                  },
+                  {
+                    "permission": "business-application",
+                    "actions": ["save"]
+                  },
+                  {
+                    "permission": "business-application-template",
+                    "actions": ["query", "grant"]
                   },
                   {
                     "permission": "menu",
@@ -559,7 +575,7 @@
               "value": "support"
             },
             "supportDataAccess": true,
-            "assetTypes": ["role", "roleGroup"]
+            "assetTypes": ["role", "roleGroup", "business_application"]
           },
           {
             "code": "system/Department",

@@ -3335,5 +3335,11 @@
   },
   "packages.ProjectHome.saasResourceDevices": "设备",
   "packages.ProjectHome.saasDataBoard": "数据看板",
-  "packages.ProjectHome.saasUnitScreens": "个大屏"
+  "packages.ProjectHome.saasUnitScreens": "个大屏",
+  "Role.application.searchPlaceholder": "分组或应用名称",
+  "Role.application.groupLoadFailed": "角色分组加载失败",
+  "Role.application.loadFailed": "应用加载失败",
+  "Role.application.templateLoadFailed": "应用模板加载失败，暂时无法配置权限",
+  "Role.application.rolesLoadFailed": "角色列表加载失败",
+  "Role.application.saveFailed": "角色保存失败，请重试"
 }

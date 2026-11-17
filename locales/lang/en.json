@@ -3335,5 +3335,11 @@
   },
   "packages.ProjectHome.saasResourceDevices": "Devices",
   "packages.ProjectHome.saasDataBoard": "Data dashboards",
-  "packages.ProjectHome.saasUnitScreens": "screens"
+  "packages.ProjectHome.saasUnitScreens": "screens",
+  "Role.application.searchPlaceholder": "Group or application name",
+  "Role.application.groupLoadFailed": "Failed to load role groups",
+  "Role.application.loadFailed": "Failed to load applications",
+  "Role.application.templateLoadFailed": "Failed to load the application template. Permission configuration is unavailable.",
+  "Role.application.rolesLoadFailed": "Failed to load roles",
+  "Role.application.saveFailed": "Failed to save the role. Please try again."
 }

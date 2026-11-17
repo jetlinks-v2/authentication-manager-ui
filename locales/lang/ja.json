@@ -3335,5 +3335,11 @@
   "privateApplication.lastLogin": "前回のログイン",
   "privateApplication.empty": "アクセスできるアプリケーションがありません。管理者に権限の割り当てを依頼してください。",
   "privateApplication.contactAdmin": "追加の権限が必要な場合は管理者にお問い合わせください。",
-  "privateOverview.edge": "エッジノード"
+  "privateOverview.edge": "エッジノード",
+  "Role.application.searchPlaceholder": "グループ名またはアプリ名",
+  "Role.application.groupLoadFailed": "ロールグループを読み込めませんでした",
+  "Role.application.loadFailed": "アプリを読み込めませんでした",
+  "Role.application.templateLoadFailed": "アプリのテンプレートを読み込めないため、権限を設定できません",
+  "Role.application.rolesLoadFailed": "ロール一覧を読み込めませんでした",
+  "Role.application.saveFailed": "ロールを保存できませんでした。もう一度お試しください。"
 }

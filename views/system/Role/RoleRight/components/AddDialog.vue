@@ -1,12 +1,17 @@
 <template>
     <a-modal
         open
-        :title="modalType ==='add' ? $t('components.AddDialog.956922-0') : $t('components.AddDialog.956922-1')"
+        :title="context.mode === 'add' ? $t('components.AddDialog.956922-0') : $t('components.AddDialog.956922-1')"
         :width="670"
-        @cancel="emits('update:visible', false)"
+        @cancel="emits('close')"
         @ok="confirm"
         :confirm-loading="loading"
+        :ok-button-props="{ disabled: groupLoading || groupError }"
     >
+        <a-alert v-if="groupError || saveError" type="error" show-icon
+            :message="$t(groupError ? 'Role.application.groupLoadFailed' : 'Role.application.saveFailed')">
+            <template v-if="groupError" #action><a-button size="small" @click="loadGroups">{{ $t('ProjectApplication.list.retry') }}</a-button></template>
+        </a-alert>
         <a-form ref="formRef" :model="form" layout="vertical">
             <a-form-item
                 name="name"
@@ -23,6 +28,7 @@
                 />
             </a-form-item>
             <a-form-item
+                v-if="!isApplication"
                 name="groupId"
                 :label="$t('components.AddDialog.956922-6')"
                 :rules="[
@@ -30,6 +36,7 @@
                 ]"
             >
                 <a-select
+                    :loading="groupLoading"
                     show-search
                     v-model:value="form.groupId"
                     :placeholder="$t('components.AddDialog.956922-7')"
@@ -37,7 +44,7 @@
                     optionFilterProp="label"
                 />
             </a-form-item>
-            <a-form-item name="name" :label="$t('components.AddDialog.956922-8')">
+            <a-form-item name="description" :label="$t('components.AddDialog.956922-8')">
                 <a-textarea
                     v-model:value="form.description"
                     :placeholder="$t('components.AddDialog.956922-9')"
@@ -51,95 +58,13 @@
 </template>
 
 <script setup lang="ts">
-import { saveRole_api , queryRoleGroup , updateRole_api} from '@authentication-manager-ui/api/system/role';
-import { useMenuStore } from '@jetlinks-web-core/store/menu';
-import { onlyMessage } from '@jetlinks-web/utils';
-import { useI18n } from 'vue-i18n';
-import { useTabSaveSuccessBack } from '@jetlinks-web-core/hooks'
+import type { PropType } from 'vue'
+import { useRoleForm } from './useRoleForm'
+import type { RoleFormContext } from './useRoleForm'
 
 defineOptions({ name: 'RoleAddDialog' })
-
-const { t: $t } = useI18n();
-const route = useRoute();
-const { jumpPage } = useMenuStore();
-
-const emits = defineEmits(['update:visible', 'save']);
-const props = defineProps({
-    visible: {
-        type:Boolean,
-        default:false
-    },
-    groupId:{
-        type:String,
-        default: undefined
-    },
-    modalType:{
-        type:String,
-        default:'add'
-    },
-    current:{
-        type:Object,
-        default:{}
-    }
-})
-// 弹窗相关
-const loading = ref(false);
-const form = ref<any>({
-    name:'',
-    groupId:undefined,
-    description:''
-});
-const formRef = ref<any>();
-const groupOptions = ref<any>([])
-
-const { onBack } = useTabSaveSuccessBack()
-const confirm = async() => {
-    loading.value = true;
-    formRef.value
-        ?.validate()
-        .then(() => {
-            if(props.modalType === 'add'){
-                saveRole_api(form.value).then((resp:any)=>{
-                    if (resp.status === 200) {
-                    onlyMessage($t('components.AddDialog.956922-10'));
-                    emits('update:visible', false);
-                    if (route.query.save) {
-                      onBack(resp.result.id)
-                } else jumpPage(`system/Role/Detail`, {params:{ id: resp.result.id }});
-            }
-                }).catch(() => (loading.value = false));
-            }else{
-                updateRole_api(form.value).then((resp:any)=>{
-                    if (resp.status === 200) {
-                    onlyMessage($t('components.AddDialog.956922-10'));
-                    emits('update:visible', false);
-                    emits('save');
-                    }
-                }).catch(() => (loading.value = false));
-            }
-        })
-       .catch(() => (loading.value = false));
-};
-// 表单相关
-const  getGroupOptions = ()=>{
-    queryRoleGroup({sorts: [{ name: 'createTime', order: 'desc' }], paging: false}).then((res:any)=>{
-        if(res.status ===200){
-           groupOptions.value = res.result.map((item:any)=>{
-                return {
-                    label:item.name,
-                    value:item.id
-                }
-            })
-        }
-    })
-}
-onMounted(()=>{
-    getGroupOptions()
-    form.value.groupId = props.groupId
-    if(props.modalType === 'edit'){
-        form.value = props.current
-    }
-})
+const props = defineProps({ context: { type: Object as PropType<RoleFormContext>, required: true } })
+const emits = defineEmits<{ close: []; save: [id: string] }>()
+const { isApplication, form, formRef, groupOptions, groupLoading, groupError, saveError,
+  loading, loadGroups, confirm } = useRoleForm(props.context, id => emits('save', id))
 </script>
-
-<style scoped></style>
