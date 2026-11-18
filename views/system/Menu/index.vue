@@ -47,7 +47,7 @@
                 />
                 <EmptyCreateButton />
                 <a-button
-                  v-if="admin"
+                  v-if="isSuperAdmin"
                   @click="menuStore.jumpPage('system/Menu/Setting')"
                 >{{ $t('Menu.index.599742-17') }}</a-button>
               </a-flex>
@@ -123,12 +123,7 @@ const permission = 'system/Menu'
 
 const menuStore = useMenuStore()
 
-const userInfoStore = useUserStore();
-const { userInfo } = storeToRefs(userInfoStore);
-
-const admin = computed(() => {
-  return userInfo.value?.username === 'admin';
-});
+const { isSuperAdmin } = storeToRefs(useUserStore());
 
 const columns = [
   {
