@@ -156,6 +156,12 @@ test('uses GET _redirect and does not expose instance open-mode or external-url 
   assert.doesNotMatch(settings, /draft\.(openMode|externalUrl)/)
 })
 
+test('copies the displayed application URL using the same HTTP-compatible helper as device details', async () => {
+  const settings = await readFile(new URL('../views/application-center/ProjectApplication/Detail/components/ApplicationSettings.vue', import.meta.url), 'utf8')
+  assert.match(settings, /import useClipboard from 'vue-clipboard3'/)
+  assert.match(settings, /await toClipboard\(domainDisplayValue\.value\)/)
+})
+
 test('opens the template redirect location after membership validation', async () => {
   const { calls, popup, guard } = createFixture()
   assert.equal(await guard.openApplication(application), true)

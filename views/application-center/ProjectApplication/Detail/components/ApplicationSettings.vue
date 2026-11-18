@@ -110,6 +110,7 @@ import type { PropType } from 'vue'
 import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
+import useClipboard from 'vue-clipboard3'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { FileUpload } from '@jetlinks-web-core/components'
 import { uploadByRequest } from '@jetlinks-web-core/components/Upload/utils'
@@ -144,6 +145,7 @@ const emits = defineEmits<{
   (event: 'save', patch: Partial<ProjectApplication>): void
 }>()
 const { t: $t } = useI18n()
+const { toClipboard } = useClipboard()
 const formRef = ref<FormInstance>()
 const draft = reactive<SettingsDraft>({
   icon: undefined,
@@ -230,7 +232,7 @@ const copyApplicationUrl = async () => {
     return
   }
   try {
-    await navigator.clipboard.writeText(domainDisplayValue.value)
+    await toClipboard(domainDisplayValue.value)
     onlyMessage($t('ProjectApplication.settings.copySuccess'))
   } catch {
     onlyMessage($t('ProjectApplication.settings.copyFailed'), 'warning')

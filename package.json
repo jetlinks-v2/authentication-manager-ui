@@ -9,7 +9,8 @@
     "build": "pnpm --filter jetlinks-ui-core build -- --module-name authentication-manager"
   },
   "dependencies": {
-    "colorpicker-v3": "^2.10.2"
+    "colorpicker-v3": "^2.10.2",
+    "vue-clipboard3": "^2.0.0"
   },
   "peerDependencies": {}
 }
