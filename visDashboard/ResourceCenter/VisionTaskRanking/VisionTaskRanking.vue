@@ -1,7 +1,7 @@
 <template>
   <section v-if="state.available" class="vision-ranking resource-ranking" :aria-label="state.title">
     <header class="ranking-header">
-      <h3>{{ state.title }}</h3>
+      <h3>{{ state.title }}<DocumentHelp code="resources/Dashboard" help-key="dashboard.visionRanking" /></h3>
       <div v-if="!state.noTasks" class="ranking-toolbar">
         <a-segmented v-model:value="state.metric" :options="state.tabs" size="small" class="ranking-switch" />
       </div>
@@ -22,6 +22,7 @@
 <script setup lang="ts">
 import { computed, reactive, toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import ResourceRankList from '../components/ResourceRankList.vue'
 import ResourceEmpty from '../components/ResourceEmpty.vue'
 import VisionTaskRankingContent from '../components/VisionTaskRankingContent.vue'

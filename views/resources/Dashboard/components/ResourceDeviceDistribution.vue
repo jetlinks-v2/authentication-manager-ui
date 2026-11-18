@@ -1,5 +1,9 @@
 <template>
-  <a-card class="resource-panel resource-device-distribution" :title="t('resourceDashboard.DeviceDistribution')">
+  <a-card class="resource-panel resource-device-distribution">
+    <template #title>
+      {{ t('resourceDashboard.DeviceDistribution') }}
+      <DocumentHelp code="resources/Dashboard" help-key="dashboard.deviceDistribution" />
+    </template>
     <div class="resource-device-distribution__content">
       <div class="resource-device-distribution__map" data-resource-section="map">
         <ResourceDeviceMap />
@@ -11,6 +15,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import ResourceDeviceMap from './ResourceDeviceMap.vue'
 import ResourceOfflineDevices from './ResourceOfflineDevices.vue'
 import { useResourcePageContext } from '../resourcePageContext'

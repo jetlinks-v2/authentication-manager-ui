@@ -2,6 +2,8 @@
 
 ## 当前入口与组件边界
 
+资源仪表盘帮助埋点：在设备分布、设备上报消息、视觉任务指标排行标题后复用 `DocumentHelp`，对应 `code=resources/Dashboard`、`key=dashboard.deviceDistribution / dashboard.deviceMessages / dashboard.visionRanking`。模块启动时由 `views/resources/Dashboard/documentHelpPoints.ts` 注册三项，文档管理不必先访问该页面即可扫描；说明与启用状态沿用平台配置，未配置或禁用不显示问号。仅增加帮助入口，不改变指标取数、地图和筛选行为。设备消息及视觉排行 SFC 编译、三点位注册标识检查通过，`node --test tests/visionTaskRanking.test.mjs tests/documentManagement.test.mjs` 共 34 项通过；设备分布两种布局的标题帮助已补充自动回归，真实页面仍待验收，真实说明需在文档管理中配置并启用。
+
 `views/resources/Dashboard/index.vue` 统一进入 `ResourceDashboardPage.vue`，由 `useResourcePage.ts` 根据部署与授权装配显式组件目录。页面只对设备地图复用 core 的按需 discovery；旧 `LegacyResourceDashboard.vue`、`useResourceDashboard.ts`、旧默认布局、未被现用页面复用的组件及其注册清单、配置面板和素材已移除。
 
 `visDashboard/ResourceCenter` 保留新页面实际复用的节点状态、节点表格、视觉任务排行、空态和相应查询/样式。历史数字卡、快速开始、静态分布与流量排行不再提供独立组件入口。当前按账号/项目/API/应用隔离的布局键保持不变；`resourceLayoutStorage.ts` 仅维护地图与离线列表组合卡的同范围迁移，不读取旧版整页画布缓存。下文历史章节中的旧组件路径及当时验证记录不代表当前实现。
@@ -35,6 +37,10 @@ SaaS 设备运维和视频监控由实际授权菜单装配，不匹配角色名
 设备分布直接复用 `deviceMapCard` 默认的高德聚合地图，保留地图拖动、缩放、聚合点展开和设备详情交互，不再指定静态分布图模式或固定显示范围。地图组件经 catalog discovery 发现，由 `DashboardWidgetRenderer` 注入，沿用原 GeoJSON 查询、权限和系统地图配置；无点位时展示底图，缺少地图配置或加载失败时沿用原组件的提示。
 
 独立小地图卡片的在线、离线图例放在标题栏右侧，与“设备分布”同栏；宿主通过运行时 `legendTarget` 选择器提供挂载容器，地图复用原有动态图例。组合分布卡片保留地图内的图例位置，不新增状态查询。
+
+独立地图的 `ResourceDashboardWidget.vue` 与组合卡的 `ResourceDeviceDistribution.vue` 均在宿主标题挂载 `resources/Dashboard` / `dashboard.deviceDistribution`，共用已有文档配置。地图以 `embedded` 模式渲染时不显示自己的标题，帮助入口由宿主提供；原图例、骨架、失败重试和查询保持不变。
+
+设备分布帮助验证（[认证 PR #165](https://github.com/jetlinks-v2/authentication-manager-ui/pull/165)）：`tests/resourceMapLoading.test.mjs` 的独立地图帮助断言在修复前失败，修复后验证加载前后帮助与图例保留，并覆盖组合卡和失败重试。地图、布局、文档管理及概览等认证回归 49/49、core 帮助回归 16/16 通过；宿主 SFC 脚本、模板、样式编译及认证目标生产构建通过（50.45 秒）。认证完整 `vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 仍有 543 项既有诊断，与修复前 `4e75adc` 忽略行号后逐条一致，修改组件无诊断；模块未配置独立 lint 脚本，差异空白检查通过。本次未完成真实页面悬停验收。
 
 设备分布的标题、白色外框与画布尺寸由资源页同步渲染，独立地图和地图/离线列表组合卡共用地图内容承载。目录发现、组件代码下载和地图业务数据分别加载；前两阶段立即显示卡内骨架，异步组件由局部 Suspense 承接，不使路由或相邻卡片一起等待。地图加载失败和重试也保留外框，不改个人布局、授权范围或查询契约。业务数据加载沿用地图组件自身状态，概览沿用现有实现。
 

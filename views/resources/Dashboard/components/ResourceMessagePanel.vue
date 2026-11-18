@@ -1,5 +1,6 @@
 <template>
-  <a-card class="resource-panel resource-message-panel" :title="t('resourcePage.messageTitle')" size="small">
+  <a-card class="resource-panel resource-message-panel" size="small">
+    <template #title>{{ t('resourcePage.messageTitle') }}<DocumentHelp code="resources/Dashboard" help-key="dashboard.deviceMessages" /></template>
     <template #extra>
       <div class="resource-message-actions">
         <a-segmented v-model:value="range" :options="ranges" size="small" class="ranking-switch" />
@@ -28,6 +29,7 @@ import { RightOutlined } from '@ant-design/icons-vue'
 import { BarChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import Echarts from '@jetlinks-web-core/components/Echarts'
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import ResourceEmpty from '../../../../visDashboard/ResourceCenter/components/ResourceEmpty.vue'
 import { useResourceMessage } from '../useResourceMessage'
 import type { TimeRange } from '../../../../visDashboard/ResourceCenter/shared'
