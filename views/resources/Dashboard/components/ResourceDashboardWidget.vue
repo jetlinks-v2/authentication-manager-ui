@@ -7,7 +7,11 @@
       :loading="runtime.summary.loading.value" :error="runtime.summary.error.value"
       @open="runtime.summary.open" @retry="runtime.summary.refresh" />
     <ResourceMessagePanel v-else-if="panel.kind === 'message'" :scope="runtime.scope.value" :initial-range="runtime.messageRange.value" />
-    <a-card v-else-if="panel.kind === 'map'" class="resource-panel" :title="t('resourceDashboard.DeviceDistribution')">
+    <a-card v-else-if="panel.kind === 'map'" class="resource-panel">
+      <template #title>
+        {{ t('resourceDashboard.DeviceDistribution') }}
+        <DocumentHelp code="resources/Dashboard" help-key="dashboard.deviceDistribution" />
+      </template>
       <template #extra><div :id="mapLegendId" /></template>
       <ResourceDeviceMap :legend-target="`#${mapLegendId}`" />
     </a-card>
@@ -21,6 +25,7 @@
 <script setup lang="ts">
 import { computed, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import type { DashboardWidget } from '@jetlinks-web-core/components/DashBoardCanvas'
 import GatewayStatusPanel from '../../../../visDashboard/ResourceCenter/components/GatewayStatusPanel.vue'
 import VisionTaskRanking from '../../../../visDashboard/ResourceCenter/VisionTaskRanking/VisionTaskRanking.vue'
