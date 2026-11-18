@@ -92,57 +92,6 @@ const policiesForMenus = (policies: AssetAccessPolicy[], menus: MenuPermissionNo
   return cloneDeep(policies.filter(policy => assetTypes.has(policy.assetType)))
 }
 
-/** 策略取模板与可授权范围交集；失去必需策略的菜单不再授权，祖先只保留层级。 */
-export const resolveApplicationRolePermissionScope = (input: ApplicationRolePermissionScopeInput) => {
-  const roleMenus = new Map(flattenMenus(normalizeGrantedMenus(input.roleMenus || [])).map(menu => [menu.id, menu]))
-  const allowedSupports = new Map(input.grantableAssets.map(asset => [asset.assetType,
-    new Set(asset.accesses.filter(access => !access.disabled).map(access => access.supportId))]))
-  const templatePolicies = input.templateAssetAccesses || []
-  const intersectedPolicies = templatePolicies.flatMap(policy => {
-    const accesses = policy.accesses.filter(access => allowedSupports.get(policy.assetType)?.has(access.supportId))
-    // 模板原有空策略仍可携带 options；过滤为零的非空策略不能变成隐式默认权限。
-    return accesses.length || !policy.accesses.length ? [{ ...cloneDeep(policy), accesses: cloneDeep(accesses) }] : []
-  })
-  const survivingTypes = new Set(intersectedPolicies.filter(policy => policy.accesses.length).map(policy => policy.assetType))
-  const excludedTypes = new Set(templatePolicies
-    .filter(policy => policy.accesses.length && !survivingTypes.has(policy.assetType)).map(policy => policy.assetType))
-  const excludedMenus: Pick<MenuPermissionNode, 'id' | 'name' | 'i18nName'>[] = []
-  const byId = new Map(resolveApplicationRoleMenuCandidates(input).map(menu => {
-    const excluded = !!menu.granted && getMenuPermissionAssetTypes(menu).some(type => excludedTypes.has(type))
-    if (excluded) excludedMenus.push({ id: menu.id, name: menu.name, i18nName: menu.i18nName })
-    const granted = !!menu.granted && !excluded
-    return [menu.id, { ...menu, granted, buttons: granted ? menu.buttons : [],
-      assetAccesses: granted ? templateMenuAccesses(menu, intersectedPolicies) : [],
-      children: [] as MenuPermissionNode[] }]
-  }))
-  const roots: MenuPermissionNode[] = []
-  byId.forEach(menu => {
-    const parent = menu.parentId && menu.parentId !== menu.id ? byId.get(menu.parentId) : undefined
-    if (parent) parent.children.push(menu)
-    else roots.push(menu)
-  })
-  // 无授权的祖先只有保留子菜单时才进入候选，避免把纯目录变成可授权叶节点。
-  const prune = (items: MenuPermissionNode[]): MenuPermissionNode[] => items.flatMap(menu => {
-    const children = prune(menu.children || [])
-    return menu.granted || children.length ? [{ ...menu, children }] : []
-  })
-  const menus = normalizeCandidateMenus(prune(roots))
-  const echo = (items: MenuPermissionNode[]): MenuPermissionNode[] => items.map(menu => {
-    const role = roleMenus.get(menu.id)
-    const selectedButtons = new Set((role?.buttons || []).filter(button => button.granted).map(button => button.id))
-    return {
-      ...menu,
-      granted: grantableMenuIds.has(menu.id) && role?.granted === true,
-      buttons: (menu.buttons || []).map(button => ({ ...button, granted: selectedButtons.has(button.id) })),
-      children: echo(menu.children || []),
-    }
-  })
-  const grantableMenuIds = new Set([...byId.values()].filter(menu => menu.granted).map(menu => menu.id))
-  const assetAccesses = policiesForMenus(intersectedPolicies, [...byId.values()].filter(menu => menu.granted))
-  return { menus, grantedMenus: echo(menus), assetAccesses, grantableMenuIds,
-    grantableAssets: input.grantableAssets, excludedMenus }
-}
-
 /** 仅提交最终已选菜单的交集策略，同步兼容字段，防止编辑器默认值或旧角色策略恢复越权项。 */
 export const buildApplicationRolePermissionGrant = (
   snapshot: MenuAssetPermissionSnapshot,
