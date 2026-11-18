@@ -615,3 +615,9 @@ Chrome 实测：画布 layout/content 的 overflowY 均为 visible；外层页�
 验证：`node scripts/verify-quick-alarms.cjs` 通过，覆盖后端仅应用请求体条件时的混合告警分类计数、列表和详情隔离、计数与列表口径一致、分页、已处理详情复查、单类计数失败隔离及原有处理/异步生命周期行为。3 个变更 TypeScript 文件语法检查与 `git diff --check` 通过。Chrome 现有 `localhost:9200/#/overview` 页面已确认：物联数量由 2,858 恢复为 0，浮层为 0 条未处理；视联仍为 2,858，浮层返回真实识别告警记录。未提交任何告警处理。真实详情弹窗未完成浏览器复核；按性能约束未运行全量 lint/typecheck/build。
 
 部署：无需新增依赖或重启后端，本地 Vite 已自动更新，生产环境需重新发布 runtime-ui。运行服务仅凭分类 URL 未隔离数据的现象与本地后端依赖源码不一致，服务版本及后端过滤原因尚未核实。
+
+## 快速上手标题帮助
+
+标题帮助：在 `visDashboard/Base/QuickGuide/components/HomeView.vue` 的六类步骤标题后复用 `DocumentHelp`，传入 `code="project/Overview"` 和 `helpKey="quickGuide.{step.key}"`。模块启动时由 `documentHelpPoints.ts` 注册 space/gateway/device/algorithm/alarm/application 六个点位，管理页无需先打开概览即可发现。管理员在「平台设置 → 文档管理」编辑 Markdown 说明和内嵌链接，配置在挂载及返回页面时预加载，保存后刷新已挂载 helper；仅说明非空且已启用时显示问号，未配置、禁用或加载失败隐藏业务入口，管理扫描清单始终保留。不再依赖文档站标签搜索。卡片导航与帮助按钮保持同级，原有点击、禁用及键盘行为不变。
+
+验证入口：`tests/quickGuideView.test.mjs`、`tests/documentManagement.test.mjs` 以及 core 的 helper 测试。相关前端 33 项定向测试通过；实际配置保存、重新打开与刷新读取待用户重启本地 auth 后联调验证。

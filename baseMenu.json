@@ -1237,6 +1237,26 @@
         "icon": "icon-pingtaishezhi",
         "children": [
           {
+            "code": "system/DocumentManagement",
+            "name": "文档管理",
+            "owner": "iot",
+            "id": "system-document-management",
+            "showPage": ["system_config"],
+            "sortIndex": 90,
+            "url": "/system/ps/documents",
+            "icon": "icon-yuandian",
+            "i18nMessages": { "name": { "zh_CN": "文档管理", "en_US": "Documentation", "en": "Documentation", "ja": "ドキュメント管理", "ja_JP": "ドキュメント管理" } },
+            "permissions": [{ "permission": "system_config", "actions": ["query"] }],
+            "buttons": [
+              {
+                "id": "save",
+                "name": "配置",
+                "i18nMessages": { "zh_CN": "配置", "en_US": "Configure", "en": "Configure", "ja": "設定", "ja_JP": "設定" },
+                "permissions": [{ "permission": "system_config", "actions": ["query", "save"] }]
+              }
+            ]
+          },
+          {
             "code": "system/Permission",
             "name": "权限管理",
             "i18nMessages": {

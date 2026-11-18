@@ -58,6 +58,7 @@ export function useResourcePage(width: Readonly<Ref<number>>) {
         ...(definition.defaultConfig.componentProps?.deviceMapCard as object || {}), topTitle: t('resourceDashboard.DeviceDistribution'),
         // 沿用原设备地图的默认模式，保留高德地图的拖动、缩放和聚合交互。
         scope: capabilities.scope.value, showStatus: true,
+        documentHelp: { code: 'resources/Dashboard', key: 'dashboard.deviceDistribution' },
         deviceTerms: deviceScope.value.terms,
       } },
     }

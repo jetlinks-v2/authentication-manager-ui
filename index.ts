@@ -1,13 +1,28 @@
 import i18n from "@jetlinks-web-core/locales";
+import { defineAsyncComponent } from 'vue'
 
 const routerModules = import.meta.glob('./views/**/index.vue')
 import { getModuleRoutesMap } from '@jetlinks-web/utils'
 import { moduleRegistry } from '@jetlinks-web-core/utils/module-registry'
-import type { MenuFilterDefinition, MenuItem } from '@jetlinks-web-core/types/module'
+import type { MenuFilterDefinition, MenuItem, RegistryAction } from '@jetlinks-web-core/types/module'
 import registerSetting from './register'
 import { name } from './package.json'
 import './views/system/list-page.less'
-import { getRegisterComponents } from './views/system/Announcement/register'
+import { registerOverviewHelpPoints } from './visDashboard/Base/QuickGuide/documentHelpPoints'
+import { registerResourceDashboardHelpPoints } from './views/resources/Dashboard/documentHelpPoints'
+import { getRegisterComponents as getAnnouncementComponents } from './views/system/Announcement/register'
+
+const getRegisterComponents = (): RegistryAction[] => [
+  ...getAnnouncementComponents(),
+  {
+    targetPage: 'layout',
+    targetModule: 'headerRight',
+    target: 'Language',
+    mode: 'after',
+    code: 'document-center',
+    component: defineAsyncComponent(() => import('./components/DocumentCenter/index.vue')),
+  },
+]
 
 /**
  * 额外子路由是独立于菜单管理之外的页面，比如详情，新增表单页；它们需要挂载在指定路由下。
@@ -131,6 +146,8 @@ const getComponents = () => ({})
 
 const register = () => {
   moduleRegistry.register(name, registerSetting)
+  registerOverviewHelpPoints()
+  registerResourceDashboardHelpPoints()
 }
 
 /**

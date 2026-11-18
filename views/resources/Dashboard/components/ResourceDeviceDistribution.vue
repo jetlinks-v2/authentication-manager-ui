@@ -1,13 +1,12 @@
 <template>
-  <a-card class="resource-panel resource-device-distribution" :title="t('resourceDashboard.DeviceDistribution')">
+  <a-card class="resource-panel resource-device-distribution">
+    <template #title>
+      {{ t('resourceDashboard.DeviceDistribution') }}
+      <DocumentHelp code="resources/Dashboard" help-key="dashboard.deviceDistribution" />
+    </template>
     <div class="resource-device-distribution__content">
       <div class="resource-device-distribution__map" data-resource-section="map">
-        <DashboardWidgetRenderer v-if="embeddedMap" :widget="embeddedMap"
-          :definition="runtime.mapDefinition.value" :preview-mode="false" />
-        <div v-else-if="runtime.mapLoading.value" class="resource-panel-state"><a-spin /></div>
-        <ResourceEmpty v-else class="resource-panel-state" :title="t('resourcePage.mapUnavailable')">
-          <a-button size="small" @click="runtime.reloadMap">{{ t('resourceDashboard.retry') }}</a-button>
-        </ResourceEmpty>
+        <ResourceDeviceMap />
       </div>
       <ResourceOfflineDevices :scope="runtime.scope.value" :device-scope="runtime.deviceScope.value" />
     </div>
@@ -15,23 +14,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { DashboardWidgetRenderer, type DashboardWidget } from '@jetlinks-web-core/components/DashBoardCanvas'
-import ResourceEmpty from '../../../../visDashboard/ResourceCenter/components/ResourceEmpty.vue'
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
+import ResourceDeviceMap from './ResourceDeviceMap.vue'
 import ResourceOfflineDevices from './ResourceOfflineDevices.vue'
 import { useResourcePageContext } from '../resourcePageContext'
 
 const { t } = useI18n()
 const runtime = useResourcePageContext()
-// 只调整地图外观，保留原查询范围、刷新策略、聚合点和详情交互。
-const embeddedMap = computed<DashboardWidget | undefined>(() => {
-  const widget = runtime.mapWidget.value
-  if (!widget) return undefined
-  return { ...widget, componentProps: { ...widget.componentProps,
-    deviceMapCard: { ...(widget.componentProps.deviceMapCard as object || {}), embedded: true },
-  } }
-})
 </script>
 
 <style scoped>
