@@ -10,6 +10,7 @@ import {
 export interface ApplicationRolePermissionScopeInput {
   isExternal: boolean
   currentUserMenus: MenuPermissionNode[]
+  applicationMenus: MenuPermissionNode[]
   templateMenus?: MenuPermissionNode[]
   roleMenus?: MenuPermissionNode[]
   templateAssetAccesses?: AssetAccessPolicy[]
@@ -37,16 +38,17 @@ const templateMenuAccesses = (menu: MenuPermissionNode, policies: AssetAccessPol
     })))
 }
 
-/** 先取菜单与按钮交集，用其查询后端可授权策略；菜单自带的资产候选不代表授权上限。 */
-export const resolveApplicationRoleMenuCandidates = (input: Pick<
-  ApplicationRolePermissionScopeInput, 'isExternal' | 'currentUserMenus' | 'templateMenus'
->): MenuPermissionNode[] => {
+/** 菜单限定当前应用并取用户和模板交集；祖先仅保留层级，资产权限始终采用模板配置。 */
+export const resolveApplicationRolePermissionScope = (input: ApplicationRolePermissionScopeInput) => {
   const normalize = (items: MenuPermissionNode[]) => flattenMenus(normalizeGrantedMenus(
     input.isExternal ? items : filterApplicationMenuInterfacePermissions(items),
   ))
   const userMenus = new Map(normalize(input.currentUserMenus).map(menu => [menu.id, menu]))
-  const candidates = normalize(input.templateMenus || []).filter(menu => userMenus.has(menu.id))
-  return candidates.map(menu => {
+  const roleMenus = new Map(normalize(input.roleMenus || []).map(menu => [menu.id, menu]))
+  const assetAccesses = cloneDeep(input.templateAssetAccesses || [])
+  const applicationIds = new Set(flattenMenus(input.applicationMenus).map(menu => menu.id))
+  const candidates = normalize(input.templateMenus || []).filter(menu => userMenus.has(menu.id) && applicationIds.has(menu.id))
+  const byId = new Map(candidates.map(menu => {
     const userMenu = userMenus.get(menu.id)!
     const userButtons = new Set((userMenu.buttons || []).filter(button => button.granted).map(button => button.id))
     const granted = !!menu.granted && !!userMenu.granted

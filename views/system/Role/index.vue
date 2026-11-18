@@ -8,10 +8,10 @@
                     right-width="1fr"
                 >
                     <template #left>
-                        <Left @select-data="selectData" />
+                        <Left :scope="scope" @select="scope = $event" />
                     </template>
                     <template #right>
-                        <Right :groupId="groupId" />
+                        <Right :scope="scope" />
                     </template>
                 </EqualHeightColumns>
             
@@ -22,12 +22,11 @@
  <script lang="ts" setup>
  import Left from './RoleLeft/index.vue'
  import Right from './RoleRight/index.vue'
+ import { ref } from 'vue'
+ import type { RoleScope } from './roleScope'
 
 defineOptions({ name: 'Role' })
- const groupId = ref()
- const selectData = (data:any)=>{
-    groupId.value = data[0]
- }
+ const scope = ref<RoleScope>({ kind: 'global' })
  </script>
  <style lang="less" scoped>
  .role-layout {

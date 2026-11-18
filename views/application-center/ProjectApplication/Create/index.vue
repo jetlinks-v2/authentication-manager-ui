@@ -20,7 +20,7 @@
           <a-form-item :label="$t('ProjectApplication.create.applicationKind')">
             <a-radio-group v-model:value="applicationKind" button-style="solid" :disabled="submitting">
               <a-radio-button value="business">{{ $t('ProjectApplication.create.businessApplication') }}</a-radio-button>
-              <a-radio-button value="third-party">{{ $t('ProjectApplication.create.thirdPartyApplication') }}</a-radio-button>
+              <a-radio-button v-if="thirdPartyApplicationEnabled" value="third-party">{{ $t('ProjectApplication.create.thirdPartyApplication') }}</a-radio-button>
             </a-radio-group>
           </a-form-item>
           <a-form-item :label="$t('ProjectApplication.create.icon')">
@@ -95,11 +95,15 @@
 
 <script setup lang="ts">
 import { defineAsyncComponent } from 'vue'
+import { componentsRegistry } from '@jetlinks-web-core/utils/components-registry'
 import TemplateSelector from './TemplateSelector.vue'
 import { useApplicationCreate } from './useApplicationCreate'
 import type { ProjectApplication } from '../types'
 
 const TemplatePreview = defineAsyncComponent(() => import('./TemplatePreview.vue'))
+// 固定页面编码使创建弹窗和独立创建路由共用类型扩展。
+const thirdPartyApplicationEnabled = !componentsRegistry.getRegistry('application-center/ProjectApplication:application-types')
+  .some(item => item.mode === 'hide' && item.target === 'third-party')
 
 defineOptions({ name: 'ProjectApplicationCreate' })
 

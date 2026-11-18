@@ -11,8 +11,15 @@
 	    </PageChrome>
 	    <FullPage flex transparent-background class="role-detail">
 		    <div class="role-detail__content">
-			    <User v-if="activeKey === 'user'" />
-			    <Permission v-else />
+            <a-alert v-if="error" type="error" show-icon :message="$t('Permission.index.071527-3')">
+              <template #action><a-button @click="load">{{ $t('ProjectApplication.list.retry') }}</a-button></template>
+            </a-alert>
+            <a-spin v-else-if="loading" />
+            <template v-else-if="detail">
+              <User v-if="activeKey === 'user'" :key="detail.kind === 'global' ? detail.role.id : detail.context.role.id"
+                :role-id="detail.kind === 'global' ? detail.role.id : detail.context.role.id" :application-id="application?.scope.applicationId" />
+              <Permission v-else :key="detail.kind === 'global' ? detail.role.id : detail.context.role.id" :application="application" />
+            </template>
 		    </div>
 	    </FullPage>
     </j-page-container>
@@ -24,19 +31,11 @@ import User from './User/index.vue';
 import FullPage from "@jetlinks-web-core/layout/FullPage.vue";
 import PageChrome from "@jetlinks-web-core/components/PageChrome/index.vue";
 import SlantedTabs from "@jetlinks-web-core/components/SlantedTabs";
-import type { SlantedTabOption } from "@jetlinks-web-core/components/SlantedTabs";
-import {useI18n} from "vue-i18n";
+import { useRoleDetail } from './useRoleDetail'
 
 defineOptions({ name: 'RoleDetail' })
 
-const { t: $t } = useI18n();
-const activeKey = ref('permission');
-
-// 页签文案由调用方国际化；数量能力当前未接入，省略 count。
-const tabs = computed<SlantedTabOption[]>(() => [
-  { key: 'permission', label: $t('Detail.index.386725-0') },
-  { key: 'user', label: $t('Detail.index.386725-1') },
-]);
+const { detail, application, loading, error, activeKey, tabs, load } = useRoleDetail()
 </script>
 
 <style lang="less" scoped>

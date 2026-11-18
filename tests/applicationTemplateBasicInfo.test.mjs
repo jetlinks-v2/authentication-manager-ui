@@ -32,6 +32,8 @@ const { outputFiles } = await build({
   plugins: [{
     name: 'basic-info-boundaries',
     setup(plugin) {
+      plugin.onResolve({ filter: /^@jetlinks-web-core\/utils\/components-registry$/ }, args => ({ path: args.path, namespace: 'components-registry-fixture' }))
+      plugin.onLoad({ filter: /.*/, namespace: 'components-registry-fixture' }, () => ({ contents: 'export const componentsRegistry = { getRegistry: () => [] };' }))
       plugin.onResolve({ filter: /^vue$/ }, () => ({ path: import.meta.resolve('vue'), external: true }))
       plugin.onLoad({ filter: /\.vue$/ }, async args => {
         const { descriptor } = parse(await readFile(args.path, 'utf8'), { filename: args.path })

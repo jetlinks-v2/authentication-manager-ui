@@ -2,7 +2,7 @@ import { request } from '@jetlinks-web/core'
 import { getMenuGrantDetail } from '@jetlinks-web-core/api/system/menu'
 
 // 获取角色列表
-export const getRoleList_api = (data: any): Promise<any> => request.post(`/role/_query/`, data);
+export const getRoleList_api = (data: any, config?: { signal?: AbortSignal }): Promise<any> => request.post(`/role/_query/`, data, config);
 // 删除角色
 export const delRole_api = (id: string): Promise<any> => request.remove(`/role/${id}`);
 // 保存角色

@@ -60,7 +60,7 @@ const hook = await load('../visDashboard/Base/Announcements/useHomeAnnouncements
   '../shared/useHomeRuntime': 'export const useHomeRuntime=()=>({error:{value:false},rows:{value:[{value:2}]}})',
 })
 const setup = () => {
-  globalThis.hooks={route:{params:{},query:{}},router:{push:location=>hooks.navigation.push(location)},navigation:[],project:'a',app:'app',scope:'service/user',errors:[],config:{chart:{displayStyle:'saas',navigation:true},refreshTime:60}, user:{userInfo:{id:'user'},alarmUpdateCount:0,updateAlarm(){this.alarmUpdateCount++}},change:async()=>({status:200,success:true})}
+  globalThis.hooks={route:{params:{},query:{}},router:{push:location=>hooks.navigation.push(location)},navigation:[],project:'a',app:'app',scope:'service/user',errors:[],config:{chart:{displayStyle:'saas',navigation:true},refreshTime:60}, user:{userInfo:{id:'user'},other:{tabKey:'notification'},messageInfo:{id:'old'},alarmUpdateCount:0,updateAlarm(){this.alarmUpdateCount++}},change:async()=>({status:200,success:true})}
   let edit=false; const instance=hook.useHomeAnnouncements({isEdit:()=>edit,info:()=>undefined})
   return {instance,setEdit:x=>{edit=x},row:{id:'id',notification:{id:'id'},readState:'unread'}}
 }
@@ -83,6 +83,8 @@ test('全部公告通过基础路由打开站内消息，编辑或禁导航时�
   f.instance.openAll()
   assert.deepEqual(hooks.navigation, [{ path: '/account/center', query: { tab: 'StationMessage' } }])
   assert.equal(hooks.user.tabKey, 'StationMessage')
+  assert.equal(hooks.user.other.tabKey, 'announcement')
+  assert.deepEqual(hooks.user.messageInfo, {})
   f.setEdit(true); f.instance.openAll()
   f.setEdit(false); hooks.config.chart.navigation = false; f.instance.openAll()
   assert.equal(hooks.navigation.length, 1)

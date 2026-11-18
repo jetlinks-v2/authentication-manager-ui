@@ -1,304 +1,66 @@
 <template>
-
   <DefineEmptyCreate>
-    <j-permission-button
-        class="authentication-system-list-page__primary-action"
-        type="primary"
-        :hasPermission="`${permission}:add`"
-        @click="addRole"
-    >
-        <AIcon type="PlusOutlined" />{{ $t('RoleRight.index.470525-0') }}
+    <j-permission-button class="authentication-system-list-page__primary-action" type="primary"
+      has-permission="system/Role:add" @click="addRole">
+      <AIcon type="PlusOutlined" />{{ $t('RoleRight.index.470525-0') }}
     </j-permission-button>
   </DefineEmptyCreate>
   <div v-bind="$attrs" class="role-container">
+    <a-alert v-if="templateError" type="error" show-icon :message="$t('Role.application.templateLoadFailed')">
+      <template #action><a-button size="small" @click="loadTemplate">{{ $t('ProjectApplication.list.retry') }}</a-button></template>
+    </a-alert>
+    <a-alert v-if="tableError" type="error" show-icon :message="$t('Role.application.rolesLoadFailed')">
+      <template #action><a-button size="small" @click="tableRef?.reload()">{{ $t('ProjectApplication.list.retry') }}</a-button></template>
+    </a-alert>
     <div class="role-table">
-      <j-pro-table
-        ref="tableRef"
-        mode="TABLE"
-        class="pro-table__no-padding"
-        :columns="columns"
-        :request="getRoleList_api"
-        :params="queryParams"
-        :defaultParams="{
-          sorts: [
-            { name: 'createTime', order: 'desc' },
-            { name: 'id', order: 'desc' }
-          ]
-        }"
-      >
+      <j-pro-table ref="tableRef" mode="TABLE" class="pro-table__no-padding" :columns="columns"
+        :request="requestRoles" :params="queryParams"
+        :default-params="{ sorts: [{ name: 'createTime', order: 'desc' }, { name: 'id', order: 'desc' }] }"
+        @request-error="tableError = true">
         <template #emptyText>
           <CloudEmpty :search="emptyCreateSearch" :search-name="$t('User.index.673867-13')">
-            <EmptyCreateButton />
+            <EmptyCreateButton v-if="!tableError" />
           </CloudEmpty>
         </template>
-          <template #headerLeftRender>
-              <a-flex gap="small">
-                  <ConditionFilter
-                      class="authentication-system-list-page__filter"
-                      noMargin
-                      :columns="columns"
-                      target="system-role"
-                      @change="({filter}) => handelSearch(filter)"
-                  />
-                  <EmptyCreateButton />
-              </a-flex>
-          </template>
-        <template #action="slotProps">
+        <template #headerLeftRender>
+          <a-flex gap="small">
+            <ConditionFilter class="authentication-system-list-page__filter" no-margin
+              :columns="columns" target="system-role" @change="search" />
+            <EmptyCreateButton />
+          </a-flex>
+        </template>
+        <template #action="role">
           <TableActions>
-            <TableActionsItem
-              v-for="(i, index) in getActions(slotProps, 'table')"
-              :key="`${i.key}-${i.icon}`"
-              :common="index < 2"
-              v-slot="{ placement }"
-            >
-              <j-permission-button
-                :disabled="i.disabled"
-                :popConfirm="i.popConfirm"
-                :tooltip="{
-                  ...i.tooltip,
-                }"
-                @click="i.onClick"
-                type="link"
-                size="small"
-                :danger="i.key === 'delete'"
-                :hasPermission="'system/Role:' + i.key"
-              >
-                <template #icon>
-                  <AIcon :type="i.icon" />
-                </template>
-                <template v-if="placement === 'more'">{{ i.text }}</template>
+            <TableActionsItem v-for="action in getActions(role)" :key="action.id" :common="action.common" v-slot="{ placement }">
+              <j-permission-button :disabled="action.disabled" :pop-confirm="action.popConfirm" :tooltip="{ title: action.text }"
+                type="link" size="small" :danger="action.key === 'delete'" :has-permission="'system/Role:' + action.key" @click="action.onClick">
+                <template #icon><AIcon :type="action.icon" /></template>
+                <template v-if="placement === 'more'">{{ action.text }}</template>
               </j-permission-button>
             </TableActionsItem>
           </TableActions>
         </template>
       </j-pro-table>
     </div>
-
-    <AddDialog
-      v-if="dialogVisible"
-      v-model:visible="dialogVisible"
-      :groupId="groupId"
-      :modalType="modalType"
-      :current="current"
-      @save="onSave"
-    />
-
-    <Copy
-        v-if="copy.visible"
-        :data="copy.data"
-        @close="copy.visible = false"
-        @save="onCopySave"
-    />
+    <AddDialog v-if="dialog" :context="dialog" @close="dialog = undefined" @save="onSave" />
+    <Copy v-if="copy.visible" :data="copy.data" @close="copy.visible = false" @save="onCopySave" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { defineAsyncComponent } from 'vue'
+import type { PropType } from 'vue'
 import { createReusableTemplate } from '@vueuse/core'
+import type { RoleScope } from '../roleScope'
+import { useRoleTable } from './useRoleTable'
 
-import AddDialog from './components/AddDialog.vue'
-import Copy from './components/Copy.vue'
-import { getRoleList_api, delRole_api } from '@authentication-manager-ui/api/system/role'
-import { useMenuStore } from '@jetlinks-web-core/store/menu'
-import { onlyMessage } from '@jetlinks-web/utils'
-import { useI18n } from 'vue-i18n';
-import PageHeader from '@jetlinks-web-core/components/PageHeader';
-import { ref as emptyCreateSearchRef } from 'vue'
-
+const AddDialog = defineAsyncComponent(() => import('./components/AddDialog.vue'))
+const Copy = defineAsyncComponent(() => import('./components/Copy.vue'))
 defineOptions({ name: 'RoleRight' })
-const emptyCreateSearch = emptyCreateSearchRef(false)
-
-
-const { t: $t } = useI18n();
-const props = defineProps({
-  groupId: {
-    type: String,
-    default: undefined
-  },
-})
-const permission = 'system/Role'
-const { jumpPage } = useMenuStore()
-const modalType = ref('add')
-const current = ref()
-const isSave = !!useRoute().query.save
-// 应用角色必须在应用详情中按模板上限授权，系统角色管理仅维护独立角色。
-const regularRoleTerm = {
-  column: 'applicationId',
-  termType: 'isnull',
-  value: 1,
-}
-const queryParams = ref<any>({ terms: [regularRoleTerm] })
-// 表格
-const tableRef = ref<Record<string, any>>()
-const dialogVisible = ref(isSave)
-const copy = reactive({
-  visible: false,
-  data: {}
-})
-const columns = [
-  {
-    title: $t('RoleRight.index.470525-1'),
-    dataIndex: 'id',
-    key: 'id',
-    ellipsis: true,
-    fixed: 'left',
-    search: {
-      type: 'string',
-    },
-  },
-  {
-    title: $t('RoleRight.index.470525-2'),
-    dataIndex: 'name',
-    key: 'name',
-    ellipsis: true,
-    search: {
-      type: 'string',
-    },
-  },
-  {
-    title: $t('RoleRight.index.470525-3'),
-    key: 'description',
-    ellipsis: true,
-    dataIndex: 'description',
-    search: {
-      type: 'string',
-    },
-    columnEmpty:$t('comm.table.empty')
-  },
-  {
-    title: $t('RoleRight.index.470525-4'),
-    dataIndex: 'action',
-    key: 'action',
-    width: 120,
-    fixed: 'right',
-    scopedSlots: true,
-  },
-]
-const getActions = (
-  data: Partial<Record<string, any>>,
-  type: 'card' | 'table',
-) => {
-  if (!data) return []
-  const actions = [
-    {
-      key: 'update',
-      text: $t('RoleRight.index.470525-5'),
-      tooltip: {
-        title: $t('RoleRight.index.470525-5'),
-      },
-      icon: 'EditOutlined',
-      onClick: () => {
-        dialogVisible.value = true
-        modalType.value = 'edit'
-        current.value = data
-      },
-    },
-    {
-      key: 'update',
-      text: $t('RoleRight.index.470525-6'),
-      tooltip: {
-        title: $t('RoleRight.index.470525-6'),
-      },
-      onClick: () => {
-        jumpPage(`system/Role/Detail`, {
-          params: {
-            id: data.id,
-          },
-        })
-      },
-      icon: 'FormOutlined',
-    },
-    {
-      key: 'copy',
-      text: $t('RoleRight.index.470525-11'),
-      tooltip: {
-        title: $t('RoleRight.index.470525-11'),
-      },
-      onClick: () => {
-        copy.visible = true
-        copy.data = data
-      },
-      icon: 'CopyOutlined',
-    },
-    {
-      key: 'delete',
-      text: $t('RoleRight.index.470525-7'),
-      tooltip: {
-        title: $t('RoleRight.index.470525-7'),
-      },
-      popConfirm: {
-        title: $t('RoleRight.index.470525-8'),
-        onConfirm: async () => {
-          const res = await delRole_api(data.id)
-          if (res.status === 200) {
-            onlyMessage($t('RoleRight.index.470525-9'))
-            tableRef.value?.reload()
-          } else {
-            onlyMessage($t('RoleRight.index.470525-10'), 'error')
-          }
-        },
-      },
-      icon: 'DeleteOutlined',
-    },
-  ]
-  if (type === 'card') return actions.filter((i: any) => i.key !== 'view')
-  return actions
-}
-
-const addRole = () => {
-  dialogVisible.value = true
-  modalType.value = 'add'
-}
-
-const onSave = () => {
-  tableRef.value?.reload()
-}
-
-const onCopySave = (id: string) => {
-  copy.visible = false
-  tableRef.value?.reload()
-  jumpPage('system/Role/Detail', {
-    params: {
-      id,
-    }
-  })
-}
-const handelSearch = (search: any) => {
-  emptyCreateSearch.value = Boolean(search.terms?.length)
-
-  queryParams.value.terms = props.groupId
-    ? [
-        regularRoleTerm,
-        {
-          value: props.groupId,
-          termType: 'eq',
-          column: 'groupId',
-        },
-        ...search.terms,
-      ]
-    : [regularRoleTerm, ...search.terms]
-}
-
-watch(
-  () => props.groupId,
-  (value) => {
-    emptyCreateSearch.value = false
-        queryParams.value = value
-      ? {
-          terms: [
-            regularRoleTerm,
-            {
-              value: props.groupId,
-              termType: 'eq',
-              column: 'groupId',
-            },
-          ],
-        }
-      : {
-          terms: [regularRoleTerm],
-        }
-  },
-)
-
+const props = defineProps({ scope: { type: Object as PropType<RoleScope>, required: true } })
+const { queryParams, emptyCreateSearch, tableRef, tableError, dialog, copy,
+  templateError, loadTemplate, requestRoles,
+  search, addRole, onSave, onCopySave, columns, getActions } = useRoleTable(props)
 const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 
@@ -311,6 +73,17 @@ const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
   .role-table {
     flex: 1 1 0;
     min-height: 0;
+  }
+  :deep(.jtable-body-header) {
+    .jtable-body-header-left {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+    .authentication-system-list-page__filter {
+      flex: 1 1 0;
+      width: auto;
+      min-width: 0;
+    }
   }
   :deep(.ant-table-cell) {
     .ant-btn-link {

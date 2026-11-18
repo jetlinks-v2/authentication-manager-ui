@@ -85,18 +85,14 @@
                       -->
                       <a-spin :spinning="applicationRoleSelectionLoading">
                         <ApplicationRoleSelector
-                          :extraData="detail.roleList"
-                          :applicationRoleIds="applicationRoleIds"
+                          :extraData="selectedRoleItems"
+                          :roles="roles"
                           :roleGroups="roleGroups"
                           v-model:value="form.data.roleIdList"
                           :disabled="isRoleReadonly || applicationRoleSelectionLoading || applicationRoleSelectionUnavailable"
                           @created="loadApplicationRoleSelection"
                         />
                       </a-spin>
-                      <div class="tip">
-                        <AIcon style="margin-right: 0.25rem" type="ExclamationCircleOutlined" />
-                        {{ $t('components.EditUserDialog.939453-38') }}
-                      </div>
                       <div v-if="applicationRoleSelectionUnavailable" class="tip tip-error">
                         {{ $t('components.EditUserDialog.939453-39') }}
                       </div>
@@ -213,7 +209,7 @@ import { useI18n } from 'vue-i18n';
 // import {queryPositionDetailNoPage} from "@authentication-manager-ui/api/system/positions";
 // import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
 import { useMenuStore } from '@jetlinks-web-core/store';  
-import { useApplicationRoleSelection } from '../useApplicationRoleSelection'
+import { useApplicationRoleSelection, type ApplicationRoleItem } from '../useApplicationRoleSelection'
 import ApplicationRoleSelector from './ApplicationRoleSelector.vue'
 
 const { t: $t } = useI18n();
@@ -229,8 +225,9 @@ const loading = ref(false);
 // const positionsMap = new Map()
 const menuStore = useMenuStore();
 const {
-  applicationRoleIds,
+  roles,
   roleGroups,
+  formatRoleName,
   loading: applicationRoleSelectionLoading,
   unavailable: applicationRoleSelectionUnavailable,
   load: loadApplicationRoleSelection,
@@ -245,7 +242,11 @@ const disabledData = reactive<{
   orgIds: []
 })
 */
-const detail = ref({})
+const detail = ref<{ roleList?: ApplicationRoleItem[]; orgList?: dictType[] }>({})
+const selectedRoleItems = computed(() => (detail.value.roleList || []).map(role => ({
+  ...role,
+  name: formatRoleName(role),
+})))
 
 const dialogTitle = computed(() => {
     if (props.type === 'add') return $t('components.EditUserDialog.939453-23');
@@ -465,7 +466,7 @@ onMounted(async () => {
   try {
     await loadApplicationRoleSelection()
   } catch {
-    // 限制数据加载失败时锁定角色选择，避免用户误把应用角色从系统入口分配出去。
+    // 候选加载失败时展示错误并保护已有绑定；应用名称缺失已由 hook 回退为原角色名。
   }
 })
 

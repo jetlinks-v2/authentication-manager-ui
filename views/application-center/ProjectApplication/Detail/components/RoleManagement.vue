@@ -50,22 +50,7 @@
             {{ $t('ProjectApplication.common.save') }}
           </a-button>
         </div>
-        <a-spin :spinning="permissionLoading || savingPermissions">
-          <a-alert v-if="permissionError" type="error" show-icon :message="$t('ProjectApplication.role.permissionLoadFailed')">
-            <template #action><a-button size="small" @click="loadPermissions">{{ $t('ProjectApplication.list.retry') }}</a-button></template>
-          </a-alert>
-          <template v-else>
-            <a-alert v-if="excludedMenuNames" class="permission-exclusions" type="warning" show-icon
-              :message="$t('ProjectApplication.role.excludedMenus', { names: excludedMenuNames })" />
-            <MenuAssetPermissionEditor
-              class="permission-editor"
-              :context="editor"
-              :columns="columns"
-              :show-asset-permissions="false"
-              height="32rem"
-            />
-          </template>
-        </a-spin>
+        <ApplicationRolePermissions class="permission-editor" :state="permissions" />
       </main>
     </div>
     <CloudEmpty v-else :description="$t('ProjectApplication.role.empty')">
@@ -94,7 +79,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { MenuAssetPermissionEditor } from '@jetlinks-web-core/components'
+import ApplicationRolePermissions from '@authentication-manager-ui/components/ApplicationRolePermissions/index.vue'
 import type { ApplicationRole, ApplicationRoleDraft, ApplicationUser } from '../../types'
 import { useApplicationRoleManagement, type ApplicationRoleScope } from './useApplicationRoleManagement'
 
@@ -105,9 +90,8 @@ const emits = defineEmits<{
   'delete-role': [role: ApplicationRole]
 }>()
 const { t: $t } = useI18n()
-const { activeRoleId, roleModalOpen, editingRoleId, formRef, form, permissionLoading, permissionError,
-  savingPermissions, initialized, excludedMenuNames, editor, activeRole, memberCount, columns, rules, savePermissions,
-  openRole, confirmRole, loadPermissions } = useApplicationRoleManagement(props, (draft, id) => emits('save-role', draft, id))
+const { activeRoleId, roleModalOpen, editingRoleId, formRef, form, permissions,
+  savingPermissions, initialized, activeRole, memberCount, rules, savePermissions, openRole, confirmRole } = useApplicationRoleManagement(props, (draft, id) => emits('save-role', draft, id))
 </script>
 
 <style scoped>

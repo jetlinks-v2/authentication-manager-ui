@@ -1,200 +1,70 @@
-	<template>
-		<div class="left-contain">
-			<header class="left-contain__header">
-				<strong>{{ $t('RoleLeft.index.507330-8') }}</strong>
-			</header>
-			<a-input class="left-contain__search" v-model:value="searchValue" :placeholder="$t('RoleLeft.index.507330-0')" @change="searchChange" @pressEnter="search">
-				<template #suffix>
-					<AIcon type="SearchOutlined" @click="search"/>
-				</template>
-			</a-input>
-			<div class="listBox">
-			<a-tree
-          v-if="listData.length"
-          :default-expanded-keys="['global_role']"
-          :fieldNames="{ title: 'name', key: 'id',
-          children: 'children' }"
-          :selectedKeys="selectedKeys"
-					v-model:expandedKeys="expandedKeys"
-          :showLine="{ showLeafIcon: false }"
-          :tree-data="listData"
-          blockNode
-      >
-				<template #title="item">
-					<div v-if="selectId === item.data.id" class="editingItem">
-						<AIcon class="treeItem__icon" type="icon-moren" />
-						<a-input
-                ref="inputRef"
-                v-model:value="addName"
-                :maxlength="64"
-                @blur="() => saveGroup(item.data)"
-            />
-					</div>
-          <div v-else class="treeItem" @click="() => selectGroup(item.data.id)">
-						<template v-if="!item?.children">
-							<div class="itemText">
-								<AIcon class="treeItem__icon" type="icon-moren" />
-								<j-ellipsis style="flex: 1; min-width: 0">{{ item.i18nName || item.name }}</j-ellipsis>
-							</div>
-							<div v-if="item.id !== 'default_group'" class="treeItem__actions" @click="(e) => e.stopPropagation()">
-								<j-permission-button :disabled="item.id === 'default_group'" :popConfirm="{
-                                    title: $t('RoleLeft.index.507330-2'),
-                                    onConfirm: () => deleteGroup(item.id, item.isNew),
-                                }" type="link" :tooltip="{title: $t('RoleLeft.index.507330-3')}" danger size="small">
-									<AIcon type="DeleteOutlined"/>
-								</j-permission-button>
-<!--                hasPermission="system/Role:groupDelete"-->
-								<j-permission-button :disabled="item.id === 'default_group'"
-																		 type="link" @click="editGroup(item.data)" :tooltip="{title: $t('RoleLeft.index.507330-4')}" size="small">
-									<AIcon type="EditOutlined"/>
-<!--                   hasPermission="system/Role:groupUpdate"-->
-								</j-permission-button>
-							</div>
-						</template>
-						<template v-else>
-							<div class="parentText">
-								<AIcon class="treeItem__icon" type="icon-jiaose" />
-								<j-ellipsis style="flex: 1; min-width: 0">{{ item.name }}</j-ellipsis>
-							</div>
-						</template>
-					</div>
-				</template>
-			</a-tree>
-				<CloudEmpty v-else style="margin-top: 6.25rem;"/>
-			</div>
-			<j-permission-button class="left-contain__create" block @click="addGroup">
-				<template #icon><AIcon type="PlusOutlined" /></template>
-				{{ $t('RoleLeft.index.507330-1') }}
-			</j-permission-button>
-		</div>
+<template>
+  <div class="left-contain">
+    <header class="left-contain__header"><strong>{{ $t('RoleLeft.index.507330-8') }}</strong></header>
+    <a-input v-model:value="searchValue" class="left-contain__search" allow-clear
+      :placeholder="$t('Role.application.searchPlaceholder')" @change="expandSearchResults">
+      <template #suffix><AIcon type="SearchOutlined" /></template>
+    </a-input>
+    <a-alert v-if="groupError || applicationError" type="error" show-icon
+      :message="$t(groupError ? 'Role.application.groupLoadFailed' : 'Role.application.loadFailed')">
+      <template #action>
+        <a-button size="small" @click="groupError ? loadGroups() : loadApplications()">{{ $t('ProjectApplication.list.retry') }}</a-button>
+      </template>
+    </a-alert>
+    <div class="listBox">
+      <a-spin :spinning="groupLoading">
+        <a-tree v-if="treeData.length" v-model:expandedKeys="expandedKeys" :selected-keys="selectedKeys"
+          :tree-data="treeData" :field-names="{ title: 'name', key: 'key', children: 'children' }"
+          :show-line="{ showLeafIcon: false }" block-node @select="onSelect">
+          <template #title="node">
+            <div v-if="node.group && editingId === node.group.id" class="editingItem" @click.stop>
+              <AIcon class="treeItem__icon" type="icon-moren" />
+              <a-input ref="inputRef" v-model:value="editName" :maxlength="64" :disabled="saving"
+                @blur="saveGroup(node.group)" @press-enter="saveGroup(node.group)" @keydown.esc="cancelEdit" />
+            </div>
+            <div v-else class="treeItem" @click="node.kind === 'application-root' && toggleApplicationRoot()">
+              <div class="itemText">
+                <AIcon class="treeItem__icon" :type="node.kind === 'application' || node.kind === 'application-root'
+                  ? 'AppstoreOutlined' : node.kind === 'global' ? 'icon-jiaose' : 'icon-moren'" />
+                <j-ellipsis style="flex: 1; min-width: 0">{{ node.name }}</j-ellipsis>
+                <a-spin v-if="node.kind === 'application-root' && applicationLoading" size="small" />
+              </div>
+              <div v-if="node.kind === 'group' && node.group.id !== 'default_group'" class="treeItem__actions" @click.stop>
+                <j-permission-button type="link" danger size="small"
+                  :tooltip="{ title: $t('RoleLeft.index.507330-3') }"
+                  :pop-confirm="{ title: $t('RoleLeft.index.507330-2'), onConfirm: () => removeGroup(node.group) }">
+                  <AIcon type="DeleteOutlined" />
+                </j-permission-button>
+                <j-permission-button type="link" size="small" :tooltip="{ title: $t('RoleLeft.index.507330-4') }"
+                  @click="editGroup(node.group)"><AIcon type="EditOutlined" /></j-permission-button>
+              </div>
+            </div>
+          </template>
+        </a-tree>
+        <CloudEmpty v-else />
+      </a-spin>
+    </div>
+    <j-permission-button v-if="canCreateGroup" class="left-contain__create" block
+      :disabled="Boolean(editingId) || groupLoading || groupError" @click="addGroup">
+      <template #icon><AIcon type="PlusOutlined" /></template>{{ $t('RoleLeft.index.507330-1') }}
+    </j-permission-button>
+  </div>
 </template>
 
-<script lang="ts" setup>
-import { onlyMessage, randomString } from '@jetlinks-web/utils';
-import { queryRoleGroup, saveRoleGroup, deleteRoleGroup } from '@authentication-manager-ui/api/system/role';
-import { useUserStore } from '@jetlinks-web-core/store/user'
-import { useI18n } from 'vue-i18n';
+<script setup lang="ts">
+import type { PropType } from 'vue'
+import type { RoleScope } from '../roleScope'
+import { useRoleNavigation } from './useRoleNavigation'
 
 defineOptions({ name: 'RoleLeft' })
-
-const { t: $t } = useI18n();
-const emit = defineEmits(['selectData'])
-const { isAdmin } = useUserStore();
-const listData: any = ref([{
-	name: $t('RoleLeft.index.507330-5'),
-	id: 'global_role',
-	children: []
-}])
-const selectedKeys = ref<string[]>(['global_role'])
-const expandedKeys = ref<string[]>(['global_role'])
-const searchValue = ref()
-const inputRef = ref()
-const addName = ref()
-const selectId = ref()
-const queryGroup = async (select?: Boolean, searchName?: string) => {
-	const params = searchName ? {
-		sorts: [{ name: 'createTime', order: 'desc' }],
-		terms: [{ terms: [{ value: '%' + searchName + '%', termType: 'like', column: 'name' }] }],
-    paging: false
-	} : { sorts: [{ name: 'createTime', order: 'desc' }], paging: false }
-	const req: any = await queryRoleGroup(params)
-	if (req.status === 200) {
-    // 排序，把default_group放在最前面
-		listData.value[0].children = req.result.sort((a: any, b: any) => {
-      if (a.id === 'default_group') return -1;
-      if (b.id === 'default_group') return 1;
-      return 0;
-    });
-		// if (req.result[req.result.length - 1].id === 'default_group') {
-		// 	req.result.unshift(req.result[req.result.length - 1])
-		// 	req.result.pop()
-		// }
-		// if(req.result.length && select){
-		//     selectGroup(req.result[0].id)
-		// }
-	}
-}
-const addGroup = () => {
-	expandedKeys.value = ['global_role']
-	addName.value = ''
-	const newId = randomString()
-	listData.value[0].children.splice(1, 0, ({
-		name: '',
-		id: newId,
-    isNew: true,
-	}))
-	selectId.value = newId
-	nextTick(() => {
-		setTimeout(() => {
-			inputRef.value.focus()
-		}, 500)
-	})
-}
-const saveGroup = async (data: any) => {
-	if (addName.value) {
-		const saveData = {
-			name: addName.value,
-			id: data.id
-		}
-		const res = await saveRoleGroup(saveData)
-		if (res.status === 200) {
-			onlyMessage($t('RoleLeft.index.507330-6'))
-			queryGroup()
-		} else {
-			onlyMessage($t('RoleLeft.index.507330-7'))
-		}
-	} else if (data.isNew) {
-    const index = listData.value[0].children.findIndex((item: any) => item.id === data.id)
-    listData.value[0].children.splice(index, 1)
-  }
-	setTimeout(() => {
-		selectId.value = ''
-	}, 300)
-}
-const search = () => {
-	queryGroup(true, searchValue.value)
-}
-const searchChange = () => {
-	if (searchValue.value === '') {
-		queryGroup()
-	}
-}
-const selectGroup = (id: string) => {
-	selectedKeys.value = [id]
-	id === 'global_role' ? emit('selectData', '') : emit('selectData', selectedKeys.value)
-}
-const deleteGroup = async (id: string, isNew: boolean) => {
-  if (isNew) {
-    listData.value[0].children = listData.value[0].children.filter((item: any) => item.id !== id)
-    return;
-  }
-	const res: any = await deleteRoleGroup(id)
-	if (res.status === 200) {
-		onlyMessage($t('RoleLeft.index.507330-6'))
-		queryGroup(true)
-	} else {
-		onlyMessage($t('RoleLeft.index.507330-7'))
-	}
-}
-const editGroup = (data: any) => {
-	if (!selectId.value) {
-		selectId.value = data.id
-		addName.value = data.name
-		listData.value[0].children.forEach((item: any) => {
-			if (item.id === data.id) {
-				item.edit = true
-			}
-		})
-		nextTick(() => {
-			inputRef.value.focus()
-		})
-	}
-
-}
-onMounted(() => {
-	queryGroup(true)
-})
+const props = defineProps({ scope: { type: Object as PropType<RoleScope>, required: true } })
+const emit = defineEmits<{ select: [scope: RoleScope] }>()
+const { treeData, selectedKeys, expandedKeys, canCreateGroup, groupLoading, applicationLoading,
+  groupError, applicationError, searchValue, editingId, editName, saving, inputRef,
+  loadGroups, loadApplications, onSelect, toggleApplicationRoot, addGroup, editGroup, cancelEdit, saveGroup, removeGroup,
+  expandSearchResults } = useRoleNavigation(props, scope => emit('select', scope))
 </script>
+
 <style lang="less" scoped>
 .left-contain {
 	height: 100%;
