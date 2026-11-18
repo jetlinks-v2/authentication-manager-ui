@@ -26,7 +26,7 @@
             @update:value="createState.formData.provider = $event"
           >
             <a-radio-button value="official">{{ $t('ProjectApplication.create.businessApplication') }}</a-radio-button>
-            <a-radio-button value="third-party">{{ $t('ProjectApplication.create.thirdPartyApplication') }}</a-radio-button>
+            <a-radio-button v-if="thirdPartyApplicationEnabled" value="third-party">{{ $t('ProjectApplication.create.thirdPartyApplication') }}</a-radio-button>
           </a-radio-group>
         </a-form-item>
         <a-form-item :label="$t('ApplicationTemplate.field.icon')" name="icon">
@@ -116,6 +116,7 @@
 import { computed, type ComponentPublicInstance, type PropType } from 'vue'
 import type { FormInstance } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
+import { componentsRegistry } from '@jetlinks-web-core/utils/components-registry'
 import { FileUpload, I18nTextField } from '@jetlinks-web-core/components'
 import ApplicationTemplateIconEditor from './ApplicationTemplateIconEditor.vue'
 import { uploadByRequest } from '@jetlinks-web-core/components/Upload/utils'
@@ -132,6 +133,9 @@ const emit = defineEmits<{
 }>()
 
 const { t: $t } = useI18n()
+// 新增与详情编辑弹窗消费同一组应用类型扩展。
+const thirdPartyApplicationEnabled = !componentsRegistry.getRegistry('application-center/Template:application-types')
+  .some(item => item.mode === 'hide' && item.target === 'third-party')
 const createState = useApplicationTemplateCreate({
   open: () => props.open,
   onOpenChange: value => emit('update:open', value),
