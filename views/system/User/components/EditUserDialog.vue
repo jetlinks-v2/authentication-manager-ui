@@ -127,7 +127,7 @@
                         :rules="[
                             { required: true, message: $t('components.EditUserDialog.939453-18') },
                             {
-                                validator: checkCh,
+                                validator: validateUsernameCharacters,
                                 trigger: ['change', 'blur'],
                             },
                             {
@@ -256,11 +256,11 @@ const dialogTitle = computed(() => {
 });
 const confirm = () => {
     loading.value = true;
-    formRef.value
+    return formRef.value
         ?.validate()
-        .then(() => form.submit())
+        .then(() => form.submit(), () => undefined)
         .then((resp: any) => {
-            if (resp.status === 200) {
+            if (resp?.status === 200) {
                 onlyMessage($t('components.EditUserDialog.939453-26'));
                 emits('confirm');
                 emits('update:visible', false);
@@ -423,10 +423,14 @@ const isProjectOwner = computed(() => [
 ].some(typeId => typeId === PROJECT_OWNER_USER_TYPE));
 const isRoleReadonly = computed(() => form.data.username === 'admin' || isProjectOwner.value);
 
-const checkCh = async(_rule:Rule,value:string) => {
-                if (/[\u4e00-\u9fa5]/.test(value)) return Promise.reject($t('components.EditUserDialog.939453-30'));
-                else return Promise.resolve('')
-            }
+const validateUsernameCharacters = async (_rule: Rule, value: string) => {
+    if (props.type === 'add' && value?.includes('@')) {
+        throw new Error($t('components.EditUserDialog.usernameNoAtSign'));
+    }
+    if (/[\u4e00-\u9fa5]/.test(value)) {
+        throw new Error($t('components.EditUserDialog.939453-30'));
+    }
+};
 
 // 组织已删除在仍显示在列表中
 // const _departmentOptions = computed(() => {

@@ -772,6 +772,7 @@
   "components.EditUserDialog.939453-28": "Password must contain both uppercase and lowercase letters, and numbers",
   "components.EditUserDialog.939453-29": "Passwords do not match",
   "components.EditUserDialog.939453-30": "Username cannot contain Chinese characters",
+  "components.EditUserDialog.usernameNoAtSign": "Username cannot contain {'@'}",
   "components.EditUserDialog.939453-31": "Position",
   "components.EditUserDialog.939453-32": "Please select position",
   "components.EditUserDialog.939453-33": "Blue tags are not editable by post association",

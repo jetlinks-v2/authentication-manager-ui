@@ -1,5 +1,11 @@
 # Authentication Manager UI
 
+## 新增用户的用户名限制
+
+`/system/ou/user` 的新增弹窗在 `views/system/User/components/EditUserDialog.vue` 本地校验用户名：输入或粘贴半角 `@` 时保留原文并提示，修正前不请求用户名校验接口，也不提交新增。此规则不限制全角 `＠`，不影响编辑历史账号。
+
+验证：`node --test tests/userRoleSelection.test.mjs` 通过，覆盖本地提示、未失焦提交、修正后保存及历史账号编辑；中英日提示渲染、模块构建与定向样式检查通过。模块 `vue-tsc --noEmit -p tsconfig.json` 仍有既有类型错误（539 → 538，无新增）；未连接真实后端写入账号。
+
 ## 用户管理应用角色选择与显示调整
 
 状态：已按确认计划实施，定向行为验证与模块构建通过。

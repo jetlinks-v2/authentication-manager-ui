@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
+import { validateRules } from 'ant-design-vue/lib/form/utils/validateUtil.js'
 import { build } from 'esbuild'
 import { parse, compileScript } from 'vue/compiler-sfc'
 
@@ -94,7 +95,7 @@ const renderer = createRenderer({
 })
 const descendants = node => [node, ...(node.children || []).flatMap(descendants)]
 const content = node => [node.tag === '#comment' ? '' : node.text || '', ...(node.children || []).map(content)].join('')
-function mount(t, component, props = {}) {
+function mount(t, component, props = {}, validate = async () => {}) {
   const rootNode = { children: [] }
   const app = renderer.createApp(component, props)
   const passthrough = tag => defineComponent({ inheritAttrs: false, setup: (_, { attrs, slots }) => () => h(tag, attrs, slots.default?.()) })
@@ -103,7 +104,7 @@ function mount(t, component, props = {}) {
     'RegistryComponent', 'ConditionFilter', 'a-menu', 'a-menu-item', 'j-badge-status', 'TableActions', 'TableActionsItem',
     'CloudEmpty', 'BatchImport']) app.component(name, passthrough(name))
   app.component('a-form', defineComponent({ setup: (_, { attrs, slots, expose }) => {
-    expose({ validate: async () => {}, clearValidate() {} })
+    expose({ validate, clearValidate() {} })
     return () => h('form', attrs, slots.default?.())
   } }))
   app.component('a-tree-select', defineComponent({
@@ -213,6 +214,63 @@ test('grouped and ungrouped application roles can be selected and removed; unsee
   assert.deepEqual(selected.value, ['hidden', 'b-role'])
   assert.equal(content(ui.find('role-tag', node => node.props.id === 'b-role')), '应用B-管理员')
   assert.equal(descendants(ui.rootNode).some(node => String(node.props?.class).includes('tag-blue')), false)
+})
+
+function mountUsernameDialog(t, type) {
+  const closed = []
+  const ui = mount(t, EditDialog, {
+    type, data: { id: user.id }, visible: true, 'onUpdate:visible': value => closed.push(value),
+  }, () => validate())
+  const field = () => ui.find('a-form-item', node => node.props.name === 'username')
+  const input = () => descendants(field()).find(node => node.tag === 'a-input').props
+  // Run the mounted field's rules in Ant's validator, including validateFirst on submit.
+  const validate = trigger => {
+    const { rules, validateFirst } = field().props
+    const active = trigger ? rules.filter(rule => !rule.trigger || [rule.trigger].flat().includes(trigger)) : rules
+    return validateRules(['username'], input().value, active, {}, validateFirst)
+  }
+  return { input, validate, submit: () => ui.find('a-modal').props.onOk(), closed }
+}
+
+test('adding a username keeps typed or pasted @ visible and blocks remote validation and save until corrected', async t => {
+  fixture()
+  const handler = http.handler
+  http.handler = async (method, url) => url === '/user/username/_validate' ? success({ passed: true }) : handler(method, url)
+  const { input, validate, submit, closed } = mountUsernameDialog(t, 'add')
+  await flush()
+  for (const value of ['a@', 'pasted@example.org']) {
+    input()['onUpdate:value'](value)
+    await nextTick()
+    assert.equal(input().value, value)
+    await submit() // No blur before save.
+    for (const trigger of ['change', 'blur']) {
+      await assert.rejects(validate(trigger), errors => errors[0].errors[0] === 'components.EditUserDialog.usernameNoAtSign')
+    }
+    assert.deepEqual(closed, [])
+    assert.ok(!http.calls.some(call => ['/user/username/_validate', '/user/detail/_create'].includes(call.url)))
+  }
+  input()['onUpdate:value']('fullwidth＠name')
+  await nextTick()
+  await validate('change') // The new local rule only reserves the ASCII character.
+  input()['onUpdate:value']('corrected')
+  await nextTick()
+  await validate('change')
+  await submit()
+  assert.equal(http.calls.find(call => call.url === '/user/username/_validate').data, 'corrected')
+  assert.equal(http.calls.find(call => call.url === '/user/detail/_create').data.user.username, 'corrected')
+  assert.deepEqual(closed, [false])
+})
+
+test('editing a legacy username containing @ still saves the unchanged username', async t => {
+  fixture()
+  const handler = http.handler
+  http.handler = async (method, url) => url === '/user/detail/user-1' ? success({ ...user, username: 'old@example.org' }) : handler(method, url)
+  const { input, submit } = mountUsernameDialog(t, 'edit')
+  await flush()
+  assert.equal(input().disabled, true)
+  await submit()
+  assert.equal(http.calls.find(call => call.method === 'put').data.user.username, 'old@example.org')
+  assert.ok(!http.calls.some(call => call.url === '/user/username/_validate'))
 })
 
 test('editing sends changed role IDs while preserving hidden roles, organization and position bindings', async t => {

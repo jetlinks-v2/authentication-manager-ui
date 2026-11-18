@@ -759,6 +759,7 @@
   "components.EditUserDialog.939453-28": "パスワードには英大文字、英小文字、数字を含めてください",
   "components.EditUserDialog.939453-29": "入力した2つのパスワードが一致しません",
   "components.EditUserDialog.939453-30": "ユーザー名に中国語は使用できません",
+  "components.EditUserDialog.usernameNoAtSign": "ユーザー名に {'@'} は使用できません",
   "components.EditUserDialog.939453-31": "役職",
   "components.EditUserDialog.939453-32": "役職を選択してください",
   "components.EditUserDialog.939453-33": "青いタグは役職に関連付けられているため編集できません",

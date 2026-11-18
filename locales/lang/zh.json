@@ -772,6 +772,7 @@
   "components.EditUserDialog.939453-28": "密码必须包含大小写英文和数字",
   "components.EditUserDialog.939453-29": "两次密码输入不一致",
   "components.EditUserDialog.939453-30": "用户名不能包含中文",
+  "components.EditUserDialog.usernameNoAtSign": "用户名不能包含 {'@'}",
   "components.EditUserDialog.939453-31": "职位",
   "components.EditUserDialog.939453-32": "请选择职位",
   "components.EditUserDialog.939453-33": "蓝色标签由职位关联不可编辑",
