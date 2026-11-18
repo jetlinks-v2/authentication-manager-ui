@@ -72,7 +72,7 @@ export async function loadGatewayStatuses(
       groupBy: ['thingId'], sorts: [{ alias: definition.alias, order: 'DESC' }], limit: 10,
     }, options)
     if (!isCurrent()) throw new Error('Gateway query cancelled')
-    applyGatewayMetrics(gateways, rowsOf(response), [metric])
+    applyGatewayMetric(gateways, rowsOf(response), metric)
     return { gateways, unit }
   } catch (error) {
     if (!isCurrent()) throw error
@@ -81,15 +81,14 @@ export async function loadGatewayStatuses(
 }
 
 /** 只采纳目录范围内在线节点的当前值，聚合窗口内的历史离线值不能冒充当前状态。 */
-function applyGatewayMetrics(gateways: GatewayStatus[], rows: Record<string, unknown>[], metrics: readonly GatewayMetric[]) {
+function applyGatewayMetric(gateways: GatewayStatus[], rows: Record<string, unknown>[], metric: GatewayMetric) {
   const byId = new Map(gateways.map(item => [item.id, item]))
+  const { alias, pointId, unit } = metricDefinitions[metric]
   for (const row of rows) {
     const gateway = byId.get(textOf(row.thingId))
     if (!gateway?.online) continue
-    for (const metric of metrics) {
-      const definition = metricDefinitions[metric], value = metricNumber(row[definition.alias])
-      if (value !== undefined) gateway.metrics[metric] = { property: definition.pointId, value, unit: definition.unit }
-    }
+    const value = metricNumber(row[alias])
+    if (value !== undefined) gateway.metrics[metric] = { property: pointId, value, unit }
   }
 }
 
@@ -108,30 +107,29 @@ async function fillLastReportTimes(gateways: GatewayStatus[], isCurrent: () => b
   })
 }
 
-/** 少量节点同时查所有允许指标：系统三项共用一次请求，复判队列独立点位类型，失败组不清空其他成功组。 */
+/** 单点位并行查询，避免多点位 LAST 聚合时，其他点位的较新采样覆盖当前点位的结果。 */
 export async function loadGatewayNodeStatuses(
   directory: OverviewGatewayItem[], metrics: readonly GatewayMetric[], now = Date.now(), isCurrent: () => boolean = () => true,
 ): Promise<GatewayStatusResult> {
   if (!isCurrent()) throw new Error('Gateway query cancelled')
   const gateways: GatewayStatus[] = directory.map(item => ({ ...item, metrics: {} }))
   const ids = gateways.filter(item => item.online).map(item => item.id)
-  const groups = [metrics.filter(metric => metric !== 'queue'), metrics.filter(metric => metric === 'queue')].filter(group => group.length)
   let partialError = false
   await Promise.all([
-    ...groups.map(async group => {
+    ...metrics.map(async metric => {
       if (!ids.length || !isCurrent()) return
-      const definition = metricDefinitions[group[0]]
+      const definition = metricDefinitions[metric]
       try {
         const response = await request.post('/device/metrics/_agg', {
-          thingIds: ids, pointType: definition.pointType, metrics: group.map(queryMetric),
-          from: formatTime(now - (group[0] === 'queue' ? 20 : 2) * 60000), to: formatTime(now),
+          thingIds: ids, pointType: definition.pointType, metrics: [queryMetric(metric)],
+          from: formatTime(now - (metric === 'queue' ? 20 : 2) * 60000), to: formatTime(now),
           groupBy: ['thingId'], limit: ids.length,
         }, options)
-        if (isCurrent()) applyGatewayMetrics(gateways, rowsOf(response), group)
+        if (isCurrent()) applyGatewayMetric(gateways, rowsOf(response), metric)
       } catch {
         if (!isCurrent()) return
         partialError = true
-        gateways.filter(item => item.online).forEach(item => { item.failedMetrics = [...(item.failedMetrics || []), ...group] })
+        gateways.filter(item => item.online).forEach(item => { item.failedMetrics = [...(item.failedMetrics || []), metric] })
       }
     }),
     // 最后上报是附加信息，缺失或不支持时保留离线状态，不能使已成功系统指标整卡失败。
