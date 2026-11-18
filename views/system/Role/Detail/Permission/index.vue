@@ -6,7 +6,7 @@
       </div>
       <a-alert v-if="application?.scope.isExternal" type="info" show-icon :message="$t('Role.application.externalPermissions')" />
       <ApplicationRolePermissions v-else-if="application" :state="permissions" :show-asset-permissions="isNoCommunity" height="60vh" />
-      <PermissionTree v-else ref="permissionTreeRef" />
+      <PermissionTree v-else ref="permissionTreeRef" :saving="loading" />
       <div class="role-bottom">
         <a-button @click="goBack">
           {{ $t('Api.index.558884-1') }}

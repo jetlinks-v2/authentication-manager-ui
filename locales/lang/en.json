@@ -3345,5 +3345,9 @@
   "Role.application.externalPermissions": "Menu permissions are unavailable for third-party applications",
   "Role.application.applicationData": "Current application's data",
   "Role.users.loadFailed": "Failed to load users. Please try again.",
-  "Role.users.saveFailed": "Failed to update role users. Please try again."
+  "Role.users.saveFailed": "Failed to update role users. Please try again.",
+  "Role.templates.basicMenus": "Basic menus",
+  "Role.templates.loadFailed": "Failed to load menu permissions or application templates. Please retry.",
+  "Role.templates.scopeChanged": "Application templates or your permissions have changed. Your draft is retained. Reload before editing.",
+  "Role.templates.verifyFailed": "Failed to verify the permission scope. Your draft is retained. Please retry saving."
 }

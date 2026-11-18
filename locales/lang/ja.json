@@ -3345,5 +3345,9 @@
   "Role.application.externalPermissions": "サードパーティアプリではメニュー権限を設定できません",
   "Role.application.applicationData": "現在のアプリケーションのデータ",
   "Role.users.loadFailed": "ユーザー一覧を読み込めませんでした。もう一度お試しください。",
-  "Role.users.saveFailed": "ロールのユーザーを更新できませんでした。もう一度お試しください。"
+  "Role.users.saveFailed": "ロールのユーザーを更新できませんでした。もう一度お試しください。",
+  "Role.templates.basicMenus": "基本メニュー",
+  "Role.templates.loadFailed": "メニュー権限またはアプリケーションテンプレートを読み込めませんでした。再試行してください。",
+  "Role.templates.scopeChanged": "テンプレートまたは現在のユーザー権限が変更されました。下書きは保持されています。再読み込みしてから設定してください。",
+  "Role.templates.verifyFailed": "権限範囲を確認できませんでした。下書きは保持されています。保存を再試行してください。"
 }
