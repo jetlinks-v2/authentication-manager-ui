@@ -3,21 +3,27 @@
     <template v-for="(step, index) in steps" :key="step.key">
       <a-tooltip :title="step.disabled ? t('packages.ProjectHome.unavailable') : undefined">
         <span class="step-entry">
-          <a-button
+          <div
             class="step-card"
-            :class="{ 'is-complete': step.status === 'complete' }"
+            :class="{ 'is-complete': step.status === 'complete', 'is-disabled': step.disabled }"
             :data-step="step.key"
-            :disabled="step.disabled"
-            :aria-label="`${index + 1}. ${step.title}，${step.disabled ? t('packages.ProjectHome.unavailable') : step.statusText}`"
-            @click="$emit('action', step)"
           >
+            <a-button
+              class="step-card-target"
+              :disabled="step.disabled"
+              :aria-label="`${index + 1}. ${step.title}，${step.disabled ? t('packages.ProjectHome.unavailable') : step.statusText}`"
+              @click="$emit('action', step)"
+            />
             <span class="step-illustration" aria-hidden="true">
               <img :src="illustrationsByStep[step.key]" alt="" />
             </span>
             <span class="step-copy">
               <span class="step-card-header">
                 <span class="step-badge">{{ index + 1 }}</span>
-                <strong class="step-title"><j-ellipsis>{{ step.title }}</j-ellipsis></strong>
+                <span class="step-title-group">
+                  <strong class="step-title"><j-ellipsis>{{ step.title }}</j-ellipsis></strong>
+                  <span class="step-help"><DocumentHelp code="project/Overview" :help-key="`quickGuide.${step.key}`" /></span>
+                </span>
               </span>
               <span class="step-card-desc"><j-ellipsis>{{ step.description }}</j-ellipsis></span>
               <span v-if="step.status === 'loading' || step.status === 'unknown'" class="step-state" aria-live="polite">
@@ -32,7 +38,7 @@
               </span>
             </span>
             <img v-if="step.status === 'complete'" class="step-corner" :src="completedCorner" alt="" />
-          </a-button>
+          </div>
         </span>
       </a-tooltip>
       <!-- 仅连接已完成的相邻步骤，通向未完成或状态未知的步骤时保持灰色。 -->
@@ -49,6 +55,7 @@
 <script setup lang="ts">
 import { LoadingOutlined, QuestionCircleOutlined } from '@ant-design/icons-vue'
 import { useI18n } from 'vue-i18n'
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import type { HomeTarget } from '../../shared/types'
 import type { GuideStatus, GuideStepKey } from '../quickGuideStatus'
 import illustrations from '../assets/quick-guide-illustrations.png'
@@ -121,14 +128,21 @@ const { t } = useI18n()
     .step-badge { background: var(--guide-accent); border-color: var(--guide-accent); color: #fff; }
   }
 
-  &:hover:not(:disabled), &:focus-visible:not(:disabled) {
+  &:hover:not(.is-disabled), &:has(.step-card-target:focus-visible) {
     border-color: var(--guide-accent);
     color: var(--guide-title);
   }
 
-  &:focus-visible { box-shadow: var(--ring-focus); }
-  &:disabled { opacity: .6; }
+  &:has(.step-card-target:focus-visible) { box-shadow: var(--ring-focus); }
+  &.is-disabled { opacity: .6; }
 }
+
+// 整卡导航与帮助各自使用原生按钮，装饰内容不拦截卡片点击。
+.step-card-target { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.step-card-target:hover, .step-card-target:focus, .step-card-target:disabled { background: transparent; }
+.step-illustration, .step-copy, .step-corner { pointer-events: none; }
+.step-help { position: relative; pointer-events: auto; flex-shrink: 0; }
+.step-title-group { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; }
 
 .step-illustration {
   position: relative;
@@ -173,7 +187,7 @@ const { t } = useI18n()
   font-weight: 500;
   line-height: 18px;
 }
-.step-title { flex: 1; min-width: 0; font-size: var(--fs-14, 14px); line-height: 20px; font-weight: 500; }
+.step-title { min-width: 0; font-size: var(--fs-14, 14px); line-height: 20px; font-weight: 500; }
 .step-card-desc { display: block; width: 100%; min-width: 0; color: var(--guide-description); font-size: var(--fs-12, 12px); line-height: 18px; }
 .step-card-action, .step-state {
   display: inline-flex;

@@ -14,40 +14,49 @@ const result = await build({ entryPoints: [path.join(root, 'visDashboard/Resourc
     api.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ loader: 'js', contents: args.path === 'request' ? 'export const request=context.request' : 'export const queryOverviewGatewayPage=(...args)=>context.page(...args)' }))
   } }],
 })
-function fixture() {
+function fixture(systemValues = { cpuUsage: 0, memoryUsage: 55, diskUsage: 52.79 }) {
   const c = { calls: [], page: async () => ({ data: [], total: 0 }), request: { post: async (url, body) => {
     c.calls.push({ url, body })
     if (url.includes('_runtime-query')) return { result: [{ id: 'offline', lastReportTime: 1793330000000 }] }
     if (body.pointType === 'edge-ai-gateway') return { success: false }
-    return { result: [{ thingId: 'online', cpuUsage: 0, memoryUsage: 55 }] }
+    const [{ alias }] = body.metrics
+    return { result: [{ thingId: 'online', [alias]: systemValues[alias] }] }
   } } }
   const module = { exports: {} }; Function('module', 'exports', 'require', 'context', result.outputFiles[0].text)(module, module.exports, require, c)
   return { ...c, api: module.exports }
 }
 const directory = [{ id: 'online', name: 'Online', online: true, connectionStatus: 'online' }, { id: 'offline', name: 'Offline', online: false, connectionStatus: 'offline' }, { id: 'disabled', name: 'Disabled', online: false, connectionStatus: 'disabled' }]
 
-test('small-node grouped queries preserve zero, missing and independent failures, and real offline timestamp', async () => {
+test('small-node queries merge individual LAST points and preserve zero, independent failures and real offline timestamps', async () => {
   const c = fixture()
   const result = await c.api.loadGatewayNodeStatuses(directory, ['cpu', 'memory', 'disk', 'queue'], 1793330010000)
   const online = result.gateways[0], offline = result.gateways[1]
   assert.equal(online.metrics.cpu.value, 0)
   assert.equal(online.metrics.memory.value, 55)
-  assert.equal(online.metrics.disk, undefined)
+  assert.equal(online.metrics.disk.value, 52.79)
   assert.deepEqual(online.failedMetrics, ['queue'])
   assert.equal(offline.lastReportTime, 1793330000000)
   assert.equal(offline.metrics.cpu, undefined)
   assert.equal(result.partialError, true)
-  const system = c.calls.find(call => call.body.pointType === 'device-health')
+  const system = c.calls.filter(call => call.body.pointType === 'device-health')
   const queue = c.calls.find(call => call.body.pointType === 'edge-ai-gateway')
-  assert.deepEqual(system.body.thingIds, ['online'])
-  assert.equal(system.body.metrics.length, 3)
-  assert.equal(system.body.limit, 1)
+  assert.deepEqual(system.map(call => call.body.metrics.map(metric => [metric.pointId, metric.aggregation])), [
+    [['system.cpu.usage', 'LAST']],
+    [['system.memory.usage', 'LAST']],
+    [['system.disk.usage', 'LAST']],
+  ])
+  for (const { body } of system) {
+    assert.deepEqual(body.thingIds, ['online'])
+    assert.equal(body.limit, 1)
+  }
   assert.deepEqual(queue.body.thingIds, ['online'])
 })
 
-test('without vision no queue query is sent and cancelled generation is rejected', async () => {
-  const c = fixture()
-  await c.api.loadGatewayNodeStatuses(directory, ['cpu', 'memory', 'disk'])
+test('without vision no queue query is sent, missing metrics stay empty and cancelled generation is rejected', async () => {
+  const c = fixture({ cpuUsage: 0, memoryUsage: 55 })
+  const result = await c.api.loadGatewayNodeStatuses(directory, ['cpu', 'memory', 'disk'])
+  assert.equal(result.gateways[0].metrics.disk, undefined)
+  assert.equal(result.partialError, false)
   assert.ok(c.calls.every(call => call.body.pointType !== 'edge-ai-gateway'))
   await assert.rejects(c.api.loadGatewayNodeStatuses(directory, ['cpu'], Date.now(), () => false))
 })
