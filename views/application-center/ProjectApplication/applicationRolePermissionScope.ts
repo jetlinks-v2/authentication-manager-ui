@@ -40,26 +40,50 @@ const templateMenuAccesses = (menu: MenuPermissionNode, policies: AssetAccessPol
 
 /** 菜单限定当前应用并取用户和模板交集；祖先仅保留层级，资产权限始终采用模板配置。 */
 export const resolveApplicationRolePermissionScope = (input: ApplicationRolePermissionScopeInput) => {
-  const normalize = (items: MenuPermissionNode[]) => flattenMenus(normalizeGrantedMenus(
-    input.isExternal ? items : filterApplicationMenuInterfacePermissions(items),
-  ))
-  const userMenus = new Map(normalize(input.currentUserMenus).map(menu => [menu.id, menu]))
-  const roleMenus = new Map(normalize(input.roleMenus || []).map(menu => [menu.id, menu]))
-  const assetAccesses = cloneDeep(input.templateAssetAccesses || [])
-  const applicationIds = new Set(flattenMenus(input.applicationMenus).map(menu => menu.id))
-  const candidates = normalize(input.templateMenus || []).filter(menu => userMenus.has(menu.id) && applicationIds.has(menu.id))
-  const byId = new Map(candidates.map(menu => {
-    const userMenu = userMenus.get(menu.id)!
-    const userButtons = new Set((userMenu.buttons || []).filter(button => button.granted).map(button => button.id))
-    const granted = !!menu.granted && !!userMenu.granted
-    return {
-      ...menu,
-      granted,
-      buttons: granted ? (menu.buttons || []).filter(button => button.granted && userButtons.has(button.id)) : [],
-      // 旧菜单可能仅在 assetAccesses 中声明资产类型，重建兼容字段前先保留定义。
-      assetTypes: getMenuPermissionAssetTypes(menu),
-    }
-  })
+    const normalize = (items: MenuPermissionNode[]) => flattenMenus(normalizeGrantedMenus(
+        input.isExternal ? items : filterApplicationMenuInterfacePermissions(items),
+    ))
+    const userMenus = new Map(normalize(input.currentUserMenus).map(menu => [menu.id, menu]))
+    const roleMenus = new Map(normalize(input.roleMenus || []).map(menu => [menu.id, menu]))
+    const assetAccesses = cloneDeep(input.templateAssetAccesses || [])
+    const applicationIds = new Set(flattenMenus(input.applicationMenus).map(menu => menu.id))
+    const candidates = normalize(input.templateMenus || []).filter(menu => userMenus.has(menu.id) && applicationIds.has(menu.id))
+    const byId = new Map(candidates.map(menu => {
+        const userMenu = userMenus.get(menu.id)!
+        const userButtons = new Set((userMenu.buttons || []).filter(button => button.granted).map(button => button.id))
+        const granted = !!menu.granted && !!userMenu.granted
+        return [menu.id, {
+            ...menu,
+            granted,
+            buttons: granted ? (menu.buttons || []).filter(button => button.granted && userButtons.has(button.id)) : [],
+            assetAccesses: templateMenuAccesses(menu, assetAccesses),
+            children: [] as MenuPermissionNode[],
+        }]
+    }))
+    const roots: MenuPermissionNode[] = []
+    byId.forEach(menu => {
+        const parent = menu.parentId && menu.parentId !== menu.id ? byId.get(menu.parentId) : undefined
+        if (parent) parent.children.push(menu)
+        else roots.push(menu)
+    })
+    // 无授权的祖先只有保留子菜单时才进入候选，避免把纯目录变成可授权叶节点。
+    const prune = (items: MenuPermissionNode[]): MenuPermissionNode[] => items.flatMap(menu => {
+        const children = prune(menu.children || [])
+        return menu.granted || children.length ? [{ ...menu, children }] : []
+    })
+    const menus = normalizeCandidateMenus(prune(roots))
+    const echo = (items: MenuPermissionNode[]): MenuPermissionNode[] => items.map(menu => {
+        const role = roleMenus.get(menu.id)
+        const selectedButtons = new Set((role?.buttons || []).filter(button => button.granted).map(button => button.id))
+        return {
+            ...menu,
+            granted: role?.granted === true,
+            buttons: (menu.buttons || []).map(button => ({ ...button, granted: selectedButtons.has(button.id) })),
+            children: echo(menu.children || []),
+        }
+    })
+    const grantableMenuIds = new Set([...byId.values()].filter(menu => menu.granted).map(menu => menu.id))
+    return { menus, grantedMenus: echo(menus), assetAccesses, grantableMenuIds }
 }
 
 /** 资产类型跟随有效菜单，保留共享类型及模板扩展配置，不修改输入策略。 */
