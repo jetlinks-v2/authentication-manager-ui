@@ -17,13 +17,7 @@
       >
         <template #title="record">
           <a-tooltip
-            v-if="applicationRoleIds.includes(record.id)"
-            :title="$t('components.EditUserDialog.939453-38')"
-          >
-            <span class="j-ellipsis j-ellipsis-line-clamp role-list-wrap__disabled-name">{{ record.name }}</span>
-          </a-tooltip>
-          <a-tooltip
-            v-else-if="extraRoleIds.includes(record.id)"
+            v-if="extraRoleIds.includes(record.id)"
             :title="$t('components.EditUserDialog.939453-34')"
           >
             <span class="j-ellipsis j-ellipsis-line-clamp role-list-wrap__disabled-name">{{ record.name }}</span>
@@ -31,10 +25,10 @@
           <j-ellipsis v-else>{{ record.name }}</j-ellipsis>
         </template>
         <template #tagRender="{ value, label, onClose }">
-          <div :class="{ 'ant-select-selection-item': true, 'tag-blue': isApplicationRole(value) }">
+          <div class="ant-select-selection-item">
             <div class="ant-select-selection-item-content">{{ label }}</div>
             <div
-              v-if="!isApplicationRole(value) && !extraRoleIds.includes(value)"
+              v-if="!disabled && !extraRoleIds.includes(value)"
               class="ant-select-selection-item-remove"
               @click.stop="onClose"
             >
@@ -55,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import type { PropType } from 'vue'
+import { computed, ref, watch, type PropType } from 'vue'
 import { TreeSelect } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { useTabSaveSuccess } from '@jetlinks-web-core/hooks'
@@ -72,8 +66,8 @@ const props = defineProps({
     type: Array as PropType<string[]>,
     default: () => [],
   },
-  applicationRoleIds: {
-    type: Array as PropType<string[]>,
+  roles: {
+    type: Array as PropType<ApplicationRoleItem[]>,
     default: () => [],
   },
   roleGroups: {
@@ -96,17 +90,18 @@ const emits = defineEmits<{
 const { t: $t } = useI18n()
 const selectedRoleIds = ref<string[]>([])
 
-const applicationRoleIdSet = computed(() => new Set(props.applicationRoleIds))
-const isApplicationRole = (roleId: string) => applicationRoleIdSet.value.has(roleId)
-const roleIdSet = computed(() => new Set(
+const groupedRoleIdSet = computed(() => new Set(
   props.roleGroups.flatMap(group => (group.roles || []).map(role => role.id)),
+))
+const roleIdSet = computed(() => new Set(
+  [...groupedRoleIdSet.value, ...props.roles.map(role => role.id)],
 ))
 const extraRoleIds = computed(() => props.extraData
   .filter(role => !roleIdSet.value.has(role.id))
   .map(role => role.id))
 
 /**
- * 角色树保留当前用户无权限查看的已绑定角色，并只锁定应用角色，避免系统入口跨应用维护角色关系。
+ * 可见角色均可分配，补入分组接口未返回的角色；仅保护无权查看的已有绑定。
  */
 const roleTree = computed<RoleTreeNode[]>(() => {
   const groups = props.roleGroups
@@ -114,17 +109,13 @@ const roleTree = computed<RoleTreeNode[]>(() => {
     id: group.groupId,
     name: group.groupName,
     disabled: true,
-    children: (group.roles || []).map(role => {
-      return {
-        ...role,
-        disabled: isApplicationRole(role.id),
-      }
-    }),
+    children: group.roles || [],
   }))
+  const ungroupedNodes = props.roles.filter(role => !groupedRoleIdSet.value.has(role.id))
   const extraNodes = props.extraData
     .filter(role => !roleIdSet.value.has(role.id))
     .map(role => ({ ...role, disabled: true }))
-  return [...groupNodes, ...extraNodes]
+  return [...groupNodes, ...ungroupedNodes, ...extraNodes]
 })
 
 const handleChange = (value: string[]) => emits('update:value', value)
@@ -153,12 +144,6 @@ watch(() => props.value, value => {
 .role-list-wrap__select {
   flex: 1;
   min-width: 0;
-}
-
-.role-list-wrap .tag-blue {
-  background: var(--info-bg);
-  border-color: color-mix(in srgb, var(--accent) 30%, var(--bg));
-  color: var(--accent);
 }
 
 .role-list-wrap :deep(.ant-select-selection-overflow-item) > span {

@@ -1,5 +1,29 @@
 # Authentication Manager UI
 
+## 用户管理应用角色选择与显示调整
+
+状态：已按确认计划实施，定向行为验证与模块构建通过。
+
+当前行为：系统用户管理中的应用角色允许选择和移除，不因应用归属置灰；应用角色统一显示为“应用名称-角色名称”，全局角色保留原名称。覆盖新增/编辑弹窗的候选与已选标签，以及用户列表的角色列和角色筛选项。
+
+影响范围与 owning module：仅 `runtime-ui/modules/authentication-manager-ui`，主要入口为 `views/system/User/useApplicationRoleSelection.ts`、`components/ApplicationRoleSelector.vue`、`components/EditUserDialog.vue`、`index.vue` 及相关语言资源。复用 `api/application-center/businessApplication.ts` 的应用查询与 `api/system/user.ts` 的角色查询、用户保存接口。
+
+实现入口：
+
+1. `useApplicationRoleSelection.ts` 基于角色 `applicationId` 关联可见应用名称，统一生成显示名称；绑定值仍为原角色 ID，兼容用户详情仅返回角色 ID/名称。并发的列表/筛选请求复用在途结果，卸载后忽略迟到响应。
+2. `components/ApplicationRoleSelector.vue` 移除应用角色专属禁用、禁止移除和蓝色标签逻辑，补入分组接口遗漏的无分组角色；`components/EditUserDialog.vue` 清理“应用角色只能在所属应用中分配”提示并更新中英日资源，保留管理员/项目所有者整体只读和无权查看的已有角色保护。
+3. `index.vue` 与弹窗共用显示规则，保存后刷新角色目录，覆盖编辑期间新建应用角色的回显。新增/编辑沿用原 `roleIdList` 请求，不把显示名称写入绑定字段。
+
+边界：不修改 `ui/`、后端、菜单授权或接口数据结构，不自动增删应用成员关系；保留现有后端资产权限检查。
+
+兼容与权限：应用名称查询受当前账号权限影响；应用名称缺失时保留原角色名称，不丢弃已有绑定，不因补充名称失败禁用全部角色。角色或分组候选加载失败时保留原有锁定和错误提示。已核对后端 `modules/authentication-manager/src/main/java/org/jetlinks/pro/auth/service/UserDetailService.java` 与 `RoleService.java`：用户保存通过 `roleIdList` 维护绑定，编辑时不传 `businessApplicationIdList` 会保留现有应用成员关系。
+
+验证结果：模块内执行 `node --test tests/userRoleSelection.test.mjs`，10/10 通过。测试编译并挂载实际用户页、编辑弹窗、角色选择器和 hook，以 HTTP/视觉控件替身验证同名角色区分、无分组角色、选择/移除、已有不可见角色保护、名称缺失/失败、请求合并与卸载、新增/编辑保存载荷、管理员/项目所有者只读、角色筛选 ID 和保存后目录刷新。原生 Vue 脚本/模板编译、中英日 JSON 与文案差异核对、本次 `git diff --check` 均通过。
+
+构建与静态检查：在 `runtime-ui` 执行 `pnpm -F jetlinks-web-core build --outDir /tmp/jetlinks-user-role-check.sHZ9Qf/build -- --module-name authentication-manager-ui` 通过（11,570 个模块，53.21 秒），保留既有 Rollup output option、CSS 注释与大包提示。`node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json` 修改前为 540 条、修改后为 537 条诊断，忽略行号后无新增，本次消除 3 条；全量类型检查仍未通过。工作区未配置独立 lint，复用 `ui/scripts/check-ui-style.mjs --files` 只读检查 3 个修改的 Vue 文件通过。
+
+待验收：在登录环境检查角色下拉/标签展示，并用受限账号新增/编辑用户、保存后刷新确认持久化及后端权限拒绝行为；未向真实后端写入用户或角色关系。清理既有类型问题后重跑上述类型命令。
+
 ## 统一应用与接口分组详情摘要
 
 当前实现：`ProjectApplication/Detail`、`ThirdPartyApplication/Direct/Detail.vue` 与 `ApiGroup/Save/index.vue` 的现有详情使用 core `DetailHeader` 摘要模式、`DetailMetaItem` 和 `StatusTag`。保留并统一 56px 对象图标，ID/时间采用相同语义图标；说明与 ID、时间在同一摘要行内按可用宽度换行，不再强制独占一行。保留返回入口、业务动作、权限、名称/说明自动保存及失败重试。接口分组仅调整带 ID 的详情分支，不新增主导航，不改创建表单。

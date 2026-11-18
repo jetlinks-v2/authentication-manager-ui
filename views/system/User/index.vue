@@ -84,9 +84,7 @@
             <j-ellipsis>
               {{
                 slotProps?.roleList
-                    ?.map((item) => {
-                      return item.name;
-                    })
+                    ?.map(formatRoleName)
                     .join(',') || $t('comm.table.empty')
               }}
             </j-ellipsis>
@@ -201,7 +199,7 @@
       :type="dialog.type"
       v-model:visible="dialog.visible"
       :data="dialog.selectItem"
-      @confirm="table.refresh"
+      @confirm="onUserSaved"
   />
   <BatchImport
     v-if="importData.visible"
@@ -224,7 +222,6 @@ import {
   getUserList_api,
   changeUserStatus_api,
   deleteUser_api,
-  queryRole_api,
   importUserTemplate_api,
   importUser_api,
   exportUser_api,
@@ -237,11 +234,18 @@ import {useI18n} from 'vue-i18n';
 // import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
 import type {ConditionFilterChangePayload} from '@jetlinks-web-core/components/ConditionFilter';
 import {transformConditionTerms} from '@authentication-manager-ui/views/system/conditionFilterUtils';
+import { useApplicationRoleSelection } from './useApplicationRoleSelection';
 
 defineOptions({ name: 'UserMange' })
 
 const {t: $t} = useI18n();
 const permission = 'system/User';
+const { formatRoleName, loadRoleOptions, getRoleOptions } = useApplicationRoleSelection();
+const refreshRoleOptions = () => {
+  void loadRoleOptions().catch(() => {
+    onlyMessage($t('components.EditUserDialog.939453-39'), 'warning');
+  });
+};
 
 const typeOptions = ref([])
 const importData = reactive({
@@ -288,23 +292,7 @@ const columns = [
     key: 'roleList',
     search: {
       type: 'select',
-      options: () =>
-          new Promise((resolve) => {
-            queryRole_api({
-              paging: false,
-              sorts: [
-                {name: 'createTime', order: 'desc'},
-                {name: 'id', order: 'desc'},
-              ],
-            }).then((resp: any) => {
-              resolve(
-                  resp.result.map((item: dictType) => ({
-                    label: item.name,
-                    value: item.id,
-                  })),
-              );
-            });
-          }),
+      options: getRoleOptions,
     },
     scopedSlots: true,
   },
@@ -428,6 +416,12 @@ const dialog = reactive({
   type: '' as modalType,
 });
 
+const onUserSaved = () => {
+  table.refresh();
+  // 编辑期间可能从角色入口新建角色，刷新目录后列表才能补齐其应用名称。
+  refreshRoleOptions();
+};
+
 type dictType = {
   id: string;
   name: string;
@@ -505,6 +499,8 @@ const handleImportDone = () => {
 }
 
 onMounted(() => {
+  // 详情只带角色 ID/名称，加载目录后列表与筛选使用同一应用角色名称。
+  refreshRoleOptions();
   getUserType_api().then(resp => {
     if (resp.success) {
       typeOptions.value = (resp.result || []).map((item: dictType) => ({
