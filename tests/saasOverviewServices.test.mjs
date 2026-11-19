@@ -23,7 +23,7 @@ const result = await build({
     stub(/^@jetlinks-web-core\/utils\/consts$/, "export const USER_CENTER_MENU_CODE = 'account-center'")
     stub(/^@jetlinks-web-core\/utils\/deployment$/, 'export const isPrivateDeployment = () => false')
     stub(/useDashboardModules$/, 'export const getDashboardModules = () => context.modules')
-    stub(/api\/overview$/, `export const queryOverviewGatewaySummary=()=>context.health('gateway'); export const queryOverviewIotDeviceSummary=()=>context.health('devices'); export const queryOverviewIotDeviceBreakdown=()=>context.breakdown(); export const queryOverviewChannelSummary=()=>context.health('video'); export const queryOverviewChannelBreakdown=(...args)=>context.videoBreakdown(...args)`)
+    stub(/api\/overview$/, `export const queryOverviewGatewaySummary=()=>context.health('gateway'); export const queryOverviewIotDeviceSummary=()=>context.health('devices'); export const queryOverviewIotDeviceBreakdown=()=>context.breakdown(); export const querySaasOverviewChannelBreakdown=()=>context.videoBreakdown()`)
     stub(/apiAlgorithms$/, 'export const loadAlgorithmMetrics=()=>context.algorithms()')
   } }],
 })
@@ -32,7 +32,7 @@ function fixture(codes = []) {
   const context = { calls, menu: { initialized: true, loading: false, menuResultCache: [{ code: 'root', children: codes.map(code => ({ code })) }] }, modules: { edge: true, vision: true },
     health: async id => { calls.push({ health: id }); return { total: 0, online: 0 } },
     breakdown: async () => ['device', 'gateway', 'childrenDevice'].map(id => ({ id, value: 0, offline: 0 })),
-    videoBreakdown: async (...args) => { calls.push({ videoBreakdown: args }); return [] },
+    videoBreakdown: async () => { calls.push({ videoBreakdown: true }); return [] },
     algorithms: async () => { calls.push({ algorithms: true }); return { algorithm: 0 } },
     request: { get: async (url, params, options) => { calls.push({ url, params, options }); return context.quotaResponse }, post: async (url, body, options) => { calls.push({ url, body, options }); return { success: true, result: url.includes('/dashboard/') || url.includes('/space/') ? [] : 0 } } },
   }
@@ -59,7 +59,8 @@ test('unauthorized or unresolved menu tree creates no requests', async () => {
 
 test('resource rows isolate failure and distinguish a real zero from invalid health', async () => {
   const c = fixture(['iot-user-device-list', 'video/resources'])
-  c.health = async id => { c.calls.push({ health: id }); if (id === 'video') return { total: undefined, online: 0 }; if (id === 'gateway') throw Error('offline'); return { total: 0, online: 0 } }
+  c.health = async id => { c.calls.push({ health: id }); if (id === 'gateway') throw Error('offline'); return { total: 0, online: 0 } }
+  c.videoBreakdown = async () => [{ id: 'onvif', total: undefined, online: 0 }]
   const rows = byId(await c.api.loadSaasResourceRows())
   assert.equal(rows.devices.value, 0)
   assert.deepEqual(rows.devices.statuses.map(s => s.value), [0, 0])
@@ -131,45 +132,50 @@ test('unavailable modules and ungranted targets are filtered before creating req
   assert.deepEqual(c.calls, [])
 })
 
-test('single authorized video uses one default-scope breakdown for totals and all four sources', async () => {
+test('single authorized video includes the offline plugin channel in its totals and other sources', async () => {
   const c = fixture(['video/resources'])
-  c.videoBreakdown = async (...args) => { c.calls.push({ videoBreakdown: args }); return [
-    { id: 'gb28181-2016', total: 7, online: 5 },
-    { id: 'onvif', total: 2, online: 1 },
-    { id: 'fixed-media', total: 0, online: 0 },
+  c.videoBreakdown = async () => { c.calls.push({ videoBreakdown: true }); return [
+    { id: 'agent-media-device-gateway', total: 17, online: 9 },
+    { id: 'media-plugin', total: 1, online: 0 },
   ] }
   const rows = await c.api.loadSaasResourceRows()
   assert.deepEqual(rows.map(row => row.id), ['video'])
   const row = rows[0]
-  assert.equal(row.value, 9)
-  assert.deepEqual(row.statuses.map(status => [status.labelKey, status.value]), [['saasOnline', 6], ['saasOffline', 3]])
+  assert.equal(row.value, 18)
+  assert.deepEqual(row.statuses.map(status => [status.labelKey, status.value]), [['saasOnline', 9], ['saasOffline', 9]])
   assert.deepEqual(row.breakdown.map(item => [item.id, item.labelKey, item.value]), [
-    ['gb28181-2016', 'privateOverview.videoProvider.gb28181-2016', 7],
-    ['onvif', 'privateOverview.videoProvider.onvif', 2],
-    ['agent-media-device-gateway', 'privateOverview.videoProvider.agent-media-device-gateway', 0],
+    ['gb28181-2016', 'privateOverview.videoProvider.gb28181-2016', 0],
+    ['onvif', 'privateOverview.videoProvider.onvif', 0],
+    ['agent-media-device-gateway', 'privateOverview.videoProvider.agent-media-device-gateway', 17],
     ['fixed-media', 'privateOverview.videoProvider.fixed-media', 0],
+    ['other', 'privateOverview.videoProvider.other', 1],
   ])
   assert.deepEqual(row.target.menus, ['video/resources', 'media/Device', 'video/live'])
-  assert.deepEqual(c.calls, [{ videoBreakdown: [] }])
+  assert.deepEqual(c.calls, [{ videoBreakdown: true }])
 })
 
 test('video breakdown failure remains unknown and does not request unauthorized resources', async () => {
   const c = fixture(['video/resources'])
-  c.videoBreakdown = async (...args) => { c.calls.push({ videoBreakdown: args }); throw Error('unavailable') }
+  c.videoBreakdown = async () => { c.calls.push({ videoBreakdown: true }); throw Error('unavailable') }
   const [row] = await c.api.loadSaasResourceRows()
   assert.equal(row.failed, true); assert.equal(row.value, undefined)
   assert.ok(!row.breakdown || row.breakdown.every(item => item.value === undefined))
   assert.deepEqual(row.target.menus, ['video/resources', 'media/Device', 'video/live'])
-  assert.deepEqual(c.calls, [{ videoBreakdown: [] }])
+  assert.deepEqual(c.calls, [{ videoBreakdown: true }])
 })
 
-test('multiple authorized resources keep the video summary request', async () => {
+test('multiple authorized resources use the same aggregate data without showing the breakdown', async () => {
   const c = fixture(['iot-user-device-list', 'video/resources'])
+  c.videoBreakdown = async () => { c.calls.push({ videoBreakdown: true }); return [
+    { id: 'agent-media-device-gateway', total: 17, online: 9 },
+    { id: 'media-plugin', total: 1, online: 0 },
+  ] }
   const rows = byId(await c.api.loadSaasResourceRows())
   assert.deepEqual(rows.video.target.menus, ['video/resources', 'media/Device', 'video/live'])
-  assert.equal(rows.video.value, 0)
-  assert.equal(c.calls.filter(call => call.health === 'video').length, 1)
-  assert.equal(c.calls.filter(call => call.videoBreakdown).length, 0)
+  assert.equal(rows.video.value, 18)
+  assert.deepEqual(rows.video.statuses.map(status => status.value), [9, 9])
+  assert.equal(rows.video.breakdown, undefined)
+  assert.equal(c.calls.filter(call => call.videoBreakdown).length, 1)
 })
 
 test('one period failure marks its metric unknown without hiding other metrics', async () => {
