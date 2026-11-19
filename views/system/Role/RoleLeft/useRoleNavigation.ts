@@ -4,7 +4,7 @@ import { onlyMessage, randomString } from '@jetlinks-web/utils'
 import { queryRoleGroup, saveRoleGroup, deleteRoleGroup } from '@authentication-manager-ui/api/system/role'
 import { queryBusinessApplications } from '@authentication-manager-ui/api/application-center/businessApplication'
 import type { BusinessApplicationEntity } from '@authentication-manager-ui/api/application-center/businessApplication'
-import { buildRoleNavigation, roleScopeKey } from '../roleScope'
+import { buildRoleNavigation, roleScopeKey, sortRoleGroups } from '../roleScope'
 import type { RoleGroup, RoleNavigationNode, RoleScope } from '../roleScope'
 
 /** 分别加载分组与应用，任一来源失败不清空另一来源；选择范围由页面持有。 */
@@ -41,8 +41,7 @@ export function useRoleNavigation(props: { scope: RoleScope }, select: (scope: R
       const response = await queryRoleGroup({ paging: false, sorts: [{ name: 'createTime', order: 'desc' }] })
       if (response.success === false) throw new Error(response.message)
       if (sequence !== groupSequence) return
-      groups.value = (response.result || []).sort((a: RoleGroup, b: RoleGroup) =>
-        a.id === 'default_group' ? -1 : b.id === 'default_group' ? 1 : 0)
+      groups.value = sortRoleGroups(response.result || [])
       const scope = props.scope
       if (scope.kind === 'group' && !groups.value.some(group => group.id === scope.groupId)) {
         select({ kind: 'global' })

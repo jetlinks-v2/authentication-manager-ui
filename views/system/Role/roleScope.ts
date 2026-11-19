@@ -27,6 +27,10 @@ export const roleScopeKey = (scope: RoleScope): string => scope.kind === 'applic
   ? `application:${scope.application.id}`
   : scope.kind === 'group' ? `group:${scope.groupId}` : 'global_role'
 
+/** 保留接口返回顺序，仅将默认分组前置。 */
+export const sortRoleGroups = (groups: RoleGroup[]): RoleGroup[] => [...groups].sort((a, b) =>
+  Number(b.id === 'default_group') - Number(a.id === 'default_group'))
+
 /** 导航节点与业务 ID 分离；应用根仅展开，应用叶子不携带分组操作。 */
 export function buildRoleNavigation(
   groups: RoleGroup[], applications: BusinessApplicationEntity[], search: string,

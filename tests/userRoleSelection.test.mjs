@@ -67,17 +67,18 @@ const success = result => ({ status: 200, success: true, result })
 const flush = async () => { await new Promise(resolve => setImmediate(resolve)); await nextTick() }
 const role = (id, applicationId) => ({ id, name: '管理员', ...(applicationId ? { applicationId } : {}) })
 const roles = [role('global'), role('a-role', 'a'), role('b-role', 'b'), role('missing-role', 'missing')]
-const group = { groupId: 'default', groupName: '默认', roles: roles.slice(0, 2) }
+const group = { groupId: 'default_group', groupName: '默认', roles: roles.slice(0, 2) }
+const applications = [{ id: 'a', name: '应用A' }, { id: 'b', name: '应用B' }]
 const user = { id: 'user-1', name: '测试用户', username: 'tester', orgList: [{ id: 'org', name: '组织' }],
   positions: [{ id: 'position' }], roleList: [{ id: 'a-role', name: '管理员' }, { id: 'hidden', name: '保留角色' }] }
-function fixture() {
+function fixture({ catalog = roles, groups = [group], apps = applications } = {}) {
   sessionFixture.userInfo = {}
   sessionFixture.steps = []
   http.calls = []
   http.handler = async (method, url) => {
-    if (url === '/role/_query/no-paging') return success(structuredClone(roles))
-    if (url === '/role/group/detail/_query/tree') return success([structuredClone(group)])
-    if (url.startsWith('/business-application/_query')) return success([{ id: 'a', name: '应用A' }, { id: 'b', name: '应用B' }])
+    if (url === '/role/_query/no-paging') return success(structuredClone(catalog))
+    if (url === '/role/group/detail/_query/tree') return success(structuredClone(groups))
+    if (url.startsWith('/business-application/_query')) return success(structuredClone(apps))
     if (url === '/user/detail/user-1') return success(structuredClone(user))
     if (url === '/user/detail/types') return success([])
     if (method === 'put' || url === '/user/detail/_create') return success('user-1')
@@ -122,10 +123,11 @@ function mount(t, component, props = {}, validate = async () => {}) {
     return () => h('form', attrs, slots.default?.())
   } }))
   app.component('a-tree-select', defineComponent({
-    props: ['value', 'treeData', 'disabled'], emits: ['update:value', 'change'],
+    props: ['value', 'treeData', 'disabled', 'filterTreeNode', 'treeDefaultExpandedKeys', 'treeExpandAction'],
+    emits: ['update:value', 'change'],
     setup: (props, { slots, emit }) => {
       const change = ids => { emit('update:value', ids); emit('change', ids) }
-      return () => h('role-select', { treeData: props.treeData, value: props.value, disabled: props.disabled, change }, [
+      return () => h('role-select', { ...props, change }, [
         ...(props.value || []).map(id => h('role-tag', { id }, slots.tagRender?.({
           value: id, label: flatten(props.treeData).find(role => role.id === id)?.name || id,
           onClose: () => change(props.value.filter(value => value !== id)),
@@ -164,12 +166,21 @@ test('missing or failed application metadata falls back without disabling role s
   const { state } = hook(t)
   await state.load()
   const handler = http.handler
-  for (const response of [() => Promise.reject(new Error('forbidden')), () => success([]), () => ({ success: false })]) {
+  for (const response of [() => Promise.reject(new Error('forbidden')), () => success([]),
+    () => success([{ id: 'a', name: '' }]), () => ({ success: false })]) {
     http.handler = (method, url) => url.startsWith('/business-application/_query') ? response() : handler(method, url)
     await state.load()
     assert.equal(state.unavailable.value, false)
     assert.equal(state.roles.value[1].name, '管理员')
     assert.deepEqual(state.roles.value.map(role => role.id), roles.map(role => role.id))
+    const ui = mount(t, Selector, {
+      roles: state.roles.value, roleGroups: state.roleGroups.value, applications: state.applications.value,
+    })
+    const { treeData } = ui.find('role-select').props
+    const appRoot = treeData.find(node => node.id === 'application_roles')
+    assert.deepEqual(appRoot.children.map(node => [node.id, node.name, node.disabled]), [
+      ['a-role', '管理员', undefined], ['b-role', '管理员', undefined], ['missing-role', '管理员', undefined],
+    ])
   }
 })
 
@@ -205,13 +216,47 @@ test('overlapping list/filter requests are shared and disposed responses do not 
   assert.deepEqual(state.roles.value, [])
 })
 
-test('grouped and ungrouped application roles can be selected and removed; unseen bindings stay protected', async t => {
+test('dialog orders global groups and applications like role navigation, with unique selectable leaves', async t => {
+  fixture({
+    catalog: [...roles, role('global_role'), { ...role('custom-role'), groupId: 'custom' },
+      { ...role('hidden-group-role'), groupId: 'not-visible' }],
+    groups: [{ groupId: 'custom', groupName: '自定义', roles: [role('group-only')] },
+      { ...group, roles: [roles[0], role('a-role'), role('missing-role', 'missing')] }],
+    apps: [...applications].reverse(),
+  })
+  const ui = mount(t, EditDialog, { type: 'edit', data: { id: user.id }, visible: true })
+  await flush()
+  const { treeData, treeDefaultExpandedKeys, treeExpandAction, filterTreeNode } = ui.find('role-select').props
+  const [globalRoot, appRoot, hidden] = treeData
+  assert.deepEqual(treeData.map(node => node.name), ['RoleLeft.index.507330-5', 'ProjectApplication.role.title', '保留角色'])
+  assert.deepEqual(globalRoot.children.map(node => node.id), ['group:default_group', 'group:custom', 'global_role', 'hidden-group-role'])
+  assert.deepEqual(globalRoot.children[0].children.map(node => node.id), ['global'])
+  assert.deepEqual(globalRoot.children[1].children.map(node => node.id), ['custom-role', 'group-only'])
+  assert.deepEqual(appRoot.children.map(node => node.id), ['application:b', 'application:a', 'missing-role'])
+  const [bRole, aRole] = appRoot.children.flatMap(node => node.children || [])
+  assert.deepEqual([bRole.name, aRole.name], ['应用B-管理员', '应用A-管理员'])
+  assert.ok(filterTreeNode('应用A', aRole))
+  assert.ok(!filterTreeNode('应用A', bRole))
+  assert.equal(appRoot.children[2].name, '管理员')
+  const nodes = flatten(treeData)
+  assert.equal(new Set(nodes.map(node => node.id)).size, nodes.length)
+  assert.ok(nodes.filter(node => node.children).every(node => node.selectable === false && !node.disabled))
+  assert.ok(nodes.filter(node => !node.children && node !== hidden).every(node => node.selectable !== false && !node.disabled))
+  assert.equal(hidden.disabled, true)
+  assert.equal(hidden.selectable, false)
+  assert.deepEqual(treeDefaultExpandedKeys, [globalRoot.id, appRoot.id, 'application:a'])
+  assert.equal(treeExpandAction, 'click')
+  assert.equal(http.calls.filter(call => call.url === '/role/_query/no-paging').length, 1)
+})
+
+test('application roles can be selected and removed; unseen bindings stay protected', async t => {
   fixture()
   const { state } = hook(t)
   await state.load()
   const selected = ref(['a-role', 'hidden'])
   const ui = mount(t, defineComponent({ setup: () => () => h(Selector, {
     value: selected.value, roles: state.roles.value, roleGroups: state.roleGroups.value,
+    applications: state.applications.value,
     extraData: [{ id: 'hidden', name: '保留角色' }], 'onUpdate:value': value => { selected.value = value },
   }) }))
   const nodes = flatten(ui.find('role-select').props.treeData)
@@ -304,15 +349,17 @@ test('editing sends changed role IDs while preserving hidden roles, organization
   assert.equal(JSON.stringify(saved.data).includes('应用B-管理员'), false)
 })
 
-test('new users can receive an application role through the existing create request', async t => {
+test('new users can receive roles from multiple applications through the existing create request', async t => {
   fixture()
   const ui = mount(t, EditDialog, { type: 'add', data: {}, visible: true })
   await flush()
-  ui.find('role-select').props.change(['a-role'])
+  ui.find('role-select').props.change(['a-role', 'b-role'])
   await nextTick()
   ui.find('a-modal').props.onOk()
   await flush()
-  assert.deepEqual(http.calls.find(call => call.url === '/user/detail/_create').data.roleIdList, ['a-role'])
+  const saved = http.calls.find(call => call.url === '/user/detail/_create').data
+  assert.deepEqual(saved.roleIdList, ['a-role', 'b-role'])
+  assert.equal('businessApplicationIdList' in saved, false)
 })
 
 test('admin and project owners remain read-only including the custom selected-tag close button', async t => {

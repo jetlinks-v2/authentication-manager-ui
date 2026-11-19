@@ -88,6 +88,7 @@
                           :extraData="selectedRoleItems"
                           :roles="roles"
                           :roleGroups="roleGroups"
+                          :applications="applications"
                           v-model:value="form.data.roleIdList"
                           :disabled="isRoleReadonly || applicationRoleSelectionLoading || applicationRoleSelectionUnavailable"
                           @created="loadApplicationRoleSelection"
@@ -228,6 +229,7 @@ const menuStore = useMenuStore();
 const {
   roles,
   roleGroups,
+  applications,
   formatRoleName,
   loading: applicationRoleSelectionLoading,
   unavailable: applicationRoleSelectionUnavailable,

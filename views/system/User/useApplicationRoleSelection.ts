@@ -2,11 +2,13 @@ import { computed, onScopeDispose, ref } from 'vue'
 import { queryRole_api } from '@authentication-manager-ui/api/system/user'
 import { getRoleList } from '@jetlinks-web-core/api/system/user'
 import { queryBusinessApplications } from '@authentication-manager-ui/api/application-center/businessApplication'
+import type { BusinessApplicationEntity } from '@authentication-manager-ui/api/application-center/businessApplication'
 
 export interface ApplicationRoleItem {
   id: string
   name: string
   applicationId?: string
+  groupId?: string
 }
 
 export interface ApplicationRoleGroup {
@@ -26,7 +28,8 @@ interface RoleQueryResponse<T> {
 export const useApplicationRoleSelection = () => {
   const rawRoles = ref<ApplicationRoleItem[]>([])
   const rawGroups = ref<ApplicationRoleGroup[]>([])
-  const applicationNames = ref(new Map<string, string>())
+  const applications = ref<BusinessApplicationEntity[]>([])
+  const applicationNames = computed(() => new Map(applications.value.map(app => [app.id, app.name])))
   const loading = ref(false)
   const unavailable = ref(false)
   let optionRequest: Promise<ApplicationRoleItem[]> | undefined
@@ -67,7 +70,7 @@ export const useApplicationRoleSelection = () => {
     optionRequest = (async () => {
       const [roleResult, applicationResult] = await Promise.allSettled([
         queryRole_api(query) as Promise<RoleQueryResponse<ApplicationRoleItem>>,
-        queryBusinessApplications(query),
+        queryBusinessApplications(query) as Promise<RoleQueryResponse<BusinessApplicationEntity>>,
       ])
       if (roleResult.status === 'rejected') throw roleResult.reason
       const response = roleResult.value
@@ -77,11 +80,10 @@ export const useApplicationRoleSelection = () => {
       if (disposed) return []
       rawRoles.value = response.result
       // 名称接口可能因权限或网络不可用，不复用旧名称，也不丢弃本次成功读取的角色。
-      const applications = applicationResult.status === 'fulfilled'
+      applications.value = applicationResult.status === 'fulfilled'
         && applicationResult.value.success !== false
         && Array.isArray(applicationResult.value.result)
         ? applicationResult.value.result : []
-      applicationNames.value = new Map(applications.map(application => [application.id, application.name]))
       return roles.value
     })().catch(error => {
       if (!disposed) unavailable.value = true
@@ -118,6 +120,7 @@ export const useApplicationRoleSelection = () => {
   return {
     roles,
     roleGroups,
+    applications,
     formatRoleName,
     loadRoleOptions,
     getRoleOptions,

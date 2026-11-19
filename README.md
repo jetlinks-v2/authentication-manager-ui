@@ -8,27 +8,15 @@
 
 ## 用户管理应用角色选择与显示调整
 
-状态：已按确认计划实施，定向行为验证与模块构建通过。
+运行时标准系统页 `/system/ou/user` 的新增/编辑弹窗按角色管理左树组织下拉：**全局角色 → 角色分组 → 角色**（默认分组优先），以及 **应用角色 → 应用名称 → 角色**。无可见分组的全局角色直接列在全局根下。应用归属优先于普通分组，同一角色只展示一次；应用名称缺失或不可读取时，角色以原名直接列在应用根下，仍可选择。没有候选的分支不展示。
 
-当前行为：系统用户管理中的应用角色允许选择和移除，不因应用归属置灰；应用角色统一显示为“应用名称-角色名称”，全局角色保留原名称。覆盖新增/编辑弹窗的候选与已选标签，以及用户列表的角色列和角色筛选项。
+实现归属：`views/system/User/roleSelectionTree.ts` 复用 `views/system/Role/roleScope.ts` 的导航分类和分组排序，由 `components/ApplicationRoleSelector.vue` 渲染。`useApplicationRoleSelection.ts` 沿用现有角色、角色分组和应用查询，不逐个应用请求。应用角色的搜索和已选标签继续使用“应用名称-角色名称”，用户列表与筛选项不变。
 
-影响范围与 owning module：仅 `runtime-ui/modules/authentication-manager-ui`，主要入口为 `views/system/User/useApplicationRoleSelection.ts`、`components/ApplicationRoleSelector.vue`、`components/EditUserDialog.vue`、`index.vue` 及相关语言资源。复用 `api/application-center/businessApplication.ts` 的应用查询与 `api/system/user.ts` 的角色查询、用户保存接口。
+兼容与权限：分类节点只能展开；新增/编辑仍按 `roleIdList` 提交原角色 ID，不改变应用成员关系。保留管理员和项目所有者只读、已有不可见角色不可移除，以及角色/分组查询失败时锁定选择的行为。不改消防应用页、运营端 `ui/`、角色管理页面行为、菜单权限和后端接口。
 
-实现入口：
+验证：模块内运行 `node --test tests/userRoleSelection.test.mjs tests/systemRoleApplications.test.mjs`，44/44 通过，覆盖分组顺序、同名与重复角色、应用名称缺失、跨应用多选、编辑回显与移除、提交载荷和不可见绑定保护。中英日文案键、两处 Vue 文件定向样式检查和 `git diff --check` 通过。工作区未配置独立 lint。
 
-1. `useApplicationRoleSelection.ts` 基于角色 `applicationId` 关联可见应用名称，统一生成显示名称；绑定值仍为原角色 ID，兼容用户详情仅返回角色 ID/名称。并发的列表/筛选请求复用在途结果，卸载后忽略迟到响应。
-2. `components/ApplicationRoleSelector.vue` 移除应用角色专属禁用、禁止移除和蓝色标签逻辑，补入分组接口遗漏的无分组角色；`components/EditUserDialog.vue` 清理“应用角色只能在所属应用中分配”提示并更新中英日资源，保留管理员/项目所有者整体只读和无权查看的已有角色保护。
-3. `index.vue` 与弹窗共用显示规则，保存后刷新角色目录，覆盖编辑期间新建应用角色的回显。新增/编辑沿用原 `roleIdList` 请求，不把显示名称写入绑定字段。
-
-边界：不修改 `ui/`、后端、菜单授权或接口数据结构，不自动增删应用成员关系；保留现有后端资产权限检查。
-
-兼容与权限：应用名称查询受当前账号权限影响；应用名称缺失时保留原角色名称，不丢弃已有绑定，不因补充名称失败禁用全部角色。角色或分组候选加载失败时保留原有锁定和错误提示。已核对后端 `modules/authentication-manager/src/main/java/org/jetlinks/pro/auth/service/UserDetailService.java` 与 `RoleService.java`：用户保存通过 `roleIdList` 维护绑定，编辑时不传 `businessApplicationIdList` 会保留现有应用成员关系。
-
-验证结果：模块内执行 `node --test tests/userRoleSelection.test.mjs`，10/10 通过。测试编译并挂载实际用户页、编辑弹窗、角色选择器和 hook，以 HTTP/视觉控件替身验证同名角色区分、无分组角色、选择/移除、已有不可见角色保护、名称缺失/失败、请求合并与卸载、新增/编辑保存载荷、管理员/项目所有者只读、角色筛选 ID 和保存后目录刷新。原生 Vue 脚本/模板编译、中英日 JSON 与文案差异核对、本次 `git diff --check` 均通过。
-
-构建与静态检查：在 `runtime-ui` 执行 `pnpm -F jetlinks-web-core build --outDir /tmp/jetlinks-user-role-check.sHZ9Qf/build -- --module-name authentication-manager-ui` 通过（11,570 个模块，53.21 秒），保留既有 Rollup output option、CSS 注释与大包提示。`node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json` 修改前为 540 条、修改后为 537 条诊断，忽略行号后无新增，本次消除 3 条；全量类型检查仍未通过。工作区未配置独立 lint，复用 `ui/scripts/check-ui-style.mjs --files` 只读检查 3 个修改的 Vue 文件通过。
-
-待验收：在登录环境检查角色下拉/标签展示，并用受限账号新增/编辑用户、保存后刷新确认持久化及后端权限拒绝行为；未向真实后端写入用户或角色关系。清理既有类型问题后重跑上述类型命令。
+在 `runtime-ui` 执行 `pnpm -F jetlinks-web-core build --outDir /tmp/jetlinks-user-role-tree-build -- --module-name authentication-manager-ui` 可复现定向构建，已通过（23.60 秒，保留既有构建警告）。`node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json` 仍未全绿；修改前后均为 538 条既有诊断，忽略位置后无新增。真实登录环境的受限账号候选及保存持久化仍待验收，未向真实后端写入用户或角色关系。
 
 ## 统一应用与接口分组详情摘要
 

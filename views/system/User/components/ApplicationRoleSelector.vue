@@ -3,8 +3,9 @@
     <div class="role-list-wrap__select">
       <a-tree-select
         v-model:value="selectedRoleIds"
-        :tree-default-expanded-keys="selectedRoleIds || []"
-        :tree-data="roleTree"
+        :tree-default-expanded-keys="defaultExpandedKeys"
+        :tree-data="selection.tree"
+        tree-expand-action="click"
         :field-names="{ label: 'name', value: 'id', children: 'children' }"
         :placeholder="$t('components.EditUserDialog.939453-13')"
         :disabled="disabled"
@@ -17,7 +18,7 @@
       >
         <template #title="record">
           <a-tooltip
-            v-if="extraRoleIds.includes(record.id)"
+            v-if="selection.extraRoleIds.has(record.id)"
             :title="$t('components.EditUserDialog.939453-34')"
           >
             <span class="j-ellipsis j-ellipsis-line-clamp role-list-wrap__disabled-name">{{ record.name }}</span>
@@ -28,7 +29,7 @@
           <div class="ant-select-selection-item">
             <div class="ant-select-selection-item-content">{{ label }}</div>
             <div
-              v-if="!disabled && !extraRoleIds.includes(value)"
+              v-if="!disabled && !selection.extraRoleIds.has(value)"
               class="ant-select-selection-item-remove"
               @click.stop="onClose"
             >
@@ -52,14 +53,11 @@
 import { computed, ref, watch, type PropType } from 'vue'
 import { TreeSelect } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
+import type { BusinessApplicationEntity } from '@authentication-manager-ui/api/application-center/businessApplication'
 import { useTabSaveSuccess } from '@jetlinks-web-core/hooks'
 import { filterSelectNode } from '@jetlinks-web-core/utils'
+import { buildRoleSelectionTree } from '../roleSelectionTree'
 import type { ApplicationRoleGroup, ApplicationRoleItem } from '../useApplicationRoleSelection'
-
-interface RoleTreeNode extends ApplicationRoleItem {
-  children?: RoleTreeNode[]
-  disabled?: boolean
-}
 
 const props = defineProps({
   value: {
@@ -72,6 +70,10 @@ const props = defineProps({
   },
   roleGroups: {
     type: Array as PropType<ApplicationRoleGroup[]>,
+    default: () => [],
+  },
+  applications: {
+    type: Array as PropType<BusinessApplicationEntity[]>,
     default: () => [],
   },
   extraData: {
@@ -90,32 +92,15 @@ const emits = defineEmits<{
 const { t: $t } = useI18n()
 const selectedRoleIds = ref<string[]>([])
 
-const groupedRoleIdSet = computed(() => new Set(
-  props.roleGroups.flatMap(group => (group.roles || []).map(role => role.id)),
+const selection = computed(() => buildRoleSelectionTree(
+  props.roles, props.roleGroups, props.applications, props.extraData,
+  { global: $t('RoleLeft.index.507330-5'), applications: $t('ProjectApplication.role.title') },
 ))
-const roleIdSet = computed(() => new Set(
-  [...groupedRoleIdSet.value, ...props.roles.map(role => role.id)],
-))
-const extraRoleIds = computed(() => props.extraData
-  .filter(role => !roleIdSet.value.has(role.id))
-  .map(role => role.id))
-
-/**
- * 可见角色均可分配，补入分组接口未返回的角色；仅保护无权查看的已有绑定。
- */
-const roleTree = computed<RoleTreeNode[]>(() => {
-  const groups = props.roleGroups
-  const groupNodes = groups.map(group => ({
-    id: group.groupId,
-    name: group.groupName,
-    disabled: true,
-    children: group.roles || [],
-  }))
-  const ungroupedNodes = props.roles.filter(role => !groupedRoleIdSet.value.has(role.id))
-  const extraNodes = props.extraData
-    .filter(role => !roleIdSet.value.has(role.id))
-    .map(role => ({ ...role, disabled: true }))
-  return [...groupNodes, ...ungroupedNodes, ...extraNodes]
+const defaultExpandedKeys = computed(() => {
+  const selectedIds = new Set(selectedRoleIds.value)
+  return selection.value.tree.flatMap(root => root.children ? [root.id, ...root.children
+    .filter(group => group.children?.some(role => selectedIds.has(role.id)))
+    .map(group => group.id)] : [])
 })
 
 const handleChange = (value: string[]) => emits('update:value', value)
