@@ -231,6 +231,14 @@ Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/1
 
 验证：与 `2.20` 模板 AST 对照确认四个按钮的权限、禁用条件、Tooltip、确认配置与回调保持一致，并核对编辑/重置密码为常用项；脚本、模板和 scoped LESS 编译通过。`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 生产构建通过（11,758 个模块，39.79 秒），`git diff --check` 通过。模块和工作区未配置 lint 脚本；在 `runtime-ui` 执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 仍有 605 项诊断，将 4 个改动 Vue 文件与 `baseMenu.json` 替换为 `2.20` 基线内容后，忽略行号位移的完整诊断一致，无新增类型错误。整体类型检查仍未通过，清理既有错误后需重跑同一命令；登录后的更多面板、键盘操作、状态确认与启用用户禁止删除的真实交互尚待验证。
 
+### 重置本人密码后的会话处理
+
+`views/system/User/components/EditUserDialog.vue` 通过 `views/system/User/useUserPasswordReset.ts` 提交密码重置。按目标用户 ID 与当前登录用户 ID 判断是否为本人；提交时复用 core 的 `beginLogoutRequest` 协调并发 401。成功后跳过 `views/system/User/index.vue#onUserSaved` 的列表、角色刷新，清除当前会话的本地 token 和验证缓存，不清空整个 localStorage，也不补发退出请求。
+
+跳转规则：core `src/router/index.ts#jumpLogin` 提供 `source-page` 模式，仅本人重置调用。`localStorage.getItem('pFrom')` 是目标地址，不是用来拼登录 URL 的前缀。有有效 HTTP(S) 来源页面时直接返回该页，保留路径、查询和 hash，不追加项目编码、登录路径、token 或旧页面的 `redirect`；无值、空白或不可用时保留当前运行入口路径并进入登录页，不清理独立的平台主账号会话。仅 hash 不同的来源页通过重新加载进入，不复用旧路由状态。重置他人密码保持当前会话并正常刷新；重置失败或取消验证不主动清 token 或跳转。不改普通退出、公共守卫、运营端或后端接口。
+
+验证：模块 `node --test tests/userRoleSelection.test.mjs` 16/16、core `node --test tests/loginNavigation.test.mjs tests/loginEntry.test.mjs tests/captchaVerify.test.mjs` 50/50 通过，覆盖本人/他人、失败/取消、重复提交、并发 401、来源回跳/回退及独立会话保留。`pnpm --config.verify-deps-before-run=false -F jetlinks-web-core build -- --module-name authentication-manager-ui`（临时 `--outDir`）生产构建通过；未配置独立 lint。`pnpm --config.verify-deps-before-run=false exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 仍有 539 项诊断；弹窗涉及的三处诊断均在未改代码，新 hook 和本次路由文件无诊断。core 的 `tests/relogin.test.mjs` 另有 9 项因现有测试桩缺 `router/login-session` 未能运行。真实登录态下的密码重置及落地页面待测试账号验收。
+
 ## 系统角色页接入应用角色
 
 本次调整已完成：移除角色详情页共用的“所属应用 · 角色”提示及闲置文案、样式，页签直接展示各自内容；保留应用权限范围、模板继承和用户管理行为。

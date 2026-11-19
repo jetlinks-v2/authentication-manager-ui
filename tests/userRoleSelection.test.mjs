@@ -16,6 +16,7 @@ const { outputFiles } = await build({
     export { default as UserPage } from './views/system/User/index.vue';
     export { effectScope, nextTick, reactive, ref, createRenderer, h, defineComponent } from 'vue';
     export { http } from '@jetlinks-web/core';
+    export { sessionFixture } from '@jetlinks-web-core/store/user';
   ` },
   bundle: true, write: false, format: 'esm', platform: 'node',
   alias: { '@authentication-manager-ui': root, '@jetlinks-web-core': core },
@@ -40,6 +41,17 @@ const { outputFiles } = await build({
       '@jetlinks-web-core/utils/validate': `export const passwordRegEx = () => true;`,
       '@jetlinks-web-core/hooks': `export const useTabSaveSuccess = () => ({ onOpen() {} });`,
       '@jetlinks-web-core/store': `export const useMenuStore = () => ({});`,
+      '@jetlinks-web-core/store/user': `export const sessionFixture = { userInfo: {}, steps: [] };
+        export const useUserStore = () => sessionFixture;`,
+      '@jetlinks-web-core/package': `import { sessionFixture } from '@jetlinks-web-core/store/user';
+        export const clearVerifyCache = () => sessionFixture.steps.push('clear-verify');`,
+      '@jetlinks-web-core/router': `import { sessionFixture } from '@jetlinks-web-core/store/user';
+        export const jumpLogin = options => sessionFixture.steps.push(['navigate', options]);`,
+      '@jetlinks-web-core/router/login-transition': `import { sessionFixture } from '@jetlinks-web-core/store/user';
+        export const beginLogoutRequest = () => {
+          sessionFixture.steps.push('begin');
+          return success => sessionFixture.steps.push(['complete', success]);
+        };`,
       'ant-design-vue': `export const TreeSelect = { SHOW_ALL: 'SHOW_ALL' };`,
       'vue-i18n': `export const useI18n = () => ({ t: key => key });`,
     }
@@ -48,7 +60,7 @@ const { outputFiles } = await build({
   } }],
 })
 const { useApplicationRoleSelection, Selector, EditDialog, UserPage, effectScope, nextTick,
-  reactive, ref, createRenderer, h, defineComponent, http } = await import(
+  reactive, ref, createRenderer, h, defineComponent, http, sessionFixture } = await import(
   `data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString('base64')}`,
 )
 const success = result => ({ status: 200, success: true, result })
@@ -59,6 +71,8 @@ const group = { groupId: 'default', groupName: '默认', roles: roles.slice(0, 2
 const user = { id: 'user-1', name: '测试用户', username: 'tester', orgList: [{ id: 'org', name: '组织' }],
   positions: [{ id: 'position' }], roleList: [{ id: 'a-role', name: '管理员' }, { id: 'hidden', name: '保留角色' }] }
 function fixture() {
+  sessionFixture.userInfo = {}
+  sessionFixture.steps = []
   http.calls = []
   http.handler = async (method, url) => {
     if (url === '/role/_query/no-paging') return success(structuredClone(roles))
@@ -341,4 +355,83 @@ test('saving from the user page refreshes the role directory for roles created w
   await flush()
   assert.equal(http.calls.filter(call => call.url === '/role/_query/no-paging').length, beforeSave + 1)
   assert.deepEqual(http.calls.find(call => call.url === '/user/detail/_create').data.roleIdList, ['new-app-role'])
+})
+
+function mountResetDialog(t, targetId = user.id, validate) {
+  fixture()
+  sessionFixture.userInfo.id = user.id
+  const events = []
+  const ui = mount(t, EditDialog, {
+    type: 'reset', visible: true, data: { id: targetId },
+    onConfirm: () => events.push('confirm'),
+    'onUpdate:visible': value => events.push(['visible', value]),
+  }, validate)
+  return { events, modal: () => ui.find('a-modal').props }
+}
+
+test('resetting the current user coordinates before the request, ignores duplicate submit and skips refresh', async t => {
+  const { events, modal } = mountResetDialog(t)
+  const handler = http.handler
+  let finish
+  const resetResponse = new Promise(resolve => { finish = resolve })
+  http.handler = async (method, url) => {
+    if (!url.endsWith('/password/_reset')) return handler(method, url)
+    sessionFixture.steps.push('request')
+    return resetResponse
+  }
+  const submit = modal().onOk()
+  await flush()
+  await modal().onOk()
+  assert.deepEqual(sessionFixture.steps, ['begin', 'request'])
+  assert.equal(http.calls.filter(call => call.url.endsWith('/password/_reset')).length, 1)
+  finish(success(null))
+  await submit
+  assert.deepEqual(events, [['visible', false]])
+  assert.deepEqual(sessionFixture.steps, [
+    'begin', 'request', 'clear-verify',
+    ['navigate', { reason: 'logout', destination: 'source-page' }],
+    ['complete', true],
+  ])
+})
+
+test('resetting another user keeps the current session and emits confirm to refresh', async t => {
+  const { events, modal } = mountResetDialog(t, 'other-user')
+  const handler = http.handler
+  http.handler = (method, url) => url === '/user/other-user/password/_reset' ? success(null) : handler(method, url)
+  await modal().onOk()
+  assert.deepEqual(events, ['confirm', ['visible', false]])
+  assert.deepEqual(sessionFixture.steps, [])
+})
+
+test('empty user IDs do not count as a self reset', async t => {
+  const { events, modal } = mountResetDialog(t, '')
+  sessionFixture.userInfo.id = ''
+  await modal().onOk()
+  assert.deepEqual(events, [])
+  assert.deepEqual(sessionFixture.steps, [])
+  assert.equal(http.calls.some(call => call.url.endsWith('/password/_reset')), false)
+})
+
+for (const [name, response] of [
+  ['unsuccessful response', () => ({ status: 200, success: false })],
+  ['verification cancelled', () => Promise.reject(new Error('verify_canceled'))],
+]) {
+  test(`self reset with ${name} releases the coordinator without closing or navigating`, async t => {
+    const { events, modal } = mountResetDialog(t)
+    const handler = http.handler
+    http.handler = (method, url) => url.endsWith('/password/_reset') ? response() : handler(method, url)
+    await modal().onOk()
+    await nextTick()
+    assert.equal(modal().confirmLoading, false)
+    assert.deepEqual(events, [])
+    assert.deepEqual(sessionFixture.steps, ['begin', ['complete', false]])
+  })
+}
+
+test('form validation failure does not register navigation or submit a reset', async t => {
+  const { events, modal } = mountResetDialog(t, user.id, async () => { throw new Error('invalid') })
+  await modal().onOk()
+  assert.deepEqual(events, [])
+  assert.deepEqual(sessionFixture.steps, [])
+  assert.equal(http.calls.some(call => call.url.endsWith('/password/_reset')), false)
 })

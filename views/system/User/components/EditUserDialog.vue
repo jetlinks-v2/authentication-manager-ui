@@ -195,7 +195,6 @@ import {
     validateField_api,
     addUser_api,
     updateUser_api,
-    updatePassword_api,
     getUser_api,
 } from '@authentication-manager-ui/api/system/user';
 import { Rule } from 'ant-design-vue/es/form';
@@ -210,6 +209,7 @@ import { useI18n } from 'vue-i18n';
 // import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
 import { useMenuStore } from '@jetlinks-web-core/store';  
 import { useApplicationRoleSelection, type ApplicationRoleItem } from '../useApplicationRoleSelection'
+import { useUserPasswordReset } from '../useUserPasswordReset'
 import ApplicationRoleSelector from './ApplicationRoleSelector.vue'
 
 const { t: $t } = useI18n();
@@ -222,6 +222,7 @@ const props = defineProps<{
 }>();
 // 弹窗相关
 const loading = ref(false);
+const { resetPassword } = useUserPasswordReset();
 // const positionsMap = new Map()
 const menuStore = useMenuStore();
 const {
@@ -254,19 +255,24 @@ const dialogTitle = computed(() => {
     else if (props.type === 'reset') return $t('components.EditUserDialog.939453-25');
     else return '';
 });
-const confirm = () => {
+const confirm = async () => {
+    if (loading.value || !formRef.value) return;
     loading.value = true;
-    return formRef.value
-        ?.validate()
-        .then(() => form.submit(), () => undefined)
-        .then((resp: any) => {
-            if (resp?.status === 200) {
-                onlyMessage($t('components.EditUserDialog.939453-26'));
-                emits('confirm');
-                emits('update:visible', false);
-            }
-        })
-        .finally(() => (loading.value = false));
+    try {
+        await formRef.value.validate();
+        const result = props.type === 'reset'
+            ? await resetPassword({ id: form.data.id || '', password: form.data.password })
+            : { success: (await form.submit()).status === 200, isSelf: false };
+        if (!result.success) return;
+
+        onlyMessage($t('components.EditUserDialog.939453-26'));
+        if (!result.isSelf) emits('confirm');
+        emits('update:visible', false);
+    } catch {
+        // 表单校验和请求错误由各自入口处理；失败保留弹窗。
+    } finally {
+        loading.value = false;
+    }
 };
 
 /* 职位联动已屏蔽，保留原处理函数。
@@ -401,12 +407,6 @@ const form = reactive({
                 orgIdList: form.data.orgIdList,
                 roleIdList: form.data.roleIdList,
                 positions: positions,
-            };
-        } else if (props.type === 'reset') {
-            api = updatePassword_api;
-            params = {
-                id: form.data.id,
-                password: form.data.password,
             };
         } else return Promise.reject();
         return api(params);
