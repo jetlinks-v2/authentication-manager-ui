@@ -53,7 +53,7 @@ const MEDIA_ACCESS_PROVIDERS = new Set([
 ])
 
 const ONLINE_STATES = new Set(['online', 'connected', 'success'])
-const DEGRADED_STATES = new Set(['degraded', 'warn', 'warning'])
+const DEGRADED_STATES = new Set(['degraded', 'warn', 'warning', 'error', 'failed'])
 const MEDIA_PAGE_SIZE = 200
 
 const DETAIL_CONTEXT = {
@@ -150,7 +150,8 @@ const rowsOfPage = (response: unknown): { rows: JsonRecord[]; total: number } =>
   }
 
   const page = recordOf(result)
-  const rows = Array.isArray(page.data) ? page.data.map(recordOf) : []
+  if (!Array.isArray(page.data)) throw new Error('Invalid media query result')
+  const rows = page.data.map(recordOf)
   const total = Number(page.total)
   return {
     rows,
@@ -172,6 +173,7 @@ const queryAllPages = async (
       { ...query, pageIndex, pageSize: MEDIA_PAGE_SIZE },
       { hiddenError: true },
     )
+    if (response.success === false || response.status >= 400) throw new Error('Media query failed')
     const page = rowsOfPage(response)
     rows.push(...page.rows)
     total = page.total
@@ -185,7 +187,9 @@ const queryAllPages = async (
 type MediaGatewayConnection = 'online' | 'degraded' | 'offline'
 
 const mediaGatewayConnectionOf = (row: JsonRecord): MediaGatewayConnection => {
-  const state = enumValueOf(row.state ?? row.runningState ?? row.status)
+  // 视频列表按枚举值判断连接状态，不能用本地化的展示文案判定在线。
+  const raw = row.state ?? row.runningState ?? row.status
+  const state = enumValueOf(typeof raw === 'string' ? raw : recordOf(raw).value)
   if (ONLINE_STATES.has(state)) return 'online'
   if (DEGRADED_STATES.has(state)) return 'degraded'
   return 'offline'
@@ -278,15 +282,56 @@ export const buildOverviewDeviceTerms = (kind: 'edge' | 'iot' | 'video'): Overvi
 
 export interface OverviewChannelBreakdown extends OverviewCountSummary { id: string }
 
-/** 按视频资源页统计接入来源；私有化 all 范围包含插件及扩展来源，默认保留现有数量卡口径。 */
-export const queryOverviewChannelBreakdown = async (scope: 'default' | 'all' = 'default'): Promise<OverviewChannelBreakdown[]> => {
-  const mediaDevices = (await queryAllPages('/media/device/_query', {
+/** 视频入口共用当前账号可见的媒体设备目录。 */
+async function queryOverviewMediaDevices(): Promise<JsonRecord[]> {
+  const devices = await queryAllPages('/media/device/_query', {
     sorts: [
       { name: 'createTime', order: 'desc' },
       { name: 'name', order: 'desc' },
     ],
-  })).filter((row) => (
-    textOf(row.id) && (scope === 'all' || MEDIA_ACCESS_PROVIDERS.has(enumValueOf(row.provider)))
+  })
+  return devices.filter(row => textOf(row.id))
+}
+
+/** 各来源汇总已按设备资产范围查询的通道数量。 */
+function groupOverviewChannelBreakdown(summaries: OverviewChannelBreakdown[]): OverviewChannelBreakdown[] {
+  const groups = new Map<string, OverviewChannelBreakdown>()
+  for (const current of summaries) {
+    const previous = groups.get(current.id)
+    groups.set(current.id, { id: current.id, total: (previous?.total ?? 0) + current.total, online: (previous?.online ?? 0) + current.online })
+  }
+  return [...groups.values()]
+}
+
+/** 复用视频列表的聚合接口。本地只按可见设备合并来源，设备离线时通道仍计入总数。 */
+export async function querySaasOverviewChannelBreakdown(): Promise<OverviewChannelBreakdown[]> {
+  const [devices, response] = await Promise.all([
+    queryOverviewMediaDevices(),
+    request.post('/media/device/channel/_summary', { paging: false }, { hiddenError: true }),
+  ])
+  const result: unknown = response.result
+  if (response.success === false || response.status >= 400 || !result || typeof result !== 'object' || Array.isArray(result)) {
+    throw new Error('Invalid media channel summary')
+  }
+  const byDevice = new Map(Object.entries(recordOf(result)))
+  return groupOverviewChannelBreakdown(devices.map(device => {
+    const stats = byDevice.get(textOf(device.id))
+    const id = enumValueOf(device.provider)
+    // 聚合结果只包含有通道的设备，缺少分组代表该设备没有通道。
+    if (stats === undefined) return { id, total: 0, online: 0 }
+    const { total, online } = recordOf(stats)
+    if (typeof total !== 'number' || typeof online !== 'number'
+      || !Number.isSafeInteger(total) || !Number.isSafeInteger(online) || online < 0 || total < online) {
+      throw new Error('Invalid media channel counts')
+    }
+    return { id, total, online: mediaGatewayConnectionOf(device) === 'offline' ? 0 : online }
+  }))
+}
+
+/** 按视频资源页统计接入来源；私有化 all 范围包含插件及扩展来源，默认保留现有数量卡口径。 */
+export const queryOverviewChannelBreakdown = async (scope: 'default' | 'all' = 'default'): Promise<OverviewChannelBreakdown[]> => {
+  const mediaDevices = (await queryOverviewMediaDevices()).filter(row => (
+    scope === 'all' || MEDIA_ACCESS_PROVIDERS.has(enumValueOf(row.provider))
   ))
 
   const summaries = await Promise.all(mediaDevices.map(async (device) => {
@@ -308,12 +353,7 @@ export const queryOverviewChannelBreakdown = async (scope: 'default' | 'all' = '
     }
   }))
 
-  const groups = new Map<string, OverviewChannelBreakdown>()
-  for (const current of summaries) {
-    const previous = groups.get(current.id)
-    groups.set(current.id, { id: current.id, total: (previous?.total ?? 0) + current.total, online: (previous?.online ?? 0) + current.online })
-  }
-  return [...groups.values()]
+  return groupOverviewChannelBreakdown(summaries)
 }
 
 /** 数量卡沿用同一接入来源统计结果，避免分布与总量使用不同范围。 */

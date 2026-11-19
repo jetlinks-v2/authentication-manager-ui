@@ -1,7 +1,7 @@
 import { request } from '@jetlinks-web/core'
 import {
   queryOverviewGatewaySummary, queryOverviewIotDeviceSummary, queryOverviewIotDeviceBreakdown,
-  queryOverviewChannelSummary, queryOverviewChannelBreakdown,
+  querySaasOverviewChannelBreakdown,
   type OverviewCountSummary,
 } from '../../../../api/overview'
 import { countOf } from '../../shared/apiResult'
@@ -64,15 +64,18 @@ export async function loadSaasResourceRows(): Promise<HomeRow[]> {
       return { ...health, breakdown: breakdown.map(item => ({ ...item, labelKey: `privateOverview.deviceType.${item.id}` })) }
     } },
     { id: 'video', labelKey: 'saasVideo', icon: 'video', target: targets.video, load: async () => {
-      if (access.resourceIds.length !== 1) return loadHealth(queryOverviewChannelSummary)
-      // 复用原有视频统计范围和同一次请求，保证分类之和与总量一致。
-      const groups = await queryOverviewChannelBreakdown()
-      const health = await loadHealth(async () => groups.reduce((sum, item) => ({
+      // 单卡和多卡共用聚合结果，单卡的分类也从同一份数据计算。
+      const groups = await querySaasOverviewChannelBreakdown()
+      const summary = groups.reduce((sum, item) => ({
         total: sum.total + item.total, online: sum.online + item.online,
-      }), { total: 0, online: 0 }))
+      }), { total: 0, online: 0 })
+      const health = await loadHealth(async () => summary)
+      if (access.resourceIds.length !== 1) return health
       const providers = ['gb28181-2016', 'onvif', 'agent-media-device-gateway', 'fixed-media']
       const breakdown = providers.map(id => ({ id, labelKey: `privateOverview.videoProvider.${id}`,
         value: groups.find(item => item.id === id)?.total ?? 0 }))
+      const other = summary.total - breakdown.reduce((sum, item) => sum + item.value, 0)
+      if (other > 0) breakdown.push({ id: 'other', labelKey: 'privateOverview.videoProvider.other', value: other })
       return { ...health, breakdown }
     } },
     { id: 'gateway', labelKey: 'saasGateway', icon: 'gateway', target: targets.gateway, load: () => loadHealth(queryOverviewGatewaySummary) },
