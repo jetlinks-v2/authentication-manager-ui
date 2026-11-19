@@ -16,6 +16,7 @@
           <span class="template-summary__status-dot" />
           {{ state === 'enabled' ? $t('ApplicationTemplate.common.enabled') : $t('ApplicationTemplate.common.disabled') }}
         </a-tag>
+        <DocumentHelp code="application-center/Template" help-key="template.availability" />
         <span class="template-summary__id">{{ $t('ApplicationTemplate.field.id') }}: {{ detail.id || emptyText }}</span>
       </div>
       <div class="template-summary__meta">
@@ -55,6 +56,7 @@
 </template>
 
 <script setup lang="ts">
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import type { PropType } from 'vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'

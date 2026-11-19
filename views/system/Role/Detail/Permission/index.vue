@@ -1,9 +1,10 @@
 <template>
   <div class="role-permiss-container">
     <div class="card">
-      <div>
+      <a-flex align="center" gap="small">
         <TitleComponent :data="$t('Permission.index.071527-0')" />
-      </div>
+        <DocumentHelp code="system/Role" help-key="permissions.scope" />
+      </a-flex>
       <a-alert v-if="application?.scope.isExternal" type="info" show-icon :message="$t('Role.application.externalPermissions')" />
       <ApplicationRolePermissions v-else-if="application" :state="permissions" :show-asset-permissions="isNoCommunity" height="60vh" />
       <PermissionTree v-else ref="permissionTreeRef" :saving="loading" />
@@ -23,6 +24,7 @@
 </template>
 
 <script setup lang="ts">
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import PermissionTree from '../components/PermissionTree.vue'
 import ApplicationRolePermissions from '@authentication-manager-ui/components/ApplicationRolePermissions/index.vue'
 import type { PropType } from 'vue'

@@ -10,8 +10,9 @@
     <a-alert
       type="info"
       show-icon
-      :message="$t('ApiApplication.permission.description')"
-    />
+    >
+      <template #message>{{ $t('ApiApplication.permission.description') }} <DocumentHelp code="application-center/ApiApplication" help-key="permissions.operations" /></template>
+    </a-alert>
     <a-spin :spinning="loading">
       <CloudEmpty v-if="!groups.length" :description="$t('ApiApplication.permission.empty')" />
       <a-collapse v-else v-model:active-key="activeKeys" accordion>
@@ -51,6 +52,7 @@
 </template>
 
 <script setup lang="ts">
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import { onBeforeUnmount, ref, watch } from 'vue'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n'

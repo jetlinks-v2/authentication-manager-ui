@@ -18,12 +18,14 @@
             <template #default="{ option }">
               <div v-if="option.key === 'configuration'" class="configuration-tab tab-content">
                 <ContentPanel :title="$t('ApiApplication.subscription.events')" :padding="0" :background="false" fill>
+                  <template #titleRightRender><DocumentHelp code="application-center/ThirdPartyApplication" help-key="subscription.events" /></template>
                   <SubscriptionEventPicker v-model="selectedEventIds" :providers="providers"
                     :disabled="saving || catalogLoading || !!catalogError" :loading="catalogLoading" @inspect="showEventDocument" />
                 </ContentPanel>
                 <a-divider class="configuration-divider" />
                 <ContentPanel :title="$t('ThirdPartyApplication.subscription.receiveSettings')" :padding="0" :background="false" fill>
-                  <a-form-item :label="$t('ApiApplication.subscription.channel')">
+                  <a-form-item>
+                    <template #label>{{ $t('ApiApplication.subscription.channel') }} <DocumentHelp code="application-center/ThirdPartyApplication" help-key="subscription.channel" /></template>
                     <a-select :value="form.channelProvider" allow-clear :disabled="saving" :options="channelOptions"
                       :placeholder="$t(channels.length ? 'ApiApplication.subscription.selectChannel' : 'ApiApplication.subscription.noChannels')"
                       @update:value="changeChannel" />
@@ -64,6 +66,7 @@
   </JlDrawerShell>
 </template>
 <script setup lang="ts">
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import { useI18n } from 'vue-i18n'
 import SlantedTabs from '@jetlinks-web-core/components/SlantedTabs'
 import type { ApplicationSubscription, SubscriptionChannel, SubscriptionConfiguration, SubscriptionEventProvider, SubscriptionValidation as Validation } from '@authentication-manager-ui/api/application-center/applicationSubscription'

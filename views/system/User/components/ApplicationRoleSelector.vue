@@ -39,6 +39,7 @@
         </template>
       </a-tree-select>
     </div>
+    <DocumentHelp code="system/User" help-key="roles.application" />
     <j-permission-button
       v-if="!disabled"
       has-permission="system/Role:add"
@@ -50,6 +51,7 @@
 </template>
 
 <script setup lang="ts">
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import { computed, ref, watch, type PropType } from 'vue'
 import { TreeSelect } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'

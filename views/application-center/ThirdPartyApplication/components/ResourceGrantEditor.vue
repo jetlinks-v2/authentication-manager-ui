@@ -6,6 +6,7 @@
         <a-select-option value="all_current">{{ $t('ThirdPartyApplication.project.allCurrent') }}</a-select-option>
         <a-select-option value="selected">{{ $t('ThirdPartyApplication.project.selectedResources') }}</a-select-option>
       </a-select>
+      <DocumentHelp code="application-center/ThirdPartyApplication" help-key="authorization.resourceScope" />
       <a-button type="text" danger :disabled="disabled" @click="emit('remove')">{{ $t('ApiApplication.actions.delete') }}</a-button>
     </a-space>
     <template v-if="modelValue.mode === 'selected'">
@@ -21,6 +22,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ResourceGrant } from '@authentication-manager-ui/api/application-center/thirdPartyIntegration'
