@@ -20,6 +20,12 @@ type RoleDetail = { kind: 'global'; role: BusinessApplicationRoleEntity }
 export function useRoleDetail() {
   const route = useRoute()
   const { t } = useI18n()
+  // 路由更新可能早于详情页卸载，其他页面的 id 不属于当前角色。
+  const roleId = computed(() => {
+    if (route.name !== 'system/Role/Detail') return undefined
+    const id = route.params.id
+    return typeof id === 'string' && id.trim() ? id : undefined
+  })
   const detail = ref<RoleDetail>()
   const loading = ref(false)
   const error = ref(false)
@@ -34,13 +40,14 @@ export function useRoleDetail() {
 
   const load = async () => {
     const current = ++sequence
-    const roleId = String(route.params.id || '')
+    const id = roleId.value
     detail.value = undefined
     activeKey.value = 'permission'
-    loading.value = true
+    loading.value = !!id
     error.value = false
+    if (!id) return
     try {
-      const response = await getRoleDetails_api(roleId)
+      const response = await getRoleDetails_api(id)
       if (current !== sequence) return
       const role: BusinessApplicationRoleEntity = response.result
       if (response.success === false || !role?.id) throw new Error('Role unavailable')
@@ -60,6 +67,6 @@ export function useRoleDetail() {
       if (current === sequence) loading.value = false
     }
   }
-  watch(() => route.params.id, load, { immediate: true, flush: 'sync' })
+  watch(roleId, load, { immediate: true, flush: 'sync' })
   return { detail, application, loading, error, activeKey, tabs, load }
 }

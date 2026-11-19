@@ -261,9 +261,13 @@ Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/1
 
 角色与授权：`RoleRight/components/useRoleForm.ts` 让应用角色只填写名称、说明，创建提交当前 `applicationId`，编辑不提交该字段；保存后留在当前应用并刷新。删除沿用现有接口与确认，应用角色不提供复制，全局操作保留。普通应用进入原有 `system/Role/Detail` 权限配置页，保留菜单权限与数据权限双栏、返回和保存操作。`Detail/useRoleDetail.ts` 根据角色真实的 `applicationId` 解析应用与模板，直接访问、刷新和切换角色均隔离过期响应，失败可重试且不会退回全局授权。`Detail/Permission/useRolePermission.ts` 按归属分流保存，与应用详情 `RoleManagement.vue` 共用 `components/ApplicationRolePermissions/useApplicationRolePermissions.ts` 和 `MenuAssetPermissionEditor`。菜单限定当前应用，并继续与用户和模板权限取交集；数据权限只读展示模板原值，模板没有配置时不显示编辑器默认策略。策略名称沿用授权目录，应用范围显示为“当前应用的数据”。保存前重新读取当前应用菜单、模板及用户授权，完整继承最新模板资产策略，并使用应用角色专用授权接口；第三方应用隐藏菜单授权入口，模板读取失败禁止保存，切换角色或卸载后忽略旧请求。应用详情保留原有菜单授权布局。
 
+详情加载边界：`views/system/Role/Detail/useRoleDetail.ts` 仅在 `system/Role/Detail` 且路由包含有效角色 ID 时查询详情（包括重试）。返回列表或跳往其他路由时清除详情状态并忽略旧请求结果，不再请求 `/role/`；列表查询和授权接口不变。
+
 角色用户：全局与应用角色详情均提供“用户管理”页签，各页签直接展示对应内容。`Detail/User/useRoleUsers.ts` 为原有用户表格和 `Detail/components/AddUserDialog.vue` 共用查询、选择与绑定操作；应用角色的已绑定列表和候选均查询当前应用成员，并将角色条件与用户搜索独立 AND 组合，候选排除已绑定用户和 admin。新增、单个解绑和批量解绑复用角色关系接口，仅增删当前角色绑定，保留其他角色及应用成员关系；操作沿用 `system/Role:update` 权限，失败可重试，切换或卸载后不刷新旧范围。全局角色继续使用原有用户查询接口。
 
 权限生效：`system/Role` 补齐应用和模板查询，编辑按钮补齐应用保存及模板授权读取依赖，资产类型增加 `business_application` 和角色用户操作所需的 `user`。既有环境需同步菜单、重新保存对应功能授权与资产数据范围并刷新认证；声明不会自动扩大已有账号权限，仍由后端校验数据权限。
+
+返回列表回归验证：`node --test tests/systemRoleApplications.test.mjs tests/globalRolePermissions.test.mjs tests/roleAssetPermissions.test.mjs` 39 项通过，覆盖无 ID 返回、跳往带同一 ID 的其他详情、无效 ID 重试及旧响应隔离。扩展运行 `tests/applicationRolePermissionScope.test.mjs` 后合计 56/57 通过，唯一失败是既有的模板资产策略断言（缺少 `space` 项），该用例不加载本次修改的 hook。模块生产构建及 `git diff --check` 通过，无独立 lint 脚本。模块类型检查 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 在修改前后均为相同的 538 条既有诊断，待清理后重跑。真实登录态尚未复验：在权限分配页通过菜单返回时，Network 应出现 `POST /api/role/_query/`，不应出现 `GET /api/role/`。
 
 验证结果（2026-11-17）：
 

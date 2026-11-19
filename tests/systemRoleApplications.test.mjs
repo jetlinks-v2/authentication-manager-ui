@@ -39,7 +39,7 @@ const { outputFiles } = await build({
         }]));`,
       '@jetlinks-web/utils': `export const onlyMessage = () => {}; export const randomString = () => 'new-group';`,
       'vue-i18n': `export const useI18n = () => ({ t: key => key });`,
-      'vue-router': `import { reactive } from 'vue'; export const route = reactive({ query: {}, params: { id: '' } }); export const useRoute = () => route;`,
+      'vue-router': `import { reactive } from 'vue'; export const route = reactive({ name: 'system/Role/Detail', query: {}, params: {} }); export const useRoute = () => route;`,
       '@jetlinks-web-core/hooks': `export const useTabSaveSuccessBack = () => ({ onBack: () => {} });`,
       '@jetlinks-web-core/store/menu': `export const navigation = []; export const useMenuStore = () => ({ jumpPage: (...args) => navigation.push(args) });`,
       '@jetlinks-web-core/api/system/menu': `export const getMenuGrantDetail = () => { throw new Error('Global grant must not load in this fixture'); };`,
@@ -56,7 +56,7 @@ const appScope = (id = 'a') => ({ kind: 'application', application: app(id) })
 const success = result => ({ success: true, status: 200, result })
 function fixture() {
   http.calls = []; navigation.length = 0
-  route.params.id = ''
+  route.name = 'system/Role/Detail'; route.params = {}
   http.handler = async (method, url, data) => {
     if (url.startsWith('/business-application/_query')) return success([app('a'), app('b')])
     if (url === '/role/group/_query/no-paging') return success([{ id: 'default_group', name: '默认' }, { id: 'same', name: '自定义分组' }])
@@ -349,6 +349,49 @@ test('switching the detail route discards stale application data and restores gl
   assert.equal(state.application.value, undefined)
   assert.deepEqual(state.tabs.value.map(tab => tab.key), ['permission', 'user'])
   assert(!http.calls.some(call => call.url.startsWith('/business-application-template/')))
+})
+
+test('returning to the role list does not request details with an empty id', async t => {
+  fixture(); route.params.id = 'r'
+  const { state } = mount(t, useRoleDetail); await flush()
+  assert.equal(state.detail.value.kind, 'global')
+
+  route.params = {}
+  route.name = 'system/Role'
+  await state.load()
+
+  assert.deepEqual(http.calls.map(call => call.url), ['/role/r'])
+  assert.equal(state.detail.value, undefined)
+  assert.equal(state.loading.value, false)
+  assert.equal(state.error.value, false)
+})
+
+test('leaving role details for a different route with the same id invalidates pending details', async t => {
+  fixture(); route.params.id = 'r'; const late = deferred()
+  http.handler = () => late.promise
+  const { state } = mount(t, useRoleDetail)
+  assert.equal(state.loading.value, true)
+
+  route.name = 'system/User/Detail'
+  assert.equal(state.loading.value, false)
+  late.resolve(success({ id: 'r', applicationId: 'a' })); await flush()
+
+  route.params.id = 'another-id'
+  assert.deepEqual(http.calls.map(call => call.url), ['/role/r'])
+  assert.equal(state.detail.value, undefined)
+  assert.equal(state.error.value, false)
+})
+
+test('invalid id on the role detail route is ignored on initial load and retry', async t => {
+  fixture()
+  const { state } = mount(t, useRoleDetail)
+  for (const id of ['', '  ', ['r']]) {
+    route.params.id = id
+    await state.load()
+  }
+  assert.deepEqual(http.calls, [])
+  assert.equal(state.loading.value, false)
+  assert.equal(state.error.value, false)
 })
 
 test('application role users and candidates query only current application members with AND search boundaries', async t => {
