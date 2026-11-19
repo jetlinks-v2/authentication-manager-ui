@@ -128,15 +128,17 @@
 
 ## 运行时角色授权详情
 
-### 应用模板菜单分组
+### 普通角色菜单权限
 
-运行时全局角色详情的菜单权限中，`iot` 显示为“基础菜单”，`app` 按可见应用模板名称显示并列页签；每页候选为模板配置与登录用户有效菜单、按钮的交集，勾选状态来自正在编辑的角色。交集为空的模板隐藏，共享菜单和按钮跨页签联动，必要祖先仅保留导航层级。运营端区域绑定菜单及应用角色专用授权流程不在本次范围。
+运行时普通（全局）角色的权限页直接显示 `owner === 'iot'` 的菜单树，不显示菜单分类页签，也不读取应用模板分类。混合 owner 的菜单树仅显示 `iot` 节点，符合条件的后代提升到最近的可见层级。角色详情的「权限 / 用户管理」页签和数据权限栏保留；应用角色（含第三方应用角色）、运营端及后端接口不变。
 
-实现入口为 `views/system/Role/Detail/components/PermissionTree.vue`，相邻 `useGlobalRolePermissions.ts` 负责加载及保存前复核，`roleTemplatePermissionService.ts` 读取模板范围，`roleTemplatePermissions.ts` 生成分组和完整保存载荷；复用 core `useMenuAssetPermissionEditor` 的可选分组范围。保存沿用全局角色接口、原菜单 ID 与 owner，保留未显示的历史授权和角色数据权限。初次加载失败禁用保存并支持重试；保存前发现模板或用户范围变化时保留草稿、禁止提交，重新加载后再配置。保存期间禁止继续编辑，角色切换后不提交旧草稿。
+入口为 `views/system/Role/Detail/components/PermissionTree.vue`。`useGlobalRolePermissions.ts` 读取角色授权详情和不带应用 Scope 的当前用户有效菜单，`roleMenuPermissions.ts` 计算可编辑菜单、按钮的交集，保存前复核该范围。分组仅用于限制展示和编辑；保存仍提交完整的菜单状态树与资产策略，隐藏非 `iot` 菜单不会撤销已有授权。加载失败可重试；有效范围变化时保留草稿并阻止提交。
 
-验证：模块内 `node --test tests/roleTemplatePermissions.test.mjs` 的 19 项测试通过，覆盖交集、共享状态、局部批量、响应式表格记录、单组/空组、个人中心保护、历史授权、请求失败和角色切换；相邻 `systemRoleApplications.test.mjs`、`applicationRolePermissionScope.test.mjs`、`roleAssetPermissions.test.mjs`、`menuAssetTypes.test.mjs` 共 59 项通过。运行时 core 内执行 `node --max-old-space-size=8192 ../node_modules/vite/bin/vite.js build --outDir /tmp/jetlinks-role-template-build -- --module-name authentication-manager-ui` 通过（27.40 秒），保留既有构建警告；3 个改动 Vue 文件的 UI 样式门禁及 `git diff --check` 通过。工作区未配置独立 lint，复用 `ui/scripts/check-ui-style.mjs` 只读检查。
+公共编辑器的 owner 投影由运行时 core 提交 `8909938` 提供，更新本模块时需同步该 core 版本。
 
-类型与页面验证：`runtime-ui` 内执行 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json`，修改前后均为 540 条既有诊断，忽略行号偏移后无新增或消失；全量类型检查仍需清理既有问题后重跑。本地 9200 的真实角色详情已确认基础菜单、模板名称页签和模板间共享菜单的勾选/取消联动，测试草稿已还原；未向真实后端提交角色授权，保存后的刷新回显仍待验收。
+验证：模块内运行 `node --test tests/{globalRolePermissions,applicationRolePermissionScope,systemRoleApplications,roleAssetPermissions,menuAssetTypes}.test.mjs`，63/64 通过；新增 5 项全部通过，使用实际 Vue 组件和编辑器搭配 HTTP/控件替身，覆盖无分类、混合 owner、操作范围、隐藏授权保留、空态和保存复核。唯一失败是 `applicationRolePermissionScope.test.mjs` 的模板资产策略用例，改动前的 Git 基线复现相同失败。未连接已登录的真实环境验证保存回显；上线验收应复查普通角色保存后回显及应用角色授权。
+
+`runtime-ui` 内运行 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json`，修改前后均有 538 条既有类型诊断，忽略行列号后一致。`jetlinks-web-core` 内运行 `node --max-old-space-size=8192 ../node_modules/vite/bin/vite.js build --outDir <临时目录> -- --module-name authentication-manager-ui`，目标模块生产构建通过；无独立 lint 脚本，已通过修改文件的 UI 样式门禁、语言资源 JSON 解析和差异检查。
 
 ### 巡检与热力图旧资产声明兼容
 
