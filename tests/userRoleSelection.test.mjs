@@ -30,6 +30,9 @@ const { outputFiles } = await build({
       return { loader: 'ts', contents: `import { ${autoImports.join(',')} } from 'vue';\n${compiled.content}` }
     })
     const fixtures = {
+      '@jetlinks-web-core/components/DocumentHelp': `import { h } from 'vue'; export default {
+        props: ['code', 'helpKey'], setup: props => () => h('span', { 'data-help-code': props.code, 'data-help-key': props.helpKey })
+      };`,
       '@jetlinks-web/core': `export const http = { calls: [], handler: null }; export const request = Object.fromEntries(
         ['get','post','put','patch','remove'].map(method => [method, (url, data, config) => {
           http.calls.push({ method, url, data: data === undefined ? undefined : JSON.parse(JSON.stringify(data)), config });

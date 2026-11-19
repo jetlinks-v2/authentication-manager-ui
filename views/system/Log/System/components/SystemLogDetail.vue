@@ -12,6 +12,7 @@
                 </div>
                 <div class="summary-meta">
                     <span :title="$t('System.index.112006-5')"><AIcon type="ClusterOutlined" /> {{ summary.server === '-' ? $t('System.list.noService') : summary.server }}</span>
+                    <DocumentHelp code="system/Log/System" help-key="log.service" />
                     <span :title="$t('System.detail.threadName')"><AIcon type="BranchesOutlined" /> {{ summary.thread }}</span>
                 </div>
             </div>
@@ -35,7 +36,7 @@
                 </a-collapse-panel>
                 <a-collapse-panel key="context">
                     <template #header>
-                        <span class="section-title"><AIcon type="ProfileOutlined" /> {{ $t('System.detail.context') }} <span class="count">{{ visibleContext.length }} / {{ context.length }}</span></span>
+                        <span class="section-title"><AIcon type="ProfileOutlined" /> {{ $t('System.detail.context') }} <span class="count">{{ visibleContext.length }} / {{ context.length }}</span> <DocumentHelp code="system/Log/System" help-key="log.context" /></span>
                     </template>
                     <template v-if="context.length > commonContext.length" #extra>
                         <a-button type="link" size="small" :aria-expanded="allContext" @click.stop="allContext = !allContext">
@@ -54,6 +55,7 @@
     </JlDrawerShell>
 </template>
 <script setup lang="ts">
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import { toRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import JlDrawerShell from '@jetlinks-web-core/components/JlDrawerShell/index.vue';

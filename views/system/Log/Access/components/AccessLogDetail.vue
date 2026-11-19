@@ -13,7 +13,9 @@
                 </div>
                 <div class="summary-badges">
                     <HttpStatusBadge :value="record?.responseStatus" />
+                    <DocumentHelp code="system/Log/Access" help-key="request.status" />
                     <a-tag class="duration"><AIcon type="ClockCircleOutlined" /> {{ summary.duration }}</a-tag>
+                    <DocumentHelp code="system/Log/Access" help-key="request.duration" />
                 </div>
                 <div class="summary-meta">
                     <span :title="$t('Access.index.480752-5')"><AIcon type="CalendarOutlined" /> {{ summary.time }}</span>
@@ -72,7 +74,7 @@
                     <CodeBlock variant="light" :content="exception" :wrap="false" />
                 </a-collapse-panel>
                 <a-collapse-panel key="location">
-                    <template #header><span class="section-title"><AIcon type="BranchesOutlined" /> {{ $t('Access.detail.location') }}</span></template>
+                    <template #header><span class="section-title"><AIcon type="BranchesOutlined" /> {{ $t('Access.detail.location') }} <DocumentHelp code="system/Log/Access" help-key="request.trace" /></span></template>
                     <LogFieldsTable :entries="locationFields" copyable>
                         <template #valueActions="{ entry }">
                             <LogValueActions
@@ -87,6 +89,7 @@
     </JlDrawerShell>
 </template>
 <script setup lang="ts">
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import { toRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { JsonViewer } from 'vue3-json-viewer';

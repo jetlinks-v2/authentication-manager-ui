@@ -10,6 +10,7 @@ import { name } from './package.json'
 import './views/system/list-page.less'
 import { registerOverviewHelpPoints } from './visDashboard/Base/QuickGuide/documentHelpPoints'
 import { registerResourceDashboardHelpPoints } from './views/resources/Dashboard/documentHelpPoints'
+import { registerAdministrationHelpPoints } from './documentHelpPoints'
 import { getRegisterComponents as getAnnouncementComponents } from './views/system/Announcement/register'
 
 const getRegisterComponents = (): RegistryAction[] => [
@@ -148,6 +149,7 @@ const register = () => {
   moduleRegistry.register(name, registerSetting)
   registerOverviewHelpPoints()
   registerResourceDashboardHelpPoints()
+  registerAdministrationHelpPoints()
 }
 
 /**

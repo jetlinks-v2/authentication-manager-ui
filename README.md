@@ -6,6 +6,24 @@
 
 验证：`node --test tests/userRoleSelection.test.mjs` 通过，覆盖本地提示、未失焦提交、修正后保存及历史账号编辑；中英日提示渲染、模块构建与定向样式检查通过。模块 `vue-tsc --noEmit -p tsconfig.json` 仍有既有类型错误（539 → 538，无新增）；未连接真实后端写入账号。
 
+## 可配置帮助点位覆盖
+
+文档管理按实际菜单和模块注册表生成目录，不在页面中固定一级分组。`documentHelpPoints.ts` 在模块启动时登记角色权限、用户应用角色、API 授权、开放平台凭证与订阅、应用模板、访问日志及系统日志的帮助点位；对应业务组件挂载 `DocumentHelp`，点位不依赖先打开业务页面才能被管理页发现。
+
+同一运行时的补充入口为 `../rule-engine-manager-ui/documentHelpPoints.ts`（规则编排与场景联动）、`../notify-manager-ui/documentHelpPoints.ts`（通知渠道、模板与记录）、`../datasource-manager-ui/documentHelpPoints.ts`（连接与数据命令）、`../data-collector-ui/documentHelpPoints.ts`（通道、采集器、采集点与周期）。分组名称以当前账号的真实菜单为准，菜单未映射的点位沿用“其他页面”规则。
+
+新增点位只声明位置和中英日名称，不初始化或覆盖 `document-help` 配置正文，不改变已有 `code + key`。帮助内容仍在文档管理中配置；未配置或禁用的业务帮助入口继续隐藏。已有必要的字段提示和校验反馈保留，不以未配置的帮助替换它们。
+
+配置内容可选用 `.document-help-guide` 紧凑指南样式：`header` 标题、一句用途、必要的 `ol` 操作步骤和 `.document-help-guide__link` 文档入口，不添加装饰性层级示例或重复标签。样式由 core 的 `DocumentHelp/MarkdownPreview.vue` 提供，仅作用于显式使用该类的正文，不改变普通 Markdown、配置结构及启禁逻辑。正文与文档链接仍由管理页配置，不在业务组件硬编码；外链沿用安全清洗并在独立窗口打开，正式交付需配置客户可访问的文档地址。
+
+气泡正文必须以当前运行时已检出的业务实现为依据；历史文档只作参考，不能替代新增表单、提交服务与测试的核验。`project/Overview + quickGuide.space` 的中文样板采用“创建空间、绑定设备”两步，不再要求先建立类型；文档链接暂作为文档中心入口，不将未复验的旧文章标为当前完整指南。更换业务模块版本后应重新核对正文，但不得自动覆盖已有配置、翻译或启用状态。
+
+各模块的 `tests/documentHelpPoints.test.mjs` 校验模块启动注册、重复注册稳定性、三语标签、菜单归属、实际组件挂载和模板编译；帮助内容与显隐仍由 core 的 `tests/documentHelp.test.mjs` 覆盖。
+
+当前验证边界：点位与公共帮助定向测试、相关业务回归、28 个变更组件的脚本/模板/样式编译及样式门禁已验证；数据采集扩展回归中的两项 WebSocket 大整数精度测试失败，相关解析实现未在此功能中修改。五个模块的完整类型检查仍未通过，不能据此声明整仓质量门禁通过。可在 runtime-ui 根目录运行 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --incremental false --pretty false -p modules/<模块名>/tsconfig.json` 复核对应模块。
+
+完整生产构建与跨模块登录验收仍待完成；单点样板验证不代表全部点位已经配置或完成验收。联合构建命令为 `pnpm --config.verify-deps-before-run=false -F jetlinks-web-core build -- --module-name authentication-manager-ui,rule-engine-manager-ui,notify-manager-ui,datasource-manager-ui,data-collector-ui`，应先保护工作区已有改动，再在隔离的构建环境中执行。
+
 ## 用户管理应用角色选择与显示调整
 
 运行时标准系统页 `/system/ou/user` 的新增/编辑弹窗按角色管理左树组织下拉：**全局角色 → 角色分组 → 角色**（默认分组优先），以及 **应用角色 → 应用名称 → 角色**。无可见分组的全局角色直接列在全局根下。应用归属优先于普通分组，同一角色只展示一次；应用名称缺失或不可读取时，角色以原名直接列在应用根下，仍可选择。没有候选的分支不展示。
@@ -98,6 +116,10 @@
 目标与范围：运行时 `runtime-ui/modules/authentication-manager-ui` 在右上角语言切换右侧增加书本图标与“文档”，点击后以无蒙层右侧浮窗嵌入文档站，底部左侧“打开文档中心”在新标签页打开同一地址。参考阿里云帮助浮窗，复用 `JlDrawerShell`；不新增菜单或站内路由，不修改运营端 `ui/`、共享 core 或文档站。iframe 使用文档站提供的 `embed=1` 模式，并携带当前语言，暂不传版本。底部链接仍打开完整文档中心。
 
 实现：`index.ts` 在原公告注册之外，向 `layout/headerRight` 的 `Language` 节点后插入入口。`components/DocumentCenter/index.vue` 负责浮窗和 iframe 展示，`useDocumentCenter.ts` 负责状态与配置地址；文案走现有 locale。auth 的 `system.config.scopes` 中为 `paths` 增加 `document-url`，前端读取既有 `useSystemStore().systemInfo.paths['document-url']`，不新增接口，不向文档站传递平台 Token。
+
+滚动策略：文档浮窗使用 `Teleport to="body"` 挂载，并为本实例设置 `getContainer=false` 与固定定位，绕过底层抽屉 Portal 的自动整页滚动锁。保留背景滚动条、背景交互及文档内部独立滚动，不修改 body 样式，不修改 `JlDrawerShell` 的公共默认行为；固定定位避免浮窗随长页面滚动。其他普通抽屉仍管理自己的滚动锁，文档浮窗关闭或卸载不能解除它们的锁定。
+
+滚动稳定性验证：`tests/documentCenterLayout.test.mjs` 覆盖真实组件的 Teleport、属性透传及普通抽屉默认值；与文档中心、文档管理、点位及公共帮助测试共 54 项通过。隔离 Chrome 使用真实文档组件、公共抽屉和 Ant Design Vue，配置及文档正文为本地测试替身；修改前复现顶部横移 10px，修改后长短页面的顶栏坐标、滚动条占位、关闭时滚动位置均保持不变，反复开关、背景操作、iframe 独立滚动、普通抽屉叠加与浮窗卸载检查通过。组件脚本/模板/样式编译、样式门禁和差异检查通过。完整类型检查仍有 539 项诊断，文档中心与公共抽屉无诊断；完整生产构建未重跑，当前登录环境仍需刷新后验收。
 
 本地部署：`runtime/authentication-service/src/main/resources/application.yml` 声明 `${SYSTEM_CONFIG_PATHS_DOCUMENT_URL:}`，本机被忽略的 `application-local.yml` 设置 `SYSTEM_CONFIG_PATHS_DOCUMENT_URL` 为 `http://192.168.33.76:4313/s/9169ec06-15dd-4253-b132-415b264918fc`。修改文件需重启 auth 并刷新前端；数据库已有同名配置优先于默认值。其他部署需显式提供自己的文档地址。
 

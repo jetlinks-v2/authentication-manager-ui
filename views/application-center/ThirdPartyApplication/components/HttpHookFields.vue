@@ -1,5 +1,6 @@
 <template>
-  <a-form-item :label="$t('ThirdPartyApplication.subscription.endpoint')" required>
+  <a-form-item required>
+    <template #label>{{ $t('ThirdPartyApplication.subscription.endpoint') }} <DocumentHelp code="application-center/ThirdPartyApplication" help-key="subscription.endpoint" /></template>
     <a-input :value="modelValue.endpoint" :disabled="disabled" :placeholder="$t('ThirdPartyApplication.subscription.endpointPlaceholder')"
       @update:value="value => emit('update:modelValue', { ...modelValue, endpoint: value })" />
   </a-form-item>
@@ -28,6 +29,7 @@
   </a-form-item>
 </template>
 <script setup lang="ts">
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import { useI18n } from 'vue-i18n'
 import type { HeaderRow, HttpHookForm } from '../useSubscriptionEditorForm'
 const props = defineProps<{ modelValue: HttpHookForm; disabled?: boolean }>()

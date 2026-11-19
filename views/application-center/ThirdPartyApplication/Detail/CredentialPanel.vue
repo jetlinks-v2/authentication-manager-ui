@@ -19,14 +19,18 @@
         <a-descriptions-item :label="$t('ThirdPartyApplication.credential.clientId')">
           <a-typography-text v-if="visibleCredentialOf(provider.type)?.clientId" copyable :content="visibleCredentialOf(provider.type)?.clientId">{{ visibleCredentialOf(provider.type)?.clientId }}</a-typography-text><span v-else>-</span>
         </a-descriptions-item>
-        <a-descriptions-item :label="$t('ThirdPartyApplication.credential.secret')">
+        <a-descriptions-item>
+          <template #label>{{ $t('ThirdPartyApplication.credential.secret') }} <DocumentHelp code="application-center/ThirdPartyApplication" help-key="credential.secret" /></template>
           <a-space v-if="secret?.type === provider.type && secret.clientSecret">
             <a-typography-text copyable :content="secret.clientSecret" class="secret-value">{{ secret.clientSecret }}</a-typography-text>
             <a-button type="link" size="small" @click="clearSecret">{{ $t('ThirdPartyApplication.credential.hide') }}</a-button>
           </a-space>
           <span v-else>{{ visibleCredentialOf(provider.type)?.secretHint || '-' }}</span>
         </a-descriptions-item>
-        <a-descriptions-item :label="$t('ThirdPartyApplication.credential.endpoint')">{{ provider.tokenEndpoint || '-' }}</a-descriptions-item>
+        <a-descriptions-item>
+          <template #label>{{ $t('ThirdPartyApplication.credential.endpoint') }} <DocumentHelp code="application-center/ThirdPartyApplication" help-key="credential.tokenEndpoint" /></template>
+          {{ provider.tokenEndpoint || '-' }}
+        </a-descriptions-item>
         <a-descriptions-item v-if="!compact" :label="$t('ThirdPartyApplication.credential.grantType')">{{ provider.grantType || '-' }}</a-descriptions-item>
         <a-descriptions-item v-if="!compact" :label="$t('ThirdPartyApplication.credential.authMethods')">{{ provider.clientAuthMethods?.join(' / ') || '-' }}</a-descriptions-item>
       </a-descriptions>
@@ -55,6 +59,7 @@
 </template>
 
 <script setup lang="ts">
+import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import { reactive, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCredential } from './useCredential'
