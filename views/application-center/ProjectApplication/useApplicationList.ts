@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import type { ConditionFilterChangePayload, ConditionFilterField } from '@jetlinks-web-core/components/ConditionFilter'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
+import { useApplicationDeletion } from './useApplicationDeletion'
 import { useApplicationOpenGuard } from './useApplicationOpenGuard'
 import { useProjectApplication } from './useProjectApplication'
 import type { ProjectApplication } from './types'
@@ -25,6 +26,7 @@ export const useApplicationList = () => {
   const createOpen = ref(false)
   const filters = ref<ConditionFilterChangePayload['filter']>({ terms: [] })
   const updatingApplicationIds = ref<string[]>([])
+  const { deletingApplicationIds, deleteApplication } = useApplicationDeletion()
   let refreshSequence = 0
   const {
     openingApplicationIds,
@@ -129,7 +131,7 @@ export const useApplicationList = () => {
 
   /** 更新应用启停状态，防止重复提交。 */
   const toggleApplicationStatus = async (application: ProjectApplication) => {
-    if (updatingApplicationIds.value.includes(application.id)) return
+    if (updatingApplicationIds.value.includes(application.id) || deletingApplicationIds.has(application.id)) return
     const actionKey = application.status === 'enabled' ? 'disable' : 'enable'
     const nextStatus = application.status === 'enabled' ? 'disabled' : 'enabled'
     updatingApplicationIds.value = [...updatingApplicationIds.value, application.id]
@@ -144,6 +146,13 @@ export const useApplicationList = () => {
     } finally {
       updatingApplicationIds.value = updatingApplicationIds.value.filter(id => id !== application.id)
     }
+  }
+
+  /** 删除成功后使用当前筛选条件重新查询，避免旧查询结果回填已删除的卡片。 */
+  const handleDelete = async (application: ProjectApplication) => {
+    const { id } = application
+    if (updatingApplicationIds.value.includes(id) || openingApplicationIds.value.includes(id)) return
+    if (await deleteApplication(application)) await refresh()
   }
 
   /** 创建完成后关闭弹窗并刷新应用列表。 */
@@ -161,11 +170,13 @@ export const useApplicationList = () => {
     cardItems,
     updatingApplicationIds,
     openingApplicationIds,
+    deletingApplicationIds,
     openApplication,
     refresh,
     handleSearch,
     openDetail,
     toggleApplicationStatus,
+    handleDelete,
     handleCreated,
   }
 }

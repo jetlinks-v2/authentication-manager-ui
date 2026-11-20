@@ -18,7 +18,7 @@
         :show-settings-actions="activeTab === 'settings'"
         :opening="openingApplicationIds.includes(application.id)"
         @cancel-settings="cancelSettings"
-        @delete="deleteApplication"
+        @delete="handleDelete"
         @edit-settings="editSettings"
         @save-settings="saveSettings"
         @toggle-status="toggleStatus"
@@ -95,6 +95,7 @@ import DeviceBinding from './components/DeviceBinding.vue'
 import RoleManagement from './components/RoleManagement.vue'
 import UserManagement from './components/UserManagement.vue'
 import { useApplicationDeviceBinding } from './useApplicationDeviceBinding'
+import { useApplicationDeletion } from '../useApplicationDeletion'
 import { useApplicationOpenGuard } from '../useApplicationOpenGuard'
 import { useProjectApplication } from '../useProjectApplication'
 import type {
@@ -106,6 +107,7 @@ import type {
 const route = useRoute()
 const menuStore = useMenuStore()
 const store = useProjectApplication()
+const { deletingApplicationIds, deleteApplication } = useApplicationDeletion()
 const { t: $t } = useI18n()
 const getInitialTab = () => route.query.tab === 'roles' || route.query.tab === 'devices'
   ? route.query.tab
@@ -121,10 +123,10 @@ const loading = ref(false)
 const settingsEditing = ref(false)
 const settingsSaving = ref(false)
 const settingsRef = ref<InstanceType<typeof ApplicationSettings>>()
-const deleting = ref(false)
 const syncingCredential = ref(false)
 
 const applicationId = computed(() => String(route.params.id || ''))
+const deleting = computed(() => deletingApplicationIds.has(applicationId.value))
 const application = computed(() => store.applications.find((item) => item.id === applicationId.value))
 const detail = computed(() => store.details[applicationId.value])
 const template = computed(() => store.templates.find((item) => item.id === application.value?.templateId))
@@ -191,17 +193,8 @@ const syncCredential = async () => {
   }
 }
 
-const deleteApplication = async () => {
-  if (!application.value || deleting.value) return
-  const applicationName = application.value.name
-  deleting.value = true
-  try {
-    await store.removeApplication(applicationId.value)
-    onlyMessage($t('ProjectApplication.detail.deleteSuccess', { name: applicationName }))
-    backToList()
-  } finally {
-    deleting.value = false
-  }
+const handleDelete = async () => {
+  if (application.value && await deleteApplication(application.value)) backToList()
 }
 
 const editSettings = () => {
