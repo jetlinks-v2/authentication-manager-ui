@@ -38,6 +38,8 @@
               :item="item"
               :loading="updatingApplicationIds.includes(item.application.id)"
               :opening="openingApplicationIds.includes(item.application.id)"
+              :deleting="deletingApplicationIds.has(item.application.id)"
+              @delete="handleDelete(item.application)"
               @edit="openDetail(item.application.id)"
               @toggle-status="toggleApplicationStatus(item.application)"
               @open="openApplication(item.application)"
@@ -87,11 +89,13 @@ const {
   cardItems,
   updatingApplicationIds,
   openingApplicationIds,
+  deletingApplicationIds,
   openApplication,
   refresh,
   handleSearch,
   openDetail,
   toggleApplicationStatus,
+  handleDelete,
   handleCreated,
 } = useApplicationList()
 </script>
