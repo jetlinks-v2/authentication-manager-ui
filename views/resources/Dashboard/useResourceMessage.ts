@@ -13,7 +13,7 @@ export function useResourceMessage(scope: Ref<string>, initialRange: TimeRange =
   const { token } = theme.useToken()
   const menu = useMenuStore()
   const range = ref<TimeRange>(initialRange)
-  const query = usePrivateQuery(() => loadMessageTrend(range.value), computed(() => JSON.stringify([scope.value, range.value])), ref(true))
+  const query = usePrivateQuery(signal => loadMessageTrend(range.value, undefined, signal), computed(() => JSON.stringify([scope.value, range.value])), ref(true))
   const ranges = computed(() => ['today', 'yesterday', '3d', '7d', '30d'].map(value => ({ value, label: t(`resourceDashboard.range.${value}`) })))
   const total = computed(() => query.data?.reduce((sum, point) => sum + point.value, 0).toLocaleString() ?? '—')
   const hourly = computed(() => ['today', 'yesterday', '3d'].includes(range.value))

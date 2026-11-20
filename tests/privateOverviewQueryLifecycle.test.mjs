@@ -15,12 +15,16 @@ const settle = async () => { await Promise.resolve(); await nextTick(); await Pr
 test('identity switch discards old response and permission withdrawal clears data; disposal blocks late writes', async () => {
   const key=ref('A'), enabled=ref(true), pending=[]
   const scope=effectScope()
-  const query=scope.run(()=>usePrivateQuery(()=>new Promise((resolve,reject)=>pending.push({resolve,reject})),key,enabled))
+  const query = scope.run(() => usePrivateQuery(signal => new Promise(resolve => pending.push({ signal, resolve })), key, enabled))
   assert.equal(pending.length,1)
   key.value='B'; await nextTick(); assert.equal(pending.length,2)
+  assert.equal(pending[0].signal.aborted, true)
+  assert.equal(pending[1].signal.aborted, false)
   pending[1].resolve('B result'); await settle(); assert.equal(query.data,'B result')
   pending[0].resolve('A result'); await settle(); assert.equal(query.data,'B result')
   enabled.value=false; await nextTick(); assert.equal(query.data,undefined)
   enabled.value=true; await nextTick(); assert.equal(pending.length,3)
-  scope.stop(); pending[2].resolve('late'); await settle(); assert.equal(query.data,undefined)
+  scope.stop()
+  assert.equal(pending[2].signal.aborted, true)
+  pending[2].resolve('late'); await settle(); assert.equal(query.data,undefined)
 })
