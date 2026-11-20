@@ -2,7 +2,7 @@
   <a-card
     class="application-card"
     hoverable
-    @click="emits('edit')"
+    @click="!deleting && emits('edit')"
   >
     <template #cover>
       <a-image
@@ -24,18 +24,30 @@
       </a-tag>
       <TableActions class="application-card__more">
         <TableActionsItem>
-          <a-button type="text" @click="emits('edit')">
+          <a-button type="text" :disabled="deleting" @click="emits('edit')">
             <template #icon><AIcon type="EditOutlined" /></template>
             {{ $t('ProjectApplication.common.edit') }}
           </a-button>
         </TableActionsItem>
         <TableActionsItem>
-          <a-button type="text" :loading="loading" @click="emits('toggle-status')">
+          <a-button type="text" :disabled="deleting" :loading="loading" @click="emits('toggle-status')">
             <template #icon>
               <AIcon :type="item.application.status === 'enabled' ? 'StopOutlined' : 'PlayCircleOutlined'" />
             </template>
             {{ statusActionText }}
           </a-button>
+        </TableActionsItem>
+        <TableActionsItem :close-on-click="false">
+          <a-popconfirm
+            :title="deleteConfirmText"
+            :disabled="loading || opening || deleting"
+            @confirm="emits('delete')"
+          >
+            <a-button type="text" danger :disabled="loading || opening" :loading="deleting">
+              <template #icon><AIcon type="DeleteOutlined" /></template>
+              {{ $t('ProjectApplication.common.delete') }}
+            </a-button>
+          </a-popconfirm>
         </TableActionsItem>
       </TableActions>
     </div>
@@ -50,7 +62,7 @@
         :text="item.application.statusText"
         :status-names="STATUS_NAMES"
       />
-      <a-button class="application-card__open" :loading="opening" @click="emits('open')">
+      <a-button class="application-card__open" :disabled="deleting" :loading="opening" @click="emits('open')">
         {{ $t('ProjectApplication.list.open') }}
       </a-button>
     </div>
@@ -84,9 +96,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  deleting: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emits = defineEmits<{
+  delete: []
   edit: []
   open: []
   'toggle-status': []
@@ -112,6 +129,10 @@ const description = computed(() =>
 const statusActionText = computed(() => $t(props.item.application.status === 'enabled'
   ? 'ProjectApplication.common.disable'
   : 'ProjectApplication.common.enable'))
+
+const deleteConfirmText = computed(() => $t('ProjectApplication.detail.deleteConfirm', {
+  name: props.item.application.name,
+}))
 </script>
 
 <style scoped lang="less">
