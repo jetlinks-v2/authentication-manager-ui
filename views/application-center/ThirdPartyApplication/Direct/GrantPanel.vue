@@ -39,11 +39,37 @@
         </a-button>
       </PageActions>
     </div>
-    <a-alert v-if="error" type="error" show-icon :message="error" class="grant-alert">
+    <a-alert v-if="error" type="error" show-icon class="grant-alert">
+      <template #message>
+        <div class="grant-error-message">
+          <span>{{ error }}</span>
+          <a-button v-if="deniedApiRows.length" class="grant-details-link" type="link"
+            aria-haspopup="dialog" @click="deniedDetailsOpen = true">
+            {{ $t('ThirdPartyApplication.direct.viewDeniedDetails') }}
+          </a-button>
+        </div>
+      </template>
       <template v-if="isTemplateGrant && !loaded" #action>
         <a-button size="small" :disabled="loading || saving" @click="load">{{ $t('ApplicationTemplate.parameters.retry') }}</a-button>
       </template>
     </a-alert>
+    <a-modal v-model:open="deniedDetailsOpen" :title="$t('ThirdPartyApplication.direct.deniedDetailsTitle')"
+      :width="960" :footer="null" centered destroy-on-close>
+      <div class="denied-api-details">
+        <p class="denied-api-hint">{{ $t('ThirdPartyApplication.direct.deniedApis') }}</p>
+        <a-table class="denied-api-table" :columns="deniedApiColumns" :data-source="deniedApiRows" row-key="key"
+          table-layout="fixed" size="middle" :scroll="{ y: 'min(55vh, 30rem)' }"
+          :pagination="{ pageSize: 10, size: 'small', showSizeChanger: false, hideOnSinglePage: true }">
+          <template #bodyCell="{ column, record }">
+            <SpecIdentity v-if="column.key === 'endpoint'" :spec="record.endpoint" part="endpoint" />
+            <div v-else-if="column.key === 'missing'" class="denied-api-permissions">
+              <a-tag v-for="permission in record.missing" :key="permission">{{ permission }}</a-tag>
+            </div>
+            <template v-else>{{ record.operation }}</template>
+          </template>
+        </a-table>
+      </div>
+    </a-modal>
     <a-alert v-if="hiddenGrants" type="warning" show-icon :message="$t('ThirdPartyApplication.direct.hiddenGrants')" class="grant-alert" />
     <a-spin :spinning="loading">
       <a-table v-if="!isTemplateGrant" class="grant-table" row-key="id" table-layout="fixed" :columns="tableColumns"
@@ -143,6 +169,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import SpecIdentity from '../../ApiGroup/components/SpecIdentity.vue'
 import { useDirectGrants } from './useDirectGrants'
 import { TEMPLATE_GRANT_TARGET } from '@authentication-manager-ui/api/application-center/apiApplication'
 // targetType 缺省时由 useDirectGrants 按 API 应用（api-client）处理。
@@ -150,7 +177,7 @@ const props = defineProps<{ targetId: string; targetType?: string }>()
 const { t: $t } = useI18n()
 const isTemplateGrant = computed(() => props.targetType === TEMPLATE_GRANT_TARGET)
 const { groups, original, selected, changed, pendingChanges, loading, saving, loaded, error, hiddenGrants,
-  tableColumns, groupRows, tableSelection, toggleGroup, toggleAll,
+  deniedDetailsOpen, deniedApiRows, deniedApiColumns, tableColumns, groupRows, tableSelection, toggleGroup, toggleAll,
   editing, edit, templateRows,
   update, canManageGroups, openGroupManager, save, load } = useDirectGrants(() => props.targetId, props.targetType)
 </script>
@@ -158,6 +185,31 @@ const { groups, original, selected, changed, pendingChanges, loading, saving, lo
 .grant-head { display: flex; gap: var(--space-4); justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4); flex-wrap: wrap; }
 .grant-head p { color: var(--ink-4); flex: 1; min-width: 220px; }
 .grant-alert { margin: var(--space-3) 0; }
+.grant-error-message { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: var(--space-3); }
+.grant-error-message > span { min-width: 0; overflow-wrap: anywhere; }
+.grant-details-link.ant-btn-link {
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: inherit;
+  line-height: inherit;
+}
+.grant-details-link:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+.denied-api-details { padding-block: var(--space-3) var(--space-4); }
+.denied-api-hint { margin: 0 0 var(--space-4); color: var(--ink-3); font: var(--fs-14)/var(--lh-normal) var(--font-sans); }
+.denied-api-table :deep(.ant-table) { color: var(--ink-2); font: var(--fs-14)/var(--lh-normal) var(--font-sans); }
+.denied-api-table :deep(.ant-table-cell) { vertical-align: top; overflow-wrap: anywhere; }
+.denied-api-table :deep(.ant-table-body) { overflow-y: auto !important; scrollbar-gutter: stable; }
+.denied-api-permissions { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
+.denied-api-permissions :deep(.ant-tag) {
+  max-width: 100%;
+  margin: 0;
+  color: var(--ink-2);
+  font: var(--fs-13)/var(--space-5) var(--font-sans);
+  white-space: normal;
+}
 .grant-panel--direct { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); min-width: 0; }
 .grant-panel--direct .grant-head { align-items: center; margin-bottom: 0; }
 .grant-panel--direct .grant-head p { margin: 0; }

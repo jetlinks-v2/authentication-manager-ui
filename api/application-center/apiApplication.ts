@@ -67,6 +67,11 @@ export interface ApiSpec {
   assetType?: string
 }
 
+export interface ApiGrantPermission {
+  id: string
+  actions: string[]
+}
+
 export interface ApiGroupGrant {
   id?: string
   targetType?: string
@@ -148,8 +153,11 @@ export const TEMPLATE_GRANT_TARGET = 'business_application_template'
 export const queryApiGrants = (targetId: string, targetType: string = API_CLIENT_TARGET) =>
   apiRequest.post<ApiGroupGrant[]>(`/open/api/group/${encodeURIComponent(targetType)}/${encodeURIComponent(targetId)}/grant/_query`)
 
-export const saveApiGrants = (targetId: string, grants: ApiGroupGrant[], targetType: string = API_CLIENT_TARGET) =>
-  apiRequest.put<void>(`/open/api/group/${encodeURIComponent(targetType)}/${encodeURIComponent(targetId)}/_grant`, grants)
+export const queryApiGrantPermissionContext = () =>
+  apiRequest.get<{ permissions: ApiGrantPermission[] }>('/authorize/context', undefined, { hiddenError: true })
+
+export const saveApiGrants = (targetId: string, grants: ApiGroupGrant[], targetType: string = API_CLIENT_TARGET, config?: RequestConfig) =>
+  apiRequest.put<void>(`/open/api/group/${encodeURIComponent(targetType)}/${encodeURIComponent(targetId)}/_grant`, grants, config)
 
 export const queryAccessLogs = (data: QueryPayload) =>
   apiRequest.post<Pager<AccessLog>>('/logger/access/_query', data)
