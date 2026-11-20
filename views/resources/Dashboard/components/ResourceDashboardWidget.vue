@@ -12,8 +12,8 @@
         {{ t('resourceDashboard.DeviceDistribution') }}
         <DocumentHelp code="resources/Dashboard" help-key="dashboard.deviceDistribution" />
       </template>
-      <template #extra><div :id="mapLegendId" /></template>
-      <ResourceDeviceMap :legend-target="`#${mapLegendId}`" />
+      <template #extra><div ref="mapLegendTarget" /></template>
+      <ResourceDeviceMap v-if="mapLegendTarget" :legend-target="mapLegendTarget" />
     </a-card>
     <ResourceDeviceDistribution v-else-if="panel.kind === 'distribution'" />
     <GatewayStatusPanel v-else-if="panel.kind === 'gateway'" :info="info" :is-edit="false" @count="runtime.onGatewayCount" />
@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useId } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import type { DashboardWidget } from '@jetlinks-web-core/components/DashBoardCanvas'
@@ -41,8 +41,8 @@ import type { ResourcePageWidget } from '../resourcePageCanvas'
 const props = defineProps<{ info: DashboardWidget }>()
 const { t } = useI18n()
 const runtime = useResourcePageContext()
-// 每张地图使用独立的标题栏容器，重排或多实例不会把图例挂到其他卡片。
-const mapLegendId = `resource-map-legend-${useId()}`
+// 缓存的地图组件可能同步挂载，此时卡片还未插入文档。图例直接使用本卡片的标题栏节点。
+const mapLegendTarget = useTemplateRef<HTMLElement>('mapLegendTarget')
 // 页面适配器只选取已授权组件和共享数据，不在卡片重排时新建查询。
 const panel = computed(() => props.info.componentProps.resourcePage as Pick<ResourcePageWidget, 'kind' | 'summaryId'>)
 const card = computed(() => runtime.summary.cards.value.find(item => item.id === panel.value.summaryId))

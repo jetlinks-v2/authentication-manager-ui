@@ -21,10 +21,10 @@ export function numberOf(value: unknown): number {
 }
 
 /** 仅为成功响应补齐已发生的时段，当前小时之后没有数据，不能画成已上报零条。 */
-export async function loadMessageTrend(range: TimeRange, now = dayjs()) {
+export async function loadMessageTrend(range: TimeRange, now = dayjs(), signal?: AbortSignal) {
   const window = rangeOf(range, now)
   const rows = rowsOf(await request.post('/dashboard/_multi', [{ dashboard: 'device', object: 'message',
-    measurement: 'quantity', dimension: 'agg', group: 'resourceMessage', params: window }], { hiddenError: true }))
+    measurement: 'quantity', dimension: 'agg', group: 'resourceMessage', params: window }], { hiddenError: true, signal }))
   const unit = window.time === '1h' ? 'hour' : 'day'
   const format = window.time === '1h' ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD'
   const values = new Map<number, number>()

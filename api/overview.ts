@@ -134,11 +134,11 @@ const isAgentDisconnected = (error: unknown): boolean => {
   return code === 'error.agent_client_is_disconnected' || message.includes('边缘节点连接已断开')
 }
 
-const queryDeviceDetailCount = async (terms: DeviceDetailTerm[]): Promise<number> => {
+const queryDeviceDetailCount = async (terms: DeviceDetailTerm[], signal?: AbortSignal): Promise<number> => {
   const response = await request.post(
     '/device/instance/_count',
     buildDetailQuery(terms),
-    { hiddenError: true },
+    { hiddenError: true, signal },
   )
   return countOf(response)
 }
@@ -162,6 +162,7 @@ const rowsOfPage = (response: unknown): { rows: JsonRecord[]; total: number } =>
 const queryAllPages = async (
   path: string,
   query: JsonRecord,
+  signal?: AbortSignal,
 ): Promise<JsonRecord[]> => {
   const rows: JsonRecord[] = []
   let pageIndex = Number(query.pageIndex ?? 0)
@@ -171,7 +172,7 @@ const queryAllPages = async (
     const response = await request.post(
       path,
       { ...query, pageIndex, pageSize: MEDIA_PAGE_SIZE },
-      { hiddenError: true },
+      { hiddenError: true, signal },
     )
     if (response.success === false || response.status >= 400) throw new Error('Media query failed')
     const page = rowsOfPage(response)
@@ -202,14 +203,15 @@ const isChannelOnline = (row: JsonRecord, gatewayConnection: MediaGatewayConnect
 
 const queryDeviceCountSummary = async (
   baseTerms: DeviceDetailTerm[],
+  signal?: AbortSignal,
 ): Promise<OverviewCountSummary> => {
   // 在线数与总数必须复用同一产品范围，避免卡片分子、分母统计到不同设备集合。
   const [total, online] = await Promise.all([
-    queryDeviceDetailCount(baseTerms),
+    queryDeviceDetailCount(baseTerms, signal),
     queryDeviceDetailCount([
       ...baseTerms,
       { column: 'state', value: 'online' },
-    ]),
+    ], signal),
   ])
 
   return {
@@ -219,10 +221,10 @@ const queryDeviceCountSummary = async (
 }
 
 /** 查询项目内边端网关的当前在线数与总数。 */
-export const queryOverviewGatewaySummary = () => queryDeviceCountSummary(buildGatewayTerms())
+export const queryOverviewGatewaySummary = (signal?: AbortSignal) => queryDeviceCountSummary(buildGatewayTerms(), signal)
 
 /** 查询项目内物联设备的当前在线数与总数，不包含网关和视频接入产品。 */
-export const queryOverviewIotDeviceSummary = () => queryDeviceCountSummary(buildIotDeviceTerms())
+export const queryOverviewIotDeviceSummary = (signal?: AbortSignal) => queryDeviceCountSummary(buildIotDeviceTerms(), signal)
 
 export interface OverviewDeviceBreakdown { id: string; value?: number; offline?: number; failed?: boolean }
 
@@ -283,13 +285,13 @@ export const buildOverviewDeviceTerms = (kind: 'edge' | 'iot' | 'video'): Overvi
 export interface OverviewChannelBreakdown extends OverviewCountSummary { id: string }
 
 /** 视频入口共用当前账号可见的媒体设备目录。 */
-async function queryOverviewMediaDevices(): Promise<JsonRecord[]> {
+async function queryOverviewMediaDevices(signal?: AbortSignal): Promise<JsonRecord[]> {
   const devices = await queryAllPages('/media/device/_query', {
     sorts: [
       { name: 'createTime', order: 'desc' },
       { name: 'name', order: 'desc' },
     ],
-  })
+  }, signal)
   return devices.filter(row => textOf(row.id))
 }
 
@@ -304,10 +306,10 @@ function groupOverviewChannelBreakdown(summaries: OverviewChannelBreakdown[]): O
 }
 
 /** 复用视频列表的聚合接口。本地只按可见设备合并来源，设备离线时通道仍计入总数。 */
-export async function querySaasOverviewChannelBreakdown(): Promise<OverviewChannelBreakdown[]> {
+export async function querySaasOverviewChannelBreakdown(signal?: AbortSignal): Promise<OverviewChannelBreakdown[]> {
   const [devices, response] = await Promise.all([
-    queryOverviewMediaDevices(),
-    request.post('/media/device/channel/_summary', { paging: false }, { hiddenError: true }),
+    queryOverviewMediaDevices(signal),
+    request.post('/media/device/channel/_summary', { paging: false }, { hiddenError: true, signal }),
   ])
   const result: unknown = response.result
   if (response.success === false || response.status >= 400 || !result || typeof result !== 'object' || Array.isArray(result)) {
@@ -329,8 +331,8 @@ export async function querySaasOverviewChannelBreakdown(): Promise<OverviewChann
 }
 
 /** 按视频资源页统计接入来源；私有化 all 范围包含插件及扩展来源，默认保留现有数量卡口径。 */
-export const queryOverviewChannelBreakdown = async (scope: 'default' | 'all' = 'default'): Promise<OverviewChannelBreakdown[]> => {
-  const mediaDevices = (await queryOverviewMediaDevices()).filter(row => (
+export const queryOverviewChannelBreakdown = async (scope: 'default' | 'all' = 'default', signal?: AbortSignal): Promise<OverviewChannelBreakdown[]> => {
+  const mediaDevices = (await queryOverviewMediaDevices(signal)).filter(row => (
     scope === 'all' || MEDIA_ACCESS_PROVIDERS.has(enumValueOf(row.provider))
   ))
 
@@ -341,6 +343,7 @@ export const queryOverviewChannelBreakdown = async (scope: 'default' | 'all' = '
       const channels = await queryAllPages(
         `/media/device/${encodeURIComponent(deviceId)}/channel/_query`,
         { sorts: [{ name: 'createTime', order: 'desc' }] },
+        signal,
       )
       return {
         id: enumValueOf(device.provider),
@@ -357,8 +360,8 @@ export const queryOverviewChannelBreakdown = async (scope: 'default' | 'all' = '
 }
 
 /** 数量卡沿用同一接入来源统计结果，避免分布与总量使用不同范围。 */
-export const queryOverviewChannelSummary = async (): Promise<OverviewCountSummary> => (
-  (await queryOverviewChannelBreakdown()).reduce((summary, current) => ({
+export const queryOverviewChannelSummary = async (signal?: AbortSignal): Promise<OverviewCountSummary> => (
+  (await queryOverviewChannelBreakdown('default', signal)).reduce((summary, current) => ({
     total: summary.total + current.total, online: summary.online + current.online,
   }), { total: 0, online: 0 })
 )

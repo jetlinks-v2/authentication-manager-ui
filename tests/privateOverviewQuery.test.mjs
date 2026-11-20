@@ -27,8 +27,9 @@ function fixture(response = { result: { total: 0 } }) {
 test('count query uses bounded paging, terms and distinguishes failure from zero', async () => {
   const terms = [{ column: 'state', termType: 'eq', value: 'enabled' }]
   const { api, calls } = fixture()
-  assert.equal(await api.queryPrivateCount('/network/config/_query', terms), 0)
-  assert.deepEqual(calls, [['/network/config/_query', { pageIndex: 0, pageSize: 1, terms }, { hiddenError: true }]])
+  const { signal } = new AbortController()
+  assert.equal(await api.queryPrivateCount('/network/config/_query', terms, signal), 0)
+  assert.deepEqual(calls, [['/network/config/_query', { pageIndex: 0, pageSize: 1, terms }, { hiddenError: true, signal }]])
   for (const response of [{ success: false }, { result: null }, { result: { total: -1 } }, { result: {} }]) {
     await assert.rejects(fixture(response).api.queryPrivateCount('/test'))
   }

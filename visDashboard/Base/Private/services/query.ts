@@ -6,8 +6,8 @@ import type { PrivateTrendPoint, PrivateTrendRange } from '../types'
 export interface PrivateTerm { column: string; termType?: string; value: unknown }
 
 /** 只使用业务页面已有的分页查询契约获取总量，不猜测配置对象的 count 端点。 */
-export async function queryPrivateCount(path: string, terms: PrivateTerm[] = []): Promise<number> {
-  return countOf(await request.post(path, { pageIndex: 0, pageSize: 1, terms }, { hiddenError: true }))
+export async function queryPrivateCount(path: string, terms: PrivateTerm[] = [], signal?: AbortSignal): Promise<number> {
+  return countOf(await request.post(path, { pageIndex: 0, pageSize: 1, terms }, { hiddenError: true, signal }))
 }
 
 /** 同一加载批次的自然日边界，今天截止刷新时刻，昨天为完整自然日。 */

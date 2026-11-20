@@ -10,10 +10,10 @@ export async function settleMetrics(loaders: Record<string, () => Promise<number
 }
 
 /** 数量与在线口径直接复用项目概览服务。 */
-export async function loadSummary(kind: 'EdgeNodes' | 'IotDevices' | 'VideoDevices'): Promise<Metric[]> {
+export async function loadSummary(kind: 'EdgeNodes' | 'IotDevices' | 'VideoDevices', signal?: AbortSignal): Promise<Metric[]> {
   const load = kind === 'EdgeNodes' ? queryOverviewGatewaySummary
     : kind === 'IotDevices' ? queryOverviewIotDeviceSummary : queryOverviewChannelSummary
-  const summary = await load()
+  const summary = await load(signal)
   return [{ key: 'total', value: summary.total }, { key: 'online', value: summary.online },
     { key: 'offline', value: Math.max(0, summary.total - summary.online) }]
 }
