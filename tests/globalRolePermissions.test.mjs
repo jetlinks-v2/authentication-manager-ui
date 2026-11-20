@@ -116,8 +116,8 @@ function fixture(t) {
   const root = element('root')
   vm.mount(root)
   t.after(() => vm.unmount())
-  const find = tag => flatten([root]).find(node => node.tag === tag)
-  return { api, tree, find }
+  const findAll = tag => flatten([root]).filter(node => node.tag === tag)
+  return { api, tree, find: tag => findAll(tag)[0], findAll }
 }
 
 test('普通角色只渲染 iot 菜单，无分类页签；全选操作不改被隐藏的菜单、按钮和资产策略', async t => {
@@ -145,6 +145,82 @@ test('普通角色只渲染 iot 菜单，无分类页签；全选操作不改被
   assert.deepEqual(saved.get('legacy-app').assetAccesses, api.detail.menus[0].children[1].assetAccesses)
   assert.deepEqual(snapshot.assetAccesses, [api.legacyAsset])
   assert.equal(http.calls.at(-1).url, userMenuPath)
+})
+
+test('普通角色过滤所在应用候选，保留同名资产，且不把唯一候选选为默认范围', async t => {
+  const { api, tree, find, findAll } = fixture(t)
+  const onlyRestricted = api.detail.menus[0].children[0]
+  onlyRestricted.assetAccesses = [{ assetType: 'device', supportId: 'business_application', name: '所在应用' }]
+  const applicationMenu = api.detail.menus[1]
+  applicationMenu.assetTypes = ['business_application']
+  applicationMenu.assetAccesses = ['business_application', 'org'].map(supportId => ({
+    assetType: 'business_application', supportId,
+  }))
+  await tree.value.load()
+  await nextTick()
+
+  assert.deepEqual(findAll('a-radio').map(node => node.props.value), ['org', 'org'])
+  assert.deepEqual(findAll('a-radio-group').map(node => node.props.value), ['org', undefined, 'org'])
+  assert.deepEqual(find('a-select').props.options, [])
+  const snapshot = await tree.value.onSave()
+  assert.deepEqual(snapshot.assetAccesses, [api.legacyAsset, { assetType: 'business_application', accesses: [{ supportId: 'org' }] }])
+  assert.deepEqual(flatten(snapshot.menus).find(item => item.id === 'iot-nested').assetAccesses, [])
+  assert.equal(onlyRestricted.assetAccesses[0].disabled, undefined)
+})
+
+test('历史所在应用独立策略在无关保存中保留，显式改选后更新菜单和角色快照', async t => {
+  const { api, tree, find, findAll } = fixture(t)
+  const deviceMenu = api.detail.menus[0].children[0]
+  deviceMenu.assetTypes = ['device']
+  deviceMenu.assetAccesses = ['business_application', 'org', 'creator'].map(supportId => ({
+    assetType: 'device', supportId, granted: supportId === 'business_application',
+  }))
+  const oldPolicy = {
+    assetType: 'device', accesses: [{ supportId: 'business_application' }, { supportId: 'creator' }],
+    options: { existing: true },
+  }
+  api.detail.assetAccesses.push(oldPolicy)
+  await tree.value.load()
+  await nextTick()
+
+  assert.ok(findAll('a-radio').every(node => node.props.value !== 'business_application'))
+  assert.deepEqual(find('a-select').props.options.map(option => option.value), ['org'])
+  find('a-select').props.onChange('business_application') // 非法批量值不影响历史策略。
+  find('a-checkbox').props.onChange({ target: { checked: false } })
+  const deviceAccesses = snapshot => flatten(snapshot.menus).find(item => item.id === 'iot-nested').assetAccesses
+  const retained = await tree.value.onSave()
+  assert.deepEqual(retained.assetAccesses.find(policy => policy.assetType === 'device'), oldPolicy)
+  assert.deepEqual(deviceAccesses(retained), [{ assetType: 'device', supportId: 'business_application', granted: true }])
+
+  const deviceOptions = findAll('a-radio-group').find(node => node.props.value === 'business_application')
+  deviceOptions.props['onUpdate:value']('creator')
+  const changed = await tree.value.onSave()
+  assert.deepEqual(changed.assetAccesses.find(policy => policy.assetType === 'device'), {
+    assetType: 'device', accesses: [{ supportId: 'creator' }],
+  })
+  assert.deepEqual(deviceAccesses(changed), [{ assetType: 'device', supportId: 'creator', granted: true }])
+
+  api.detail.assetAccesses = changed.assetAccesses
+  await tree.value.load()
+  await nextTick()
+  assert.ok(findAll('a-radio-group').some(node => node.props.value === 'creator'))
+  assert.ok(findAll('a-radio').every(node => node.props.value !== 'business_application'))
+})
+
+test('仅菜单级的历史范围不作为新候选；合法批量设置可替换它', async t => {
+  const { api, tree, find } = fixture(t)
+  const deviceMenu = api.detail.menus[1]
+  deviceMenu.assetType = 'device'
+  deviceMenu.assetAccesses = [{ supportId: 'business_application', granted: true }, { supportId: 'org' }]
+  await tree.value.load()
+  await nextTick()
+
+  const devicePolicy = snapshot => snapshot.assetAccesses.find(policy => policy.assetType === 'device')
+  assert.deepEqual(devicePolicy(await tree.value.onSave())?.accesses, [{ supportId: 'business_application' }])
+  find('a-select').props.onChange('org')
+  assert.deepEqual(devicePolicy(await tree.value.onSave())?.accesses, [{ supportId: 'org' }])
+  find('a-checkbox').props.onChange({ target: { checked: false } })
+  assert.equal(devicePolicy(await tree.value.onSave()), undefined)
 })
 
 test('没有可编辑的 iot 菜单时显示空态，不清空原有授权', async t => {

@@ -144,11 +144,15 @@
 
 入口为 `views/system/Role/Detail/components/PermissionTree.vue`。`useGlobalRolePermissions.ts` 读取角色授权详情和不带应用 Scope 的当前用户有效菜单，`roleMenuPermissions.ts` 计算可编辑菜单、按钮的交集，保存前复核该范围。分组仅用于限制展示和编辑；保存仍提交完整的菜单状态树与资产策略，隐藏非 `iot` 菜单不会撤销已有授权。加载失败可重试；有效范围变化时保留草稿并阻止提交。
 
+全局角色的数据权限不提供「所在应用」（`supportId: business_application`），单项、批量和默认值都排除该范围。判断依据为被编辑角色的归属，不区分操作者身份；`business_application` 资产本身仍可配置其他范围。已有「所在应用」授权在无关编辑后仍保留，显式改选才替换；取消相关菜单沿用现有撤销规则。应用角色的模板展示和继承不变。
+
 公共编辑器的 owner 投影由运行时 core 提交 `8909938` 提供，更新本模块时需同步该 core 版本。
 
 验证：模块内运行 `node --test tests/{globalRolePermissions,applicationRolePermissionScope,systemRoleApplications,roleAssetPermissions,menuAssetTypes}.test.mjs`，63/64 通过；新增 5 项全部通过，使用实际 Vue 组件和编辑器搭配 HTTP/控件替身，覆盖无分类、混合 owner、操作范围、隐藏授权保留、空态和保存复核。唯一失败是 `applicationRolePermissionScope.test.mjs` 的模板资产策略用例，改动前的 Git 基线复现相同失败。未连接已登录的真实环境验证保存回显；上线验收应复查普通角色保存后回显及应用角色授权。
 
 `runtime-ui` 内运行 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json`，修改前后均有 538 条既有类型诊断，忽略行列号后一致。`jetlinks-web-core` 内运行 `node --max-old-space-size=8192 ../node_modules/vite/bin/vite.js build --outDir <临时目录> -- --module-name authentication-manager-ui`，目标模块生产构建通过；无独立 lint 脚本，已通过修改文件的 UI 样式门禁、语言资源 JSON 解析和差异检查。
+
+「所在应用」过滤复用上述验证命令：目标模块生产构建和 `git diff --check` 通过；类型诊断与改动前一致。授权回归 69/70 通过，唯一失败仍为改动前已复现的模板资产策略用例。新增全局角色用例覆盖候选、默认值、历史授权保留或替换及重新加载；应用角色用例确认模板中的「所在应用」仍会展示并提交。未在已登录的真实环境验证保存回显。
 
 ### 巡检与热力图旧资产声明兼容
 

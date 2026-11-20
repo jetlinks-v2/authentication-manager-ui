@@ -3,7 +3,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useMenuAssetPermissionEditor, useRegistryOptions } from '@jetlinks-web-core/hooks'
-import type { AssetTypeName, MenuPermissionNode } from '@jetlinks-web-core/hooks'
+import type { AssetAccessPolicy, AssetTypeName, MenuPermissionNode } from '@jetlinks-web-core/hooks'
 import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
 import { USER_CENTER_MENU_CODE } from '@jetlinks-web-core/utils/consts'
 import { NotificationSubscriptionCode } from '@jetlinks-web-core/router/menu'
@@ -13,9 +13,19 @@ import { getAssetsType } from '@authentication-manager-ui/api/system/menu'
 import { cleanRoleAssetPermissions } from './roleAssetPermissions'
 import { buildGlobalRoleMenuGroup, buildRoleGrantSnapshot, globalRoleMenuScopeFingerprint } from './roleMenuPermissions'
 
+const BUSINESS_APPLICATION_SUPPORT_ID = 'business_application'
+
 const filterMenus = (menus: MenuPermissionNode[]): MenuPermissionNode[] => menus
   .filter(menu => menu.code !== NotificationSubscriptionCode)
-  .map(menu => ({ ...menu, children: filterMenus(menu.children || []) }))
+  .map(menu => ({
+    ...menu,
+    // 在计算默认值和批量候选前禁用此范围，保留菜单声明及已授予的历史值。
+    assetAccesses: menu.assetAccesses?.map(access =>
+      (access.supportId ?? access.id ?? access.type ?? access.value) === BUSINESS_APPLICATION_SUPPORT_ID
+        ? { ...access, disabled: true }
+        : access),
+    children: filterMenus(menu.children || []),
+  }))
 
 const requirePermissionResult = <T>(response: { success?: boolean; result?: T; message?: string }): T => {
   if (response?.success === false || response?.result == null) throw new Error(response?.message || 'Permission data unavailable')
@@ -36,12 +46,28 @@ export function useGlobalRolePermissions() {
   const scopeChanged = ref(false)
   let sequence = 0
   let fingerprint = ''
+  const legacyPolicies = new Map<string, AssetAccessPolicy>()
+  const draft = useMenuAssetPermissionEditor({
+    defaultSupportIds: ['creator'], protectedMenuCode: USER_CENTER_MENU_CODE, protectedButtonId: 'view',
+  })
   const editor = {
-    ...useMenuAssetPermissionEditor({
-      defaultSupportIds: ['creator'], protectedMenuCode: USER_CENTER_MENU_CODE, protectedButtonId: 'view',
-    }),
+    ...draft,
     // 保留单组的编辑范围，但不显示菜单分类页签。
     showMenuGroups: computed(() => false),
+    visibleAssets: computed(() => draft.visibleAssets.value.map(asset => ({
+      ...asset,
+      accesses: asset.accesses.filter(access => access.supportId !== BUSINESS_APPLICATION_SUPPORT_ID),
+    }))),
+    setAssetAccess(assetType: string, supportId?: string) {
+      if (!supportId || supportId === BUSINESS_APPLICATION_SUPPORT_ID) return
+      legacyPolicies.delete(assetType)
+      draft.setAssetAccess(assetType, supportId)
+    },
+    applyAssetBatch(supportId?: string) {
+      if (!draft.batchAssetOptions.value.some(option => option.value === supportId)) return
+      draft.visibleAssets.value.forEach(asset => legacyPolicies.delete(asset.assetType))
+      draft.applyAssetBatch(supportId)
+    },
   }
   const baseColumns = computed(() => [
     { title: t('components.PermissionTree.954862-0'), dataIndex: 'menu', key: 'menu', width: '38%' },
@@ -77,10 +103,17 @@ export function useGlobalRolePermissions() {
       if (!Array.isArray(detail.menus) || !Array.isArray(detail.assetAccesses)) throw new Error('Role permissions unavailable')
       const menus = filterMenus(detail.menus)
       const group = buildGlobalRoleMenuGroup(menus, userMenus)
-      editor.reset(cleanRoleAssetPermissions({
+      const input = cleanRoleAssetPermissions({
         menus, assetAccesses: detail.assetAccesses, assetTypes,
         menuGroups: [group],
-      }))
+      })
+      legacyPolicies.clear()
+      input.assetAccesses?.forEach(policy => {
+        if (policy.accesses?.some(access => access.supportId === BUSINESS_APPLICATION_SUPPORT_ID)) {
+          legacyPolicies.set(policy.assetType, policy)
+        }
+      })
+      editor.reset(input)
       fingerprint = globalRoleMenuScopeFingerprint(group)
       scopeChanged.value = false
       initialized.value = true
@@ -103,7 +136,10 @@ export function useGlobalRolePermissions() {
         scopeChanged.value = true
         return undefined
       }
-      return buildRoleGrantSnapshot(editor.menuTree.value, editor.getSnapshot())
+      const snapshot = editor.getSnapshot()
+      // 独立策略可能包含多项范围或扩展配置；未显式改选时不把它压缩为编辑器的单选值。
+      snapshot.assetAccesses = snapshot.assetAccesses.map(policy => legacyPolicies.get(policy.assetType) ?? policy)
+      return buildRoleGrantSnapshot(editor.menuTree.value, snapshot)
     } catch {
       if (current === sequence) onlyMessage(t('Role.globalPermissions.verifyFailed'), 'error')
       return undefined

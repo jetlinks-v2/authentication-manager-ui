@@ -171,6 +171,8 @@ test('inherited data display uses template values and never editor defaults or u
   api.template.assetAccesses = [policy('business_application')]
   await state.loadPermissions()
   assert.equal(state.inheritedAssetOptions.value.device[0].label, 'Role.application.applicationData')
+  await state.savePermissions()
+  assertPolicy(api.writes[0].data, 'business_application')
   api.template.assetAccesses = []
   await state.loadPermissions()
   assert.deepEqual(state.inheritedAssetOptions.value.device, [])
