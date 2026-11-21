@@ -2,6 +2,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { SpecPermissionResource } from './specPermissionResources'
 import { useLocalTextFilter } from './useLocalTextFilter'
+import { useSpecActionLabel } from './useSpecActionLabel'
 
 interface PermissionSpecsSource {
   resources: SpecPermissionResource[]
@@ -11,6 +12,7 @@ interface PermissionSpecsSource {
 
 export const usePermissionSpecs = (source: PermissionSpecsSource) => {
   const { t } = useI18n()
+  const actionLabel = useSpecActionLabel()
   const page = ref(1)
   const pageSize = computed(() => source.readonly ? 12 : 8)
   const { filterFields, filtered, search } = useLocalTextFilter(() => source.resources, () => [
@@ -28,7 +30,12 @@ export const usePermissionSpecs = (source: PermissionSpecsSource) => {
     return { checked: ids.length > 0 && count === ids.length, indeterminate: count > 0 && count < ids.length }
   }
   const rows = computed(() => filtered.value.map(resource => ({ ...resource, ...selectionState(resource.ids),
-    actions: resource.actions.map(action => ({ ...action, ...selectionState(action.ids) })),
+    resourceMeta: resource.appId ? `${resource.appId} · ${resource.permissionId}` : resource.permissionId,
+    actions: resource.actions.map(action => ({
+      ...action,
+      ...selectionState(action.ids),
+      label: action.actions.map(actionLabel).join(' + '),
+    })),
   })))
   const pageIds = computed(() => filtered.value
     .slice((page.value - 1) * pageSize.value, page.value * pageSize.value)
