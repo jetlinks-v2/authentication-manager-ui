@@ -20,17 +20,17 @@
           <span v-if="readonly" class="resource-name" :title="record.name">{{ record.name }}</span>
           <a-checkbox v-else :checked="record.checked" :indeterminate="record.indeterminate" :disabled="disabled"
             @change="emit('select', record.ids, $event.target.checked)">{{ record.name }}</a-checkbox>
-          <span class="resource-meta" :title="`${record.appId || '—'} · ${record.permissionId}`">{{ record.appId || '—' }} · {{ record.permissionId }}</span>
+          <span class="resource-meta" :title="record.resourceMeta">{{ record.resourceMeta }}</span>
         </div>
         <div v-else-if="column.key === 'actions'" class="permission-actions">
           <a-tooltip v-for="action in record.actions" :key="action.key"
-            :title="$t(readonly ? 'ApiGroupManagement.spec.linkedActionInterfaces' : 'ApiGroupManagement.spec.actionInterfaces', { actions: action.actions.map(actionLabel).join(' + '), count: action.ids.length })">
+            :title="$t(readonly ? 'ApiGroupManagement.spec.linkedActionInterfaces' : 'ApiGroupManagement.spec.actionInterfaces', { actions: action.label, count: action.ids.length })">
             <a-tag v-if="readonly" class="permission-action-tag">
-              {{ action.actions.map(actionLabel).join(' + ') }} <span class="action-count">{{ action.ids.length }}</span>
+              {{ action.label }} <span class="action-count">{{ action.ids.length }}</span>
             </a-tag>
             <a-checkbox v-else :checked="action.checked" :indeterminate="action.indeterminate" :disabled="disabled"
               @change="emit('select', action.ids, $event.target.checked)">
-              {{ action.actions.map(actionLabel).join(' + ') }} <span class="action-count">{{ action.ids.length }}</span>
+              {{ action.label }} <span class="action-count">{{ action.ids.length }}</span>
             </a-checkbox>
           </a-tooltip>
         </div>
@@ -52,9 +52,6 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{ (event: 'select', ids: string[], checked: boolean): void }>()
 const { t: $t } = useI18n()
 const { filterFields, search, columns, rows, pagination, pageIds, pageSelection } = usePermissionSpecs(props)
-// 与平台权限配置的标准动作名称一致；自定义动作保留实际编码，不通过 HTTP 方法推测。
-const actionNameKeys: Record<string, string> = { query: 'Permission.util.968438-11', save: 'Permission.util.968438-12', delete: 'Permission.util.968438-13' }
-const actionLabel = (action: string) => actionNameKeys[action] ? $t(actionNameKeys[action]) : action
 </script>
 <style scoped>
 .permission-specs { min-width: 0; }
