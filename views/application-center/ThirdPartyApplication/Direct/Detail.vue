@@ -110,17 +110,9 @@ const [DefineTextFeedback, TextFeedback] = createReusableTemplate<{ field: Appli
 .text-feedback .ant-btn { height: auto; padding: 0; font-size: inherit; }
 .detail-alert { margin-bottom: var(--space-4); }
 .detail-workspace { min-width: 0; padding: var(--space-4) 0; }
-.detail-workspace :deep(.subscription-panel) {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-4);
-  min-width: 0;
-  max-width: 100%;
-  padding: 0;
-}
+.detail-workspace :deep(.subscription-panel) { min-width: 0; max-width: 100%; }
 .detail-workspace :deep(.subscription-toolbar) { align-items: center; flex-wrap: wrap; }
 .detail-workspace :deep(.subscription-toolbar .condition-filter) { flex: 1 1 20rem; }
-.detail-workspace :deep(.subscription-panel > .subscription-alert) { margin: 0; }
 .detail-workspace :deep(.subscription-panel > .pro-table__no-padding) { min-width: 0; max-width: 100%; overflow: hidden; }
 .detail-workspace :deep(.subscription-panel .ant-table-thead > tr > th) {
   background: var(--jet-theme-bg-layout);
