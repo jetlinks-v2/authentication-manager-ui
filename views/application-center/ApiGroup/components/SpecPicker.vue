@@ -95,7 +95,7 @@ const tabOptions = computed<SlantedTabOption[]>(() => [
   { key: 'details', label: $t('ApiGroupManagement.spec.detailMode') },
   { key: 'selected', label: $t('ApiGroupManagement.spec.selected'), count: selectedIds.value.length },
 ])
-const tableHeight = computed(() => props.context.creating ? 'max(16rem, calc(100vh - 490px))' : 'max(16rem, calc(100vh - 330px))')
+const tableHeight = computed(() => props.context.creating ? 'max(16rem, calc(100vh - 610px))' : 'max(16rem, calc(100vh - 450px))')
 const canConfirm = computed(() => validSelection.value && !catalogLoading.value && !props.context.disabled && !props.context.saving && (props.context.creating ? selectedIds.value.length > 0 : changed.value))
 const close = (open: boolean) => { if (!open && !props.context.saving) emit('close') }
 const confirmCreate = () => { if (!props.context.confirmImpact && canConfirm.value) emit('confirm', selection()) }
