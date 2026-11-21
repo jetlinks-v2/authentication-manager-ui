@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash-es'
 import { computed, ref } from 'vue'
 import { onlyMessage } from '@jetlinks-web/utils'
-import { useMenuAssetPermissionEditor } from '@jetlinks-web-core/hooks'
+import { getFixedNotificationMenuAccesses, isFixedNotificationAsset, useMenuAssetPermissionEditor } from '@jetlinks-web-core/hooks'
 import type {
   AssetTypeName,
   MenuAssetPermissionResetOptions,
@@ -40,6 +40,7 @@ interface GrantDetail {
 }
 
 interface MenuConfigMessages {
+  fixedScopeBlocked: string
   loadFailed: string
   saved: string
   notReady: string
@@ -151,9 +152,15 @@ export const useApplicationTemplateMenuConfig = (
       const editorInput: MenuAssetPermissionResetOptions = {
         menus: sourceMenus,
         grantedMenus: grantedMenus.value,
-        assetAccesses: filterAssetAccessPoliciesByMenuScope(savedAssetAccesses.value, sourceMenus),
+        // 固定资产保留历史策略用于提示，候选仍由原菜单与可授权目录决定。
+        assetAccesses: [
+          ...filterAssetAccessPoliciesByMenuScope(savedAssetAccesses.value, sourceMenus)
+            .filter(policy => !isFixedNotificationAsset(policy.assetType)),
+          ...savedAssetAccesses.value.filter(policy => isFixedNotificationAsset(policy.assetType)),
+        ],
         assetTypes: normalizeAssetTypeNames(assetTypesResponse) as AssetTypeName[],
         grantableAssets: grantableAssets.length ? grantableAssets : undefined,
+        fixedAssetGrantable: grantableAssets,
       }
       // 保存完整候选及原始回显，取消时不以只包含已选项的提交快照重建候选。
       savedEditorInput = cloneDeep(editorInput)
@@ -197,9 +204,13 @@ export const useApplicationTemplateMenuConfig = (
     const sequence = loadSequence
     saving.value = true
     try {
-      const snapshot = editor.getSnapshot()
+      const snapshot = editor.getGrantSnapshot()
+      if (!snapshot) {
+        onlyMessage(messages.fixedScopeBlocked, 'warning')
+        return false
+      }
       const response = await saveApplicationTemplateMenus(templateId, {
-        menus: buildFullMenuGrantTree(editor.menuTree.value),
+        menus: buildFullMenuGrantTree(editor.menuTree.value, getFixedNotificationMenuAccesses(snapshot)),
         assetAccesses: buildTemplateAssetAccesses(snapshot.assetAccesses, strategyDraft.value),
       })
       assertSuccess(response, undefined)

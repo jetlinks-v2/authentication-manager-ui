@@ -439,16 +439,21 @@ export const normalizeGrantedMenus = (
   return visit(menus)
 }
 
-export const buildFullMenuGrantTree = (menus: MenuPermissionNode[] = []): MenuPermissionNode[] =>
+export const buildFullMenuGrantTree = (
+  menus: MenuPermissionNode[] = [],
+  fixedAccessesByMenu?: ReadonlyMap<string, NonNullable<MenuPermissionNode['assetAccesses']>>,
+): MenuPermissionNode[] =>
   menus.map(source => {
     const menu = { ...source }
     menu.granted = !!source.granted
     menu.buttons = (source.buttons || []).map(button => ({ ...button, granted: !!button.granted }))
-    menu.children = source.children?.length ? buildFullMenuGrantTree(source.children) : null
+    menu.children = source.children?.length ? buildFullMenuGrantTree(source.children, fixedAccessesByMenu) : null
     delete menu._granted
     delete menu.indeterminate
     delete menu.actions
     delete menu.assetAccesses
+    const fixedAccesses = fixedAccessesByMenu?.get(menu.id)
+    if (menu.granted && fixedAccesses?.length) menu.assetAccesses = fixedAccesses
     delete menu.dataAccesses
     delete menu.selectAccesses
     delete menu.selectAccessesByAssetType

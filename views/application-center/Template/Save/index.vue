@@ -133,6 +133,7 @@ const basicInfo = useApplicationTemplateBasicInfo({
 const menuConfig = useApplicationTemplateMenuConfig(
   () => templateId.value,
   {
+    fixedScopeBlocked: $t('components.MenuAssetPermissionEditor.fixedScopeSaveBlocked'),
     loadFailed: $t('ApplicationTemplate.config.loadFailed'),
     saved: $t('ApplicationTemplate.config.saved'),
     notReady: $t('ApplicationTemplate.config.notReady'),

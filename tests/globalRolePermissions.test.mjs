@@ -30,6 +30,7 @@ const { outputFiles } = await build({
   ` },
   alias: { '@jetlinks-web-core': core, '@authentication-manager-ui': moduleRoot },
   platform: 'node', format: 'esm', bundle: true, write: false,
+  define: { 'import.meta.env': JSON.stringify({ VITE_APP_ENVIRONMENT: 'saas' }) },
   plugins: [{ name: 'role-test-boundaries', setup(plugin) {
     plugin.onResolve({ filter: /^vue$/ }, () => ({ path: import.meta.resolve('vue'), external: true }))
     plugin.onResolve({ filter: /.*/ }, ({ path }) => Object.hasOwn(boundaries, path) ? { path, namespace: 'fixture' } : undefined)
@@ -90,13 +91,14 @@ function fixture(t) {
     menu('iot-base', 'iot'), menu('iot-no-access', 'iot'), menu('unknown-owner', undefined),
   ], assetAccesses: [legacyAsset] }
   const api = {
-    detail, legacyAsset,
+    detail, legacyAsset, fixedGrantable: [],
     user: success([menu('iot-nested', 'iot'), menu('iot-base', 'iot'), menu('iot-no-access', 'iot', { granted: false }), appMenu]),
     userResponse: () => api.user,
   }
   http.handler = async (method, url) => {
     if (method === 'get' && /^\/menu\/role\/role-\d+\/_grant\/detail$/.test(url)) return success(detail)
     if (method === 'post' && url === userMenuPath) return api.userResponse()
+    if (method === 'post' && url === '/menu/asset-accesses/grantable') return success(api.fixedGrantable)
     if (method === 'get' && url === '/asset/types') return success([{ id: legacyAsset.assetType, name: '既有数据权限' }])
     assert.fail(`Unexpected request ${method} ${url}`)
   }
@@ -280,4 +282,25 @@ test('校验期间切换角色不会返回旧角色授权载荷', async t => {
   assert.equal(await saving, undefined)
   assert.equal(tree.value.canSave, true)
   assert.ok(http.calls.some(call => call.url === '/menu/role/role-2/_grant/detail'))
+})
+
+
+test('notification role scope renders read-only, overrides legacy merge, then blocks when grantability is withdrawn', async t => {
+  const { api, tree, findAll } = fixture(t)
+  const channel = api.detail.menus.find(menu => menu.id === 'iot-base')
+  channel.assetTypes = ['notifyConfig']
+  channel.assetAccesses = ['all', 'tenant', 'business_application'].map(supportId => ({ assetType: 'notifyConfig', supportId }))
+  api.detail.assetAccesses.push({ assetType: 'notifyConfig', accesses: [{ supportId: 'all' }, { supportId: 'business_application' }] })
+  api.fixedGrantable = [{ assetType: 'notifyConfig', accesses: [{ supportId: 'tenant' }, { supportId: 'all' }] }]
+  await tree.value.load()
+  await nextTick()
+  assert.ok(findAll('div').some(node => node.props.class === 'fixed-asset-scope'))
+  assert.ok(findAll('a-radio').every(node => !['all', 'tenant', 'business_application'].includes(node.props.value)))
+  const snapshot = await tree.value.onSave()
+  assert.deepEqual(snapshot.assetAccesses.find(item => item.assetType === 'notifyConfig').accesses, [{ supportId: 'tenant' }])
+  assert.deepEqual(flatten(snapshot.menus).find(item => item.id === channel.id).assetAccesses,
+    [{ assetType: 'notifyConfig', supportId: 'tenant', granted: true }])
+  api.fixedGrantable = [{ assetType: 'notifyConfig', accesses: [{ supportId: 'all' }] }]
+  assert.equal(await tree.value.onSave(), undefined)
+  assert.deepEqual(notices.at(-1), ['components.MenuAssetPermissionEditor.fixedScopeSaveBlocked', 'warning'])
 })

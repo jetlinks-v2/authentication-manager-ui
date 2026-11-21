@@ -28,7 +28,7 @@ const fixture = () => ({
   menus: [{ id: 'root', children: [
     menu('patrol/workbench', ['inspectionRun', 'inspectionPlan', ...retired.slice(0, 5)]),
     menu('heatmap/points', ['aiHeatmapPoint', 'aiHeatmapFloorRegion', 'space']),
-    menu('other', ['notifyConfig', 'retrieval', 'alarmConfig', 'futureAsset']),
+    menu('other', ['notifySubscriberProvider', 'retrieval', 'alarmConfig', 'futureAsset']),
   ] }],
   assetAccesses: ['inspectionRun', 'aiHeatmapPoint', ...retired].map(assetType => ({ assetType, accesses: [{ supportId: 'org' }] })),
   assetTypes: Object.entries(names).map(([id, name]) => ({ id, name })),
@@ -71,13 +71,13 @@ test('旧标量及只有候选字段的失效类型也不会通过回退重新�
 test('资产目录不可用时仍保留其他资产及其策略，不修改接口原始数据', () => {
   const input = fixture()
   input.assetTypes = []
-  input.assetAccesses.push({ assetType: 'notifyConfig', accesses: [{ supportId: 'org' }] })
+  input.assetAccesses.push({ assetType: 'notifySubscriberProvider', accesses: [{ supportId: 'org' }] })
   const original = structuredClone(input)
   const editor = load(input)
-  for (const type of ['notifyConfig', 'retrieval', 'alarmConfig', 'futureAsset']) {
+  for (const type of ['notifySubscriberProvider', 'retrieval', 'alarmConfig', 'futureAsset']) {
     assert.ok(editor.visibleAssets.value.some(a => a.assetType === type))
   }
-  assert.equal(editor.visibleAssets.value.find(a => a.assetType === 'notifyConfig').selectedSupportId, 'org')
+  assert.equal(editor.visibleAssets.value.find(a => a.assetType === 'notifySubscriberProvider').selectedSupportId, 'org')
   assert.deepEqual(input, original)
 })
 
@@ -88,7 +88,7 @@ test('正常菜单、按钮和取消状态保持不变，清理可重复执行',
   const cleaned = cleanRoleAssetPermissions(input)
   assert.deepEqual(cleaned.menus[0].children[2], input.menus[0].children[2])
   assert.deepEqual(cleanRoleAssetPermissions(cleaned), cleaned)
-  assert.ok(!load(input).visibleAssets.value.some(a => a.assetType === 'notifyConfig'))
+  assert.ok(!load(input).visibleAssets.value.some(a => a.assetType === 'notifySubscriberProvider'))
 })
 
 test('巡检和热力图初始化声明与真实资产模型一致', () => {

@@ -19,6 +19,7 @@ const { outputFiles } = await build({
   bundle: true,
   write: false,
   format: 'esm',
+  define: { 'import.meta.env': JSON.stringify({ VITE_APP_ENVIRONMENT: 'saas' }) },
   plugins: [{
     name: 'application-role-boundaries',
     setup(plugin) {
@@ -85,7 +86,7 @@ function fixture(t, { external = false } = {}) {
   http.calls = []
   notifications.length = 0
   const api = {
-    template: { menus: [deviceMenu()], assetAccesses: [policy('all')] },
+    template: { menus: [deviceMenu()], assetAccesses: [policy('all')] }, fixedGrantable: [],
     applicationMenus: null, applicationFailure: false,
     userMenus: [deviceMenu()],
     roles: { a: { menus: [deviceMenu({ buttons: [button('view')] })], assetAccesses: [policy('all')] },
@@ -102,6 +103,7 @@ function fixture(t, { external = false } = {}) {
     if (method === 'post' && url === '/menu/user-own/tree') return { success: true, result: copy(api.userMenus) }
     if (method === 'post' && url === '/menu/asset-accesses/grantable') return { success: true, result: [
       { assetType: 'device', accesses: [{ supportId: 'all', name: '全部数据' }, { supportId: 'tenant', name: '当前租户' }] },
+      ...api.fixedGrantable,
     ] }
     if (method === 'get' && url === '/business-application/app/menus') return api.applicationFailure
       ? { success: false } : { success: true, result: { menus: copy(api.applicationMenus || api.template.menus) } }
@@ -387,4 +389,27 @@ test('revoking every menu or losing the entire intersection still removes prior 
   api.userMenus = []
   await state.savePermissions()
   assert.deepEqual(api.roles.a.menus, [])
+})
+
+
+test('notification application role never replays the rest of a legacy template policy', async t => {
+  const { api, state } = fixture(t)
+  const assetType = 'notifyTemplate'
+  const channel = menu('notify', { assetTypes: [assetType], buttons: [button('view')] })
+  const tenant = { supportId: 'tenant' }
+  const all = { supportId: 'all' }
+  api.template = { menus: [channel], assetAccesses: [{ assetType, accesses: [all, tenant] }] }
+  api.userMenus = [channel]
+  api.roles.a = { menus: [channel], assetAccesses: [{ assetType, accesses: [all] }] }
+  api.fixedGrantable = [{ assetType, accesses: [all, tenant] }]
+  await state.loadPermissions()
+  assert.equal(state.editor.visibleAssets.value[0].selectedSupportId, 'tenant')
+  assert.deepEqual(state.editor.visibleAssets.value[0].previousScopeLabels, ['all'])
+  await state.savePermissions()
+  assert.deepEqual(api.writes[0].data.assetAccesses, [{ assetType, accesses: [tenant] }])
+  assert.deepEqual(api.writes[0].data.menus[0].assetAccesses, [{ assetType, supportId: 'tenant', granted: true }])
+  api.template.assetAccesses[0].accesses = [all]
+  await state.savePermissions()
+  assert.equal(api.writes.length, 1)
+  assert.deepEqual(notifications.at(-1), ['components.MenuAssetPermissionEditor.fixedScopeSaveBlocked', 'warning'])
 })
