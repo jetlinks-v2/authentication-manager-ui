@@ -904,7 +904,7 @@ Owning module: `ui/modules/authentication-manager-ui`. The application menu Scop
 
 应用详情 → 应用角色与系统角色页的应用角色共用 `components/ApplicationRolePermissions/useApplicationRolePermissions.ts`。只改运行时前端：菜单、按钮限定到当前应用、模板与操作者的共同范围；加载与保存前，读取现有 `GET /business-application/{id}/menus` 的模板独立资产策略，并对有资产的候选菜单调用 `POST /menu/asset-accesses/grantable` 获取当前操作者可下授的范围。无需新后端接口，也不改变原保存接口的校验。
 
-`views/application-center/ProjectApplication/applicationRolePermissionScope.ts` 按资产类型和范围值计算交集。模板「全部数据」(`ignore`)、操作者仅能授「所在组织」(`org`)，以及反向组合，最终只提交 `org`。模板值可直接下授时保留原值；需要替换时，只取操作者可授上限，普通范围的宽窄比较使用菜单返回的 `priority`，不按名称推断。无法证明包含关系的同级异名范围、不能安全转换的扩展策略不自动替换；通知资产只保留模板与可下授目录显式匹配的值。
+`views/application-center/ProjectApplication/applicationRolePermissionScope.ts` 按资产类型和范围值计算交集。模板「全部数据」(`ignore`)、操作者仅能授「所在组织」(`org`)，以及反向组合，最终只提交 `org`。模板值可直接下授时保留原值；需要替换时，只取操作者可授上限，普通范围的宽窄比较使用菜单返回的 `priority`，不按名称推断。无法证明包含关系的同级异名范围、不能安全转换的扩展策略不自动替换；通知资产只允许模板显式配置且可下授的部署固定值。
 
 菜单级与顶层 `assetAccesses` 从同一结果生成，仅提交最终勾选菜单关联的策略。普通菜单缺少任何必需资产的共同范围时排除并提示，其他菜单仍可保存；旧绑定仅在显式保存时撤销。查询失败或响应异常不保存，允许重试，无旧角色或模板宽值兜底。不改运营端、全局角色、第三方应用或历史角色数据。
 

@@ -19,6 +19,7 @@ const { outputFiles } = await build({
   bundle: true,
   write: false,
   format: 'esm',
+  define: { 'import.meta.env': JSON.stringify({ VITE_APP_ENVIRONMENT: 'saas' }) },
   plugins: [{
     name: 'application-role-boundaries',
     setup(plugin) {
@@ -389,6 +390,29 @@ test('revoking every menu or losing the entire intersection still removes prior 
   api.userMenus = []
   await state.savePermissions()
   assert.deepEqual(api.roles.a.menus, [])
+})
+
+
+test('notification application role never replays the rest of a legacy template policy', async t => {
+  const { api, state } = fixture(t)
+  const assetType = 'notifyTemplate'
+  const channel = menu('notify', { assetTypes: [assetType], buttons: [button('view')] })
+  const tenant = { supportId: 'tenant' }
+  const all = { supportId: 'all' }
+  api.template = { menus: [channel], assetAccesses: [{ assetType, accesses: [all, tenant] }] }
+  api.userMenus = [channel]
+  api.roles.a = { menus: [channel], assetAccesses: [{ assetType, accesses: [all] }] }
+  api.catalog = [{ assetType, accesses: [all, tenant] }]
+  await state.loadPermissions()
+  assert.equal(state.editor.visibleAssets.value[0].selectedSupportId, 'tenant')
+  assert.deepEqual(state.editor.visibleAssets.value[0].previousScopeLabels, ['all'])
+  await state.savePermissions()
+  assert.deepEqual(api.writes[0].data.assetAccesses, [{ assetType, accesses: [tenant] }])
+  assert.deepEqual(api.writes[0].data.menus[0].assetAccesses, [{ assetType, supportId: 'tenant', granted: true }])
+  api.template.assetAccesses[0].accesses = [all]
+  await state.savePermissions()
+  assert.equal(api.writes.length, 1)
+  assert.deepEqual(notifications.at(-1), ['components.MenuAssetPermissionEditor.fixedScopeSaveBlocked', 'warning'])
 })
 
 // The real grantable catalog includes narrower choices; do not grant every returned option.

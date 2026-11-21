@@ -89,7 +89,8 @@
                 </header>
                 <div class="template-permission__range template-permission__asset-range">
                   <span class="template-permission__field-label">{{ $t('ApplicationTemplate.permission.accessScope') }}</span>
-                  <a-radio-group v-if="state.editing.value && asset.accesses.length" :value="asset.selectedSupportId" :disabled="view.disabled.value" @update:value="view.setAssetAccess(asset.assetType, $event)">
+                  <FixedAssetScope v-if="asset.fixedScope" :asset="asset" />
+                  <a-radio-group v-else-if="state.editing.value && asset.accesses.length" :value="asset.selectedSupportId" :disabled="view.disabled.value" @update:value="view.setAssetAccess(asset.assetType, $event)">
                     <a-radio v-for="access in asset.accesses" :key="access.supportId" :value="access.supportId" :disabled="access.disabled">{{ access.i18nName || access.name || access.supportId }}</a-radio>
                   </a-radio-group>
                   <span v-else>{{ asset.supportLabel || $t('Basis.Config.notConfigured') }}</span>
@@ -113,6 +114,7 @@
 </template>
 
 <script setup lang="ts">
+import FixedAssetScope from '@jetlinks-web-core/components/MenuAssetPermissionEditor/FixedAssetScope.vue'
 import { computed, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ApplicationTemplateMenuConfigState } from './useApplicationTemplateMenuConfig'

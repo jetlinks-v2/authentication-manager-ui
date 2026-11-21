@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash-es'
-import { getMenuPermissionAssetTypes } from '@jetlinks-web-core/hooks'
+import { getMenuPermissionAssetTypes, isFixedNotificationAsset } from '@jetlinks-web-core/hooks'
 import type { AssetAccessPolicy, GrantableAssetType, MenuAssetPermissionSnapshot, MenuPermissionNode } from '@jetlinks-web-core/hooks'
 import {
   filterApplicationMenuInterfacePermissions,
@@ -80,7 +80,7 @@ export const intersectRoleAssetPolicies = (
   const policies = new Map(template.map(policy => [policy.assetType, policy]))
   return catalog.flatMap(({ assetType, accesses }) => {
     const ranks = priorities.get(assetType)
-    const fixed = assetType === 'notifyConfig' || assetType === 'notifyTemplate'
+    const fixed = isFixedNotificationAsset(assetType)
     const policy = policies.get(assetType) ?? (fixed ? undefined : policies.get('*'))
     const allowed = accesses.filter(access => !access.disabled)
     if (!ranks || !policy || !allowed.length || assetType === '*') return []
@@ -116,7 +116,7 @@ export const resolveApplicationRolePermissionScope = (input: {
     const effectiveTypes = new Set(assetAccesses.map(policy => policy.assetType))
     const blockedMenuNames: string[] = []
     const byId = new Map(input.candidates.map(menu => {
-        const granted = !!menu.granted && getMenuPermissionAssetTypes(menu).every(type => effectiveTypes.has(type))
+        const granted = !!menu.granted && getMenuPermissionAssetTypes(menu).every(type => effectiveTypes.has(type) || isFixedNotificationAsset(type))
         if (menu.granted && !granted) blockedMenuNames.push(menu.i18nName || menu.name || menu.id)
         return [menu.id, { ...menu, granted, buttons: granted ? menu.buttons : [],
           assetAccesses: effectiveMenuAccesses(menu, assetAccesses), children: [] as MenuPermissionNode[],
@@ -141,6 +141,11 @@ export const resolveApplicationRolePermissionScope = (input: {
             ...menu,
             granted: grantableMenuIds.has(menu.id) && role?.granted === true,
             buttons: (menu.buttons || []).map(button => ({ ...button, granted: selectedButtons.has(button.id) })),
+            // 通知资产的旧角色值仅用于回显；可授值仍受模板和当前用户共同约束。
+            assetAccesses: [
+                ...(menu.assetAccesses || []).filter(access => !isFixedNotificationAsset(access.assetType)),
+                ...(role?.assetAccesses || []).filter(access => isFixedNotificationAsset(access.assetType)),
+            ],
             children: echo(menu.children || []),
         }
     })
@@ -161,7 +166,14 @@ export const buildApplicationRolePermissionGrant = (
   previousMenus: MenuPermissionNode[] = [],
 ): MenuAssetPermissionSnapshot => {
   const selectedMenus = snapshot.menus.filter(menu => scope.grantableMenuIds.has(menu.id) && menu.granted === true)
-  const assetAccesses = policiesForMenus(scope.assetAccesses, selectedMenus)
+  const fixedSupportIds = new Map(snapshot.assetAccesses.filter(policy => isFixedNotificationAsset(policy.assetType))
+    .map(policy => [policy.assetType, policy.accesses[0]?.supportId]))
+  const assetAccesses = policiesForMenus(scope.assetAccesses, selectedMenus).flatMap(policy => {
+    if (!isFixedNotificationAsset(policy.assetType)) return [policy]
+    // 普通资产已按可下授目录收窄；固定范围只能继承编辑器已校验的单一策略。
+    const access = policy.accesses.find(item => item.supportId === fixedSupportIds.get(policy.assetType))
+    return access ? [{ ...policy, accesses: [access] }] : []
+  })
   const menus = snapshot.menus.map(menu => {
     // 公共编辑器会勾选有已选子项的祖先；导航祖先本身不在模板授权范围时，不能作为新授权提交。
     const granted = scope.grantableMenuIds.has(menu.id) && menu.granted === true

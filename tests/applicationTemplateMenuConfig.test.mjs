@@ -19,6 +19,7 @@ const { outputFiles } = await build({
   bundle: true,
   write: false,
   format: 'esm',
+  define: { 'import.meta.env': JSON.stringify({ VITE_APP_ENVIRONMENT: 'saas' }) },
   plugins: [{
     name: 'template-menu-api-boundary',
     setup(plugin) {
@@ -92,7 +93,7 @@ function fixture(supportsByAsset = { device: ['tenant', 'business_application', 
   api.loadFailure = ''
   notifications.length = 0
   return useApplicationTemplateMenuConfig(options.getTemplateId || (() => 'template'), {
-    loadFailed: 'load failed', saved: 'saved', notReady: 'not ready', missingMenus: count => `missing ${count}`,
+    fixedScopeBlocked: 'fixed scope blocked', loadFailed: 'load failed', saved: 'saved', notReady: 'not ready', missingMenus: count => `missing ${count}`,
   }, options.canEdit)
 }
 
@@ -352,4 +353,24 @@ test('failed loads expose a retryable error and do not enable permission editing
   await state.loadEditor()
   assert.equal(state.loadError.value, '')
   assert.equal(state.initialized.value, true)
+})
+
+
+test('notification template saves only tenant in both payload levels and does not save without grantability', async () => {
+  const state = fixture({ notifyConfig: ['tenant', 'all'], device: ['creator'] })
+  api.detail = { menus: [{ ...api.menus[0], granted: true }], assetAccesses: [policy('notifyConfig', 'all', 'SELECT')] }
+  await state.loadEditor()
+  state.edit()
+  assert.deepEqual(state.editor.visibleAssets.value.find(row => row.assetType === 'notifyConfig').previousScopeLabels, ['全部数据'])
+  assert.equal(api.writes.length, 0)
+  assert.equal(await state.save(), true)
+  assert.deepEqual(api.writes[0].data.assetAccesses.find(row => row.assetType === 'notifyConfig'), policy('notifyConfig', 'tenant', 'SELECT'))
+  assert.deepEqual(api.writes[0].data.menus[0].assetAccesses, [{ assetType: 'notifyConfig', supportId: 'tenant', granted: true }])
+  assert.equal(visible(state).notifyConfig.selected, 'tenant')
+  api.grantable = []
+  await state.loadEditor()
+  state.edit()
+  assert.equal(await state.save(), false)
+  assert.deepEqual(notifications.at(-1), { message: 'fixed scope blocked', type: 'warning' })
+  assert.equal(api.writes.length, 1)
 })

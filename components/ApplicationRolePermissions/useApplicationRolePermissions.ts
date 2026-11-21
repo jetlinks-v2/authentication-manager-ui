@@ -1,7 +1,7 @@
 import { computed, onScopeDispose, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
-import { useMenuAssetPermissionEditor } from '@jetlinks-web-core/hooks'
+import { getFixedNotificationMenus, isFixedNotificationAsset, useMenuAssetPermissionEditor } from '@jetlinks-web-core/hooks'
 import type { AssetAccessPolicy, AssetTypeName, GrantableAssetType, MenuPermissionNode } from '@jetlinks-web-core/hooks'
 import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
 import { getAssetsType as queryAssetTypes } from '@authentication-manager-ui/api/system/menu'
@@ -38,6 +38,14 @@ export interface ApplicationRolePermissionTarget {
   role?: Pick<BusinessApplicationRoleEntity, 'id' | 'name'>
 }
 
+const inheritedFixedGrantable = (
+  menus: MenuPermissionNode[], policies: AssetAccessPolicy[], definitions: GrantableAssetType[],
+) => getFixedNotificationMenus(menus).length ? definitions.map(asset => ({
+  ...asset,
+  accesses: asset.accesses.filter(access => policies.some(policy => policy.assetType === asset.assetType
+    && policy.accesses.some(item => item.supportId === access.supportId))),
+})) : []
+
 /** 应用详情与系统角色权限页共用授权边界；保存前刷新应用及模板，切换目标后忽略过期请求。 */
 export function useApplicationRolePermissions(target: () => ApplicationRolePermissionTarget) {
   const { t: $t } = useI18n()
@@ -49,6 +57,7 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
   const blockedMenuNames = ref<string[]>([])
   const refreshError = ref(false)
   let savedRoleMenus: MenuPermissionNode[] = []
+  const savedFixedPolicies = ref<AssetAccessPolicy[]>([])
   const assetDefinitions = ref<GrantableAssetType[]>([])
   const editor = useMenuAssetPermissionEditor({ defaultSupportIds: ['creator'] })
   // 展示有效上限，避免共享编辑器的默认 creator 草稿被误认为继承的数据权限。
@@ -78,6 +87,7 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
     savedRoleMenus = []
     blockedMenuNames.value = []
     refreshError.value = false
+    savedFixedPolicies.value = []
     assetDefinitions.value = []
     editor.reset({ menus: [], assetTypes: [] })
   }
@@ -149,7 +159,11 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
       loadedAssetTypes = assetTypes
       assetDefinitions.value = definitions
       inheritedAssetAccesses.value = permissionScope.assetAccesses
-      editor.reset({ ...permissionScope, assetTypes })
+      savedFixedPolicies.value = (roleDetail.assetAccesses || []).filter(policy => isFixedNotificationAsset(policy.assetType))
+      editor.reset({ ...permissionScope, assetTypes,
+        assetAccesses: [...permissionScope.assetAccesses.filter(policy => !isFixedNotificationAsset(policy.assetType)), ...savedFixedPolicies.value],
+        fixedAssetGrantable: inheritedFixedGrantable(permissionScope.menus, permissionScope.assetAccesses, definitions),
+      })
       initialized.value = true
     } catch {
       if (sequence === loadSequence) { clearPermissions(); permissionError.value = true }
@@ -189,9 +203,17 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
       refreshError.value = false
       blockedMenuNames.value = permissionScope.blockedMenuNames
       inheritedAssetAccesses.value = permissionScope.assetAccesses
-      editor.reset({ ...permissionScope, assetTypes: loadedAssetTypes })
+      editor.reset({ ...permissionScope, assetTypes: loadedAssetTypes,
+        assetAccesses: [...permissionScope.assetAccesses.filter(policy => !isFixedNotificationAsset(policy.assetType)), ...savedFixedPolicies.value],
+        fixedAssetGrantable: inheritedFixedGrantable(permissionScope.menus, permissionScope.assetAccesses, definitions),
+      })
       scopeReady = true
-      const payload = buildApplicationRolePermissionGrant(editor.getSnapshot(), permissionScope, previousMenus)
+      const snapshot = editor.getGrantSnapshot()
+      if (!snapshot) {
+        onlyMessage($t('components.MenuAssetPermissionEditor.fixedScopeSaveBlocked'), 'warning')
+        return
+      }
+      const payload = buildApplicationRolePermissionGrant(snapshot, permissionScope, previousMenus)
       const response = await saveBusinessApplicationRoleMenuGrant(
         scope.applicationId, roleId, payload,
       )
