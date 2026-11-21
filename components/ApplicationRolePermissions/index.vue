@@ -1,5 +1,8 @@
 <template>
   <a-spin :spinning="state.permissionLoading.value || state.savingPermissions.value">
+    <a-alert v-if="state.refreshError.value" type="warning" show-icon :message="$t('ProjectApplication.role.scopeRefreshFailed')" />
+    <a-alert v-if="state.initialized.value && state.blockedMenuNames.value.length" type="warning" show-icon
+      :message="$t('ProjectApplication.role.noCommonAssetScope', { menus: state.blockedMenuNames.value.join('、') })" />
     <a-alert v-if="state.permissionError.value" type="error" show-icon :message="$t('ProjectApplication.role.permissionLoadFailed')">
       <template #action><a-button size="small" @click="state.loadPermissions">{{ $t('ProjectApplication.list.retry') }}</a-button></template>
     </a-alert>

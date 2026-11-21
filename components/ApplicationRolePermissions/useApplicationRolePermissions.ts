@@ -13,6 +13,9 @@ import {
 import {
   buildApplicationRoleMenuQuery,
   buildApplicationRolePermissionGrant,
+  getApplicationRoleMenuCandidates,
+  intersectRoleAssetPolicies,
+  previousRoleBindings,
   resolveApplicationRolePermissionScope,
 } from '../../views/application-center/ProjectApplication/applicationRolePermissionScope'
 import type { BusinessApplicationRoleEntity } from '@authentication-manager-ui/api/application-center/businessApplication'
@@ -43,9 +46,12 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
   const savingPermissions = ref(false)
   const initialized = ref(false)
   const inheritedAssetAccesses = ref<AssetAccessPolicy[]>([])
+  const blockedMenuNames = ref<string[]>([])
+  const refreshError = ref(false)
+  let savedRoleMenus: MenuPermissionNode[] = []
   const assetDefinitions = ref<GrantableAssetType[]>([])
   const editor = useMenuAssetPermissionEditor({ defaultSupportIds: ['creator'] })
-  // 展示模板原值，避免共享编辑器的默认 creator 草稿被误认为继承的数据权限。
+  // 展示有效上限，避免共享编辑器的默认 creator 草稿被误认为继承的数据权限。
   const inheritedAssetOptions = computed(() => Object.fromEntries(editor.visibleAssets.value.map(asset => [
     asset.assetType,
     (inheritedAssetAccesses.value.find(policy => policy.assetType === asset.assetType)?.accesses || []).map(access => {
@@ -69,6 +75,9 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
     initialized.value = false
     permissionLoading.value = false
     inheritedAssetAccesses.value = []
+    savedRoleMenus = []
+    blockedMenuNames.value = []
+    refreshError.value = false
     assetDefinitions.value = []
     editor.reset({ menus: [], assetTypes: [] })
   }
@@ -86,6 +95,34 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
     return normalizeAssetTypeNames(response)
   }
 
+  // 加载和保存走同一份实时可下授目录，不能把模板或角色的已存策略当作操作者的权限。
+  const readScope = async (scope: ApplicationRoleScope) => {
+    const [templateResponse, userResponse, applicationResponse] = await Promise.all([
+      getBusinessApplicationTemplateMenus(scope.templateId),
+      getCurrentUserMenuTree(buildApplicationRoleMenuQuery(scope.isExternal)),
+      getBusinessApplicationMenus(scope.applicationId),
+    ])
+    const template = assertSuccess<GrantDetail>(templateResponse, {})
+    const application = assertSuccess<GrantDetail>(applicationResponse, {})
+    const currentUserMenus = assertSuccess<MenuPermissionNode[] | null>(userResponse, null)
+    if (!Array.isArray(application.menus) || !Array.isArray(template.menus) || !Array.isArray(currentUserMenus)
+      || !Array.isArray(application.assetAccesses) || !application.assetAccesses.every(policy => policy?.assetType
+        && Array.isArray(policy.accesses) && policy.accesses.every(access => typeof access?.supportId === 'string' && access.supportId))) {
+      throw new Error('Application role grant scope unavailable')
+    }
+    const candidates = getApplicationRoleMenuCandidates({ isExternal: scope.isExternal, currentUserMenus,
+      templateMenus: template.menus, applicationMenus: application.menus })
+    const eligible = candidates.filter(menu => menu.granted && Array.isArray(menu.assetTypes) && menu.assetTypes.length)
+    const catalog = eligible.length ? assertSuccess<GrantableAssetType[] | null>(await getGrantableAssetAccesses(eligible), null) : []
+    if (!Array.isArray(catalog) || !catalog.every(asset => typeof asset?.assetType === 'string' && asset.assetType
+      && Array.isArray(asset.accesses) && asset.accesses.every(access => typeof access?.supportId === 'string' && access.supportId))) {
+      throw new Error('Grantable asset scopes unavailable')
+    }
+    const definitions = normalizeGrantableAssets(catalog)
+    return { isExternal: scope.isExternal, candidates, definitions,
+      effectiveAssetAccesses: intersectRoleAssetPolicies(eligible, application.assetAccesses, definitions) }
+  }
+
   const loadPermissions = async () => {
     const sequence = ++loadSequence
     const { scope, role } = target()
@@ -97,34 +134,18 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
     permissionLoading.value = true
     permissionError.value = false
     try {
-      const [templateResponse, userMenuResponse, applicationResponse, detailResponse, assetTypes] = await Promise.all([
-        getBusinessApplicationTemplateMenus(scope.templateId),
-        getCurrentUserMenuTree(buildApplicationRoleMenuQuery(scope.isExternal)),
-        getBusinessApplicationMenus(scope.applicationId),
-        getBusinessApplicationRoleMenuGrantDetail(scope.applicationId, role.id),
-        loadAssetTypes(),
+      const [roleResponse, assetTypes, bounds] = await Promise.all([
+        getBusinessApplicationRoleMenuGrantDetail(scope.applicationId, role.id), loadAssetTypes(), readScope(scope),
       ])
+      const roleDetail = assertSuccess<GrantDetail>(roleResponse, {})
+      if (!Array.isArray(roleDetail.menus)) throw new Error('Role menus unavailable')
       if (sequence !== loadSequence) return
+      const permissionScope = resolveApplicationRolePermissionScope({ ...bounds, roleMenus: roleDetail.menus })
 
-      const templateDetail = assertSuccess<GrantDetail>(templateResponse, {})
-      const roleDetail = assertSuccess<GrantDetail>(detailResponse, {})
-      const applicationDetail = assertSuccess<GrantDetail>(applicationResponse, {})
-      if (!Array.isArray(applicationDetail.menus)) throw new Error('Application menus unavailable')
-      const permissionScope = resolveApplicationRolePermissionScope({
-        isExternal: scope.isExternal,
-        currentUserMenus: assertSuccess<MenuPermissionNode[]>(userMenuResponse, []),
-        templateMenus: templateDetail.menus,
-        applicationMenus: applicationDetail.menus,
-        roleMenus: Array.isArray(roleDetail.menus) ? roleDetail.menus : [],
-        templateAssetAccesses: templateDetail.assetAccesses,
-      })
-
-      // 策略名称复用现有授权目录，仅用于只读展示，不改变模板继承值或菜单交集。
-      const definitions = isNoCommunity && permissionScope.menus.length
-        ? await getGrantableAssetAccesses(permissionScope.menus).then(normalizeGrantableAssets).catch(() => [])
-        : []
-      if (sequence !== loadSequence) return
-
+      const { definitions } = bounds
+      savedRoleMenus = previousRoleBindings(roleDetail.menus)
+      blockedMenuNames.value = permissionScope.blockedMenuNames
+      refreshError.value = false
       loadedAssetTypes = assetTypes
       assetDefinitions.value = definitions
       inheritedAssetAccesses.value = permissionScope.assetAccesses
@@ -152,32 +173,24 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
     const roleName = role.name
     const sequence = loadSequence
     const draft = editor.getSnapshot()
-    const previousMenus = editor.flatMenus.value
+    const previousMenus = [...savedRoleMenus, ...editor.flatMenus.value]
     // 请求期间切换角色、应用或卸载后，不把旧草稿写给新目标，也不覆盖新角色的回显。
     const isCurrent = () => !disposed && sequence === loadSequence && roleId === target().role?.id
       && scope.applicationId === target().scope.applicationId && scope.templateId === target().scope.templateId
       && scope.isExternal === target().scope.isExternal
+    let scopeReady = false
     savingPermissions.value = true
     try {
-      const [templateResponse, userMenuResponse, applicationResponse] = await Promise.all([
-        getBusinessApplicationTemplateMenus(scope.templateId),
-        getCurrentUserMenuTree(buildApplicationRoleMenuQuery(scope.isExternal)),
-        getBusinessApplicationMenus(scope.applicationId),
-      ])
+      const bounds = await readScope(scope)
       if (!isCurrent()) return
-      const template = assertSuccess<GrantDetail>(templateResponse, {})
-      const applicationDetail = assertSuccess<GrantDetail>(applicationResponse, {})
-      if (!Array.isArray(applicationDetail.menus)) throw new Error('Application menus unavailable')
-      const permissionScope = resolveApplicationRolePermissionScope({
-        isExternal: scope.isExternal,
-        currentUserMenus: assertSuccess<MenuPermissionNode[]>(userMenuResponse, []),
-        templateMenus: template.menus,
-        applicationMenus: applicationDetail.menus,
-        templateAssetAccesses: template.assetAccesses,
-        roleMenus: draft.menus,
-      })
+      const permissionScope = resolveApplicationRolePermissionScope({ ...bounds, roleMenus: draft.menus })
+      const { definitions } = bounds
+      assetDefinitions.value = definitions
+      refreshError.value = false
+      blockedMenuNames.value = permissionScope.blockedMenuNames
       inheritedAssetAccesses.value = permissionScope.assetAccesses
       editor.reset({ ...permissionScope, assetTypes: loadedAssetTypes })
+      scopeReady = true
       const payload = buildApplicationRolePermissionGrant(editor.getSnapshot(), permissionScope, previousMenus)
       const response = await saveBusinessApplicationRoleMenuGrant(
         scope.applicationId, roleId, payload,
@@ -187,12 +200,12 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
       onlyMessage($t('ProjectApplication.role.permissionSuccess', { name: roleName }))
       await loadPermissions()
     } catch {
-      // The shared request layer reports the backend error.
+      if (!scopeReady && isCurrent()) refreshError.value = true
     } finally {
       savingPermissions.value = false
     }
   }
 
-  return { permissionLoading, permissionError, savingPermissions, initialized, inheritedAssetOptions, editor, columns,
+  return { permissionLoading, permissionError, refreshError, blockedMenuNames, savingPermissions, initialized, inheritedAssetOptions, editor, columns,
     loadPermissions, savePermissions }
 }
