@@ -17,11 +17,8 @@
           <SlantedTabs v-model:active-key="activeTab" :options="tabOptions" class="subscription-tabs">
             <template #default="{ option }">
               <div v-if="option.key === 'configuration'" class="configuration-tab tab-content">
-                <ContentPanel :title="$t('ApiApplication.subscription.events')" :padding="0" :background="false" fill>
-                  <template #titleRightRender><DocumentHelp code="application-center/ThirdPartyApplication" help-key="subscription.events" /></template>
-                  <SubscriptionEventPicker v-model="selectedEventIds" :providers="providers"
-                    :disabled="saving || catalogLoading || !!catalogError" :loading="catalogLoading" @inspect="showEventDocument" />
-                </ContentPanel>
+                <SubscriptionEventPicker v-model="selectedEventIds" :providers="providers"
+                  :disabled="saving || catalogLoading || !!catalogError" :loading="catalogLoading" @inspect="showEventDocument" />
                 <a-divider class="configuration-divider" />
                 <ContentPanel :title="$t('ThirdPartyApplication.subscription.receiveSettings')" :padding="0" :background="false" fill>
                   <a-form-item>
