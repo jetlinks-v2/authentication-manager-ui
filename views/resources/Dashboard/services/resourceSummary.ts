@@ -2,7 +2,7 @@ import dayjs from 'dayjs'
 import { request } from '@jetlinks-web/core'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { moduleRegistry } from '@jetlinks-web-core/utils/module-registry'
-import { buildOverviewDeviceTerms, queryOverviewChannelBreakdown } from '../../../../api/overview'
+import { buildOverviewDeviceTerms, queryOverviewChannelBreakdown, querySaasOverviewChannelBreakdown } from '../../../../api/overview'
 import { countOf, recordOf, rowsOf } from '../../../../visDashboard/Base/shared/apiResult'
 import { HOME_TARGETS } from '../../../../visDashboard/Base/shared/navigation'
 import { queryPrivateCount } from '../../../../visDashboard/Base/Private/services/query'
@@ -89,14 +89,14 @@ function withMetrics(card: ResourceSummaryCard, metrics: Metric[]): ResourceSumm
 }
 
 /** 同一时刻建立今天与昨天的等长时间窗；合法空聚合集合才表示零条。 */
-async function messageMetrics(): Promise<Metric[]> {
+async function messageMetrics(signal?: AbortSignal): Promise<Metric[]> {
   const now = dayjs()
   const count = async (yesterday: boolean) => {
     const end = yesterday ? now.subtract(1, 'day') : now
     const rows = rowsOf(await request.post('/dashboard/_multi', [{ dashboard: 'device', object: 'message',
       measurement: 'quantity', dimension: 'agg', group: 'resourceSummaryMessage',
       params: { ...rangeOf('today', end), from: end.startOf('day').valueOf(), to: end.valueOf() },
-    }], { hiddenError: true }))
+    }], { hiddenError: true, signal }))
     return rows.reduce((sum, row) => {
       const value = recordOf(row.data).value
       if ((typeof value !== 'number' && typeof value !== 'string') || (typeof value === 'string' && !value.trim())) {
@@ -109,69 +109,69 @@ async function messageMetrics(): Promise<Metric[]> {
 }
 
 /** 识别事件沿用事件页设备资产范围，排除复判；比较昨日同一时刻。 */
-async function aiEventMetrics(): Promise<Metric[]> {
+async function aiEventMetrics(signal?: AbortSignal): Promise<Metric[]> {
   const now = dayjs()
   const count = async (yesterday: boolean) => {
     const end = yesterday ? now.subtract(1, 'day') : now
     return countOf(await request.post('/ai/task/history/_count', { terms: [
       { column: 'timestamp', termType: 'btw', value: [end.startOf('day').valueOf(), end.valueOf()] },
       { column: 'taskType', termType: 'not', value: 'reviewHandle' },
-    ] }, { hiddenError: true, params: { assetType: 'device' } }))
+    ] }, { hiddenError: true, params: { assetType: 'device' }, signal }))
   }
   return settleMetrics({ total: () => count(false), yesterdaySameTime: () => count(true) })
 }
 
 /** 模板沿用当前工作台分页接口和 projectPageType 条件，避开已失效的 dimension 入口。 */
-async function visualizationMetrics(card: ResourceSummaryCard): Promise<Metric[]> {
+async function visualizationMetrics(card: ResourceSummaryCard, signal?: AbortSignal): Promise<Metric[]> {
   const loaders: Record<string, () => Promise<number>> = {
-    total: () => queryPrivateCount('/visualization/project/_query', [{ column: 'projectType', termType: 'eq', value: 'bigScreen' }]),
+    total: () => queryPrivateCount('/visualization/project/_query', [{ column: 'projectType', termType: 'eq', value: 'bigScreen' }], signal),
   }
   for (const { key } of card.statuses) {
     loaders[key] = key === 'template'
-      ? () => queryPrivateCount('/visualization/template/_query', [{ column: 'projectPageType', termType: 'eq', value: 'bigScreen' }])
-      : () => queryPrivateCount('/visualization/resource/latest/_query', [{ column: 'searchCode', termType: 'in', value: `visResource:${key}` }])
+      ? () => queryPrivateCount('/visualization/template/_query', [{ column: 'projectPageType', termType: 'eq', value: 'bigScreen' }], signal)
+      : () => queryPrivateCount('/visualization/resource/latest/_query', [{ column: 'searchCode', termType: 'in', value: `visResource:${key}` }], signal)
   }
   return settleMetrics(loaders)
 }
 
 /** 边缘节点的总数和状态分项共用同一设备分类。 */
-function edgeStateMetrics(): Promise<Metric[]> {
+function edgeStateMetrics(signal?: AbortSignal): Promise<Metric[]> {
   const terms = buildOverviewDeviceTerms('edge')
   const count = (state?: string) => queryPrivateCount('/device/instance/_count', state
-    ? [...terms, { column: 'state', termType: 'eq', value: state }] : terms)
+    ? [...terms, { column: 'state', termType: 'eq', value: state }] : terms, signal)
   return settleMetrics({ total: () => count(), online: () => count('online'), offline: () => count('offline'),
     disabled: () => count('notActive'),
   })
 }
 
 /** 按已选卡片查询其 owning API；可视化分项已在创建阶段按菜单授权裁剪。 */
-export async function loadResourceSummary(card: ResourceSummaryCard, access: ResourcePageAccess): Promise<ResourceSummaryCard> {
+export async function loadResourceSummary(card: ResourceSummaryCard, access: ResourcePageAccess, signal?: AbortSignal): Promise<ResourceSummaryCard> {
   try {
     if (card.id === 'edge') {
-      return withMetrics(card, await edgeStateMetrics())
+      return withMetrics(card, await edgeStateMetrics(signal))
     }
     if (card.id === 'iot') {
-      return withMetrics(card, await loadSummary('IotDevices'))
+      return withMetrics(card, await loadSummary('IotDevices', signal))
     }
     if (card.id === 'video') {
-      // 两种部署均统计全部媒体来源的通道，台数与产品接入类型不参与此卡取数。
-      const groups = await queryOverviewChannelBreakdown('all')
+      // SaaS 与视频列表共用按设备汇总的通道数，避免每台设备单独加载通道明细。
+      const groups = access.saas ? await querySaasOverviewChannelBreakdown(signal) : await queryOverviewChannelBreakdown('all', signal)
       const total = groups.reduce((sum, item) => sum + item.total, 0)
       const online = groups.reduce((sum, item) => sum + item.online, 0)
       return withMetrics(card, [{ key: 'total', value: total }, { key: 'online', value: online }, { key: 'offline', value: total - online }])
     }
-    if (card.id === 'message') return withMetrics(card, await messageMetrics())
-    if (card.id === 'aiEvents') return withMetrics(card, await aiEventMetrics())
-    if (card.id === 'visualization') return withMetrics(card, await visualizationMetrics(card))
+    if (card.id === 'message') return withMetrics(card, await messageMetrics(signal))
+    if (card.id === 'aiEvents') return withMetrics(card, await aiEventMetrics(signal))
+    if (card.id === 'visualization') return withMetrics(card, await visualizationMetrics(card, signal))
     const path = card.id === 'product' ? '/device-product/_count' : card.id === 'networkCards' ? '/network/card/_count' : '/data-collect/channel/_count'
-    const loaders: Record<string, () => Promise<number>> = { total: () => queryPrivateCount(path) }
+    const loaders: Record<string, () => Promise<number>> = { total: () => queryPrivateCount(path, [], signal) }
     for (const { key } of card.statuses) {
       // 已停止是独立状态；异常只包含限流和熔断，不能把停止归入异常。
       const term = card.id === 'product' ? { column: 'state', termType: 'eq', value: key === 'enabled' ? 1 : 0 }
         : card.id === 'networkCards' ? { column: 'cardStateType', termType: 'eq', value: key }
           : key === 'abnormal' ? { column: 'runningState', termType: 'in', value: ['partialError', 'failed'] }
             : { column: 'runningState', termType: key === 'notRunning' ? 'not' : 'eq', value: key === 'notRunning' ? 'running' : key }
-      loaders[key] = () => queryPrivateCount(path, [term])
+      loaders[key] = () => queryPrivateCount(path, [term], signal)
     }
     return withMetrics(card, await settleMetrics(loaders))
   } catch {

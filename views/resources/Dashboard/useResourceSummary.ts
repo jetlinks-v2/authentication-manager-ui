@@ -15,7 +15,7 @@ export function useResourceSummary(access: Ref<ResourcePageAccess>, scope: Ref<s
   const key = computed(() => JSON.stringify([scope.value, access.value, visualizationKeys.value]))
   const enabled = computed(() => definitions.value.length > 0)
   const query = usePrivateQuery(
-    () => Promise.all(definitions.value.map(card => loadResourceSummary(card, access.value))), key, enabled,
+    signal => Promise.all(definitions.value.map(card => loadResourceSummary(card, access.value, signal))), key, enabled,
   )
   const updatedAt = ref<number>()
   // 时间仅代表本次成功取得的资源统计；切换范围清空，不把页面打开时间伪装成数据时间。

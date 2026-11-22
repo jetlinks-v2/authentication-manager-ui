@@ -1,8 +1,8 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
-import { API_CLIENT_TARGET, TEMPLATE_GRANT_TARGET, queryApiGrants, queryApiGroups, saveApiGrants } from '@authentication-manager-ui/api/application-center/apiApplication'
-import type { ApiGroup, ApiGroupGrant, ApiGroupOperation } from '@authentication-manager-ui/api/application-center/apiApplication'
+import { API_CLIENT_TARGET, TEMPLATE_GRANT_TARGET, queryApiGrantPermissionContext, queryApiGrants, queryApiGroups, saveApiGrants } from '@authentication-manager-ui/api/application-center/apiApplication'
+import type { ApiGrantPermission, ApiGroup, ApiGroupGrant, ApiGroupOperation } from '@authentication-manager-ui/api/application-center/apiApplication'
 import { applicationError, responseBody } from '../applicationUtils'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { groupMenu, useGroupPermissions } from '../../ApiGroup/useGroupPermissions'
@@ -11,6 +11,23 @@ import { groupAssetHint, selectedGroupOperations, updateGroupGrantOperations } f
 const grantableOperation = (operation: ApiGroupOperation) => !!operation.apiSpecIds?.length
   && operation.apiSpecIds.every(id => operation.apiDetail?.some(spec => spec.id === id
     && !!spec.permissionId?.trim() && !!spec.actions?.length && spec.actions.every(action => !!action.trim())))
+
+const findDeniedOperations = (groups: ApiGroup[], grants: ApiGroupGrant[], permissions: ApiGrantPermission[]) => {
+  const submitted = selectedGroupOperations(grants)
+  return groups.flatMap(group => (group.operations || [])
+    .filter(operation => submitted[group.id]?.includes(operation.id))
+    .flatMap(operation => {
+      const apis = (operation.apiDetail || []).flatMap(spec => {
+        const { id, permissionId, actions, method, path } = spec
+        if (!operation.apiSpecIds?.includes(id) || !permissionId || !actions?.length || !method || !path) return []
+        const owned = permissions.find(permission => permission.id === '*' || permission.id === permissionId)?.actions || []
+        if (owned.includes('*')) return []
+        const missing = actions.filter(action => !owned.includes(action))
+        return missing.length ? [{ id, method, path, missing: missing.map(action => `${permissionId}:${action}`) }] : []
+      })
+      return apis.length ? [{ id: `${group.id}/${operation.id}`, name: `${group.name} / ${operation.name || operation.id}`, apis }] : []
+    }))
+}
 
 export const useDirectGrants = (targetId: () => string, targetType: string = API_CLIENT_TARGET) => {
   const { t } = useI18n()
@@ -34,6 +51,17 @@ export const useDirectGrants = (targetId: () => string, targetType: string = API
   const saving = ref(false)
   const loaded = ref(false)
   const error = ref('')
+  const deniedOperations = ref<ReturnType<typeof findDeniedOperations>>([])
+  const deniedDetailsOpen = ref(false)
+  const deniedApiRows = computed(() => deniedOperations.value.flatMap(operation => operation.apis.map(api => ({
+    key: JSON.stringify([operation.id, api.id]), operation: operation.name, endpoint: api, missing: api.missing,
+  }))))
+  const deniedApiColumns = computed(() => [
+    { title: t('ThirdPartyApplication.direct.deniedOperationColumn'), dataIndex: 'operation', key: 'operation', width: '22%' },
+    { title: t('ApiGroupManagement.spec.endpoint'), dataIndex: 'endpoint', key: 'endpoint' },
+    { title: t('ThirdPartyApplication.direct.deniedPermissionColumn'), dataIndex: 'missing', key: 'missing', width: '28%' },
+  ])
+  watch(deniedOperations, () => { deniedDetailsOpen.value = false })
   let generation = 0
   onBeforeUnmount(() => { generation++ })
   // 刷新仅重载授权和草稿，不退出模板编辑；保存期间不允许刷新打断提交。
@@ -41,6 +69,7 @@ export const useDirectGrants = (targetId: () => string, targetType: string = API
     if (isTemplateGrant && saving.value) return
     const current = ++generation
     loading.value = true; loaded.value = false; error.value = ''; changed.value = []
+    deniedOperations.value = []
     groups.value = []; original.value = []; selected.value = {}
     try {
       const [catalog, grants] = await Promise.all([queryApiGroups({ paging: false, terms: [{ column: 'status', termType: 'eq', value: 'enabled' }] }), queryApiGrants(targetId(), targetType)])
@@ -67,6 +96,10 @@ export const useDirectGrants = (targetId: () => string, targetType: string = API
       error.value = t('ThirdPartyApplication.direct.invalidOperation'); return
     }
     selected.value[groupId] = [...new Set(ids)]
+    if (deniedOperations.value.length) {
+      deniedOperations.value = []
+      error.value = ''
+    }
     if (!changed.value.includes(groupId)) changed.value.push(groupId)
   }
   const operations = (group: ApiGroup) => {
@@ -137,24 +170,38 @@ export const useDirectGrants = (targetId: () => string, targetType: string = API
     if (saving.value || !loaded.value || loading.value || (isTemplateGrant && !editing.value)) return
     if (!revokeAll && targetType === API_CLIENT_TARGET && !pendingChanges.value.length) return
     const current = generation
+    const submitted = revokeAll ? [] : payload.value
     saving.value = true; error.value = ''
+    deniedOperations.value = []
     try {
-      await saveApiGrants(targetId(), revokeAll ? [] : payload.value, targetType)
+      await saveApiGrants(targetId(), submitted, targetType,
+        targetType === API_CLIENT_TARGET ? { hiddenError: true } : undefined)
       if (current !== generation) return
       onlyMessage(t('ApiApplication.message.permissionSaved'))
       if (isTemplateGrant) editing.value = false
       saving.value = false
       await load()
-    } catch (cause) { if (current === generation) error.value = applicationError(cause, t) }
-    finally { if (current === generation) saving.value = false }
+    } catch (cause) {
+      if (current !== generation) return
+      error.value = applicationError(cause, t)
+      const failure = cause as { response?: { status?: number }; status?: number; code?: string } | undefined
+      const status = Number(failure?.response?.status ?? failure?.status ?? failure?.code)
+      if (targetType === API_CLIENT_TARGET && status === 403 && submitted.length) {
+        // 全量保存也会校验未改动的已有授权，因此按实际提交内容定位，而不只检查新勾选项。
+        const context = await queryApiGrantPermissionContext().then(result => responseBody(result), () => undefined)
+        if (current === generation && Array.isArray(context?.permissions)) {
+          deniedOperations.value = findDeniedOperations(groups.value, submitted, context.permissions)
+        }
+      }
+    } finally { if (current === generation) saving.value = false }
   }
   // 新模板使用独立的查看态；旧请求由 generation 隔离，不占用新模板的提交状态。
   watch(targetId, () => {
     if (isTemplateGrant) { editing.value = false; saving.value = false }
     void load()
   }, { immediate: true })
-  return { groups, original, selected, changed, pendingChanges, loading, saving, loaded, error, hiddenGrants, payload,
-    tableColumns, groupRows, tableSelection, toggleGroup, toggleAll,
+  return { groups, original, selected, changed, pendingChanges, loading, saving, loaded, error, deniedOperations, hiddenGrants, payload,
+    deniedDetailsOpen, deniedApiRows, deniedApiColumns, tableColumns, groupRows, tableSelection, toggleGroup, toggleAll,
     editing, edit, templateRows,
     update, selectAll, operations, assetHint, canManageGroups, openGroupManager, save, load }
 }

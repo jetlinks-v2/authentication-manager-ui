@@ -25,7 +25,7 @@ import { DashboardWidgetRenderer, type DashboardWidget } from '@jetlinks-web-cor
 import ResourceEmpty from '../../../../visDashboard/ResourceCenter/components/ResourceEmpty.vue'
 import { useResourcePageContext } from '../resourcePageContext'
 
-const props = defineProps<{ legendTarget?: string }>()
+const props = defineProps<{ legendTarget?: HTMLElement }>()
 const { t } = useI18n()
 const runtime = useResourcePageContext()
 const [DefineLoading, ReuseLoading] = createReusableTemplate()

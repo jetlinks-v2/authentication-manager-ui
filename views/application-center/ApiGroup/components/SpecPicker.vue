@@ -22,7 +22,8 @@
             <div class="catalog-toolbar"><ConditionFilter :columns="filterColumns" @change="handleSearch" /></div>
             <a-alert v-if="error" type="error" show-icon :message="error" class="picker-error" />
             <j-pro-table class="pro-table__no-padding catalog-table" mode="TABLE" :columns="columns" :request="requestPage" :params="params"
-              :alert-show="false" :rowSelection="rowSelection" :scroll="{ x: 960, y: tableHeight }">
+              :alert-show="false" :rowSelection="rowSelection" :scroll="{ x: 960, y: tableHeight }"
+              :pagination="{ defaultPageSize: pickerPagination.defaultPageSize }">
               <template #identity="row">
                 <div class="catalog-identity">
                   <SpecIdentity :spec="row" part="name" />
@@ -34,6 +35,9 @@
               <template #endpoint="row"><SpecIdentity :spec="row" part="endpoint" /></template>
               <template #appId="row"><span class="source-service" :title="row.appId">{{ row.appId || '—' }}</span></template>
               <template #details="row"><SpecDetails :spec="row" /></template>
+              <template #paginationRender="{ total, current, pageSize, onChange }">
+                <a-pagination v-bind="pickerPagination" :total="total" :current="current" :page-size="pageSize" @change="onChange" />
+              </template>
             </j-pro-table>
           </div>
           <div v-else class="picker-tab-content">
@@ -87,7 +91,7 @@ import PermissionSpecs from './PermissionSpecs.vue'
 const props = defineProps<{ open: boolean; selectedIds: string[]; knownSpecs: RawOpenApiSpec[]; context: SpecPickerContext }>()
 const emit = defineEmits<{ (event: 'close'): void; (event: 'confirm', value: SpecSelection): void }>()
 const { t: $t } = useI18n()
-const { columns, filterColumns, params, error, selectedIds, selectedFilterFields, selectedColumns, selectedRecords, selectedPagination, searchSelected,
+const { columns, filterColumns, params, error, selectedIds, selectedFilterFields, selectedColumns, selectedRecords, selectedPagination, pickerPagination, searchSelected,
   mode, resources, catalogLoading, catalogReady, catalogError, loadCatalog, toggleIds,
   unavailable, validSelection, changed, rowSelection, requestPage, handleSearch, remove, selection } = useSpecPicker(() => ({ ...props, disabled: props.context.saving }))
 const tabOptions = computed<SlantedTabOption[]>(() => [
@@ -95,7 +99,7 @@ const tabOptions = computed<SlantedTabOption[]>(() => [
   { key: 'details', label: $t('ApiGroupManagement.spec.detailMode') },
   { key: 'selected', label: $t('ApiGroupManagement.spec.selected'), count: selectedIds.value.length },
 ])
-const tableHeight = computed(() => props.context.creating ? 'max(16rem, calc(100vh - 490px))' : 'max(16rem, calc(100vh - 330px))')
+const tableHeight = computed(() => props.context.creating ? 'max(16rem, calc(100vh - 610px))' : 'max(16rem, calc(100vh - 450px))')
 const canConfirm = computed(() => validSelection.value && !catalogLoading.value && !props.context.disabled && !props.context.saving && (props.context.creating ? selectedIds.value.length > 0 : changed.value))
 const close = (open: boolean) => { if (!open && !props.context.saving) emit('close') }
 const confirmCreate = () => { if (!props.context.confirmImpact && canConfirm.value) emit('confirm', selection()) }

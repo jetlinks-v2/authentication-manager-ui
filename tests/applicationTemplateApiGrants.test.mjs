@@ -24,7 +24,7 @@ const { outputFiles } = await build({
         const copy = value => JSON.parse(JSON.stringify(value));
         export const API_CLIENT_TARGET = 'api-client';
         export const TEMPLATE_GRANT_TARGET = 'business_application_template';
-        export const api = { catalog: [], grants: {}, queries: [], writes: [], loadFailure: '', saveFailure: '', beforeLoad: null, beforeSave: null };
+        export const api = { catalog: [], grants: {}, permissions: [], queries: [], writes: [], loadFailure: '', saveFailure: '', beforeLoad: null, beforeSave: null };
         export const queryApiGroups = async data => {
           api.queries.push(copy(data));
           if (api.beforeLoad) await api.beforeLoad();
@@ -32,6 +32,7 @@ const { outputFiles } = await build({
           return { result: copy(api.catalog) };
         };
         export const queryApiGrants = async (id, targetType) => ({ result: copy(api.grants[id] || []) });
+        export const queryApiGrantPermissionContext = async () => ({ result: { permissions: copy(api.permissions) } });
         export const saveApiGrants = async (id, grants, targetType) => {
           api.writes.push({ id, grants: copy(grants), targetType });
           if (api.beforeSave) await api.beforeSave();
@@ -75,7 +76,7 @@ async function fixture(t, targetType = TEMPLATE_GRANT_TARGET, options = {}) {
     { id: 'user-product', targetId: 'template', targetType, groupId: 'user', operationIds: ['query'], assetAccesses: { assetType: 'product', accesses: [{ supportId: 'creator' }] } },
     { id: 'hidden', targetId: 'template', targetType, groupId: 'hidden-group', operationIds: ['private'], assetAccesses: { assetType: 'secret', accesses: [{ supportId: 'tenant' }] } },
   ], another: [] }
-  api.writes = []; api.queries = []; api.loadFailure = options.loadFailure || ''; api.saveFailure = ''; api.beforeLoad = null; api.beforeSave = null
+  api.writes = []; api.queries = []; api.permissions = []; api.loadFailure = options.loadFailure || ''; api.saveFailure = ''; api.beforeLoad = null; api.beforeSave = null
   const id = ref('template')
   let state
   const app = renderer.createApp({ setup() { state = useDirectGrants(() => id.value, targetType); return () => null } })
@@ -268,4 +269,22 @@ test('API applications still edit immediately and only save effective pending ch
   assert.equal(api.writes[0].targetType, API_CLIENT_TARGET)
   assert.deepEqual(api.writes[0].grants.find(grant => grant.groupId === 'device').operationIds, ['read'])
   assert.deepEqual(api.writes[0].grants.find(grant => grant.id === 'hidden'), api.grants.template.find(grant => grant.id === 'hidden'))
+})
+
+test('API application 403 reports the submitted interfaces and their missing actions', async t => {
+  const { state } = await fixture(t, API_CLIENT_TARGET)
+  const read = state.groups.value.find(group => group.id === 'device').operations[0]
+  Object.assign(read.apiDetail[0], {
+    method: 'POST', path: '/device/template', permissionId: 'device-template', actions: ['query', 'save'],
+  })
+  api.permissions = [{ id: 'device-template', actions: ['query'] }]
+  api.beforeSave = () => { throw Object.assign(new Error('Forbidden'), { response: { status: 403 } }) }
+  state.update('device', ['read'])
+  await state.save()
+  assert.equal(state.error.value, 'Forbidden')
+  assert.deepEqual(state.selected.value.device, ['read'])
+  assert.deepEqual(state.deniedOperations.value, [{
+    id: 'device/read', name: 'Devices / Operation read',
+    apis: [{ id: 'read-api', method: 'POST', path: '/device/template', missing: ['device-template:save'] }],
+  }])
 })

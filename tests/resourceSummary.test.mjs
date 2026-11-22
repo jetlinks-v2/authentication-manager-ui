@@ -9,7 +9,9 @@ const root = fileURLToPath(new URL('../', import.meta.url))
 const compiled = await build({ entryPoints: [fileURLToPath(new URL('../views/resources/Dashboard/services/resourceSummary.ts', import.meta.url))], bundle:true, write:false, platform:'node', format:'cjs', packages:'external', define:{'import.meta.env':'{}'}, plugins:[{name:'boundaries',setup(api) {
   const stubs = {
     '../../useDashboardModules':'export const getDashboardModules=()=>({})',
-    '../../../../api/overview': `export { buildOverviewDeviceTerms } from ${JSON.stringify(root + 'api/overview.ts')}; export const queryOverviewChannelBreakdown=(scope)=>context.channels(scope)`,
+    '../../../../api/overview': `export { buildOverviewDeviceTerms } from ${JSON.stringify(root + 'api/overview.ts')};
+      export const queryOverviewChannelBreakdown=(scope, signal)=>context.channels(scope, signal);
+      export const querySaasOverviewChannelBreakdown=signal=>context.channels('summary', signal)`,
     '../../../../visDashboard/Base/shared/navigation':'export const HOME_TARGETS={gateway:{},devices:{},video:{},card:{},collector:{},screen:{},image:{menus:[]},component:{menus:[]},model:{menus:[]},template:{menus:[]}}',
     '@jetlinks-web/core':'export const request={post:()=>{throw Error("unexpected request")}}',
     '@jetlinks-web-core/locales':'export default {global:{t:key=>key}}',
@@ -22,7 +24,7 @@ const compiled = await build({ entryPoints: [fileURLToPath(new URL('../views/res
 } }] })
 function fixture(failure, channelResult = []) {
   const calls=[]
-  const context={channels: async scope => { calls.push({ scope }); if (channelResult instanceof Error) throw channelResult; return channelResult }, count:async (path,terms=[])=>{
+  const context={channels: async (scope, signal) => { calls.push({ scope, signal }); if (channelResult instanceof Error) throw channelResult; return channelResult }, count:async (path,terms=[])=>{
     calls.push({path,terms})
     const state=terms.find(term=>term.column==='state')?.value
     if(failure !== undefined && state===failure) throw Error('count failed')
@@ -68,10 +70,11 @@ for (const saas of [true, false]) {
     const card = api.createResourceSummaryCards(currentAccess).find(item => item.id === 'video')
     assert.equal(card.labelKey, 'resourcePage.summary.video')
     assert.equal(card.unitKey, 'resourcePage.summary.unitChannels')
-    const result = await api.loadResourceSummary(card, currentAccess)
+    const { signal } = new AbortController()
+    const result = await api.loadResourceSummary(card, currentAccess, signal)
     assert.equal(result.value, 30)
     assert.deepEqual(result.statuses.map(item => [item.key, item.value, Boolean(item.failed)]), [['online', 11, false], ['offline', 19, false]])
-    assert.deepEqual(calls, [{ scope: 'all' }])
+    assert.deepEqual(calls, [{ scope: saas ? 'summary' : 'all', signal }])
   })
 }
 
@@ -82,7 +85,7 @@ test('empty channel collection produces zero counts', async () => {
   assert.equal(result.value, 0)
   assert.equal(Boolean(result.failed), false)
   assert.deepEqual(result.statuses.map(item => [item.value, Boolean(item.failed)]), [[0, false], [0, false]])
-  assert.deepEqual(calls, [{ scope: 'all' }])
+  assert.deepEqual(calls, [{ scope: 'summary', signal: undefined }])
 })
 
 test('channel loading failure marks total and states as failed', async () => {
@@ -92,5 +95,5 @@ test('channel loading failure marks total and states as failed', async () => {
   assert.equal(result.value, undefined)
   assert.equal(result.failed, true)
   assert.deepEqual(result.statuses.map(item => [item.value, item.failed]), [[undefined, true], [undefined, true]])
-  assert.deepEqual(calls, [{ scope: 'all' }])
+  assert.deepEqual(calls, [{ scope: 'summary', signal: undefined }])
 })

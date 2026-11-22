@@ -5,7 +5,7 @@
       <template #icon><AIcon type="PlusOutlined" /></template>{{ $t('ApiApplication.subscription.create') }}
     </a-button>
   </DefineEmptyCreate>
-  <div class="application-list subscription-panel">
+  <FullPage flex transparent-background class="application-list subscription-panel">
     <div class="application-list-toolbar">
       <ConditionFilter class="application-list-filter" :columns="filterColumns" :target="`api-subscriptions-${application?.id}`" @change="handleSearch" />
       <EmptyCreateButton class="application-list-create" />
@@ -14,7 +14,10 @@
     <a-alert v-if="listError" type="error" show-icon :message="$t('ApiApplication.subscription.loadError')" :description="listError" class="subscription-alert" />
     <a-alert v-if="operationError && !editorOpen && !detailOpen" type="error" show-icon :message="operationError" class="subscription-alert" />
     <j-pro-table v-if="application" :key="application.id" ref="tableRef" mode="TABLE"
-      :columns="columns" :request="requestPage" :params="filters" :body-style="{ padding: 0 }" :alert-show="false" :pagination="{ size: 'small' }" :scroll="false">
+      :columns="columns" :request="requestPage" :params="filters" :body-style="{ padding: 0, flex: 1, minHeight: 0 }" :alert-show="false" :pagination="pagination">
+      <template #paginationRender="page">
+        <a-pagination v-bind="{ ...pagination, ...page }" />
+      </template>
       <template #emptyText>
         <CloudEmpty :search="filters.terms" :search-name="$t('components.Card.812844-0')">
           <EmptyCreateButton />
@@ -59,7 +62,7 @@
         </TableActions>
       </template>
     </j-pro-table>
-  </div>
+  </FullPage>
 
   <SubscriptionEditor v-model:open="editorOpen" :subscription="editing" :providers="providers" :channels="channels"
     :catalog-loading="catalogLoading" :catalog-error="catalogError" :saving="saving" :validation="validation" :operation-error="operationError"
@@ -97,6 +100,7 @@ import { createReusableTemplate } from '@vueuse/core'
 
 import { useI18n } from 'vue-i18n'
 import type { ApiApplication } from '@authentication-manager-ui/api/application-center/apiApplication'
+import { useSpecTablePagination } from '../../ApiGroup/useSpecTablePagination'
 import { useSubscriptionPanel } from '../useSubscriptionPanel'
 import { executionColor } from '../subscriptionState'
 import { formatTime } from '../integrationUtils'
@@ -105,6 +109,7 @@ import SubscriptionValidation from './SubscriptionValidation.vue'
 import SubscriptionEventSummary from './SubscriptionEventSummary.vue'
 const props = defineProps<{ application: ApiApplication }>()
 const { t: $t } = useI18n()
+const pagination = useSpecTablePagination()
 const { providers, channels, catalogLoading, catalogError, listError, operationError, saving, validation, clearFeedback,
   tableRef, filters, editorOpen, detailOpen, detailLoading, editing, selected, applicationEnabled,
   filterColumns, columns, requestPage, handleSearch, channelName, executionLabel,
