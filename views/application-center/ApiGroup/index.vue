@@ -4,7 +4,7 @@
     <j-permission-button :hasPermission="groupMenu + ':add'" type="primary" @click="create"><template #icon><AIcon type="PlusOutlined" /></template>{{ $t('ApiGroupManagement.create') }}</j-permission-button>
   </DefineEmptyCreate>
   <j-page-container v-bind="$attrs">
-    <ContentPanel fill :background="false" :padding="0" class="application-list api-group-list">
+    <FullPage flex transparent-background class="application-list">
       <a-flex align="center" justify="space-between" :gap="16" class="application-list-toolbar">
         <ConditionFilter v-if="canQuery" class="application-list-filter" :columns="columns" target="api-group-management" @change="handleSearch" />
         <EmptyCreateButton class="application-list-create" />
@@ -12,7 +12,11 @@
       <a-alert v-if="!canQuery" type="warning" show-icon :message="$t('ApiGroupManagement.noQueryPermission')" />
       <template v-else>
         <a-alert v-if="error" type="error" show-icon :message="error" class="page-alert" />
-        <j-pro-table ref="tableRef" mode="TABLE" :columns="columns" :request="requestPage" :params="params" :body-style="{ padding: 0 }" :alert-show="false" :pagination="{ size: 'small' }">
+        <j-pro-table ref="tableRef" mode="TABLE" :columns="columns" :request="requestPage" :params="params"
+          :body-style="{ padding: 0, flex: 1, minHeight: 0 }" :alert-show="false" :pagination="pagination">
+          <template #paginationRender="page">
+            <a-pagination v-bind="{ ...pagination, ...page }" />
+          </template>
           <template #emptyText>
             <CloudEmpty :search="params.terms" :search-name="$t('components.AddDialog.956922-6')">
               <EmptyCreateButton />
@@ -55,7 +59,7 @@
           </template>
         </j-pro-table>
       </template>
-    </ContentPanel>
+    </FullPage>
     <a-modal v-model:open="editOpen" :title="$t('ApiGroupManagement.editTitle')" :confirm-loading="saving"
       :ok-text="$t('ApiGroupManagement.save')" :cancel-text="$t('ApiGroupManagement.cancel')"
       :closable="!saving" :mask-closable="!saving" :cancel-button-props="{ disabled: saving }"
@@ -76,11 +80,13 @@
 import { createReusableTemplate } from '@vueuse/core'
 
 import { useI18n } from 'vue-i18n'
+import { useSpecTablePagination } from './useSpecTablePagination'
 import { useApiGroupList } from './useApiGroupList'
 import { groupText, groupValue } from './groupUtils'
 
 defineOptions({ name: 'ApiGroupManagement' })
 const { t: $t } = useI18n()
+const pagination = useSpecTablePagination()
 const { groupMenu, canQuery, tableRef, params, columns, error, busyId, editOpen, editForm, editError, saving,
   requestPage, handleSearch, create, open, openEdit, saveEdit, toggle, remove } = useApiGroupList()
 
@@ -88,7 +94,6 @@ const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 <style scoped src="../application-list.less" lang="less"></style>
 <style scoped>
-.api-group-list { overflow: visible; }
 .page-alert { margin: 16px 0; }
 .table-link { padding-inline: 0; }
 </style>

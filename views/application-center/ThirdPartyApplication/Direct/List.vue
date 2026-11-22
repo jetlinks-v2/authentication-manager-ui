@@ -4,13 +4,17 @@
     <a-button type="primary" @click="openCreate"><template #icon><AIcon type="PlusOutlined" /></template>{{ $t('ThirdPartyApplication.direct.create') }}</a-button>
   </DefineEmptyCreate>
   <j-page-container v-bind="$attrs">
-    <ContentPanel fill :background="false" :padding="0" class="application-list direct-page">
+    <FullPage flex transparent-background class="application-list">
       <a-flex align="center" justify="space-between" :gap="16" class="application-list-toolbar">
         <ConditionFilter class="application-list-filter" :columns="filterColumns" target="third-party-direct" @change="search" />
         <EmptyCreateButton class="application-list-create" />
       </a-flex>
       <a-alert v-if="error" type="error" show-icon :message="error" class="page-alert" />
-      <j-pro-table ref="tableRef" mode="TABLE" :columns="columns" :request="query" :params="filters" :body-style="{ padding: 0 }" :alert-show="false" :pagination="{ size: 'small' }">
+      <j-pro-table ref="tableRef" mode="TABLE" :columns="columns" :request="query" :params="filters"
+        :body-style="{ padding: 0, flex: 1, minHeight: 0 }" :alert-show="false" :pagination="pagination">
+        <template #paginationRender="page">
+          <a-pagination v-bind="{ ...pagination, ...page }" />
+        </template>
         <template #emptyText>
           <CloudEmpty :search="filters.terms" :search-name="$t('components.EditForm.949962-3')">
             <EmptyCreateButton />
@@ -50,7 +54,7 @@
           </TableActions>
         </template>
       </j-pro-table>
-    </ContentPanel>
+    </FullPage>
     <a-modal v-model:open="formOpen" :title="$t(editingId ? 'ThirdPartyApplication.edit' : 'ThirdPartyApplication.direct.create')" :confirm-loading="saving"
       :closable="!saving" :mask-closable="!saving" :cancel-button-props="{ disabled: saving }"
       :ok-button-props="{ disabled: !form.name.trim() }" @ok="save">
@@ -68,6 +72,7 @@ import { createReusableTemplate } from '@vueuse/core'
 
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useSpecTablePagination } from '../../ApiGroup/useSpecTablePagination'
 import type { ConditionFilterChangePayload, ConditionFilterField } from '@jetlinks-web-core/components/ConditionFilter'
 import type { ApiApplication } from '@authentication-manager-ui/api/application-center/apiApplication'
 import { useDirectApplications } from './useDirectApplications'
@@ -76,6 +81,7 @@ import { formatTime } from '../integrationUtils'
 
 defineOptions({ name: 'DirectThirdPartyApplications' })
 const { t: $t } = useI18n()
+const pagination = useSpecTablePagination()
 const tableRef = ref<{ reload: () => void }>()
 const filters = ref<{ terms: Array<Record<string, unknown>> }>({ terms: [] })
 const { error, formError, saving, busyId, formOpen, editingId, form, query, openCreate, openEdit, saveForm, openDetail, toggleState, removeApplication } = useDirectApplications()
@@ -101,7 +107,6 @@ const [DefineEmptyCreate, EmptyCreateButton] = createReusableTemplate()
 </script>
 <style scoped src="../../application-list.less" lang="less"></style>
 <style scoped>
-.direct-page { overflow: visible; }
 .page-alert { margin: 16px 0; }
 .table-link { padding-inline: 0; }
 </style>
