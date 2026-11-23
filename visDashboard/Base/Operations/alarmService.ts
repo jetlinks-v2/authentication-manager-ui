@@ -89,7 +89,7 @@ export async function queryQuickAlarm(category: AlarmCategory, id: string): Prom
   return mapAlarm(row)
 }
 
-/** 视觉告警走聚合告警处理，物联告警沿用通用记录处理；禁止把失败响应视为成功。 */
+/** 视觉告警走触发任务告警处理，物联告警沿用通用记录处理；禁止把失败响应视为成功。 */
 export async function handleQuickAlarm(category: AlarmCategory, alarm: QuickAlarm, describe: string): Promise<void> {
   if (!alarm.id || alarm.state !== 'warning' || !describe.trim() || describe.trim().length > 200) {
     throw new Error('Invalid alarm handling request')
@@ -98,5 +98,5 @@ export async function handleQuickAlarm(category: AlarmCategory, alarm: QuickAlar
     ? { alarmRecordId: alarm.id, describe: describe.trim(), type: 'user', handleTime: Date.now() }
     : { alarmRecordId: alarm.id, alarmConfigId: alarm.alarmConfigId, alarmTime: alarm.alarmTime,
       describe: describe.trim(), type: 'user', state: 'normal' }
-  resultOf(await request.post(category === 'visionAlarm' ? '/ai/aggregate/task/alarm/_handle' : '/alarm/record/_handle', payload, { hiddenError: true }))
+  resultOf(await request.post(category === 'visionAlarm' ? '/ai/trigger/alarms/_handle' : '/alarm/record/_handle', payload, { hiddenError: true }))
 }

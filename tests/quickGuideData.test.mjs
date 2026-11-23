@@ -36,7 +36,7 @@ test('space completion counts bindings across the tree and alarm completion coun
   const calls = fixture(t, path => {
     if (path === '/space/_query/tree') return { result: [{ id: 'parent', children: [{ id: 'child' }, { id: 'parent' }] }] }
     if (path === '/space/data-bind/_count') return { result: 2 }
-    if (path === '/ai/aggregate/task/_count') return { result: 3 }
+    if (path === '/ai/trigger/tasks/_query') return { result: { data: [{ id: 'visual' }], total: 3 } }
     throw new Error(`Unexpected endpoint ${path}`)
   })
   assert.deepEqual(await loadQuickGuideRows(), [{ id: 'space', value: 2 }, { id: 'alarm', value: 3 }])
@@ -44,13 +44,16 @@ test('space completion counts bindings across the tree and alarm completion coun
     terms: [{ column: 'spaceId', termType: 'in', value: ['parent', 'child'] }],
   })
   assert.ok(calls.every(call => call.options.hiddenError === true))
-  assert.deepEqual(calls.find(call => call.path === '/ai/aggregate/task/_count').data, {})
+  assert.deepEqual(calls.find(call => call.path === '/ai/trigger/tasks/_query').data, {
+    paging: true, pageIndex: 0, pageSize: 1,
+    terms: [{ column: 'type', termType: 'eq', value: 'visualAlarm' }],
+  })
 })
 
 test('an empty space tree remains incomplete and skips the binding query', async t => {
   const calls = fixture(t, path => {
     if (path === '/space/_query/tree') return { result: [] }
-    if (path === '/ai/aggregate/task/_count') return { result: 0 }
+    if (path === '/ai/trigger/tasks/_query') return { result: { data: [], total: 0 } }
     throw new Error(`Unexpected endpoint ${path}`)
   })
   assert.deepEqual(await loadQuickGuideRows(), [{ id: 'space', value: 0 }, { id: 'alarm', value: 0 }])
@@ -58,11 +61,11 @@ test('an empty space tree remains incomplete and skips the binding query', async
 })
 
 test('a failed space query preserves alarm configuration and a failed alarm query preserves space configuration', async t => {
-  for (const failedPath of ['/space/_query/tree', '/ai/aggregate/task/_count']) {
+  for (const failedPath of ['/space/_query/tree', '/ai/trigger/tasks/_query']) {
     fixture(t, path => {
       if (path === failedPath) throw new Error('Unavailable')
       if (path === '/space/_query/tree') return { result: [{ id: 'space' }] }
-      return { result: 1 }
+      return path === '/ai/trigger/tasks/_query' ? { result: { data: [{ id: 'visual' }], total: 1 } } : { result: 1 }
     })
     assert.deepEqual(await loadQuickGuideRows(), failedPath === '/space/_query/tree'
       ? [{ id: 'space', failed: true }, { id: 'alarm', value: 1 }]
@@ -70,7 +73,7 @@ test('a failed space query preserves alarm configuration and a failed alarm quer
   }
 })
 
-test('missing vision skips the aggregate alarm request while retaining space', async t => {
+test('missing vision skips the visual trigger task request while retaining space', async t => {
   globalThis.quickGuideVision = false
   t.after(() => { delete globalThis.quickGuideVision })
   const calls = fixture(t, () => ({ result: [] }))
