@@ -4,19 +4,21 @@ import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { build } from 'esbuild'
 import { compileScript, parse } from 'vue/compiler-sfc'
-import { createRenderer, defineComponent, h, nextTick, ref } from 'vue'
+import { createRenderer, defineComponent, h, nextTick } from 'vue'
 
 const moduleRoot = fileURLToPath(new URL('..', import.meta.url))
 const core = fileURLToPath(new URL('../../../jetlinks-web-core/src', import.meta.url))
 const boundaries = {
   '@jetlinks-web/core': `
     export const http = { calls: [], handler: null };
-    export const request = Object.fromEntries(['get', 'post'].map(method => [method, (url, data, config) => {
+    export const request = Object.fromEntries(['get', 'post', 'put'].map(method => [method, (url, data, config) => {
       http.calls.push({ method, url, data, config }); return http.handler(method, url);
     }]));`,
   '@jetlinks-web/utils': 'export const notices = []; export const onlyMessage = (...args) => notices.push(args);',
   'vue-i18n': 'export const useI18n = () => ({ t: key => key });',
-  'vue-router': `import { reactive } from 'vue'; export const route = reactive({ params: { id: 'role-1' } }); export const useRoute = () => route;`,
+  'vue-router': `import { reactive } from 'vue'; export const route = reactive({ params: { id: 'role-1' } }); export const useRoute = () => route; export const useRouter = () => ({});`,
+  '@authentication-manager-ui/components/ApplicationRolePermissions/useApplicationRolePermissions': `import { ref } from 'vue';
+    export const useApplicationRolePermissions = () => ({ savingPermissions: ref(false) });`,
   '@jetlinks-web-core/hooks': `export { useMenuAssetPermissionEditor } from '${core}/hooks/useMenuAssetPermissionEditor';
     export const useRegistryOptions = ({ baseOptions }) => ({ mergedOptions: baseOptions });`,
   '@jetlinks-web-core/components': `export { default as MenuAssetPermissionEditor } from '${core}/components/MenuAssetPermissionEditor/index.vue';`,
@@ -26,11 +28,12 @@ const boundaries = {
 const { outputFiles } = await build({
   stdin: { resolveDir: moduleRoot, contents: `
     export { default as PermissionTree } from './views/system/Role/Detail/components/PermissionTree.vue';
+    export { useRolePermission } from './views/system/Role/Detail/Permission/useRolePermission';
     export { http } from '@jetlinks-web/core'; export { route } from 'vue-router'; export { notices } from '@jetlinks-web/utils';
   ` },
   alias: { '@jetlinks-web-core': core, '@authentication-manager-ui': moduleRoot },
   platform: 'node', format: 'esm', bundle: true, write: false,
-  define: { 'import.meta.env': JSON.stringify({ VITE_APP_ENVIRONMENT: 'saas' }) },
+  define: { 'import.meta.env': JSON.stringify({ VITE_APP_ENVIRONMENT: '' }) },
   plugins: [{ name: 'role-test-boundaries', setup(plugin) {
     plugin.onResolve({ filter: /^vue$/ }, () => ({ path: import.meta.resolve('vue'), external: true }))
     plugin.onResolve({ filter: /.*/ }, ({ path }) => Object.hasOwn(boundaries, path) ? { path, namespace: 'fixture' } : undefined)
@@ -43,7 +46,7 @@ const { outputFiles } = await build({
     })
   } }],
 })
-const { PermissionTree, http, route, notices } = await import(
+const { PermissionTree, useRolePermission, http, route, notices } = await import(
   `data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString('base64')}`,
 )
 
@@ -91,19 +94,22 @@ function fixture(t) {
     menu('iot-base', 'iot'), menu('iot-no-access', 'iot'), menu('unknown-owner', undefined),
   ], assetAccesses: [legacyAsset] }
   const api = {
-    detail, legacyAsset, fixedGrantable: [],
+    detail, legacyAsset, saveResponse: success(null),
     user: success([menu('iot-nested', 'iot'), menu('iot-base', 'iot'), menu('iot-no-access', 'iot', { granted: false }), appMenu]),
     userResponse: () => api.user,
   }
   http.handler = async (method, url) => {
     if (method === 'get' && /^\/menu\/role\/role-\d+\/_grant\/detail$/.test(url)) return success(detail)
     if (method === 'post' && url === userMenuPath) return api.userResponse()
-    if (method === 'post' && url === '/menu/asset-accesses/grantable') return success(api.fixedGrantable)
+    if (method === 'put' && url === '/menu/role/role-1/_grant') return api.saveResponse
     if (method === 'get' && url === '/asset/types') return success([{ id: legacyAsset.assetType, name: '既有数据权限' }])
     assert.fail(`Unexpected request ${method} ${url}`)
   }
-  const tree = ref()
-  const vm = renderer.createApp({ render: () => h(PermissionTree, { ref: tree }) })
+  let page
+  const vm = renderer.createApp({ setup() {
+    page = useRolePermission({})
+    return () => h(PermissionTree, { ref: page.permissionTreeRef })
+  } })
   vm.config.globalProperties.$t = key => key
   for (const tag of ['a-tabs', 'a-tab-pane', 'a-spin', 'a-checkbox', 'a-alert', 'a-button', 'a-select', 'a-radio-group', 'a-radio', 'AIcon', 'CloudEmpty']) {
     vm.component(tag, defineComponent({ inheritAttrs: false, setup: (_, { attrs, slots }) => () => h(tag, attrs, slots.default?.()) }))
@@ -119,7 +125,7 @@ function fixture(t) {
   vm.mount(root)
   t.after(() => vm.unmount())
   const findAll = tag => flatten([root]).filter(node => node.tag === tag)
-  return { api, tree, find: tag => findAll(tag)[0], findAll }
+  return { api, tree: page.permissionTreeRef, save: page.clickSave, find: tag => findAll(tag)[0], findAll }
 }
 
 test('普通角色只渲染 iot 菜单，无分类页签；全选操作不改被隐藏的菜单、按钮和资产策略', async t => {
@@ -285,22 +291,32 @@ test('校验期间切换角色不会返回旧角色授权载荷', async t => {
 })
 
 
-test('notification role scope renders read-only, overrides legacy merge, then blocks when grantability is withdrawn', async t => {
-  const { api, tree, findAll } = fixture(t)
+test('私有化全局角色保存时升级为全部数据，不依赖可授权目录；不改其他资产', async t => {
+  const { api, tree, save, findAll } = fixture(t)
   const channel = api.detail.menus.find(menu => menu.id === 'iot-base')
   channel.assetTypes = ['notifyConfig']
-  channel.assetAccesses = ['all', 'tenant', 'business_application'].map(supportId => ({ assetType: 'notifyConfig', supportId }))
-  api.detail.assetAccesses.push({ assetType: 'notifyConfig', accesses: [{ supportId: 'all' }, { supportId: 'business_application' }] })
-  api.fixedGrantable = [{ assetType: 'notifyConfig', accesses: [{ supportId: 'tenant' }, { supportId: 'all' }] }]
+  channel.assetAccesses = [{ assetType: 'notifyConfig', supportId: 'creator', granted: true }]
+  api.detail.assetAccesses.push({ assetType: 'notifyConfig', accesses: [{ supportId: 'creator' }, { supportId: 'business_application' }] })
   await tree.value.load()
   await nextTick()
-  assert.ok(findAll('div').some(node => node.props.class === 'fixed-asset-scope'))
-  assert.ok(findAll('a-radio').every(node => !['all', 'tenant', 'business_application'].includes(node.props.value)))
-  const snapshot = await tree.value.onSave()
-  assert.deepEqual(snapshot.assetAccesses.find(item => item.assetType === 'notifyConfig').accesses, [{ supportId: 'tenant' }])
+  const group = findAll('a-radio-group').find(node => node.props.value === 'ignore')
+  assert.ok(group, '全部数据默认选中')
+  const options = flatten(group.children).filter(node => node.tag === 'a-radio')
+  assert.deepEqual(options.map(node => node.props.value), ['ignore'])
+  assert.ok(flatten(options).some(node => node.text === 'components.MenuAssetPermissionEditor.fixedAll'))
+  assert.ok(!findAll('div').some(node => node.props.class === 'fixed-asset-scope'))
+  assert.equal(findAll('a-alert').length, 0)
+  assert.ok(!http.calls.some(call => call.method === 'put'))
+  api.saveResponse = { success: false, message: '授权被拒绝' }
+  await save()
+  assert.equal(http.calls.at(-1).method, 'put')
+  assert.ok(!notices.some(([key]) => key === 'Permission.index.071527-2'))
+  api.saveResponse = success(null)
+  await save()
+  assert.equal(notices.at(-1)[0], 'Permission.index.071527-2')
+  const snapshot = http.calls.at(-1).data
+  assert.deepEqual(snapshot.assetAccesses, [api.legacyAsset, { assetType: 'notifyConfig', accesses: [{ supportId: 'ignore' }] }])
   assert.deepEqual(flatten(snapshot.menus).find(item => item.id === channel.id).assetAccesses,
-    [{ assetType: 'notifyConfig', supportId: 'tenant', granted: true }])
-  api.fixedGrantable = [{ assetType: 'notifyConfig', accesses: [{ supportId: 'all' }] }]
-  assert.equal(await tree.value.onSave(), undefined)
-  assert.deepEqual(notices.at(-1), ['components.MenuAssetPermissionEditor.fixedScopeSaveBlocked', 'warning'])
+    [{ assetType: 'notifyConfig', supportId: 'ignore', granted: true }])
+  assert.ok(!http.calls.some(call => call.url === '/menu/asset-accesses/grantable'))
 })

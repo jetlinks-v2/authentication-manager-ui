@@ -3,15 +3,14 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useMenuAssetPermissionEditor, useRegistryOptions } from '@jetlinks-web-core/hooks'
-import { getFixedNotificationMenus, isFixedNotificationAsset } from '@jetlinks-web-core/hooks/useMenuAssetPermissionEditor'
+import { isFixedNotificationAsset } from '@jetlinks-web-core/hooks/useMenuAssetPermissionEditor'
 import type { AssetAccessPolicy, AssetTypeName, MenuPermissionNode } from '@jetlinks-web-core/hooks'
 import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
 import { USER_CENTER_MENU_CODE } from '@jetlinks-web-core/utils/consts'
 import { NotificationSubscriptionCode } from '@jetlinks-web-core/router/menu'
 import { getOwnMenuThree, readOwnMenuTree } from '@jetlinks-web-core/api/system/menu'
-import { getGrantableAssetAccesses_api, getPermissionDetail_api } from '@authentication-manager-ui/api/system/role'
+import { getPermissionDetail_api } from '@authentication-manager-ui/api/system/role'
 import { getAssetsType } from '@authentication-manager-ui/api/system/menu'
-import { normalizeGrantableAssets } from '../../../../application-center/Template/Save/menu-config.shared'
 import { cleanRoleAssetPermissions } from './roleAssetPermissions'
 import { buildGlobalRoleMenuGroup, buildRoleGrantSnapshot, globalRoleMenuScopeFingerprint } from './roleMenuPermissions'
 
@@ -37,13 +36,6 @@ const requirePermissionResult = <T>(response: { success?: boolean; result?: T; m
 const loadUserMenus = async (): Promise<MenuPermissionNode[]> =>
   readOwnMenuTree(await getOwnMenuThree({ paging: false }, false))
 
-const loadFixedGrantableAssets = async (menus: MenuPermissionNode[]) => {
-  const fixedMenus = getFixedNotificationMenus(menus)
-  if (!fixedMenus.length) return []
-  // 角色详情包含存量策略，不代表当前赋权人仍能授予该范围。
-  return getGrantableAssetAccesses_api(fixedMenus).then(normalizeGrantableAssets).catch(() => [])
-}
-
 /** 全局角色保留完整授权草稿，仅投影可编辑的 iot 菜单，保存前复核有效范围。 */
 export function useGlobalRolePermissions() {
   const route = useRoute()
@@ -57,6 +49,7 @@ export function useGlobalRolePermissions() {
   let fingerprint = ''
   const legacyPolicies = new Map<string, AssetAccessPolicy>()
   const draft = useMenuAssetPermissionEditor({
+    notificationScopeMode: 'deployment',
     defaultSupportIds: ['creator'], protectedMenuCode: USER_CENTER_MENU_CODE, protectedButtonId: 'view',
   })
   const editor = {
@@ -116,8 +109,6 @@ export function useGlobalRolePermissions() {
         menus, assetAccesses: detail.assetAccesses, assetTypes,
         menuGroups: [group],
       })
-      const fixedAssetGrantable = await loadFixedGrantableAssets(input.menus)
-      if (current !== sequence) return
       legacyPolicies.clear()
       input.assetAccesses?.forEach(policy => {
         if (!isFixedNotificationAsset(policy.assetType)
@@ -125,7 +116,7 @@ export function useGlobalRolePermissions() {
           legacyPolicies.set(policy.assetType, policy)
         }
       })
-      editor.reset({ ...input, fixedAssetGrantable })
+      editor.reset(input)
       fingerprint = globalRoleMenuScopeFingerprint(group)
       scopeChanged.value = false
       initialized.value = true
@@ -148,14 +139,8 @@ export function useGlobalRolePermissions() {
         scopeChanged.value = true
         return undefined
       }
-      const selected = editor.flatMenus.value.filter(menu => menu.granted).map(menu => ({ ...menu, children: null }))
-      const currentFixedGrantable = await loadFixedGrantableAssets(selected)
-      if (current !== sequence || !initialized.value) return undefined
-      const snapshot = editor.getGrantSnapshot(currentFixedGrantable)
-      if (!snapshot) {
-        onlyMessage(t('components.MenuAssetPermissionEditor.fixedScopeSaveBlocked'), 'warning')
-        return undefined
-      }
+      const snapshot = editor.getGrantSnapshot()
+      if (!snapshot) return undefined
       // 独立策略可能包含多项范围或扩展配置；未显式改选时不把它压缩为编辑器的单选值。
       snapshot.assetAccesses = snapshot.assetAccesses.map(policy => legacyPolicies.get(policy.assetType) ?? policy)
       return buildRoleGrantSnapshot(editor.menuTree.value, snapshot)
