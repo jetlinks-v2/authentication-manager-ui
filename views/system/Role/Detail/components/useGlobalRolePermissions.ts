@@ -3,7 +3,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useMenuAssetPermissionEditor, useRegistryOptions } from '@jetlinks-web-core/hooks'
-import { isFixedNotificationAsset } from '@jetlinks-web-core/hooks/useMenuAssetPermissionEditor'
+import { isDeploymentFixedNotificationAsset } from '@jetlinks-web-core/hooks/useMenuAssetPermissionEditor'
 import type { AssetAccessPolicy, AssetTypeName, MenuPermissionNode } from '@jetlinks-web-core/hooks'
 import { isNoCommunity } from '@jetlinks-web-core/utils/utils'
 import { USER_CENTER_MENU_CODE } from '@jetlinks-web-core/utils/consts'
@@ -111,7 +111,7 @@ export function useGlobalRolePermissions() {
       })
       legacyPolicies.clear()
       input.assetAccesses?.forEach(policy => {
-        if (!isFixedNotificationAsset(policy.assetType)
+        if (!isDeploymentFixedNotificationAsset(policy.assetType)
           && policy.accesses?.some(access => access.supportId === BUSINESS_APPLICATION_SUPPORT_ID)) {
           legacyPolicies.set(policy.assetType, policy)
         }

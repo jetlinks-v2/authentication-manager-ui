@@ -294,16 +294,23 @@ test('校验期间切换角色不会返回旧角色授权载荷', async t => {
 test('私有化全局角色保存时升级为全部数据，不依赖可授权目录；不改其他资产', async t => {
   const { api, tree, save, findAll } = fixture(t)
   const channel = api.detail.menus.find(menu => menu.id === 'iot-base')
-  channel.assetTypes = ['notifyConfig']
-  channel.assetAccesses = [{ assetType: 'notifyConfig', supportId: 'creator', granted: true }]
-  api.detail.assetAccesses.push({ assetType: 'notifyConfig', accesses: [{ supportId: 'creator' }, { supportId: 'business_application' }] })
+  const fixedTypes = ['notifyConfig', 'notifySubscriberProvider']
+  const devicePolicy = { assetType: 'device', accesses: [{ supportId: 'org' }] }
+  channel.assetTypes = [...fixedTypes, 'device']
+  channel.assetAccesses = fixedTypes.map(assetType => ({ assetType, supportId: 'creator', granted: true }))
+  channel.assetAccesses.push({ assetType: 'device', supportId: 'org', granted: true })
+  api.detail.assetAccesses.push(...fixedTypes.map(assetType => ({
+    assetType, accesses: [{ supportId: 'creator' }, { supportId: 'business_application' }],
+  })), devicePolicy)
   await tree.value.load()
   await nextTick()
-  const group = findAll('a-radio-group').find(node => node.props.value === 'ignore')
-  assert.ok(group, '全部数据默认选中')
-  const options = flatten(group.children).filter(node => node.tag === 'a-radio')
-  assert.deepEqual(options.map(node => node.props.value), ['ignore'])
-  assert.ok(flatten(options).some(node => node.text === 'components.MenuAssetPermissionEditor.fixedAll'))
+  const groups = findAll('a-radio-group').filter(node => node.props.value === 'ignore')
+  assert.equal(groups.length, 2, '通知配置及通知订阅配置均选中全部数据')
+  for (const group of groups) {
+    const options = flatten(group.children).filter(node => node.tag === 'a-radio')
+    assert.deepEqual(options.map(node => node.props.value), ['ignore'])
+    assert.ok(flatten(options).some(node => node.text === 'components.MenuAssetPermissionEditor.fixedAll'))
+  }
   assert.ok(!findAll('div').some(node => node.props.class === 'fixed-asset-scope'))
   assert.equal(findAll('a-alert').length, 0)
   assert.ok(!http.calls.some(call => call.method === 'put'))
@@ -315,8 +322,11 @@ test('私有化全局角色保存时升级为全部数据，不依赖可授权�
   await save()
   assert.equal(notices.at(-1)[0], 'Permission.index.071527-2')
   const snapshot = http.calls.at(-1).data
-  assert.deepEqual(snapshot.assetAccesses, [api.legacyAsset, { assetType: 'notifyConfig', accesses: [{ supportId: 'ignore' }] }])
+  assert.deepEqual(snapshot.assetAccesses, [api.legacyAsset, ...fixedTypes.map(assetType => ({
+    assetType, accesses: [{ supportId: 'ignore' }],
+  })), devicePolicy])
   assert.deepEqual(flatten(snapshot.menus).find(item => item.id === channel.id).assetAccesses,
-    [{ assetType: 'notifyConfig', supportId: 'ignore', granted: true }])
+    [...fixedTypes.map(assetType => ({ assetType, supportId: 'ignore', granted: true })),
+      { assetType: 'device', supportId: 'org', granted: true }])
   assert.ok(!http.calls.some(call => call.url === '/menu/asset-accesses/grantable'))
 })
