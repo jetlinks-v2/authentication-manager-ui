@@ -127,7 +127,7 @@ export const useSpecPicker = (source: () => PickerSource) => {
   const selection = (): SpecSelection => ({ ids: [...selectedIds.value],
     specs: selectedIds.value.flatMap(id => known.value[id] ? [known.value[id]] : []),
   })
-  return { columns, filterColumns, params, error, selectedIds, selectedFilterFields, selectedColumns, selectedRecords, selectedPagination, pickerPagination, searchSelected,
+  return { columns, filterColumns, params, error, selectedIds, selectedFilterFields, selectedColumns, selectedRecords, selectedPagination, searchSelected,
     mode, resources, catalogLoading, catalogReady, catalogError, loadCatalog, toggleIds,
     unavailable, validSelection, changed, rowSelection, requestPage, handleSearch, remove, selection }
 }

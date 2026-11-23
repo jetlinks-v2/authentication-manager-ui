@@ -11,10 +11,7 @@
       </a-flex>
       <a-alert v-if="error" type="error" show-icon :message="error" class="page-alert" />
       <j-pro-table ref="tableRef" mode="TABLE" :columns="columns" :request="query" :params="filters"
-        :body-style="{ padding: 0, flex: 1, minHeight: 0 }" :alert-show="false" :pagination="pagination">
-        <template #paginationRender="page">
-          <a-pagination v-bind="{ ...pagination, ...page }" />
-        </template>
+        :body-style="{ padding: 0, flex: 1, minHeight: 0 }" :alert-show="false">
         <template #emptyText>
           <CloudEmpty :search="filters.terms" :search-name="$t('components.EditForm.949962-3')">
             <EmptyCreateButton />
@@ -72,7 +69,6 @@ import { createReusableTemplate } from '@vueuse/core'
 
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useSpecTablePagination } from '../../ApiGroup/useSpecTablePagination'
 import type { ConditionFilterChangePayload, ConditionFilterField } from '@jetlinks-web-core/components/ConditionFilter'
 import type { ApiApplication } from '@authentication-manager-ui/api/application-center/apiApplication'
 import { useDirectApplications } from './useDirectApplications'
@@ -81,7 +77,6 @@ import { formatTime } from '../integrationUtils'
 
 defineOptions({ name: 'DirectThirdPartyApplications' })
 const { t: $t } = useI18n()
-const pagination = useSpecTablePagination()
 const tableRef = ref<{ reload: () => void }>()
 const filters = ref<{ terms: Array<Record<string, unknown>> }>({ terms: [] })
 const { error, formError, saving, busyId, formOpen, editingId, form, query, openCreate, openEdit, saveForm, openDetail, toggleState, removeApplication } = useDirectApplications()

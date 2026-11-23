@@ -17,7 +17,7 @@
             <span class="alarm-list-name">{{ item.title || '—' }}<template v-if="category === 'visionAlarm' && item.channel"> · {{ item.channel }}</template></span>
             <a-tag color="error">{{ t('packages.ProjectHome.alarmPending') }}</a-tag>
           </button>
-          <a-pagination v-if="total > ALARM_PAGE_SIZE" :current="page" :total="total" :page-size="ALARM_PAGE_SIZE"
+          <CorePagination v-if="total > ALARM_PAGE_SIZE" :current="page" :total="total" :page-size="ALARM_PAGE_SIZE"
             :show-size-changer="false" size="small" @change="load" />
         </template>
       </div>
@@ -49,6 +49,7 @@
     @close="close" @retry="selected && select(selected)" @submit="submit" />
 </template>
 <script setup lang="ts">
+import CorePagination from '@jetlinks-web-core/components/CorePagination'
 import CloudEmpty from '@jetlinks-web-core/components/CloudEmpty/index.vue'
 import { useI18n } from 'vue-i18n'
 import { AlertOutlined, WarningOutlined } from '@ant-design/icons-vue'
