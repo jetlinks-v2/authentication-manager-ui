@@ -20,7 +20,7 @@
               </a-flex>
               <a-typography-text v-if="loaded && !failed" type="secondary">{{ t('DocumentManagement.count', { count: filteredRows.length }) }}</a-typography-text>
             </div>
-            <a-alert v-if="scope === 'all'" type="info" show-icon :message="t('DocumentManagement.usageHint')" />
+            <a-alert v-if="scope === 'all'" class="document-list__hint" type="info" show-icon :message="t('DocumentManagement.usageHint')" />
             <a-alert v-if="failed" type="error" show-icon :message="t('DocumentManagement.loadFailed')">
               <template #action><a-button size="small" @click="load()">{{ t('DocumentManagement.retry') }}</a-button></template>
             </a-alert>
@@ -170,6 +170,7 @@ async function queryRows(params: { pageIndex?: number; pageSize?: number }) {
 .document-scope > :deep(strong) { font-size: var(--fs-18); line-height: var(--lh-24); }
 .document-list { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: auto; }
 .document-list__heading { margin-bottom: var(--space-4); display: flex; align-items: center; justify-content: space-between; }
+.document-list__hint { margin-bottom: var(--space-4); }
 .document-list__body { flex: 1; min-height: 0; }
 .document-list__body :deep(.ant-spin-container) { height: 100%; }
 .document-toolbar { width: 100%; min-width: 0; }
