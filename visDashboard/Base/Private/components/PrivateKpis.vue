@@ -42,7 +42,7 @@ const { t, locale } = useI18n()
 <style scoped lang="less">
 .private-kpis-container { min-width: 0; container-type: inline-size; }
 .private-kpis { display: grid; grid-template-columns: repeat(var(--kpi-columns, 5), minmax(0, 1fr)); gap: 16px; }
-.private-kpi { position: relative; display: flex; align-items: flex-start; gap: 12px; min-width: 0; padding: 16px; border: 1px solid transparent; border-radius: var(--r-3, 8px); box-shadow: 0 1px 3px rgb(31 35 41 / 4%); background: var(--ant-color-bg-container, #fff); color: var(--business-component-text, #1f2329); font: inherit; text-align: left; cursor: pointer; transition: border-color .2s; }
+.private-kpi { position: relative; display: flex; align-items: flex-start; gap: 12px; min-width: 0; padding: 16px; border: 1px solid transparent; border-radius: var(--r-3, 8px); background: var(--ant-color-bg-container, #fff); color: var(--business-component-text, #1f2329); font: inherit; text-align: left; cursor: pointer; transition: border-color .2s; }
 .private-kpi:hover:not(:disabled) { border-color: var(--business-component-primary, #1677ff); }
 .private-kpi:disabled { cursor: default; }
 .private-kpi:focus-visible { outline: 2px solid var(--business-component-primary, #1677ff); outline-offset: 2px; }

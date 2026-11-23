@@ -25,6 +25,7 @@ const { t } = useI18n()
 
 <style scoped lang="less">
 .saas-project-summary { border-radius: var(--r-3, 8px); container-type: inline-size; }
+.saas-project-summary.ant-card { box-shadow: none; }
 .saas-project-summary :deep(.ant-card-body) { padding: 16px; }
 .saas-project-summary-content { display: flex; align-items: center; justify-content: space-between; gap: 16px 24px; }
 .saas-project-copy { flex: 1; min-width: 0; }

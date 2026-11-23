@@ -25,6 +25,7 @@ const { rows, isStarting, open, openingId } = useSaasRecent(props.variant)
 </script>
 <style scoped>
 .saas-recent-card { border-radius: var(--r-3, 8px); container: saas-recent / inline-size; }
+.saas-recent-card.ant-card { box-shadow: none; }
 .saas-recent-card :deep(.ant-card-head) { min-height: 46px; border-bottom: 1px solid var(--line, #f2f3f5); padding: 0 18px; font-size: 15px; }
 .saas-recent-card :deep(.ant-card-head-title) { font-weight: 600; padding-block: 12px; }
 .saas-recent-card :deep(.ant-card-body) { display: flex; flex-direction: column; padding: 12px 16px; }
