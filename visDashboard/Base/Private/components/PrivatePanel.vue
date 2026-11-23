@@ -33,8 +33,9 @@ const { t } = useI18n()
 <style scoped lang="less">
 .private-overview-panel {
   display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; overflow: hidden;
-  border-radius: var(--r-3, 8px); box-shadow: 0 1px 3px rgb(31 35 41 / 4%);
+  border-radius: var(--r-3, 8px);
   background: var(--ant-color-bg-container, #fff); container-type: inline-size;
+  &.ant-card { box-shadow: none; }
   /* 与 SaaS 概览统一卡头尺寸，缩放时标题固定、正文独立滚动。 */
   :deep(.ant-card-head) { flex: none; min-height: 48px; padding: 8px 16px; border-bottom: 1px solid var(--line, #f2f3f5); }
   :deep(.ant-card-head-wrapper) { gap: 12px; }

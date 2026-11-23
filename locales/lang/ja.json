@@ -2867,7 +2867,6 @@
   "ApiGroupManagement.spec.interfaceDetails": "インターフェース明細",
   "ApiGroupManagement.spec.linkedActionInterfaces": "{actions}：{count}件の関連インターフェース",
   "ApiGroupManagement.spec.unclassifiedCount": "ほかに{count}件のインターフェースが現在分類できません。「インターフェース明細」で確認してください。",
-  "ApiGroupManagement.spec.paginationTotal": "全{count}件",
   "ApiGroupManagement.spec.totalCount": "全{count}件のインターフェース",
   "ApiGroupManagement.spec.detailMode": "詳細設定",
   "ApiGroupManagement.spec.resource": "業務機能",

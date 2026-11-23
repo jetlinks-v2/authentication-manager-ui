@@ -41,6 +41,8 @@ const account = useSaasAccount(() => props.isEdit)
   container-name: project-home;
   container-type: inline-size;
 
+  &.ant-card { box-shadow: none; }
+
   &.saas-utility-card--help :deep(.ant-card-body) {
     padding: 0 !important;
   }

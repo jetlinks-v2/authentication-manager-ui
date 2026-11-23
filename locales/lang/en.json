@@ -2855,7 +2855,6 @@
   "ApiGroupManagement.spec.interfaceDetails": "API Details",
   "ApiGroupManagement.spec.linkedActionInterfaces": "{actions}: {count} linked APIs",
   "ApiGroupManagement.spec.unclassifiedCount": "Another {count} APIs cannot currently be grouped. View them in API Details.",
-  "ApiGroupManagement.spec.paginationTotal": "Total {count} items",
   "ApiGroupManagement.spec.totalCount": "{count} APIs in total",
   "ApiGroupManagement.spec.detailMode": "Detailed Configuration",
   "ApiGroupManagement.spec.resource": "Feature",

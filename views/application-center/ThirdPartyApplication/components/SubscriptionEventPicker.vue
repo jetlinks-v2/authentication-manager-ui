@@ -18,7 +18,7 @@
     <p class="selection-hint">{{ $t('ThirdPartyApplication.subscription.categorySelectionHint') }}</p>
     <ConditionFilter v-if="showSearch" :fields="filterFields" :model-value="terms" :disabled="disabled || loading" @update:model-value="search" />
     <a-table :columns="[{ key: 'category', title: $t('ThirdPartyApplication.subscription.eventCategories') }]" :data-source="pageRows"
-      row-key="key" table-layout="fixed" size="small" class="category-list" :show-header="false" :loading="loading" :pagination="pagination" :scroll="tableScroll">
+      row-key="key" table-layout="fixed" size="small" class="category-list" :show-header="false" :loading="loading" :pagination="false" :scroll="tableScroll">
       <template #bodyCell="{ record }">
         <div class="category-row">
           <div class="category-choice">
@@ -41,17 +41,19 @@
       </template>
       <template #emptyText><CloudEmpty :description="$t(terms.length ? 'ThirdPartyApplication.subscription.noMatchingCategories' : 'ApiApplication.subscription.noEvents')" /></template>
     </a-table>
+    <JPagination v-if="showPagination" v-bind="pagination" />
   </ContentPanel>
 </template>
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import JPagination from '@jetlinks-web/components/es/ProTable/Pagination'
 import DocumentHelp from '@jetlinks-web-core/components/DocumentHelp'
 import type { SubscriptionEventProvider } from '@authentication-manager-ui/api/application-center/applicationSubscription'
 import { useSubscriptionEventPicker } from '../useSubscriptionEventPicker'
 const props = defineProps<{ providers: SubscriptionEventProvider[]; modelValue: string[]; disabled?: boolean; loading?: boolean }>()
 const emit = defineEmits<{ 'update:modelValue': [ids: string[]]; inspect: [eventId: string] }>()
 const { t: $t } = useI18n()
-const { terms, filterFields, showSearch, pageRows, tableScroll, pagination, tableSelection, selectedCategoryCount,
+const { terms, filterFields, showSearch, pageRows, tableScroll, pagination, showPagination, tableSelection, selectedCategoryCount,
   search, toggleCategory, togglePage } = useSubscriptionEventPicker(props, ids => emit('update:modelValue', ids))
 </script>
 <style scoped>

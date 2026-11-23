@@ -56,7 +56,6 @@ const { t } = useI18n()
   background: var(--ant-color-bg-container, #ffffff);
   border: 1px solid var(--jet-theme-border-secondary, #e8edf3);
   border-radius: var(--r-3, 8px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .resource-summary-card :deep(.ant-card-body) {
