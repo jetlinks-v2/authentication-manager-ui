@@ -2855,7 +2855,6 @@
   "ApiGroupManagement.spec.interfaceDetails": "接口明细",
   "ApiGroupManagement.spec.linkedActionInterfaces": "{actions}：已关联 {count} 个接口",
   "ApiGroupManagement.spec.unclassifiedCount": "另有 {count} 个接口暂无法归类，请在“接口明细”中查看。",
-  "ApiGroupManagement.spec.paginationTotal": "共 {count} 条",
   "ApiGroupManagement.spec.totalCount": "共 {count} 个接口",
   "ApiGroupManagement.spec.detailMode": "详细配置",
   "ApiGroupManagement.spec.resource": "业务功能",

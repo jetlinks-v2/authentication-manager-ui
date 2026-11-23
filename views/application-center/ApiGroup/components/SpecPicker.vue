@@ -22,8 +22,7 @@
             <div class="catalog-toolbar"><ConditionFilter :columns="filterColumns" @change="handleSearch" /></div>
             <a-alert v-if="error" type="error" show-icon :message="error" class="picker-error" />
             <j-pro-table class="pro-table__no-padding catalog-table" mode="TABLE" :columns="columns" :request="requestPage" :params="params"
-              :alert-show="false" :rowSelection="rowSelection" :scroll="{ x: 960, y: tableHeight }"
-              :pagination="{ defaultPageSize: pickerPagination.defaultPageSize }">
+              :alert-show="false" :rowSelection="rowSelection" :scroll="{ x: 960, y: tableHeight }">
               <template #identity="row">
                 <div class="catalog-identity">
                   <SpecIdentity :spec="row" part="name" />
@@ -35,16 +34,13 @@
               <template #endpoint="row"><SpecIdentity :spec="row" part="endpoint" /></template>
               <template #appId="row"><span class="source-service" :title="row.appId">{{ row.appId || '—' }}</span></template>
               <template #details="row"><SpecDetails :spec="row" /></template>
-              <template #paginationRender="{ total, current, pageSize, onChange }">
-                <a-pagination v-bind="pickerPagination" :total="total" :current="current" :page-size="pageSize" @change="onChange" />
-              </template>
             </j-pro-table>
           </div>
           <div v-else class="picker-tab-content">
             <div class="catalog-toolbar">
               <ConditionFilter :fields="selectedFilterFields" :placeholder="$t('ApiGroupManagement.spec.searchSelected')" @update:model-value="searchSelected" />
             </div>
-            <a-table :columns="selectedColumns" :data-source="selectedRecords" row-key="id" :pagination="selectedPagination"
+            <a-table :columns="selectedColumns" :data-source="selectedRecords" row-key="id" :pagination="false"
               table-layout="fixed" :scroll="{ x: 960, y: tableHeight }">
               <template #emptyText>
                 <CloudEmpty :description="$t(selectedIds.length ? 'ApiGroupManagement.spec.noMatches' : 'ApiGroupManagement.spec.selectHint')" />
@@ -64,6 +60,7 @@
                 </template>
               </template>
             </a-table>
+            <JPagination v-if="selectedPagination.total" v-bind="selectedPagination" />
           </div>
         </template>
       </SlantedTabs>
@@ -81,6 +78,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import JPagination from '@jetlinks-web/components/es/ProTable/Pagination'
 import SlantedTabs, { type SlantedTabOption } from '@jetlinks-web-core/components/SlantedTabs'
 import type { RawOpenApiSpec } from '@authentication-manager-ui/api/application-center/apiGroupManagement'
 import { useSpecPicker, type SpecPickerContext, type SpecSelection } from '../useSpecPicker'
@@ -91,7 +89,7 @@ import PermissionSpecs from './PermissionSpecs.vue'
 const props = defineProps<{ open: boolean; selectedIds: string[]; knownSpecs: RawOpenApiSpec[]; context: SpecPickerContext }>()
 const emit = defineEmits<{ (event: 'close'): void; (event: 'confirm', value: SpecSelection): void }>()
 const { t: $t } = useI18n()
-const { columns, filterColumns, params, error, selectedIds, selectedFilterFields, selectedColumns, selectedRecords, selectedPagination, pickerPagination, searchSelected,
+const { columns, filterColumns, params, error, selectedIds, selectedFilterFields, selectedColumns, selectedRecords, selectedPagination, searchSelected,
   mode, resources, catalogLoading, catalogReady, catalogError, loadCatalog, toggleIds,
   unavailable, validSelection, changed, rowSelection, requestPage, handleSearch, remove, selection } = useSpecPicker(() => ({ ...props, disabled: props.context.saving }))
 const tabOptions = computed<SlantedTabOption[]>(() => [
