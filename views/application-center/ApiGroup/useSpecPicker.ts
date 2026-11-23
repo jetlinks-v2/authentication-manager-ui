@@ -7,7 +7,7 @@ import type { RawOpenApiSpec } from '@authentication-manager-ui/api/application-
 import { groupError, validSpecPermission } from './groupUtils'
 import { buildSpecPermissionResources } from './specPermissionResources'
 import { specTextFields, useLocalTextFilter } from './useLocalTextFilter'
-import { useSpecTablePagination } from './useSpecTablePagination'
+import { specTablePageSize, useSpecTablePagination } from './useSpecTablePagination'
 export interface SpecPickerContext {
   creating: boolean
   saving: boolean
@@ -30,28 +30,15 @@ export const useSpecPicker = (source: () => PickerSource) => {
   const catalogReady = ref(false)
   const catalog = ref<RawOpenApiSpec[]>([])
   const mode = ref('permissions')
-  const selectedPage = ref(1)
-  const pickerPagination = useSpecTablePagination()
-  const selectedPageSize = ref(pickerPagination.defaultPageSize)
   let generation = 0
   let initialIds = new Set<string>()
   const { filterFields: selectedFilterFields, filtered: selectedRows, search: applySelectedSearch, reset: resetSelected } = useLocalTextFilter(
     () => selectedIds.value, () => specTextFields(t),
     (id, column) => column === 'id' ? id : known.value[id]?.[column as keyof RawOpenApiSpec],
   )
+  const { page: selectedPage, pageSize: selectedPageSize, slicePage, pagination: selectedPagination } = useSpecTablePagination(() => selectedRows.value.length)
   const searchSelected = (terms: ConditionFilterTerm[]) => { selectedPage.value = 1; applySelectedSearch(terms) }
-  const selectedRecords = computed(() => selectedRows.value.map(id => ({ id, spec: known.value[id] })))
-  const selectedPagination = computed(() => ({
-    ...pickerPagination,
-    current: selectedPage.value, pageSize: selectedPageSize.value,
-    onChange: (current: number, size: number) => {
-      selectedPage.value = size === selectedPageSize.value ? current : 1
-      selectedPageSize.value = size
-    },
-  }))
-  watch(() => selectedRows.value.length, total => {
-    selectedPage.value = Math.min(selectedPage.value, Math.max(1, Math.ceil(total / selectedPageSize.value)))
-  })
+  const selectedRecords = computed(() => slicePage(selectedRows.value).map(id => ({ id, spec: known.value[id] })))
   const loadCatalog = async () => {
     const current = generation
     catalogLoading.value = true; catalogError.value = ''; catalogReady.value = false
@@ -69,7 +56,7 @@ export const useSpecPicker = (source: () => PickerSource) => {
   watch(() => source().open, open => {
     generation++; error.value = ''; catalogError.value = ''; catalogReady.value = false
     catalog.value = []; catalogLoading.value = false; mode.value = 'permissions'; params.value = { terms: [] }; resetSelected()
-    selectedPage.value = 1; selectedPageSize.value = pickerPagination.defaultPageSize
+    selectedPage.value = 1; selectedPageSize.value = specTablePageSize
     if (open) {
       initialIds = new Set(source().selectedIds)
       selectedIds.value = [...initialIds]
@@ -127,7 +114,7 @@ export const useSpecPicker = (source: () => PickerSource) => {
   const selection = (): SpecSelection => ({ ids: [...selectedIds.value],
     specs: selectedIds.value.flatMap(id => known.value[id] ? [known.value[id]] : []),
   })
-  return { columns, filterColumns, params, error, selectedIds, selectedFilterFields, selectedColumns, selectedRecords, selectedPagination, pickerPagination, searchSelected,
+  return { columns, filterColumns, params, error, selectedIds, selectedFilterFields, selectedColumns, selectedRecords, selectedPagination, searchSelected,
     mode, resources, catalogLoading, catalogReady, catalogError, loadCatalog, toggleIds,
     unavailable, validSelection, changed, rowSelection, requestPage, handleSearch, remove, selection }
 }

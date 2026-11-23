@@ -6,7 +6,7 @@
     </div>
     <p v-if="!readonly" class="permission-hint">{{ $t('ApiGroupManagement.spec.permissionHint') }}</p>
     <a-table :columns="columns" :data-source="rows" row-key="key" table-layout="fixed"
-      :pagination="pagination" :scroll="{ y: height }">
+      :pagination="readonly ? readonlyPagination : false" :scroll="{ y: height }">
       <template #headerCell="{ column }">
         <a-checkbox v-if="!readonly && column.key === 'resource'"
           :checked="pageSelection.checked" :indeterminate="pageSelection.indeterminate" :disabled="disabled || !pageIds.length"
@@ -36,10 +36,12 @@
         </div>
       </template>
     </a-table>
+    <JPagination v-if="!readonly && pagination.total" v-bind="pagination" />
   </div>
 </template>
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import JPagination from '@jetlinks-web/components/es/ProTable/Pagination'
 import type { SpecPermissionResource } from '../specPermissionResources'
 import { usePermissionSpecs } from '../usePermissionSpecs'
 const props = withDefaults(defineProps<{
@@ -51,7 +53,7 @@ const props = withDefaults(defineProps<{
 }>(), { selectedIds: () => [], disabled: false, readonly: false })
 const emit = defineEmits<{ (event: 'select', ids: string[], checked: boolean): void }>()
 const { t: $t } = useI18n()
-const { filterFields, search, columns, rows, pagination, pageIds, pageSelection } = usePermissionSpecs(props)
+const { filterFields, search, columns, rows, pagination, readonlyPagination, pageIds, pageSelection } = usePermissionSpecs(props)
 </script>
 <style scoped>
 .permission-specs { min-width: 0; }

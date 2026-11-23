@@ -13,10 +13,7 @@
       <template v-else>
         <a-alert v-if="error" type="error" show-icon :message="error" class="page-alert" />
         <j-pro-table ref="tableRef" mode="TABLE" :columns="columns" :request="requestPage" :params="params"
-          :body-style="{ padding: 0, flex: 1, minHeight: 0 }" :alert-show="false" :pagination="pagination">
-          <template #paginationRender="page">
-            <a-pagination v-bind="{ ...pagination, ...page }" />
-          </template>
+          :body-style="{ padding: 0, flex: 1, minHeight: 0 }" :alert-show="false">
           <template #emptyText>
             <CloudEmpty :search="params.terms" :search-name="$t('components.AddDialog.956922-6')">
               <EmptyCreateButton />
@@ -80,13 +77,11 @@
 import { createReusableTemplate } from '@vueuse/core'
 
 import { useI18n } from 'vue-i18n'
-import { useSpecTablePagination } from './useSpecTablePagination'
 import { useApiGroupList } from './useApiGroupList'
 import { groupText, groupValue } from './groupUtils'
 
 defineOptions({ name: 'ApiGroupManagement' })
 const { t: $t } = useI18n()
-const pagination = useSpecTablePagination()
 const { groupMenu, canQuery, tableRef, params, columns, error, busyId, editOpen, editForm, editError, saving,
   requestPage, handleSearch, create, open, openEdit, saveEdit, toggle, remove } = useApiGroupList()
 
