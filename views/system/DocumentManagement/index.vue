@@ -5,8 +5,8 @@
         <template #left>
           <aside class="document-scope">
             <a-typography-text strong>{{ t('DocumentManagement.groups') }}</a-typography-text>
-            <a-input v-model:value="routeKeyword" :placeholder="t('DocumentManagement.routeSearch')" allow-clear>
-              <template #prefix><AIcon type="SearchOutlined" /></template>
+            <a-input v-model:value="routeKeyword" :placeholder="t('DocumentManagement.routeSearch')" :aria-label="t('DocumentManagement.routeSearch')" allow-clear>
+              <template #prefix><AIcon type="SearchOutlined" aria-hidden="true" /></template>
             </a-input>
             <AutoTree block-node :show-line="{ showLeafIcon: false }" :tree-data="treeData" :selected-keys="[scope]" :expanded-keys="expandedKeys" @expand="onExpand" @select="selectScope" />
           </aside>
@@ -25,11 +25,11 @@
               <template #action><a-button size="small" @click="load()">{{ t('DocumentManagement.retry') }}</a-button></template>
             </a-alert>
             <a-spin v-else :spinning="loading" class="document-list__body">
-              <JProTable style="padding: 1rem 0 0" mode="TABLE" :columns="columns" :request="queryRows" :params="{ scope, terms, rows: filteredRows }" row-key="id" :row-selection="rowSelection" :scroll="{ x: 820 }" :pagination="{ pageSize: 10 }" :alert-render="false">
+              <JProTable class="pro-table__no-padding" mode="TABLE" :columns="columns" :request="queryRows" :params="{ scope, terms, rows: filteredRows }" row-key="id" :row-selection="rowSelection" :scroll="{ x: 820 }" :pagination="{ pageSize: 10 }" :alert-render="false">
                 <template #headerLeftRender>
-                  <a-flex gap="small" wrap="wrap">
+                  <a-flex class="document-toolbar" gap="small" align="center" wrap="wrap">
                     <ConditionFilter v-model="terms" :fields="fields" :placeholder="t('DocumentManagement.search')" class="document-filter" />
-                    <BatchDropdown v-model:isCheck="isCheck" :actions="batchActions" />
+                    <BatchDropdown v-model:isCheck="isCheck" :actions="batchActions" class="document-actions" />
                   </a-flex>
                 </template>
                 <template #name="row"><j-ellipsis>{{ row.name }}</j-ellipsis></template>
@@ -172,7 +172,9 @@ async function queryRows(params: { pageIndex?: number; pageSize?: number }) {
 .document-list__heading { margin-bottom: var(--space-4); display: flex; align-items: center; justify-content: space-between; }
 .document-list__body { flex: 1; min-height: 0; }
 .document-list__body :deep(.ant-spin-container) { height: 100%; }
-.document-filter { width: 15rem; max-width: 100%; }
+.document-toolbar { width: 100%; min-width: 0; }
+.document-filter { flex: 1 1 15rem; width: auto; min-width: 0; max-width: 100%; }
+.document-actions { flex: 0 0 auto; }
 .help-preview { margin-block: var(--space-6); }
 .help-preview__sample { display: flex; align-items: center; gap: var(--space-1); margin-top: var(--space-3); padding: var(--space-4); background: var(--jet-theme-bg-layout); border-radius: var(--r-2); }
 </style>

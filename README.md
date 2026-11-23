@@ -8,6 +8,8 @@
 
 ## 可配置帮助点位覆盖
 
+文档管理搜索栏调整：`views/system/DocumentManagement/index.vue` 左侧沿用设备列表左树的 `a-input` 与前置搜索图标，右侧为清空入口，不使用独立搜索按钮；右侧条件搜索与批量操作共同铺满内容区，搜索框自适应剩余宽度，窄屏允许换行。表格容器复用 `pro-table__no-padding` 去掉内边距，与内容区对齐。原筛选和批量操作逻辑保留。验证：`node --test tests/documentManagement.test.mjs` 23 项通过，页面脚本、模板和 Less 编译及差异空白检查通过；本次仅调整搜索控件与布局，未重跑全量类型检查或生产构建，模块未配置独立 lint。浏览器工具不可用，实际宽窄视口布局及批量模式仍待页面验收；需要完整构建时在 runtime-ui 执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`。
+
 文档管理按实际菜单和模块注册表生成目录，不在页面中固定一级分组。`documentHelpPoints.ts` 在模块启动时登记角色权限、用户应用角色、API 授权、开放平台凭证与订阅、应用模板、访问日志及系统日志的帮助点位；对应业务组件挂载 `DocumentHelp`，点位不依赖先打开业务页面才能被管理页发现。
 
 同一运行时的补充入口为 `../rule-engine-manager-ui/documentHelpPoints.ts`（规则编排与场景联动）、`../notify-manager-ui/documentHelpPoints.ts`（通知渠道、模板与记录）、`../datasource-manager-ui/documentHelpPoints.ts`（连接与数据命令）、`../data-collector-ui/documentHelpPoints.ts`（通道、采集器、采集点与周期）。分组名称以当前账号的真实菜单为准，菜单未映射的点位沿用“其他页面”规则。
