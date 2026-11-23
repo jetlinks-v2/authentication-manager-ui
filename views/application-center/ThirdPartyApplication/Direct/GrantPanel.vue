@@ -59,7 +59,7 @@
         <p class="denied-api-hint">{{ $t('ThirdPartyApplication.direct.deniedApis') }}</p>
         <a-table class="denied-api-table" :columns="deniedApiColumns" :data-source="deniedApiRows" row-key="key"
           table-layout="fixed" size="middle" :scroll="{ y: 'min(55vh, 30rem)' }"
-          :pagination="{ pageSize: 10, size: 'small', showSizeChanger: false, hideOnSinglePage: true }">
+          :pagination="{ pageSize: 10, size: 'default', showSizeChanger: false, hideOnSinglePage: true }">
           <template #bodyCell="{ column, record }">
             <SpecIdentity v-if="column.key === 'endpoint'" :spec="record.endpoint" part="endpoint" />
             <div v-else-if="column.key === 'missing'" class="denied-api-permissions">

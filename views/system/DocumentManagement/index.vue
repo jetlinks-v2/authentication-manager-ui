@@ -25,7 +25,7 @@
               <template #action><a-button size="small" @click="load()">{{ t('DocumentManagement.retry') }}</a-button></template>
             </a-alert>
             <a-spin v-else :spinning="loading" class="document-list__body">
-              <JProTable style="padding: 1rem 0 0" mode="TABLE" :columns="columns" :request="queryRows" :params="{ scope, terms, rows: filteredRows }" row-key="id" :row-selection="rowSelection" :scroll="{ x: 820 }" :pagination="{ pageSize: 10 }" :alert-render="false">
+              <JProTable style="padding: 1rem 0 0" mode="TABLE" :columns="columns" :request="queryRows" :params="{ scope, terms, rows: filteredRows }" row-key="id" :row-selection="rowSelection" :scroll="{ x: 820 }" :alert-render="false">
                 <template #headerLeftRender>
                   <a-flex gap="small" wrap="wrap">
                     <ConditionFilter v-model="terms" :fields="fields" :placeholder="t('DocumentManagement.search')" class="document-filter" />
@@ -160,7 +160,7 @@ const fields = computed<ConditionFieldSchema[]>(() => ['name', 'page', 'key'].ma
 function onDrawerOpenChange(open: boolean) { if (!open) close() }
 function selectScope(keys: (string | number)[]) { if (keys.length) scope.value = String(keys[0]) }
 async function queryRows(params: { pageIndex?: number; pageSize?: number }) {
-  const pageIndex = params.pageIndex || 0, pageSize = params.pageSize || 10
+  const pageIndex = params.pageIndex || 0, pageSize = params.pageSize || 12
   return { success: true, result: { data: filteredRows.value.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize), total: filteredRows.value.length, pageIndex, pageSize } }
 }
 </script>

@@ -45,7 +45,7 @@ export const useDebugApiPicker = (context: {
   ])
   const pagination = computed(() => ({
     current: page.value, pageSize: 8, total: rows.value.length, showSizeChanger: false,
-    hideOnSinglePage: true, size: 'small' as const, disabled: context.disabled,
+    hideOnSinglePage: true, size: 'default' as const, disabled: context.disabled,
   }))
   const changePage = (value: { current?: number }) => { page.value = value.current || 1 }
   const rowClassName = (row: ApiRow) => row.id === context.modelValue ? 'ant-table-row-selected' : ''

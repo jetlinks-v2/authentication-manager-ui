@@ -18,7 +18,7 @@
             <a-tag color="error">{{ t('packages.ProjectHome.alarmPending') }}</a-tag>
           </button>
           <a-pagination v-if="total > ALARM_PAGE_SIZE" :current="page" :total="total" :page-size="ALARM_PAGE_SIZE"
-            :show-size-changer="false" size="small" @change="load" />
+            :show-size-changer="false" size="default" @change="load" />
         </template>
       </div>
     </template>

@@ -585,6 +585,8 @@ Verification:
 2. 权限管理保留新增与批量导入/导出；菜单管理保留新增与管理员菜单配置；公告管理保留新增；用户管理保留新增与导入/导出，均与搜索同行右对齐。
 3. 沿用网络组件的标题层级和间距，只添加页面内必要的响应式样式；不添加无业务契约的操作或统计信息。
 
+菜单树由 `CorePagination` 单独按一级菜单分页。`views/system/Menu/index.vue` 将本页根节点及其 `children` 交给表格展开，不再由表格内部分页；切页不请求接口。`views/system/Menu/useMenuRootPage.ts` 用完整树计算新增排序，与页脚的总数分开。 Chromium 回归（运行时根目录 `tests/runtimePaginationSurfaces.test.mjs`）使用 16 个一级菜单复现旧页脚数量为 2；修复后始终只有 1 个，第一页 12 项、第二页 4 项，切换 24 条后显示全部 16 项。展开子项、翻页、换容量合计只查询一次。模块构建通过；模块 `vue-tsc` 修改前后均为 539 条诊断，无新增，未配置独立 lint。
+
 菜单配置跳转：`views/system/Menu/index.vue` 的管理员菜单配置按钮使用 `menuStore.jumpPage('system/Menu/Setting')`，通过菜单映射解析目标路由并携带运行时项目上下文；已移除不再使用的 `useRouter` 实例。管理员可见性与目标页面保持原约定。
 
 跳转调整验证：页面 Vue SFC 模板/脚本编译、`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`（55.12 秒）与 `git diff --check` 通过。模块未配置 lint 脚本；`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 报告 605 项工作区类型诊断，本页 3 项均位于与 HEAD 一致的子菜单排序代码，改动位置无诊断。未进行登录态点击验证，菜单配置页面在项目运行时的实际导航仍需页面回归确认。

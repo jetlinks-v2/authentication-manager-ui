@@ -60,7 +60,7 @@
                 </template>
               </template>
             </a-table>
-            <JPagination v-if="selectedPagination.total" v-bind="selectedPagination" />
+            <JPagination v-if="selectedPagination.total" v-bind="selectedPagination" size="default" />
           </div>
         </template>
       </SlantedTabs>

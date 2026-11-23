@@ -28,7 +28,7 @@
             <a-table
               :columns="requestBody.tableColumns"
               :dataSource="requestBody.params.paramsTable"
-              size="small"
+              size="small" :pagination="{ size: 'default' }"
               bordered
             >
               <template #emptyText>

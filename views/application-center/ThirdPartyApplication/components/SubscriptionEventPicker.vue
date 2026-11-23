@@ -41,7 +41,7 @@
       </template>
       <template #emptyText><CloudEmpty :description="$t(terms.length ? 'ThirdPartyApplication.subscription.noMatchingCategories' : 'ApiApplication.subscription.noEvents')" /></template>
     </a-table>
-    <JPagination v-if="showPagination" v-bind="pagination" />
+    <JPagination v-if="showPagination" v-bind="pagination" size="default" />
   </ContentPanel>
 </template>
 <script setup lang="ts">

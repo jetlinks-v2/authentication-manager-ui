@@ -36,7 +36,7 @@
         </div>
       </template>
     </a-table>
-    <JPagination v-if="!readonly && pagination.total" v-bind="pagination" />
+    <JPagination v-if="!readonly && pagination.total" v-bind="pagination" size="default" />
   </div>
 </template>
 <script setup lang="ts">
