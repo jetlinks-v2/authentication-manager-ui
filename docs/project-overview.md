@@ -188,7 +188,7 @@ SaaS 初始布局按当前概览设计的 9 组坐标同步到 `views/project/Ov
 
 实施：物联与视觉告警按现有统计的 targetType 查询 warning 记录，分页展示；选择记录时重新读取同类别记录，避免旧状态继续提交；处理成功刷新概览统计，重新展开时查询最新列表。查询失败可重试，提交失败保留输入，提交期间禁止重复提交及关闭。运维告警沿用前述暂不统计约定，未发现其正式列表及处理契约前不显示演示入口。验证包含 SFC、定向类型检查、接口参数及竞态测试、浏览器空态/浮层/弹窗验证；真实告警不作为测试数据写入。
 
-实现入口：`Operations/alarmService.ts` 封装分页、详情复查及处理参数；`Operations/useQuickAlarms.ts` 管理请求竞态和提交；`Operations/components/AlarmQuickEntry.vue` 组合浮层列表与 `AlarmQuickDetail.vue`；`shared/useHomeRuntime.ts` 接收刷新标识，处理成功后重新查询数量。物联处理使用 `POST /alarm/record/_handle`（alarmRecordId/alarmConfigId/alarmTime/describe/type=user/state=normal），视觉处理使用 `POST /ai/aggregate/task/alarm/_handle`（alarmRecordId/describe/type=user/handleTime），分别参考告警日志 SolveComponent 和 BusinessAlarm/Table 现有契约。
+实现入口：`Operations/alarmService.ts` 封装分页、详情复查及处理参数；`Operations/useQuickAlarms.ts` 管理请求竞态和提交；`Operations/components/AlarmQuickEntry.vue` 组合浮层列表与 `AlarmQuickDetail.vue`；`shared/useHomeRuntime.ts` 接收刷新标识，处理成功后重新查询数量。物联处理使用 `POST /alarm/record/_handle`（alarmRecordId/alarmConfigId/alarmTime/describe/type=user/state=normal），视觉处理使用 `POST /ai/trigger/alarms/_handle`（alarmRecordId/describe/type=user/handleTime）。
 
 验证结果：
 - 本地 9200 点击物联、视觉分类分别请求 `/alarm/record/device/_query`、`/alarm/record/aiTaskMediaTarget/_query`，均 HTTP 200，真实记录为空；浮层展开、分类切换、空态通过。
@@ -383,7 +383,7 @@ Chrome 实测：画布 layout/content 的 overflowY 均为 visible；外层页�
      - 沿用 Figma 节点 `arHAXmzThOpRg72RvxNDX3 / 1:552` 的 72px 插图、96px 卡片、步骤编号与完成态渐变；原有四张插图和裁切保持不变，`assets/alarm.png`、`assets/application.png` 分别原样使用用户补充的告警、应用图标。每张已完成卡片都有右上角标，相邻两步都完成时连接箭头高亮；空间、算法、告警显示“去配置”，网关、设备显示“去接入”，应用显示“去创建”。
      - 展示顺序为“配置空间 → 接入网关 → 接入设备 → 配置算法 → 配置告警 → 创建应用”，移除旧的四步副标题。插图、状态及跳转目标按业务 key 关联，编号按当前顺序生成。
      - 窄容器横向滚动，高度充足时改为网格；矮容器复用同一视图显示紧凑编号和标题，不维护独立展开/收起缓存。
-     - 配置状态来自现有查询：空间至少已有一条设备绑定；网关、设备和算法沿用原有计数；告警使用 `apiQuickGuide.ts` 中的 `POST /ai/aggregate/task/_count` 查询视觉告警工作台的配置任务；应用复用共享 `Applications` 订阅。各项失败独立显示状态不可用，六步全部完成后隐藏引导；已完成步骤仍可通过卡片进入管理页。标题和说明只在溢出时通过平台深色提示显示全文，无菜单权限保留禁用与权限提示。
+     - 配置状态来自现有查询：空间至少已有一条设备绑定；网关、设备和算法沿用原有计数；告警使用 `apiQuickGuide.ts` 中的 `POST /ai/trigger/tasks/_query`，按 `type=visualAlarm` 查询视觉告警配置；应用复用共享 `Applications` 订阅。各项失败独立显示状态不可用，六步全部完成后隐藏引导；已完成步骤仍可通过卡片进入管理页。标题和说明只在溢出时通过平台深色提示显示全文，无菜单权限保留禁用与权限提示。
      - 接入项目路由跳转（`useMenuStore.jumpPage`），分别直达空间管理、边缘网关、设备新增、算法中心、告警中心的视觉告警、开发与集成的应用管理；后两个目标使用 `HOME_TARGETS.visionAlarm` 与 `HOME_TARGETS.applications`。
    - **应用中心空状态（Applications）**：
      - `HomeWidget.vue` 支持 `#empty` 插槽与动态右上角更多文本；当 `feature === 'Applications'` 时右上角操作文案自适应展示为“查看所有应用 ›”。

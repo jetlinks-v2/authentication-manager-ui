@@ -12,6 +12,8 @@ interface MenuSources {
   currentUserMenus: MenuPermissionNode[]
   applicationMenus: MenuPermissionNode[]
   templateMenus?: MenuPermissionNode[]
+  roleMenus?: MenuPermissionNode[]
+  templateAssetAccesses?: AssetAccessPolicy[]
 }
 
 /** 内置应用只查询应用菜单；保留外部应用的跨 owner 查询约定。 */
