@@ -48,7 +48,7 @@ const { outputFiles } = await build({
     },
   }],
 })
-const { resolveApplicationRolePermissionScope, buildApplicationRolePermissionGrant, useMenuAssetPermissionEditor,
+const { getApplicationRoleMenuCandidates, intersectRoleAssetPolicies, resolveApplicationRolePermissionScope, buildApplicationRolePermissionGrant, useMenuAssetPermissionEditor,
   useApplicationRoleManagement, reactive, effectScope, nextTick, http, notifications } = await import(
   `data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString('base64')}`,
 )
@@ -59,7 +59,7 @@ const button = (id, granted = true) => ({ id, name: id, granted })
 const policy = (supportId, extra = {}) => ({ assetType: 'device', accesses: [{ supportId }], ...extra })
 const deviceMenu = (extra = {}) => menu('device', {
   assetTypes: ['device'], buttons: [button('view'), button('save')],
-  assetAccesses: [{ assetType: 'device', supportId: 'all', granted: true }], ...extra,
+  assetAccesses: [{ assetType: 'device', supportId: 'ignore', granted: true }], ...extra,
 })
 const flush = async () => { await new Promise(resolve => setImmediate(resolve)); await nextTick() }
 const deferred = () => {
@@ -70,11 +70,12 @@ const deferred = () => {
 const flatten = menus => menus.flatMap(item => [item, ...flatten(item.children || [])])
 
 function resolve(input = {}) {
-  return resolveApplicationRolePermissionScope({
+  const sources = {
     isExternal: false, currentUserMenus: [deviceMenu()], templateMenus: [deviceMenu()],
     applicationMenus: input.templateMenus || [deviceMenu()],
-    roleMenus: [deviceMenu()], templateAssetAccesses: [policy('tenant')], ...input,
-  })
+    roleMenus: [deviceMenu()], effectiveAssetAccesses: [policy('tenant')], ...input,
+  }
+  return resolveApplicationRolePermissionScope({ ...sources, candidates: getApplicationRoleMenuCandidates(sources) })
 }
 function editorFor(scope) {
   const editor = useMenuAssetPermissionEditor({ defaultSupportIds: ['creator'] })
@@ -86,11 +87,13 @@ function fixture(t, { external = false } = {}) {
   http.calls = []
   notifications.length = 0
   const api = {
-    template: { menus: [deviceMenu()], assetAccesses: [policy('all')] }, fixedGrantable: [],
+    template: { menus: [deviceMenu()], assetAccesses: [policy('ignore')] },
+    catalog: [{ assetType: 'device', accesses: [{ supportId: 'business_application' },
+      { supportId: 'tenant', name: '当前租户' }, { supportId: 'ignore', name: '全部数据' }] }],
     applicationMenus: null, applicationFailure: false,
     userMenus: [deviceMenu()],
-    roles: { a: { menus: [deviceMenu({ buttons: [button('view')] })], assetAccesses: [policy('all')] },
-      b: { menus: [deviceMenu({ buttons: [button('save')] })], assetAccesses: [policy('all')] } },
+    roles: { a: { menus: [deviceMenu({ buttons: [button('view')] })], assetAccesses: [policy('ignore')] },
+      b: { menus: [deviceMenu({ buttons: [button('save')] })], assetAccesses: [policy('ignore')] } },
     writes: [], beforeTemplate: null, templateFailure: null, beforeSave: null, saveFailure: null,
   }
   http.handler = async (method, url, data) => {
@@ -101,12 +104,10 @@ function fixture(t, { external = false } = {}) {
       return { success: true, result: copy(api.template) }
     }
     if (method === 'post' && url === '/menu/user-own/tree') return { success: true, result: copy(api.userMenus) }
-    if (method === 'post' && url === '/menu/asset-accesses/grantable') return { success: true, result: [
-      { assetType: 'device', accesses: [{ supportId: 'all', name: '全部数据' }, { supportId: 'tenant', name: '当前租户' }] },
-      ...api.fixedGrantable,
-    ] }
+    if (method === 'post' && url === '/menu/asset-accesses/grantable') return { success: true, result: copy(api.catalog) }
     if (method === 'get' && url === '/business-application/app/menus') return api.applicationFailure
-      ? { success: false } : { success: true, result: { menus: copy(api.applicationMenus || api.template.menus) } }
+      ? { success: false } : { success: true, result: { menus: copy(api.applicationMenus || api.template.menus),
+        assetAccesses: copy(api.template.assetAccesses) } }
     const role = url.match(/^\/business-application\/app\/roles\/(a|b)\/menus\/_grant(\/detail)?$/)
     if (method === 'get' && role?.[2]) return { success: true, result: copy(api.roles[role[1]]) }
     if (method === 'put' && role && !role[2]) {
@@ -164,12 +165,12 @@ test('current application menus exclude other candidates even when user and temp
   assert.deepEqual(resolve({ applicationMenus: [] }).menus, [])
 })
 
-test('inherited data display uses template values and never editor defaults or unsaved role changes', async t => {
+test('data display uses effective values and never editor defaults or unsaved role changes', async t => {
   const { api, state } = fixture(t); await flush()
-  assert.equal(state.inheritedAssetOptions.value.device[0].value, 'all')
+  assert.equal(state.inheritedAssetOptions.value.device[0].value, 'ignore')
   assert.equal(state.inheritedAssetOptions.value.device[0].label, '全部数据')
   state.editor.setAssetAccess('device', 'creator')
-  assert.equal(state.inheritedAssetOptions.value.device[0].value, 'all')
+  assert.equal(state.inheritedAssetOptions.value.device[0].value, 'ignore')
   api.template.assetAccesses = [policy('business_application')]
   await state.loadPermissions()
   assert.equal(state.inheritedAssetOptions.value.device[0].label, 'Role.application.applicationData')
@@ -177,7 +178,7 @@ test('inherited data display uses template values and never editor defaults or u
   assertPolicy(api.writes[0].data, 'business_application')
   api.template.assetAccesses = []
   await state.loadPermissions()
-  assert.deepEqual(state.inheritedAssetOptions.value.device, [])
+  assert.equal(state.inheritedAssetOptions.value.device, undefined)
 })
 
 test('application scope is refreshed before saving and application query failure blocks grants', async t => {
@@ -192,27 +193,27 @@ test('application scope is refreshed before saving and application query failure
   assert.equal(state.initialized.value, true); assert.deepEqual(state.editor.flatMenus.value, [])
 })
 
-test('template asset strategies override user and old role candidates without losing extension configuration', () => {
+test('effective policies exclude unrelated asset types and preserve configuration for the selected type', () => {
   const templatePolicies = [policy('tenant', { options: { scopeStrategy: 'SELECT' } }),
     { assetType: 'space', accesses: [{ supportId: 'tenant', configuration: { id: 'project' } }] }]
   const result = resolve({
     currentUserMenus: [deviceMenu({ assetAccesses: [{ assetType: 'device', supportId: 'creator' }] })],
-    templateAssetAccesses: templatePolicies,
+    effectiveAssetAccesses: templatePolicies,
   })
   const editor = editorFor(result)
   assert.equal(editor.visibleAssets.value[0].selectedSupportId, 'tenant')
   const payload = buildApplicationRolePermissionGrant(editor.getSnapshot(), result)
-  assert.deepEqual(payload.assetAccesses, templatePolicies)
+  assert.deepEqual(payload.assetAccesses, [templatePolicies[0]])
   assert.deepEqual(payload.menus[0].assetAccesses, [{ assetType: 'device', supportId: 'tenant', granted: true }])
-  payload.assetAccesses[0].accesses[0].supportId = 'all'
+  payload.assetAccesses[0].accesses[0].supportId = 'ignore'
   assert.equal(templatePolicies[0].accesses[0].supportId, 'tenant')
 })
 
 test('empty template policies clear both independent and menu policies instead of reviving role all or defaults', () => {
-  const result = resolve({ templateAssetAccesses: [] })
+  const result = resolve({ effectiveAssetAccesses: [] })
   const payload = buildApplicationRolePermissionGrant(editorFor(result).getSnapshot(), result)
   assert.deepEqual(payload.assetAccesses, [])
-  assert.deepEqual(payload.menus[0].assetAccesses, [])
+  assert.ok(payload.menus.every(menu => !menu.granted && !menu.assetAccesses.length))
 })
 
 test('internal roles exclude open-api and external candidates still respect the intersection', () => {
@@ -226,7 +227,7 @@ test('role A is saved with tenant after the template changes from all while the 
   const { api, state } = fixture(t)
   await flush()
   assert.equal(state.initialized.value, true)
-  assert.equal(state.editor.visibleAssets.value[0].selectedSupportId, 'all')
+  assert.equal(state.editor.visibleAssets.value[0].selectedSupportId, 'ignore')
   state.editor.toggleButton(state.editor.menuTree.value[0], state.editor.menuTree.value[0].buttons[1], true)
   api.template.assetAccesses = [policy('tenant', { options: { scopeStrategy: 'SELECT' } })]
   await state.savePermissions()
@@ -252,11 +253,11 @@ test('reopening an old role uses the latest template and saving a cleared templa
   await flush()
   await state.loadPermissions()
   assert.equal(state.editor.visibleAssets.value[0].selectedSupportId, 'tenant')
-  assert.equal(api.roles.a.assetAccesses[0].accesses[0].supportId, 'all')
+  assert.equal(api.roles.a.assetAccesses[0].accesses[0].supportId, 'ignore')
   api.template.assetAccesses = []
   await state.savePermissions()
   assert.deepEqual(api.roles.a.assetAccesses, [])
-  assert.deepEqual(api.roles.a.menus[0].assetAccesses, [])
+  assert.deepEqual(api.roles.a.menus, [])
 })
 
 test('saving rechecks removed menus and buttons without selecting newly available menus', async t => {
@@ -401,7 +402,7 @@ test('notification application role never replays the rest of a legacy template 
   api.template = { menus: [channel], assetAccesses: [{ assetType, accesses: [all, tenant] }] }
   api.userMenus = [channel]
   api.roles.a = { menus: [channel], assetAccesses: [{ assetType, accesses: [all] }] }
-  api.fixedGrantable = [{ assetType, accesses: [all, tenant] }]
+  api.catalog = [{ assetType, accesses: [all, tenant] }]
   await state.loadPermissions()
   assert.equal(state.editor.visibleAssets.value[0].selectedSupportId, 'tenant')
   assert.deepEqual(state.editor.visibleAssets.value[0].previousScopeLabels, ['all'])
@@ -412,4 +413,62 @@ test('notification application role never replays the rest of a legacy template 
   await state.savePermissions()
   assert.equal(api.writes.length, 1)
   assert.deepEqual(notifications.at(-1), ['components.MenuAssetPermissionEditor.fixedScopeSaveBlocked', 'warning'])
+})
+
+// The real grantable catalog includes narrower choices; do not grant every returned option.
+test('role display and both policy fields use the organization cap and refresh it before save', async t => {
+  const { api, state } = fixture(t)
+  api.template.assetAccesses = [policy('ignore')]
+  api.catalog = [{ assetType: 'device', accesses: [{ supportId: 'creator' }, { supportId: 'org' }] }]
+  await state.loadPermissions()
+  assert.equal(state.inheritedAssetOptions.value.device[0].value, 'org')
+  await state.savePermissions()
+  assertPolicy(api.roles.a, 'org')
+  api.catalog = [policy('creator')]
+  await state.savePermissions()
+  assertPolicy(api.roles.a, 'creator')
+})
+
+test('no common scope for one required type excludes that menu, not unrelated menus; old owner is revoked', async t => {
+  const { api, state } = fixture(t)
+  api.template.menus = [deviceMenu({ assetTypes: ['device', 'space'] }), menu('help', { owner: 'docs' })]
+  api.userMenus = copy(api.template.menus)
+  api.template.assetAccesses.push({ assetType: 'space', accesses: [{ supportId: 'ignore' }] })
+  api.catalog = [policy('org')]
+  await state.loadPermissions()
+  assert.deepEqual(state.editor.flatMenus.value.map(item => item.id), ['help'])
+  assert.deepEqual(state.blockedMenuNames.value, ['device'])
+  state.editor.setMenusChecked(state.editor.menuTree.value, true)
+  await state.savePermissions()
+  assert.deepEqual(api.roles.a.menus.map(item => item.id), ['help'])
+  assert.deepEqual(api.roles.a.assetAccesses, [])
+})
+
+test('malformed effective scope blocks the write and keeps the draft for retry', async t => {
+  const { api, state } = fixture(t); await flush()
+  const draft = state.editor.getSnapshot()
+  api.catalog = null
+  await state.savePermissions()
+  assert.equal(api.writes.length, 0)
+  assert.equal(state.refreshError.value, true)
+  assert.deepEqual(state.editor.getSnapshot(), draft)
+  api.catalog = [policy('org')]
+  await state.savePermissions()
+  assertPolicy(api.roles.a, 'org')
+  assert.equal(state.refreshError.value, false)
+})
+
+// Template bounds are not inferred from the grantable list or from translated option labels.
+test('narrow template with unrestricted operator retains only org; incomparable or configured supports cannot widen', () => {
+  const menu = deviceMenu({ assetAccesses: [
+    { assetType: 'device', supportId: 'org', priority: 100 },
+    { assetType: 'device', supportId: 'peer', priority: 100 },
+    { assetType: 'device', supportId: 'wider', priority: 200 },
+  ] })
+  const catalog = ids => [{ assetType: 'device', accesses: ids.map(supportId => ({ supportId })) }]
+  const intersect = (template, ids) => intersectRoleAssetPolicies([menu], [template], catalog(ids))
+  assert.deepEqual(intersect(policy('org'), ['creator', 'org', 'ignore']), [policy('org')])
+  assert.deepEqual(intersect(policy('wider'), ['creator', 'org']), [policy('org')])
+  assert.deepEqual(intersect(policy('peer'), ['creator', 'org']), [])
+  assert.deepEqual(intersect(policy('ignore', { options: { custom: 'opaque' } }), ['org']), [])
 })

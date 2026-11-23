@@ -1,13 +1,13 @@
 import { cloneDeep } from 'lodash-es'
 import { getMenuPermissionAssetTypes, isFixedNotificationAsset } from '@jetlinks-web-core/hooks'
-import type { AssetAccessPolicy, MenuAssetPermissionSnapshot, MenuPermissionNode } from '@jetlinks-web-core/hooks'
+import type { AssetAccessPolicy, GrantableAssetType, MenuAssetPermissionSnapshot, MenuPermissionNode } from '@jetlinks-web-core/hooks'
 import {
   filterApplicationMenuInterfacePermissions,
   normalizeCandidateMenus,
   normalizeGrantedMenus,
 } from '../Template/Save/menu-config.shared'
 
-export interface ApplicationRolePermissionScopeInput {
+interface MenuSources {
   isExternal: boolean
   currentUserMenus: MenuPermissionNode[]
   applicationMenus: MenuPermissionNode[]
@@ -28,8 +28,13 @@ const flattenMenus = (menus: MenuPermissionNode[], parentId?: string): MenuPermi
     ...flattenMenus(menu.children || [], menu.id),
   ])
 
-/** 只从模板独立策略生成菜单级兼容字段，旧角色策略和用户菜单资产字段不参与继承。 */
-const templateMenuAccesses = (menu: MenuPermissionNode, policies: AssetAccessPolicy[]) => {
+/** 仅保留已绑定节点的撤销标识；授权详情中的其他候选不能作为要替换的 owner。 */
+export const previousRoleBindings = (menus: MenuPermissionNode[]) => flattenMenus(menus)
+  .filter(menu => menu.granted === true)
+  .map(({ id, owner }) => ({ id, owner }))
+
+/** 只从已收窄的独立策略生成菜单级兼容字段，旧角色策略和用户菜单资产字段不参与继承。 */
+const effectiveMenuAccesses = (menu: MenuPermissionNode, policies: AssetAccessPolicy[]) => {
   const assetTypes = new Set(getMenuPermissionAssetTypes(menu))
   return policies.filter(policy => assetTypes.has(policy.assetType))
     .flatMap(policy => policy.accesses.map(access => ({
@@ -37,26 +42,86 @@ const templateMenuAccesses = (menu: MenuPermissionNode, policies: AssetAccessPol
     })))
 }
 
-/** 菜单限定当前应用并取用户和模板交集；祖先仅保留层级，资产权限始终采用模板配置。 */
-export const resolveApplicationRolePermissionScope = (input: ApplicationRolePermissionScopeInput) => {
-    const normalize = (items: MenuPermissionNode[]) => flattenMenus(normalizeGrantedMenus(
-        input.isExternal ? items : filterApplicationMenuInterfacePermissions(items),
-    ))
-    const userMenus = new Map(normalize(input.currentUserMenus).map(menu => [menu.id, menu]))
-    const roleMenus = new Map(normalize(input.roleMenus || []).map(menu => [menu.id, menu]))
-    const assetAccesses = cloneDeep(input.templateAssetAccesses || [])
-    const applicationIds = new Set(flattenMenus(input.applicationMenus).map(menu => menu.id))
-    const candidates = normalize(input.templateMenus || []).filter(menu => userMenus.has(menu.id) && applicationIds.has(menu.id))
-    const byId = new Map(candidates.map(menu => {
-        const userMenu = userMenus.get(menu.id)!
-        const userButtons = new Set((userMenu.buttons || []).filter(button => button.granted).map(button => button.id))
-        const granted = !!menu.granted && !!userMenu.granted
-        return [menu.id, {
-            ...menu,
-            granted,
-            buttons: granted ? (menu.buttons || []).filter(button => button.granted && userButtons.has(button.id)) : [],
-            assetAccesses: templateMenuAccesses(menu, assetAccesses),
-            children: [] as MenuPermissionNode[],
+const normalizeMenus = (items: MenuPermissionNode[], external: boolean) => flattenMenus(normalizeGrantedMenus(
+  external ? items : filterApplicationMenuInterfacePermissions(items),
+))
+
+/** 先求应用、模板与用户的菜单/按钮交集；可授权资产目录只查询其中能授权的节点。 */
+export const getApplicationRoleMenuCandidates = (input: MenuSources): MenuPermissionNode[] => {
+  const user = new Map(normalizeMenus(input.currentUserMenus, input.isExternal).map(menu => [menu.id, menu]))
+  const application = new Map(flattenMenus(input.applicationMenus).map(menu => [menu.id, menu]))
+  return normalizeMenus(input.templateMenus || [], input.isExternal).flatMap(menu => {
+    const own = user.get(menu.id)
+    const app = application.get(menu.id)
+    if (!own || !app) return []
+    const granted = !!own.granted && !!menu.granted
+    const buttons = new Set((own.buttons || []).filter(button => button.granted).map(button => button.id))
+    return [{ ...menu, granted,
+      assetTypes: [...new Set([...getMenuPermissionAssetTypes(app), ...getMenuPermissionAssetTypes(menu)])],
+      buttons: granted ? (menu.buttons || []).filter(button => button.granted && buttons.has(button.id)) : [],
+    }]
+  })
+}
+
+/**
+ * 可下授目录按范围 priority 升序返回，菜单中的 priority 仅用于比较宽窄，不作为可授权凭据。
+ * 模板值可授时原样保留，否则只收窄到当前用户的上限；同级异名或未知范围不推断包含关系。
+ */
+export const intersectRoleAssetPolicies = (
+  menus: MenuPermissionNode[], template: AssetAccessPolicy[], catalog: GrantableAssetType[],
+): AssetAccessPolicy[] => {
+  const priorities = new Map<string, Map<string, number>>()
+  for (const menu of menus) {
+    const types = getMenuPermissionAssetTypes(menu)
+    for (const type of types) if (!priorities.has(type)) priorities.set(type, new Map())
+    for (const access of menu.assetAccesses || []) {
+      const type = access.assetType || (types.length === 1 ? types[0] : undefined)
+      if (type && Number.isFinite(access.priority)) priorities.get(type)?.set(access.supportId, access.priority)
+    }
+  }
+  const policies = new Map(template.map(policy => [policy.assetType, policy]))
+  return catalog.flatMap(({ assetType, accesses }) => {
+    const ranks = priorities.get(assetType)
+    const fixed = isFixedNotificationAsset(assetType)
+    const policy = policies.get(assetType) ?? (fixed ? undefined : policies.get('*'))
+    const allowed = accesses.filter(access => !access.disabled)
+    if (!ranks || !policy || !allowed.length || assetType === '*') return []
+    const enabledIds = new Set(allowed.map(access => access.supportId))
+    const last = allowed[allowed.length - 1].supportId
+    const max = ranks.get(last)
+    const upper = allowed.filter(access => access.supportId === last || (max !== undefined && ranks.get(access.supportId) === max))
+    const values = new Map<string, AssetAccessPolicy['accesses'][number]>()
+    const options = (policy as AssetAccessPolicy & { options?: Record<string, unknown> }).options
+    for (const access of policy.accesses) {
+      if (enabledIds.has(access.supportId)) {
+        values.set(access.supportId, access)
+        continue
+      }
+      // 固定通知值必须显式匹配；未知扩展配置不能从某个 support 移植到另一个。
+      if (fixed || Object.keys(access).some(key => key !== 'supportId')
+        || Object.keys(policy).some(key => !['assetType', 'accesses', 'options'].includes(key))
+        || Object.keys(options || {}).some(key => key !== 'scopeStrategy')) continue
+      const limit = ranks.get(access.supportId)
+      if (access.supportId !== 'ignore' && !(limit !== undefined && max !== undefined && max < limit)) continue
+      for (const { supportId } of upper) if (!values.has(supportId)) values.set(supportId, { supportId })
+    }
+    return values.size ? [{ ...policy, assetType, accesses: [...values.values()] }] : []
+  })
+}
+
+/** 未获资产范围的父菜单可以保留作导航，但不能提交为已授权菜单。 */
+export const resolveApplicationRolePermissionScope = (input: {
+  isExternal: boolean; candidates: MenuPermissionNode[]; effectiveAssetAccesses: AssetAccessPolicy[]; roleMenus?: MenuPermissionNode[]
+}) => {
+    const roleMenus = new Map(normalizeMenus(input.roleMenus || [], input.isExternal).map(menu => [menu.id, menu]))
+    const assetAccesses = cloneDeep(input.effectiveAssetAccesses.filter(policy => policy.accesses.length > 0))
+    const effectiveTypes = new Set(assetAccesses.map(policy => policy.assetType))
+    const blockedMenuNames: string[] = []
+    const byId = new Map(input.candidates.map(menu => {
+        const granted = !!menu.granted && getMenuPermissionAssetTypes(menu).every(type => effectiveTypes.has(type) || isFixedNotificationAsset(type))
+        if (menu.granted && !granted) blockedMenuNames.push(menu.i18nName || menu.name || menu.id)
+        return [menu.id, { ...menu, granted, buttons: granted ? menu.buttons : [],
+          assetAccesses: effectiveMenuAccesses(menu, assetAccesses), children: [] as MenuPermissionNode[],
         }]
     }))
     const roots: MenuPermissionNode[] = []
@@ -76,9 +141,9 @@ export const resolveApplicationRolePermissionScope = (input: ApplicationRolePerm
         const selectedButtons = new Set((role?.buttons || []).filter(button => button.granted).map(button => button.id))
         return {
             ...menu,
-            granted: role?.granted === true,
+            granted: grantableMenuIds.has(menu.id) && role?.granted === true,
             buttons: (menu.buttons || []).map(button => ({ ...button, granted: selectedButtons.has(button.id) })),
-            // 通知资产的旧角色值仅用于回显；授权候选仍来自上方模板菜单。
+            // 通知资产的旧角色值仅用于回显；可授值仍受模板和当前用户共同约束。
             assetAccesses: [
                 ...(menu.assetAccesses || []).filter(access => !isFixedNotificationAsset(access.assetType)),
                 ...(role?.assetAccesses || []).filter(access => isFixedNotificationAsset(access.assetType)),
@@ -87,7 +152,7 @@ export const resolveApplicationRolePermissionScope = (input: ApplicationRolePerm
         }
     })
     const grantableMenuIds = new Set([...byId.values()].filter(menu => menu.granted).map(menu => menu.id))
-    return { menus, grantedMenus: echo(menus), assetAccesses, grantableMenuIds }
+    return { menus, grantedMenus: echo(menus), assetAccesses, grantableMenuIds, blockedMenuNames }
 }
 
 /** 资产类型跟随有效菜单，保留共享类型及模板扩展配置，不修改输入策略。 */
@@ -107,7 +172,7 @@ export const buildApplicationRolePermissionGrant = (
     .map(policy => [policy.assetType, policy.accesses[0]?.supportId]))
   const assetAccesses = policiesForMenus(scope.assetAccesses, selectedMenus).flatMap(policy => {
     if (!isFixedNotificationAsset(policy.assetType)) return [policy]
-    // 其他资产照原样继承模板；固定范围只能继承编辑器已校验的单一策略。
+    // 普通资产已按可下授目录收窄；固定范围只能继承编辑器已校验的单一策略。
     const access = policy.accesses.find(item => item.supportId === fixedSupportIds.get(policy.assetType))
     return access ? [{ ...policy, accesses: [access] }] : []
   })
@@ -115,7 +180,7 @@ export const buildApplicationRolePermissionGrant = (
     // 公共编辑器会勾选有已选子项的祖先；导航祖先本身不在模板授权范围时，不能作为新授权提交。
     const granted = scope.grantableMenuIds.has(menu.id) && menu.granted === true
     return { ...menu, granted, buttons: granted ? menu.buttons : [],
-      assetAccesses: granted ? templateMenuAccesses(menu, assetAccesses) : [] }
+      assetAccesses: granted ? effectiveMenuAccesses(menu, assetAccesses) : [] }
   })
   const included = new Set(menus.map(menu => menu.id))
   // 后端按提交节点的 owner 替换旧绑定；保留撤销标记，确保清空或移出交集后仍删除旧菜单。
