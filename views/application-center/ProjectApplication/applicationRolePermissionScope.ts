@@ -7,6 +7,8 @@ import {
   normalizeGrantedMenus,
 } from '../Template/Save/menu-config.shared'
 
+export type ApplicationRolePermissionMode = 'menus-only' | 'with-assets'
+
 interface MenuSources {
   isExternal: boolean
   currentUserMenus: MenuPermissionNode[]
@@ -109,16 +111,17 @@ export const intersectRoleAssetPolicies = (
   })
 }
 
-/** 未获资产范围的父菜单可以保留作导航，但不能提交为已授权菜单。 */
+/** 两个入口共用菜单/按钮交集；只有配置数据权限的入口按资产上限裁剪菜单。 */
 export const resolveApplicationRolePermissionScope = (input: {
   isExternal: boolean; candidates: MenuPermissionNode[]; effectiveAssetAccesses: AssetAccessPolicy[]; roleMenus?: MenuPermissionNode[]
-}) => {
+}, mode: ApplicationRolePermissionMode = 'with-assets') => {
     const roleMenus = new Map(normalizeMenus(input.roleMenus || [], input.isExternal).map(menu => [menu.id, menu]))
     const assetAccesses = cloneDeep(input.effectiveAssetAccesses.filter(policy => policy.accesses.length > 0))
     const effectiveTypes = new Set(assetAccesses.map(policy => policy.assetType))
     const blockedMenuNames: string[] = []
     const byId = new Map(input.candidates.map(menu => {
-        const granted = !!menu.granted && getMenuPermissionAssetTypes(menu).every(type => effectiveTypes.has(type) || isFixedNotificationAsset(type))
+        const granted = !!menu.granted && (mode === 'menus-only' || getMenuPermissionAssetTypes(menu)
+          .every(type => effectiveTypes.has(type) || isFixedNotificationAsset(type)))
         if (menu.granted && !granted) blockedMenuNames.push(menu.i18nName || menu.name || menu.id)
         return [menu.id, { ...menu, granted, buttons: granted ? menu.buttons : [],
           assetAccesses: effectiveMenuAccesses(menu, assetAccesses), children: [] as MenuPermissionNode[],
@@ -144,7 +147,7 @@ export const resolveApplicationRolePermissionScope = (input: {
             granted: grantableMenuIds.has(menu.id) && role?.granted === true,
             buttons: (menu.buttons || []).map(button => ({ ...button, granted: selectedButtons.has(button.id) })),
             // 通知资产的旧角色值仅用于回显；可授值仍受模板和当前用户共同约束。
-            assetAccesses: [
+            assetAccesses: mode === 'menus-only' ? [] : [
                 ...(menu.assetAccesses || []).filter(access => !isFixedNotificationAsset(access.assetType)),
                 ...(role?.assetAccesses || []).filter(access => isFixedNotificationAsset(access.assetType)),
             ],

@@ -235,6 +235,20 @@ export const getBusinessApplicationRoleMenuGrantDetail = (applicationId: string,
     { applicationScope: false },
   )
 
+export interface ApplicationRoleMenuBinding {
+  menuId: string
+  buttons: Array<{ id: string; granted: boolean }>
+  merge?: boolean
+  priority?: number
+}
+
+/** 分页读取实际绑定，而不是受模板裁剪的角色详情。旧绑定可能不在当前菜单候选内。 */
+export const queryApplicationRoleMenuBindings = (applicationId: string, roleId: string, pageIndex: number) =>
+  apiRequest.post<PagerResult<ApplicationRoleMenuBinding>>(
+    `/business-application/${encodeURIComponent(applicationId)}/roles/${encodeURIComponent(roleId)}/menus/_query`,
+    { pageIndex, pageSize: 100, sorts: [{ name: 'menuId', order: 'asc' }] }, { applicationScope: false },
+  )
+
 /**
  * 在目标应用范围内保存角色菜单与数据权限授权。
  *

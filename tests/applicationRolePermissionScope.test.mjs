@@ -9,8 +9,10 @@ const { outputFiles } = await build({
     contents: `
       export * from './views/application-center/ProjectApplication/applicationRolePermissionScope';
       export { useApplicationRoleManagement } from './views/application-center/ProjectApplication/Detail/components/useApplicationRoleManagement';
+      export { readRoleMenuBindings } from './views/application-center/ProjectApplication/menuOnlyRoleGrant';
+      export { useRolePermission } from './views/system/Role/Detail/Permission/useRolePermission';
       export { useMenuAssetPermissionEditor } from '@jetlinks-web-core/hooks';
-      export { reactive, effectScope, nextTick } from 'vue';
+      export { reactive, ref, effectScope, nextTick } from 'vue';
       export { http } from '@jetlinks-web/core';
       export { notifications } from '@jetlinks-web/utils';
     `,
@@ -27,7 +29,7 @@ const { outputFiles } = await build({
       plugin.onResolve({ filter: /^@jetlinks-web-core\/hooks$/ }, () => ({
         path: fileURLToPath(new URL('../../../jetlinks-web-core/src/hooks/useMenuAssetPermissionEditor.ts', import.meta.url)),
       }))
-      plugin.onResolve({ filter: /^(@jetlinks-web\/core|@jetlinks-web\/utils|vue-i18n|@jetlinks-web-core\/utils\/utils|@authentication-manager-ui\/api\/system\/menu)$/ }, args => ({
+      plugin.onResolve({ filter: /^(@jetlinks-web\/core|@jetlinks-web\/utils|vue-i18n|vue-router|@jetlinks-web-core\/utils\/utils|@authentication-manager-ui\/api\/system\/menu)$/ }, args => ({
         path: args.path, namespace: 'fixture',
       }))
       plugin.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ contents: {
@@ -41,6 +43,7 @@ const { outputFiles } = await build({
             [method, (...args) => call(method, ...args)]));
         `,
         '@jetlinks-web/utils': `export const notifications = []; export const onlyMessage = (...args) => notifications.push(args);`,
+        'vue-router': `export const useRoute = () => ({ params: { id: 'a' } }); export const useRouter = () => ({});`,
         'vue-i18n': `export const useI18n = () => ({ t: (key, params) => key + (params?.name || '') });`,
         '@jetlinks-web-core/utils/utils': `export const isNoCommunity = true;`,
         '@authentication-manager-ui/api/system/menu': `export const getAssetsType = async () => ({ result: [{ id: 'device', name: '设备' }] });`,
@@ -49,7 +52,7 @@ const { outputFiles } = await build({
   }],
 })
 const { getApplicationRoleMenuCandidates, intersectRoleAssetPolicies, resolveApplicationRolePermissionScope, buildApplicationRolePermissionGrant, useMenuAssetPermissionEditor,
-  useApplicationRoleManagement, reactive, effectScope, nextTick, http, notifications } = await import(
+  useApplicationRoleManagement, useRolePermission, readRoleMenuBindings, reactive, ref, effectScope, nextTick, http, notifications } = await import(
   `data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString('base64')}`,
 )
 
@@ -83,7 +86,7 @@ function editorFor(scope) {
   return editor
 }
 
-function fixture(t, { external = false } = {}) {
+function fixture(t, { external = false, entry = 'system' } = {}) {
   http.calls = []
   notifications.length = 0
   const api = {
@@ -108,6 +111,13 @@ function fixture(t, { external = false } = {}) {
     if (method === 'get' && url === '/business-application/app/menus') return api.applicationFailure
       ? { success: false } : { success: true, result: { menus: copy(api.applicationMenus || api.template.menus),
         assetAccesses: copy(api.template.assetAccesses) } }
+    const relation = url.match(/^\/business-application\/app\/roles\/(a|b)\/menus\/_query$/)
+    if (method === 'post' && relation) {
+      if (api.bindingPage) return api.bindingPage(data.pageIndex, relation[1])
+      const dataRows = flatten(api.roles[relation[1]].menus).filter(m => m.granted === true)
+        .map(m => ({ menuId: m.id, buttons: (m.buttons || []).map(b => ({ id: b.id, granted: b.granted === true })) }))
+      return { success: true, result: { total: dataRows.length, data: dataRows } }
+    }
     const role = url.match(/^\/business-application\/app\/roles\/(a|b)\/menus\/_grant(\/detail)?$/)
     if (method === 'get' && role?.[2]) return { success: true, result: copy(api.roles[role[1]]) }
     if (method === 'put' && role && !role[2]) {
@@ -121,7 +131,7 @@ function fixture(t, { external = false } = {}) {
       api.roles[role[1]] = { menus: copy([
         ...api.roles[role[1]].menus.filter(menu => menu.owner && !owners.has(menu.owner)),
         ...data.menus.filter(menu => menu.granted),
-      ]), assetAccesses: copy(data.assetAccesses) }
+      ]), assetAccesses: copy(data.assetAccesses ?? api.roles[role[1]].assetAccesses) }
       return { success: true }
     }
     throw new Error(`Unexpected HTTP ${method} ${url}`)
@@ -130,7 +140,15 @@ function fixture(t, { external = false } = {}) {
   t.after(() => scope.stop())
   const props = reactive({ roles: [{ id: 'a', name: '角色A' }, { id: 'b', name: '角色B' }], users: [],
     scope: { applicationId: 'app', templateId: 'template', isExternal: external } })
-  const state = scope.run(() => useApplicationRoleManagement(props, () => {}))
+  const state = scope.run(() => {
+    if (entry === 'detail') return useApplicationRoleManagement(props, () => {})
+    // Existing data-permission tests exercise the actual system role page entry and its default mode.
+    const activeRoleId = ref('a')
+    const system = useRolePermission({ get application() {
+      return { scope: props.scope, role: props.roles.find(role => role.id === activeRoleId.value) }
+    } })
+    return { ...system.permissions, activeRoleId }
+  })
   return { api, props, state, stop: () => scope.stop() }
 }
 
@@ -239,6 +257,7 @@ test('role A is saved with tenant after the template changes from all while the 
   assert.equal(state.editor.visibleAssets.value[0].selectedSupportId, 'tenant')
   assert.equal(notifications.length, 1)
   assert.equal(http.calls.filter(call => call.url.endsWith('/template/menus')).length, 3)
+  assert.equal(http.calls.filter(call => call.url.endsWith('/asset-accesses/grantable')).length, 3)
   const applicationCalls = http.calls.filter(call => call.url === '/business-application/app/menus')
   assert.equal(applicationCalls.length, 3)
   assert.ok(applicationCalls.every(call => call.config.applicationScope === false))
@@ -356,7 +375,7 @@ test('duplicate clicks are ignored and disposing during refresh prevents a write
 })
 
 test('external application role display continues to skip menu permission reads and writes', async t => {
-  const { state } = fixture(t, { external: true })
+  const { state } = fixture(t, { external: true, entry: 'detail' })
   await flush()
   await state.savePermissions()
   assert.deepEqual(http.calls, [])
@@ -471,4 +490,140 @@ test('narrow template with unrestricted operator retains only org; incomparable 
   assert.deepEqual(intersect(policy('wider'), ['creator', 'org']), [policy('org')])
   assert.deepEqual(intersect(policy('peer'), ['creator', 'org']), [])
   assert.deepEqual(intersect(policy('ignore', { options: { custom: 'opaque' } }), ['org']), [])
+})
+
+const grantableCalls = () => http.calls.filter(call => call.url === '/menu/asset-accesses/grantable')
+
+test('application detail uses only the menu/button intersection on load, switch, save and reload', async t => {
+  const { api, state } = fixture(t, { entry: 'detail' }); await flush()
+  const wall = menu('wall', { name: '监控墙', assetTypes: ['device', 'space'],
+    buttons: [button('view'), button('save'), button('delete', false)] })
+  api.catalog = []
+  api.template = { menus: [wall, menu('template-only'), menu('outside-app')], assetAccesses: [] }
+  api.userMenus = [{ ...wall, buttons: [button('view'), button('delete')] }, menu('outside-app'), menu('user-only')]
+  api.applicationMenus = [wall, menu('template-only'), menu('user-only')]
+  api.roles.b = { menus: [], assetAccesses: [] }
+  state.activeRoleId.value = 'b'; await flush()
+  const [row] = state.editor.flatMenus.value
+  assert.deepEqual(state.editor.flatMenus.value.map(m => m.id), ['wall'])
+  assert.deepEqual(state.blockedMenuNames.value, [])
+  assert.equal(row.granted, false)
+  assert.deepEqual(row.buttons.map(b => b.id), ['view'])
+  state.editor.setMenusChecked([row], true)
+  await state.savePermissions()
+  assert.equal(api.writes.length, 1)
+  const [{ data, roleId }] = api.writes
+  assert.equal(roleId, 'b'); assert.equal(Object.hasOwn(data, 'assetAccesses'), false)
+  assert.deepEqual(data.menus.filter(m => m.granted).map(m => [m.id, m.buttons.map(b => b.id), m.assetAccesses]),
+    [['wall', ['view'], undefined]])
+  assert.equal(state.editor.flatMenus.value[0].granted, true)
+  assert.equal(grantableCalls().length, 0)
+})
+
+test('unchanged detail or edit then undo does not verify, write, or report success', async t => {
+  const { state, api } = fixture(t, { entry: 'detail' }); await flush()
+  const row = state.editor.flatMenus.value[0]
+  const calls = http.calls.length
+  await state.savePermissions()
+  state.editor.toggleButton(row, row.buttons[1], true)
+  state.editor.toggleButton(row, row.buttons[1], false)
+  await state.savePermissions()
+  assert.equal(http.calls.length, calls); assert.deepEqual(api.writes, []); assert.deepEqual(notifications, [])
+})
+
+test('detail never replays retained menu scopes or silently drops hidden bindings, even if projection looks empty', async t => {
+  const { state, api } = fixture(t, { entry: 'detail' }); await flush()
+  api.template.menus.push(menu('help')); api.userMenus.push(menu('help'))
+  api.roles.a.menus[0].assetAccesses = []; await state.loadPermissions()
+  state.editor.setMenusChecked([state.editor.flatMenus.value[1]], true)
+  const draft = state.editor.getSnapshot()
+  await state.savePermissions()
+  assert.equal(state.menuSaveWarning.value, 'menuBindingProtected')
+  assert.deepEqual(state.editor.getSnapshot(), draft); assert.deepEqual(api.writes, [])
+  api.roles.a.menus.push(menu('hidden-from-template')); await state.loadPermissions()
+  state.editor.setMenusChecked(state.editor.flatMenus.value, false)
+  await state.savePermissions(); assert.equal(state.menuSaveWarning.value, 'menuBindingProtected')
+  assert.deepEqual(api.writes, []); assert.deepEqual(notifications, []); assert.equal(grantableCalls().length, 0)
+})
+
+test('detail can explicitly replace all old bindings and then clear them without touching independent policies', async t => {
+  const { api, state } = fixture(t, { entry: 'detail' }); await flush()
+  const notify = menu('notify', { assetTypes: ['notifyTemplate'] })
+  api.template.menus.push(notify); api.userMenus.push(notify); api.catalog = []
+  await state.loadPermissions()
+  const row = id => state.editor.flatMenus.value.find(m => m.id === id)
+  state.editor.setMenusChecked([row('device')], false)
+  state.editor.setMenusChecked([row('notify')], true)
+  await state.savePermissions()
+  assert.deepEqual(api.writes[0].data.menus.map(m => [m.id, m.granted]), [['notify', true], ['device', false]])
+  assert.ok(api.writes[0].data.menus.every(m => !Object.hasOwn(m, 'assetAccesses')))
+  assert.deepEqual(Object.keys(api.writes[0].data), ['menus']); assert.deepEqual(api.roles.a.assetAccesses, [policy('ignore')])
+  state.editor.setMenusChecked([row('notify')], false); await state.savePermissions()
+  assert.deepEqual(api.roles.a.menus, []); assert.deepEqual(api.roles.a.assetAccesses, [policy('ignore')]); assert.equal(grantableCalls().length, 0)
+})
+
+test('detail detects changed scope or bindings without resetting the edited selection or posting', async t => {
+  const { api, state } = fixture(t, { entry: 'detail' }); await flush()
+  state.editor.setMenusChecked(state.editor.flatMenus.value, false)
+  const draft = state.editor.getSnapshot()
+  api.userMenus[0].buttons.pop(); await state.savePermissions()
+  assert.equal(state.menuSaveWarning.value, 'menuGrantChanged'); assert.deepEqual(state.editor.getSnapshot(), draft)
+  api.userMenus = [deviceMenu()]; api.roles.a.menus[0].buttons = [button('save')]; await state.savePermissions()
+  assert.equal(state.menuSaveWarning.value, 'menuGrantChanged'); assert.deepEqual(state.editor.getSnapshot(), draft)
+  assert.deepEqual(api.writes, []); assert.deepEqual(notifications, [])
+})
+
+test('incomplete binding reads block writes without hiding candidates or losing the draft', async t => {
+  const { api, state } = fixture(t, { entry: 'detail' }); await flush()
+  state.editor.setMenusChecked(state.editor.flatMenus.value, false)
+  api.bindingPage = () => ({ result: { data: [], total: 1 } })
+  const draft = state.editor.getSnapshot(); await state.savePermissions()
+  assert.equal(state.menuSaveWarning.value, 'menuVerificationFailed'); assert.deepEqual(state.editor.getSnapshot(), draft)
+  await state.loadPermissions(); assert.equal(state.initialized.value, true); assert.equal(state.editor.flatMenus.value.length, 1)
+  assert.equal(state.menuSaveWarning.value, 'menuBindingsUnavailable')
+  api.bindingPage = null; state.editor.setMenusChecked(state.editor.flatMenus.value, false); await state.savePermissions()
+  assert.equal(state.menuSaveWarning.value, 'menuBindingsUnavailable'); assert.deepEqual(api.writes, [])
+})
+
+test('detail checks all binding pages and rejects duplicate rows, drifting totals and missing counts', async t => {
+  const { api } = fixture(t, { entry: 'detail' }); await flush()
+  const row = menuId => ({ menuId, buttons: [] })
+  const page = (total, ...data) => ({ success: true, result: { total, data } })
+  api.bindingPage = idx => idx ? page(2, row('b')) : page(2, row('a'))
+  assert.deepEqual((await readRoleMenuBindings('app', 'a')).map(r => r.menuId), ['a', 'b'])
+  for (const last of [page(2, row('a')), page(3, row('b')), page(undefined, row('b')), page(2), page(2, { menuId: 'b' })]) {
+    api.bindingPage = idx => idx ? last : page(2, row('a'))
+    await assert.rejects(readRoleMenuBindings('app', 'a'))
+  }
+})
+
+test('detail handles rejected writes and role switches during verification without success or wrong-role writes', async t => {
+  const { state, api } = fixture(t, { entry: 'detail' }); await flush()
+  state.editor.setMenusChecked(state.editor.flatMenus.value, false); const draft = state.editor.getSnapshot()
+  api.saveFailure = 'denied'; await state.savePermissions(); assert.equal(state.menuSaveWarning.value, 'menuWriteFailed')
+  assert.deepEqual(state.editor.getSnapshot(), draft); assert.deepEqual(notifications, [])
+  const gate = deferred(); api.beforeTemplate = () => gate.promise
+  const saving = state.savePermissions(); state.activeRoleId.value = 'b'; await nextTick(); gate.resolve()
+  await saving; await flush(); assert.equal(api.writes.length, 1); assert.equal(grantableCalls().length, 0)
+  assert.equal(state.menuSaveWarning.value, '')
+})
+
+test('detail shows a stored menu with no granted buttons as checked and lets the user explicitly revoke it', async t => {
+  const { api, state } = fixture(t, { entry: 'detail' }); await flush()
+  api.roles.a.menus[0].buttons = []; await state.loadPermissions()
+  const [row] = state.editor.ownerGroups.value[0].menus
+  assert.equal(row._granted, true); assert.ok(row.buttons.every(b => !b.granted))
+  state.editor.toggleMenu(row, false); await state.savePermissions()
+  assert.deepEqual(api.writes[0].data.menus, [{ id: 'device', owner: 'app', granted: false, buttons: [] }])
+  assert.equal(grantableCalls().length, 0)
+})
+
+test('a successful PUT with unmatched binding readback does not report success or discard the draft', async t => {
+  const { api, state } = fixture(t, { entry: 'detail' }); await flush()
+  state.editor.setMenusChecked(state.editor.flatMenus.value, false)
+  const draft = state.editor.getSnapshot()
+  api.beforeSave = () => { api.bindingPage = () => ({ success: true, result: { total: 1, data: [{ menuId: 'device', buttons: [] }] } }) }
+  await state.savePermissions()
+  assert.equal(api.writes.length, 1); assert.equal(state.menuSaveWarning.value, 'menuWriteFailed')
+  assert.deepEqual(notifications, []); assert.deepEqual(state.editor.getSnapshot(), draft)
 })
