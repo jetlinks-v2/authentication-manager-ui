@@ -298,7 +298,7 @@
   "Department.index.945805-5": "The products imported this time will become the distribution products of <b> organization </b>",
   "Department.index.945805-6": "The devices imported this time will become the distribution devices of <b> organization </b>",
   "user.index.252066-0": "Bind User",
-  "user.index.252066-1": "Are you sure to unbind? The relevant position information of the user will also be cleared.",
+  "user.index.252066-1": "Are you sure to unbind? ",
   "user.index.252066-2": "Batch Unbind",
   "user.index.252066-3": "Normal",
   "user.index.252066-4": "Disabled",
