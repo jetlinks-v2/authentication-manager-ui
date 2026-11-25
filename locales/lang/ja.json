@@ -3454,6 +3454,7 @@
   "Role.application.applicationData": "現在のアプリケーションのデータ",
   "Role.users.loadFailed": "ユーザー一覧を読み込めませんでした。もう一度お試しください。",
   "Role.users.saveFailed": "ロールのユーザーを更新できませんでした。もう一度お試しください。",
+  "Role.globalPermissions.baseMenus": "基本メニュー",
   "Role.globalPermissions.loadFailed": "メニュー権限を読み込めませんでした。再試行してください。",
   "Role.globalPermissions.scopeChanged": "編集可能なメニュー権限が変更されました。下書きは保持されています。再読み込みしてから設定してください。",
   "Role.globalPermissions.verifyFailed": "権限範囲を確認できませんでした。下書きは保持されています。保存を再試行してください。"

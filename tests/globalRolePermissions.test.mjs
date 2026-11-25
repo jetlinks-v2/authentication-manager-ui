@@ -95,7 +95,7 @@ function fixture(t) {
   ], assetAccesses: [legacyAsset] }
   const api = {
     detail, legacyAsset, saveResponse: success(null),
-    user: success([menu('iot-nested', 'iot'), menu('iot-base', 'iot'), menu('iot-no-access', 'iot', { granted: false }), appMenu]),
+    user: success([menu('iot-nested', 'iot'), menu('iot-base', 'iot'), menu('iot-no-access', 'iot', { granted: false }), menu('legacy-app', 'app')]),
     userResponse: () => api.user,
   }
   http.handler = async (method, url) => {
@@ -125,14 +125,18 @@ function fixture(t) {
   vm.mount(root)
   t.after(() => vm.unmount())
   const findAll = tag => flatten([root]).filter(node => node.tag === tag)
-  return { api, tree: page.permissionTreeRef, save: page.clickSave, find: tag => findAll(tag)[0], findAll }
+  const find = tag => findAll(tag)[0]
+  const switchTab = async key => { find('a-tabs').props['onUpdate:activeKey'](key); await nextTick() }
+  const rows = () => flatten(find('a-table')?.props.records)
+  return { api, tree: page.permissionTreeRef, save: page.clickSave, find, findAll, switchTab, rows }
 }
 
-test('普通角色只渲染 iot 菜单，无分类页签；全选操作不改被隐藏的菜单、按钮和资产策略', async t => {
-  const { api, tree, find } = fixture(t)
+test('基础菜单默认选中，表头只操作本组可编辑项，不改其他菜单、按钮和资产策略', async t => {
+  const { api, tree, find, findAll } = fixture(t)
   await flush()
   assert.equal(tree.value.canSave, true)
-  assert.equal(find('a-tabs'), undefined)
+  assert.deepEqual(findAll('a-tab-pane').map(node => node.props.tab), [notice('baseMenus'), 'MenuSetting.owner.app'])
+  assert.equal(find('a-tabs').props.activeKey, 'iot')
   const rows = flatten(find('a-table').props.records)
   assert.deepEqual(rows.map(row => row.id), ['iot-nested', 'iot-base'])
   assert.deepEqual(rows[0].buttons.map(button => button.id), ['view'])
@@ -231,30 +235,120 @@ test('仅菜单级的历史范围不作为新候选；合法批量设置可替�
   assert.equal(devicePolicy(await tree.value.onSave()), undefined)
 })
 
-test('没有可编辑的 iot 菜单时显示空态，不清空原有授权', async t => {
+for (const [owner, id, label] of [['app', 'legacy-app', 'MenuSetting.owner.app'], ['iot', 'iot-base', notice('baseMenus')]]) {
+  test(`仅 ${owner} 有可编辑项时只显示并选中该页签`, async t => {
+    const { api, tree, find, findAll, rows } = fixture(t)
+    api.user = success([menu(id, owner)])
+    await tree.value.load()
+    await nextTick()
+    assert.deepEqual(findAll('a-tab-pane').map(node => node.props.tab), [label])
+    assert.equal(find('a-tabs').props.activeKey, owner)
+    assert.ok(rows().some(node => node.id === id))
+    assert.ok(rows().every(node => node.owner === owner))
+  })
+}
+
+test('两组均无可编辑项时显示空态，保存不清空原有授权', async t => {
   const { api, tree, find } = fixture(t)
-  api.user = success([menu('legacy-app', 'app')])
-  // Load again after switching the effective user fixture.
+  api.user = success([menu('unknown-owner', 'cloud')])
   await tree.value.load()
   await nextTick()
-  assert.equal(find('a-table'), undefined)
-  assert.equal(find('a-tabs'), undefined)
+  assert.ok(!find('a-table') && !find('a-tabs'))
   assert.equal(find('CloudEmpty').props.description, 'components.MenuAssetPermissionEditor.noMenus')
-  assert.deepEqual((await tree.value.onSave()).assetAccesses, [api.legacyAsset])
+  const snapshot = await tree.value.onSave()
+  assert.ok(flatten(snapshot.menus).every(node => node.granted))
+  assert.deepEqual(snapshot.assetAccesses, [api.legacyAsset])
 })
 
-test('保存只复核有效 iot 范围，忽略 owner 无关项和顺序变化，权限变化时保留草稿并阻止保存', async t => {
-  const { api, tree, find } = fixture(t)
-  await flush()
-  api.user.result = api.user.result.filter(item => item.owner === 'iot').reverse()
-  assert.ok(await tree.value.onSave())
-  api.user.result.find(item => item.id === 'iot-nested').buttons = []
-  assert.equal(await tree.value.onSave(), undefined)
+test('应用菜单编辑和基础菜单全选共用一次保存，保留跨 owner 层级并正确回显', async t => {
+  const { api, tree, save, find, findAll, switchTab, rows } = fixture(t)
+  const [appParent, base] = api.detail.menus
+  const app = appParent.children.pop()
+  api.detail.menus.push(app)
+  appParent.granted = false
+  appParent.buttons = [] // 仅有跨 owner 子节点，不能根据该子节点勾选父菜单。
+  api.user.result.push(menu(appParent.id, 'app'))
+  app.buttons.push({ id: 'edit', granted: false }, { id: 'delete', granted: false })
+  api.user.result.find(node => node.id === app.id).buttons.push({ id: 'edit', granted: true })
+  base.assetAccesses = [{ assetType: 'device', supportId: 'creator', granted: true }]
+  await tree.value.load()
   await nextTick()
-  assert.equal(tree.value.canSave, false)
-  assert.equal(find('a-alert').props.message, notice('scopeChanged'))
-  assert.ok(find('a-table').props.records[0].buttons.length)
+  const requests = http.calls.length
+  const assetValues = () => findAll('a-radio-group').map(node => node.props.value)
+  assert.deepEqual(assetValues(), ['org', 'creator'])
+  await switchTab('app')
+  assert.deepEqual(rows().map(node => node.id), [appParent.id, app.id])
+  assert.equal(rows()[0].granted, false)
+  assert.deepEqual(rows()[1].buttons.map(button => button.id), ['view', 'edit'])
+  const edit = findAll('a-checkbox').find(node => flatten([node]).some(child => child.text === 'edit'))
+  edit.props.onChange({ target: { checked: true } })
+  await switchTab('iot')
+  assert.deepEqual(assetValues(), ['org', 'creator'])
+  find('a-checkbox').props.onChange({ target: { checked: false } })
+  await switchTab('app')
+  assert.deepEqual(assetValues(), ['org'])
+  assert.equal(rows()[0].granted, false)
+  assert.ok(rows()[1].buttons.every(button => button.granted))
+  assert.equal(http.calls.length, requests)
+  await save()
+  const writes = http.calls.filter(call => call.method === 'put')
+  assert.equal(writes.length, 1)
+  const snapshot = writes[0].data
+  const nodes = new Map(flatten(snapshot.menus).map(node => [node.id, node]))
+  assert.equal(nodes.get(appParent.id).granted, false)
+  assert.equal(nodes.get(appParent.id).children[0].id, 'iot-nested')
+  assert.equal(nodes.get('iot-nested').parentId, appParent.id)
+  assert.deepEqual(nodes.get(app.id).buttons.map(button => button.granted), [true, true, false])
+  assert.equal(nodes.get(base.id).granted, false)
+  assert.equal(nodes.get('unknown-owner').granted, true)
+  assert.deepEqual(snapshot.assetAccesses, [api.legacyAsset])
+  Object.assign(api.detail, snapshot)
+  await tree.value.load()
+  await nextTick()
+  await switchTab('iot')
+  assert.equal(rows().find(node => node.id === base.id).granted, false)
+  await switchTab('app')
+  assert.ok(rows().find(node => node.id === app.id).buttons.every(button => button.granted))
 })
+
+test('应用页签提升跨 owner 后代到最近同组祖先；本组撤销不动中间的基础菜单', async t => {
+  const { api, tree, find, switchTab } = fixture(t)
+  const nested = api.detail.menus[0].children[0]
+  nested.children = [menu('app-grandchild', 'app')]
+  api.user.result.push(menu('app-grandchild', 'app'))
+  await tree.value.load()
+  await nextTick()
+  await switchTab('app')
+  const [parent] = find('a-table').props.records
+  assert.equal(parent.id, 'app-ancestor')
+  assert.deepEqual(parent.children.map(node => node.id), ['app-grandchild', 'legacy-app'])
+  find('a-checkbox').props.onChange({ target: { checked: false } })
+  const [saved] = (await tree.value.onSave()).menus
+  assert.equal(saved.granted, true, '仅展示层级的祖先不在授权范围内')
+  assert.equal(saved.children[0].granted, true)
+  assert.ok(saved.children[0].buttons.every(button => button.granted))
+  const [grandchild] = saved.children[0].children
+  assert.equal(grandchild.granted, false)
+  assert.equal(grandchild.parentId, nested.id)
+  assert.equal(saved.children[1].granted, false)
+})
+
+for (const [owner, id] of [['iot', 'iot-nested'], ['app', 'legacy-app']]) {
+  test(`保存忽略顺序及无关 owner，但 ${owner} 可编辑按钮变化时保留草稿并阻止提交`, async t => {
+    const { api, tree, save, find, rows } = fixture(t)
+    await flush()
+    api.user.result.reverse().push(menu('irrelevant', 'cloud'))
+    assert.ok(await tree.value.onSave())
+    find('a-checkbox').props.onChange({ target: { checked: false } })
+    api.user.result.find(item => item.id === id).buttons = []
+    await save()
+    await nextTick()
+    assert.equal(tree.value.canSave, false)
+    assert.equal(find('a-alert').props.message, notice('scopeChanged'))
+    assert.equal(rows().find(node => node.id === 'iot-base').granted, false)
+    assert.ok(!http.calls.some(call => call.method === 'put'))
+  })
+}
 
 test('加载和保存范围校验失败时不放开编辑，支持重新加载或重试保存', async t => {
   const { api, tree, find } = fixture(t)

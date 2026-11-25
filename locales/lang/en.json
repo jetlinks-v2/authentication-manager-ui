@@ -3451,6 +3451,7 @@
   "Role.application.applicationData": "Current application's data",
   "Role.users.loadFailed": "Failed to load users. Please try again.",
   "Role.users.saveFailed": "Failed to update role users. Please try again.",
+  "Role.globalPermissions.baseMenus": "Base menus",
   "Role.globalPermissions.loadFailed": "Failed to load menu permissions. Please retry.",
   "Role.globalPermissions.scopeChanged": "The menu permissions you can edit have changed. Your draft is retained. Reload before editing.",
   "Role.globalPermissions.verifyFailed": "Failed to verify the permission scope. Your draft is retained. Please retry saving."

@@ -12,7 +12,7 @@ import { getOwnMenuThree, readOwnMenuTree } from '@jetlinks-web-core/api/system/
 import { getPermissionDetail_api } from '@authentication-manager-ui/api/system/role'
 import { getAssetsType } from '@authentication-manager-ui/api/system/menu'
 import { cleanRoleAssetPermissions } from './roleAssetPermissions'
-import { buildGlobalRoleMenuGroup, buildRoleGrantSnapshot, globalRoleMenuScopeFingerprint } from './roleMenuPermissions'
+import { buildGlobalRoleMenuGroups, buildOwnerEditTree, buildRoleGrantSnapshot, globalRoleMenuScopeFingerprint } from './roleMenuPermissions'
 
 const BUSINESS_APPLICATION_SUPPORT_ID = 'business_application'
 
@@ -36,7 +36,7 @@ const requirePermissionResult = <T>(response: { success?: boolean; result?: T; m
 const loadUserMenus = async (): Promise<MenuPermissionNode[]> =>
   readOwnMenuTree(await getOwnMenuThree({ paging: false }, false))
 
-/** 全局角色保留完整授权草稿，仅投影可编辑的 iot 菜单，保存前复核有效范围。 */
+/** 基础菜单与应用菜单共享授权草稿和数据权限，保存前复核两组有效范围。 */
 export function useGlobalRolePermissions() {
   const route = useRoute()
   const { t } = useI18n()
@@ -47,6 +47,7 @@ export function useGlobalRolePermissions() {
   const scopeChanged = ref(false)
   let sequence = 0
   let fingerprint = ''
+  let sourceMenus: MenuPermissionNode[] = []
   const legacyPolicies = new Map<string, AssetAccessPolicy>()
   const draft = useMenuAssetPermissionEditor({
     notificationScopeMode: 'deployment',
@@ -54,8 +55,6 @@ export function useGlobalRolePermissions() {
   })
   const editor = {
     ...draft,
-    // 保留单组的编辑范围，但不显示菜单分类页签。
-    showMenuGroups: computed(() => false),
     visibleAssets: computed(() => draft.visibleAssets.value.map(asset => ({
       ...asset,
       accesses: asset.accesses.filter(access => access.supportId !== BUSINESS_APPLICATION_SUPPORT_ID),
@@ -104,10 +103,10 @@ export function useGlobalRolePermissions() {
       const detail = requirePermissionResult(response)
       if (!Array.isArray(detail.menus) || !Array.isArray(detail.assetAccesses)) throw new Error('Role permissions unavailable')
       const menus = filterMenus(detail.menus)
-      const group = buildGlobalRoleMenuGroup(menus, userMenus)
+      const groups = buildGlobalRoleMenuGroups(menus, userMenus)
       const input = cleanRoleAssetPermissions({
         menus, assetAccesses: detail.assetAccesses, assetTypes,
-        menuGroups: [group],
+        menuGroups: groups,
       })
       legacyPolicies.clear()
       input.assetAccesses?.forEach(policy => {
@@ -116,8 +115,9 @@ export function useGlobalRolePermissions() {
           legacyPolicies.set(policy.assetType, policy)
         }
       })
-      editor.reset(input)
-      fingerprint = globalRoleMenuScopeFingerprint(group)
+      sourceMenus = input.menus
+      editor.reset({ ...input, menus: buildOwnerEditTree(sourceMenus) })
+      fingerprint = globalRoleMenuScopeFingerprint(groups)
       scopeChanged.value = false
       initialized.value = true
     } catch {
@@ -134,8 +134,8 @@ export function useGlobalRolePermissions() {
     try {
       const userMenus = await loadUserMenus()
       if (current !== sequence || !initialized.value) return undefined
-      const group = buildGlobalRoleMenuGroup(editor.menuTree.value, userMenus)
-      if (globalRoleMenuScopeFingerprint(group) !== fingerprint) {
+      const groups = buildGlobalRoleMenuGroups(sourceMenus, userMenus)
+      if (globalRoleMenuScopeFingerprint(groups) !== fingerprint) {
         scopeChanged.value = true
         return undefined
       }
@@ -143,7 +143,7 @@ export function useGlobalRolePermissions() {
       if (!snapshot) return undefined
       // 独立策略可能包含多项范围或扩展配置；未显式改选时不把它压缩为编辑器的单选值。
       snapshot.assetAccesses = snapshot.assetAccesses.map(policy => legacyPolicies.get(policy.assetType) ?? policy)
-      return buildRoleGrantSnapshot(editor.menuTree.value, snapshot)
+      return buildRoleGrantSnapshot(sourceMenus, editor.flatMenus.value, snapshot)
     } catch {
       if (current === sequence) onlyMessage(t('Role.globalPermissions.verifyFailed'), 'error')
       return undefined

@@ -3538,6 +3538,7 @@
   "Role.application.applicationData": "当前应用的数据",
   "Role.users.loadFailed": "用户列表加载失败，请重试",
   "Role.users.saveFailed": "角色用户更新失败，请重试",
+  "Role.globalPermissions.baseMenus": "基础菜单",
   "Role.globalPermissions.loadFailed": "菜单权限加载失败，请重试",
   "Role.globalPermissions.scopeChanged": "当前用户可编辑的菜单权限已变化，草稿已保留，请重新加载后配置",
   "Role.globalPermissions.verifyFailed": "权限范围校验失败，草稿已保留，请重试保存"

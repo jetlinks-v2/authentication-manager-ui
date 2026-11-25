@@ -142,19 +142,17 @@
 
 ### 普通角色菜单权限
 
-运行时普通（全局）角色的权限页直接显示 `owner === 'iot'` 的菜单树，不显示菜单分类页签，也不读取应用模板分类。混合 owner 的菜单树仅显示 `iot` 节点，符合条件的后代提升到最近的可见层级。角色详情的「权限 / 用户管理」页签和数据权限栏保留；应用角色（含第三方应用角色）、运营端及后端接口不变。
+运行时普通（全局）角色在「权限 → 菜单权限」中按归属展示「基础菜单」（`iot`）和「应用菜单」（`app`），基础菜单优先。无可编辑项的分组不显示；两组都为空时显示空态。切换页签不重新加载，表头全选只作用于当前组可编辑的菜单与按钮。右侧数据权限沿用同一份角色草稿，底部一次保存两组，不按页签分别提交。外层「权限 / 用户管理」、应用角色的模板授权、运营端和后端接口不变。
 
-入口为 `views/system/Role/Detail/components/PermissionTree.vue`。`useGlobalRolePermissions.ts` 读取角色授权详情和不带应用 Scope 的当前用户有效菜单，`roleMenuPermissions.ts` 计算可编辑菜单、按钮的交集，保存前复核该范围。分组仅用于限制展示和编辑；保存仍提交完整的菜单状态树与资产策略，隐藏非 `iot` 菜单不会撤销已有授权。加载失败可重试；有效范围变化时保留草稿并阻止提交。
+入口为 `views/system/Role/Detail/components/PermissionTree.vue`。`useGlobalRolePermissions.ts` 读取角色授权详情与不带应用 Scope 的当前用户有效菜单；`roleMenuPermissions.ts` 按 owner、菜单 ID 和按钮 ID 取可编辑范围。编辑时将混合归属的节点挂到最近的同 owner 祖先，避免跨页签连带授权；提交时按详情原树还原层级和 `parentId`，保留不可编辑菜单及按钮的授权状态。保存前重新核验两组范围；任一组有效权限变化时保留草稿、阻止提交并提示重新加载，返回顺序变化不触发拦截。
 
 全局角色的数据权限不提供「所在应用」（`supportId: business_application`），单项、批量和默认值都排除该范围。判断依据为被编辑角色的归属，不区分操作者身份；`business_application` 资产本身仍可配置其他范围。已有「所在应用」授权在无关编辑后仍保留，显式改选才替换；取消相关菜单沿用现有撤销规则。应用角色的模板展示和继承不变。
 
 公共编辑器的 owner 投影由运行时 core 提交 `8909938` 提供，更新本模块时需同步该 core 版本。
 
-验证：模块内运行 `node --test tests/{globalRolePermissions,applicationRolePermissionScope,systemRoleApplications,roleAssetPermissions,menuAssetTypes}.test.mjs`，63/64 通过；新增 5 项全部通过，使用实际 Vue 组件和编辑器搭配 HTTP/控件替身，覆盖无分类、混合 owner、操作范围、隐藏授权保留、空态和保存复核。唯一失败是 `applicationRolePermissionScope.test.mjs` 的模板资产策略用例，改动前的 Git 基线复现相同失败。未连接已登录的真实环境验证保存回显；上线验收应复查普通角色保存后回显及应用角色授权。
+验证：模块内 `node --test tests/{globalRolePermissions,applicationRolePermissionScope,systemRoleApplications,roleAssetPermissions,menuAssetTypes}.test.mjs` 91 项通过，覆盖分组显隐、混合层级、全选隔离、隐藏授权、跨页签保存回显、范围复核及已有数据权限规则。Chromium 使用实际权限组件和 Ant Design Vue 控件、模拟授权接口，验证了双页签勾选、一次提交与重新加载回显。真实运行时角色页在未登录会话下跳转到登录页；仍需使用有 `app` 可授权菜单的测试账号核对后端候选，并在专用测试角色上保存和刷新验收。
 
-`runtime-ui` 内运行 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json`，修改前后均有 538 条既有类型诊断，忽略行列号后一致。`jetlinks-web-core` 内运行 `node --max-old-space-size=8192 ../node_modules/vite/bin/vite.js build --outDir <临时目录> -- --module-name authentication-manager-ui`，目标模块生产构建通过；无独立 lint 脚本，已通过修改文件的 UI 样式门禁、语言资源 JSON 解析和差异检查。
-
-「所在应用」过滤复用上述验证命令：目标模块生产构建和 `git diff --check` 通过；类型诊断与改动前一致。授权回归 69/70 通过，唯一失败仍为改动前已复现的模板资产策略用例。新增全局角色用例覆盖候选、默认值、历史授权保留或替换及重新加载；应用角色用例确认模板中的「所在应用」仍会展示并提交。未在已登录的真实环境验证保存回显。
+目标构建通过（`runtime-ui/jetlinks-web-core` 内 `node --max-old-space-size=8192 ../node_modules/vite/bin/vite.js build --outDir <临时目录> -- --module-name authentication-manager-ui`）。模块无独立 lint 脚本；三语页签文案、测试脚本语法与 `git diff --check` 通过。`runtime-ui` 内 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json` 仍有 538 条既有类型诊断，改动前后输出完全一致。
 
 ### 巡检与热力图旧资产声明兼容
 
