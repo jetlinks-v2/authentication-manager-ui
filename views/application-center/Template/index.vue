@@ -42,7 +42,7 @@
 		              <a-flex :gap="16">
 				            <ConditionFilter
 					            class="application-template-page__search"
-					            :columns="columns"
+					            :fields="filterFields"
 					            @change="table.handleSearch"
 				            />
 				            <EmptyCreateButton />
@@ -53,6 +53,10 @@
 	              <a class="application-template-page__link" @click="table.viewDetail(slotProps)">
 	                {{ slotProps.i18nName || slotProps.name || $t('comm.table.empty') }}
 	              </a>
+	            </template>
+
+	            <template #provider="slotProps">
+	              {{ getProviderLabel(slotProps.provider) }}
 	            </template>
 
 	            <template #description="slotProps">
@@ -121,13 +125,15 @@
   </j-page-container>
 </template>
 
-<script setup lang="ts" name="ApplicationTemplateManage">
+<script setup lang="ts">
 import { createReusableTemplate } from '@vueuse/core'
 
 import ConditionFilter from '@jetlinks-web-core/components/ConditionFilter'
 import TableActions, { TableActionsItem } from '@jetlinks-web-core/components/TableActions'
 import ApplicationTemplateCreateDialog from './components/ApplicationTemplateCreateDialog.vue'
 import { useApplicationTemplateList } from './useApplicationTemplateList'
+
+defineOptions({ name: 'ApplicationTemplateManage' })
 
 const {
   permission,
@@ -136,8 +142,10 @@ const {
   createDialogOpen,
   queryParams,
   columns,
+  filterFields,
   defaultParams,
   requestTable,
+  getProviderLabel,
   normalizeState,
   table,
 } = useApplicationTemplateList()

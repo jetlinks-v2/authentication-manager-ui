@@ -36,7 +36,7 @@
 								<AIcon class="treeItem__icon" type="icon-moren" />
 								<j-ellipsis style="flex: 1; min-width: 0">{{ item.i18nName || item.name }}</j-ellipsis>
 							</div>
-							<div v-if="item.id !== 'default_group' && isAdmin" class="treeItem__actions" @click="(e) => e.stopPropagation()">
+							<div v-if="item.id !== 'default_group'" class="treeItem__actions" @click="(e) => e.stopPropagation()">
 								<j-permission-button :disabled="item.id === 'default_group'" :popConfirm="{
                                     title: $t('RoleLeft.index.507330-2'),
                                     onConfirm: () => deleteGroup(item.id, item.isNew),
@@ -69,11 +69,13 @@
 		</div>
 </template>
 
-<script lang="ts" name="RoleLeft" setup>
+<script lang="ts" setup>
 import { onlyMessage, randomString } from '@jetlinks-web/utils';
 import { queryRoleGroup, saveRoleGroup, deleteRoleGroup } from '@authentication-manager-ui/api/system/role';
 import { useUserStore } from '@jetlinks-web-core/store/user'
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'RoleLeft' })
 
 const { t: $t } = useI18n();
 const emit = defineEmits(['selectData'])

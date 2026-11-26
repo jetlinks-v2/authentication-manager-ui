@@ -1,9 +1,11 @@
-<script setup name="PositionsBind">
+<script setup>
 import { useRequest } from '@jetlinks-web/hooks';
 import { useI18n } from "vue-i18n";
 import { bindUserColumns } from '../util'
 import { getUser, bindUser } from '@authentication-manager-ui/api/system/positions';
 import {onlyMessage} from "@jetlinks-web/utils";
+
+defineOptions({ name: 'PositionsBind' })
 
 const { t: $t } = useI18n();
 

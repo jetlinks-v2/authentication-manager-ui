@@ -13,6 +13,8 @@
     </j-page-container>
 </template>
 
-<script setup lang="ts" name="Platforms">
+<script setup lang="ts">
 import Api from './Api/index.vue';
+
+defineOptions({ name: 'Platforms' })
 </script>

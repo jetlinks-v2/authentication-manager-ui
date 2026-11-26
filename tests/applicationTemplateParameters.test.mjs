@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { readFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
 import { build } from 'esbuild'
 
 const { outputFiles } = await build({
   stdin: {
     contents: `export { useApplicationTemplateParameters } from './views/application-center/Template/Save/useApplicationTemplateParameters'; export { ref, nextTick } from 'vue';`,
-    resolveDir: new URL('..', import.meta.url).pathname,
+    resolveDir: fileURLToPath(new URL('..', import.meta.url)),
   },
   bundle: true,
   write: false,
@@ -30,6 +31,102 @@ function fixture(configuration = {}) {
   }, messages)
   return { state, writes, detail }
 }
+
+test('configuration starts in view mode and cancelling restores every saved field', () => {
+  const configuration = {
+    platformId: 'saved-platform',
+    credential: { keyId: 'saved-rsa', publicKey: 'saved-public-key' },
+    notification: { address: 'https://receiver.example/saved' },
+    externalParameters: [{ name: 'page', provider: 'fixed', configuration: { value: 'saved' } }],
+  }
+  const { state, writes } = fixture(configuration)
+  assert.equal(state.editing.value, false)
+  state.edit()
+  assert.equal(state.editing.value, true)
+  state.platformId.value = 'draft-platform'
+  state.redirectUri.value = 'https://training.example/draft'
+  state.credential.keyId = 'draft-rsa'
+  state.credential.publicKey = 'draft-public-key'
+  state.notification.enabled = false
+  state.notification.address = 'https://receiver.example/draft'
+  state.parameters.value[0].value = 'draft'
+  state.addParameter()
+  state.error.value = 'draft validation error'
+
+  state.cancel()
+  assert.equal(state.editing.value, false)
+  assert.equal(state.platformId.value, 'saved-platform')
+  assert.equal(state.redirectUri.value, 'https://training.example/ui/')
+  assert.deepEqual(state.credential, configuration.credential)
+  assert.deepEqual(state.notification, { enabled: true, address: configuration.notification.address })
+  assert.deepEqual(state.parameters.value, [{ name: 'page', provider: 'fixed', value: 'saved' }])
+  assert.equal(state.error.value, '')
+  assert.deepEqual(writes, [])
+})
+
+test('configuration only leaves edit mode after a successful save', async () => {
+  const { state, writes } = fixture()
+  state.edit()
+  state.redirectUri.value = ''
+  assert.equal(await state.save(), false)
+  assert.equal(state.editing.value, true)
+  assert.deepEqual(writes, [])
+  state.redirectUri.value = 'https://training.example/updated'
+  assert.equal(await state.save(), true)
+  assert.equal(state.editing.value, false)
+  assert.equal(writes[0].redirectUri, 'https://training.example/updated')
+})
+
+test('save rejection and exceptions preserve edit mode and unsaved values', async () => {
+  const detail = ref({ id: 'template', provider: 'third-party', configuration: { redirectUri: 'https://training.example/' } })
+  let shouldThrow = false
+  const state = useApplicationTemplateParameters(() => detail.value, async () => {
+    if (shouldThrow) throw new Error('offline')
+    return false
+  }, messages)
+  state.edit()
+  state.redirectUri.value = 'https://training.example/draft'
+  assert.equal(await state.save(), false)
+  assert.equal(state.editing.value, true)
+  assert.equal(state.redirectUri.value, 'https://training.example/draft')
+  shouldThrow = true
+  assert.equal(await state.save(), false)
+  assert.equal(state.editing.value, true)
+  assert.equal(state.redirectUri.value, 'https://training.example/draft')
+  assert.equal(state.saving.value, false)
+  assert.equal(state.error.value, messages.saveFailed)
+})
+
+test('switching templates clears edit mode and loads the new configuration', async () => {
+  const { state, detail, writes } = fixture({ platformId: 'first' })
+  state.edit()
+  state.platformId.value = 'unsaved'
+  state.addParameter()
+  detail.value = { id: 'another-template', provider: 'third-party', configuration: { redirectUri: 'https://other.example/' } }
+  await nextTick()
+  assert.equal(state.editing.value, false)
+  assert.equal(state.platformId.value, '')
+  assert.equal(state.redirectUri.value, 'https://other.example/')
+  assert.deepEqual(state.parameters.value, [])
+  assert.deepEqual(writes, [])
+})
+
+test('pending saves keep the active draft intact until completion', async () => {
+  let complete
+  const state = useApplicationTemplateParameters(() => ({ id: 'template', provider: 'third-party', configuration: { redirectUri: 'https://training.example/' } }),
+    () => new Promise(resolve => { complete = resolve }), messages)
+  state.edit()
+  state.redirectUri.value = 'https://training.example/draft'
+  const saving = state.save()
+  assert.equal(state.saving.value, true)
+  state.cancel()
+  assert.equal(state.editing.value, true)
+  assert.equal(state.redirectUri.value, 'https://training.example/draft')
+  complete(true)
+  assert.equal(await saving, true)
+  assert.equal(state.saving.value, false)
+  assert.equal(state.editing.value, false)
+})
 
 test('saves the edited parameters with the address and preserves all other Configuration values', async () => {
   const { state, writes } = fixture({

@@ -124,7 +124,7 @@
   </div>
 </template>
 
-<script setup lang="ts" name="LeftTree">
+<script setup lang="ts">
 import ObjectTypeIcon from '@jetlinks-web-core/components/IconValue/ObjectTypeIcon.vue'
 import { getTreeData_api, delDepartment_api, downloadImportTemplate_api, batchImport_api } from '@authentication-manager-ui/api/system/department'
 import { onlyMessage } from '@jetlinks-web/utils'
@@ -135,6 +135,8 @@ import { ArrayToTree } from '../util'
 import { useI18n } from 'vue-i18n';
 import { useTabSaveSuccessBack } from '@jetlinks-web-core/hooks'
 import { usePermission } from '@jetlinks-web/hooks'
+
+defineOptions({ name: 'LeftTree' })
 
 const { t: $t } = useI18n();
 const permission = 'system/Department'
@@ -149,8 +151,8 @@ const loading = ref<boolean>(false) // 数据加载状态
 const sourceTree = ref<any[]>([]) // 源数据
 const treeMap = new Map() // 数据的map版本
 const treeData = ref<any[]>([]) // 展示的数据
-const selectedKeys = ref<string[]>([<string>route.query.id]) // 当前选中的项
-const expandedKeys = ref<string[] | number[]>([])
+const selectedKeys = ref<(string | number)[]>([<string>route.query.id]) // 当前选中的项
+const expandedKeys = ref<(string | number)[]>([])
 
 // 弹窗
 const visible = ref<boolean>(false)
@@ -271,7 +273,7 @@ const expandParentNodes = (targetId: string) => {
 }
 // 删除部门
 const delDepartment = (id: string) => {
-  delDepartment_api(id).then((resp) => {
+  delDepartment_api(id).then((resp: { success: boolean }) => {
     if (resp.success) {
       onlyMessage($t('components.LeftTree.755653-6'))
       getTree(() => {
@@ -311,7 +313,7 @@ const openDialog = (row: any = {}) => {
   visible.value = true
 }
 
-const onSelect = (val: string[]) => {
+const onSelect = (val: (string | number)[]) => {
   if(val.length){
     selectedKeys.value = val
   }

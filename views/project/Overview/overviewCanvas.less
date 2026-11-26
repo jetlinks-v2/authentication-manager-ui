@@ -1,7 +1,8 @@
-/* 两种部署复用同一画布的卡头、留白和正文滚动约束。 */
-.project-overview :deep(.dashboard-card-layout),
-.project-overview :deep(.dashboard-card-content) { height: auto; overflow: visible; }
-.project-overview :deep(.dashboard-card-content) { scrollbar-gutter: auto; }
+/* 两种部署都由页面滚动；内容层优先级高于画布默认规则，不依赖生产样式的加载顺序。 */
+.project-overview :deep(.dashboard-card-layout) { height: auto; overflow: visible; }
+.project-overview :deep(.dashboard-card-layout > .dashboard-card-content) {
+  height: auto; overflow: visible; scrollbar-gutter: auto;
+}
 .project-overview :deep(.dashboard-grid) { min-height: 0; overflow-x: clip; overflow-y: visible; }
 /* 画布控制卡片尺寸，超出内容在卡片正文内滚动，标题与拖拽手柄保持可见。 */
 .project-overview :deep(.project-home-shell--saas),

@@ -102,7 +102,7 @@
                       </div>
                     </a-form-item>
                 </a-col>
-                <a-col :span="12" v-if="hasDepartmentMenu">
+                <a-col :span="12">
                     <a-form-item name="orgIdList" :label="$t('components.EditUserDialog.939453-14')">
                       <!-- 职位关联禁用及提示已屏蔽，保留原配置。
                       <form-item-org :extraData="detail.orgList" :extraProps="{multiple: true}" :disabledData="disabledData.orgIds" v-model:value="form.data.orgIdList" :disabled="form.data.username === 'admin'" />
@@ -228,7 +228,6 @@ const props = defineProps<{
 const loading = ref(false);
 // const positionsMap = new Map()
 const menuStore = useMenuStore();
-const hasDepartmentMenu = menuStore.hasMenu('system/Department');
 const {
   applicationRoleIds,
   roleGroups,

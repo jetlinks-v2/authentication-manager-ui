@@ -44,7 +44,7 @@
     <IntegrationStateModal :action="action" @close="action = undefined" @saved="load" />
   </j-page-container>
 </template>
-<script setup lang="ts" name="ProjectThirdPartyApplications">
+<script setup lang="ts">
 import { createReusableTemplate } from '@vueuse/core'
 
 import { computed } from 'vue'
@@ -53,6 +53,8 @@ import { useThirdPartyApplications } from './useThirdPartyApplications'
 import { formatTime, integrationState, integrationStateLabel } from './integrationUtils'
 import ConnectApplication from './components/ConnectApplication.vue'
 import IntegrationStateModal from './components/IntegrationStateModal.vue'
+
+defineOptions({ name: 'ProjectThirdPartyApplications' })
 const { t: $t } = useI18n()
 const { contextError, projectId, hasRuntimeContext, rows, applications, loading, error, catalogError, search,
   connectOpen, connectOptions, action, nameOf, load, openDetail, openAction } = useThirdPartyApplications()

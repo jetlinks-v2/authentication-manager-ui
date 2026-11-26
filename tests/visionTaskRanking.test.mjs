@@ -22,6 +22,7 @@ const catalog = [
   ['edge-ai-gateway', 'edge.ai.review.dimension.pending', 'GAUGE', ['taskId', 'dimensionKey', 'dimensionType'], '条'],
 ].map(([pointType, pointId, metricType, labels, unit]) => ({ pointType, pointId, metricType, unit, labelKeys: labels.map(id => ({ id })), groupByKeys: [{ id: 'thingId' }] }))
 globalThis.__visionSupported = () => ok(catalog)
+const task = (value, cloudChannelName) => ({ task: value, operation: null, ...(cloudChannelName ? { cloudChannelName } : {}) })
 const gateway = id => ({ id, name: `网关 ${id}`, online: true })
 const latency = (thingId, taskId, sourceId = 'source', value = 1) => ({ thingId, taskId, modelId: 'model', sourceId, value })
 const directory = ids => async () => ({ data: ids.map(gateway), total: ids.length })
@@ -89,7 +90,7 @@ test('discard queries 20-minute cumulative-counter increments and rejects missin
   const calls = []
   globalThis.__visionRankingFixture = { page: directory(['g1']), post: async (url, body) => {
     calls.push({ url, body })
-    return url === '/device/metrics/_agg' ? ok([{ ...latency('g1', 'zero', 's', 0), validIncrement: 0 }]) : ok([{ id: 'zero', name: 'Zero' }])
+    return url === '/device/metrics/_agg' ? ok([{ ...latency('g1', 'zero', 's', 0), validIncrement: 0 }]) : ok([task({ id: 'zero', name: 'Zero' })])
   } }
   const result = await loadVisionTaskRanking('discard')
   assert.equal(calls[0].body.metrics[0].aggregation, 'SUM')
@@ -119,7 +120,7 @@ test('queries only authorized gateway scope and batches task names once per gate
       active++; maximum = Math.max(maximum, active)
       await new Promise(resolve => pending.push(resolve))
       active--
-      return ok([{ id: 't1', name: '任务一', configuration: { sources: [{ id: 's1', name: '来源一' }] } }, { id: 't2', name: '任务二' }])
+      return ok([task({ id: 't1', name: '任务一', taskTargetDetail: { text: '算法一' }, configuration: { sources: [{ id: 's1', name: '来源一', sceneName: '场景一' }] } }, '云端来源'), task({ id: 't2', name: '任务二' }), { task: null, operation: { id: 't3' } }])
     },
   }
   const resultPromise = loadVisionTaskRanking('latency')
@@ -136,9 +137,11 @@ test('queries only authorized gateway scope and batches task names once per gate
   const names = calls.slice(1)
   assert.equal(names.length, ids.length)
   assert.equal(new Set(names.map(call => call.url)).size, ids.length)
-  for (const call of names) assert.deepEqual(call.body, { paging: false, terms: [{ column: 'id', termType: 'in', value: ['t1', 't2'] }] })
+  for (const call of names) assert.deepEqual(call.body, { paging: false, terms: [{ column: 'task.domain', termType: 'eq', value: 'ComputerVision' }, { column: 'task.id', termType: 'in', value: ['t1', 't2'] }] })
   assert.equal(result.rows.length, 14)
-  assert.equal(result.rows.find(row => row.taskId === 't1').sourceName, '来源一')
+  assert.equal(result.rows.find(row => row.taskId === 't1').sourceName, '云端来源')
+  assert.equal(result.rows.find(row => row.taskId === 't1').sceneName, '场景一')
+  assert.equal(result.rows.find(row => row.taskId === 't1').algorithmName, '算法一')
   assert.equal(result.rows.find(row => row.taskId === 't1').name, '任务一')
   assert.equal(result.metadataFailed, false)
 })
@@ -186,12 +189,13 @@ test('small node directory distinguishes no tasks from missing metrics', async (
   const calls = []
   globalThis.__visionRankingFixture = { page: directory(['g1']), post: async (url, body) => {
     calls.push({url,body})
-    return ok(url === '/device/metrics/_agg' ? [] : [{id:'t1',name:'未上报任务',configuration:{sources:[{id:'s1'},{id:'s2'}]}}])
+    return ok(url === '/device/metrics/_agg' ? [] : [task({id:'t1',name:'未上报任务',taskTargetDetail:{text:'人流检测'},configuration:{sceneName:'大厅',sources:[{id:'s1'},{id:'s2'}]}}, '入口通道'), {task:null,operation:{id:'only-operation'}}])
   }}
   let result = await loadVisionTaskRanking('latency')
   assert.equal(result.taskCount, 1); assert.equal(result.directoryIncomplete, false)
+  assert.equal(result.rows[0].sourceName, '入口通道'); assert.equal(result.rows[0].sceneName, '大厅'); assert.equal(result.rows[0].algorithmName, '人流检测')
   assert.equal(result.rows[0].value, undefined); assert.equal(result.rows[0].taskId, 't1'); assert.equal(result.rows[0].sourceId, undefined); assert.equal(result.rows[0].detailAvailable, true)
-  assert.deepEqual(calls.find(item=>item.url.includes('/edge/detail/')).body.terms, [{column:'domain',termType:'eq',value:'ComputerVision'}])
+  assert.deepEqual(calls.find(item=>item.url.includes('/edge/detail/')).body.terms, [{column:'task.domain',termType:'eq',value:'ComputerVision'},{column:'task.id',termType:'notnull',value:''}])
   globalThis.__visionRankingFixture.post = async () => ok([])
   result = await loadVisionTaskRanking('latency')
   assert.equal(result.taskCount, 0); assert.deepEqual(result.rows, [])
@@ -231,7 +235,7 @@ test('offline top 50 cannot displace online metrics and both scopes share the sa
   globalThis.__visionRankingFixture = {
     page: async () => ({ data: [gateway('on'), { id: 'off', name: 'Offline', online: false }], total: 2 }),
     post: async (url, body) => {
-      if (url !== '/device/metrics/_agg') return ok([{ id: 'live', name: 'Live' }])
+      if (url !== '/device/metrics/_agg') return ok([task({ id: 'live', name: 'Live' })])
       calls.push(body)
       return ok(body.thingIds[0] === 'on'
         ? [latency('on', 'live', 'source', 1)]
@@ -252,21 +256,167 @@ test('offline top 50 cannot displace online metrics and both scopes share the sa
 test('task metadata uses enum text and source-specific scene without mixing dimensions', async () => {
   globalThis.__visionRankingFixture = {page:directory(['g1']),post:async url => ok(url === '/device/metrics/_agg'
     ? [latency('g1','t','s1',3),latency('g1','t','s2',2),latency('g1','t','s3',1)]
-    : [{id:'t',name:'任务',modelName:'模型',taskTargetDetail:{value:'ClutterDetection',text:'杂物检测'},configuration:{sources:[
+    : [task({id:'t',name:'任务',modelName:'模型',taskTargetDetail:{value:'ClutterDetection',text:'杂物检测'},configuration:{sources:[
       {id:'s1',sceneName:'场景一'}, {id:'s2',headers:{sceneName:'场景二'}}, {id:'s3',others:{sceneName:'历史场景'}},
-    ]}}])}
+    ]}})])}
   const result=await loadVisionTaskRanking('latency')
   assert.deepEqual(result.rows.map(r=>[r.sourceId,r.sceneName,r.algorithmName]),[['s1','场景一','杂物检测'],['s2','场景二','杂物检测'],['s3','历史场景','杂物检测']])
 })
 
 test('configuration scene wins and ambiguous source-free task has no invented scene', async () => {
   globalThis.__visionRankingFixture = {page:directory(['g1']),post:async url => ok(url === '/device/metrics/_agg' ? [] : [
-    {id:'configured',taskTargetDetail:{text:'算法一'},configuration:{sceneName:'配置场景',sources:[{id:'s1',sceneName:'来源场景'}]}},
-    {id:'ambiguous',name:'任务名',modelName:'模型名',taskTargetDetail:{text:'算法二'},configuration:{sources:[{id:'s1',sceneName:'一'},{id:'s2',sceneName:'二'}]}},
+    task({id:'configured',taskTargetDetail:{text:'算法一'},configuration:{sceneName:'配置场景',sources:[{id:'s1',sceneName:'来源场景'}]}}),
+    task({id:'ambiguous',name:'任务名',modelName:'模型名',taskTargetDetail:{text:'算法二'},configuration:{sources:[{id:'s1',sceneName:'一'},{id:'s2',sceneName:'二'}]}}),
   ])}
   const result=await loadVisionTaskRanking('latency')
   const byId=Object.fromEntries(result.rows.map(r=>[r.taskId,r]))
   assert.equal(byId.configured.sceneName,'配置场景')
   assert.equal(byId.ambiguous.sceneName,undefined)
   assert.equal(byId.ambiguous.algorithmName,'算法二')
+})
+
+test('three online gateways reuse complete metadata while every tab requests fresh metrics', async () => {
+  const calls = []
+  globalThis.__visionRankingFixture = {
+    get: async () => { calls.push('supported'); return ok(catalog) },
+    page: async () => { calls.push('gateways'); return { data: ['g1', 'g2', 'g3'].map(gateway), total: 3 } },
+    post: async (url, body) => {
+      if (url === '/device/metrics/_agg') { calls.push('aggregation'); return ok([]) }
+      calls.push('tasks')
+      assert.deepEqual(body.terms, [{ column: 'task.domain', termType: 'eq', value: 'ComputerVision' }, { column: 'task.id', termType: 'notnull', value: '' }])
+      return ok([task({ id: 't', name: 'Task' })])
+    },
+  }
+  const cache = {}
+  for (const [index, metric] of ['latency', 'discard', 'backlog'].entries()) {
+    const before = calls.length
+    const result = await loadVisionTaskRanking(metric, () => true, cache)
+    assert.equal(calls.length - before, index === 0 ? 6 : 1)
+    assert.equal(result.taskCount, 3)
+    assert.equal(result.directoryIncomplete, false)
+  }
+  assert.deepEqual(calls.reduce((counts, key) => ({ ...counts, [key]: (counts[key] || 0) + 1 }), {}),
+    { supported: 1, gateways: 1, aggregation: 3, tasks: 3 })
+})
+
+test('cached mixed online/offline scope still queries both aggregations and remains unknown', async () => {
+  const calls = []
+  globalThis.__visionRankingFixture = {
+    get: async () => { calls.push('supported'); return ok(catalog) },
+    page: async () => { calls.push('gateways'); return { data: [gateway('on'), { id: 'off', name: 'Offline', online: false }], total: 2 } },
+    post: async (url, body) => {
+      if (url === '/device/metrics/_agg') { calls.push(body.thingIds); return ok([]) }
+      calls.push('tasks'); return ok([task({ id: 't', name: 'Task' })])
+    },
+  }
+  const cache = {}
+  for (const metric of ['latency', 'backlog']) {
+    const result = await loadVisionTaskRanking(metric, () => true, cache)
+    assert.equal(result.directoryIncomplete, true)
+    assert.equal(result.taskCount, undefined)
+  }
+  assert.deepEqual(calls, ['supported', 'gateways', ['on'], ['off'], 'tasks', ['on'], ['off']])
+})
+
+test('missing metric metadata cannot corrupt the cached directory for another metric', async () => {
+  const calls = []
+  globalThis.__visionRankingFixture = {
+    page: directory(['g1']),
+    post: async (url, body) => {
+      calls.push(url)
+      if (url !== '/device/metrics/_agg') return ok([task({ id: 'known', name: 'Known' })])
+      return ok(body.pointType === 'edge-ai-task'
+        ? [latency('g1', 'missing')]
+        : [{ thingId: 'g1', taskId: 'known', dimensionKey: 'k', dimensionType: 'type', value: 3 }])
+    },
+  }
+  const cache = {}
+  const missing = await loadVisionTaskRanking('latency', () => true, cache)
+  assert.equal(missing.directoryIncomplete, true)
+  assert.equal(missing.taskCount, undefined)
+  const known = await loadVisionTaskRanking('backlog', () => true, cache)
+  assert.equal(known.directoryIncomplete, false)
+  assert.equal(known.taskCount, 1)
+  assert.equal(known.metadataFailed, false)
+  assert.equal(calls.filter(url => url !== '/device/metrics/_agg').length, 1)
+})
+
+test('failed task directory remains unknown when reused and a new cache retries it', async () => {
+  let taskCalls = 0
+  globalThis.__visionRankingFixture = {
+    page: directory(['g1']),
+    post: async url => {
+      if (url === '/device/metrics/_agg') return ok([])
+      return ++taskCalls === 1 ? { status: 403 } : ok([task({ id: 't', name: 'Task' })])
+    },
+  }
+  const cache = {}
+  for (const metric of ['latency', 'backlog']) {
+    const result = await loadVisionTaskRanking(metric, () => true, cache)
+    assert.equal(result.directoryIncomplete, true)
+    assert.equal(result.taskCount, undefined)
+    assert.equal(result.metadataFailed, true)
+  }
+  assert.equal(taskCalls, 1)
+  const refreshed = await loadVisionTaskRanking('latency', () => true, {})
+  assert.equal(taskCalls, 2)
+  assert.equal(refreshed.taskCount, 1)
+  assert.equal(refreshed.directoryIncomplete, false)
+})
+
+test('failed supported and gateway requests are retried with the same cache', async () => {
+  let gets = 0, pages = 0
+  globalThis.__visionRankingFixture = {
+    get: async () => { if (++gets === 1) throw new Error('supported failed'); return ok(catalog) },
+    page: async () => { if (++pages === 1) throw new Error('gateways failed'); return { data: [], total: 0 } },
+    post: () => assert.fail('no gateways')
+  }
+  const cache = {}
+  await assert.rejects(loadVisionTaskRanking('latency', () => true, cache), /supported failed/)
+  await assert.rejects(loadVisionTaskRanking('latency', () => true, cache), /gateways failed/)
+  const result = await loadVisionTaskRanking('latency', () => true, cache)
+  assert.equal(result.taskCount, 0)
+  assert.equal(gets, 2)
+  assert.equal(pages, 2)
+})
+
+test('a failed aggregation is never reused and the next metric retries it', async () => {
+  let aggregations = 0, taskCalls = 0
+  globalThis.__visionRankingFixture = {
+    page: directory(['g1']),
+    post: async url => {
+      if (url !== '/device/metrics/_agg') { taskCalls++; return ok([task({ id: 't', name: 'Task' })]) }
+      aggregations++
+      return aggregations === 2 ? { status: 500 } : ok([])
+    },
+  }
+  const cache = {}
+  await loadVisionTaskRanking('latency', () => true, cache)
+  await assert.rejects(loadVisionTaskRanking('discard', () => true, cache))
+  const result = await loadVisionTaskRanking('backlog', () => true, cache)
+  assert.equal(aggregations, 3)
+  assert.equal(taskCalls, 1)
+  assert.equal(result.taskCount, 1)
+})
+
+test('directory rejects missing nested task IDs while ignoring operation-only and legacy flat records', async () => {
+  globalThis.__visionRankingFixture = { page: directory(['g1']), post: async url => ok(url === '/device/metrics/_agg' ? [] : [
+    task({ id: 'valid', name: '真实任务' }), task({ name: '缺失 ID' }),
+    { task: null, operation: { id: 'operation-only' } }, { id: 'flat', name: '旧结构' },
+  ]) }
+  const result = await loadVisionTaskRanking('latency')
+  assert.equal(result.taskCount, undefined)
+  assert.equal(result.directoryIncomplete, true)
+  assert.deepEqual(result.rows.map(row => row.taskId), ['valid'])
+})
+
+test('ranked name lookup ignores operation-only records and preserves zero with unknown metadata', async () => {
+  globalThis.__visionRankingFixture = { page: directory(['g1', 'g2', 'g3', 'g4']), post: async url => ok(url === '/device/metrics/_agg'
+    ? [latency('g1', 'missing', 's', 0)]
+    : [{ task: null, operation: { id: 'missing', name: '仅操作' } }, { id: 'missing', name: '旧结构' }]) }
+  const result = await loadVisionTaskRanking('latency')
+  assert.equal(result.rows.length, 1)
+  assert.equal(result.rows[0].value, 0)
+  assert.equal(result.rows[0].name, 'missing')
+  assert.equal(result.rows[0].detailAvailable, false)
 })

@@ -1,6 +1,6 @@
 <template>
-  <a-table class="gateway-node-table" size="small" row-key="id" :data-source="rows" :columns="columns"
-    :pagination="false" :scroll="{ x: 440 }">
+  <a-table class="gateway-node-table" size="small" row-key="id" table-layout="fixed" :data-source="rows" :columns="columns"
+    :pagination="false" :scroll="{ x: 560 }">
     <template #bodyCell="{ column, record }">
       <template v-if="column.key === 'state'">
         <a-badge :status="record.stateBadge" :text="record.stateText" />
@@ -26,14 +26,16 @@ const emit = defineEmits<{ select: [row: GatewayTableRow] }>()
 </script>
 
 <style scoped>
-.gateway-node-table { min-height: 0; }
+/* 标题和概览保留在滚动区外，表格占用卡片剩余高度。 */
+.gateway-node-table { flex: 1; min-width: 0; min-height: 0; overflow: auto; }
 .gateway-node-table :deep(.ant-table) { font-size: 12px; background: transparent; }
 .gateway-node-table :deep(.ant-table-thead > tr > th) { color: var(--ant-color-text-secondary, #8c8c8c); font-weight: 400; background: transparent; white-space: nowrap; }
 .gateway-node-table :deep(.ant-table-tbody > tr > td) { padding-block: 12px; }
+.gateway-node-table :deep(.ant-badge) { white-space: nowrap; }
 .gateway-node-table :deep(.ant-badge-status-text) { margin-inline-start: 5px; font-size: 12px; }
-.node-identity { display: flex; min-width: 100px; flex-direction: column; gap: 4px; }
-.node-name { display: block; max-width: 190px; height: auto; padding: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; font-size: 13px; color: var(--ant-color-text, #1d2939); }
-.node-model { display: block; max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ant-color-text-secondary, #8c8c8c); font-size: 11px; }
+.node-identity { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
+.node-name { display: block; max-width: 100%; height: auto; padding: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; font-size: 13px; color: var(--ant-color-text, #1d2939); }
+.node-model { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ant-color-text-secondary, #8c8c8c); font-size: 11px; }
 .node-value { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .node-last-report, .is-missing { color: var(--ant-color-text-secondary, #8c8c8c); font-size: 12px; }
 </style>

@@ -1,8 +1,10 @@
-import { ref } from 'vue'
+import { cloneDeep } from 'lodash-es'
+import { computed, ref } from 'vue'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useMenuAssetPermissionEditor } from '@jetlinks-web-core/hooks'
 import type {
   AssetTypeName,
+  MenuAssetPermissionResetOptions,
   MenuPermissionNode,
 } from '@jetlinks-web-core/hooks'
 import {
@@ -44,9 +46,11 @@ interface MenuConfigMessages {
   missingMenus: (count: number) => string
 }
 
+/** 维护模板菜单与资产权限草稿，编辑流程不改变公共编辑器的授权规则。 */
 export const useApplicationTemplateMenuConfig = (
   getTemplateId: () => string,
   messages: MenuConfigMessages,
+  canEdit: () => boolean = () => true,
 ) => {
   const editor = useMenuAssetPermissionEditor({ defaultSupportIds: ['business_application', 'creator'] })
   const scopeStrategyOptions = ref<SelectOption[]>([])
@@ -56,9 +60,14 @@ export const useApplicationTemplateMenuConfig = (
   const loadingEditor = ref(false)
   const saving = ref(false)
   const initialized = ref(false)
+  const editing = ref(false)
+  const loadError = ref('')
+  const canUpdate = computed(canEdit)
   const grantedMenus = ref<MenuPermissionNode[]>([])
   const savedAssetAccesses = ref<TemplateAssetAccessPolicy[]>([])
   let loadSequence = 0
+  let savedEditorInput: MenuAssetPermissionResetOptions | undefined
+  let savedStrategies: Record<string, string> = {}
 
   const assertSuccess = <T>(response: any, fallback: T): T => {
     if (response?.success === false) throw new Error(response.message || messages.loadFailed)
@@ -88,6 +97,9 @@ export const useApplicationTemplateMenuConfig = (
 
   const clearEditor = () => {
     initialized.value = false
+    editing.value = false
+    savedEditorInput = undefined
+    savedStrategies = {}
     strategyDraft.value = {}
     missingMenuIds.value = []
     editor.reset({ menus: [], assetTypes: [] })
@@ -96,6 +108,9 @@ export const useApplicationTemplateMenuConfig = (
   const loadEditor = async () => {
     const sequence = ++loadSequence
     const templateId = getTemplateId()
+    editing.value = false
+    loadError.value = ''
+    savedEditorInput = undefined
     if (!templateId) {
       clearEditor()
       return
@@ -133,35 +148,54 @@ export const useApplicationTemplateMenuConfig = (
       missingMenuIds.value = findMissingMenuIds(grantedMenus.value, sourceMenus)
       strategyDraft.value = buildStrategyDraft(savedAssetAccesses.value)
       const grantableAssets = normalizeGrantableAssets(grantableResponse)
-      editor.reset({
+      const editorInput: MenuAssetPermissionResetOptions = {
         menus: sourceMenus,
         grantedMenus: grantedMenus.value,
         assetAccesses: filterAssetAccessPoliciesByMenuScope(savedAssetAccesses.value, sourceMenus),
         assetTypes: normalizeAssetTypeNames(assetTypesResponse) as AssetTypeName[],
         grantableAssets: grantableAssets.length ? grantableAssets : undefined,
-      })
+      }
+      // 保存完整候选及原始回显，取消时不以只包含已选项的提交快照重建候选。
+      savedEditorInput = cloneDeep(editorInput)
+      savedStrategies = { ...strategyDraft.value }
+      editor.reset(editorInput)
       initialized.value = true
     } catch (error: any) {
       if (sequence === loadSequence) {
         clearEditor()
-        onlyMessage(error?.message || messages.loadFailed, 'error')
+        loadError.value = error?.message || messages.loadFailed
+        onlyMessage(loadError.value, 'error')
       }
     } finally {
       if (sequence === loadSequence) loadingEditor.value = false
     }
   }
 
-  const save = async () => {
+  const edit = () => {
+    if (canUpdate.value && initialized.value && !loadingEditor.value && !saving.value) editing.value = true
+  }
+
+  /** 取消只恢复内存草稿，不重新请求或写入权限；候选裁剪与加载时保持一致。 */
+  const cancel = () => {
+    if (saving.value || !editing.value) return
+    if (savedEditorInput) editor.reset(cloneDeep(savedEditorInput))
+    strategyDraft.value = { ...savedStrategies }
+    editing.value = false
+  }
+
+  const save = async (): Promise<boolean> => {
+    if (saving.value || !canUpdate.value) return false
     const templateId = getTemplateId()
     if (!templateId || !initialized.value) {
       onlyMessage(messages.notReady, 'warning')
-      return
+      return false
     }
     // if (missingMenuIds.value.length) {
     //   onlyMessage(messages.missingMenus(missingMenuIds.value.length), 'warning')
     //   return
     // }
 
+    const sequence = loadSequence
     saving.value = true
     try {
       const snapshot = editor.getSnapshot()
@@ -170,10 +204,14 @@ export const useApplicationTemplateMenuConfig = (
         assetAccesses: buildTemplateAssetAccesses(snapshot.assetAccesses, strategyDraft.value),
       })
       assertSuccess(response, undefined)
+      // 保存期间切换模板时，不让旧请求关闭新模板的编辑态或触发额外重载。
+      if (sequence !== loadSequence || templateId !== getTemplateId()) return true
       onlyMessage(messages.saved)
       await loadEditor()
+      return true
     } catch (error: any) {
       onlyMessage(error?.message || messages.loadFailed, 'error')
+      return false
     } finally {
       saving.value = false
     }
@@ -189,9 +227,16 @@ export const useApplicationTemplateMenuConfig = (
     loadingEditor,
     saving,
     initialized,
+    canUpdate,
+    editing,
+    loadError,
     loadOptions,
     loadEditor,
     setScopeStrategy,
+    edit,
+    cancel,
     save,
   }
 }
+
+export type ApplicationTemplateMenuConfigState = ReturnType<typeof useApplicationTemplateMenuConfig>

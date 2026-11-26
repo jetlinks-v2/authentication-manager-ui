@@ -53,6 +53,8 @@ export function useHomeAnnouncements(options: HomeAnnouncementOptions) {
   function openAll() {
     if (!canOpenAll.value) return
     user.tabKey = 'StationMessage'
+    user.other.tabKey = 'announcement'
+    user.messageInfo = {}
     void router.push({ path: '/account/center', query: { tab: 'StationMessage' } })
   }
 

@@ -64,10 +64,12 @@
   </j-page-container>
 </template>
 
-<script setup lang="ts" name="MenuSetting">
+<script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { MENU_OWNERS } from './utils'
 import { useMenuSetting } from './useMenuSetting'
+
+defineOptions({ name: 'MenuSetting' })
 
 const { t: $t } = useI18n()
 const { activeOwner, treeData, selectedKeys, visible, loading, saving, loadError, failureMessage,

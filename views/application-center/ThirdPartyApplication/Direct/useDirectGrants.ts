@@ -14,6 +14,8 @@ const grantableOperation = (operation: ApiGroupOperation) => !!operation.apiSpec
 
 export const useDirectGrants = (targetId: () => string, targetType: string = API_CLIENT_TARGET) => {
   const { t } = useI18n()
+  const isTemplateGrant = targetType === TEMPLATE_GRANT_TARGET
+  const editing = ref(false)
   const menu = useMenuStore()
   const { canQuery: canManageGroups } = useGroupPermissions()
   const groups = ref<ApiGroup[]>([])
@@ -34,7 +36,9 @@ export const useDirectGrants = (targetId: () => string, targetType: string = API
   const error = ref('')
   let generation = 0
   onBeforeUnmount(() => { generation++ })
+  // 刷新仅重载授权和草稿，不退出模板编辑；保存期间不允许刷新打断提交。
   const load = async () => {
+    if (isTemplateGrant && saving.value) return
     const current = ++generation
     loading.value = true; loaded.value = false; error.value = ''; changed.value = []
     groups.value = []; original.value = []; selected.value = {}
@@ -50,8 +54,11 @@ export const useDirectGrants = (targetId: () => string, targetType: string = API
     } catch (cause) { if (current === generation) error.value = applicationError(cause, t) }
     finally { if (current === generation) loading.value = false }
   }
+  const edit = () => {
+    if (isTemplateGrant && loaded.value && !loading.value && !saving.value) editing.value = true
+  }
   const update = (groupId: string, ids: string[]) => {
-    if (saving.value || loading.value) return
+    if (saving.value || loading.value || (isTemplateGrant && !editing.value)) return
     const group = groups.value.find(item => item.id === groupId)
     if (!group) return
     const available = new Set(operations(group).filter(item => !item.disabled).map(item => item.id))
@@ -117,8 +124,17 @@ export const useDirectGrants = (targetId: () => string, targetType: string = API
   })
   const hiddenGrants = computed(() => original.value.some(grant => !groups.value.some(group => group.id === grant.groupId)))
   const assetHint = (group: ApiGroup) => groupAssetHint(group, original.value, targetType === TEMPLATE_GRANT_TARGET)
+  // 查看只展示已有授权，编辑展示完整候选；历史缺失操作仍使用原有回填与校验规则。
+  const templateRows = computed(() => groupRows.value.map(group => {
+    const visibleOperations = editing.value ? group.operationOptions
+      : group.operationOptions.filter(operation => group.selectedIds.includes(operation.id))
+    return { ...group, visibleOperations, assetHint: assetHint(group),
+      selectedCount: group.selectedIds.length, totalCount: group.operationOptions.length,
+      hasVisibleUnavailableOperations: visibleOperations.some(operation => operation.disabled),
+    }
+  }))
   const save = async (revokeAll = false) => {
-    if (saving.value || !loaded.value || loading.value) return
+    if (saving.value || !loaded.value || loading.value || (isTemplateGrant && !editing.value)) return
     if (!revokeAll && targetType === API_CLIENT_TARGET && !pendingChanges.value.length) return
     const current = generation
     saving.value = true; error.value = ''
@@ -126,13 +142,19 @@ export const useDirectGrants = (targetId: () => string, targetType: string = API
       await saveApiGrants(targetId(), revokeAll ? [] : payload.value, targetType)
       if (current !== generation) return
       onlyMessage(t('ApiApplication.message.permissionSaved'))
+      if (isTemplateGrant) editing.value = false
       saving.value = false
       await load()
     } catch (cause) { if (current === generation) error.value = applicationError(cause, t) }
     finally { if (current === generation) saving.value = false }
   }
-  watch(targetId, load, { immediate: true })
+  // 新模板使用独立的查看态；旧请求由 generation 隔离，不占用新模板的提交状态。
+  watch(targetId, () => {
+    if (isTemplateGrant) { editing.value = false; saving.value = false }
+    void load()
+  }, { immediate: true })
   return { groups, original, selected, changed, pendingChanges, loading, saving, loaded, error, hiddenGrants, payload,
     tableColumns, groupRows, tableSelection, toggleGroup, toggleAll,
+    editing, edit, templateRows,
     update, selectAll, operations, assetHint, canManageGroups, openGroupManager, save, load }
 }

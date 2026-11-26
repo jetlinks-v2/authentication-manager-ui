@@ -4,9 +4,43 @@
 
 组织通过同一注册入口声明 `directory.mode: tree`，复用 `api/system/department.ts#getTreeData_api` 的不分页组织树，不请求成员统计；树的展开、保留祖先搜索及选择由消费方处理，目录行只显示图标与名称。该接口沿用组织原权限范围，身份模块不依赖本体模块，也不根据图关系拼装组织层级。
 
+## 统一应用与接口分组详情摘要
+
+当前实现：`ProjectApplication/Detail`、`ThirdPartyApplication/Direct/Detail.vue` 与 `ApiGroup/Save/index.vue` 的现有详情使用 core `DetailHeader` 摘要模式、`DetailMetaItem` 和 `StatusTag`。保留并统一 56px 对象图标，ID/时间采用相同语义图标；说明与 ID、时间在同一摘要行内按可用宽度换行，不再强制独占一行。保留返回入口、业务动作、权限、名称/说明自动保存及失败重试。接口分组仅调整带 ID 的详情分支，不新增主导航，不改创建表单。
+
+摘要同行验证：操作区只占名称行右侧，摘要使用图标右侧完整宽度；1920/1280px 普通说明同行，768/390/320px 随空间自动换行。长说明、缺失字段、中英文、保存失败及重试检查通过；core 21 项回归、严格组件类型检查、5 个文件样式检查与认证模块构建通过。浏览器使用模拟业务数据，真实登录环境待验收。
+
+返回入口调整：三类详情的返回按钮从摘要内部移至卡片上方的独立 `PageChrome`，使用共享 `PageBack` 显示左箭头与返回列表文字，保留各页面原有跳转目标；加载和未找到详情时仍可返回。接口分组新增分支保留原返回方式。
+
+返回调整验证：三页在中英文、1920/1280/390/320px、PageChrome 原地及头部传送模式下的 48 组位置/原跳转目标检查通过；缺失详情仍有返回入口，新增分支无重复返回。24 项认证回归、公共组件类型检查、样式门禁与三个相关模块联合构建通过；浏览器业务数据与导航服务为替身，真实登录环境待验收。
+
+业务应用主导航改为 `PageChrome flush` / `SlantedTabs`，正文首次访问才挂载、切换后保留实例，并在应用 ID 变化时清理访问记录；保持设置表单 ref 与页头保存动作关联，头部移入 PageChrome 后仍保留加载遮罩。开放平台继续使用原主导航和条件卸载策略，避免保留凭据明文。其他正文与内层页签保持现状。
+
+验证：应用页签/同步凭据/外部接入的 24 项测试通过；认证模块单独构建、三个相关模块联合构建和样式门禁通过。浏览器以真实页面/保存 hook 配合模拟接口确认名称与说明保存失败保留草稿、重试后消除反馈；接口分组无 ID 时仍显示原新增表单；真实业务应用页的替身正文面板首次访问挂载，切卡返回保留草稿和实例。ID 复制保留完整 19 位字符串；长模板名不撑出卡片，业务应用长说明展示三行并提供完整 Tooltip。定向检查中改动页面/hook 无类型诊断，全模块依赖仍有既有诊断。独立浏览器被登录页拦截，六个真实 ID 的权限/后端联调、真实凭据清理仍待验收；命令与公共契约见 core `src/components/DetailHeader/README.md`。
+
+运行时工作台 `visDashboard/Base/shared/navigation.ts` 的消息通知快捷入口使用 `system/MessageNotification/Channels`，统一进入 `/system/notification/channels`；按当前菜单授权显示。迁移范围与验证见 [通知模块说明](../notify-manager-ui/README.md#旧菜单退役与个人中心入口统一)。
+
 第三方应用模板的 RSA keyId、公钥保存在 `configuration.credential`，可在关闭通知时独立维护，用于应用凭据主动获取与加密交付。通知开关只维护 `configuration.notification.address`；读取兼容旧 notification 内的 RSA 字段，保存时迁移为统一 credential，关闭通知不会删除公钥。通知 HMAC Secret 也可独立设置：keyId 默认自动准备，也可填写第三方预设的 keyId/Secret，接收端配置后通过专用接口保存切换；未设置时继续原派生算法，普通模板保存不读写 Secret。前后端须配套发布，后端需先增加两个可空通知凭据字段；旧后端不支持新 RSA 配置或自定义通知凭据，回滚需恢复配置格式与接收端信任凭据。
 
 `authentication-manager-ui` provides account, organization, permission, system application, and related management pages for the operations UI.
+
+第三方登录菜单（`baseMenu.json` 中的 `system-third-party-login`，owner 为 `cloud`）需声明应用管理查询权限 `application/query`，供 `api/system/thirdPartyLogin.ts#queryThirdPartyApplications` 调用 `/application/_query`。更新菜单定义后需同步已保存菜单及相应授权；验收时使用仅拥有该菜单的账号确认应用列表可查询，实际登录环境权限效果待验证。
+
+## 运行时角色授权详情
+
+### 巡检与热力图旧资产声明兼容
+
+交付：实现提交 `2e733bcb`；[PR #155](https://github.com/jetlinks-v2/authentication-manager-ui/pull/155)，目标分支 `2.20`。
+
+范围为实际运行于 9100 的运行时前端 `runtime-ui/`。角色页在 `views/system/Role/Detail/components/PermissionTree.vue` 加载详情后，通过相邻 `roleAssetPermissions.ts` 清理菜单及策略中已确认失效的 `inspectionPoint`、`inspectionItem`、`inspectionRule`、`inspectionFinding`、`inspectionReport`、`aiHeatmapFloorRegion`。巡检保留任务与方案，热力图保留点位及原有空间、视频等关联资产；正常资产的原范围、菜单及按钮状态保持。只清理这六个 ID，不依据资产目录缺失删除其他资产。同步修正巡检和 AI 模块的初始化 JSON，不修改后端或运营端前端。
+
+存量菜单初始化可能保留历史声明，角色页兼容在展示和保存快照中清理它们，无需预先写入数据库。只修改初始化 JSON 不会自动迁移已有菜单、模板及角色数据。验证：本模块 `node --test tests/roleAssetPermissions.test.mjs` 的 6 项回归通过；9100 返回的角色组件已调用清理函数，初始化 JSON 也不再含这六个失效声明。定向严格 TypeScript 检查及 Vue SFC 编译零诊断。运行时 core 内执行 `node ../node_modules/vite/bin/vite.js build -- --module-name authentication-manager-ui` 通过（11,588 个模块，2 分 11 秒）；保留既有输出选项、CSS 注释和大包提示。以运行时编辑器执行真实授权响应，全选为 37 项，巡检仅任务/方案、热力图仅点位。三个模块 diff 检查通过；模块无独立 lint 脚本，未运行全量类型检查，可执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json`。完整浏览器页面加载超时，页面显示与真实角色保存回显尚未验收，未提交真实角色授权。
+
+角色授权读取统一使用 core 的 `getMenuGrantDetail('role', roleId, query)`，对应 `GET /menu/{targetType}/{targetId}/_grant/detail`。`result.menus` 提供菜单及权限候选，顶层 `result.assetAccesses` 提供该角色的独立资产策略；不把候选列表作为已保存策略，不额外传候选展示域 `owner`。旧 `getPermissionTree_api` 仅保留菜单树返回结构的兼容适配。
+
+`api/system/role.ts` 复用统一详情查询，`PermissionTree.vue` 校验两组数据都是数组后才启用保存；旧 tree 数组、缺少字段或请求失败均不能生成保存载荷。旧树适配器保留错误响应，不把失败转换成空菜单。范围限运行时前端，候选筛选与后端授权规则保持原行为。
+
+验证：模块内 `node --test tests/roleGrantDetail.test.mjs` 的 6 项回归通过，覆盖真实 API、角色页 setup、共享编辑器与初始化角色流程；3 个改动 API 的定向 TypeScript 检查通过（沿用工作区配置并加载 Vue JSX 类型）。`runtime-ui` 中执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 对应的 Vite 模块构建通过，`git diff --check` 通过。未配置独立 lint 脚本；未运行全量类型检查，可执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 复核。尚未对真实后端写入；本地需检查角色加载请求、修改资产范围后保存及刷新回显，本次接口统一不等同于验证所有重复展示问题已修复。
 
 ## Application ownership filter
 
@@ -16,11 +50,9 @@ The application list uses `createAssetOwnershipField` for `business_application`
 
 Organizations use `OwnershipOrganizationTree.vue` and `useOwnershipOrganizationTree.ts`: independent checkbox selection, path labels, default root and selected-ancestor expansion, debounced local search and virtual rows. Clearing search restores expansion; stale responses cannot replace current selections. “Include descendants” submits the backend closure condition. Selected tags occupy at most two rows beside that control; `useSelectedTagOverflow.ts` reserves space for `+N`, whose popover shows all selections in the editor's stacking context.
 
-内嵌 `option-extra` 模式采用名称与操作同一行，右侧固定预留112px，保持44px行高；不在名称下另列权限。搜索路径可在名称下弱化显示。复选框与展开箭头居中对齐。树仅承载插槽，不解释权限或请求资产接口。15项树回归、格式检查及生产构建通过；此前真实浏览器已验证勾选、四项权限、撤销和搜索均不引起挤位或横向溢出。`assetOwnershipCreator.test.mjs` 的6项既有失败来自注册测试替身未处理 `./objectPresentations` 导入，与本次树行样式无关。
+内嵌 `option-extra` 模式将名称与操作放在同一行，预留操作区并保持统一行高；搜索路径可在名称下弱化显示。复选框与展开箭头保持对齐。树只承载插槽，权限与写入交由原资产接口。
 
-状态走查修正：空目录使用 Ant Empty 的简单 SVG，避免 `image=null` 触发渲染错误；读取失败明确显示提示及重试按钮，重试复用原加载器并保留勾选、过期响应与卸载保护。实际组件场景页见 `../jetlinks-ontology-ui/tests/browser/asset-binding-scenarios.html`，覆盖280/320/400px宽度、深层与长名称、零到多项权限、只读/禁用、单选、加载、失败重试、空目录及普通列表。浅色中文及暗色英文的真实DOM布局检查通过；重试后加载成功，单选和搜索勾选顺序正常，未出现横向溢出。全部使用本地数据，不写业务配置。定向类型检查仍有197项共享依赖诊断，修改的组件与hook无诊断。真实工作台恢复后已验证无匹配空态、清空搜索保留草稿、权限与更多菜单Esc返回；已恢复用户原来的未保存选择与三项权限，未提交配置。
-
-Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/186) and the backend Context from [Components #1655](https://github.com/jetlinks-v2/jetlinks-components/pull/1655) / [Tenant #48](https://github.com/jetlinks-v2/jetlinks-tenant/pull/48). Regression command: `node --test tests/assetOwnershipCreator.test.mjs tests/assetOwnershipOrganizationTree.test.mjs`; coverage includes lazy registration, user query mapping, the actual setup-name transform, tag overflow and local filtering of over 20,000 nodes. Full type checking retains existing errors; final visual verification remains pending because the browser connection times out.
+空目录使用 Ant Empty 的简单图形；读取失败显示提示和重试按钮。重试复用原加载器，保留勾选、过期响应及卸载保护。组件沿当前 Vue 的真实文件名与 `defineOptions` 声明命名，不依赖旧 setup-name 转换。
 
 ## 菜单多资产表单兼容
 
@@ -49,6 +81,38 @@ Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/1
 
 待验证：登录环境中打开旧菜单、选择两项后保存重开、删到一项、切换支持/间接/不支持，以及保存后的真实授权效果。本轮自动化测试没有写入真实菜单或授权数据；源码与虚拟组件回归不替代真实接口验收。
 
+### 用户管理初始化菜单的关联资产范围
+
+- 交付入口：实现提交 `1177515`；[PR #136：补齐角色及分组数据权限声明](https://github.com/jetlinks-v2/authentication-manager-ui/pull/136)，目标分支 `2.20`。
+
+- 目标：仅授予用户管理菜单时，也能为新增、编辑用户所查询的角色与角色分组配置数据范围，避免只有 `user` 策略而缺少 `role`、`roleGroup` 策略。
+- 实现范围：运行时模块 `runtime-ui/modules/authentication-manager-ui/baseMenu.json` 的 `system/User` 菜单已改为 `assetTypes: ["user", "role", "roleGroup"]`，并将旧 `assetType` 清空为 `""`。复用现有多资产菜单授权与后端 AssetsHolder 查询、绑定校验，新增/编辑按钮的功能权限保持原样。
+- 范围之外：不改后端、用户编辑页面、其他菜单或 `ui/`，不写入真实菜单或授权数据。
+- 生效与风险：已有环境需要同步初始化菜单，并在授权界面为角色及角色分组配置、保存“自己创建”策略，再刷新账号认证；增加资产声明本身不补齐已有独立策略或已授权菜单策略。角色分组同样受控，所属分组不可见时角色树中不会展示该分组下的角色。
+- 验证结果：在运行时模块使用 Node 22 执行 `node --test tests/menuSettingOwners.test.mjs tests/menuAssetTypes.test.mjs`，25 项通过；菜单 JSON 可解析，执行实际 `baseMenu.ts` 转换确认资产数组及按钮定义完整保留。
+- 待验证：本次未运行 lint、全量 typecheck 或生产构建；发布前可在 `runtime-ui/` 使用 Node 22 执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`，并核对产物中的菜单声明。真实账号新增/编辑用户、角色候选及保存权限效果，仍需完成菜单同步及授权后在登录环境验收。
+
+### 用户管理的组织候选范围
+
+- 交付：实现提交 `272fd4b`；[PR #156](https://github.com/jetlinks-v2/authentication-manager-ui/pull/156)，目标分支 `2.20`。
+- 目标与入口：在运营端 `ui/modules/authentication-manager-ui/baseMenu.json` 的 `system/User.assetTypes` 中补充 `organization`，保留 `user`、`role`、`roleGroup`，使只勾选用户管理时也能独立配置组织数据范围。
+- 实施方式：复用现有多资产菜单授权编辑器、组织树接口的数据权限过滤和新增/编辑用户的组织资产保存权限校验；不调整页面、按钮功能权限、后端或其他前端工作区。
+- 生效方式：已有环境需定向同步并保存用户管理菜单，再为角色配置、保存组织数据范围并刷新账号认证；新增声明不会自动补齐已有组织策略，也不会自动授予组织管理菜单。
+- 验证：菜单 JSON 可解析，和 Git 基线对照仅增加该资产；通过 esbuild 执行实际 `baseMenu.ts`、共享 `useMenuAssetPermissionEditor` 和菜单设置工具，确认只勾选用户管理时显示组织候选、用户与组织范围独立、授权快照携带组织策略，旧菜单定向同步后保留按钮及排序配置。脚本仅替换部署上下文，不写入服务端数据；差异空白检查通过。
+- 验证限制：`node --test tests/menuAssetTypes.test.mjs` 在 Node 25.1.0 下因测试宿主将 Vue 的 `module.exports` 导出用作 `new Function` 参数而报 `SyntaxError: Arg string terminates parameters early`，尚未进入用例。本次仅调整 JSON 配置和说明，未运行全量类型检查及生产构建，工作区无 lint 脚本；需要完整门禁时，在 `ui/` 执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 与 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`。真实登录环境的组织候选过滤与越权组织提交仍待完成菜单同步及授权后验收。
+
+### 组织管理的用户操作权限
+
+目标与范围：仅调整运行时 `runtime-ui/modules/authentication-manager-ui/baseMenu.json` 的 `system/Department` 菜单，使仅获组织管理授权的账号可在授权范围内新增、绑定和解绑用户。沿用现有页面按钮、用户/组织接口及后端 AssetsHolder 校验，不修改页面代码、运营端、后端权限模型或真实环境的授权数据。
+
+实现入口：`baseMenu.json` 的 `bind-user` 与 `bind` 按钮补齐后端额外检查的 `user/save` 与 `organization/save`，查看按钮补充角色筛选查询权限，`bind-user` 补充新增用户表单所需的角色/角色分组查询权限。组织菜单关联资产为 `organization`、`user`、`role`、`roleGroup`，清空旧 `assetType` 并沿用已有多资产授权配置。`views/system/Department/user/index.vue` 保持原有权限标识：新增用户和绑定用户共用 `bind-user`，单条/批量解绑共用 `bind`。
+
+生效与兼容：发布后同步已保存菜单，重新保存对应角色/用户的功能授权与各资产数据范围，再刷新登录认证。现有 `bind-user`（绑定用户）授权继续同时控制新增用户与绑定用户，解绑继续沿用 `bind`（资产解绑）授权，不新增按钮标识。绑定、解绑需要目标用户的数据权限和目标组织的保存权限；新增用户关联的组织、角色也必须在允许范围内。菜单声明不会自动创建或扩大已有授权策略，`user/save` 是现有后端要求的用户保存功能权限。
+
+验证结果：在模块目录使用 Node 22 执行 `node --test tests/departmentUserPermissions.test.mjs tests/menuSettingOwners.test.mjs tests/menuAssetTypes.test.mjs`，28 项通过，覆盖实际菜单转换及同步保存载荷、原有模板权限标识和现有菜单多资产回归。`git diff --check` 通过，组织用户页面与 HEAD 一致。在 `runtime-ui/` 执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过（2 分 39 秒），产物包含 JS 与 manifest，`dist/baseMenu.json` 与源码 JSON 完整一致；存在 Baseline 数据过期和大 chunk 提示。工作区和模块未配置 lint 脚本；执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 未通过，存在 627 项工作区类型诊断，未命中本次菜单配置。
+
+待验证：真实账号仅授组织管理时的允许/拒绝行为、单条及批量解绑效果待登录环境验收；菜单声明与模板契约检查不替代实际接口权限验证。
+
 ## 用户表格行操作
 
 交付入口：代码提交 `6cc39dc3174ee51afbef68291efbcb1109914823`；[PR #109：完善角色分组权限与列表操作](https://github.com/jetlinks-v2/authentication-manager-ui/pull/109)，目标分支 `2.20`。
@@ -75,9 +139,11 @@ Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/1
 
 验证：本地 `http://localhost:9200/#/system/ou/role` 的父节点和叶子节点分别显示 `icon-jiaose`、`icon-moren`，点击“默认”后叶节点正常选中，再切回“全局角色”正常选中；`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过（10,799 个模块，38.33 秒），`git diff --check` 通过。构建仅保留现有的 Rollup output option、CSS 注释与大包提示；未触发节点编辑/删除的后端写入验证。
 
-节点操作显示：`views/system/Role/RoleLeft/index.vue` 的编辑、删除入口改为带 Tooltip 的小尺寸图标按钮，操作容器默认 `display: none`，鼠标悬浮当前节点时切换为 `display: flex`。名称使用剩余宽度并允许在操作出现时收缩；保留管理员可见性、默认分组限制、点击隔离与原有回调。登录后仍需复核长名称在悬浮前后的布局以及图标按钮的点击交互。
+节点操作显示：`views/system/Role/RoleLeft/index.vue` 的编辑、删除入口使用带 Tooltip 的小尺寸图标按钮，操作容器默认 `display: none`，鼠标悬浮当前节点时切换为 `display: flex`。名称使用剩余宽度并允许在操作出现时收缩；自定义分组操作不再额外限制管理员身份，默认分组仍隐藏操作，保留点击隔离与原有回调。`baseMenu.json` 的 `system/Role` 菜单声明 `role-group/save`、`role-group/delete`，关联资产为 `role`、`roleGroup`；实际操作仍受后端功能权限与资产数据范围校验。已有环境需同步菜单、保存对应授权并刷新认证，菜单声明不会自动补齐已有数据策略。
 
-验证：模板 AST 与 `2.20` 对照确认管理员/默认分组保护、点击隔离、禁用与删除确认回调保持一致，脚本未变；当前模板和 scoped LESS 编译通过。模块生产构建通过（11,758 个模块，39.79 秒），`git diff --check` 通过。完整类型检查仍有 605 项基线一致诊断，本组件无诊断；模块未配置 lint 脚本。长名称悬浮前后布局和编辑/删除的实际页面交互待登录后验证。
+`views/system/Role/Detail/components/AddUserDialog.vue` 将筛选放入表格 `headerLeftRender`，使用 `ConditionFilter` 的 `search` 事件根分组载荷传递条件，并复用其事件类型；查询保留排除已绑定用户与 admin 的限制。`views/system/User/components/EditUserDialog.vue` 的组织选择不再依赖组织管理菜单是否可见，admin 用户的字段禁用规则保持原样。范围仅限运行时本模块，不调整接口、后端权限或运营端。验证覆盖菜单转换和同步、默认分组保护、用户筛选与绑定载荷；真实账号权限、组织候选和悬浮交互仍需登录环境验收，源码与边界替身检查不替代实际接口验证。
+
+验证结果：上述 5 个定向验收切片、三个 SFC 的脚本/模板/样式编译、UI 样式门禁和差异空白检查通过，模块构建通过（12,011 个模块，53.57 秒）。`node --test tests/menuSettingOwners.test.mjs tests/menuAssetTypes.test.mjs tests/departmentUserPermissions.test.mjs` 中 10 项通过，另两个测试文件分别因宿主未处理 `application-scope` 导入及缺少 `localStorage` 失败，待完善测试宿主后重跑。工作区未配置独立 lint；在 `runtime-ui/` 执行 `pnpm exec vue-tsc --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json` 仍有 609 条诊断（包含用户弹窗原有字段/校验等 5 条诊断），新增筛选回调的隐式 `any` 已修正，完整类型检查待清理相关问题后重跑。
 
 ## 组织树节点图标
 
@@ -216,7 +282,7 @@ Goal: give the six built-in bulletin types one icon vocabulary, and open a cente
 
 - `views/system/Announcement/bulletinTypeIcon.ts` owns the type-to-icon map (`default`, `maintenance`, `incident`, `release`, `security`, `policy`) and falls back to `NotificationOutlined` for unknown, historical or missing values. Icons only mark the content topic; they never carry severity or colour level.
 - `views/system/Announcement/realtimeNotification.ts` routes both realtime arrivals and bell-record clicks directly to `openAnnouncementDetail`, with a centered, closable dialog and no right-corner tip. `我知道了` keeps the existing read confirmation and badge refresh; closing the dialog alone does not mark it read.
-- Announcement dialog plan: keep `components/NotificationDetail.vue` as the shared renderer and scope the new skin to `.announcement-notification-modal`. The modal-content padding is cleared so the primary-colour header fills the complete top edge and both sides; it displays the localized announcement title and publication time above a separately scrollable Markdown body. The fixed footer uses a centered pill-shaped confirmation button. The generic Ant modal title is omitted to prevent duplicate headings; the bell and message-center embeds retain their compact metadata layout. Login confirmation, realtime read confirmation, APIs and Markdown compatibility stay unchanged. Focused popup/realtime regressions pass 6/6, the UI style gate and final production build pass, the shared Vue file is 255 lines, and scoped `git diff --check` passes. Authenticated visual verification remains required for final browser spacing and long-content scrolling.
+- Announcement dialog plan: keep `components/NotificationDetail.vue` as the shared renderer and scope the new skin to `.announcement-notification-modal`. The modal-content padding is cleared so the primary-colour header fills the complete top edge and both sides; it displays the localized announcement title and publication time above a separately scrollable Markdown body. The fixed footer uses compact right-aligned buttons; login popups place an unread-announcement count action beside confirmation. The generic Ant modal title is omitted to prevent duplicate headings; the bell and message-center embeds retain their compact metadata layout. Login confirmation, realtime read confirmation, APIs and Markdown compatibility stay unchanged. The shared Vue file remains below 300 lines; current verification is recorded with the login behavior below. Authenticated visual verification remains required for final browser spacing and long-content scrolling.
 - `noticeListLoader.ts` decorates bell records with the business-neutral `noticeIcon` field, and `components/NotificationDetail.vue` shows the same icon in the announcement detail shared by the bell, the realtime dialog and the message center.
 - Shared core exposes generic hooks through `noticeRealtimeHandler.ts`; the bulletin handler returns `true` to suppress the generic tip. Ordinary notifications retain their existing tip, and `NoticeItem.vue` renders `noticeIcon` when present. Core still contains no `SystemBulletin` name, bulletin API or bulletin copy.
 
@@ -383,11 +449,9 @@ Verification:
 
 ## System Basis Navigation Layout
 
-The system basis form stores the selected menu layout in `front.layout`. The selector supports `side`, `mix`, and `top` with CSS-only layout previews. During application startup or page refresh, `jetlinks-web-core/src/store/system.ts` validates the configured value and applies it to the shared shell layout; missing or invalid legacy values fall back to `side`.
+运行时基础配置通过 `views/system/Basis/Form.vue` 使用 core 的 `PlatformSettingsEditor`，与初始化页共享外观设置、草稿预览、地图和接口基础地址卡片。设置页逐项保存，`system/Basis:update` 控制编辑；字段注册由 core 公共入口提供，原 `fieldRegistry.ts` 兼容转导出。SaaS 自定义域名继续追加到外层 `system/basis:basic`。
 
-The owning UI files are `views/system/Basis/Form.vue`, `views/system/Basis/components/LayoutModeSelector.vue`, and `views/system/Basis/typing.ts`. The shared refresh-time state boundary remains `jetlinks-web-core/src/store/system.ts`.
-
-Verification: the `authentication-manager-ui` production build through the `jetlinks-web-core` Vite entry passes. Workspace-wide Vue type-checking is currently blocked by the existing `modules/device-manager-ui/views/link/Certificate/type.d.ts` syntax error and other legacy core diagnostics; the two new Basis components and their form-data type add no targeted diagnostics.
+已有 `front.layout`、`layoutVariant`、`headerTheme` 以及扩展配置在保存时保留。当前页面不再提供菜单布局和主题编辑器；共享 system store 仍按既有规则应用布局，缺失或非法值回退 `side`。契约与验证结果集中维护于 [core 页面说明](../../jetlinks-web-core/src/views/README.md#基础配置与初始化共享布局)。
 
 ## Application Center
 
@@ -463,6 +527,42 @@ Verification result:
 
 Risks: `templateUrl` relies on the existing backend template field being returned by the list/detail APIs. Authenticated browser smoke testing remains pending.
 
+#### 运行时模板介绍侧滑改造
+
+状态：已按确认方案完成。创建应用时，模板详细介绍参考原型 `https://jetlinks-ai-new.ez7268-453.workers.dev/midhub/open/industry`，在同一弹窗内部从右侧滑入，返回后继续填写。
+
+范围与入口：仅运行时 `runtime-ui/modules/authentication-manager-ui` 的 `views/application-center/ProjectApplication/Create/`、必要的模板读取类型／转换、现有 locale 和本文档；不修改运营端 `ui/`、后端接口、权限配置规则或创建提交载荷。
+
+实现与交互：
+
+1. `TemplateSelector.vue` 的「详细介绍」统一打开当前创建弹窗内部的右侧滑入内容区，替换嵌套 Modal 和自动打开 `templateUrl` 的分支。原创建表单保持挂载，返回时保留名称、描述、图片、模板选择及滚动位置；预览不自动选择模板。
+2. `Create/TemplatePreview.vue` 复用 `SlantedTabs` 承载「文档介绍／权限」两块内容。文档通过现有 `getApplicationTemplate` 读取模板 `i18nDocument`／`document`，复用只读 `MarkdownEditor`；权限读取现有 `/business-application-template/{id}/menus` 的已配置菜单及按钮。`Create/templatePreviewModel.ts` 复用模板配置的授权标志归一化，兼容扁平 `parentId` 与嵌套 `children`，保留已授权子菜单的父级路径，通过 Ant Design Collapse／Tree 只读展示菜单，在所属菜单右侧用 Tag 回显已授权按钮；不展示资产策略编辑。空内容、加载失败及重试分别反馈，不把失败当作未配置。
+3. `Create/useTemplatePreview.ts` 管理预览状态和按需请求，文档与菜单独立加载，模板切换和关闭后忽略过期响应；移除原菜单名称的全局缓存，避免跨预览沿用旧配置。返回按钮、关闭及 Escape 的预览态行为均先回到模板选择，表单态继续沿用关闭弹窗行为。使用同一弹窗标题和底栏，背景表单暂时 inert，入场聚焦预览、退场归还触发按钮焦点；不叠加第二层遮罩或弹窗。窄屏内容在当前容器内滚动，侧滑尊重减少动画设置。
+
+按钮权限回显修复（S，已完成）：`Create/templatePreviewModel.ts` 保留已有归一化结果中的已授权按钮 ID 与国际化名称；`Create/TemplatePreview.vue` 的折叠标题与树节点共用局部 `TemplatePreviewMenuRow.vue`，在所属菜单同一行右侧以只读标签展示按钮，覆盖顶层菜单和任意层级子菜单。沿用 `normalizeGrantedMenus` 对 `buttons`／历史 `actions` 和授权标志的兼容；未授权菜单仅作为父级路径保留时不展示其按钮。范围限运行时预览、现有回归测试和本文档，不调整接口、授权配置或权限写入。
+
+按钮右侧布局调整（S，已完成）：仅调整 `Create/TemplatePreviewMenuRow.vue` 的布局样式，菜单名在左、按钮标签在同一行右侧，按钮较多时在右侧区域换行；保留现有权限数据与只读交互。组件 script／template／scoped-style 编译与 `git diff --check` 通过，真实页面确认空间配置、空间态势、监控墙的按钮组与菜单名同排，按钮组右边缘与所在行对齐。本轮样式调整未重复运行数据回归、全量类型检查或生产构建，沿用下方此前的验证结果。
+
+菜单行分隔调整（S，已完成）：仅在 `Create/TemplatePreview.vue` 的菜单树每行增加 `1px solid var(--line)` 底部边框，保留菜单与按钮的对齐和权限数据。组件共 138 行，script／template／scoped-style 编译与 `git diff --check` 通过；真实页面确认 11 个菜单行均有底部分隔线，包含无按钮的菜单行。本次纯样式调整未重复运行数据回归、全量类型检查或生产构建。背景微调（S，已完成）：分组内容区改用已有的浅色 `var(--bg-2)`（`#FAFAFA`），增强与行分隔线的区分。SFC 解析与 scoped-style 编译通过；真实页面确认背景为 `rgb(250, 250, 250)`，行边框仍为 `1px solid rgb(236, 239, 243)`，对比效果已核对。
+
+按钮回显验证：现有预览回归测试共 8 项通过，新增覆盖按钮授权过滤、国际化名称与 ID 回退、不同菜单相同按钮 ID、历史 `actions`／授权标志、未授权父级路径和输入不变性。两个相关 SFC 的 script／template／scoped-style 编译通过（`TemplatePreview.vue` 134 行、`TemplatePreviewMenuRow.vue` 60 行），`git diff --check` 通过；9201 真实页面确认「空间配置」展示查看／新增／编辑／删除／导入，「空间态势」展示查看／操作，「监控墙」展示查看／新增／编辑／删除，无按钮的菜单正常保留。重新执行下方 `vue-tsc` 命令仍有 569 条诊断，预览相关文件无诊断，完整类型检查尚未通过；本次未重跑生产构建，工作区未配置独立 lint 脚本。
+
+模板卡片样式修正（S，已完成）：以用户补充的选中／未选中对照图为准，仅修改 `Create/TemplateSelector.vue`。单卡改为 88px 高的横向布局：左侧 44px 模板图标，右侧依次为名称、单行省略描述、带文档图标的详细介绍链接；使用 12px 圆角和 8px 卡片间距，移除独立底栏和箭头。选中卡片使用整卡浅蓝底、蓝色边框及右上角实心勾选标记，未选中卡片使用白底浅色边框且不显示空心选择圈。保留两列及窄屏单列规则、整卡选择、侧滑预览和现有数据来源，不调整接口或创建表单。
+
+卡片样式验证结果：`TemplateSelector.vue` 共 194 行，通过当前 core 依赖的 `vue/compiler-sfc` 完成 script／template／scoped-style 编译，`git diff --check` 通过。真实页面测得卡片为 302.5×88px，描述为 `nowrap`／`ellipsis`；已验证左侧安防卡片选中、右侧养老卡片未选中的对照效果，并保存截图。点击储能卡片的详细介绍并返回后，安防卡片仍选中，触发按钮焦点正常恢复。此次局部展示修改未重复完整 typecheck／build，下方完整构建和类型检查结果来自此前侧滑改造阶段；工作区未配置独立 lint 脚本。40rem 以下单列样式保持原规则，本轮未重复窄屏实测。
+
+复用判断：当前 core `JlDrawerShell` 基于独立的 `a-drawer` 浮层和头尾结构；本次需要替换同一 Modal 的内容并保留表单，因此使用局部过渡容器组合已有页签、Markdown 和 Ant Design 菜单树／折叠组件，不修改公共抽屉。
+
+验证结果：
+
+- `node --test tests/applicationTemplateMenuPreview.test.mjs` 的 8 项回归通过，覆盖菜单层级与同名不同 ID、父级路径与未授权叶节点过滤、已授权按钮归属和名称、历史按钮字段与授权标志、国际化文档和原文回退、独立失败／空态及重试、快速切换的过期响应、关闭后的请求失效和重开默认页签；使用真实转换函数与 Vue hook，仅替换请求 I/O 和无关环境边界。
+- 侧滑改造阶段的三个相关 SFC 的 script/template/scoped-style 编译通过（当时创建入口 175 行、模板选择 156 行、预览 93 行），中英日 JSON 与 `git diff --check` 通过。工作区和模块未配置独立 lint 脚本。
+- 在 `runtime-ui/` 执行 `pnpm --config.verify-deps-before-run=false exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false`，修改前后均为 569 条既有诊断，归一化行号后完全一致，无新增错误；完整类型检查仍需清理历史诊断后重跑。
+- 在 `runtime-ui/jetlinks-web-core` 执行 `pnpm --config.verify-deps-before-run=false exec vite build --outDir /tmp/jetlinks-template-preview-build -- --module-name authentication-manager-ui` 通过，转换 12,062 个模块，耗时 1 分 16 秒，保留原有构建告警。
+- `9201` 真实页面确认文档正文、文档空态、权限菜单空态、带分组的菜单树和折叠正常；页面始终只有一个可见 dialog。返回按钮、关闭和 Escape 保留名称、描述、已选模板及表单滚动位置，退场后恢复详细介绍按钮焦点；键盘打开其他模板预览不会更改已选模板。1280px 桌面、768px 和 390px 视口均无文档或内容面板横向溢出，临时视口已恢复，浏览器无 error 日志。
+
+未覆盖：真实请求失败由自动化边界测试覆盖，未在浏览器注入网络故障；减少动画由样式规则处理，未切换系统偏好验证。未向后端提交真实创建、图片上传或权限变更；Git commit 与 PR 尚未生成。
+
 ### Project Application Members And Roles Layout Plan
 
 Status: implemented and verified after confirmation.
@@ -520,6 +620,15 @@ Verification result:
 `_redirect?applicationScope=false`，不能关闭范围；仅关闭应用范围时，项目页面附带的租户范围仍会令签发 Code 返回 403。
 
 应用管理使用同一创建入口，通过模板 provider 区分普通业务应用与第三方应用，不新增后端应用类型或无模板创建接口。实际前端模块为 runtime-ui/modules/authentication-manager-ui；开放平台 API 应用仍使用独立 /api-application 模型。
+
+应用卡片类型展示与筛选（已实现）：
+
+交付：实现提交 `9494f0a2f46b297d1d2a31b3440d510ee8c262f9`；[PR #154](https://github.com/jetlinks-v2/authentication-manager-ui/pull/154)，目标分支 `2.20`，包含本文的应用模板类型列与筛选。
+
+- `/open/application` 卡片在模板名同一行显示“业务应用 / 第三方应用”，顶部 `ConditionFilter` 提供应用类型的“属于 / 不属于”筛选。`applicationModel.ts#getApplicationProviderOptions` 为 `components/ApplicationCard.vue` 和 `useApplicationList.ts` 提供同一组选项及中英文文案；历史空 provider 归为业务应用，未知 provider 保留原值。沿用现有卡片壳层、行高和截断样式。
+- 类型来自关联模板，应用实例没有 `provider` 列。`applicationModel.ts#buildApplicationTerms` 递归将虚拟类型条件转换为标准 `templateId` 的 `in/nin`，保留 AND/OR 分组及名称、状态、归属条件；无匹配模板时利用必填 `templateId` 的 `isnull/notnull` 表达空集合，避免空 IN 被忽略。后端实体、接口、菜单权限及运营端 `ui/` 保持原有契约。
+- `useProjectApplication.ts` 在类型查询前加载完整模板列表；与初次加载共用在途请求，失败传递到现有列表错误态并释放请求以供重试，不误判为空结果。等待模板期间切换或清空筛选时，旧查询不会再请求或替换新列表；没有类型条件时保留原有并行加载。继续复用应用菜单已有的模板查询权限及现有 API。
+- 验证：`node --test tests/applicationTypeFilter.test.mjs` 的 10 项通过，覆盖中英文卡片内容 SSR、真实列表字段与搜索选项、两类模板及空/未知类型、空集合、嵌套分组、失败重试、清空筛选、请求共享及响应顺序；API 与无关展示外壳使用边界替身。原有 `projectApplicationExternalAccess.test.mjs` 的 18 项通过，该脚本通过临时无空格工作区软链接入口和 `--preserve-symlinks-main` 运行，规避既有 `URL.pathname` 对路径空格的处理问题。模块定向生产构建通过（12,041 个模块，51.54 秒；通过 `--outDir` 将产物写入临时目录，命令入口为 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`），`git diff --check` 通过；卡片组件为 218 行。`pnpm exec vue-tsc --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json` 最终分支与最新 `origin/2.20` 基线均有 570 项诊断，归一化行号后完全一致，修改文件无诊断；清理基线后需重跑。工作区没有独立 lint 脚本。真实后端的组合筛选、清空结果及窄屏显示仍待在 `pnpm dev` 对应的 `/open/application` 页面验收。
 
 - 创建第三方实例时仅选择 provider=third-party 的模板及填写基本信息，不配置出站 OAuth2、通知 Token 或实例 callback。
 - 模板配置复用 redirectUri、externalParameters 和 notification.address/keyId/publicKey。平台生成 Code 并拼接跳转参数；第三方通过平台现有 /oauth2/token 和 /authorize/context 获取委托身份。
@@ -622,13 +731,25 @@ Owning module: `ui/modules/authentication-manager-ui`. The application menu Scop
 - External application opening verification: the focused Node suite passes all 11 cases, including configuration echo, the missing-link short circuit, configured external URL flow, role selection, failed URL loading, and unchanged Runtime access; the `authentication-manager-ui` production build passes with 10,906 transformed modules.
 - Users: bound users are queried through `/user/detail/business_application/{applicationId}/_query` and batch-hydrated through `/user/detail/_query`. Entering a ProjectApplication detail page ensures the current signed-in user is bound to that business application; opening an application also requires the user to hold one of the application's roles, auto-binding the single available role or asking the user to choose when multiple roles exist. `绑定用户` queries current project users through `/user/detail/_query`, filters already-bound IDs with `id nin`, and binds selected IDs through `/business-application/{applicationId}/users/_bind`; row-level `解绑` posts the selected user ID to `/business-application/{applicationId}/users/_unbind`; existing-user role updates omit `businessApplicationIdList`, so they preserve all memberships.
 - Roles: application roles now use the same system role APIs as `views/system/Role`: `POST /role/_query/` with an `applicationId` exact term, `POST /role` with `applicationId` on creation, `PATCH /role` on update, and `DELETE /role/{id}` on deletion. Updates do not resend `applicationId` because it is create-only.
-- Role permissions: every role-editor load directly re-queries `POST /menu/user-own/tree` instead of reading `menuResultCache`, and intersects those nodes with `GET /business-application-template/{templateId}/menus` by exact menu `id`. Internal applications query `owner=app`; external-link applications query all menu owners and retain `open-api` candidates. Both branches keep the template authorization ceiling and reuse `/menu/role/{roleId}/_grant/detail` and `/menu/role/{roleId}/_grant`; saved grants and asset accesses are pruned to the final current-operator and template candidate scope before echo and save.
-- Devices: bound assets use the `dim-assets` term with target type `business_application`. The bind drawer has no device group/product/gateway classification sidebar and pages candidates through `/device/instance/detail/_query`. Every candidate request prepends `productId$product-info = "accessProvider nin (agent-device-gateway,agent-media-device-gateway,official-edge-gateway,fixed-media,gb28181-2016,media-plugin,onvif)"`, sorts by `createTime desc`, and sends the required tags/relations/parent detail context. Opening the drawer does not call `/assets/bindings/device`; confirming calls `/assets/bind/device` once with a single binding object, selected device IDs in `assetIdList`, and `read`, `save`, `delete`, and `share` permissions. Unbinding continues through `/assets/unbind/device`.
+- Runtime role permissions: menu and button candidates intersect `POST /menu/user-own/tree` (`owner=app`) with `GET /business-application-template/{templateId}/menus`. The role editor reads and saves grants through `/business-application/{applicationId}/roles/{roleId}/menus/_grant/detail` and `/menus/_grant`. Each save re-reads the template and user menus, keeps valid menu selections, and replaces independent asset policies with the complete latest template configuration; menu-level compatibility fields use that same configuration. Third-party applications keep their existing role-only display without this menu editor. See the runtime implementation and verification below.
+- 设备绑定：绑定列表使用目标类型为 `business_application` 的 `dim-assets` 条件；选择器通过 `/device/instance/detail/_query` 分页查询所有接入方式的设备，不再排除网关、视频等设备，不添加分类侧栏，保留名称/ID 条件、已绑定 ID 排除、创建时间倒序及既有详情上下文。打开选择器不查询 `/assets/bindings/device`；确认时通过 `/assets/bind/device` 提交所选 `assetIdList` 和 `read`、`save`、`delete`、`share` 权限，解绑沿用 `/assets/unbind/device`。
 - Video: opening the camera drawer queries gateways through `/media/device/_query` only. Checkboxes in the left list select multiple gateway `deviceId` values for binding, while the most recently clicked or checked gateway independently drives the right-side preview. No channel query is issued until a preview gateway is active; the right-side table then pages `/media/device/{gatewayId}/channel/_query` without row checkboxes. Bound-camera lookup filters `/media/channel/_query/no-paging` by `dim-assets` on `deviceId`; already-bound gateway IDs are excluded from the left list. Confirm submits all checked gateway IDs through `/assets/bind/device`, and unbind submits the containing gateway `deviceId` through `/assets/unbind/device`.
 - Membership mutation boundary: application member addition uses the incremental `/business-application/{applicationId}/users/_bind` endpoint, and row-level member removal uses `/business-application/{applicationId}/users/_unbind`. Role deletion still uses the global generic role endpoint and remains explicitly confirmed.
-- Application detail tabs: the single-application workspace exposes only `应用设置`, `应用成员`, and `应用角色`. Device and video asset binding remain available in their service boundaries but are no longer eagerly queried or rendered as detail tabs.
+- 应用详情页签：`runtime-ui/modules/authentication-manager-ui` 保留“应用设置”“应用成员”“应用角色”，恢复“设备绑定”入口。复用 `ProjectApplication/Detail/components/DeviceBinding.vue`、`applicationDeviceService.ts` 及现有 `/assets/bind/device`、`/assets/unbind/device` 接口，以 `business_application` 和当前应用 ID 分配设备；`ProjectApplication/Detail/useApplicationDeviceBinding.ts` 在进入设备页签后加载绑定列表，绑定或解绑成功后刷新，切换应用时清理上一应用的列表与选择器。操作复用已有 `application-center/ProjectApplication:bind-device` 权限。实现仅涉及本模块的详情入口、设备交互状态和中英文文案。
+- Application identity: the Runtime application's detail summary (`views/application-center/ProjectApplication/Detail/components/ApplicationSummary.vue`) displays a copyable `application.id` tag after the description. Reuse `AppTag` and the typography copy control; copying includes only the instance ID. The component script/template/scoped styles, locale JSON parsing, UI style check and `git diff --check` pass. The `authentication-manager-ui` production build passes with Node 22 (2m 40s), retaining large-chunk warnings. Browser verification remains pending because the browser debugging connection was interrupted; reopen the application detail at the Runtime UI server and check that the tag appears and copies only the ID. No separate lint script is configured; full typecheck was not rerun for this local display change.
 - Application settings: `应用基本信息` is read-only by default and switches the whole section into edit mode. Its edit, cancel, and save controls are shown in the detail header action group immediately before `删除` while the settings tab is active; the settings card no longer renders its own top-right actions. Icon, name, description, default language, and timezone are saved in one update; the application link remains read-only and copyable. The timezone is stored as `configuration.timezone`, defaulting to `Asia/Shanghai` for existing records.
 - Menu data access: `application-center/ProjectApplication` exposes `business_application`, `user`, `role`, and `device` as assignable asset types. Application templates and `assets-bind` remain functional permissions rather than asset types.
+
+### 运行时应用角色菜单与模板资产权限
+
+目标与范围：`runtime-ui/modules/authentication-manager-ui` 的 `/open/application/Detail/:id` 角色配置。已按确认方案恢复菜单交集，并让角色保存继承最新模板资产权限；模板由「全部数据」改为「租户」后，再次保存角色 A，会将原策略覆盖为「租户」。模板修改本身不批量迁移所有角色。
+
+- 菜单来源：加载和保存前均查询当前用户菜单与关联模板，按菜单 ID 及按钮 ID 取交，保留模板名称、资产定义与树层级。导航祖先只用于展示，不作为新增授权提交；实例专属菜单不进入候选。角色历史授权只用于回显合法的菜单与按钮勾选。
+- 资产来源：完整复制最新模板独立 `assetAccesses`（保留策略扩展配置），同步重建每个已选菜单的资产权限兼容字段。用户菜单资产范围、旧角色策略、编辑器默认值均不替代模板；模板配置为空时明确提交空数组，清空旧策略。模板读取失败不提交旧快照。
+- 保存边界：继续使用应用角色专用授权接口，保留后端角色归属、操作者权限和模板上限校验。保留已加载菜单的未勾选撤销标记，以便后端按 owner 删除旧绑定；当前页面清空菜单或菜单移出交集时仍提交这些标记。保存期间禁止重复提交及编辑权限，切换角色、应用或卸载后取消尚未提交的过期请求；已发出的写入固定原角色，完成后不覆盖新角色页面。成功后重新读取回显。
+- 实现入口：`views/application-center/ProjectApplication/applicationRolePermissionScope.ts` 负责交集、模板资产继承与提交载荷；`views/application-center/ProjectApplication/Detail/components/useApplicationRoleManagement.ts` 负责读取、保存前刷新与请求隔离；`views/application-center/ProjectApplication/Detail/components/RoleManagement.vue` 在保存期间展示加载遮罩；`api/application-center/businessApplication.ts` 补齐模板资产响应类型。未修改运营端、公共编辑器、模板编辑流程、第三方应用角色展示、后端代码或接口结构。
+- 验证：`node --test tests/applicationRolePermissionScope.test.mjs` 的 15 项通过，使用真实 Vue 状态、公共权限编辑器、业务 API 包装，只替换 HTTP、通知和应用上下文；覆盖 `all` → `tenant`、模板清空与扩展配置、菜单/按钮交集、父级目录、撤销全部、失效请求与失败重试。`node --test tests/applicationTemplateMenuConfig.test.mjs tests/applicationTemplateMenuPreview.test.mjs tests/applicationDetailTabs.test.mjs` 的 23 项通过。最终模块生产构建通过（24.34 秒，保留既有分块体积等提示），命令在 `runtime-ui/jetlinks-web-core` 执行：`node --max-old-space-size=8192 ../node_modules/vite/bin/vite.js build --outDir /tmp/jetlinks-app-role-build -- --module-name authentication-manager-ui`。在 `runtime-ui` 执行 `pnpm exec vue-tsc --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json`，修改前后均为 541 条既有诊断，归一化行号后完全一致，修改文件无诊断；清理基线后需重跑。`git diff --check` 通过，角色组件保持 139 行。
+- 剩余验证：未对真实后端提交该应用角色授权，需在登录环境验收模板改为「租户」后保存角色 A，并刷新确认持久化结果。保存前读取与提交之间再次修改模板时，后端继续按提交时的模板上限校验，前端不绕过拒绝；没有自动迁移已有角色。当前工作区无独立 lint 脚本。
 
 ### Application Menu Scope
 
@@ -674,7 +795,7 @@ The related shared code is limited to:
 - `views/application-center/ProjectApplication/useProjectApplication.ts`: remote state and mutation orchestration.
 - Ledger/create/detail components: loading, empty, validation, confirmation, submit, and post-mutation refresh behavior.
 - The ledger follows the project-application card design: the shared `PageHeader` carries a `ConditionFilter` whose name and status fields submit the component's standard `terms` model alongside the primary create action, followed by a responsive three-column card wall and an inline create card. Each card shows icon, name, status, template, description, creation time, edit/status actions, and the primary open action. Application cards reuse `jetlinks-web-core/src/components/CardBox/index.vue` (see 应用列表卡片改为 CardBox 壳层 for the bottom toolbar); unsupported gateway/camera metrics and the template filter are not rendered.
-- `views/application-center/Template/`: template ledger, create dialog, tag sidebar, and Save workspace. The Save workspace keeps the top summary as a detail display, then separates document and configuration tabs. Configuration reuses `MenuAssetPermissionEditor` with asset permission batch selection and writes scope strategy to `assetAccesses[].options.scopeStrategy`.
+- `views/application-center/Template/`: template ledger, create dialog, tag sidebar, and Save workspace. The Save workspace keeps the top summary as a detail display, followed by document and permission tabs; third-party templates additionally expose configuration and API authorization tabs. The permission tab reuses `MenuAssetPermissionEditor` with asset permission batch selection and writes scope strategy to `assetAccesses[].options.scopeStrategy`.
   Third-party templates also expose optional `configuration.platformId` in the existing redirect configuration form. An empty value uses the template ID at runtime; regions with identical application IDs should use different platform IDs. Saving preserves unrelated configuration, and only users with update permission can edit the field.
 - `baseMenu.json`: visible name “应用管理” and backend resource actions required by the page.
 - `locales/lang/zh.json` and `locales/lang/en.json`: synchronized user-visible copy.
@@ -689,11 +810,77 @@ Every created or substantially edited Vue file remains at or below 300 lines.
 
 ### 应用模板列表操作
 
+应用类型筛选与卡片展示：本模块 `views/application-center/Template/useApplicationTemplateList.ts` 为现有 `ConditionFilter` 独立配置 `provider` 搜索字段，选项复用“业务应用”（`official`）和“第三方应用”（`third-party`）的中、英、日文资源；默认使用 `in` 多选条件，请求提交类型编码，模板表格列保持不变。`views/application-center/ProjectApplication/components/ApplicationCard.vue` 在模板名称旁展示类型标签，读取应用模型中由关联模板确定的 `provider`，历史空值按业务应用展示，未知值使用现有空值占位。仅修改运行时应用模板搜索及应用管理列表卡片，不改创建弹窗、后端接口、权限或运营端。
+
+应用类型验证（2026-11-07）：在 `runtime-ui` 执行 `pnpm -F jetlinks-web-core build --outDir /tmp/app-type-build-20261107 -- --module-name authentication-manager-ui` 通过（28.43 秒），保留既有大分块等告警；`node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json` 修改前后均有 609 条既有诊断，忽略行号后无新增，三个修改文件无诊断。工作区与模块无独立 lint 脚本，`git diff --check` 通过。独立浏览器预览挂载真实 `ConditionFilter`、列表 hook 和 `ApplicationCard`，以接口替身验证两种类型、名称／状态组合筛选、清空、三种语言、空值／未知值、模板异步更新及 320px／380px 卡片类型与模板名称无重叠，共 15 项通过；手工点击类型单选、多选和清空，查询分别提交 `third-party`、两种类型数组和空条件。此验证不替代登录后完整页面与真实后端结果验收，需在 `/infrastructure/app-template` 和应用管理页补充真实筛选结果／空结果联调；修复既有类型问题后重跑上述 typecheck。
+
 运行时应用模板页 `/infrastructure/app-template` 的状态列仅展示状态，复用产品列表 `modules/device-manager-ui/views/device/Product/index.vue` 的 `j-badge-status`，以 `enabled → processing`、`disabled → error` 映射呈现蓝色／红色状态标签。沿用应用模板文案和字符串／枚举对象归一化，标签外观由现有表格公共样式提供，不另写样式。`views/application-center/Template/index.vue` 的操作列复用 core `TableActions`，编辑图标保留行内入口，启用／停用与删除放入更多面板；分别使用菜单已有的 `update`、`action`、`delete` 权限码，并复用现有中英文资源。`useApplicationTemplateList.ts` 移除开关的临时乐观状态，取消确认时保留原状态，接口成功后更新状态并刷新，加载状态在请求结束时释放。后端接口、菜单定义、运营端 `ui/`、产品列表和其他模板配置保持原有契约。
 
 验证（2026-10-29 交付复核）：页面 Vue 脚本与模板、日志 CSS/Less 编译通过；使用真实 Vue 响应式和平台边界替身的定向检查覆盖确认取消、启用／停用成功、请求失败、请求期间状态、loading 释放和成功刷新。`node --test tests/systemLogPresentation.test.mjs tests/accessLogPresentation.test.mjs` 回归通过（15/15）。在 `jetlinks-web-core` 使用 Vite `build` API 和 `process.argv.push('--module-name', 'authentication-manager-ui')`，将输出目录指定为 `/tmp/codex-authentication-manager-ui-delivery-build-20261029`，模块生产构建通过（11,900 个模块，1 分 40 秒），保留输出选项、CSS 与大分块等现有告警。`git diff --check` 通过；工作区和模块未配置 lint 脚本。在 `runtime-ui` 执行 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json` 报告本次修改文件之外的 617 项类型诊断，修改的页面、hook 及 `TableActions` 没有诊断，需处理项目类型错误后重跑。
 
 此前真实 `9200` 页面七行均展示蓝色只读状态标签，页面无开关；已有更多面板与停用／删除确认、取消验证，取消后仍保留七条模板及原状态。本次交付复核未重跑浏览器或提交真实启停、删除；成功提交、接口失败及停用模板的启用分支仍待后端联调，定向检查中的平台边界替身不代表真实接口验证。
+
+### 新增应用模板的图标与基础图片
+
+当前行为：`/infrastructure/app-template` 的新增和详情基本信息编辑共用表单，均展示图标、基础图片及必填说明（最多 512 字符，支持多语言）。图标沿用 `icon`，基础图片使用可空地址字段 `coverImage`，两项媒体配置均选填。颜色页签沿用「纯色」，通过调色板选色立即更新图标草稿和预览；基础图片选择后直接上传原图，不进入裁剪，支持 JPG/PNG、2 MB 以内文件及预览、清除。历史空说明仅在保存基本信息时要求补齐；独立图标入口仍可便捷编辑图标。
+
+文案调整：移除 `ApplicationTemplateIconEditor.vue` 对颜色页签名称的覆盖，复用 core 既有的「纯色」多语言文案，保留即时选色逻辑。中英文 JSON 解析、Vue SFC 编译及 `git diff --check` 通过；`9201` 新增弹窗实测显示「纯色」。此次仅恢复名称，沿用下述类型检查与构建证据。
+
+实现落点：`views/application-center/Template/components/ApplicationTemplateCreateDialog.vue` 承载两种模式；`ApplicationTemplateIconEditor.vue` 通过 core `IconValueEditor` 的 `color` 插槽复用模块已使用的 `colorpicker-v3`，保留 `color:<颜色>[:标签]` 格式。`useApplicationTemplateCreate.ts` 管理创建、必填及长度校验；`Save/useApplicationTemplateBasicInfo.ts` 管理编辑草稿、实际变更字段与多语言合并。`useApplicationTemplateMedia.ts` 共用上传状态与回显，沿用 `FileUpload`、`uploadByRequest` 和平台文件服务，将 `result.accessUrl` 写入 `coverImage`，不将文件 ID 当作地址。图标最大 256 字符、基础图片地址最大 1024 字符；清除已有图片显式提交空字符串。
+
+边界：编辑中的应用类型和模板编码继续只读，第三方跳转地址仍在配置页维护；两类 Provider 共用新增媒体和说明字段。上传、图标裁剪和图标库打开期间禁止父弹窗提交和关闭；取消恢复已保存值，失败保留草稿，旧保存响应不能覆盖新模板。上传结束或图片变化后重建控件，清空内部预览缓存。校验失败只显示字段反馈，不误报为服务端保存失败。保持其他页签草稿、应用卡片、权限及运营端 `ui/`；本轮未修改后端结构，既有 `coverImage` 契约见 `modules/authentication-manager/README.md` 的「应用模板图标与基础图片」。core 的默认颜色输入继续保留，只有模板通过插槽使用调色板。
+
+自动验证：在本模块运行 `node --test tests/applicationTemplateBasicInfo.test.mjs`，26 项全部通过；core 的 `node --test tests/iconValue.test.mjs` 6 项通过，共 32 项。覆盖新增／编辑字段、说明必填与隐藏语言长度、即时选色、颜色标签保留、媒体回显和清除、失败／取消／保存锁／目标切换、默认颜色编辑器与自定义插槽。`runtime-ui/` 中运行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false`，最后有 569 条既有诊断，无新增；相较 570 条基线，仅另一处应用卡片相关诊断随工作区现有改动消失。完整类型检查仍需清理既有问题后重跑。`jetlinks-web-core/` 中运行 `pnpm exec vite build --outDir <临时输出目录> -- --module-name authentication-manager-ui` 通过（12,057 个模块，3 分 26 秒），保留既有输出选项、CSS 注释和大包告警；随后的小范围错误反馈与浮层样式修正经定向回归、类型检查、SFC／CSS 编译和实际页面复核。中英文 JSON 与 `git diff --check` 通过；工作区未配置独立 lint 或样式门禁脚本。
+
+浏览器验收：登录后的 `9201` 页面确认「调色板」展示主题色、渐变色阶、标准色及更多颜色，选色后图标预览立即改变；新增说明为空时阻止创建并提示「请输入说明」。详情编辑回显已保存的图标和基础图片，展示必填说明，类型与编码只读；空说明保存仅显示字段校验，清除图片、修改说明后取消，再打开恢复原图片和说明。验证草稿已取消，未提交真实模板变更，真实 HTTP 保存仍由配套后端联调补充。基础图片原图上传（480×270、600×240）、预览、换图缓存、清除，以及原有两类 Provider／390×844 布局沿用上一轮证据；本轮未重跑窄屏和实际文件上传。
+
+### 应用模板详情布局
+
+目标与范围：运行时 `runtime-ui/modules/authentication-manager-ui/views/application-center/Template/Save/` 对齐设备详情页 `modules/device-manager-ui/views/device/list/components/IotDeviceDetailView.vue`，按「返回按钮 → 模板信息 → SlantedTabs → 页签内容」排列。本次为 S 级局部布局调整，不改运营端 `ui/`、公共布局、接口、菜单、权限和保存逻辑。
+
+实现：`index.vue` 复用 `PageChrome` 将返回入口、独立摘要卡和贴合式 `SlantedTabs` 放到布局内容面板上方；`TemplateSummary.vue` 移除内嵌返回按钮和多余底部间距。文档、配置及条件展示的授权页签继续共用原有活动项和内容实例，避免布局迁移重置编辑状态。
+
+顶部摘要与统一编辑：`TemplateSummary.vue` 参考同一原型将图标放在左侧，右侧内容依次为「名称、状态、模板 ID」「应用类型、模板编码」「说明」，操作区居右提供编辑和原有启停按钮。名称、说明移除单项编辑入口，统一由右侧编辑按钮打开列表新增所用的 `components/ApplicationTemplateCreateDialog.vue`，该组件已扩展编辑模式；图标继续在摘要区域独立点击编辑，也与基础图片一起进入基本信息弹窗；说明在新增和基本信息编辑中均必填。顶部与基本信息编辑中均不提供模板地址字段，不实现原型中的眼睛图标。空说明显示「未配置」，长名称、ID、编码和说明支持换行。
+
+实现范围：仅运行时 owning module 的 `views/application-center/Template/Save/`、列表新增弹窗组件、相关中英文资源、定向回归及本文。`useApplicationTemplateBasicInfo.ts` 维护名称／说明多语言、图标及基础图片草稿，并为独立图标入口保留单独草稿；两种编辑共用提交锁与媒体操作锁。复用新增弹窗的编辑模式保持应用类型和模板编码只读，第三方跳转地址继续在配置页维护，列表新增字段和创建载荷沿用原有规则。图标入口在 `Save/index.vue` 复用 `ApplicationTemplateIconEditor` 独立编辑。两种编辑均保留原有字段长度校验，取消丢弃对应草稿，保存成功关闭，失败保留，模板切换及卸载后忽略旧响应。`useApplicationTemplateDetail.ts` 的 `updateBasicInfo` 使用原更新接口局部合并改动，保留配置对象引用、文档草稿和其他翻译，避免整体重载重置其他页签。
+
+业务边界与风险：模板编码和应用类型目前在详情没有修改入口，本次不扩大可编辑字段，也不迁移或清除历史模板地址数据；第三方应用配置页的 `configuration.redirectUri` 仍是独立的应用跳转地址，保持现有行为。共享弹窗仅增加编辑模式，创建流程、其他页签、后端字段、更新接口、菜单权限、公共组件和运营端 `ui/` 保持原有规则。用户取消 300 行限制继续有效，按职责组织弹窗与状态，不按行数拆分。
+
+验证：`node --test tests/applicationTemplateBasicInfo.test.mjs tests/applicationTemplateApiGrants.test.mjs tests/groupAssetHint.test.mjs tests/applicationTemplateMenuConfig.test.mjs tests/applicationTemplateParameters.test.mjs tests/applicationTemplateSignature.test.mjs tests/applicationTemplateMenuPreview.test.mjs tests/applicationRolePermissionScope.test.mjs` 的 76 项全部通过；新增 17 项使用真实 Vue 状态、公共多语言输入 hook 及 SFC／Vue SSR，覆盖基本信息与独立图标编辑的取消、空提交、长度校验、失败保留、重复提交保护、切换模板／卸载保护、其他页签草稿保留，以及共享弹窗的新增／编辑模式、类型编码只读、图标和跳转配置归属、两类模板创建载荷。仅替换 API、i18n 和基础展示控件边界，不代表真实后端写入联调。Vite 模块生产构建通过（12,116 个模块，33.30 秒，输出到 `/tmp/jetlinks-app-template-basic-info-final-build`）；中英文 JSON 与 `git diff --check` 通过。`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 仍有 633 项既有诊断，忽略行号后与上一轮基线一致，无新增错误；工作区和模块没有 lint 脚本。浏览器复核时本地 `9200` 及同工作区 `9201` 开发页面均为空白，本次真实页面的布局、弹窗及桌面／窄屏交互仍待页面恢复后验收；未提交真实基本信息、图标或状态变更。
+
+语言切换：`DocumentPane.vue` 将独立的中英文页签头改为编辑器工具栏右侧的紧凑切换，位置在预览／全屏按钮之前，复用已有语言文案、各语言独立草稿和编辑器实例。公共 `runtime-ui/jetlinks-web-core/src/components/MarkdownEditor/` 通过 `md-editor-v3` 的公开 `defToolbars` 扩展点提供通用 `toolbar-right` 插槽，并在组件 README 说明自定义索引和只读入口；默认使用方保留当前工具栏。插槽存在时右侧操作区保持完整宽度，窄屏由左侧格式工具承接横向滚动；只读预览与空内容继续保留语言切换入口。保存载荷、权限、后端及运营端 `ui/` 保持原有契约。
+
+语言切换验证：本地页面实际输入中英文草稿后互切，切到配置再返回，两个草稿与所选语言均保留；临时输入已清理。通过真实公共组件的浏览器场景核对关闭上传、无分隔符、自定义索引、只读预览、只读空内容和默认工具栏；全屏工具栏中的语言控件可见且可切换。980px 窄屏下右侧语言与预览操作全部位于工具栏内，键盘可滚动访问左侧格式按钮，无页面横向溢出。最终 Vite 模块生产构建通过（12,113 个模块，33.53 秒，输出到 `/tmp/jetlinks-app-template-toolbar-build`），`git diff --check` 通过；上述类型检查与修改前均为 633 项既有诊断，忽略行号后完全一致，无新增错误。工作区和模块未配置 lint 脚本，完整类型检查仍需清理既有问题后重跑。
+
+配置与权限拆分：同一 owning module 的 `views/application-center/Template/Save/index.vue` 将 `ExternalParameterConfig` 独立留在第三方模板的「配置」页签，将两类模板共用的 `ConfigPane` 移至「权限」页签。业务应用显示「文档 → 权限」，第三方应用显示「文档 → 配置 → 权限 → 接口授权」；业务应用隐藏没有信息配置内容的「配置」页签。`locales/lang/zh.json`、`en.json` 同步提供权限标签；组件、hook、草稿和保存回调继续复用，运营端 `ui/`、后端、权限规则、路由与 API 契约保持原有行为。
+
+拆分验证：真实 `9200` 页面分别核对业务模板与第三方模板的页签顺序、信息配置与菜单权限归属、接口授权入口；第三方信息草稿和菜单勾选在配置／权限间互切后保留，业务模板菜单与数据范围在文档／权限间互切后保留。临时输入和勾选均已还原，未提交真实配置或权限变更。`node --test tests/applicationTemplateMenuConfig.test.mjs tests/applicationTemplateParameters.test.mjs tests/applicationTemplateSignature.test.mjs` 的 23 项回归全部通过；后两份测试使用 `fileURLToPath` 处理本工作区含空格的路径。公共 `MarkdownEditor` 的条件类名改用 `md-editor-v3` 所声明的字符串类型，消除对象类名引发的类型诊断。最终模块构建通过（12,113 个模块，49.12 秒，输出到 `/tmp/jetlinks-app-template-tab-split-build`），中英文 JSON 与 `git diff --check` 通过；模块类型检查仍有 633 项既有诊断，忽略行号后与前一轮基线完全一致，无新增错误。工作区和模块未配置 lint 脚本，完整类型检查仍需清理既有问题后重跑上述 `vue-tsc` 命令。
+
+配置页原型对齐：参考 `https://jetlinks-ai-new.ez7268-453.workers.dev/midhub/ops/template/tpl-1` 的配置页，`ExternalParameterConfig.vue` 默认显示「查看配置」，右上角「编辑配置」进入表单；顶部取消／保存栏固定在内容区内，长表单滚动时仍可操作。查看态复用 Ant Design `Descriptions` 承载单列标签／值、细分隔线和含操作的签名字段，编辑态使用全宽字段、浅色关联配置区域及参数行，沿用本地布局 token。所有空字段和空参数显示「未配置」，不用双连字符占位；平台标识留空仍由后端按模板 ID 处理。
+
+状态与业务边界：运行时 owning module 的 `views/application-center/Template/Save/useApplicationTemplateParameters.ts` 继续管理原有草稿、重置、校验和保存，仅补充进入编辑、取消还原、保存成功退出、失败保留以及切换模板退出编辑。`useTemplateNotificationSignature` 的独立查看／设置弹窗与保存契约继续保留，普通配置页只显示 Secret 掩码，不自动请求明文；RSA 不随通知开关隐藏或清空。业务应用页签、菜单与资产权限页、接口授权、后端接口和运营端 `ui/` 保持原有行为；新展示文案同步维护在中英文资源中。
+
+原型对齐验证：真实 `9200` 页面核对查看／编辑布局、通知条件字段、参数添加、跨页签编辑草稿保留、空地址校验、取消还原及签名独立弹窗取消；滚动至参数区后保存栏仍位于内容区顶部，页面无横向溢出，也没有双连字符占位。临时草稿已清理，未提交真实配置或密钥。上述三份模板回归共 31 项全部通过，新增覆盖取消还原全部字段、保存成功／失败、保存期间取消保护、切换模板、只读用户无法进入编辑、Secret 掩码不自动查看及通知关闭时保留 RSA；展示测试使用真实 SFC 与 Vue SSR，仅替换基础控件和 i18n 边界。成功保存与接口失败由 hook／API 边界回归覆盖，未进行真实后端写入联调。最终模块构建通过（12,113 个模块，57.60 秒，输出到 `/tmp/jetlinks-app-template-config-prototype-build`），中英文 JSON、文案引用与 `git diff --check` 通过；模块类型检查仍有与拆分页签基线一致的 633 项既有诊断，忽略行号后无新增错误。工作区和模块未配置 lint 脚本，完整类型检查需清理既有问题后重跑上述 `vue-tsc` 命令。
+
+验证：本地 `9200` 页面在 1462px、1000px 视口下均按四段顺序排列，无页面横向溢出；文档／配置切换后保留已选文档语言，返回列表和重新进入详情正常，PageDown 滚动由内容区承接。Vite 模块生产构建通过（48.69 秒，输出到 `/tmp/jetlinks-app-template-layout-build`），保留既有构建告警，`git diff --check` 通过。工作区和模块未配置 lint 脚本；在 `runtime-ui` 执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false`，修改前后均有 633 项既有诊断，忽略行号后完全一致，本次两个 Vue 文件均无诊断。完整类型检查仍未通过，需清理工作区既有问题后重跑该命令。
+
+权限页原型对齐：参考同一原型的「权限」页，`views/application-center/Template/Save/ConfigPane.vue` 默认查看菜单与操作授权摘要及资产数据权限；右上角「编辑权限」进入编辑，顶部取消／保存栏固定在内容区内。桌面端为左右贴合的菜单与数据权限两栏，各自滚动；窄屏改为上下分区。查看态展开菜单层级、展示纯文本授权摘要，空值使用「未配置」；编辑态展示菜单／按钮勾选、单项范围及右侧批量配置。影响范围仅为运行时 owning module、现有中英文资源及相关回归，不修改运营端 `ui/`、后端、路由、菜单定义或其他权限编辑页。
+
+实现入口：`useApplicationTemplatePermissionView.ts` 只维护展示派生、菜单展开及批量草稿，通过公共 `MenuAssetPermissionEditorContext` 执行实际授权联动，复用已注册的 `EqualHeightColumns`、Ant Design 控件与本地布局 token。公共权限组件的只读态仍为禁用控件，本页单独组织摘要视图，不改变其他使用方。`useApplicationTemplateMenuConfig.ts` 保存加载时的完整候选和策略，取消时恢复内存草稿，成功保存后退出编辑，失败保留草稿，切换模板清理编辑状态；旧模板的异步保存不会重载新模板。只读用户无法进入编辑或保存，保存期间禁用修改、重复提交和取消；加载失败提供原地重试。`index.vue` 仅向面板传入该权限状态。
+
+业务边界：右侧继续按现有资产类型聚合，保存仍由 `buildFullMenuGrantTree` 与 `buildTemplateAssetAccesses` 生成完整菜单树及资产策略；菜单候选、项目范围裁剪、受保护项、默认范围和字典选项沿用当前规则。批量权限范围只使用公共编辑器计算的可授权交集，批量策略只使用当前可用字典值；应用前重新校验，菜单变化后失效的范围不会套用到新资产。查看／编辑、批量应用和取消仅修改内存草稿，最终保存仍调用原接口。
+
+权限页验证：`node --test tests/applicationTemplateMenuConfig.test.mjs tests/applicationTemplateParameters.test.mjs tests/applicationTemplateSignature.test.mjs tests/applicationTemplateMenuPreview.test.mjs tests/applicationRolePermissionScope.test.mjs` 共 45 项通过，使用真实 Vue 状态、公共权限编辑器及模板 hook，替换 API／消息边界；新增覆盖取消还原完整候选与各类权限、成功／失败、保存期间保护、模板切换、只读、加载重试、父子与操作联动、批量交集和失效候选。真实 `9200` 页面核对业务／第三方模板的查看与编辑、单项范围、批量应用、文档／配置页签切换保留草稿及取消还原；1156px 下两栏等高且独立滚动，880px 下改为上下分区，滚动到资产区后顶部取消／保存仍可用，无页面或面板横向溢出。临时草稿均已取消，未提交真实权限变更；成功保存和失败保留由 API 边界回归覆盖，真实后端写入仍待联调。模块生产构建通过（12,114 个模块，55.22 秒，输出到 `/tmp/jetlinks-app-template-permission-prototype-build`），中英文资源与 `git diff --check` 通过；类型检查仍为 633 项既有诊断，忽略行号后与配置页基线一致，无新增错误。工作区与模块没有 lint 脚本，完整类型检查需清理既有问题后重跑上述 `vue-tsc` 命令。
+
+接口授权页原型对齐：参考同一原型的「接口授权」页，以单个模板的授权查看和维护为主任务，沿用现有详情工作区。默认按分组展示名称、分组 ID、已授权数量及已授权操作；操作名称和说明居左、编码居右，未授权分组只展示分组行。右上提供「接口分组管理」与「编辑授权」；编辑态展示全部候选操作及分组全选／半选，顶部操作为分组管理、刷新、撤销全部授权、保存。模板分支的折叠面板与组内全选／清空链接改为连续分组列表；长列表独立滚动，窄屏操作栏换行。原有授权语义与资产范围说明移至标题和分组的信息提示中，不重复占用列表行。
+
+实现入口与状态：仅运行时 owning module 的 `views/application-center/ThirdPartyApplication/Direct/GrantPanel.vue`、`useDirectGrants.ts`、相关中英文资源和 `tests/applicationTemplateApiGrants.test.mjs`。现有 hook 管理模板查看／编辑状态及展示派生；保存成功回到查看，保存失败保留编辑草稿，刷新重新加载已保存授权、丢弃草稿并保持编辑态。查看或保存期间禁止修改与重复提交，保存期间禁止刷新；切换模板清理编辑状态，旧保存响应不会重载新模板。离开接口授权页签仍按原有条件卸载，返回时重新加载并默认查看。复用 `PageActions`、Ant Design 控件和当前页面样式 token，未新增公共组件或依赖；共享组件的 API 应用表格分支、其他页签、运营端 `ui/`、后端、路由及授权接口契约保持原有行为。
+
+风险与业务边界：原有可授权操作校验、历史不可用操作、目录不可见授权保留、资产范围说明和全量替换载荷保持现有规则；分组全选仅增加当前可授权项，取消整组才显式撤销已有项。「撤销全部」仍经原确认调用原接口（含不可见授权），不改为仅清空草稿；普通保存仍经原确认提交。仅第三方模板展示该页签，业务模板的页签规则不变。
+
+接口授权验证：`node --test tests/applicationTemplateApiGrants.test.mjs tests/groupAssetHint.test.mjs tests/applicationTemplateMenuConfig.test.mjs tests/applicationTemplateParameters.test.mjs tests/applicationTemplateSignature.test.mjs tests/applicationTemplateMenuPreview.test.mjs tests/applicationRolePermissionScope.test.mjs` 共 59 项通过。新增 11 项使用真实 Vue 生命周期、授权 hook 和分组转换，仅替换 API／消息／平台上下文边界，覆盖默认查看、候选与半选、历史不可用项、显式整组撤权、全量载荷的多资产范围及隐藏授权保留、刷新、保存成功／失败、提交保护、旧模板保存响应和 API 应用原有行为。真实 `9200` 页面核对查看／编辑、单项和整组勾选、数量联动、刷新确认与草稿恢复、切换文档后返回查看；1156px 与 880px 下页面和面板均无横向溢出，窄屏顶部操作换行。临时草稿已还原，未提交真实授权变更；真实后端保存／撤销全部写入仍待联调，由 API 边界回归验证载荷与状态。
+
+质量验证：交付前基于最新 `2.20`（`27ef904`）重新执行本节八份模板相关回归，76 项全部通过；中英文资源与 `git diff --check` 通过。模块生产构建通过（11997 个模块，1 分 2 秒，产物放在仓库外的临时目录），保留既有构建告警。`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 仍有 615 项诊断；以相同工作区依赖读取 `27ef904` 的模板源码作基线对比，忽略行列号后完整诊断一致，无新增错误，包括 `GrantPanel.vue` API 应用分支既有的表格 record 类型诊断。工作区和模块没有 lint 脚本，完整类型检查需清理既有问题后重跑上述命令。本次交付未重跑真实页面，配置与授权的真实后端写入仍待联调；文档工具栏插槽所需的 `jetlinks-web-core` PR #223 已合并到 `2.20`。
 
 ### 应用模板数据权限候选一致性
 
@@ -716,7 +903,7 @@ Every created or substantially edited Vue file remains at or below 300 lines.
 - The application-template management files pass focused JSON parsing, route/menu boundary review, i18n key coverage, SFC tag scanning, TypeScript syntax transpilation, and line-count checks. Per task scope, build and `tsc` were not run; authenticated backend calls for `/business-application-template/{id}/menus`, `/menu/user-own/tree`, `/menu/asset-accesses/grantable`, `/asset/types`, and `/dictionary/asset-scope-strategy/items` still need environment smoke testing.
 - The application-management menu asset types match the application, user, role, and device interfaces consumed by the page. This menu-only update was checked by JSON parsing and boundary review; build and `tsc` were intentionally not run.
 - The application-role permission editor now re-queries `/menu/user-own/tree` on each load and no longer depends on the menu store initialization state or `menuResultCache`. `git diff --check` and the full `pnpm build` pass; the build transforms 22883 modules with only existing asset, dynamic-import, CSS-comment, and chunk-size warnings. The module-target build argument is rejected by the current Vite CLI, so validation used the root full-build script. `RoleManagement.vue` remains below the 300-line limit at 292 lines; authenticated role-permission interaction remains pending.
-- External-role permission scope checks cover all current-operator menu owners, retained `open-api` mappings, template intersection, saved-role echo, and current-operator asset-scope pruning; internal-role checks cover the unchanged template/menu intersection. The focused Node suites and `authentication-manager-ui` production build pass; authenticated role-grant persistence remains pending environment verification.
+- Historical external-role scope tests covered cross-owner menus and `open-api`; the current third-party role display skips menu permission editing. Current internal-role intersection, template asset inheritance and save verification are documented in the runtime role-permission section above.
 - The target implementation contains no legacy application API path, dimension type, header, or direct-device setting.
 - The current three-tab detail plus ledger/create/settings optimization passes locale JSON parsing, `git diff --check`, focused unsafe-member-mutation scans, Vue line-count checks, and a production build with 9954 transformed modules. The ledger search now reuses `ConditionFilter` and sends its normalized `terms` directly to the application query. Module `vue-tsc` still exits non-zero on the pre-existing implicit `any` in `jetlinks-web-core/src/store/businessApplication.ts`; no `ProjectApplication` file reports a diagnostic.
 - The settings-action placement follow-up passes focused SFC parsing through `vue/compiler-sfc`, scoped diff whitespace checks, and Vue line-count checks (`Detail/index.vue` 223 lines, `ApplicationSummary.vue` 203 lines, `ApplicationSettings.vue` 247 lines). Build and `tsc` were intentionally not run for this pass by request.
@@ -727,35 +914,32 @@ Run the production build command for this module from `ui/jetlinks-web-core`:
 node --max_old_space_size=8192 --max-semi-space-size=64 -e "process.argv.push('--module-name','authentication-manager-ui'); import('vite').then(({ build }) => build())"
 ```
 
-### 应用列表卡片改为 CardBox 壳层
+### 应用列表封面与详情布局
 
-Goal: 把 `ProjectApplication` 列表卡片的壳层从 `CardSummary` 换成通用 `CardBox`（`jetlinks-web-core/src/components/CardBox/index.vue`），并让卡片底栏采用 `DeviceAlarmRecordCard` 的按钮排布：左侧图标文字按钮 + 右侧主按钮，底栏与内容之间用分隔线隔开。
+顶部图标局部调整（S，已完成）：`ApplicationSummary.vue` 从 `@jetlinks-web-core/components/IconValue` 导入 `IconValueView`，展示关联模板 `icon`，沿用模板详情的 56px 尺寸、12px 圆角与名称缺省值；下方应用图片及编辑回显保持原规则。组件契约、SFC 编译、类型增量和真实页面回显已验证。
 
-Owning module: `runtime-ui/modules/authentication-manager-ui`。`ui/` 运营端的同名模块、`CardBox` 组件本身、接口契约、路由、菜单和 i18n key 都不在本次范围内。
+详情图片局部调整（S，已完成）：详情设置统一显示「应用图片」。`applicationModel.ts#applicationImage` 供设置查看和编辑回显共用：应用自身图片地址（沿用现有 `icon` 字段）优先，其次模板 `coverImage`，都未配置时显示现有默认封面；旧字体图标不作为图片地址。查看态复用 Ant Design Vue Image 的默认图片 fallback，并以 contain 保留完整图像。编辑态继续使用 ImageUpload，`ApplicationSettings.vue#imageModel` 的 getter 提供继承图片，setter 只在上传后更新 `draft.icon`，避免仅保存其他字段时把模板封面固化到应用。详情专属中英文／日文文案同步更新，原上传与裁剪流程保持原样，列表规则保持模板封面优先。
 
-Implementation:
+目标与范围：运行时 `modules/authentication-manager-ui` 的 `/open/application` 列表与 `/open/application/Detail/:id` 详情。`9201` 开发服务实际运行于 `runtime-ui/jetlinks-web-core`；本轮 M 级方案已确认并实施，只调整运行时应用展示，不改变运营端 `ui/`、后端接口与数据库、公共组件、路由、菜单、权限或模板编辑流程。
 
-1. `views/application-center/ProjectApplication/components/ApplicationCard.vue` 保留对外 `item` / `loading` / `opening` props 与 `edit` / `open` / `toggle-status` 事件契约，内部把 `CardSummary` 换成 `CardBox`：`#img` 复用 `CardBox/CardAvatar.vue` 承载应用图标，`#content` 承载名称、模板、描述和创建时间，`#bottom-tool` 承载底栏按钮。
-2. `CardBox` 的 `status` / `status-text` / `status-names` 接管右上状态位与顶部色条：`enabled -> success`、`disabled -> default`，不再自己画状态图标。
-3. 底栏样式对齐 `modules/device-manager-ui/views/device/alarm/components/DeviceAlarmRecordCard.vue`：`border-top: 1px solid var(--jet-theme-border-color-1)`，左侧 `编辑` / `停用|启用` 为 `type="text"` 图标按钮，右侧 `打开应用` 为 `type="primary"` 主按钮。
-4. `ProjectApplication/index.vue` 继续使用 `<ApplicationCard>`，列表页模板、筛选和创建入口不变；只把内联「创建应用」卡片的固定高度换成共享的 `--application-card-block-size`，让它和更高的 CardBox 卡片在同一栅格里保持等高。
+列表复用 Ant Design Vue Card 的封面布局：顶部图片，正文为名称、类型和单行描述，右侧复用 `TableActions` 收纳编辑与启停，底部复用 `j-badge-status` 展示状态及进入应用按钮。卡片主体和编辑菜单继续进入详情，进入应用与启停沿用原有事件和业务编排；更多菜单及底栏点击与卡片点击隔离。`ProjectApplication/index.vue` 的栅格统一行高，创建卡片随行拉伸；封面保持 2.1:1 比例并裁剪填充，名称与描述通过现有省略组件截断。
 
-不做：不新增后端接口或字段，不改 `ProjectApplication` 的请求编排与 `useApplicationList` 逻辑，不改 `CardBox`/`CardAvatar` 组件实现，不同步改 `ui/` 下的同名页面。
+封面规则：`api/application-center/businessApplication.ts` 的模板返回类型接收可空 `coverImage`，`views/application-center/ProjectApplication/applicationModel.ts#normalizeTemplate` 去除地址首尾空白后传给 `types.ts` 的模板视图。`components/ApplicationCard.vue` 只使用关联模板的 `coverImage`，缺失／空值时使用 `assets/application-cover.png`；图片加载失败继续由 Ant Design Vue Image 的 fallback 显示同一默认封面。应用与模板的 `icon` 仍用于图标，不再作为列表封面。缺失模板时，`useApplicationList.ts` 的展示兜底补齐 `layout`，保持 `ApplicationTemplate` 类型完整。默认封面沿用已有建筑插图，描述优先应用、其次模板，状态展示后端枚举 text，类型沿用 provider 规则。
 
-Risks / 待确认点:
+详情参考同模块 `views/application-center/Template/Save/index.vue`，采用「独立返回入口 → 应用摘要卡 → SlantedTabs → 内容区」。`ProjectApplication/Detail/index.vue` 通过 `PageChrome` 承载返回入口、摘要和贴合式页签，下方 `FullPage` 承接滚动；复用原有 `a-tabs` 内容容器并隐藏其导航头，保留设置、成员、角色的懒挂载及切换后实例，`?tab=roles` 继续直达角色页。`Detail/components/ApplicationSummary.vue` 使用 `ContentPanel`，按名称／状态／可复制应用 ID、模板／创建时间、说明分行组织，窄屏操作区自动换行。编辑、取消、保存、同步接入信息、启停、删除和打开应用沿用原有业务处理；返回文案同步到中英文资源。相关 Vue 文件均保持在 300 行以内。
 
-- 卡片高度改由栅格行高驱动（`height: 100%` + `min-height`），需要与同行的内联「创建应用」卡片（固定高度）保持等高。实测 App 卡片内容高 `219px`，而内联创建卡只有 `204px`，两者落在不同栅格行时会不一致，因此引入共享的 `--application-card-block-size: 14rem`，两边都按它取高。
-- `statusText` 仍来自后端枚举 `text`；字典缺失时会回退成裸状态值，这是既有行为，本次不额外兜底。
-- `CardAvatar.vue` 仍是非公开导出的内部头像层，这里按仓库既有做法直接按文件路径引用。
+验证结果：
 
-Verification result:
+- 顶部模板图标验证：`ApplicationSummary.vue` 的 script/template/scoped-style 编译及差异空白检查通过，组件为 194 行。真实 `9201` 测试应用详情顶部正常显示模板图标，下方「应用图片」继续显示模板封面。模块 `vue-tsc` 与上一轮均为 569 条既有诊断，归一化行号后完全一致，摘要组件没有诊断；完整类型检查仍未通过。本轮局部组件替换未重跑完整生产构建，上一轮构建结果见下一条；独立 lint 脚本未配置。
+- 详情图片验证：上一轮两个 SFC 的 script/template/scoped-style 编译、三种语言 JSON 及差异空白检查通过，设置组件为 289 行。真实 `9201` 测试应用的设置图片加载为 276×132 的模板图片，编辑预览也显示同一张图片。一次性执行真实 model 与设置 SFC 的脚本，验证应用图片优先、空白值／旧字体图标继承模板封面、双空值、编辑回显不改草稿、保存其他字段不固化封面、上传更新草稿及取消还原，均通过；没有提交真实保存或上传文件。`pnpm --config.verify-deps-before-run=false exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 修改前后均为 569 条既有诊断，归一化行号后完全一致。`runtime-ui/jetlinks-web-core` 中执行 `pnpm --config.verify-deps-before-run=false exec vite build --outDir /tmp/jetlinks-detail-image-build -- --module-name authentication-manager-ui` 通过（2 分 7 秒），保留原有构建告警；独立 lint 脚本仍未配置。图片失效 fallback 沿用 Ant Design Vue，未构造真实失效文件或做真实上传保存。
+- 三个 Vue 文件的 script/template/scoped-style 编译、中英文 JSON 解析及 `git diff --check` 通过。使用真实 `normalizeTemplate`、卡片 SFC、Vue SSR 和 Ant Design Vue 组件进行一次性渲染检查，覆盖模板封面与应用／模板图标同时存在、首尾空白、历史字段缺失、显式 null 及空白地址五种情况，均通过；只隔离无关的全局 i18n 和装饰组件，不请求后端，不新增持久测试文件。
+- 在 `runtime-ui/jetlinks-web-core` 执行 `pnpm --config.verify-deps-before-run=false exec vite build --outDir /tmp/jetlinks-app-cover-detail-build -- --module-name authentication-manager-ui` 通过，转换 12,057 个模块，耗时 3 分 56 秒；保留现有输出选项、CSS 注释及大包告警。工作区和模块没有独立 lint／样式门禁脚本，按相邻模板详情和现有 token 核对样式。
+- 在 `runtime-ui/` 执行 `pnpm --config.verify-deps-before-run=false exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false`，修改前 570 条、修改后 569 条诊断；归一化行号后无新增诊断，减少的是列表 fallback 缺少 `layout` 的类型错误。完整类型检查仍未通过，清理既有问题后需重跑同一命令。
+- `9201` 浏览器验证通过：1452px 桌面下四段布局、三页签切换、返回列表、角色深链；设置名称临时草稿跨页签保留，取消后恢复原值。768px 下设置页文档宽度与滚动宽度均为 768、无横向溢出，第三方应用操作可换行，角色内容可滚动。当前五张应用卡片均正常显示默认封面；没有提交真实配置、启停、删除、授权或接入信息同步。
 
-- SFC 编译：`ApplicationCard.vue`（script / template / less scoped style）与 `index.vue` 全部编译通过。
-- 聚焦 `vue-tsc`：`ApplicationCard.vue` 与 `ProjectApplication/index.vue` 无任何诊断；本次运行剩余的非零诊断全部来自既有共享核心文件（`ConditionFilter`、`CardBox/index.vue`、`Search/Filter`），与本次改动无关。
-- 模块生产构建：`authentication-manager-ui` 生产构建通过（`✓ built in 1m 23s`，退出码 0）。
-- 视觉核验：用一次性 Vite 预览页 + 无头 Chromium 渲染「4 张应用卡片 + 内联创建卡」的栅格并取盒模型，结果为 `cardHeights=[224,224,224,224]`、`createCardHeight=224`、`avatarTops=[0,0,0,0]`（头像与名称顶对齐）、`actionsBorders=["1px",...]`（底栏分隔线存在）；`enabled/disabled` 分别渲染为绿色「运行中」和灰色「已停用」，长名称和两行描述按 `j-ellipsis` 截断。该预览只用临时脚手架验证样式，验证后已删除，未进入提交。
-- 未验证：真实运行时页面里带鉴权的列表交互（登录后打开 `/application-center/ProjectApplication`）未在本任务中执行。
-- `git diff --check` 通过；`ApplicationCard.vue` 224 行、`ProjectApplication/index.vue` 174 行，均在 300 行门禁内。
+未覆盖与既有阻塞：首轮列表样本均回退到默认封面，非空模板封面已由渲染检查及本轮详情真实样本覆盖；真实失效远程图片的 fallback 仍待实际样本验证。原回归命令 `node --test tests/projectApplicationCredentialSync.test.mjs tests/projectApplicationExternalAccess.test.mjs tests/applicationTypeFilter.test.mjs` 在修改前即无法执行：前两项用 URL `.pathname` 生成含 `%20` 的文件系统路径，后一项未配置 PNG loader；本轮没有将这些脚本报告为通过，修复测试环境后可重跑。远端参考页面当前需要登录，本次布局以本地同名模板详情实现为准。
+
+交付复核（2026-11-12）：本模块以 `origin/2.20` 的 `0de2f96` 为基线，使用 `codex/application-center-template-preview-2.20` 分支交付当前模板预览、图标与基础图片编辑、应用列表及详情布局改动。模板调色板依赖 [Web Core PR #237](https://github.com/jetlinks-v2/jetlinks-web-core/pull/237) 提供的 `IconValueEditor` 颜色插槽，需配套合并与发布。模块目录执行 `node --test tests/applicationTemplateBasicInfo.test.mjs tests/applicationTemplateMenuPreview.test.mjs tests/applicationTemplateParameters.test.mjs`，53/53 通过；中英文／日文 JSON 解析及差异空白检查通过。`runtime-ui/jetlinks-web-core` 中执行 `pnpm --config.verify-deps-before-run=false exec vite build --outDir /tmp/authentication-manager-ui-2.20-delivery-build -- --module-name authentication-manager-ui` 通过（1 分 23 秒），保留已有构建告警。`runtime-ui/` 中执行 `pnpm --config.verify-deps-before-run=false exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 未通过，共 576 条诊断；本次新增预览、媒体编辑组件没有诊断。工作区无独立 lint 脚本，完整类型检查仍需清理相关问题后重跑；真实模板保存、图片上传与失败回退、应用操作的联调限制沿用上文。
 
 ## 项目概览归属迁移
 
@@ -932,6 +1116,17 @@ SaaS 管理员概览将项目摘要固定在画布上方，最近访问、资源
 - 源码与差异检查：已核对原始路径等值、HTTP 方法、前后一分钟毫秒范围、时间到秒的预览/提示、固定应用归属与用户条件嵌套 AND；核对 SectionCard/actions、JlDrawerShell、表格列插槽及 ConditionFilter 的实际组件契约。修改的 Vue 文件均低于 300 行，差异格式检查通过，未修改公共组件或后端。前端 lint/typecheck/build、自动测试、浏览器和服务操作均按用户约束未执行，不声称页面已验收；本轮后端未变，不重复执行已有后端测试。
 - 待人工验收与交付边界：在现有环境验证调试后带条件定位同应用同路径同方法的日志、可读时间与耗时、请求中/成功/失败状态、长响应、文档侧栏和窄屏结果定位。本轮在现有 `codex/open-platform-call-logs-20261028` 分支提交推送；继续遵守不创建 PR、不丢弃已有改动、不提交新生成文档的约束。
 
+##### 应用国际化、日志权限与接口分组底色修复（已实施，待人工验收）
+
+- 目标与归属：修复开放平台应用详情文案缺失、调用日志查询返回 `access-logger.query` 权限不足，以及接口分组列表重复底色；仅涉及 `runtime-ui/modules/authentication-manager-ui`，已按用户确认的方案实施。
+- 实施结果：`locales/lang/zh.json`、`en.json` 从 `14441634^` 恢复被公告提交误删、仍由应用详情及其关联页签使用的 26 个语言键，`ja.json` 补齐同名日语键；`views/application-center/ApiGroup/index.vue` 的已有 `ContentPanel` 配置 `background=false`、`padding=0`，取消重复面板底色及内边距，保留公共外层标准留白；`j-pro-table` 移除 `scroll=false`，与设备列表使用相同的默认横纵滚动和表格结构，有数据与空态统一沿用公共表头、背景、行分隔线及悬停样式，保留原有工具栏、表格根内边距为 0 及分页配置；`baseMenu.json` 的 `application-center/ThirdPartyApplication` 顶层 `permissions` 增加 `access-logger/query`，供该菜单初始化时绑定调用日志查询权限。
+- 边界与已有环境：不修改公共组件、后端 Java、其他前端或应用资产数据权限，未执行菜单初始化或实际业务写入。新环境使用更新后的菜单种子；已有环境需通过菜单配置的“同步系统菜单权限”保存新定义，再刷新认证信息或重新登录，单改本地种子不会更新数据库菜单或已有授权。
+- 源码检查结果：三语言 JSON 均可解析且无重复键，应用相关各恢复相同的 26 个键，接口分组相关各恢复/补齐 37 个键；中英文恢复值与历史原文一致，既有键值、UTF-8 和 CRLF 保持不变。应用页面的完整字面量文案键均可解析，新增键均有源码引用。菜单 JSON 解析及与原结构的增量比对通过，仅增加日志查询权限，保留原有权限和应用资产声明。列表样式以 `device-manager-ui/views/device/Instance/index.vue` 实际使用的同一全局 `JProTable` 为依据：设备页未关闭 `scroll`，组件默认转为 `{ x: '100%', y: '100%' }`；接口分组此前显式关闭滚动，改变了表头与表身的组织方式。现恢复相同默认结构，并移除局部表格背景、空态悬停及空态底边线覆盖。有数据和空态均使用公共 Ant Design Table 主题，默认行分隔线继续保留，不给接口分组增加单独的去线规则；未复制设备卡片模式、字段或额外布局，定向差异格式检查通过。
+- 接口分组文案恢复：`ApiGroup/Save`、授权项编辑、`SpecPicker` 权限/详细配置/已授权接口页签及直接业务 hooks 实际引用的 37 个缺失键，中文和英文均从 `14441634^` 恢复原文，日语无历史原文则按现有术语补齐。覆盖名称/说明占位、权限资源及选择提示、保存/删除反馈和计数；静态及条件表达式引用无缺失，动态状态和字段名沿用已有键，新增译文非空且 `{field}`、`{name}`、`{actions}`、`{count}` 等插值变量集合一致；仅修改语言资源与本文，未调整页面、接口、权限或样式。
+- 开放平台列表样式：`ThirdPartyApplication/Direct/List.vue` 同步采用透明且 `padding=0` 的局部面板与标准 `JProTable` 默认滚动，有数据和空态共同沿用平台公共主题；两页均取消局部面板默认 16px 与公共外层 16px 的叠加，只保留平台标准 16px 留白；保留原工具栏、列、分页、权限和行操作，仅完成源码与定向差异检查，页面效果待现有环境人工验收。
+- 待人工验收项：未运行前端构建、lint、类型检查、测试、浏览器或服务操作。应用详情及相关页签、接口分组详情和接口选择器的中英日文案，初始化/同步后的日志权限和实际日志查询、接口分组列表底色仍由用户在现有运行环境人工验收；源码检查不代表页面或真实权限验收通过。
+- 交付入口：功能提交 `2fbf5579`，合入基线 `2.20`；PR：https://github.com/jetlinks-v2/authentication-manager-ui/pull/149，待审核。
+
 #### 接口授权表格化重设计（已实现）
 
 已按用户确认实现，并取消开放平台授权页的“分组管理”和“刷新”。表格替代此前“分组卡片 + 选择本组全部操作 / 清除本组操作”的展示，不扩展到应用列表、其他详情页签或模板授权。
@@ -1040,6 +1235,8 @@ SaaS 管理员概览将项目摘要固定在画布上方，最近访问、资源
 - 现有环境由菜单管理员单独增加/发布新入口并配置按钮权限；本地菜单种子不会自动覆盖已保存菜单，不应全量重置菜单。未提交、推送或生成 PR。
 
 ### 接口分组列表操作
+
+`views/application-center/ThirdPartyApplication/Direct/List.vue` 的配置状态和 `views/application-center/ApiGroup/index.vue` 的分组状态使用设备列表同款 `j-badge-status`，复用现有表格标签样式，启用为绿色、停用为灰色。状态文案、接口、权限和启停逻辑保持原有约定。
 
 运行时 `views/application-center/ApiGroup/index.vue` 复用 `TableActions` / `TableActionsItem`，三个操作均标记为常用项，行内显示图标并在悬停时展示既有国际化文案。编辑/查看使用 `EditOutlined` / `EyeOutlined`，禁用/启用使用 `StopOutlined` / `PlayCircleOutlined`，删除使用 `DeleteOutlined`。权限按钮、忙碌状态、确认弹窗和业务回调保持原样；启停、删除的文字提示放在下方，避免遮挡上方确认框。`useApiGroupList.ts` 将固定操作列宽收敛为 120；不改接口、授权、菜单、公共组件或运营端。
 
@@ -1177,13 +1374,21 @@ URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显�
 
 ### 内容保存与发布范围
 
+#### 多环境系统公告管理
+
+`ui/modules/authentication-manager-ui` 与 `runtime-ui/modules/authentication-manager-ui` 是同一仓库的两份检出，必须维护相同实现、按仓库提交一份 PR。`views/system/Announcement/managementContext.ts` 复用 Web Core 的 `isPrivateDeployment`、`isProjectRuntime` 和 `isFromCloud`；仅 SaaS 管理端显示、校验投递范围及加载区域，私有化、项目与云侧代理隐藏范围并清理旧草稿的 `others.deliveryScope`，来源由后端身份确定。`api.ts` 按该上下文选择 SaaS 编排或本地生命周期接口，共享编辑器、列表、接收和确认逻辑。菜单 `baseMenu.json` 在系统设置下提供 `iot` 公告入口，`baseMenu.ts` 在 SaaS 管理上下文排除此候选，继续使用运营模块已有公告菜单，避免重复初始化。后端表、投递契约、资产权限与其他模块不变。
+
+实施及验证：同一套 API 和编辑器覆盖 SaaS、私有化、项目和云侧代理，校验保存、发布、撤回请求体、范围必填、旧草稿清理、区域请求次数以及初始化菜单过滤。公告能力、登录弹窗、本地确认与管理回归 76/76 通过，相关菜单/弹窗/发布结构检查 5/5 通过；Web Core 依赖回归 75/75 通过。两端模块类型检查保持原有 757/609 项依赖诊断，修改文件无新增诊断；两端 `pnpm -F jetlinks-web-core build -- -- --module-name authentication-manager-ui` 生产构建通过，修改文件 `git diff --check` 通过。Web Core 可选通知数据源能力在其自身仓库交付，不提交本地配置或父仓库子模块引用。
+
+交付引用：实现提交 `6181aa512f7c5035d27549242f5138e063da0284`，模块 [PR #146](https://github.com/jetlinks-v2/authentication-manager-ui/pull/146)；依赖 [Web Core PR #226](https://github.com/jetlinks-v2/jetlinks-web-core/pull/226)，先合并依赖。
+
 #### 公告多语言内容完善（已完成）
 
 - 目标：新增和编辑公告时，标题、摘要、类型、Markdown 正文均可分别维护中文与英文；管理列表、查看弹窗、顶栏铃铛、实时提示、通知详情和首次登录弹窗按当前界面语言展示，缺少当前语言时继续回退兼容主字段。
 - Owning module：前端以 `views/system/Announcement/` 为主，复用现有 `AnnouncementI18nTextDialog.vue`、`AnnouncementI18nMarkdownEditor.vue` 与 `announcementI18n.ts`；后端继续使用 `SystemBulletinEntity.i18nMessages` 的“字段 -> 语言 -> 文本”结构。区域副本沿现有 Runtime Command 原样复制国际化内容，不新增表字段或迁移脚本。
 - 数据兼容：`i18nMessages` 扩展并统一保存 `title/summary/type/content`。顶层 `title/summary/content` 继续作为历史消费方和缺省语言回退值；顶层 `type` 继续作为兼容值及既有公告图标识别依据，新增当前语言的类型展示值，避免翻译文本破坏 `maintenance/incident/release/security/policy` 等已有图标语义。历史公告没有对应语言时不回填数据库，读取时回退顶层字段。
 - 实施步骤：先统一四个字段的归一化、校验、兼容投影和当前语言解析；再为标题、摘要和类型接入中英文文本配置，为正文接入中英文 Markdown 页签；随后让管理列表、详情标题/正文、铃铛标签、实时通知、通知详情和登录弹窗使用当前语言文本，并保留原始类型值供图标选择；最后补齐中英文界面文案和前后端定向测试。
-- 明确不做：不提供机器翻译，不强制中英文同时必填，不修改公告发布、撤回、投递范围、已读确认、权限或菜单，不同步修改 `runtime-ui/`，不新增公告任务表、副本映射表或多语言专用列。
+- 明确不做：不提供机器翻译，不强制中英文同时必填，不修改本次多语言改造之外的公告发布、撤回、已读确认或权限，不新增公告任务表、副本映射表或多语言专用列。
 - 实现结果：`announcementI18n.ts` 已统一归一化 `title/summary/type/content`，保存时中文优先、英文兜底生成顶层兼容字段，但顶层 `type` 始终保留原始语义键。编辑器为标题、摘要和类型共用中英文配置弹窗，正文改用中英文 Markdown 页签；管理列表、查看页、铃铛标签、通知详情和首次登录/实时详情使用当前语言文本，语言切换会刷新列表或重新加载通知详情。所选正文语言确实缺失时才显示回退提示；历史公告读取时只回退顶层字段，不因读取动作写回数据库。
 - 验证结果：多语言解析与铃铛文本 8 项测试、编辑/展示契约 6 项测试均通过；完整公告套件 63 项中 62 项通过，唯一失败仍为既有 `system/NoticeRule` 运行时菜单断言，与本次改动无关。中英文 locale JSON 可解析，6 个相关 Vue 文件通过 `check:ui-style`，目标 Vue 文件均不超过 300 行，`git diff --check` 通过。全量 `vue-tsc` 仍有 1,312 行工作区既有诊断，但本次公告目标文件命中 0 条；Vite 7 生产构建通过，转换 11,086 个模块。后端数据结构和复制链路未改动，因此未补后端编译；浏览器中英文切换及 SaaS 到区域副本的真实部署联调仍待执行。
 
@@ -1197,11 +1402,11 @@ URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显�
 - 实现结果：`AnnouncementI18nTextDialog.vue` 使用稳定的二级弹窗层级并在关闭时销毁内容，重复打开仍位于公告编辑弹窗上方；父页面和编辑器使用 `draft/publish` 动作状态，两个提交按钮在请求期间均防重复点击，仅触发按钮显示加载动画。类型控件固定提供五项下拉选择，`release` 的展示文案按最终要求调整为“系统升级 / System Upgrade”，新增 `emergency` 对应“紧急通知 / Emergency Notice”；固定类型统一从模块 locale 解析，改选后清理历史逐公告类型翻译。
 - 验证结果：公告套件 64 项中 63 项通过，唯一失败仍为既有 `system/NoticeRule` 运行时菜单断言，与本次改动无关；中英文 locale JSON 可解析，3 个改动 Vue 文件通过 `check:ui-style`，`vue-tsc --noEmit` 为 0 诊断，目标 Vue 文件均不超过 300 行，`git diff --check` 通过。`authentication-manager-ui` 目标模块生产构建通过，转换 11,086 个模块；仅有项目既有 CSS 注释和大 chunk 警告。浏览器中重复打开国际化弹窗、分别触发两个提交按钮及切换中英文选项仍待人工验收。
 
-`POST /system/bulletin/_save` 保存标题、摘要、Markdown 字符串正文、国际化内容、`others.popup` 与 `others.deliveryScope`；保存成功返回公告 ID。投递范围支持 SaaS 端、一个或多个区域，二者可同时选择且至少选择一项。没有 `deliveryScope` 的历史草稿默认按仅 SaaS 端回显，避免旧数据被意外扩散到区域项目。
+`POST /system/bulletin/_save` 保存标题、摘要、Markdown 字符串正文、国际化内容与 `others.popup`；保存成功返回公告 ID。SaaS 管理端额外保存 `others.deliveryScope`，支持 SaaS 及区域范围；历史缺少范围时按仅 SaaS 回显。运行时不提供投递范围选择，也不保存 `others.deliveryScope`；保存旧草稿时清除此历史字段，保留其他扩展内容。私有化默认当前系统全员，项目内默认公告创建时所属项目全员，后端固定可信来源，不由页面传入项目或用户列表。
 
 公告类型仍使用普通字符串保存：新增和编辑表单提供必选下拉框，不预填默认值，固定值为 `maintenance/release/campaign/policy/emergency`；编辑历史自定义类型时可回显原值，重新选择后只会提交五个固定值之一。管理列表的“公告类型”列、顶栏铃铛卡片的业务中立 `noticeTag`、登录及通知详情弹窗均按当前语言显示同一类型标签。前端仅在读取滚动升级期间的旧响应时兼容 `{ value, text }` 枚举对象，不再以该对象格式保存。
 
-“保存草稿”只调用 `_save`；“保存并发布”串行执行 `_save` 与 `PUT /saas/bulletin/_deploy?id=...`。列表中的发布和撤回分别调用 `/saas/bulletin/_deploy`、`/saas/bulletin/_revocation`，并把当前回显范围转换为 `{ all, runtimes: [{ id, projects: [] }] }` Body；`all` 对应 SaaS 端，区域 ID 对应 `runtimes[].id`，本期始终提交空 `projects`，前端不查询或选择项目，也不直接访问项目运行时。铃铛、实时通知、首次登录弹窗和管理列表仍使用 `/system/bulletin/**`，因此 SaaS 管理列表只显示主公告一条数据。
+“保存草稿”只调用 `_save`；SaaS 管理端发布及撤回分别使用 `/saas/bulletin/_deploy` 与 `/saas/bulletin/_revocation`，Body 为 `{ all, runtimes: [{ id, projects: [] }] }`。运行时“保存并发布”串行执行 `_save` 与 `PUT /system/bulletin/_deploy?id=...`，发布 Body 固定为 `{ dimension: [], deployType: 'now' }`。列表发布复用同一接口，撤回调用 `/system/bulletin/_revocation?id=...`。运行时不请求 SaaS 编排或区域查询接口，本地新增公告不会反向同步到 SaaS。铃铛、实时通知、首次登录弹窗和管理列表继续使用当前运行时的 `/system/bulletin/**`。
 
 发布失败时保留编辑弹窗和已保存草稿，不提示发布成功；发布成功后才关闭弹窗并刷新列表。撤回后重发会生成新的 `publishVersion`，独立接收数据源据此形成新的未读批次，旧版本的本地确认不会隐藏新版本。
 
@@ -1211,6 +1416,10 @@ URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显�
 
 `register.ts` 同时注册公告独立数据源、实时订阅和登录处理器。顶栏铃铛、未读统计和个人中心通过 `/system/bulletin/received/_query`、`/_query/no-paging`、`/_count` 查询，不再依赖通用 `/notifications` 收件箱；普通通知继续使用原服务端数据源和已读状态。Web Core 只负责按 provider 分派数据源与生命周期，不包含公告接口、存储键或业务判断。
 
-登录处理器按发布时间从旧到新查询当前账号的未读公告，只对 `others.popup === true` 的批次展示不可点遮罩关闭的详情弹窗；用户关闭或确认后，以 `公告ID + publishVersion` 写入当前 API 服务和账号隔离的浏览器确认记录并刷新铃铛。普通未读公告不会在登录时弹窗，也不会被自动确认，仍保留在铃铛中。该语义只保证同服务、同账号、同浏览器、同发布版本一次，不保证跨设备原子一次。
+公告能力与登录筛选：前端通过 `hasCommandService('notifyService:bulletin')` 探测后端实际注册能力，公告命令服务与 `jetlinks.bulletin.enabled=true` 共同注册。必须读取 `/command-supports/services` 的服务声明；`/service/{id}/exists` 读取的命令元数据会按 `bulletin:save` 权限过滤，不能用作公告接收能力开关。为通知数据源增加通用异步能力判定，铃铛和消息中心过滤关闭的分类；公告接收查询、首页统计、管理列表及实时连接在请求前共用探测，失败不保留失败缓存，身份或服务变化时隔离结果。登录先查询当前可见已发布公告，再选择最新弹窗批次，最后判断该批次未读状态，已读时不回退历史；其余未读数量继续保留，普通通知和后端接口不变。验证覆盖关闭无公告 HTTP/WS、探测失败可重试、迟到响应隔离、确认后刷新、新发布与重发批次，以及相关回归、类型检查和构建。
+
+登录处理器 `views/system/Announcement/loginPopup.ts` 不区分新老用户，先按发布时间倒序选择当前可见、已发布且 `others.popup === true` 的最新一条，再判断该批次是否未读；已读时不回退到历史未读批次，每次登录最多展示一个弹窗。公告弹窗底部调整为靠右排列的紧凑按钮，复用 `components/NotificationDetail.vue` 的底部样式；移除历史未读小字，在“我知道了”左侧提供“{count} 条未读公告”按钮，点击后确认当前公告并进入消息中心的公告页，不批量确认其他未读公告。数量为当前可见未读批次数减去本次展示的一条，包含未开启弹窗的公告；没有其他未读公告时不渲染数量按钮。只确认本次展示的批次，其他公告保留在铃铛中。刷新和后续登录不会轮流补弹历史；新增发布或重发产生的新批次可以再次弹出。最新批次被撤回后，以剩余当前可见公告重新选择；确认记录为浏览器本地状态，不额外建立服务端弹窗回执。该规则同时适用于 SaaS 和运行时前端，不改变后端接收范围、接口或菜单。确认仍以 `公告ID + publishVersion` 写入当前 API 服务和账号隔离的浏览器记录，不保证跨设备原子一次。
+
+验证入口为 `tests/systemBulletin*.test.mjs`、`tests/homeAnnouncements.test.mjs` 及 Web Core 命令能力/数据源/铃铛/个人中心测试。公告行为回归 76/76、相关结构检查 5/5、Web Core 回归 75/75 通过，覆盖关闭时无公告 HTTP/WS、无发布权限的接收者仍可使用公告，以及确认最新后刷新不补弹历史。模块 `pnpm exec vue-tsc -p modules/authentication-manager-ui/tsconfig.json --noEmit --pretty false` 仍有既有诊断（runtime-ui 609 项、ui 757 项），本次修改文件无诊断；没有独立 lint 脚本。历史跨工作区菜单/Core 结构正则与订阅宿主断言存在既有失败，未为这些断言修改无关业务。两端目标模块生产构建通过（ui 4m04s，runtime-ui 3m57s），修改文件 `git diff --check` 通过；真实账号的开启/关闭、发布接收和刷新交互仍待浏览器验收。
 
 实时订阅使用共享 wsClient 订阅 `/system/bulletin/received`，收到消息后按发布批次回查当前资格和撤回状态，再刷新角标与列表。实时到达仅显示带公告类型图标的轻提示，点击后打开详情；只有详情确认按钮写入本地已读。账号、服务或项目上下文变化时释放旧逻辑订阅、销毁旧详情弹窗并使旧确认回调失效，避免上一身份的迟到消息污染当前账号。

@@ -46,10 +46,12 @@
   </j-page-container>
 </template>
 
-<script setup lang="ts" name="Department">
+<script setup lang="ts">
 import { useRegistryOptions } from '@jetlinks-web-core/hooks'
 import { isNoCommunity } from '@jetlinks-web-core/utils'
 import LeftTree from './components/LeftTree.vue'
+
+defineOptions({ name: 'Department' })
 
 type DepartmentTabKey = 'position' | 'user' | 'property'
 

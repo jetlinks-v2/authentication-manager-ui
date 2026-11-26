@@ -32,17 +32,17 @@ test('completing the first four steps does not hide unconfigured alarms or appli
   assert.equal(shouldShowGuide({ ...statuses, application: 'complete' }), true)
 })
 
-test('a failed alarm query does not clear a configured space; an application failure is not an empty list', () => {
+test('failed alarm and application queries keep the guide hidden instead of implying missing configuration', () => {
   const statuses = resolveGuideStatuses(
     health, algorithms, ready([{ id: 'space', value: 1 }, { id: 'alarm', failed: true }]), ready([], true),
   )
   assert.equal(statuses.space, 'complete')
   assert.equal(statuses.alarm, 'unknown')
   assert.equal(statuses.application, 'unknown')
-  assert.equal(shouldShowGuide(statuses), true)
+  assert.equal(shouldShowGuide(statuses), false)
 })
 
-test('an incomplete or unavailable device step shows the guide without treating failures as zero', () => {
+test('confirmed empty device counts show the guide while unavailable counts keep it hidden', () => {
   const incomplete = resolveGuideStatuses(
     ready([{ id: 'gateway', value: 0 }, { id: 'devices', value: 0 }, { id: 'video', value: 0 }]),
     algorithms, configuration, applications,
@@ -57,7 +57,7 @@ test('an incomplete or unavailable device step shows the guide without treating 
   )
   assert.equal(unavailable.gateway, 'unknown')
   assert.equal(unavailable.device, 'unknown')
-  assert.equal(shouldShowGuide(unavailable), true)
+  assert.equal(shouldShowGuide(unavailable), false)
 })
 
 test('editor previews retain all six steps without using runtime completion state', () => {

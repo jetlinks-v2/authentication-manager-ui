@@ -19,6 +19,7 @@ const createEnvironment = () => {
   const store = createTab()
   let respond = () => ({ success: true, status: 200, result: [] })
   const source = loadLogModule('views/system/Announcement/receivedDataSource.ts', {
+    './bulletinCapability': { isAnnouncementSupported: async () => true },
     './localReadStore': store,
     '@jetlinks-web/core': { request: { post: async (url, query) => { calls.push({ url, query }); return respond(url, query) } } },
     '@jetlinks-web-core/locales': { __esModule: true, default: { global: { t: key => key } } },
@@ -114,6 +115,7 @@ test('all-read projects IDs only and records the captured account without hiding
   let finish
   respond(() => new Promise(resolve => { finish = resolve }))
   const pending = source.markAllAnnouncementsRead()
+  await Promise.resolve()
   user.userInfo.id = 'user-B'
   finish({ success: true, status: 200, result: [{ id: 'visible-v1' }] })
   await pending
@@ -147,14 +149,12 @@ test('same-page, storage writes and clear refresh listeners; other identities do
 
 
 test('an all-read request started without an identity cannot write a later signed-in account', async () => {
-  const { store, source, user, respond } = createEnvironment()
+  const { store, source, user, calls } = createEnvironment()
   user.userInfo.id = ''
-  let finish
-  respond(() => new Promise(resolve => { finish = resolve }))
   const pending = source.markAllAnnouncementsRead()
   user.userInfo.id = 'user-B'
-  finish({ success: true, status: 200, result: [{ id: 'visible-v1' }] })
   await pending
+  assert.equal(calls.length, 0, 'identity change during the capability check prevents the request')
   assert.deepEqual(store.getAnnouncementReadIds(), [])
 })
 

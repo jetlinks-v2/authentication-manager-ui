@@ -1,7 +1,7 @@
 import { request } from '@jetlinks-web/core'
 import dayjs from 'dayjs'
 import { loadGatewayDirectory, metricNumber } from './gatewayStatus'
-import { loadVisionTaskDirectory, type VisionTaskDirectory } from './visionTaskDirectory'
+import { loadVisionTaskDirectory, visionTaskDetailsOf, type VisionTaskDirectory } from './visionTaskDirectory'
 import { recordOf, rowsOf, textOf } from '../../Base/shared/apiResult'
 
 export const visionRankingMetrics = ['latency', 'discard', 'backlog'] as const
@@ -30,6 +30,12 @@ export interface VisionTaskRankingResult {
   unit: string
   taskCount?: number
   directoryIncomplete?: boolean
+}
+/** 由单个卡片持有的目录快照；有效期和作用域由 Hook 管理，不缓存指标结果。 */
+export interface VisionTaskRankingCache {
+  catalog?: Record<string, unknown>[]
+  gateways?: Awaited<ReturnType<typeof loadGatewayDirectory>>
+  directory?: VisionTaskDirectory
 }
 export const VISION_RANKING_LIMIT = 50
 const options = { hiddenError: true, timeout: 15000 }
@@ -90,6 +96,7 @@ function compareVisionRows(a: VisionTaskRank, b: VisionTaskRank) {
     || Number(a.online === false) - Number(b.online === false) || a.id.localeCompare(b.id)
 }
 
+/** 消费详情边界已提取的真实任务，按指标来源匹配场景和算法名称。 */
 function applyTaskMetadata(row: VisionTaskRank, task: Record<string, unknown>) {
   const config = recordOf(task.configuration)
   const sources = Array.isArray(config.sources) ? config.sources.map(recordOf) : []
@@ -108,11 +115,14 @@ function applyTaskMetadata(row: VisionTaskRank, task: Record<string, unknown>) {
 }
 
 /** 少量节点合并完整在线任务目录；其余仅补齐入榜名称，最多四路并发。 */
-export async function loadVisionTaskRanking(metric: VisionRankingMetric, isCurrent: () => boolean = () => true): Promise<VisionTaskRankingResult> {
+export async function loadVisionTaskRanking(
+  metric: VisionRankingMetric, isCurrent: () => boolean = () => true, cache?: VisionTaskRankingCache,
+): Promise<VisionTaskRankingResult> {
   if (!isCurrent()) throw new Error('Ranking query cancelled')
   const definition = visionMetricDefinitions[metric]
-  const catalog = rowsOf(await request.get('/device/metrics/_supported', {}, options))
+  const catalog = cache?.catalog ?? rowsOf(await request.get('/device/metrics/_supported', {}, options))
   if (!isCurrent()) throw new Error('Ranking query cancelled')
+  if (cache) cache.catalog = catalog
   const supported = catalog.find(item => item.pointType === definition.pointType && item.pointId === definition.pointId && item.metricType === definition.metricType)
   const labels = Array.isArray(supported?.labelKeys) ? supported.labelKeys.map(item => textOf(recordOf(item).id)) : []
   const groups = Array.isArray(supported?.groupByKeys) ? supported.groupByKeys.map(item => textOf(recordOf(item).id)) : []
@@ -120,22 +130,26 @@ export async function loadVisionTaskRanking(metric: VisionRankingMetric, isCurre
     return { rows: [], metadataFailed: false, limited: false, supported: false, unit: '' }
   }
   const unit = textOf(supported.unit)
-  const gateways = await loadGatewayDirectory(isCurrent)
+  const gateways = cache?.gateways ?? await loadGatewayDirectory(isCurrent)
   if (!isCurrent()) throw new Error('Ranking query cancelled')
+  if (cache) cache.gateways = gateways
   if (!gateways.length) return { rows: [], metadataFailed: false, limited: false, supported: true, unit, taskCount: 0, directoryIncomplete: false }
   // 离线历史仅补充身份，不能占用在线指标的 Top50 名额；两组沿用同一查询时刻。
   const now = Date.now()
   const scopes = [gateways.filter(item => item.online), gateways.filter(item => !item.online)].filter(items => items.length)
   const [responses, directory] = await Promise.all([
     Promise.all(scopes.map(items => request.post('/device/metrics/_agg', buildVisionRankingQuery(metric, items.map(item => item.id), now), options))),
-    gateways.length <= 3 ? loadVisionTaskDirectory(gateways, isCurrent) : Promise.resolve<VisionTaskDirectory | undefined>(undefined),
+    gateways.length <= 3 ? (cache?.directory ?? loadVisionTaskDirectory(gateways, isCurrent)) : Promise.resolve<VisionTaskDirectory | undefined>(undefined),
   ])
   if (!isCurrent()) throw new Error('Ranking query cancelled')
+  if (cache && directory) cache.directory = directory
   const batches = responses.map(rowsOf)
   const limited = batches.some(rows => rows.length >= VISION_RANKING_LIMIT)
   const rows = normalizeVisionRanking(batches.flat(), gateways, metric)
   if (directory) {
     let metadataFailed = directory.failed
+    // 某个指标缺少任务身份只影响本次结果，不能污染其他指标复用的目录快照。
+    let directoryIncomplete = directory.incomplete
     let taskCount = 0
     for (const gateway of gateways) {
       const tasks = directory.byGateway.get(gateway.id)
@@ -146,7 +160,7 @@ export async function loadVisionTaskRanking(metric: VisionRankingMetric, isCurre
       for (const row of group) {
         const task = byId.get(row.taskId)
         if (task) applyTaskMetadata(row, task)
-        else { metadataFailed = true; directory.incomplete = true }
+        else { metadataFailed = true; directoryIncomplete = true }
       }
       const represented = new Set(group.map(row => row.taskId))
       for (const [taskId, task] of byId) {
@@ -161,7 +175,7 @@ export async function loadVisionTaskRanking(metric: VisionRankingMetric, isCurre
     }
     return { rows: rows.sort(compareVisionRows), metadataFailed,
       limited, supported: true, unit,
-      taskCount: directory.incomplete ? undefined : taskCount, directoryIncomplete: directory.incomplete }
+      taskCount: directoryIncomplete ? undefined : taskCount, directoryIncomplete }
   }
   const gatewayIds = [...new Set(rows.filter(item => item.online !== false).map(item => item.gatewayId))]
   let cursor = 0, metadataFailed = false
@@ -170,9 +184,12 @@ export async function loadVisionTaskRanking(metric: VisionRankingMetric, isCurre
       const gatewayId = gatewayIds[cursor++]
       const group = rows.filter(item => item.gatewayId === gatewayId)
       try {
-        // 与 AI 模块 queryGatewayEdgeTaskDetails 使用同一 CRUD 查询接口及边端任务 ID。
-        const tasks = rowsOf(await request.post(`/edge/device/${encodeURIComponent(gatewayId)}/_/ai/task/edge/detail/_query/no-paging`, {
-          paging: false, terms: [{ column: 'id', termType: 'in', value: [...new Set(group.map(item => item.taskId))] }],
+        // task.id 限定指标对应的真实任务，不把组合详情中的操作身份用于名称匹配。
+        const tasks = visionTaskDetailsOf(await request.post(`/edge/device/${encodeURIComponent(gatewayId)}/_/ai/task/edge/detail/_query/no-paging`, {
+          paging: false, terms: [
+            { column: 'task.domain', termType: 'eq', value: 'ComputerVision' },
+            { column: 'task.id', termType: 'in', value: [...new Set(group.map(item => item.taskId))] },
+          ],
         }, options))
         if (!isCurrent()) return
         const byId = new Map(tasks.map(task => [textOf(task.id), task]))

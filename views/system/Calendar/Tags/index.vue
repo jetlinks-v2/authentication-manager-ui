@@ -72,7 +72,7 @@
     />
 </template>
 
-<script setup name="CalendarTags">
+<script setup>
 import { queryTags, deleteTags, saveTagsColor } from '@authentication-manager-ui/api/system/calendar';
 import { Draggable } from '@fullcalendar/interaction';
 import EditTag from './components/editTag.vue';
@@ -81,6 +81,8 @@ import { inject } from 'vue';
 import { omit } from 'lodash-es';
 import { useSystemStore } from '@jetlinks-web-core/store/system';
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'CalendarTags' })
 
 const { t: $t } = useI18n();
 const system = useSystemStore();

@@ -29,7 +29,7 @@ const { resolveResourcePageAccess: resolve, buildResourcePageLayout: layout, ran
 const granted = codes => [{ code: 'root', children: codes.map(code => ({ code })) }]
 const menus = ['iot-user-device-list', 'video/resources', 'algorithm-center', 'visualization/project', 'device/Product', 'data-collect', 'iot-card/CardManagement']
 const modules = ['device-manager-ui', 'jetlinks-media-ui', 'edge-master-ui', 'jetlinks-ai-ui', 'visualization-manager-ui', 'data-collector-ui', 'network-card-manager-ui']
-const access = (saas, codes = menus, installed = modules) => resolve({ saas, menus: granted(codes), installed: name => installed.includes(name) })
+const access = (saas, codes = menus, installed = modules) => resolve({ edgeSupported: true, saas, menus: granted(codes), installed: name => installed.includes(name) })
 const ids = value => layout(value).flatMap(cell => cell.panels)
 const assertFullRows = cells => {
   let row = 0

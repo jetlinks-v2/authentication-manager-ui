@@ -1,15 +1,25 @@
 <template>
   <section class="template-document">
-    <a-tabs v-model:active-key="activeLanguage">
-      <a-tab-pane v-for="language in languages" :key="language.code" :tab="language.label">
+    <a-tabs v-model:active-key="activeLanguage" class="template-document__panes">
+      <a-tab-pane v-for="language in languages" :key="language.value" :tab="language.label">
         <MarkdownEditor
-          :model-value="documentByLanguage[language.code]"
-          :rows="22"
+          :model-value="documentByLanguage[language.value]"
+          :rows="16"
           :placeholder="$t('ApplicationTemplate.document.placeholder')"
           :empty-description="$t('ApplicationTemplate.document.empty')"
           :disabled="!canUpdate"
-          @update:model-value="updateDocument(language.code, $event)"
-        />
+          @update:model-value="updateDocument(language.value, $event)"
+        >
+          <template #toolbar-right>
+            <a-segmented
+              :value="activeLanguage"
+              class="template-document__language-switch"
+              :options="languages"
+              size="small"
+              @change="activeLanguage = String($event)"
+            />
+          </template>
+        </MarkdownEditor>
       </a-tab-pane>
     </a-tabs>
     <div v-if="canUpdate" class="template-document__actions">
@@ -44,8 +54,8 @@ const { t: $t, locale } = useI18n()
 const currentLanguage = computed(() => String(locale.value || 'zh').replace('_', '-').split('-')[0])
 const activeLanguage = ref(currentLanguage.value === 'en' ? 'en' : 'zh')
 const languages = computed(() => [
-  { code: 'zh', label: $t('I18n.chinese') },
-  { code: 'en', label: $t('I18n.english') },
+  { value: 'zh', label: $t('I18n.chinese') },
+  { value: 'en', label: $t('I18n.english') },
 ])
 const documentByLanguage = computed<Record<string, string>>(() => ({
   zh: String((props.i18nDraft as Record<string, string>).zh || (currentLanguage.value === 'zh' ? props.draft : '')),
@@ -65,5 +75,8 @@ const updateDocument = (language: string, value: string) => {
 
 <style scoped>
 .template-document { display: flex; flex-direction: column; gap: var(--space-4); }
+/* 内容继续保留独立编辑器实例，语言入口统一由工具栏插槽承载。 */
+.template-document__panes :deep(> .ant-tabs-nav) { display: none; }
+.template-document__language-switch { font-size: var(--fs-12); }
 .template-document__actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
 </style>

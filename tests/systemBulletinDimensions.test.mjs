@@ -6,6 +6,8 @@ import * as vue from 'vue'
 import { loadLogModule } from './logTestLoader.mjs'
 
 const loadApi = request => loadLogModule('views/system/Announcement/api.ts', {
+  './bulletinCapability': { isAnnouncementSupported: async () => true },
+  './managementContext': { isSaasAnnouncementManagement: () => true },
   '@jetlinks-web/core': { request },
   './receivedDataSource': {},
   './announcementI18n': {

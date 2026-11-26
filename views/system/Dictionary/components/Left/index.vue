@@ -89,13 +89,15 @@
     <Export v-if="downVisible" @closeDown="closeDown" />
 </template>
 
-<script lang="ts" setup name="DictionaryLeft">
+<script lang="ts" setup>
 import { getDicList, deleteDictionary, addDictionary } from '@authentication-manager-ui/api/system/dictionary';
 import Save from './save/index.vue'
 import Export from './Export/index.vue'
 import { onlyMessage } from '@jetlinks-web/utils';
 import { usePermission } from '@jetlinks-web/hooks'
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'DictionaryLeft' })
 
 const { t: $t } = useI18n();
 const emit = defineEmits(['selectData'])

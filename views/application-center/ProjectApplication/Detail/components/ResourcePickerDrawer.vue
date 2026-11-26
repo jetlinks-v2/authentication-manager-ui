@@ -87,7 +87,7 @@
   </JlDrawerShell>
 </template>
 
-<script setup lang="ts" name="ProjectApplicationResourcePickerDrawer">
+<script setup lang="ts">
 import type { PropType } from 'vue'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -99,6 +99,8 @@ import type {
 } from '@jetlinks-web-core/components/ConditionFilter'
 import type { ApplicationResource, ResourcePickerData, ResourcePickerGateway } from '../../types'
 import ResourcePickerTable from './ResourcePickerTable.vue'
+
+defineOptions({ name: 'ProjectApplicationResourcePickerDrawer' })
 
 interface CheckboxEvent { target: { checked: boolean } }
 

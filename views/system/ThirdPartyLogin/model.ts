@@ -26,6 +26,8 @@ export interface LoginConfigDraft {
   scope: string
   userIdField: string
   showOnLogin: boolean
+  autoCreateUser: boolean
+  defaultPasswd: string
   usernamePrefix: string
   roleIdList: string[]
   orgIdList: string[]
@@ -52,6 +54,8 @@ export function createDraft(method: LoginMethod): LoginConfigDraft {
     scope: '',
     userIdField: '',
     showOnLogin: true,
+    autoCreateUser: true,
+    defaultPasswd: '',
     usernamePrefix: '',
     roleIdList: [],
     orgIdList: [],
@@ -138,6 +142,9 @@ export function fromApplication(
     userIdField: oauth2.userProperty?.userId || '',
     showOnLogin: (application.integrationModes || [])
       .some(mode => enumValue(mode) === 'ssoClient'),
+    // 历史缺失开关沿用后端 false 默认值，密码仅用于编辑详情。
+    autoCreateUser: application.sso?.autoCreateUser ?? false,
+    defaultPasswd: includeSecret ? application.sso?.defaultPasswd || '' : '',
     usernamePrefix: application.sso?.usernamePrefix || '',
     roleIdList: [...(application.sso?.roleIdList || [])],
     orgIdList: [...(application.sso?.orgIdList || [])],
@@ -202,7 +209,8 @@ export function toApplicationPayload(
   const sso = {
     ...currentSso,
     configuration,
-    autoCreateUser: true,
+    autoCreateUser: draft.autoCreateUser,
+    defaultPasswd: draft.defaultPasswd,
     roleIdList: [...draft.roleIdList],
     orgIdList: [...draft.orgIdList],
   }

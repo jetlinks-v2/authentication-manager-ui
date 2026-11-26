@@ -102,7 +102,7 @@
   </a-modal>
 </template>
 
-<script setup lang="ts" name="EditDialog">
+<script setup lang="ts">
 import { createReusableTemplate } from '@vueuse/core'
 
 import {
@@ -114,6 +114,8 @@ import { useRequest } from '@jetlinks-web/hooks'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { editColumns, defaultAction } from '../util'
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'EditDialog' })
 
 const { t: $t } = useI18n();
 const emits = defineEmits(['save', 'close'])

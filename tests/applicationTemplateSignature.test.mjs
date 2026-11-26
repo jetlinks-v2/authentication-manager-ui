@@ -1,13 +1,15 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { readFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
 import { build } from 'esbuild'
-import { effectScope, nextTick, ref } from 'vue'
+import { createSSRApp, effectScope, h, nextTick, ref } from 'vue'
+import { renderToString } from 'vue/server-renderer'
 import { parse, compileScript, compileTemplate } from 'vue/compiler-sfc'
 
 const hook = new URL('../views/application-center/Template/Save/useTemplateNotificationSignature.ts', import.meta.url)
 const { outputFiles } = await build({
-  entryPoints: [hook.pathname], bundle: true, write: false, format: 'esm',
+  entryPoints: [fileURLToPath(hook)], bundle: true, write: false, format: 'esm',
   plugins: [{
     name: 'notification-signature-fixture',
     setup(plugin) {
@@ -130,10 +132,78 @@ test('cancel and scope disposal clear view and edit material without saving', as
 })
 
 test('the existing template config component compiles with the signing editor', async () => {
-  const filename = new URL('../views/application-center/Template/Save/ExternalParameterConfig.vue', import.meta.url).pathname
+  const filename = fileURLToPath(new URL('../views/application-center/Template/Save/ExternalParameterConfig.vue', import.meta.url))
   const { descriptor, errors } = parse(await readFile(filename, 'utf8'), { filename })
   assert.deepEqual(errors, [])
   const script = compileScript(descriptor, { id: 'template-signature-edit' })
   const template = compileTemplate({ source: descriptor.template.content, filename, id: 'template-signature-edit', compilerOptions: { bindingMetadata: script.bindings } })
   assert.deepEqual(template.errors, [])
+})
+
+async function renderConfig({ canUpdate = true, editing = false } = {}) {
+  const filename = fileURLToPath(new URL('../views/application-center/Template/Save/ExternalParameterConfig.vue', import.meta.url))
+  const { descriptor } = parse(await readFile(filename, 'utf8'), { filename })
+  const script = compileScript(descriptor, { id: 'template-config-presentation', inlineTemplate: true })
+  const locale = JSON.parse(await readFile(new URL('../locales/lang/zh.json', import.meta.url), 'utf8'))
+  const { outputFiles } = await build({
+    stdin: { contents: script.content, loader: 'ts' }, bundle: true, write: false, format: 'esm',
+    plugins: [{
+      name: 'config-presentation-boundary',
+      setup(plugin) {
+        plugin.onResolve({ filter: /^(vue|@vueuse\/core)$/ }, args => ({ path: import.meta.resolve(args.path), external: true }))
+        plugin.onResolve({ filter: /^vue-i18n$/ }, () => ({ path: 'i18n', namespace: 'fixture' }))
+        plugin.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ contents: `
+          const messages = ${JSON.stringify(locale)};
+          export const useI18n = () => ({ t: key => messages[key] || key });
+        ` }))
+      },
+    }],
+  })
+  const { default: Config } = await import(`data:text/javascript;base64,${Buffer.from(outputFiles[0].text).toString('base64')}`)
+  let revealed = 0
+  const state = {
+    editing: ref(editing), saving: ref(false), error: ref(''), platformId: ref(''), redirectUri: ref(''),
+    notification: { enabled: false, address: '' }, credential: { keyId: '', publicKey: '' }, parameters: ref([]),
+  }
+  const signature = {
+    status: ref({ configured: true, keyId: 'notification-current' }), error: ref(''), loading: ref(false), saving: ref(false),
+    visible: ref(false), draft: ref(), secret: ref(), reveal: () => { revealed++ },
+  }
+  const app = createSSRApp(Config, { canUpdate, state, signature })
+  const passthrough = { props: ['label'], setup: (props, { slots }) => () => h('div', [slots.label?.() || props.label, slots.default?.()]) }
+  for (const name of ['a-alert', 'a-spin', 'a-tag', 'a-space', 'a-typography-text', 'a-tooltip', 'a-descriptions', 'a-descriptions-item', 'a-form', 'a-form-item']) app.component(name, passthrough)
+  app.component('AIcon', { render: () => null })
+  app.component('a-button', { setup: (_, { slots }) => () => h('button', slots.default?.()) })
+  for (const name of ['a-input', 'a-input-password', 'a-textarea', 'a-select', 'a-switch']) app.component(name, { render: () => h('input') })
+  app.component('a-modal', { props: ['open'], setup: (props, { slots }) => () => props.open ? h('dialog', slots.default?.()) : null })
+  const html = await renderToString(app)
+  return { html, text: html.replace(/<[^>]*>/g, ''), revealed }
+}
+
+test('configuration defaults to a read view with explicit empty values and masked signing material', async () => {
+  const { html, text, revealed } = await renderConfig()
+  assert.match(text, /查看配置/)
+  assert.match(text, /编辑配置/)
+  assert.match(text, /未配置/)
+  assert.match(text, /••••/)
+  assert.equal(text.includes('--'), false)
+  assert.doesNotMatch(html, /<input|<dialog/)
+  assert.equal(revealed, 0)
+})
+
+test('read-only users cannot enter editing or access signing actions even with a retained edit state', async () => {
+  const { html, text, revealed } = await renderConfig({ canUpdate: false, editing: true })
+  assert.match(text, /查看配置/)
+  assert.doesNotMatch(text, /编辑配置|设置签名密钥|查看当前凭据/)
+  assert.doesNotMatch(html, /<input|<button|<dialog/)
+  assert.equal(revealed, 0)
+})
+
+test('editing keeps RSA fields visible when notifications are disabled', async () => {
+  const { html, text } = await renderConfig({ editing: true })
+  assert.match(text, /编辑配置/)
+  assert.match(text, /RSA 接收密钥 ID/)
+  assert.match(text, /RSA 接收公钥/)
+  assert.doesNotMatch(text, /通知接收地址/)
+  assert.match(html, /<input/)
 })

@@ -1,4 +1,5 @@
 import { defineAsyncComponent } from 'vue'
+import * as runtimeMonitor from './runtimeMonitor'
 import { getTreeData_api } from '@authentication-manager-ui/api/system/department'
 import {exportPermission_api} from "@authentication-manager-ui/api/system/permission";
 import { ownershipDimensionFilters } from './views/application-center/ProjectApplication/ownershipSelectors'
@@ -10,6 +11,7 @@ export default {
   assetDimensionFilters: ownershipDimensionFilters,
   objectRelationMaintainers: { 'asset:org': assetRelationMaintainer },
   apis: {
+    runtimeMonitor,
     getTreeData_api,
     exportPermission_api
   },

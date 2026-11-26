@@ -6,7 +6,7 @@ import { moduleRegistry } from '@jetlinks-web-core/utils/module-registry'
 import { useResourceCapabilities } from './useResourceCapabilities'
 import { settingsOf, type ResourceInfo } from '../shared'
 import type { ResourceRankRow } from '../components/resourceRank'
-import { loadVisionTaskRanking, visionRankingMetrics, type VisionRankingMetric, type VisionTaskRank } from '../services/visionTaskRanking'
+import { loadVisionTaskRanking, visionRankingMetrics, type VisionRankingMetric, type VisionTaskRank, type VisionTaskRankingCache } from '../services/visionTaskRanking'
 
 export interface VisionTaskRankRow extends VisionTaskRank, ResourceRankRow {}
 
@@ -64,11 +64,15 @@ export function useVisionTaskRanking(info: Ref<ResourceInfo | undefined>, isEdit
   const canOpenDetail = computed(() => available.value && active.value && !preview.value && !!detailComponent.value)
   let generation = 0
   let timer: ReturnType<typeof setTimeout> | undefined
+  let cache: VisionTaskRankingCache = {}, cachedAt = 0
   const enabled = () => available.value && active.value && (preview.value || visibility.value === 'visible')
 
-  async function refresh() {
+  /** 仅纯指标切换复用一分钟内的目录；主动重试和定时刷新仍重新查询全部数据。 */
+  async function refresh(reuseMetadata = false) {
     const current = ++generation
     clearTimeout(timer)
+    const now = Date.now()
+    if (!reuseMetadata || now - cachedAt >= 60_000) { cache = {}; cachedAt = now }
     loading.value = false; error.value = false; unsupported.value = false; taskCount.value = undefined; directoryIncomplete.value = false
     if (!enabled()) { data.value = []; return }
     loading.value = true
@@ -76,7 +80,7 @@ export function useVisionTaskRanking(info: Ref<ResourceInfo | undefined>, isEdit
     try {
       const result = preview.value
         ? { rows: previewRows(), metadataFailed: false, limited: false, supported: true, unit: metric.value === 'latency' ? 'ms' : 'count', taskCount: 8, directoryIncomplete: false }
-        : await loadVisionTaskRanking(metric.value, isCurrent)
+        : await loadVisionTaskRanking(metric.value, isCurrent, cache)
       if (!isCurrent()) return
       data.value = result.rows; metadataFailed.value = result.metadataFailed; limited.value = result.limited
       unsupported.value = !result.supported; unit.value = result.unit
@@ -90,11 +94,12 @@ export function useVisionTaskRanking(info: Ref<ResourceInfo | undefined>, isEdit
       }
     }
   }
-  watch([metric, preview, available, capabilities.scope, active, visibility, () => config.value.refreshSeconds], () => {
+  watch([metric, preview, available, capabilities.scope, active, visibility, () => config.value.refreshSeconds], ([nextMetric, ...context], [previousMetric, ...previousContext]) => {
     ++generation; clearTimeout(timer)
     data.value = []; metadataFailed.value = false; limited.value = false; unsupported.value = false; unit.value = ''
     selected.value = undefined
-    void refresh()
+    // 账号、项目、权限、可见性等上下文变化必须重新取目录。
+    void refresh(nextMetric !== previousMetric && context.every((value, index) => value === previousContext[index]))
   }, { immediate: true, flush: 'sync' })
   onActivated(() => { active.value = true })
   onDeactivated(() => { active.value = false })

@@ -1,4 +1,4 @@
-<script setup name="Positions">
+<script setup>
 import { createReusableTemplate } from '@vueuse/core'
 
 import {useI18n} from 'vue-i18n';
@@ -10,6 +10,8 @@ import {queryRole_api} from "@authentication-manager-ui/api/system/user";
 import {clearPositionTreeCache, getPositionTree, getSelectedPositionOptions} from "./data";
 import PageHeader from '@jetlinks-web-core/components/PageHeader';
 import {filterConditionTerms, transformConditionTerms} from '@authentication-manager-ui/views/system/conditionFilterUtils';
+
+defineOptions({ name: 'Positions' })
 
 const {t: $t} = useI18n();
 const menuStore = useMenuStore();

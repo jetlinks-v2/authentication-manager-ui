@@ -36,10 +36,15 @@ function grantedMenuCodes(menus: readonly GrantedMenu[], codes = new Set<string>
 export function getDashboardModules(): DashboardModules {
   const menu = useMenuStore()
   const codes = grantedMenuCodes(menu.initialized && !menu.loading ? menu.menuResultCache : [])
+  const local = moduleRegistry.hasModule('edge-basic-ui')
+  const saas = isSaaS && !local
   // 安装不等于授权：私有化也不能为无菜单权限的用户展示模块统计或触发请求。
   const available = (key: keyof DashboardModules) => {
     const requirement = moduleRequirements[key]
-    return requirement.menus.some(code => codes.has(code)) && (isSaaS || moduleRegistry.hasModule(requirement.module))
+    const granted = requirement.menus.some(code => codes.has(code))
+      || key === 'vision' && local && codes.has('machine-vision/Task')
+    return granted && (saas || moduleRegistry.hasModule(requirement.module)
+      || key === 'collection' && local)
   }
   return {
     model: available('model'), edge: available('edge'), vision: available('vision'),

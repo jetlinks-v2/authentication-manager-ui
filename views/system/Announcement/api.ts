@@ -7,6 +7,9 @@ import {
   type AnnouncementI18n,
 } from './announcementI18n'
 
+import { isAnnouncementSupported } from './bulletinCapability'
+import { isSaasAnnouncementManagement } from './managementContext'
+
 export type AnnouncementState = 'unpublished' | 'published'
 export const SYSTEM_BULLETIN_PROVIDER = 'SystemBulletin'
 export const SYSTEM_BULLETIN_CHANNEL = 'inside-mail'
@@ -45,7 +48,7 @@ export interface AnnouncementRecord {
   userIds: string[]
   organizationIds: string[]
   popup: boolean
-  deliveryScope: AnnouncementDeliveryScope
+  deliveryScope?: AnnouncementDeliveryScope
   others?: Record<string, unknown>
   i18nMessages?: AnnouncementI18n
   legacyTitle?: string
@@ -60,7 +63,7 @@ export interface AnnouncementDraft {
   content: string
   type: string
   popup: boolean
-  deliveryScope: AnnouncementDeliveryScope
+  deliveryScope?: AnnouncementDeliveryScope
   publish: boolean
   others?: Record<string, unknown>
   i18nMessages?: unknown
@@ -189,13 +192,16 @@ const normalizeBulletin = (record: SystemBulletin): AnnouncementRecord => {
     userIds: dimensionMap.get('user') || [],
     organizationIds: dimensionMap.get('org') || [],
     popup: record.others?.popup === true,
-    deliveryScope: normalizeDeliveryScope(record.others),
+    deliveryScope: isSaasAnnouncementManagement() ? normalizeDeliveryScope(record.others) : undefined,
     others: record.others,
   }
 }
 
 /** 分页查询公告管理详情，并转换枚举与时间字段。 */
 export const queryAnnouncements = async (query: AnnouncementQuery) => {
+  if (!await isAnnouncementSupported()) {
+    return { success: true, result: { data: [], total: 0, pageIndex: query.pageIndex || 0, pageSize: query.pageSize || 20 } }
+  }
   const response = await request.post('/system/bulletin/detail/_query', query) as ApiResponse<PageResult<SystemBulletin>>
   return {
     ...response,
@@ -296,7 +302,7 @@ export {
   markAllAnnouncementsRead,
 } from './receivedDataSource'
 
-/** 保存未发布公告及其 SaaS/区域投递范围。 */
+/** 统一保存公告；只有 SaaS 管理上下文保存跨区域范围，本地草稿移除历史范围。 */
 export const saveAnnouncement = async (draft: AnnouncementDraft): Promise<string> => {
   const {
     i18nMessages,
@@ -306,6 +312,15 @@ export const saveAnnouncement = async (draft: AnnouncementDraft): Promise<string
     content,
   } = buildAnnouncementI18nFields(draft)
 
+  const others: Record<string, unknown> = { ...(draft.others || {}), popup: draft.popup }
+  if (isSaasAnnouncementManagement()) {
+    const scope = draft.deliveryScope
+    if (!scope || (!scope.saas && !scope.regionIds.some(id => id.trim()))) throw new Error('Bulletin delivery scope is required')
+    others.deliveryScope = normalizeDeliveryScope({ deliveryScope: scope })
+  } else {
+    // 来源由后端可信身份确定，不能把旧 SaaS 草稿范围带入本地发布。
+    delete others.deliveryScope
+  }
   const response = await request.post('/system/bulletin/_save', {
     id: draft.id,
     title,
@@ -313,45 +328,40 @@ export const saveAnnouncement = async (draft: AnnouncementDraft): Promise<string
     content,
     i18nMessages,
     type,
-    others: {
-      ...(draft.others || {}),
-      popup: draft.popup,
-      deliveryScope: {
-        saas: draft.deliveryScope.saas,
-        regionIds: [...new Set(draft.deliveryScope.regionIds)],
-      },
-    },
+    others,
   }) as ApiResponse<string>
   return String(response.result || draft.id || '')
 }
 
 /** 将编辑回显范围转换为单次发布/撤回契约，项目级范围开放前始终提交空 projects。 */
 const buildDeliveryRequest = (
-  scope: AnnouncementDeliveryScope,
-): AnnouncementDeliveryRequest => ({
-  all: scope.saas,
-  runtimes: [...new Set(scope.regionIds
-    .map(id => id.trim())
-    .filter(Boolean))]
-    .map(id => ({ id, projects: [] })),
-})
+  scope?: AnnouncementDeliveryScope,
+): AnnouncementDeliveryRequest => {
+  if (!scope || (!scope.saas && !scope.regionIds.some(id => id.trim()))) throw new Error('Bulletin delivery scope is required')
+  return {
+    all: scope.saas,
+    runtimes: [...new Set(scope.regionIds.map(id => id.trim()).filter(Boolean))]
+      .map(id => ({ id, projects: [] })),
+  }
+}
 
 /** 发布一条未发布公告；本次请求 Body 是后端执行投递的唯一范围。 */
-export const publishAnnouncement = (id: string, scope: AnnouncementDeliveryScope) => request.put(
-  '/saas/bulletin/_deploy',
-  buildDeliveryRequest(scope),
+export const publishAnnouncement = (id: string, scope?: AnnouncementDeliveryScope) => request.put(
+  isSaasAnnouncementManagement() ? '/saas/bulletin/_deploy' : '/system/bulletin/_deploy',
+  isSaasAnnouncementManagement() ? buildDeliveryRequest(scope) : { dimension: [], deployType: 'now' },
   { params: { id } },
 )
 
 /** 撤回一条已发布公告。 */
-export const withdrawAnnouncement = (id: string, scope: AnnouncementDeliveryScope) => request.put(
-  '/saas/bulletin/_revocation',
-  buildDeliveryRequest(scope),
+export const withdrawAnnouncement = (id: string, scope?: AnnouncementDeliveryScope) => request.put(
+  isSaasAnnouncementManagement() ? '/saas/bulletin/_revocation' : '/system/bulletin/_revocation',
+  isSaasAnnouncementManagement() ? buildDeliveryRequest(scope) : {},
   { params: { id } },
 )
 
 /** 查询运营端可选区域，公告只保存区域 ID，不在前端展开项目。 */
 export const queryAnnouncementRegions = async (): Promise<AnnouncementRegionOption[]> => {
+  if (!isSaasAnnouncementManagement()) return []
   const response = await request.post('/saas/runtime/_query/', {
     pageIndex: 0,
     pageSize: 1000,

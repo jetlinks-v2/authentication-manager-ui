@@ -4,6 +4,7 @@ import { getRequestHeaders } from '@jetlinks-web-core/utils/request-context'
 import { getAnnouncementReadScope, notifyAnnouncementChanges } from './localReadStore'
 import { disposeAnnouncementRealtimeDialogs } from './realtimeNotification'
 import { queryAnnouncementInboxNoPaging } from './receivedDataSource'
+import { isAnnouncementSupported } from './bulletinCapability'
 
 type Listener = (payload: Record<string, any>) => void
 const listeners = new Set<Listener>()
@@ -25,7 +26,7 @@ const release = () => {
   subscription = undefined
 }
 
-const connect = (force = false) => {
+const connect = async (force = false) => {
   const next = getContext()
   if (!force && next === context) return
   if (next !== context) disposeAnnouncementRealtimeDialogs()
@@ -33,6 +34,12 @@ const connect = (force = false) => {
   context = next
   if (!next) return
   const current = generation
+  // 探测完成前不创建 WS；期间的身份切换、卸载或重连会使本次结果失效。
+  if (!await isAnnouncementSupported()) {
+    if (current === generation) context = ''
+    return
+  }
+  if (current !== generation || next !== getContext() || !listeners.size) return
   // 当前项目是订阅意图，由服务端按真实成员资格校验，不能沿用共享连接的项目快照。
   const tenantDomain = getRequestHeaders()['X-Tenant-Domain']
   subscription = wsClient.getWebSocket(`system-bulletin-${generation}`, '/system/bulletin/received',

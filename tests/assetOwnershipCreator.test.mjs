@@ -33,6 +33,8 @@ const fixture = (options = {}) => {
   const registrationCode = transformSync(readFileSync(resolve(root, 'register.ts'), 'utf8'), { loader: 'ts', format: 'cjs' }).code
   new Function('require', 'exports', 'module', registrationCode)(id => {
     if (id === 'vue') return vue
+    if (id === './runtimeMonitor' || id === './objectPresentations') return {}
+    if (id.endsWith('/AssetRelationEditor')) return { assetRelationMaintainer: {} }
     if (id.endsWith('/ownershipSelectors')) return module.exports
     if (id.endsWith('/system/department')) return { getTreeData_api: () => { throw new Error('Unexpected registration request') } }
     if (id.endsWith('/system/permission')) return { exportPermission_api: () => { throw new Error('Unexpected registration request') } }

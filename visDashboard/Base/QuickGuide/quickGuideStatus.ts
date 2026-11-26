@@ -51,6 +51,7 @@ export function guideStepAvailable(key: GuideStepKey, modules: DashboardModules)
   return true
 }
 
+/** 默认隐藏，只有查询明确确认尚未配置时才展示；加载中或查询失败不触发引导。 */
 export function shouldShowGuide(statuses: Partial<Record<GuideStepKey, GuideStatus>>): boolean {
-  return Object.values(statuses).some(status => status === 'incomplete' || status === 'unknown')
+  return Object.values(statuses).some(status => status === 'incomplete')
 }

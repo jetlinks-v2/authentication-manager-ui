@@ -49,6 +49,7 @@ export interface BusinessApplicationTemplateEntity {
   code: string
   provider?: string
   icon?: string
+  coverImage?: string | null
   description?: string
   i18nName?: string
   i18nDescription?: string
@@ -172,14 +173,6 @@ export interface PagerResult<T> {
   pageSize?: number
 }
 
-export interface MenuView {
-  id?: string
-  code?: string
-  name?: string
-  i18nName?: string
-  children?: MenuView[]
-}
-
 export const queryBusinessApplications = (data: QueryPayload) =>
   apiRequest.post<BusinessApplicationEntity[]>('/business-application/_query/no-paging?paging=false', data)
 
@@ -254,8 +247,10 @@ export const saveBusinessApplicationRoleMenuGrant = (applicationId: string, role
     { applicationScope: false },
   )
 
+/** 模板菜单与独立资产策略一并返回，供角色加载及保存前刷新授权上限。 */
 export const getBusinessApplicationTemplateMenus = (id: string) =>
-  apiRequest.get<MenuView[]>(`/business-application-template/${id}/menus`)
+  apiRequest.get<{ menus: MenuPermissionNode[]; assetAccesses: AssetAccessPolicy[] }>(
+    `/business-application-template/${encodeURIComponent(id)}/menus`)
 
 export const queryBusinessApplicationRoles = (
   applicationId: string,

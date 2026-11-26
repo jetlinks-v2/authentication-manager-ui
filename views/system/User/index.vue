@@ -213,7 +213,7 @@
   />
 </template>
 
-<script setup lang="ts" name="UserMange">
+<script setup lang="ts">
 import type { ConditionQueryTerm } from '@authentication-manager-ui/views/system/conditionFilterUtils'
 
 import { createReusableTemplate } from '@vueuse/core'
@@ -237,6 +237,8 @@ import {useI18n} from 'vue-i18n';
 // import {isNoCommunity} from '@jetlinks-web-core/utils/utils';
 import type {ConditionFilterChangePayload} from '@jetlinks-web-core/components/ConditionFilter';
 import {transformConditionTerms} from '@authentication-manager-ui/views/system/conditionFilterUtils';
+
+defineOptions({ name: 'UserMange' })
 
 const {t: $t} = useI18n();
 const permission = 'system/User';

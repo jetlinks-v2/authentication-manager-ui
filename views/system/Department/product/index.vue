@@ -283,7 +283,7 @@
   </div>
 </template>
 
-<script setup lang="ts" name="product">
+<script setup lang="ts">
 import type { ConditionTerm } from '@jetlinks-web-core/components/ConditionFilter'
 
 import { createReusableTemplate } from '@vueuse/core'
@@ -309,6 +309,8 @@ import {useI18n} from 'vue-i18n';
 import {downloadFileByUrl} from '@jetlinks-web/utils';
 import {useMenuStore} from "@jetlinks-web-core/store";
 import PageHeader from '@jetlinks-web-core/components/PageHeader';
+
+defineOptions({ name: 'product' })
 
 const {t: $t} = useI18n();
 const permission = 'system/Department';

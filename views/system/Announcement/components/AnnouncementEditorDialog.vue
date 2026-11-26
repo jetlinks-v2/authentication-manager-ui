@@ -59,7 +59,7 @@
             </a-space>
           </a-form-item>
         </a-col>
-        <a-col :span="16">
+        <a-col v-if="saasManagement" :span="16">
           <a-form-item
             :label="$t('Announcement.editor.deliveryScope')"
             required
@@ -137,6 +137,7 @@ import { useI18n } from 'vue-i18n'
 import type { AnnouncementDraft, AnnouncementRecord } from '../types'
 import { BULLETIN_TYPE_VALUES } from '../bulletinTypeIcon'
 import { useAnnouncementRegions } from '../hooks/useAnnouncementRegions'
+import { isSaasAnnouncementManagement } from '../managementContext'
 import {
   mergeLegacyAnnouncementI18n,
   normalizeAnnouncementI18n,
@@ -162,6 +163,7 @@ const emit = defineEmits<{
 }>()
 
 const { t: $t, locale } = useI18n()
+const saasManagement = computed(isSaasAnnouncementManagement)
 const form = reactive({
   title: '',
   summary: '',
@@ -195,7 +197,7 @@ const typeOptions = computed(() => BULLETIN_TYPE_VALUES.map(value => ({
   value,
   label: $t(`Announcement.type.${value}`),
 })))
-const scopeInvalid = computed(() => !form.saas && form.regionIds.length === 0)
+const scopeInvalid = computed(() => saasManagement.value && !form.saas && form.regionIds.length === 0)
 const canSubmit = computed(() => {
   const i18n = normalizeAnnouncementI18n(form.i18nMessages)
   return Boolean(
@@ -209,7 +211,7 @@ const canSubmit = computed(() => {
 watch(() => props.open, (open) => {
   if (open) {
     resetForm()
-    void loadRegions()
+    if (saasManagement.value) void loadRegions()
   }
 })
 
@@ -263,10 +265,9 @@ function submit(publish: boolean) {
     content: resolveCompatibilityText(i18n.content),
     type: form.type.trim(),
     popup: form.popup,
-    deliveryScope: {
-      saas: form.saas,
-      regionIds: [...form.regionIds],
-    },
+    ...(saasManagement.value ? { deliveryScope: {
+      saas: form.saas, regionIds: [...form.regionIds],
+    } } : {}),
     publish,
     others: props.record?.others,
     i18nMessages: i18n,

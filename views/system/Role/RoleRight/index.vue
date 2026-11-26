@@ -92,7 +92,7 @@
   </div>
 </template>
 
-<script setup lang="ts" name="RoleRight">
+<script setup lang="ts">
 import { createReusableTemplate } from '@vueuse/core'
 
 import AddDialog from './components/AddDialog.vue'
@@ -103,6 +103,8 @@ import { onlyMessage } from '@jetlinks-web/utils'
 import { useI18n } from 'vue-i18n';
 import PageHeader from '@jetlinks-web-core/components/PageHeader';
 import { ref as emptyCreateSearchRef } from 'vue'
+
+defineOptions({ name: 'RoleRight' })
 const emptyCreateSearch = emptyCreateSearchRef(false)
 
 

@@ -3,7 +3,7 @@ import { Modal } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { onlyMessage } from '@jetlinks-web/utils'
-import type { ConditionFilterChangePayload } from '@jetlinks-web-core/components/ConditionFilter'
+import type { ConditionFilterChangePayload, ConditionFilterField } from '@jetlinks-web-core/components/ConditionFilter'
 import {
   deleteApplicationTemplate,
   queryApplicationTemplates,
@@ -33,6 +33,13 @@ export const useApplicationTemplateList = () => {
     { label: $t('ApplicationTemplate.common.enabled'), value: 'enabled' },
     { label: $t('ApplicationTemplate.common.disabled'), value: 'disabled' },
   ])
+  const providerOptions = computed(() => [
+    { label: $t('ProjectApplication.create.businessApplication'), value: 'official' },
+    { label: $t('ProjectApplication.create.thirdPartyApplication'), value: 'third-party' },
+  ])
+  // 与详情保持一致，未标记类型的历史模板按业务应用展示。
+  const getProviderLabel = (provider?: string) =>
+    providerOptions.value.find(option => option.value === (provider || 'official'))?.label || provider
 
   const columns = computed(() => [
     {
@@ -54,6 +61,14 @@ export const useApplicationTemplateList = () => {
       },
     },
     {
+      title: $t('ProjectApplication.create.applicationKind'),
+      dataIndex: 'provider', key: 'provider', width: 140, scopedSlots: true,
+      search: {
+        type: 'select',
+        options: providerOptions.value,
+      },
+    },
+    {
       title: $t('ApplicationTemplate.field.description'),
       dataIndex: 'description', key: 'description', ellipsis: true, scopedSlots: true,
     },
@@ -68,6 +83,21 @@ export const useApplicationTemplateList = () => {
     {
       title: $t('ApplicationTemplate.common.action'),
       dataIndex: 'action', key: 'action', width: 100, scopedSlots: true,
+    },
+  ])
+  const filterFields = computed<ConditionFilterField[]>(() => [
+    ...columns.value.filter(column => column.search),
+    {
+      title: $t('ProjectApplication.create.applicationKind'),
+      dataIndex: 'provider',
+      search: {
+        type: 'select',
+        defaultTermType: 'in',
+        options: [
+          { label: $t('ProjectApplication.create.businessApplication'), value: 'official' },
+          { label: $t('ProjectApplication.create.thirdPartyApplication'), value: 'third-party' },
+        ],
+      },
     },
   ])
   const defaultParams = {
@@ -137,8 +167,10 @@ export const useApplicationTemplateList = () => {
     createDialogOpen,
     queryParams,
     columns,
+    filterFields,
     defaultParams,
     requestTable,
+    getProviderLabel,
     normalizeState: stateValue,
     table,
   }

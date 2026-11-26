@@ -68,9 +68,8 @@ export function createResourceSummaryCards(access: ResourcePageAccess, visualiza
       : id === 'networkCards' ? ['using', 'toBeActivated', 'deactivate']
         : id === 'collection' ? collectionDetails ? ['running', 'stopped', 'abnormal'] : ['running', 'notRunning'] : id === 'product' ? ['enabled', 'disabled']
           : id === 'message' || id === 'aiEvents' ? ['yesterdaySameTime'] : visualizationKeys
-    const videoDevices = id === 'video' && access.saas
-    return { id, labelKey: videoDevices ? `${prefix}videoDevices` : `${prefix}${id}`, icon: icons[id],
-      unitKey: `${prefix}${id === 'video' ? videoDevices ? 'unitDevices' : 'unitChannels' : id === 'networkCards' ? 'unitCards' : id === 'message' || id === 'aiEvents' ? 'unitMessages' : id === 'visualization' ? 'unitScreens' : ['edge', 'iot'].includes(id) ? 'unitDevices' : 'unitItems'}`,
+    return { id, labelKey: `${prefix}${id}`, icon: icons[id],
+      unitKey: `${prefix}${id === 'video' ? 'unitChannels' : id === 'networkCards' ? 'unitCards' : id === 'message' || id === 'aiEvents' ? 'unitMessages' : id === 'visualization' ? 'unitScreens' : ['edge', 'iot'].includes(id) ? 'unitDevices' : 'unitItems'}`,
       target: id === 'message' ? undefined : targets[id],
       statuses: statusKeys.map(key => ({ key, labelKey: id === 'edge' && key === 'disabled' ? 'resourceDashboard.disabled' : `${prefix}${key}`,
         tone: ['online', 'using', 'running', 'enabled'].includes(key) ? 'success' : ['offline', 'deactivate', 'abnormal'].includes(key) ? 'error' : 'default' })),
@@ -135,26 +134,27 @@ async function visualizationMetrics(card: ResourceSummaryCard): Promise<Metric[]
   return settleMetrics(loaders)
 }
 
-/** 与地图及离线列表共用设备分类；SaaS 视频统计设备台数，不把通道数当作设备数。 */
-function deviceStateMetrics(kind: 'edge' | 'video'): Promise<Metric[]> {
-  const terms = buildOverviewDeviceTerms(kind)
+/** 边缘节点的总数和状态分项共用同一设备分类。 */
+function edgeStateMetrics(): Promise<Metric[]> {
+  const terms = buildOverviewDeviceTerms('edge')
   const count = (state?: string) => queryPrivateCount('/device/instance/_count', state
     ? [...terms, { column: 'state', termType: 'eq', value: state }] : terms)
   return settleMetrics({ total: () => count(), online: () => count('online'), offline: () => count('offline'),
-    ...(kind === 'edge' ? { disabled: () => count('notActive') } : {}),
+    disabled: () => count('notActive'),
   })
 }
 
 /** 按已选卡片查询其 owning API；可视化分项已在创建阶段按菜单授权裁剪。 */
 export async function loadResourceSummary(card: ResourceSummaryCard, access: ResourcePageAccess): Promise<ResourceSummaryCard> {
   try {
-    if (card.id === 'edge' || (card.id === 'video' && access.saas)) {
-      return withMetrics(card, await deviceStateMetrics(card.id))
+    if (card.id === 'edge') {
+      return withMetrics(card, await edgeStateMetrics())
     }
     if (card.id === 'iot') {
       return withMetrics(card, await loadSummary('IotDevices'))
     }
     if (card.id === 'video') {
+      // 两种部署均统计全部媒体来源的通道，台数与产品接入类型不参与此卡取数。
       const groups = await queryOverviewChannelBreakdown('all')
       const total = groups.reduce((sum, item) => sum + item.total, 0)
       const online = groups.reduce((sum, item) => sum + item.online, 0)

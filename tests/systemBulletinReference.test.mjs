@@ -3,6 +3,8 @@ import { test } from 'node:test'
 import { loadLogModule } from './logTestLoader.mjs'
 
 const loadApi = () => loadLogModule('views/system/Announcement/api.ts', {
+  './bulletinCapability': { isAnnouncementSupported: async () => true },
+  './managementContext': { isSaasAnnouncementManagement: () => false },
   '@jetlinks-web/core': { request: { get: async () => ({ result: {} }) } },
   './announcementI18n': {
     resolveAnnouncementText: (row, key) => row?.[key] || '',
@@ -44,6 +46,8 @@ test('keeps legacy unversioned references but rejects a batch id without its exp
 test('received publication uses explicit bulletin ID and version for detail', async () => {
   const calls = []
   const api = loadLogModule('views/system/Announcement/api.ts', {
+    './managementContext': { isSaasAnnouncementManagement: () => false },
+  './bulletinCapability': { isAnnouncementSupported: async () => true },
     '@jetlinks-web/core': { request: { get: async (...args) => { calls.push(args); return { result: { id: 'bulletin-A', type: 'custom' } } } } },
     './announcementI18n': {
       resolveAnnouncementText: (row, key) => row[key] || '',

@@ -1,6 +1,7 @@
 import { defineAsyncComponent } from 'vue'
 import { subscribeAnnouncementReadChanges } from './localReadStore'
 import { subscribeAnnouncementRealtime } from './realtimeSubscription'
+import { isAnnouncementSupported } from './bulletinCapability'
 import { BULLETIN_TYPE_VALUES } from './bulletinTypeIcon'
 import { resolveAnnouncementTypeLabel } from './announcementI18n'
 import i18n from '@jetlinks-web-core/locales'
@@ -41,6 +42,7 @@ export const getRegisterComponents = () => [
         },
       }),
       dataSource: {
+        isSupported: isAnnouncementSupported,
         subscribe: subscribeAnnouncementReadChanges,
         subscribeRealtime: subscribeAnnouncementRealtime,
         confirmOnDetail: true,

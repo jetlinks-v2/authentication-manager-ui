@@ -35,7 +35,7 @@ const { resolveResourcePageAccess: resolve, buildResourcePageLayout: layout, bui
 const allMenus = ['iot-user-device-list', 'video/resources', 'algorithm-center', 'video/event', 'visualization/project', 'device/Product', 'data-collect', 'iot-card/CardManagement', 'iot-card/TrafficPoolManagement']
 const baseModules = ['device-manager-ui', 'jetlinks-ai-ui', 'visualization-manager-ui']
 const optionalModules = ['jetlinks-media-ui', 'edge-master-ui', 'network-card-manager-ui', 'data-collector-ui']
-const access = (menus, installed) => resolve({ saas: false, menus: [{ code: 'root', children: menus.map(code => ({ code })) }], installed: name => installed.includes(name) })
+const access = (menus, installed) => resolve({ edgeSupported: true, saas: false, menus: [{ code: 'root', children: menus.map(code => ({ code })) }], installed: name => installed.includes(name) })
 const panels = cells => cells.flatMap(cell => cell.panels)
 const ids = cells => cells.map(cell => cell.id)
 const rect = widget => widget.gridItem
@@ -200,4 +200,15 @@ test('private desktop uses one row for six summaries and joins collection-only c
   assert.deepEqual(three.map(item => rect(item).w), [8, 8, 8])
   assert.equal(new Set(three.map(item => rect(item).y)).size, 1)
   nonOverlapping(three)
+})
+
+
+test('registered frontend edge module without backend service keeps IoT and hides edge content', () => {
+  const value = resolve({ saas: false, edgeSupported: false, menus: allMenus.map(code => ({ code })), installed: name => [...baseModules, ...optionalModules].includes(name) })
+  assert.equal(value.iot, true)
+  assert.equal(value.edge, false)
+  assert.equal(value.vision, false)
+  assert.equal(kinds(value).includes('edge'), false)
+  assert.equal(panels(layout(value, 0)).includes('gateway'), false)
+  assert.equal(panels(layout(value, 0)).includes('vision'), false)
 })

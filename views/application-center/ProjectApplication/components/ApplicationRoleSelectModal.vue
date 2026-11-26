@@ -28,12 +28,14 @@
   </a-modal>
 </template>
 
-<script setup lang="ts" name="ProjectApplicationRoleSelectModal">
+<script setup lang="ts">
 import type { PropType } from 'vue'
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import type { ApplicationRole } from '../types'
+
+defineOptions({ name: 'ProjectApplicationRoleSelectModal' })
 
 const props = defineProps({
   open: {
