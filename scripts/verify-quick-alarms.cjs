@@ -17,7 +17,7 @@ function load(file) {
     } } }
     // 只验证运维告警，隔离同文件中未调用的资源和健康状态依赖。
     if (id === '../../../api/overview' || id === './apiAlgorithms') return {}
-    if (id === './resources') return { RESOURCE_ROWS: [] }
+    if (id === './resources') return { RESOURCE_ROWS: [], resourceRowAvailable: () => true }
     if (id === './navigation') return { HOME_TARGETS: {} }
     if (id.startsWith('.')) return load(path.resolve(path.dirname(file), id + '.ts'))
     return require(id)
@@ -61,7 +61,8 @@ async function main() {
   assert.equal(calls.at(-1)[0], '/alarm/record/_handle')
   assert.deepEqual(calls.at(-1)[1], { alarmRecordId: 'alarm', alarmConfigId: 'rule', alarmTime: 0, describe: '已复位', type: 'user', state: 'normal' })
   await api.handleQuickAlarm('visionAlarm', alarm, '已核实')
-  assert.equal(calls.at(-1)[0], '/ai/aggregate/task/alarm/_handle')
+  assert.equal(calls.at(-1)[0], '/ai/trigger/alarms/_handle')
+  assert.equal(calls.at(-1)[1].alarmRecordId, 'alarm')
   assert.equal(calls.at(-1)[1].type, 'user')
   assert.equal(typeof calls.at(-1)[1].handleTime, 'number')
   const before = calls.length

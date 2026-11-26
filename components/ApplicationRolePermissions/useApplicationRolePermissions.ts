@@ -13,6 +13,7 @@ import {
 import {
   buildApplicationRoleMenuQuery,
   buildApplicationRolePermissionGrant,
+  type ApplicationRolePermissionMode,
   getApplicationRoleMenuCandidates,
   intersectRoleAssetPolicies,
   previousRoleBindings,
@@ -26,6 +27,9 @@ import {
   saveBusinessApplicationRoleMenuGrant,
 } from '@authentication-manager-ui/api/application-center/businessApplication'
 import { getCurrentUserMenuTree, getGrantableAssetAccesses } from '@authentication-manager-ui/api/application-center/applicationTemplate'
+import { matchesMenuOnlyWrite, menuOnlyBaseline, readRoleMenuBindings } from '../../views/application-center/ProjectApplication/menuOnlyRoleGrant'
+
+type RoleBindings = Awaited<ReturnType<typeof readRoleMenuBindings>>
 
 interface GrantDetail {
   menus?: MenuPermissionNode[]
@@ -47,7 +51,10 @@ const inheritedFixedGrantable = (
 })) : []
 
 /** 应用详情与系统角色权限页共用授权边界；保存前刷新应用及模板，切换目标后忽略过期请求。 */
-export function useApplicationRolePermissions(target: () => ApplicationRolePermissionTarget) {
+export function useApplicationRolePermissions(
+  target: () => ApplicationRolePermissionTarget, mode: ApplicationRolePermissionMode = 'with-assets',
+) {
+  const menusOnly = mode === 'menus-only'
   const { t: $t } = useI18n()
   const permissionLoading = ref(false)
   const permissionError = ref(false)
@@ -56,10 +63,21 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
   const inheritedAssetAccesses = ref<AssetAccessPolicy[]>([])
   const blockedMenuNames = ref<string[]>([])
   const refreshError = ref(false)
+  const menuSaveWarning = ref('')
+  let baseline: ReturnType<typeof menuOnlyBaseline> | undefined
   let savedRoleMenus: MenuPermissionNode[] = []
   const savedFixedPolicies = ref<AssetAccessPolicy[]>([])
   const assetDefinitions = ref<GrantableAssetType[]>([])
-  const editor = useMenuAssetPermissionEditor({ defaultSupportIds: ['creator'] })
+  const sharedEditor = useMenuAssetPermissionEditor({ defaultSupportIds: ['creator'] })
+  // 本页只有一份菜单/按钮交集。分组编辑器可保留“只授菜单、没有按钮”的原绑定；
+  // 在本页也将这种授权显示为勾选，避免误以为已撤销。不改变系统权限页的分组或展示。
+  const showExplicitGrants = (rows: MenuPermissionNode[]): MenuPermissionNode[] => rows.map(row => ({
+    ...row, _granted: row._granted || (!!row.granted && !row.indeterminate),
+    children: row.children?.length ? showExplicitGrants(row.children) : null,
+  }))
+  const editor = menusOnly ? { ...sharedEditor, showMenuGroups: computed(() => false),
+    ownerGroups: computed(() => sharedEditor.ownerGroups.value.map(group => ({ ...group, menus: showExplicitGrants(group.menus) }))),
+  } : sharedEditor
   // 展示有效上限，避免共享编辑器的默认 creator 草稿被误认为继承的数据权限。
   const inheritedAssetOptions = computed(() => Object.fromEntries(editor.visibleAssets.value.map(asset => [
     asset.assetType,
@@ -85,6 +103,8 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
     permissionLoading.value = false
     inheritedAssetAccesses.value = []
     savedRoleMenus = []
+    baseline = undefined
+    menuSaveWarning.value = ''
     blockedMenuNames.value = []
     refreshError.value = false
     savedFixedPolicies.value = []
@@ -99,13 +119,27 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
   }
 
   const loadAssetTypes = async (): Promise<AssetTypeName[]> => {
-    if (!isNoCommunity) return []
+    if (menusOnly || !isNoCommunity) return []
     const response = await queryAssetTypes()
     if (response?.success === false) throw new Error(response.message)
     return normalizeAssetTypeNames(response)
   }
 
-  // 加载和保存走同一份实时可下授目录，不能把模板或角色的已存策略当作操作者的权限。
+  const readRoleDetail = async (applicationId: string, roleId: string, confirmed?: RoleBindings): Promise<{
+    menus: MenuPermissionNode[]; assetAccesses?: AssetAccessPolicy[]; bindings?: RoleBindings
+  }> => {
+    if (menusOnly) {
+      // 实际关系用于回显和写前核对；没有额外查询权限时仍可读应用内详情，但不能把它当作写入依据。
+      const bindings = confirmed ?? await readRoleMenuBindings(applicationId, roleId).catch(() => undefined)
+      if (bindings) return { bindings, menus: bindings.map(b => ({ id: b.menuId, granted: true, buttons: b.buttons })) }
+    }
+    const response = await getBusinessApplicationRoleMenuGrantDetail(applicationId, roleId)
+    const detail = assertSuccess<GrantDetail>(response, {})
+    if (!Array.isArray(detail.menus)) throw new Error('Role menus unavailable')
+    return { menus: detail.menus, assetAccesses: detail.assetAccesses }
+  }
+
+  // 两个入口均刷新菜单/按钮上限；只有权限配置页读取赋权人的资产目录。
   const readScope = async (scope: ApplicationRoleScope) => {
     const [templateResponse, userResponse, applicationResponse] = await Promise.all([
       getBusinessApplicationTemplateMenus(scope.templateId),
@@ -115,13 +149,16 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
     const template = assertSuccess<GrantDetail>(templateResponse, {})
     const application = assertSuccess<GrantDetail>(applicationResponse, {})
     const currentUserMenus = assertSuccess<MenuPermissionNode[] | null>(userResponse, null)
-    if (!Array.isArray(application.menus) || !Array.isArray(template.menus) || !Array.isArray(currentUserMenus)
-      || !Array.isArray(application.assetAccesses) || !application.assetAccesses.every(policy => policy?.assetType
-        && Array.isArray(policy.accesses) && policy.accesses.every(access => typeof access?.supportId === 'string' && access.supportId))) {
+    if (!Array.isArray(application.menus) || !Array.isArray(template.menus) || !Array.isArray(currentUserMenus)) {
       throw new Error('Application role grant scope unavailable')
     }
     const candidates = getApplicationRoleMenuCandidates({ isExternal: scope.isExternal, currentUserMenus,
       templateMenus: template.menus, applicationMenus: application.menus })
+    if (menusOnly) return { isExternal: scope.isExternal, candidates, definitions: [], effectiveAssetAccesses: [] }
+    if (!Array.isArray(application.assetAccesses) || !application.assetAccesses.every(policy => policy?.assetType
+      && Array.isArray(policy.accesses) && policy.accesses.every(access => typeof access?.supportId === 'string' && access.supportId))) {
+      throw new Error('Application role asset scope unavailable')
+    }
     const eligible = candidates.filter(menu => menu.granted && Array.isArray(menu.assetTypes) && menu.assetTypes.length)
     const catalog = eligible.length ? assertSuccess<GrantableAssetType[] | null>(await getGrantableAssetAccesses(eligible), null) : []
     if (!Array.isArray(catalog) || !catalog.every(asset => typeof asset?.assetType === 'string' && asset.assetType
@@ -133,7 +170,26 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
       effectiveAssetAccesses: intersectRoleAssetPolicies(eligible, application.assetAccesses, definitions) }
   }
 
-  const loadPermissions = async () => {
+  const resetEditor = (bounds: Awaited<ReturnType<typeof readScope>>, roleMenus: MenuPermissionNode[]) => {
+    const scope = resolveApplicationRolePermissionScope({ ...bounds, roleMenus }, mode)
+    blockedMenuNames.value = scope.blockedMenuNames
+    refreshError.value = false
+    if (menusOnly) {
+      const menus = bounds.candidates.filter(menu => menu.granted)
+        .map(menu => ({ id: menu.id, buttonIds: (menu.buttons || []).map(button => button.id) }))
+      editor.reset({ menus: scope.menus, grantedMenus: scope.grantedMenus, menuGroups: [{ key: 'app', label: 'app', menus }] })
+    } else {
+      assetDefinitions.value = bounds.definitions
+      inheritedAssetAccesses.value = scope.assetAccesses
+      editor.reset({ ...scope, assetTypes: loadedAssetTypes,
+        assetAccesses: [...scope.assetAccesses.filter(policy => !isFixedNotificationAsset(policy.assetType)), ...savedFixedPolicies.value],
+        fixedAssetGrantable: inheritedFixedGrantable(scope.menus, scope.assetAccesses, bounds.definitions),
+      })
+    }
+    return scope
+  }
+
+  const refreshPermissions = async (confirmed?: RoleBindings) => {
     const sequence = ++loadSequence
     const { scope, role } = target()
     if (scope.isExternal || !role?.id || !scope.applicationId || !scope.templateId) {
@@ -143,27 +199,23 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
     initialized.value = false
     permissionLoading.value = true
     permissionError.value = false
+    menuSaveWarning.value = ''
+    baseline = undefined
     try {
-      const [roleResponse, assetTypes, bounds] = await Promise.all([
-        getBusinessApplicationRoleMenuGrantDetail(scope.applicationId, role.id), loadAssetTypes(), readScope(scope),
+      const [roleDetail, assetTypes, bounds] = await Promise.all([
+        readRoleDetail(scope.applicationId, role.id, confirmed), loadAssetTypes(), readScope(scope),
       ])
-      const roleDetail = assertSuccess<GrantDetail>(roleResponse, {})
-      if (!Array.isArray(roleDetail.menus)) throw new Error('Role menus unavailable')
       if (sequence !== loadSequence) return
-      const permissionScope = resolveApplicationRolePermissionScope({ ...bounds, roleMenus: roleDetail.menus })
-
-      const { definitions } = bounds
-      savedRoleMenus = previousRoleBindings(roleDetail.menus)
-      blockedMenuNames.value = permissionScope.blockedMenuNames
-      refreshError.value = false
       loadedAssetTypes = assetTypes
-      assetDefinitions.value = definitions
-      inheritedAssetAccesses.value = permissionScope.assetAccesses
-      savedFixedPolicies.value = (roleDetail.assetAccesses || []).filter(policy => isFixedNotificationAsset(policy.assetType))
-      editor.reset({ ...permissionScope, assetTypes,
-        assetAccesses: [...permissionScope.assetAccesses.filter(policy => !isFixedNotificationAsset(policy.assetType)), ...savedFixedPolicies.value],
-        fixedAssetGrantable: inheritedFixedGrantable(permissionScope.menus, permissionScope.assetAccesses, definitions),
-      })
+      if (!menusOnly) {
+        savedRoleMenus = previousRoleBindings(roleDetail.menus)
+        savedFixedPolicies.value = (roleDetail.assetAccesses || []).filter(policy => isFixedNotificationAsset(policy.assetType))
+      }
+      resetEditor(bounds, roleDetail.menus)
+      if (menusOnly) {
+        baseline = menuOnlyBaseline(bounds.candidates, editor.getSnapshot().menus, roleDetail.bindings)
+        if (!roleDetail.bindings) menuSaveWarning.value = 'menuBindingsUnavailable'
+      }
       initialized.value = true
     } catch {
       if (sequence === loadSequence) { clearPermissions(); permissionError.value = true }
@@ -171,6 +223,8 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
       if (sequence === loadSequence) permissionLoading.value = false
     }
   }
+
+  const loadPermissions = () => refreshPermissions()
 
   watch([
     () => target().role?.id,
@@ -187,6 +241,10 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
     const roleName = role.name
     const sequence = loadSequence
     const draft = editor.getSnapshot()
+    if (menusOnly && (!baseline || !baseline.changed(draft.menus))) {
+      if (baseline?.verified) menuSaveWarning.value = ''
+      return
+    }
     const previousMenus = [...savedRoleMenus, ...editor.flatMenus.value]
     // 请求期间切换角色、应用或卸载后，不把旧草稿写给新目标，也不覆盖新角色的回显。
     const isCurrent = () => !disposed && sequence === loadSequence && roleId === target().role?.id
@@ -195,39 +253,50 @@ export function useApplicationRolePermissions(target: () => ApplicationRolePermi
     let scopeReady = false
     savingPermissions.value = true
     try {
-      const bounds = await readScope(scope)
-      if (!isCurrent()) return
-      const permissionScope = resolveApplicationRolePermissionScope({ ...bounds, roleMenus: draft.menus })
-      const { definitions } = bounds
-      assetDefinitions.value = definitions
-      refreshError.value = false
-      blockedMenuNames.value = permissionScope.blockedMenuNames
-      inheritedAssetAccesses.value = permissionScope.assetAccesses
-      editor.reset({ ...permissionScope, assetTypes: loadedAssetTypes,
-        assetAccesses: [...permissionScope.assetAccesses.filter(policy => !isFixedNotificationAsset(policy.assetType)), ...savedFixedPolicies.value],
-        fixedAssetGrantable: inheritedFixedGrantable(permissionScope.menus, permissionScope.assetAccesses, definitions),
-      })
-      scopeReady = true
-      const snapshot = editor.getGrantSnapshot()
-      if (!snapshot) {
-        onlyMessage($t('components.MenuAssetPermissionEditor.fixedScopeSaveBlocked'), 'warning')
-        return
+      let payload: { menus: MenuPermissionNode[]; assetAccesses?: AssetAccessPolicy[] }
+      if (menusOnly) {
+        const [bounds, bindings] = await Promise.all([readScope(scope), readRoleMenuBindings(scope.applicationId, roleId)])
+        if (!isCurrent() || !baseline) return
+        const result = baseline.prepare(draft.menus, bounds.candidates, bindings)
+        if (result.warning) { menuSaveWarning.value = result.warning; return }
+        payload = result
+        menuSaveWarning.value = ''
+      } else {
+        const bounds = await readScope(scope)
+        if (!isCurrent()) return
+        const permissionScope = resetEditor(bounds, draft.menus)
+        const snapshot = editor.getGrantSnapshot()
+        if (!snapshot) {
+          onlyMessage($t('components.MenuAssetPermissionEditor.fixedScopeSaveBlocked'), 'warning')
+          return
+        }
+        payload = buildApplicationRolePermissionGrant(snapshot, permissionScope, previousMenus)
       }
-      const payload = buildApplicationRolePermissionGrant(snapshot, permissionScope, previousMenus)
+      scopeReady = true
       const response = await saveBusinessApplicationRoleMenuGrant(
         scope.applicationId, roleId, payload,
       )
+      if (menusOnly && response?.success !== true) throw new Error('Menu grant not confirmed')
       assertSuccess(response, undefined)
       if (!isCurrent()) return
+      const confirmed = menusOnly ? await readRoleMenuBindings(scope.applicationId, roleId) : undefined
+      if (!isCurrent()) return
+      if (confirmed && !matchesMenuOnlyWrite(payload.menus, confirmed)) {
+        menuSaveWarning.value = 'menuWriteFailed'
+        return
+      }
       onlyMessage($t('ProjectApplication.role.permissionSuccess', { name: roleName }))
-      await loadPermissions()
+      await refreshPermissions(confirmed)
     } catch {
-      if (!scopeReady && isCurrent()) refreshError.value = true
+      if (isCurrent()) {
+        if (menusOnly) menuSaveWarning.value = scopeReady ? 'menuWriteFailed' : 'menuVerificationFailed'
+        else if (!scopeReady) refreshError.value = true
+      }
     } finally {
       savingPermissions.value = false
     }
   }
 
-  return { permissionLoading, permissionError, refreshError, blockedMenuNames, savingPermissions, initialized, inheritedAssetOptions, editor, columns,
+  return { permissionLoading, permissionError, refreshError, menuSaveWarning, blockedMenuNames, savingPermissions, initialized, inheritedAssetOptions, editor, columns,
     loadPermissions, savePermissions }
 }

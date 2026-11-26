@@ -8,6 +8,8 @@
 
 ## 可配置帮助点位覆盖
 
+文档管理搜索栏调整：`views/system/DocumentManagement/index.vue` 左侧沿用设备列表左树的 `a-input` 与前置搜索图标，右侧为清空入口，不使用独立搜索按钮；右侧条件搜索与批量操作共同铺满内容区，搜索框自适应剩余宽度，窄屏允许换行。表格容器复用 `pro-table__no-padding` 去掉内边距，与内容区对齐。原筛选和批量操作逻辑保留。验证：`node --test tests/documentManagement.test.mjs` 23 项通过，页面脚本、模板和 Less 编译及差异空白检查通过；本次仅调整搜索控件与布局，未重跑全量类型检查或生产构建，模块未配置独立 lint。浏览器工具不可用，实际宽窄视口布局及批量模式仍待页面验收；需要完整构建时在 runtime-ui 执行 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`。
+
 文档管理按实际菜单和模块注册表生成目录，不在页面中固定一级分组。`documentHelpPoints.ts` 在模块启动时登记角色权限、用户应用角色、API 授权、开放平台凭证与订阅、应用模板、访问日志及系统日志的帮助点位；对应业务组件挂载 `DocumentHelp`，点位不依赖先打开业务页面才能被管理页发现。
 
 同一运行时的补充入口为 `../rule-engine-manager-ui/documentHelpPoints.ts`（规则编排与场景联动）、`../notify-manager-ui/documentHelpPoints.ts`（通知渠道、模板与记录）、`../datasource-manager-ui/documentHelpPoints.ts`（连接与数据命令）、`../data-collector-ui/documentHelpPoints.ts`（通道、采集器、采集点与周期）。分组名称以当前账号的真实菜单为准，菜单未映射的点位沿用“其他页面”规则。
@@ -140,19 +142,17 @@
 
 ### 普通角色菜单权限
 
-运行时普通（全局）角色的权限页直接显示 `owner === 'iot'` 的菜单树，不显示菜单分类页签，也不读取应用模板分类。混合 owner 的菜单树仅显示 `iot` 节点，符合条件的后代提升到最近的可见层级。角色详情的「权限 / 用户管理」页签和数据权限栏保留；应用角色（含第三方应用角色）、运营端及后端接口不变。
+运行时普通（全局）角色在「权限 → 菜单权限」中按归属展示「基础菜单」（`iot`）和「应用菜单」（`app`），基础菜单优先。无可编辑项的分组不显示；两组都为空时显示空态。切换页签不重新加载，表头全选只作用于当前组可编辑的菜单与按钮。右侧数据权限沿用同一份角色草稿，底部一次保存两组，不按页签分别提交。外层「权限 / 用户管理」、应用角色的模板授权、运营端和后端接口不变。
 
-入口为 `views/system/Role/Detail/components/PermissionTree.vue`。`useGlobalRolePermissions.ts` 读取角色授权详情和不带应用 Scope 的当前用户有效菜单，`roleMenuPermissions.ts` 计算可编辑菜单、按钮的交集，保存前复核该范围。分组仅用于限制展示和编辑；保存仍提交完整的菜单状态树与资产策略，隐藏非 `iot` 菜单不会撤销已有授权。加载失败可重试；有效范围变化时保留草稿并阻止提交。
+入口为 `views/system/Role/Detail/components/PermissionTree.vue`。`useGlobalRolePermissions.ts` 读取角色授权详情与不带应用 Scope 的当前用户有效菜单；`roleMenuPermissions.ts` 按 owner、菜单 ID 和按钮 ID 取可编辑范围。编辑时将混合归属的节点挂到最近的同 owner 祖先，避免跨页签连带授权；提交时按详情原树还原层级和 `parentId`，保留不可编辑菜单及按钮的授权状态。保存前重新核验两组范围；任一组有效权限变化时保留草稿、阻止提交并提示重新加载，返回顺序变化不触发拦截。
 
 全局角色的数据权限不提供「所在应用」（`supportId: business_application`），单项、批量和默认值都排除该范围。判断依据为被编辑角色的归属，不区分操作者身份；`business_application` 资产本身仍可配置其他范围。已有「所在应用」授权在无关编辑后仍保留，显式改选才替换；取消相关菜单沿用现有撤销规则。应用角色的模板展示和继承不变。
 
 公共编辑器的 owner 投影由运行时 core 提交 `8909938` 提供，更新本模块时需同步该 core 版本。
 
-验证：模块内运行 `node --test tests/{globalRolePermissions,applicationRolePermissionScope,systemRoleApplications,roleAssetPermissions,menuAssetTypes}.test.mjs`，63/64 通过；新增 5 项全部通过，使用实际 Vue 组件和编辑器搭配 HTTP/控件替身，覆盖无分类、混合 owner、操作范围、隐藏授权保留、空态和保存复核。唯一失败是 `applicationRolePermissionScope.test.mjs` 的模板资产策略用例，改动前的 Git 基线复现相同失败。未连接已登录的真实环境验证保存回显；上线验收应复查普通角色保存后回显及应用角色授权。
+验证：模块内 `node --test tests/{globalRolePermissions,applicationRolePermissionScope,systemRoleApplications,roleAssetPermissions,menuAssetTypes}.test.mjs` 91 项通过，覆盖分组显隐、混合层级、全选隔离、隐藏授权、跨页签保存回显、范围复核及已有数据权限规则。Chromium 使用实际权限组件和 Ant Design Vue 控件、模拟授权接口，验证了双页签勾选、一次提交与重新加载回显。真实运行时角色页在未登录会话下跳转到登录页；仍需使用有 `app` 可授权菜单的测试账号核对后端候选，并在专用测试角色上保存和刷新验收。
 
-`runtime-ui` 内运行 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json`，修改前后均有 538 条既有类型诊断，忽略行列号后一致。`jetlinks-web-core` 内运行 `node --max-old-space-size=8192 ../node_modules/vite/bin/vite.js build --outDir <临时目录> -- --module-name authentication-manager-ui`，目标模块生产构建通过；无独立 lint 脚本，已通过修改文件的 UI 样式门禁、语言资源 JSON 解析和差异检查。
-
-「所在应用」过滤复用上述验证命令：目标模块生产构建和 `git diff --check` 通过；类型诊断与改动前一致。授权回归 69/70 通过，唯一失败仍为改动前已复现的模板资产策略用例。新增全局角色用例覆盖候选、默认值、历史授权保留或替换及重新加载；应用角色用例确认模板中的「所在应用」仍会展示并提交。未在已登录的真实环境验证保存回显。
+目标构建通过（`runtime-ui/jetlinks-web-core` 内 `node --max-old-space-size=8192 ../node_modules/vite/bin/vite.js build --outDir <临时目录> -- --module-name authentication-manager-ui`）。模块无独立 lint 脚本；三语页签文案、测试脚本语法与 `git diff --check` 通过。`runtime-ui` 内 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json` 仍有 538 条既有类型诊断，改动前后输出完全一致。
 
 ### 巡检与热力图旧资产声明兼容
 
@@ -585,6 +585,8 @@ Verification:
 2. 权限管理保留新增与批量导入/导出；菜单管理保留新增与管理员菜单配置；公告管理保留新增；用户管理保留新增与导入/导出，均与搜索同行右对齐。
 3. 沿用网络组件的标题层级和间距，只添加页面内必要的响应式样式；不添加无业务契约的操作或统计信息。
 
+菜单树由 `CorePagination` 单独按一级菜单分页。`views/system/Menu/index.vue` 将本页根节点及其 `children` 交给表格展开，不再由表格内部分页；切页不请求接口。`views/system/Menu/useMenuRootPage.ts` 用完整树计算新增排序，与页脚的总数分开。 Chromium 回归（运行时根目录 `tests/runtimePaginationSurfaces.test.mjs`）使用 16 个一级菜单复现旧页脚数量为 2；修复后始终只有 1 个，第一页 12 项、第二页 4 项，切换 24 条后显示全部 16 项。展开子项、翻页、换容量合计只查询一次。模块构建通过；模块 `vue-tsc` 修改前后均为 539 条诊断，无新增，未配置独立 lint。
+
 菜单配置跳转：`views/system/Menu/index.vue` 的管理员菜单配置按钮使用 `menuStore.jumpPage('system/Menu/Setting')`，通过菜单映射解析目标路由并携带运行时项目上下文；已移除不再使用的 `useRouter` 实例。管理员可见性与目标页面保持原约定。
 
 跳转调整验证：页面 Vue SFC 模板/脚本编译、`pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`（55.12 秒）与 `git diff --check` 通过。模块未配置 lint 脚本；`pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` 报告 605 项工作区类型诊断，本页 3 项均位于与 HEAD 一致的子菜单排序代码，改动位置无诊断。未进行登录态点击验证，菜单配置页面在项目运行时的实际导航仍需页面回归确认。
@@ -891,7 +893,7 @@ Owning module: `ui/modules/authentication-manager-ui`. The application menu Scop
 - External application opening verification: the focused Node suite passes all 11 cases, including configuration echo, the missing-link short circuit, configured external URL flow, role selection, failed URL loading, and unchanged Runtime access; the `authentication-manager-ui` production build passes with 10,906 transformed modules.
 - Users: bound users are queried through `/user/detail/business_application/{applicationId}/_query` and batch-hydrated through `/user/detail/_query`. Entering a ProjectApplication detail page ensures the current signed-in user is bound to that business application; opening an application also requires the user to hold one of the application's roles, auto-binding the single available role or asking the user to choose when multiple roles exist. `绑定用户` queries current project users through `/user/detail/_query`, filters already-bound IDs with `id nin`, and binds selected IDs through `/business-application/{applicationId}/users/_bind`; row-level `解绑` posts the selected user ID to `/business-application/{applicationId}/users/_unbind`; existing-user role updates omit `businessApplicationIdList`, so they preserve all memberships.
 - Roles: application roles now use the same system role APIs as `views/system/Role`: `POST /role/_query/` with an `applicationId` exact term, `POST /role` with `applicationId` on creation, `PATCH /role` on update, and `DELETE /role/{id}` on deletion. Updates do not resend `applicationId` because it is create-only.
-- Application role permissions: menu and button candidates intersect `POST /menu/user-own/tree` (`owner=app`) with the linked template. Asset policies also intersect the template with `/menu/asset-accesses/grantable`, then retain only types used by selected menus. See the UI role permission rules below. Third-party applications keep their role-only display without this menu editor.
+- Application role permissions: menu and button candidates intersect `POST /menu/user-own/tree` (`owner=app`) with the linked template. The runtime application-detail tab only edits menus and buttons and never requests `/menu/asset-accesses/grantable`. The system role permission screen still checks asset scopes. Third-party applications keep their role-only display without this menu editor.
 - 设备绑定：绑定列表使用目标类型为 `business_application` 的 `dim-assets` 条件；选择器通过 `/device/instance/detail/_query` 分页查询所有接入方式的设备，不再排除网关、视频等设备，不添加分类侧栏，保留名称/ID 条件、已绑定 ID 排除、创建时间倒序及既有详情上下文。打开选择器不查询 `/assets/bindings/device`；确认时通过 `/assets/bind/device` 提交所选 `assetIdList` 和 `read`、`save`、`delete`、`share` 权限，解绑沿用 `/assets/unbind/device`。
 - Video: opening the camera drawer queries gateways through `/media/device/_query` only. Checkboxes in the left list select multiple gateway `deviceId` values for binding, while the most recently clicked or checked gateway independently drives the right-side preview. No channel query is issued until a preview gateway is active; the right-side table then pages `/media/device/{gatewayId}/channel/_query` without row checkboxes. Bound-camera lookup filters `/media/channel/_query/no-paging` by `dim-assets` on `deviceId`; already-bound gateway IDs are excluded from the left list. Confirm submits all checked gateway IDs through `/assets/bind/device`, and unbind submits the containing gateway `deviceId` through `/assets/unbind/device`.
 - Membership mutation boundary: application member addition uses the incremental `/business-application/{applicationId}/users/_bind` endpoint, and row-level member removal uses `/business-application/{applicationId}/users/_unbind`. Role deletion still uses the global generic role endpoint and remains explicitly confirmed.
@@ -900,15 +902,15 @@ Owning module: `ui/modules/authentication-manager-ui`. The application menu Scop
 - Application settings: `应用基本信息` is read-only by default and switches the whole section into edit mode. Its edit, cancel, and save controls are shown in the detail header action group immediately before `删除` while the settings tab is active; the settings card no longer renders its own top-right actions. Icon, name, description, default language, and timezone are saved in one update; the application link remains read-only. `ApplicationSettings.vue` copies the displayed URL with `vue-clipboard3`, like the device detail ID button, including on intranet HTTP pages without `navigator.clipboard`. The timezone is stored as `configuration.timezone`, defaulting to `Asia/Shanghai` for existing records. Clipboard verification: both configured and third-party links round-trip through copy/paste in Chromium on HTTP without the native Clipboard API. The module builds and its detail/access tests pass. Module typecheck (`vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json` from `runtime-ui`) retains the same 538 diagnostics; no standalone lint script is configured. The deployed instance was not changed.
 - Menu data access: `application-center/ProjectApplication` exposes `business_application`, `user`, `role`, and `device` as assignable asset types. Application templates and `assets-bind` remain functional permissions rather than asset types.
 
-### 运行时应用角色的资产授权上限
+### 运行时应用角色：应用详情与系统权限页
 
-应用详情 → 应用角色与系统角色页的应用角色共用 `components/ApplicationRolePermissions/useApplicationRolePermissions.ts`。只改运行时前端：菜单、按钮限定到当前应用、模板与操作者的共同范围；加载与保存前，读取现有 `GET /business-application/{id}/menus` 的模板独立资产策略，并对有资产的候选菜单调用 `POST /menu/asset-accesses/grantable` 获取当前操作者可下授的范围。无需新后端接口，也不改变原保存接口的校验。
+**应用详情 → 应用角色**只配置菜单和按钮，加载、切换角色、保存和刷新不调用 `/menu/asset-accesses/grantable`。`useApplicationRoleManagement.ts` 显式选择 `menus-only`；应用有效菜单内，模板和当前用户的菜单、按钮分别取交集。角色已有绑定仅影响勾选，不会因为资产范围为空而隐藏菜单。
 
-`views/application-center/ProjectApplication/applicationRolePermissionScope.ts` 按资产类型和范围值计算交集。模板「全部数据」(`ignore`)、操作者仅能授「所在组织」(`org`)，以及反向组合，最终只提交 `org`。模板值可直接下授时保留原值；需要替换时，只取操作者可授上限，普通范围的宽窄比较使用菜单返回的 `priority`，不按名称推断。无法证明包含关系的同级异名范围、不能安全转换的扩展策略不自动替换；通知资产只允许模板显式配置且可下授的部署固定值。
+**保存边界。** `views/application-center/ProjectApplication/menuOnlyRoleGrant.ts` 分页核对实际绑定（`roles/{roleId}/menus/_query`），不从角色详情推断旧菜单的数据范围。无改动不写。首次授权、确认全部旧绑定均被明确取消的撤销或替换，沿用原 PUT，仅提交菜单和按钮；不传独立或菜单级资产策略。接口按 owner 重建绑定且会清理历史空 owner，关系查询又不返回原始 owner 和数据策略，因此保留旧绑定、读到隐藏绑定、授权变化或核对失败时，均保留草稿、提示原因、不发 PUT。写后核对实际菜单和按钮，确认后才提示成功。
 
-菜单级与顶层 `assetAccesses` 从同一结果生成，仅提交最终勾选菜单关联的策略。普通菜单缺少任何必需资产的共同范围时排除并提示，其他菜单仍可保存；旧绑定仅在显式保存时撤销。查询失败或响应异常不保存，允许重试，无旧角色或模板宽值兜底。不改运营端、全局角色、第三方应用或历史角色数据。
+**其它入口不变。** 系统角色权限页（含在此编辑应用角色）继续按模板和赋权人的资产上限筛选和保存；应用模板页保留原 `/grantable` 调用。第三方应用、运营端、后端和数据库均未改。
 
-验证边界：本版仅静态核对请求链路、收窄规则、保存载荷与 Git 差异，按要求未运行构建、类型检查或自动化测试。定向回归入口为本模块 `node --test tests/applicationRolePermissionScope.test.mjs`（未执行）；真实页面仍待用仅有组织范围的账号保存并重新打开角色核对。
+**验证。** 模块内 `node --test tests/{applicationRolePermissionScope,applicationTemplateMenuConfig,systemRoleApplications,globalRolePermissions,roleAssetPermissions,menuAssetTypes,applicationDetailTabs,applicationTemplateMenuPreview}.test.mjs`，110 项通过，含真实前端入口、共享编辑器和模拟 HTTP。覆盖菜单交集、零 `/grantable` 请求、分页异常、旧权限保护、拒绝及回读不一致时保留草稿。`runtime-ui` 下 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui` 通过；`pnpm exec vue-tsc --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json` 与基线同为 538 条既有诊断，输出一致；模块没有独立 lint 脚本。未操作线上角色。现有接口没有版本条件写入，前端复核不能保证事务级并发保护，应避免多人同时修改同一个角色。
 
 ### 项目应用角色菜单与资产权限（ui）
 
@@ -1094,6 +1096,8 @@ node --max_old_space_size=8192 --max-semi-space-size=64 -e "process.argv.push('-
 ```
 
 ### 应用列表封面与详情布局
+
+列表页标题由 `views/application-center/ProjectApplication/index.vue` 使用 `ProjectApplication.list.title` 读取 `locales/lang/` 下的中、英、日文案，中文显示「应用列表」。三语标题渲染、Vue 单文件组件编译、认证模块生产构建和差异空白检查均通过。工作区未配置独立 lint。在 `runtime-ui/` 运行 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --incremental false --pretty false -p modules/authentication-manager-ui/tsconfig.json`，结果为 538 条既有诊断。筛选回归在临时补齐 PNG 加载器后仍有 1 项既有卡片标签断言失败，修复测试配置和断言后可在模块目录重跑 `node --test tests/applicationTypeFilter.test.mjs`。
 
 列表图片优先级修复（S，已完成）：运行时 `ProjectApplication/components/ApplicationCard.vue` 复用 `applicationModel.ts#applicationImage`，按应用配置图片 → 模板 `coverImage` → 默认封面的顺序显示；卡片正文内边距统一使用 `var(--space-4)`。失效图片沿用现有默认封面 fallback。
 
@@ -1445,7 +1449,7 @@ SaaS 管理员概览将项目摘要固定在画布上方，最近访问、资源
 - 已关联接口展示调整：默认复用本地 Controller/权限动作组件的只读视图，展示当前授权项已关联的资源、动作和接口数量，不把局部关联显示为完整授权。移除重复的“关联接口 + 数量”小标题，数量继续由左侧列表与表格展示；关联区域“权限概览 / 接口明细”和配置抽屉“按权限选择 / 详细配置 / 已选接口”均复用开放平台详情的 SlantedTabs 斜边页签，保留其斜边样式、懒挂载与已访问面板保留能力；白底区域通过组件已有样式变量将选中页签设为平台 accent-soft 浅蓝底，未选页签透明、内容面板保持 bg 底色，不额外添加整条灰底或修改公共组件。权限概览移除 Controller 汇总说明小字，保留筛选与表格的统一间距。权限概览与接口明细统一使用默认表格密度，表头和单元格留白一致；名称统一为平台字体、14px 中等字重，次级信息统一为 12px、20px 行高，方法与权限标签共用相同字号、内边距和高度。接口明细按“接口名称 / 请求方法与路径 / 来源服务 / 详情”分列展示，名称占 28%，来源服务列加宽至 240px，路径列利用剩余宽度；表格中的长名称、路径与服务名完整换行，连续长字符串可断行，行高随内容增长，保留窄屏横向滚动，避免截断或撑破表格。独立路径列使用平台正文样式，不再使用等宽字体。名称与路径仍复用本地 SpecIdentity；选择抽屉的候选接口表采用相同分列、列宽与横向滚动配置，已选接口改为独立核对页签，使用同字号、同密度的全宽表格，移除常驻右栏及灰底、小字差异化样式；数量仅在页签展示，全部取消放到底部左侧。候选和已选视图共享列展示与选择草稿，保留原筛选、分页及授权逻辑。请求方法统一使用 Ant Design Vue 彩色标签：GET 青色、POST 蓝色、PUT 橙色、PATCH 紫色、DELETE 红色、HEAD 靛蓝色、OPTIONS 金色，详情、候选与已选接口保持一致。提供“接口明细”页签，沿用平台筛选并改为分页表格；筛选或关联变化回到第一页。配置按钮在两种视图中都与筛选同行，无法归类的旧关联仍保留在明细中。只改本地展示与分页，不新增请求、不改变保存语义；源码/引用、中英文键与差异检查已完成，git diff --check 通过。未执行浏览器、构建、类型检查、lint 或测试，Controller 汇总、分页切换和筛选重置效果待用户在现有环境人工确认。
 - 默认选择方案：`JlDrawerShell` 内使用“按权限选择 / 详细配置 / 已选接口”三个页签，已选数量始终显示在核对页签中，不再同时展示两份列表。默认参考角色权限配置，以真实 `appId + permissionId` 归并资源，用接口 Controller 标签展示名称，按真实 `actions` 显示动作复选框；选中资源或动作会选中其完整接口集合，而非当前分页。完整轻量目录复用现有 `/open/api/spec/_query/no-paging`，只读取身份、权限和标签字段，不载入 specification/apiDoc。没有有效映射的接口不可新选，资源目录与接口元数据不从菜单名称或 HTTP 方法推断。
 - 权限动作显示：`usePermissionSpecs.ts` 和 `SpecDetails.vue` 共用 `useSpecActionLabel.ts`，不改变按页全选、组合动作、勾选和授权数据。中文词条已对照 2.20 后端源码和本地服务包盘点的 87 个内置动作；英文和未配置词条的自定义动作显示原始编码。现场已通过 `POST /open/api/spec/_query/no-paging` 无筛选响应核对 1,442 个接口、35 个不同动作编码，中文词条无缺失。权限列表来源服务（`appId`）有值时与权限标识并列显示，无值时只显示权限标识；本次现场目录均未返回 `appId`。未运行构建或浏览器验收。
-- 开放平台与接口分组分页：开放平台应用列表、应用详情的数据订阅列表、接口分组管理列表以及配置接口抽屉内“按权限选择 / 详细配置 / 已授权接口”对齐资源中心设备列表，使用 `useSpecTablePagination.ts` 统一总数、数字页码、前后翻页和每页条数，默认 12 条/页。这三个列表的分页位于内容区右下角，只有一页时也保留页码 1；抽屉外只读详情和其他页面沿用原配置。保留现有筛选、全选本页与跨页勾选，不新增请求；移除已选接口后保留当前页或回到最后一个有效页。已核对分页组件、语言键及代码差异，未运行构建、类型检查、lint 或测试；页面待在现有运行环境人工验收。
+- 开放平台与接口分组分页：开放平台应用列表、应用详情的数据订阅列表、接口分组管理列表和配置接口抽屉对齐「自动录像」的标准分页，显示当前记录范围、总数、前后翻页和每页条数，不显示数字页码，默认 12 条/页。远程表使用 ProTable 默认分页，抽屉本地表复用同一 `JPagination`。保留筛选、全选本页、跨页勾选和删除后页码校正；抽屉外只读详情沿用原配置。
 - 选择边界：多动作接口按完整动作组合单独显示，避免勾选查询时隐式加入额外写入动作。详细配置保留逐接口分页筛选，已选接口使用草稿的本地筛选与分页；三个页签共用真实接口 ID 集合，支持半选、跨页选择、已选检索及移除；抽屉底部左侧提供“全部取消”，复用选择更新逻辑清空所有已选 ID，不受分页和筛选影响，保存中或无已选项时禁用。清空只修改抽屉草稿；编辑已有授权项时允许保存空接口集合，确认后提交当前项的 apiSpecIds: []，保留授权项及其他授权项的配置。新增授权项仍要求至少选择一个接口；未变更、保存中及无权限的禁用规则不变，切换/取消不保存。旧不可见关联继续保留。修正接口名称列与表格 `summary` 汇总插槽同名导致的底部假提示，改用 `identity` 插槽；通过 `alertShow=false` 隐藏重复“已选择 / 取消选择”提示条，不屏蔽真正不可见接口的告警。
 - 编辑与保存：分组名称/说明和授权项名称/说明就地保存；已有授权编码只读。新增授权项与选择接口仍在同一抽屉，新分组可先配置授权项再随创建提交。每次名称/说明保存仅提交对应字段，授权项维护仅提交 operations，保留未修改项、既有编码、options 和不可见旧接口关联；权限、状态确认与关联影响确认不变。关联保存后刷新服务端推导的资产归属，刷新失败单独提示；字段失败保留编辑值并支持手动重试。
 - 实现入口：`Save/index.vue`、`components/OperationsEditor.vue`、`LinkedSpecs.vue`、`SpecPicker.vue`、`PermissionSpecs.vue`；`useSpecPicker.ts` 维护三个页签共用的选择及已选核对的筛选、分页，`specPermissionResources.ts` 归并资源/动作，`useLocalTextFilter.ts` 复用本地筛选，`api/application-center/apiGroupManagement.ts` 读取现有 tags 与全量轻量目录。接口身份仍由 `SpecIdentity.vue` 展示，技术详情由 `SpecDetails.vue` 承载。
@@ -1511,7 +1515,7 @@ URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显�
 - 首屏与密度：`[ConditionFilter] [新增] → [名称 / 业务字段 / 状态 / 编辑·更多] → [紧凑分页]`。统一容器留白、工具栏对齐、名称/单元格、操作间距和分页；不新增统计、批量动作、设备图片/分组树或额外装饰。表格保持首屏主内容，状态列使用已有状态语义，不用单侧色条表示状态。
 - 操作与编辑梯度：复用已有 `ContentPanel`、`j-pro-table`、`TableActions` / `TableActionsItem`、`j-permission-button` 及现有确认能力；编辑图标常驻，启停/删除收进更多，与设备列表一致。名称仍进入详情；保留各列表已有编辑弹窗/订阅单层抽屉，本次不改编辑流程、不新增详情壳或侧栏。
 - 已确认操作规则：按配置状态而非执行状态决定启停，启用显示停用，停用显示启用；完全按截图对应的统一设备列表表达：禁用/停用使用红色危险色，启用使用蓝色普通操作色；删除只在停用后恢复红色可操作态，未停用时灰色禁用。仅停用后的订阅允许删除，启用时保留灰色禁用入口并提示先停用；接口分组和开放平台应用列表同样保留灰色的不可删除入口，不隐藏该状态。开放平台列表复用详情已有的删除接口；所属应用停用时仍不能启用订阅。订阅及调用日志移除额外刷新按钮，不新增轮询。确认、请求期间禁用和操作成功刷新均保留。
-- 实施顺序：先修正订阅菜单与业务 hook 的一致约束，再统一三处列表与分页配置，最后核对引用、权限、确认及完整差异。三处列表在 `views/application-center/application-list.less` 复用本模块局部样式，沿用设备列表的透明表格外壳、灰色表头、圆角与紧凑分页，不覆盖公共样式。优先使用公共组件现有 props，不修改公共组件、设备模块、运营端、后端、接口契约或日志归属逻辑，不新增依赖。
+- 实施顺序：先修正订阅菜单与业务 hook 的一致约束，再统一三处列表与分页配置，最后核对引用、权限、确认及完整差异。三处列表在 `views/application-center/application-list.less` 复用本模块局部样式，表格外壳、表头与圆角沿用现有模块样式；分页以「自动录像」为准，不覆盖公共样式。优先使用公共组件现有 props，不修改公共组件、设备模块、运营端、后端、接口契约或日志归属逻辑，不新增依赖。
 - 验证边界：用户已明确不可删除时置灰、列表沿用设备样式并移除刷新；只做源码、组件契约和差异检查，按用户约束不自动运行前端构建、类型检查、lint、测试、浏览器或服务操作。现有环境仍需人工验收启停/删除状态、确认与菜单收起、禁用原因、表格留白与分页、长内容及窄屏；不声称已完成页面验收。
 - 实施与检查结果：三处菜单均在启用时将删除置灰；订阅及应用的 hook 同步限制仅停用后删除，接口分组沿用已有状态/权限校验。确认操作复用设备列表的权限按钮，禁用/停用为危险动作、启用为普通动作，删除始终受停用状态约束；订阅/日志只移除额外刷新入口和由其独占的状态，不改变筛选、分页、操作后重查或应用日志归属条件。中英文新增文案、三处局部样式引用及完整差异已核对，`git diff --check` 通过，改动 Vue 均少于 300 行。名称高亮恢复统一设备列表的蓝色链接及 600 字重：移除本模块局部样式中覆盖 Ant Design 链接色和 hover 色的规则，沿用原生主题交互色，不再把可点击名称降为普通文字。继续补入已有 PR #126，不新增重复 PR、不强推、不自动合并。
 
@@ -1545,7 +1549,7 @@ URL 后的复制/搜索操作随地址排列，在 hover 或键盘 focus 时显�
 
 ##### 类别级订阅与说明分离（已实现，页面待人工验收）
 
-- 订阅事件选择区（已实现，页面待人工验收）：所有类别始终按单列清单展示，无灰底表头。标题右侧显示已选类别数与“全选本页”，勾选说明位于清单上方。每行左侧勾选类别，右侧的事件数可点击或通过键盘打开“事件说明”。少量类别按内容高度展示，不显示空筛选栏和单页分页；目录超过 6 个类别时显示搜索；当前页超过 6 行时只滚动表体。匹配结果超过 12 个时使用平台数字分页与每页条数，可跨页选择。根据未筛选目录决定是否保留搜索入口，筛选和翻页不清空已有勾选。仅涉及订阅编辑器的类别选择区及必要的订阅文案，不改目录请求、接收设置或保存契约。验收重点为少量类别、多页、长名称、半选和不可用项。
+- 订阅事件选择区（已实现，页面待人工验收）：所有类别始终按单列清单展示，无灰底表头。标题右侧显示已选类别数与“全选本页”，勾选说明位于清单上方。每行左侧勾选类别，右侧的事件数可点击或通过键盘打开“事件说明”。少量类别按内容高度展示，不显示空筛选栏和单页分页；目录超过 6 个类别时显示搜索；当前页超过 6 行时只滚动表体。匹配结果超过 12 个时使用与「自动录像」一致的标准分页与每页条数，可跨页选择。根据未筛选目录决定是否保留搜索入口，筛选和翻页不清空已有勾选。仅涉及订阅编辑器的类别选择区及必要的订阅文案，不改目录请求、接收设置或保存契约。验收重点为少量类别、多页、长名称、半选和不可用项。
 
 - 目标：字段说明不显示“必填”，不改变实际表单校验；主选择区只呈现目录大类，避免十余条具体事件和重复类别铺满界面。
 - 方案：平台单层配置抽屉，沿用 `JlDrawerShell`，以已在接口分组选择器使用的 `SlantedTabs` 分为“订阅配置 / 事件说明”。配置页为单列主布局，名称/说明紧凑排列，类别表格和接收表单顺序呈现；文档在同一抽屉的独立页签展开，不再堆到选择表格下面，也不再横向挤压回调表单。

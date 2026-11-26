@@ -1,9 +1,9 @@
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ConditionFilterTerm } from '@jetlinks-web-core/components/ConditionFilter'
 import type { SubscriptionEventProvider } from '@authentication-manager-ui/api/application-center/applicationSubscription'
 import { useLocalTextFilter } from '../ApiGroup/useLocalTextFilter'
-import { useSpecTablePagination } from '../ApiGroup/useSpecTablePagination'
+import { specTablePageSize, useSpecTablePagination } from '../ApiGroup/useSpecTablePagination'
 import { unavailableEventIds } from './subscriptionEvents'
 
 interface CategoryRow {
@@ -24,9 +24,6 @@ const compactCategoryLimit = 6
 export const useSubscriptionEventPicker = (source: EventPickerSource, select: (ids: string[]) => void) => {
   const { t } = useI18n()
   const terms = ref<ConditionFilterTerm[]>([])
-  const paginationOptions = useSpecTablePagination()
-  const page = ref(1)
-  const pageSize = ref(paginationOptions.defaultPageSize)
   const selectedIds = computed(() => new Set(source.modelValue))
   const categories = computed<CategoryRow[]>(() => source.providers.filter(provider => provider.events.length).map(provider => ({
     key: JSON.stringify(['provider', provider.id]), name: provider.name,
@@ -43,13 +40,12 @@ export const useSubscriptionEventPicker = (source: EventPickerSource, select: (i
   const { filterFields, filtered, search: filter } = useLocalTextFilter(() => allRows.value, () => [
     { title: t('ThirdPartyApplication.subscription.eventCategories'), dataIndex: 'name' },
   ], row => row.name)
-  const pageRows = computed(() => {
-    const start = (page.value - 1) * pageSize.value
-    return filtered.value.slice(start, start + pageSize.value).map(row => {
-      const count = row.eventIds.reduce((sum, id) => sum + Number(selectedIds.value.has(id)), 0)
-      return { ...row, checked: count === row.eventIds.length, indeterminate: count > 0 && count < row.eventIds.length }
-    })
-  })
+  const { page, slicePage, pagination } = useSpecTablePagination(() => filtered.value.length)
+  const showPagination = computed(() => filtered.value.length > specTablePageSize)
+  const pageRows = computed(() => slicePage(filtered.value).map(row => {
+    const count = row.eventIds.reduce((sum, id) => sum + Number(selectedIds.value.has(id)), 0)
+    return { ...row, checked: count === row.eventIds.length, indeterminate: count > 0 && count < row.eventIds.length }
+  }))
   const tableScroll = computed(() => pageRows.value.length > compactCategoryLimit ? { y: 'min(36vh, 18rem)' } : undefined)
   const selectableRows = computed(() => pageRows.value.filter(row => !row.unavailable))
   const tableSelection = computed(() => {
@@ -58,13 +54,6 @@ export const useSubscriptionEventPicker = (source: EventPickerSource, select: (i
     return { checked, indeterminate: !checked && visible.some(row => row.checked || row.indeterminate), disabled: !visible.length }
   })
   const selectedCategoryCount = computed(() => categories.value.filter(category => category.eventIds.some(id => selectedIds.value.has(id))).length)
-  const pagination = computed(() => filtered.value.length > paginationOptions.defaultPageSize ? {
-    ...paginationOptions, current: page.value, pageSize: pageSize.value, total: filtered.value.length,
-    onChange: (current: number, size: number) => {
-      page.value = size === pageSize.value ? current : 1
-      pageSize.value = size
-    },
-  } : false as const)
   const toggleIds = (ids: string[], checked: boolean) => {
     if (source.disabled || source.loading) return
     const next = new Set(source.modelValue)
@@ -78,7 +67,6 @@ export const useSubscriptionEventPicker = (source: EventPickerSource, select: (i
   // 全选仅影响当前页的可用类别；隐藏、跨页和目录不可用的原订阅不会被顺带清除。
   const togglePage = (checked: boolean) => toggleIds(selectableRows.value.flatMap(row => row.eventIds), checked)
   const search = (value: ConditionFilterTerm[]) => { terms.value = value; filter(value); page.value = 1 }
-  watch(() => filtered.value.length, total => { page.value = Math.min(page.value, Math.max(1, Math.ceil(total / pageSize.value))) })
-  return { terms, filterFields, showSearch, pageRows, tableScroll, pagination, tableSelection, selectedCategoryCount,
+  return { terms, filterFields, showSearch, pageRows, tableScroll, pagination, showPagination, tableSelection, selectedCategoryCount,
     search, toggleCategory, togglePage }
 }

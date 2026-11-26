@@ -9,7 +9,7 @@
 .resource-dashboard :deep(.resource-panel > .ant-card-body) { overflow: auto; }
 .resource-dashboard :deep(.resource-message-panel > .ant-card-body),
 .resource-dashboard :deep(.resource-supplemental-panel--trend > .ant-card-body) { overflow: hidden; }
-.resource-dashboard :deep(.resource-panel) { height: 100%; display: flex; flex-direction: column; min-width: 0; border-radius: var(--r-3, 8px); border: 1px solid var(--jet-theme-border-secondary, #e8edf3); background: var(--ant-color-bg-container, #ffffff); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03); overflow: hidden; }
+.resource-dashboard :deep(.resource-panel) { height: 100%; display: flex; flex-direction: column; min-width: 0; border-radius: var(--r-3, 8px); border: 1px solid var(--jet-theme-border-secondary, #e8edf3); background: var(--ant-color-bg-container, #ffffff); overflow: hidden; }
 .resource-dashboard :deep(.resource-panel > .ant-card-head) { flex-shrink: 0; height: auto; min-height: 48px; box-sizing: border-box; padding: 8px 16px; border-bottom: 1px solid #f0f2f5; }
 .resource-dashboard :deep(.resource-panel .ant-card-head-wrapper) { min-height: 28px; }
 /* 标题栏最小高度一致；窄卡控件换行后自然增高，不覆盖组件自身的容器查询名称。 */
@@ -23,7 +23,7 @@
 .resource-dashboard :deep(.resource-panel .ant-card-extra .ant-btn-link) { padding: 0; font-size: 13px; }
 .resource-dashboard :deep(.resource-panel-state) { display: flex; flex: 1; flex-direction: column; gap: 8px; align-items: center; justify-content: center; min-height: 0; }
 /* 规范本页旧排行的卡头与卡片 */
-.resource-dashboard :deep(.resource-ranking) { border-radius: var(--r-3, 8px); border: 1px solid var(--jet-theme-border-secondary, #e8edf3); background: var(--ant-color-bg-container, #ffffff); padding: 0 16px 16px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03); }
+.resource-dashboard :deep(.resource-ranking) { border-radius: var(--r-3, 8px); border: 1px solid var(--jet-theme-border-secondary, #e8edf3); background: var(--ant-color-bg-container, #ffffff); padding: 0 16px 16px; }
 .resource-dashboard :deep(.ranking-header) { padding: 8px 16px; margin: 0 -16px 12px; height: auto; min-height: 48px; border-bottom: 1px solid #f0f2f5; box-sizing: border-box; }
 .resource-dashboard :deep(.ranking-header h3) { font-size: 15px; font-weight: 600; line-height: 24px; color: #17243b; }
 .resource-dashboard :deep(.resource-ranking .action-link),
@@ -41,7 +41,7 @@
 .resource-dashboard :deep(.resource-rank-row .rank-1),
 .resource-dashboard :deep(.resource-rank-row .rank-2),
 .resource-dashboard :deep(.resource-rank-row .rank-3) { background: var(--ant-color-primary, #1677ff); color: #fff; }
-.resource-dashboard :deep(.device-map-card:not(.device-map-card--embedded)) { padding: 0 16px 16px; border: 1px solid var(--jet-theme-border-secondary, #e8edf3); border-radius: var(--r-3, 8px); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03); background: var(--ant-color-bg-container, #ffffff); overflow: hidden; }
+.resource-dashboard :deep(.device-map-card:not(.device-map-card--embedded)) { padding: 0 16px 16px; border: 1px solid var(--jet-theme-border-secondary, #e8edf3); border-radius: var(--r-3, 8px); background: var(--ant-color-bg-container, #ffffff); overflow: hidden; }
 .resource-dashboard :deep(.device-map-card > .section-header) { flex-shrink: 0; height: 48px; min-height: 48px; margin: 0 -16px 12px; padding: 8px 16px; border-bottom: 1px solid #f0f2f5; box-sizing: border-box; }
 .resource-dashboard :deep(.device-map-card > .section-header::after) { display: none; }
 .resource-dashboard :deep(.device-map-card:not(.device-map-card--embedded) .device-map-card__body) { min-height: 280px; }

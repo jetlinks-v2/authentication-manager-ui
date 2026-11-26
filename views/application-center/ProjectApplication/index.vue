@@ -5,7 +5,7 @@
         <a-spin :spinning="loading">
           <div style="margin-bottom: var(--space-4);">
             <a-flex justify="space-between" align="center">
-              <h2 class="project-page-title">应用列表</h2>
+              <h2 class="project-page-title">{{ $t('ProjectApplication.list.title') }}</h2>
 	            <a-space>
 		            <ConditionFilter
 			            :fields="filterFields"

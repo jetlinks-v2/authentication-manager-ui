@@ -14,14 +14,16 @@
     <div class="menu-container">
       <FullPage :fixed="false" transparentBackground>
         
+          <a-alert v-if="failed" type="error" show-icon :message="$t('MenuSetting.loadFailed')">
+            <template #action><a-button size="small" @click="reload">{{ $t('AccountCenter.retry') }}</a-button></template>
+          </a-alert>
+          <!-- rows 已按一级菜单切页；使用原生 children 展开，避免 TREE 模式再次分页。 -->
           <j-pro-table
-            ref="tableRef"
             class="pro-table__no-padding"
             :columns="columns"
-            :request="getList"
-            :params="queryParams"
-            :defaultParams="defaultParams"
-            type="TREE"
+            :data-source="rows"
+            :loading="loading"
+            :scroll="false"
             mode="TABLE"
             noPagination
             v-model:expandedRowKeys="expandedRowKeys"
@@ -98,6 +100,7 @@
               </a-space>
             </template>
           </j-pro-table>
+          <CorePagination :current="current" :page-size="pageSize" :total="total" @change="changePage" />
         
       </FullPage>
     </div>
@@ -107,10 +110,11 @@
 <script setup lang="ts">
 import { createReusableTemplate } from '@vueuse/core'
 
-import { getMenuTree, delMenu } from '@authentication-manager-ui/api/system/menu'
+import { delMenu } from '@authentication-manager-ui/api/system/menu'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
 import { onlyMessage } from '@jetlinks-web/utils'
-import {OWNER_KEY} from "@jetlinks-web-core/utils/consts";
+import CorePagination from '@jetlinks-web-core/components/CorePagination'
+import { useMenuRootPage } from './useMenuRootPage'
 import { useI18n } from 'vue-i18n';
 import { useUserStore } from '@jetlinks-web-core/store/user';
 import { storeToRefs } from 'pinia'
@@ -206,20 +210,8 @@ const columns = [
   },
 ]
 const queryParams = ref<ConditionFilterChangePayload['filter']>({ terms: [] })
-const defaultParams = {
-  terms: [
-    {
-      value: "%show\":false%",
-      termType: "nlike",
-      column: "options"
-    }
-  ],
-  type:'and'
-}
+const { rows, total, current, pageSize, changePage, nextSortIndex, loading, failed, reload } = useMenuRootPage(queryParams)
 const expandedRowKeys = ref<string[]>([])
-const tableRef = ref<Record<string, any>>({}) // 表格实例
-const total = ref<number>(0)
-
 const handleSearch = ({filter}: ConditionFilterChangePayload) => {
   queryParams.value = filter
   if (!filter.terms.length) {
@@ -227,61 +219,6 @@ const handleSearch = ({filter}: ConditionFilterChangePayload) => {
   }
 }
 
-const getList = async (_params: any) => {
-  //过滤非集成的菜单
-  const item = {
-    terms: [
-      {
-        terms: [
-          {
-            column: 'owner',
-            termType: 'eq',
-            value: OWNER_KEY,
-          },
-          {
-            column: 'owner',
-            termType: 'isnull',
-            value: '1',
-            type: 'or',
-          },
-        ],
-      },
-      {
-        type: 'or',
-        terms: [
-          {
-            value: '%show":false%',
-            termType: 'nlike',
-            column: 'options',
-          },
-        ],
-      }
-    ],
-  }
-  const params = {
-    ..._params,
-    sorts: [{ name: 'sortIndex', order: 'asc' }],
-    paging: false,
-  }
-  const resp: any = await getMenuTree(params)
-  const menuArr = resp.result.filter(
-    (i: any) => i.code !== 'account-center',
-  );
-  const lastItem = menuArr[menuArr.length - 1];
-  //个人中心排序为9999需要做过滤特殊处理
-  total.value = lastItem
-    ? lastItem.sortIndex + 1 === 9999
-      ? 10000
-      : lastItem.sortIndex + 1
-    : 1;
-
-  return {
-    code: resp.message,
-    result: resp.result,
-    status: resp.status,
-    success: resp.status === 200
-  }
-}
 const addChildren = (row: any) => {
   let sortIndex = 0
   if (row && row.children) {
@@ -307,7 +244,7 @@ const toDetails = (row: any) => {
     query: {
       pid: row.parentId,
       basePath: row.url || '',
-      sortIndex: total.value,
+      sortIndex: nextSortIndex.value,
     },
   })
 }
@@ -315,7 +252,7 @@ const toDetails = (row: any) => {
 const clickDel = (row: any) => {
   delMenu(row.id).then((resp: any) => {
     if (resp.status === 200) {
-      tableRef.value?.reload()
+      void reload()
       onlyMessage($t('Menu.index.599742-16'))
     }
   })

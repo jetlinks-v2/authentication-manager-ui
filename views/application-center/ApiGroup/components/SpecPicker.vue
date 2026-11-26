@@ -40,7 +40,7 @@
             <div class="catalog-toolbar">
               <ConditionFilter :fields="selectedFilterFields" :placeholder="$t('ApiGroupManagement.spec.searchSelected')" @update:model-value="searchSelected" />
             </div>
-            <a-table :columns="selectedColumns" :data-source="selectedRecords" row-key="id" :pagination="selectedPagination"
+            <a-table :columns="selectedColumns" :data-source="selectedRecords" row-key="id" :pagination="false"
               table-layout="fixed" :scroll="{ x: 960, y: tableHeight }">
               <template #emptyText>
                 <CloudEmpty :description="$t(selectedIds.length ? 'ApiGroupManagement.spec.noMatches' : 'ApiGroupManagement.spec.selectHint')" />
@@ -60,6 +60,7 @@
                 </template>
               </template>
             </a-table>
+            <JPagination v-if="selectedPagination.total" v-bind="selectedPagination" size="default" />
           </div>
         </template>
       </SlantedTabs>
@@ -77,6 +78,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import JPagination from '@jetlinks-web/components/es/ProTable/Pagination'
 import SlantedTabs, { type SlantedTabOption } from '@jetlinks-web-core/components/SlantedTabs'
 import type { RawOpenApiSpec } from '@authentication-manager-ui/api/application-center/apiGroupManagement'
 import { useSpecPicker, type SpecPickerContext, type SpecSelection } from '../useSpecPicker'

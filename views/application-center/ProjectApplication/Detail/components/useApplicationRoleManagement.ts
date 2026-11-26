@@ -23,7 +23,7 @@ export function useApplicationRoleManagement(
   watch(() => props.roles, roles => {
     if (!roles.some(item => item.id === activeRoleId.value)) activeRoleId.value = roles[0]?.id || ''
   }, { immediate: true, deep: true })
-  const permissions = useApplicationRolePermissions(() => ({ scope: props.scope, role: activeRole.value }))
+  const permissions = useApplicationRolePermissions(() => ({ scope: props.scope, role: activeRole.value }), 'menus-only')
   const openRole = (role?: ApplicationRole) => {
     editingRoleId.value = role?.id
     Object.assign(form, { name: role?.name || '', description: role?.description || '' })

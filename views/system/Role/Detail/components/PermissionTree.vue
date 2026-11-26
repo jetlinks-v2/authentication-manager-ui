@@ -8,6 +8,7 @@
       <MenuAssetPermissionEditor
         :context="editor"
         :columns="columns"
+        :owner-labels="{ iot: $t('Role.globalPermissions.baseMenus'), app: $t('MenuSetting.owner.app') }"
         :readonly="!canSave || saving"
         :show-asset-permissions="isNoCommunity"
         height="60vh"
