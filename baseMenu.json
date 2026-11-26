@@ -2201,6 +2201,49 @@
         ],
         "buttons": [
           {
+            "id": "view",
+            "name": "查看",
+            "i18nMessages": {
+              "zh_CN": "查看",
+              "en_US": "View",
+              "en": "View",
+              "ja": "表示",
+              "ja_JP": "表示"
+            },
+            "permissions": [
+              {
+                "permission": "business-application",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "business-application-template",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "user",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "role",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "device-instance",
+                "actions": [
+                  "query"
+                ]
+              }
+            ]
+          },
+          {
             "id": "add",
             "name": "创建应用",
             "i18nMessages": {
@@ -2388,6 +2431,40 @@
           { "permission": "api_group", "actions": ["query", "grant", "grant_query"] },
           { "permission": "access-logger", "actions": ["query"] }
         ],
+        "buttons": [
+          {
+            "id": "view",
+            "name": "查看",
+            "i18nMessages": {
+              "zh_CN": "查看",
+              "en_US": "View",
+              "en": "View",
+              "ja": "表示",
+              "ja_JP": "表示"
+            },
+            "permissions": [
+              {
+                "permission": "application",
+                "actions": [
+                  "query"
+                ]
+              },
+              {
+                "permission": "api_group",
+                "actions": [
+                  "query",
+                  "grant_query"
+                ]
+              },
+              {
+                "permission": "access-logger",
+                "actions": [
+                  "query"
+                ]
+              }
+            ]
+          }
+        ],
         "accessSupport": {
           "text": "支持",
           "value": "support"
@@ -2436,6 +2513,25 @@
           }
         ],
         "buttons": [
+          {
+            "id": "view",
+            "name": "查看",
+            "i18nMessages": {
+              "zh_CN": "查看",
+              "en_US": "View",
+              "en": "View",
+              "ja": "表示",
+              "ja_JP": "表示"
+            },
+            "permissions": [
+              {
+                "permission": "application",
+                "actions": [
+                  "query"
+                ]
+              }
+            ]
+          },
           {
             "id": "add",
             "name": "新增 API 应用",
@@ -2708,7 +2804,27 @@
             "actions": ["query"]
           }
         ],
-        "buttons": []
+        "buttons": [
+          {
+            "id": "view",
+            "name": "查看",
+            "i18nMessages": {
+              "zh_CN": "查看",
+              "en_US": "View",
+              "en": "View",
+              "ja": "表示",
+              "ja_JP": "表示"
+            },
+            "permissions": [
+              {
+                "permission": "application",
+                "actions": [
+                  "query"
+                ]
+              }
+            ]
+          }
+        ]
       }
     ]
   }
