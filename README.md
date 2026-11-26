@@ -1097,6 +1097,8 @@ node --max_old_space_size=8192 --max-semi-space-size=64 -e "process.argv.push('-
 
 ### 应用列表封面与详情布局
 
+列表页标题由 `views/application-center/ProjectApplication/index.vue` 使用 `ProjectApplication.list.title` 读取 `locales/lang/` 下的中、英、日文案，中文显示「应用列表」。三语标题渲染、Vue 单文件组件编译、认证模块生产构建和差异空白检查均通过。工作区未配置独立 lint。在 `runtime-ui/` 运行 `node node_modules/vue-tsc/bin/vue-tsc.js --noEmit --incremental false --pretty false -p modules/authentication-manager-ui/tsconfig.json`，结果为 538 条既有诊断。筛选回归在临时补齐 PNG 加载器后仍有 1 项既有卡片标签断言失败，修复测试配置和断言后可在模块目录重跑 `node --test tests/applicationTypeFilter.test.mjs`。
+
 列表图片优先级修复（S，已完成）：运行时 `ProjectApplication/components/ApplicationCard.vue` 复用 `applicationModel.ts#applicationImage`，按应用配置图片 → 模板 `coverImage` → 默认封面的顺序显示；卡片正文内边距统一使用 `var(--space-4)`。失效图片沿用现有默认封面 fallback。
 
 详情图片免裁剪（S，已完成）：`ProjectApplication/Detail/components/ApplicationSettings.vue` 复用 core `FileUpload` 与现有 `uploadByRequest` 直接上传原文件，保留 JPG/PNG、2 MB 校验、草稿回显及保存字段，取消 256×256 裁剪。相邻 `useApplicationImageUpload.ts` 仅在上传成功后使用 `result.accessUrl` 更新图片，失败保留原图，取消编辑后忽略旧上传结果；`Detail/index.vue` 在上传期间显示保存等待状态，避免提交旧图片地址。共享上传组件和其他页面保持原行为。

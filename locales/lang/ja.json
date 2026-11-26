@@ -1321,7 +1321,7 @@
   "ProjectApplication.common.actions": "操作",
   "ProjectApplication.common.search": "検索",
   "ProjectApplication.common.close": "閉じる",
-  "ProjectApplication.list.title": "プロジェクトアプリケーション",
+  "ProjectApplication.list.title": "アプリケーション一覧",
   "ProjectApplication.detail.backToList": "アプリ一覧に戻る",
   "ProjectApplication.list.description": "エンドユーザー向けのアプリケーションを管理します",
   "ProjectApplication.list.create": "アプリケーションを作成",
