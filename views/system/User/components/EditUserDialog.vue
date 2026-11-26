@@ -75,7 +75,10 @@
             </a-row>
             <a-row :gutter="24" v-if="form.IsShow('add', 'edit')">
                 <a-col :span="12">
-                    <a-form-item name="roleIdList" :label="$t('components.EditUserDialog.939453-12')">
+                    <a-form-item name="roleIdList">
+                      <template #label>
+                        <UserRoleLabel />
+                      </template>
 <!--                      :rules="[-->
 <!--                      { required: form.data.username !== 'admin', message: $t('components.EditUserDialog.939453-13') },-->
 <!--                      ]"-->
@@ -212,6 +215,7 @@ import { useMenuStore } from '@jetlinks-web-core/store';
 import { useApplicationRoleSelection, type ApplicationRoleItem } from '../useApplicationRoleSelection'
 import { useUserPasswordReset } from '../useUserPasswordReset'
 import ApplicationRoleSelector from './ApplicationRoleSelector.vue'
+import UserRoleLabel from './UserRoleLabel.vue'
 
 const { t: $t } = useI18n();
 
