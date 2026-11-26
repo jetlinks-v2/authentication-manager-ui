@@ -1676,3 +1676,16 @@ core 的 `DocumentHelp` 支持纯说明、复杂内容插槽与按 `code/helpKey
 同步 `2.20` 后公共帮助/页签 30 项与认证 32 项复验通过，认证目标生产构建通过（34.86 秒）；最终认证及关联 core 类型检查仍有 543 项诊断，文档管理/帮助/注册文件无诊断。core 新增的 `vue-clipboard3@^2.0.0` 已与 dompurify 一并锁定，构建使用既有 pnpm 缓存补齐本地依赖链接。根冻结锁安装检查被 `origin/2.20` 已存在的根清单与锁文件不一致阻断；额外的平台设置测试宿主缺少 fieldRegistry 替身，未作为本批通过证据。保持 Draft，待修复基线依赖与测试宿主后重跑。
 
 交付引用：公共帮助 [Web Core #243](https://github.com/jetlinks-v2/jetlinks-web-core/pull/243)（`e0909c2`）；认证 [#165](https://github.com/jetlinks-v2/authentication-manager-ui/pull/165)（`f6e8c99`）；设备 [#404](https://github.com/jetlinks-v2/device-manager-ui/pull/404)（`96b6e824`）；空间 [#100](https://github.com/jetlinks-v2/jetlinks-space-ui/pull/100)（`91b8e1d`）；网关 [#57](https://github.com/jetlinks-v2/edge-master-ui/pull/57)（`124ba67`）；算法 [#221](https://github.com/jetlinks-v2/jetlinks-ai-ui/pull/221)（`c2d85fd`）；视频 [#184](https://github.com/jetlinks-v2/jetlinks-media-ui/pull/184)（`dc87b4e`）。上述 hash 为各仓库实现提交，后续仅回填交付引用。本批仅交付各子模块代码，不提交聚合仓库的子模块指针 PR。全部为目标 `2.20` 的 Draft PR，先集成公共能力再集成消费者。
+
+## 系统页面按钮权限与查看按钮数据补齐
+
+- 目标与影响范围：补齐运行时 `runtime-ui/modules/authentication-manager-ui` 中角色管理、组织管理的按钮权限控制，以及数据字典、日历维护、文档管理的菜单“查看”按钮权限数据；不改 `ui/` 与后端代码。
+- 关键代码引用：
+  - `views/system/Role/RoleLeft/index.vue`：角色分组“新增分组 / 编辑 / 删除”按钮分别补充 `system/Role:add`、`system/Role:update`、`system/Role:delete`。
+  - `views/system/Department/components/LeftTree.vue`：底部“新增”下拉触发器改为 `j-permission-button`（`system/Department:add`），并在无 `add` 权限时禁用下拉菜单（同步拦截批量导入）。
+  - `baseMenu.json`：为 `system/Dictionary`（`dictionary:query`）、`system/Calendar`（`calendar-manager:query`）、`system/DocumentManagement`（`system_config:query`）补充 `view`（查看）按钮；为 `system/Role` 的 `add / update / delete` 按钮补齐对应 `role-group` 权限声明。
+- 验证结果与剩余风险：
+  - 定向测试 `node --test tests/systemButtonPermissions.test.mjs tests/documentManagement.test.mjs tests/systemRoleApplications.test.mjs` 54/54 通过（覆盖 SFC 模板编译与权限属性断言、菜单 JSON 按钮结构断言）。
+  - `vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false`：`RoleLeft/index.vue` 无诊断，`LeftTree.vue` 修改行无新增诊断（仅保留 28/207/275 行既有类型诊断）；`git diff --check` 通过；未配置独立 lint 脚本。
+  - 生效提醒：已部署环境需在菜单管理执行一次菜单同步，角色授权树才会显示新增的“查看”按钮权限；浏览器真实账号交互待验收。
+  - Git commit / PR：pending。

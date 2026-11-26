@@ -437,6 +437,12 @@
                     "actions": [
                       "delete"
                     ]
+                  },
+                  {
+                    "permission": "role-group",
+                    "actions": [
+                      "delete"
+                    ]
                   }
                 ]
               },
@@ -476,6 +482,12 @@
                     "permission": "menu",
                     "actions": [
                       "grant"
+                    ]
+                  },
+                  {
+                    "permission": "role-group",
+                    "actions": [
+                      "save"
                     ]
                   }
                 ]
@@ -540,6 +552,12 @@
                     "permission": "menu",
                     "actions": [
                       "grant"
+                    ]
+                  },
+                  {
+                    "permission": "role-group",
+                    "actions": [
+                      "save"
                     ]
                   }
                 ]
@@ -1265,6 +1283,12 @@
             "permissions": [{ "permission": "system_config", "actions": ["query"] }],
             "buttons": [
               {
+                "id": "view",
+                "name": "查看",
+                "i18nMessages": { "zh_CN": "查看", "en_US": "View", "en": "View", "ja": "表示", "ja_JP": "表示" },
+                "permissions": [{ "permission": "system_config", "actions": ["query"] }]
+              },
+              {
                 "id": "save",
                 "name": "配置",
                 "i18nMessages": { "zh_CN": "配置", "en_US": "Configure", "en": "Configure", "ja": "設定", "ja_JP": "設定" },
@@ -1629,6 +1653,25 @@
             "permissions": [],
             "buttons": [
               {
+                "id": "view",
+                "name": "查看",
+                "i18nMessages": {
+                  "zh_CN": "查看",
+                  "en_US": "View",
+                  "en": "View",
+                  "ja": "表示",
+                  "ja_JP": "表示"
+                },
+                "permissions": [
+                  {
+                    "permission": "dictionary",
+                    "actions": [
+                      "query"
+                    ]
+                  }
+                ]
+              },
+              {
                 "id": "add",
                 "name": "新增",
                 "i18nMessages": {
@@ -1778,6 +1821,25 @@
               }
             ],
             "buttons": [
+              {
+                "id": "view",
+                "name": "查看",
+                "i18nMessages": {
+                  "zh_CN": "查看",
+                  "en_US": "View",
+                  "en": "View",
+                  "ja": "表示",
+                  "ja_JP": "表示"
+                },
+                "permissions": [
+                  {
+                    "permission": "calendar-manager",
+                    "actions": [
+                      "query"
+                    ]
+                  }
+                ]
+              },
               {
                 "id": "add",
                 "name": "新增",

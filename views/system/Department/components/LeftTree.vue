@@ -87,18 +87,18 @@
       </a-spin>
     </div>
     <div class="left-tree-contain__footer">
-      <a-dropdown :trigger="['click']" placement="topCenter">
-        <a-button block>
+      <a-dropdown :trigger="['click']" placement="topCenter" :disabled="!canAdd">
+        <j-permission-button :hasPermission="`${permission}:add`" block>
           <AIcon type="PlusOutlined" />
           {{ $t('components.LeftTree.755653-1') }}
-        </a-button>
+        </j-permission-button>
         <template #overlay>
           <a-menu>
             <a-menu-item key="import" @click="batchImportVisible = true">
               <AIcon type="ImportOutlined" />
               {{ $t('components.LeftTree.755653-8') }}
             </a-menu-item>
-            <a-menu-item v-if="canAdd" key="add" @click="openDialog()">
+            <a-menu-item key="add" @click="openDialog()">
               <AIcon type="PlusOutlined" />
               {{ $t('components.LeftTree.755653-1') }}
             </a-menu-item>

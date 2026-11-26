@@ -31,11 +31,14 @@
               </div>
               <div v-if="node.kind === 'group' && node.group.id !== 'default_group'" class="treeItem__actions" @click.stop>
                 <j-permission-button type="link" danger size="small"
+                  has-permission="system/Role:delete"
                   :tooltip="{ title: $t('RoleLeft.index.507330-3') }"
                   :pop-confirm="{ title: $t('RoleLeft.index.507330-2'), onConfirm: () => removeGroup(node.group) }">
                   <AIcon type="DeleteOutlined" />
                 </j-permission-button>
-                <j-permission-button type="link" size="small" :tooltip="{ title: $t('RoleLeft.index.507330-4') }"
+                <j-permission-button type="link" size="small"
+                  has-permission="system/Role:update"
+                  :tooltip="{ title: $t('RoleLeft.index.507330-4') }"
                   @click="editGroup(node.group)"><AIcon type="EditOutlined" /></j-permission-button>
               </div>
             </div>
@@ -45,6 +48,7 @@
       </a-spin>
     </div>
     <j-permission-button v-if="canCreateGroup" class="left-contain__create" block
+      has-permission="system/Role:add"
       :disabled="Boolean(editingId) || groupLoading || groupError" @click="addGroup">
       <template #icon><AIcon type="PlusOutlined" /></template>{{ $t('RoleLeft.index.507330-1') }}
     </j-permission-button>
