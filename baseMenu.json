@@ -2433,36 +2433,22 @@
         ],
         "buttons": [
           {
-            "id": "view",
-            "name": "查看",
-            "i18nMessages": {
-              "zh_CN": "查看",
-              "en_US": "View",
-              "en": "View",
-              "ja": "表示",
-              "ja_JP": "表示"
-            },
-            "permissions": [
-              {
-                "permission": "application",
-                "actions": [
-                  "query"
-                ]
-              },
-              {
-                "permission": "api_group",
-                "actions": [
-                  "query",
-                  "grant_query"
-                ]
-              },
-              {
-                "permission": "access-logger",
-                "actions": [
-                  "query"
-                ]
-              }
-            ]
+            "id": "query",
+            "name": "查询",
+            "i18nMessages": { "zh_CN": "查询", "en_US": "Query", "en": "Query", "ja": "検索", "ja_JP": "検索" },
+            "permissions": [{ "permission": "application", "actions": ["query"] }]
+          },
+          {
+            "id": "save",
+            "name": "保存",
+            "i18nMessages": { "zh_CN": "保存", "en_US": "Save", "en": "Save", "ja": "保存", "ja_JP": "保存" },
+            "permissions": [{ "permission": "application", "actions": ["save"] }]
+          },
+          {
+            "id": "delete",
+            "name": "删除",
+            "i18nMessages": { "zh_CN": "删除", "en_US": "Delete", "en": "Delete", "ja": "削除", "ja_JP": "削除" },
+            "permissions": [{ "permission": "application", "actions": ["delete"] }]
           }
         ],
         "accessSupport": {
@@ -2806,23 +2792,22 @@
         ],
         "buttons": [
           {
-            "id": "view",
-            "name": "查看",
-            "i18nMessages": {
-              "zh_CN": "查看",
-              "en_US": "View",
-              "en": "View",
-              "ja": "表示",
-              "ja_JP": "表示"
-            },
-            "permissions": [
-              {
-                "permission": "application",
-                "actions": [
-                  "query"
-                ]
-              }
-            ]
+            "id": "query",
+            "name": "查询",
+            "i18nMessages": { "zh_CN": "查询", "en_US": "Query", "en": "Query", "ja": "検索", "ja_JP": "検索" },
+            "permissions": [{ "permission": "application", "actions": ["query"] }]
+          },
+          {
+            "id": "save",
+            "name": "保存",
+            "i18nMessages": { "zh_CN": "保存", "en_US": "Save", "en": "Save", "ja": "保存", "ja_JP": "保存" },
+            "permissions": [{ "permission": "application", "actions": ["save"] }]
+          },
+          {
+            "id": "delete",
+            "name": "删除",
+            "i18nMessages": { "zh_CN": "删除", "en_US": "Delete", "en": "Delete", "ja": "削除", "ja_JP": "削除" },
+            "permissions": [{ "permission": "application", "actions": ["delete"] }]
           }
         ]
       }
