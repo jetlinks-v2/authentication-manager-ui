@@ -1335,7 +1335,7 @@
   "ProjectApplication.common.actions": "Actions",
   "ProjectApplication.common.search": "Search",
   "ProjectApplication.common.close": "Close",
-  "ProjectApplication.list.title": "Project Applications",
+  "ProjectApplication.list.title": "Application List",
   "ProjectApplication.detail.backToList": "Back to applications",
   "ProjectApplication.list.description": "Manage applications used by end users",
   "ProjectApplication.list.create": "Create Application",
