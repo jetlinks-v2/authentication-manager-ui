@@ -2460,8 +2460,8 @@
         "buttons": [
           {
             "id": "query",
-            "name": "查询",
-            "i18nMessages": { "zh_CN": "查询", "en_US": "Query", "en": "Query", "ja": "検索", "ja_JP": "検索" },
+            "name": "查看",
+            "i18nMessages": { "zh_CN": "查看", "en_US": "Query", "en": "Query", "ja": "検索", "ja_JP": "検索" },
             "permissions": [{ "permission": "application", "actions": ["query"] }]
           },
           {
@@ -2894,8 +2894,8 @@
         "buttons": [
           {
             "id": "query",
-            "name": "查询",
-            "i18nMessages": { "zh_CN": "查询", "en_US": "Query", "en": "Query", "ja": "検索", "ja_JP": "検索" },
+            "name": "查看",
+            "i18nMessages": { "zh_CN": "查看", "en_US": "Query", "en": "Query", "ja": "検索", "ja_JP": "検索" },
             "permissions": [{ "permission": "application", "actions": ["query"] }]
           },
           {
