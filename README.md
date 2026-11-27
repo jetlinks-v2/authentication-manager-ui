@@ -595,6 +595,15 @@ Verification:
 
 ## 菜单配置的 owner 边界
 
+### 占位目录导致全量保存失败：修复计划（待确认）
+
+- 目标与证据：管理员保存 `/menu/iot/_all` 时不再提交模块挂载用的空目录。当前 `notify-manager-ui/baseMenu.json` 的 `system` 节点仅有 code、owner 和 children；`Setting/utils.ts#flattenMenus` 为其补出 `id: system`，`createMenuDrafts` 按 ID 合并后将其与真实“系统设置”同时保留。使用真实菜单 JSON 和当前转换函数，排除附件中的异常节点后仍能重新生成无 name 的 `id: system`，与附件第一条一致。后端 `MenuEntity.name` 对应非空列，`DefaultMenuService#saveOwnerMenuAll` 删除旧菜单后保存全量载荷；尚未取得目标服务异常堆栈，具体数据库错误待核实。
+- 影响范围：M 级，owning module 为 `runtime-ui/modules/authentication-manager-ui`；实现集中在 `views/system/Menu/Setting/utils.ts` 及必要的加载/同步调用点，回归补入 `tests/menuSettingOwners.test.mjs`。
+- 实施步骤：在构造草稿和同步权限前识别本地无 ID、无 name 的挂载占位目录，按同 owner、同 code 的唯一真实目录解析父级，不生成独立菜单；保留真实菜单按 ID 合并的规则、服务端已有 parentId、显示状态与排序；用通知模块真实定义覆盖已有环境及首次加入通知菜单的保存载荷。
+- 范围之外：不修改后端接口、表结构、公共 core、`ui/` 或通知模块页面，不按 code 合并具有独立 ID 的真实菜单，不直接执行目标环境的全量菜单保存。
+- 风险与兼容：占位目录缺少真实目标或存在多个同 owner/code 目标时不能猜测父级，需阻止无效载荷并明确报告；跨 owner 引用、隐藏系统菜单、已保存通知菜单及部分 owner 保存失败仍沿用现有语义。
+- 验证计划：执行 `node --test tests/menuSettingOwners.test.mjs tests/menuAssetTypes.test.mjs`，覆盖空目录不入载荷、新通知菜单正确挂载、真实同 code 不同 ID 不丢失及 owner 隔离；在 `runtime-ui/` 执行 `pnpm exec vue-tsc --noEmit -p modules/authentication-manager-ui/tsconfig.json --pretty false` 和 `pnpm -F jetlinks-web-core build -- --module-name authentication-manager-ui`，区分既有诊断与新增问题。模块未配置独立 lint。真实后端保存、刷新回显及服务堆栈仍待联调；当前尚未实施修复。
+
 当前行为：`views/system/Menu/Setting/` 将菜单配置拆成项目菜单（`iot`）与应用菜单（`app`）两个 Tab，默认进入项目菜单。仅涉及运行端本模块；后端、初始化流程和运营端保持原实现。
 
 实现入口：页面 `index.vue` 负责 Tab、菜单树及反馈，`useMenuSetting.ts` 维护两个 Tab 的独立草稿与交互生命周期，`menuSettingService.ts` 编排查询与按 owner 保存，`utils.ts`、`menuTree.ts` 负责纯数据转换。查询通过 `api/system/menu.ts#getMenuDefinitions` 调用现有 `/menu/_query/no-paging`，同时读取 `iot`、`app` 和空 owner，避免树查询在缺少跨 owner 祖先时丢节点；本地模块定义直接按 ID 合并，避免同 code、不同 ID 的候选串选或丢失。
