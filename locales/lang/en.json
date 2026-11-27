@@ -1,5 +1,6 @@
 {
   "Save.index.551010-24": "Description",
+  "Log.index.exportCurrentPage": "Export Current Page",
   "Basis.Form.436809-0": "System Name",
   "Basis.Form.436809-1": "Please enter system name",
   "Basis.Form.436809-2": "Theme color",
@@ -800,5 +801,6 @@
   "property.Assign.385242-2": "All",
   "property.Assign.385242-3": "Filter by conditions and select all {0}",
   "property.Assign.385242-4": "Organization",
-  "property.Assign.385242-5": "Select {0} that belongs to a specific organization"
+  "property.Assign.385242-5": "Select {0} that belongs to a specific organization",
+  "Log.index.export": "Export"
 }

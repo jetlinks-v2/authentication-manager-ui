@@ -1,5 +1,6 @@
 {
   "Save.index.551010-24": "说明",
+  "Log.index.exportCurrentPage": "导出当前页",
   "Basis.Form.436809-0": "系统名称",
   "Basis.Form.436809-1": "请输入系统名称",
   "Basis.Form.436809-2": "主题色",
@@ -800,5 +801,6 @@
   "property.Assign.385242-2": "全部",
   "property.Assign.385242-3": "按筛选条件过滤选择所有{0}",
   "property.Assign.385242-4": "组织",
-  "property.Assign.385242-5": "选择归属于具体组织的{0}"
+  "property.Assign.385242-5": "选择归属于具体组织的{0}",
+  "Log.index.export": "导出"
 }

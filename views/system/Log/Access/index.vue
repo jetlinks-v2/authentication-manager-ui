@@ -5,6 +5,7 @@
                 <pro-search style="margin-bottom: 0" :columns="columns" target="search-access" @search="handleSearch" />
                 <div style="min-height: 0; flex: 1">
                 <j-pro-table
+                    ref="tableRef"
                     mode="TABLE"
                     :columns="columns"
                     :request="queryAccess"
@@ -12,8 +13,8 @@
                     :params="params"
                 >
                     <template #headerLeftRender>
-                        <j-permission-button hasPermission="system/Log/Access:export" :loading="exporting" @click="handleExport">
-                            <AIcon type="ExportOutlined"/>{{ $t('Log.index.export') }}
+                        <j-permission-button hasPermission="system/Log/Access:export" :loading="exporting" :disabled="!canExport" @click="handleExport">
+                            <AIcon type="ExportOutlined"/>{{ $t('Log.index.exportCurrentPage') }}
                         </j-permission-button>
                     </template>
                     <template #requestTime="slotProps">
@@ -124,7 +125,7 @@ const { t: $t } = useI18n();
 const params = ref<Record<string, any>>({});
 const defaultParams = { sorts: [{ name: 'responseTime', order: 'desc' }] };
 const { userOptions, userOptionsLoading, searchUsers } = useUserOptions();
-const { exporting, handleExport } = useLogExport('access', $t('Log.index.407378-0'), () => ({ ...defaultParams, ...params.value }));
+const { tableRef, canExport, exporting, handleExport } = useLogExport('access', $t('Log.index.407378-0'), defaultParams.sorts);
 
 const columns = [
     {

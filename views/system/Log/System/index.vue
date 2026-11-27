@@ -5,6 +5,7 @@
                 <pro-search style="margin-bottom: 0" :columns="columns" target="search-system" @search="handleSearch" />
                 <div style="min-height: 0; flex: 1">
                 <j-pro-table
+                    ref="tableRef"
                     mode="TABLE"
                     :columns="columns"
                     :request="querySystem"
@@ -12,8 +13,8 @@
                     :params="params"
                 >
                     <template #headerLeftRender>
-                        <j-permission-button hasPermission="system/Log/System:export" :loading="exporting" @click="handleExport">
-                            <AIcon type="ExportOutlined"/>{{ $t('Log.index.export') }}
+                        <j-permission-button hasPermission="system/Log/System:export" :loading="exporting" :disabled="!canExport" @click="handleExport">
+                            <AIcon type="ExportOutlined"/>{{ $t('Log.index.exportCurrentPage') }}
                         </j-permission-button>
                     </template>
                     <template #level="slotProps">
@@ -116,7 +117,7 @@ import { modifySearchColumnValue } from '@/utils/comm';
 
 const params = ref<Record<string, any>>({});
 const defaultParams = { sorts: [{ name: 'createTime', order: 'desc' }] };
-const { exporting, handleExport } = useLogExport('system', $t('Log.index.407378-1'), () => ({ ...defaultParams, ...params.value }));
+const { tableRef, canExport, exporting, handleExport } = useLogExport('system', $t('Log.index.407378-1'), defaultParams.sorts);
 
 const columns = [
     {
