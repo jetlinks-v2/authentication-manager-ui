@@ -1,7 +1,7 @@
 <template>
 
   <DefineEmptyCreate>
-    <a-button type="primary" @click="openCreate"><template #icon><AIcon type="PlusOutlined" /></template>{{ $t('ThirdPartyApplication.direct.create') }}</a-button>
+    <j-permission-button :hasPermission="permission + ':save'" type="primary" @click="openCreate"><template #icon><AIcon type="PlusOutlined" /></template>{{ $t('ThirdPartyApplication.direct.create') }}</j-permission-button>
   </DefineEmptyCreate>
   <j-page-container v-bind="$attrs">
     <FullPage flex transparent-background class="application-list">
@@ -28,13 +28,13 @@
         <template #action="row">
           <TableActions>
             <TableActionsItem common>
-              <j-permission-button type="link" size="small" :hasPermission="true" :disabled="!!busyId"
+              <j-permission-button type="link" size="small" :hasPermission="permission + ':save'" :disabled="!!busyId"
                 :tooltip="{ title: $t('ThirdPartyApplication.edit') }" @click="openEdit(row)">
                 <template #icon><AIcon type="EditOutlined" /></template>
               </j-permission-button>
             </TableActionsItem>
             <TableActionsItem>
-              <j-permission-button type="link" size="small" :hasPermission="true" :disabled="!!busyId" :loading="busyId === row.id"
+              <j-permission-button type="link" size="small" :hasPermission="permission + ':save'" :disabled="!!busyId" :loading="busyId === row.id"
                 :danger="apiState(row) === 'enabled'"
                 :popConfirm="{ title: $t(apiState(row) === 'enabled' ? 'ThirdPartyApplication.direct.disableConfirm' : 'ThirdPartyApplication.direct.enableConfirm'), onConfirm: () => toggle(row) }">
                 <template #icon><AIcon :type="apiState(row) === 'enabled' ? 'StopOutlined' : 'CheckCircleOutlined'" /></template>
@@ -42,7 +42,7 @@
               </j-permission-button>
             </TableActionsItem>
             <TableActionsItem>
-              <j-permission-button type="link" size="small" danger :hasPermission="true" :disabled="!!busyId || apiState(row) !== 'disabled'"
+              <j-permission-button type="link" size="small" danger :hasPermission="permission + ':delete'" :disabled="!!busyId || apiState(row) !== 'disabled'"
                 :tooltip="{ title: $t(apiState(row) !== 'disabled' ? 'ThirdPartyApplication.direct.deleteDisabledOnly' : 'ApiApplication.actions.delete') }"
                 :popConfirm="{ title: $t('ThirdPartyApplication.direct.deleteConfirm'), onConfirm: () => remove(row) }">
                 <template #icon><AIcon type="DeleteOutlined" /></template>{{ $t('ApiApplication.actions.delete') }}
@@ -54,7 +54,7 @@
     </FullPage>
     <a-modal v-model:open="formOpen" :title="$t(editingId ? 'ThirdPartyApplication.edit' : 'ThirdPartyApplication.direct.create')" :confirm-loading="saving"
       :closable="!saving" :mask-closable="!saving" :cancel-button-props="{ disabled: saving }"
-      :ok-button-props="{ disabled: !form.name.trim() }" @ok="save">
+      :ok-button-props="{ disabled: !canSave || !form.name.trim() }" @ok="save">
       <a-alert v-if="formError" type="error" show-icon :message="formError" />
       <a-form layout="vertical">
         <a-form-item :label="$t('ThirdPartyApplication.name')" required><a-input v-model:value="form.name" :disabled="saving" /></a-form-item>
@@ -79,7 +79,7 @@ defineOptions({ name: 'DirectThirdPartyApplications' })
 const { t: $t } = useI18n()
 const tableRef = ref<{ reload: () => void }>()
 const filters = ref<{ terms: Array<Record<string, unknown>> }>({ terms: [] })
-const { error, formError, saving, busyId, formOpen, editingId, form, query, openCreate, openEdit, saveForm, openDetail, toggleState, removeApplication } = useDirectApplications()
+const { permission, canSave, error, formError, saving, busyId, formOpen, editingId, form, query, openCreate, openEdit, saveForm, openDetail, toggleState, removeApplication } = useDirectApplications()
 const filterColumns = computed<ConditionFilterField[]>(() => [
   { dataIndex: 'name', title: $t('ThirdPartyApplication.name'), search: { type: 'string', defaultTermType: 'like' } },
   { dataIndex: 'state', title: $t('ApiApplication.subscription.state'), search: { type: 'select', options: [

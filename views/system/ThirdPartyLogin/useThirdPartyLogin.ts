@@ -1,4 +1,5 @@
 import { computed, onMounted, ref } from 'vue'
+import { useAuthStore } from '@jetlinks-web-core/store/auth'
 import type { ConditionFilterTerm } from '@jetlinks-web-core/components/ConditionFilter'
 import {
   createThirdPartyApplication,
@@ -22,6 +23,11 @@ import {
 } from './model'
 
 export function useThirdPartyLogin() {
+  const auth = useAuthStore()
+  const permission = 'system/ThirdPartyLogin'
+  // 既有 save 同时授权新增、编辑和启停，提交时重新读取以响应权限撤回。
+  const canSave = computed(() => auth.hasPermission(permission + ':save'))
+  const canDelete = computed(() => auth.hasPermission(permission + ':delete'))
   const records = ref<LoginConfig[]>([])
   const selectedMethod = ref<MethodFilter>('all')
   const filterTerms = ref<ConditionFilterTerm[]>([])
@@ -63,6 +69,7 @@ export function useThirdPartyLogin() {
   }
 
   function openCreate() {
+    if (!canSave.value) return
     editing.value = undefined
     editingApplication.value = undefined
     creatingMethod.value = selectedMethod.value === 'all' ? 'wechat' : selectedMethod.value
@@ -71,11 +78,12 @@ export function useThirdPartyLogin() {
 
   /** 编辑前读取完整详情，保存时保留页面没有承载的既有应用配置。 */
   async function openEdit(record: LoginConfig) {
+    if (!canSave.value) return
     loading.value = true
     try {
       const response = await getThirdPartyApplication(record.id)
       const config = fromApplication(response.result, true)
-      if (!config) return
+      if (!config || !canSave.value) return
       editingApplication.value = response.result
       editing.value = config
       drawerOpen.value = true
@@ -86,6 +94,7 @@ export function useThirdPartyLogin() {
 
   /** 新增或更新现有应用 SSO 配置，成功后刷新服务端列表。 */
   async function save(draft: LoginConfigDraft): Promise<boolean> {
+    if (!canSave.value || saving.value) return false
     saving.value = true
     try {
       const payload = toApplicationPayload(draft, editingApplication.value)
@@ -106,14 +115,18 @@ export function useThirdPartyLogin() {
 
   /** 删除应用后重新读取列表，避免保留服务端已失效的数据。 */
   async function remove(record: LoginConfig) {
+    if (!canDelete.value || record.enabled) return false
     await deleteThirdPartyApplication(record.id)
     await loadRecords()
+    return true
   }
 
   /** 启停直接复用应用管理的 state 局部更新语义。 */
   async function updateEnabled(id: string, enabled: boolean) {
+    if (!canSave.value) return false
     await updateThirdPartyApplicationState(id, enabled ? 'enabled' : 'disabled')
     await loadRecords()
+    return true
   }
 
   onMounted(() => {
@@ -122,6 +135,7 @@ export function useThirdPartyLogin() {
   })
 
   return {
+    permission, canSave, canDelete,
     records, selectedMethod, filterTerms, visibleRecords, drawerOpen, editing, creatingMethod,
     loading, saving, error, callbackBasePath,
     countFor, loadRecords, openCreate, openEdit, save, remove, updateEnabled,

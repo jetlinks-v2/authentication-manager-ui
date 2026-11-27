@@ -1,7 +1,8 @@
-import { onBeforeUnmount, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
+import { useAuthStore } from '@jetlinks-web-core/store/auth'
 import { deleteApiApplication, queryApiApplications, updateApiApplication } from '@authentication-manager-ui/api/application-center/apiApplication'
 import type { ApiApplication, QueryPayload } from '@authentication-manager-ui/api/application-center/apiApplication'
 import { createDirectApplication } from '@authentication-manager-ui/api/application-center/directApiApplication'
@@ -10,6 +11,11 @@ import { apiState, applicationError, responseBody } from '../applicationUtils'
 export const useDirectApplications = () => {
   const { t } = useI18n()
   const menu = useMenuStore()
+  const auth = useAuthStore()
+  const permission = 'application-center/ThirdPartyApplication'
+  // 既有菜单将新增、编辑和启停合并为 save，执行时也检查当前授权。
+  const canSave = computed(() => auth.hasPermission(permission + ':save'))
+  const canDelete = computed(() => auth.hasPermission(permission + ':delete'))
   const error = ref('')
   const formError = ref('')
   const saving = ref(false)
@@ -34,14 +40,18 @@ export const useDirectApplications = () => {
       throw cause
     }
   }
-  const openCreate = () => { editingId.value = ''; form.name = ''; form.description = ''; formError.value = ''; formOpen.value = true }
+  const openCreate = () => {
+    if (!canSave.value) return
+    editingId.value = ''; form.name = ''; form.description = ''; formError.value = ''; formOpen.value = true
+  }
   const openEdit = (application: ApiApplication) => {
+    if (!canSave.value) return
     editingId.value = application.id
     form.name = application.name; form.description = application.description || ''
     formError.value = ''; formOpen.value = true
   }
   const saveForm = async () => {
-    if (saving.value || !form.name.trim()) return false
+    if (!canSave.value || saving.value || !form.name.trim()) return false
     saving.value = true; formError.value = ''
     const id = editingId.value
     const values = { name: form.name.trim(), description: form.description.trim() }
@@ -66,16 +76,19 @@ export const useDirectApplications = () => {
     } catch (cause) { if (!disposed) error.value = applicationError(cause, t); return false }
     finally { if (!disposed) busyId.value = '' }
   }
-  const toggleState = (application: ApiApplication) => mutate(application, () => updateApiApplication(application.id, {
-    state: apiState(application) === 'enabled' ? 'disabled' : 'enabled',
-  }), 'ThirdPartyApplication.direct.saved')
+  const toggleState = (application: ApiApplication) => {
+    if (!canSave.value) return false
+    return mutate(application, () => updateApiApplication(application.id, {
+      state: apiState(application) === 'enabled' ? 'disabled' : 'enabled',
+    }), 'ThirdPartyApplication.direct.saved')
+  }
   const removeApplication = async (application: ApiApplication) => {
     // 与设备列表一致，仅停用后的应用允许从列表删除。
-    if (apiState(application) !== 'disabled') return false
+    if (!canDelete.value || apiState(application) !== 'disabled') return false
     return mutate(application, () => deleteApiApplication(application.id), 'ThirdPartyApplication.deleted')
   }
   const openDetail = (application: ApiApplication) => menu.jumpPage('application-center/ThirdPartyApplication/Detail', {
     params: { id: application.id }, query: { tab: 'basic' },
   })
-  return { error, formError, saving, busyId, formOpen, editingId, form, query, openCreate, openEdit, saveForm, openDetail, toggleState, removeApplication }
+  return { permission, canSave, canDelete, error, formError, saving, busyId, formOpen, editingId, form, query, openCreate, openEdit, saveForm, openDetail, toggleState, removeApplication }
 }

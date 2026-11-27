@@ -31,10 +31,10 @@
                   :placeholder="$t('ThirdPartyLogin.searchPlaceholder')"
                 />
                 <a-space class="config-actions">
-                  <a-button type="primary" @click="openCreate">
+                  <j-permission-button :hasPermission="permission + ':save'" type="primary" @click="openCreate">
                     <template #icon><AIcon type="PlusOutlined" /></template>
                     {{ $t('ThirdPartyLogin.add') }}
-                  </a-button>
+                  </j-permission-button>
                 </a-space>
               </a-flex>
 
@@ -71,8 +71,8 @@
                       </a-tooltip>
                     </template>
                     <template v-else-if="column.key === 'status'">
-                      <a-popconfirm :title="$t('ThirdPartyLogin.toggleConfirm')" @confirm="changeEnabled(record.id, !record.enabled)">
-                        <a-switch :checked="record.enabled" size="small" />
+                      <a-popconfirm :disabled="!canSave" :title="$t('ThirdPartyLogin.toggleConfirm')" @confirm="changeEnabled(record.id, !record.enabled)">
+                        <a-switch :checked="record.enabled" :disabled="!canSave" size="small" />
                       </a-popconfirm>
                       <span class="flag-label">{{ $t(record.enabled ? 'ThirdPartyLogin.enabled' : 'ThirdPartyLogin.disabled') }}</span>
                     </template>
@@ -80,6 +80,7 @@
                       <a-space :size="8">
                         <!-- 后端暂无无副作用的 SSO 测试接口，接口补齐后再开放测试入口。 -->
                         <j-permission-button
+                          :hasPermission="permission + ':save'"
                           type="link"
                           size="small"
                           :tooltip="{ title: $t('ThirdPartyLogin.edit') }"
@@ -87,8 +88,9 @@
                         >
                           <span role="img" :aria-label="$t('ThirdPartyLogin.edit')"><AIcon type="EditOutlined" /></span>
                         </j-permission-button>
-                        <a-popconfirm :disabled="record.enabled" :title="$t('ThirdPartyLogin.deleteConfirm')" @confirm="deleteRecord(record as LoginConfig)">
+                        <a-popconfirm :disabled="!canDelete || record.enabled" :title="$t('ThirdPartyLogin.deleteConfirm')" @confirm="deleteRecord(record as LoginConfig)">
                           <j-permission-button
+                            :hasPermission="permission + ':delete'"
                             type="link"
                             size="small"
                             danger
@@ -108,9 +110,9 @@
                   type="page"
                   :description="$t(records.length && (filterTerms.length || selectedMethod !== 'all')
                     ? 'ThirdPartyLogin.emptyFiltered' : 'ThirdPartyLogin.empty')" :search="filterTerms.length > 0 || selectedMethod !== 'all'" :search-name="$t('ApplicationTemplate.detail.config')">
-                  <a-button v-if="!records.length" type="primary" @click="openCreate">
+                  <j-permission-button v-if="!records.length" :hasPermission="permission + ':save'" type="primary" @click="openCreate">
                     {{ $t('ThirdPartyLogin.addFirst') }}
-                  </a-button>
+                  </j-permission-button>
                   <a-button v-else @click="clearFilters">{{ $t('ThirdPartyLogin.clearSearch') }}</a-button>
                 </CloudEmpty>
               </a-spin>
@@ -145,6 +147,7 @@ defineOptions({ name: 'ThirdPartyLogin' })
 
 const { t } = useI18n()
 const {
+  permission, canSave, canDelete,
   records, selectedMethod, filterTerms, visibleRecords, drawerOpen, editing, creatingMethod,
   loading, saving, error, callbackBasePath,
   countFor, loadRecords, openCreate, openEdit, save, remove, updateEnabled,
@@ -200,8 +203,7 @@ async function editRecord(record: LoginConfig) {
 
 async function deleteRecord(record: LoginConfig) {
   try {
-    await remove(record)
-    message.success(t('ThirdPartyLogin.deleted'))
+    if (await remove(record)) message.success(t('ThirdPartyLogin.deleted'))
   } catch {
     message.error(t('ThirdPartyLogin.deleteFailed'))
   }
@@ -209,8 +211,7 @@ async function deleteRecord(record: LoginConfig) {
 
 async function changeEnabled(id: string, enabled: boolean) {
   try {
-    await updateEnabled(id, enabled)
-    message.success(t('ThirdPartyLogin.statusChanged'))
+    if (await updateEnabled(id, enabled)) message.success(t('ThirdPartyLogin.statusChanged'))
   } catch {
     message.error(t('ThirdPartyLogin.statusChangeFailed'))
   }

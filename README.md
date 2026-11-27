@@ -60,6 +60,14 @@
 
 第三方登录菜单（`baseMenu.json` 中的 `system-third-party-login`，owner 为 `cloud`）需声明应用管理查询权限 `application/query`，供 `api/system/thirdPartyLogin.ts#queryThirdPartyApplications` 调用 `/application/_query`。更新菜单定义后需同步已保存菜单及相应授权；验收时使用仅拥有该菜单的账号确认应用列表可查询，实际登录环境权限效果待验证。
 
+### 开放平台与第三方登录按钮权限
+
+`/open/third-party-application` 的 `views/application-center/ThirdPartyApplication/Direct/{List.vue,useDirectApplications.ts}`，以及 `/system/third-party-login` 的 `views/system/ThirdPartyLogin/{index.vue,useThirdPartyLogin.ts}`，均已绑定各自菜单的 `save`（新增、编辑、启停）与 `delete` 按钮权限。覆盖工具栏、空态和行操作；入口与提交函数再次检查当前授权，第三方登录编辑详情请求结束后也检查授权。删除保留仅停用记录可删的限制，权限检查未通过时不提示操作成功。不新增按钮 ID，不改接口、菜单定义、详情页或运营端。
+
+验证：模块内执行 `node --test tests/thirdPartyButtonPermissions.test.mjs tests/thirdPartyLoginMenu.test.mjs tests/thirdPartyLoginModel.test.mjs tests/thirdPartyLoginForm.test.mjs`，30 项中 29 项通过，新增的 11 项权限回归全部通过，覆盖只读、仅保存、仅删除、跨菜单授权隔离、权限撤回、详情加载期间撤权及两页 SFC 编译。旧 `thirdPartyLoginMenu.test.mjs` 中查找 `system/Apply` 菜单的断言失败；从修改前 `92269b0` 导出该测试及所读文件独立运行，同样为 5 项通过、1 项失败。未修改这项历史菜单断言。
+
+在 runtime-ui 执行 `pnpm -F jetlinks-web-core build --outDir /tmp/jetlinks-third-party-button-permissions-build -- --module-name authentication-manager-ui`，生产构建通过（26.86 秒）；`git diff --check` 通过。`pnpm exec vue-tsc --noEmit --pretty false -p modules/authentication-manager-ui/tsconfig.json` 未通过，共 538 项诊断，四个改动代码文件均无诊断；修复模块类型问题后重跑同一命令。工作区、宿主和本模块无独立 lint 脚本。真实角色的仅查询／仅保存／仅删除授权、页面禁用态及后端拦截仍需登录环境联调；未操作真实应用数据。本轮按用户要求在当前分支本地提交，未推送。
+
 
 ## 文档管理（已实现，待运行环境联调）
 
