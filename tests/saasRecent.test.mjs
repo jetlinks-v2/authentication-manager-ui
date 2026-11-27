@@ -12,7 +12,7 @@ const result = await build({
   plugins: [{ name: 'boundaries', setup(api) {
     const boundaries = {
       'vue-router': 'export const useRouter=()=>context.router; export const NavigationFailureType={cancelled:8,aborted:4,duplicated:16}; export const isNavigationFailure=(failure,type)=>!!failure && (failure.type & type)!==0',
-      'vue-i18n': 'export const useI18n=()=>({t:(key,params)=>{const value=context.translations?.[key] ?? key; return params ? value.replace("{time}",params.time) : value}})',
+      'vue-i18n': 'export const useI18n=()=>({t:(key,params)=>{context.onTranslate?.(key); const value=context.translations?.[key] ?? key; return params ? value.replace("{time}",params.time) : value}})',
       '@jetlinks-web/utils': 'export const onlyMessage=()=>{}',
       '@vueuse/core': 'export const useNow=()=>context.now',
       '@jetlinks-web-core/store/menu': 'export const useMenuStore=()=>context.menu',
@@ -150,27 +150,27 @@ test('menu tree supplies current translated titles, inherited icons, paths and l
   try {
     const codes = ['devices', 'list', 'detail', 'orphan']
     const f = recentFixture(codes)
-    f.context.translations = vue.reactive({ root: '资源中心', group: '设备管理', list: '设备列表', detail: '设备详情',
-      'saasRecent.todayTime': '今天 {time}', 'saasRecent.yesterdayTime': '昨天 {time}' })
+    f.context.onTranslate = key => assert.match(key, /^saasRecent\./)
+    f.context.translations = { 'saasRecent.todayTime': '今天 {time}', 'saasRecent.yesterdayTime': '昨天 {time}' }
     f.context.now.value = new Date(2026, 9, 30, 10, 0)
-    f.context.menu.siderMenus = vue.reactive([{ name: 'root', meta: { title: 'root', icon: 'RootIcon' }, children: [
-      { name: 'devices', meta: { title: 'group', icon: 'GroupIcon' }, children: [
-        { name: 'list', meta: { title: 'list', icon: 'ListIcon' } },
+    f.context.menu.siderMenus = vue.reactive([{ name: 'root', meta: { title: '资源中心', icon: 'RootIcon' }, children: [
+      { name: 'devices', meta: { title: '设备管理', icon: 'GroupIcon' }, children: [
+        { name: 'list', meta: { title: '设备列表', icon: 'ListIcon' } },
       ] },
     ] }])
-    f.context.menu.getMenu = code => f.available.has(code) ? { routeName: code, title: code, path: `/${code}` } : undefined
+    f.context.menu.getMenu = code => f.available.has(code) ? { routeName: code, title: code === 'detail' ? '设备详情' : undefined, path: `/${code}` } : undefined
     f.setHistory([
       { ...makeVisit('list'), ownerCode: 'list', title: 'Old stored title', visitedAt: new Date(2026, 9, 30, 9, 5).getTime() },
       { ...makeVisit('detail', 1), ownerCode: 'devices', visitedAt: new Date(2026, 9, 29, 23, 1).getTime() },
-      { ...makeVisit('orphan', 2), visitedAt: new Date(2026, 9, 28, 8, 2).getTime() },
+      { ...makeVisit('orphan', 2), title: '历史标题', visitedAt: new Date(2026, 9, 28, 8, 2).getTime() },
     ])
     let [list, detail, orphan] = f.state.rows.value
     assert.deepEqual([list.title, list.icon, list.fullPath, list.description], ['设备列表', 'GroupIcon', '资源中心 › 设备管理 › 设备列表', '资源中心 · 今天 09:05'])
     assert.deepEqual([detail.title, detail.icon, detail.fullPath, detail.description], ['设备详情', 'GroupIcon', '资源中心 › 设备管理 › 设备详情', '资源中心 · 昨天 23:01'])
-    assert.deepEqual([orphan.icon, orphan.description], ['FileOutlined', 'orphan · 10-28 08:02'])
+    assert.deepEqual([orphan.title, orphan.icon, orphan.description], ['历史标题', 'FileOutlined', '历史标题 · 10-28 08:02'])
     f.context.menu.siderMenus[0].children[0].children[0].meta.icon = 'icon-yuandian'
-    f.context.translations.list = 'Device list'
-    f.context.translations.root = 'Resources'
+    f.context.menu.siderMenus[0].children[0].children[0].meta.title = 'Device list'
+    f.context.menu.siderMenus[0].meta.title = 'Resources'
     ;[list] = f.state.rows.value
     assert.deepEqual([list.title, list.icon, list.fullPath], ['Device list', 'GroupIcon', 'Resources › 设备管理 › Device list'])
     for (const icon of ['icon-yuandian', undefined]) {
