@@ -22,7 +22,7 @@ export function getSaasGrantedMenus(): ReadonlySet<string> {
 }
 
 /** 概览和个人中心属于基础入口，不能据此认定账号拥有项目业务功能。 */
-export function getSaasProjectEntries(): { id: string; titleKey: string }[] {
+export function getSaasProjectEntries(): { id: string; name: string }[] {
   const menu = useMenuStore()
   const byRoute = new Map<string, string>()
   for (const code of getSaasGrantedMenus()) {
@@ -40,8 +40,8 @@ export function getSaasProjectEntries(): { id: string; titleKey: string }[] {
     return route.name ? byRoute.get(String(route.name)) : undefined
   }
   return menu.siderMenus.flatMap(route => {
-    const id = findEntry(route), titleKey = route.meta?.title
-    return id && typeof titleKey === 'string' ? [{ id, titleKey }] : []
+    const id = findEntry(route), name = route.meta?.title
+    return id && typeof name === 'string' ? [{ id, name }] : []
   })
 }
 
