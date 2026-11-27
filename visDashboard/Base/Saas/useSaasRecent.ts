@@ -48,7 +48,7 @@ export function useSaasRecent(variant?: 'private') {
     const result = new Map<string, MenuPresentation>()
     function collect(nodes: RouteRecordRaw[], ancestors: string[] = [], parentIcon?: string) {
       nodes.forEach(node => {
-        const title = node.meta?.title ? t(String(node.meta.title)) : ''
+        const title = String(node.meta?.title || '')
         const visible = node.meta?.hideInMenu !== true && !!title
         const path = visible ? [...ancestors, title] : ancestors
         // 独立入口统一使用所属二级菜单图标，三级及详情不覆盖；圆点不作为业务图标。
@@ -130,7 +130,7 @@ export function useSaasRecent(variant?: 'private') {
         || (menu.getMenu(code)?.routeName && menu.getMenu(code)?.routeName === current?.routeName))
       const statusTitle = variant === 'private' && deviceRoute && (status === 'online' || status === 'offline')
         ? t(`saasRecent.start.${status}Devices`) : undefined
-      const title = resource ? knownName || resource.id : statusTitle || leaf?.title || t(String(current?.title || row.title || row.menuCode))
+      const title = resource ? knownName || resource.id : statusTitle || leaf?.title || current?.title || row.title || row.menuCode
       // 隐藏详情路由沿用所属菜单的层级和图标，再追加当前详情页名称。
       const path = leaf ? [...leaf.path.slice(0, -1), title] : [...(owner?.path || []), title]
       const group = resource ? t(`saasRecent.resource.${resource.kind}`) : path[0]

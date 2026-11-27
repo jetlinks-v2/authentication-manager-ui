@@ -24,7 +24,7 @@ export const SAAS_HELP_CENTER_URL = 'https://hanta.yuque.com/px7kg1/rk46tv/6da59
 
 /** 账号信息来自当前会话；功能入口只从已授权且可导航的菜单树生成。 */
 export function useSaasAccount(isEdit: () => boolean) {
-  const user = useUserStore(), menu = useMenuStore(), { t } = useI18n()
+  const user = useUserStore(), menu = useMenuStore()
   const applicationEntry = inject(saasApplicationEntryKey, undefined)
   const applicationMode = computed(() => applicationEntry?.mode.value === 'applications')
   const names = (values: unknown[] = []) => values.flatMap(value => {
@@ -41,7 +41,7 @@ export function useSaasAccount(isEdit: () => boolean) {
   })
   const entries = computed<PrivateAccountEntry[]>(() => {
     if (applicationMode.value && applicationEntry) return applicationEntry.entries.value
-    return getSaasProjectEntries().map(item => ({ id: item.id, name: t(item.titleKey), disabled: false }))
+    return getSaasProjectEntries().map(item => ({ ...item, disabled: false }))
   })
   const openingId = computed(() => applicationMode.value ? applicationEntry?.openingId.value : undefined)
   function open(id: string) {
