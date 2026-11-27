@@ -151,9 +151,7 @@
           {
             "permission": "bulletin",
             "actions": [
-              "query",
-              "save",
-              "delete"
+              "query"
             ]
           }
         ],
@@ -302,8 +300,10 @@
         ],
         "permissions": [
           {
-            "permission": "tenant-self-manager",
-            "actions": ["query", "save"]
+            "permission": "system_config",
+            "actions": [
+              "query"
+            ]
           }
         ],
         "buttons": [
@@ -406,17 +406,20 @@
               },
               {
                 "permission": "business-application",
-                "actions": ["query"]
+                "actions": [
+                  "query"
+                ]
               },
               {
                 "permission": "business-application-template",
-                "actions": ["query"]
+                "actions": [
+                  "query"
+                ]
               },
               {
                 "permission": "role-group",
                 "actions": [
-                  "save",
-                  "delete"
+                  "query"
                 ]
               }
             ],
@@ -1948,21 +1951,7 @@
               "system-logger",
               "access-logger"
             ],
-            "permissions": [
-              {
-                "permission": "system-logger",
-                "actions": [
-                  "query"
-                ]
-              },
-              {
-                "permission": "access-logger",
-                "actions": [
-                  "self-data",
-                  "query"
-                ]
-              }
-            ],
+            "permissions": [],
             "buttons": [],
             "children": [
               {
@@ -1992,7 +1981,16 @@
                   "value": "support"
                 },
                 "supportDataAccess": true,
-                "assetType": "accessLogger"
+                "assetType": "accessLogger",
+                "permissions": [
+                  {
+                    "permission": "access-logger",
+                    "actions": [
+                      "query",
+                      "self-data"
+                    ]
+                  }
+                ]
               },
               {
                 "id": "57e5bdaaee37a611424cfc1f5ab02d1f",
@@ -2020,7 +2018,15 @@
                   "text": "不支持",
                   "value": "unsupported"
                 },
-                "assetAccesses": []
+                "assetAccesses": [],
+                "permissions": [
+                  {
+                    "permission": "system-logger",
+                    "actions": [
+                      "query"
+                    ]
+                  }
+                ]
               }
             ]
           },
@@ -2192,11 +2198,15 @@
         "permissions": [
           {
             "permission": "business-application",
-            "actions": ["query", "delete"]
+            "actions": [
+              "query"
+            ]
           },
           {
             "permission": "business-application-template",
-            "actions": ["query"]
+            "actions": [
+              "query"
+            ]
           }
         ],
         "buttons": [
@@ -2427,9 +2437,25 @@
         "sortIndex": 3,
         "showPage": ["application"],
         "permissions": [
-          { "permission": "application", "actions": ["query", "save", "delete"] },
-          { "permission": "api_group", "actions": ["query", "grant", "grant_query"] },
-          { "permission": "access-logger", "actions": ["query"] }
+          {
+            "permission": "application",
+            "actions": [
+              "query"
+            ]
+          },
+          {
+            "permission": "api_group",
+            "actions": [
+              "query",
+              "grant_query"
+            ]
+          },
+          {
+            "permission": "access-logger",
+            "actions": [
+              "query"
+            ]
+          }
         ],
         "buttons": [
           {
@@ -2442,7 +2468,20 @@
             "id": "save",
             "name": "保存",
             "i18nMessages": { "zh_CN": "保存", "en_US": "Save", "en": "Save", "ja": "保存", "ja_JP": "保存" },
-            "permissions": [{ "permission": "application", "actions": ["save"] }]
+            "permissions": [
+              {
+                "permission": "application",
+                "actions": [
+                  "save"
+                ]
+              },
+              {
+                "permission": "api_group",
+                "actions": [
+                  "grant"
+                ]
+              }
+            ]
           },
           {
             "id": "delete",
@@ -2479,23 +2518,34 @@
         "permissions": [
           {
             "permission": "application",
-            "actions": ["query", "save", "delete"]
+            "actions": [
+              "query"
+            ]
           },
           {
             "permission": "api_group",
-            "actions": ["query", "grant", "grant_query"]
+            "actions": [
+              "query",
+              "grant_query"
+            ]
           },
           {
             "permission": "api_spec",
-            "actions": ["query"]
+            "actions": [
+              "query"
+            ]
           },
           {
             "permission": "business-application",
-            "actions": ["query", "save"]
+            "actions": [
+              "query"
+            ]
           },
           {
             "permission": "access-logger",
-            "actions": ["query"]
+            "actions": [
+              "query"
+            ]
           }
         ],
         "buttons": [
@@ -2528,7 +2578,20 @@
               "ja": "APIアプリケーションを追加",
               "ja_JP": "APIアプリケーションを追加"
             },
-            "permissions": [{ "permission": "application", "actions": ["save"] }]
+            "permissions": [
+              {
+                "permission": "application",
+                "actions": [
+                  "save"
+                ]
+              },
+              {
+                "permission": "api_group",
+                "actions": [
+                  "grant"
+                ]
+              }
+            ]
           },
           {
             "id": "permission",
@@ -2565,6 +2628,44 @@
               "ja_JP": "インターフェースログ"
             },
             "permissions": [{ "permission": "access-logger", "actions": ["query"] }]
+          },
+          {
+            "id": "action",
+            "name": "启用/停用",
+            "i18nMessages": {
+              "zh_CN": "启用/停用",
+              "en_US": "Enable/Disable",
+              "en": "Enable/Disable",
+              "ja": "有効化/無効化",
+              "ja_JP": "有効化/無効化"
+            },
+            "permissions": [
+              {
+                "permission": "application",
+                "actions": [
+                  "save"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "delete",
+            "name": "删除",
+            "i18nMessages": {
+              "zh_CN": "删除",
+              "en_US": "Delete",
+              "en": "Delete",
+              "ja": "削除",
+              "ja_JP": "削除"
+            },
+            "permissions": [
+              {
+                "permission": "application",
+                "actions": [
+                  "delete"
+                ]
+              }
+            ]
           }
         ],
         "accessSupport": {
