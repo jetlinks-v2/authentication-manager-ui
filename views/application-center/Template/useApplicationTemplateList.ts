@@ -2,6 +2,7 @@ import { computed, ref } from 'vue'
 import { Modal } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
+import { useAuthStore } from '@jetlinks-web-core/store/auth'
 import { onlyMessage } from '@jetlinks-web/utils'
 import type { ConditionFilterChangePayload, ConditionFilterField } from '@jetlinks-web-core/components/ConditionFilter'
 import {
@@ -22,7 +23,9 @@ const stateValue = (value: unknown) => {
 export const useApplicationTemplateList = () => {
   const { t: $t } = useI18n()
   const menuStore = useMenuStore()
+  const authStore = useAuthStore()
   const permission = 'application-center/Template'
+  const canEdit = computed(() => authStore.hasPermission(`${permission}:update`))
   const tableRef = ref<Record<string, any>>({})
   const tableLoading = ref(false)
   const createDialogOpen = ref(false)
@@ -112,8 +115,11 @@ export const useApplicationTemplateList = () => {
     }
   }
 
-  const viewDetail = (row: { id: string }) =>
+  // 名称与编辑按钮共用入口，点击时复核授权，避免撤销权限后继续打开编辑详情。
+  const viewDetail = (row: { id: string }) => {
+    if (!canEdit.value) return
     menuStore.jumpPage('application-center/Template/Save', { query: { id: row.id } })
+  }
   const changeStatus = (row: Record<string, any>, checked: boolean) => {
     Modal.confirm({
       title: $t('ApplicationTemplate.message.confirmChangeStatus', [
@@ -158,6 +164,7 @@ export const useApplicationTemplateList = () => {
 
   return {
     permission,
+    canEdit,
     tableRef,
     tableLoading,
     createDialogOpen,

@@ -2245,13 +2245,13 @@
           },
           {
             "id": "add",
-            "name": "创建应用",
+            "name": "新增应用",
             "i18nMessages": {
-              "zh_CN": "创建应用",
-              "en_US": "Create Application",
-              "en": "Create Application",
-              "ja": "アプリケーションを作成",
-              "ja_JP": "アプリケーションを作成"
+              "zh_CN": "新增应用",
+              "en_US": "Add Application",
+              "en": "Add Application",
+              "ja": "アプリケーションを追加",
+              "ja_JP": "アプリケーションを追加"
             },
             "permissions": [
               {

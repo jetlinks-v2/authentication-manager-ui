@@ -21,6 +21,7 @@ const fixtures = {
   '@jetlinks-web-core/locales': "export { i18n as default } from 'test-runtime';",
   '@jetlinks-web/utils': 'export const onlyMessage = () => {};',
   '@jetlinks-web-core/store/menu': 'export const useMenuStore = () => ({ jumpPage() {} });',
+  '@jetlinks-web-core/store/auth': 'export const useAuthStore = () => ({ hasPermission: () => false });',
   '@jetlinks-web-core/store/user': "export const useUserStore = () => ({ userInfo: { id: 'user' } });",
   '@jetlinks-web-core/components/AssetOwnershipCondition': "export const createAssetOwnershipField = () => ({ dataIndex: 'id' });",
   'vue-router': 'export const useRoute = () => ({ query: {} }); export const useRouter = () => ({ replace() {} });',

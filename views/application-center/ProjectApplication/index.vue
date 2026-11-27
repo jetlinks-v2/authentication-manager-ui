@@ -12,14 +12,15 @@
 			            @change="handleSearch"
 		            />
 
-		            <a-button
+		            <j-permission-button
+			            :hasPermission="`${permission}:add`"
 			            class="create-application-button"
 			            type="primary"
-			            @click="createOpen = true"
+			            @click="openCreate"
 		            >
 			            <template #icon><AIcon type="PlusOutlined" /></template>
 			            {{ $t('ProjectApplication.list.create') }}
-		            </a-button>
+		            </j-permission-button>
 	            </a-space>
             </a-flex>
           </div>
@@ -44,10 +45,6 @@
               @toggle-status="toggleApplicationStatus(item.application)"
               @open="openApplication(item.application)"
             />
-            <button class="create-card" type="button" @click="createOpen = true">
-              <AIcon type="PlusOutlined" />
-              <span>{{ $t('ProjectApplication.list.createCard') }}</span>
-            </button>
           </ResponsiveGrid>
           <CloudEmpty
             v-else
@@ -55,14 +52,15 @@
             :description="$t(hasFilters
               ? 'ProjectApplication.list.empty'
               : 'ProjectApplication.list.noApplications')" :search="hasFilters" :search-name="$t('components.EditForm.949962-3')">
-            <a-button v-if="!hasFilters" type="primary" @click="createOpen = true">
+            <j-permission-button v-if="!hasFilters" :hasPermission="`${permission}:add`" type="primary" @click="openCreate">
               {{ $t('ProjectApplication.list.create') }}
-            </a-button>
+            </j-permission-button>
           </CloudEmpty>
         </a-spin>
       </full-page>
 
       <ApplicationCreateDialog
+        v-if="canCreate"
         v-model:open="createOpen"
         embedded
         @created="handleCreated"
@@ -73,7 +71,6 @@
 
 <script setup lang="ts">
 import ConditionFilter from '@jetlinks-web-core/components/ConditionFilter'
-import PageHeader from '@jetlinks-web-core/components/PageHeader'
 import ApplicationCreateDialog from './Create/index.vue'
 import ApplicationCard from './components/ApplicationCard.vue'
 import { useApplicationList } from './useApplicationList'
@@ -81,6 +78,9 @@ import { useApplicationList } from './useApplicationList'
 defineOptions({ name: 'ProjectApplication' })
 
 const {
+  permission,
+  canCreate,
+  openCreate,
   loading,
   loadFailed,
   createOpen,
@@ -102,7 +102,7 @@ const {
 
 <style scoped>
 .project-application-page {
-  /* 应用卡片与内联「创建应用」卡片共用同一高度，避免两者落在不同栅格行时高度不一致。 */
+  /* 应用卡片使用统一行高。 */
   --application-card-block-size: 16rem;
 
   min-height: 100%;
@@ -118,46 +118,8 @@ const {
   min-width: 0;
 }
 
-.create-card {
-  display: grid;
-  height: 100%;
-  min-height: var(--application-card-block-size);
-  place-items: center;
-  align-content: center;
-  gap: var(--space-3);
-  border: var(--jet-theme-stroke-width) solid var(--card-shell-border);
-  border-radius: var(--r-4);
-  background: var(--bg);
-  color: var(--ink-1);
-  font-size: var(--fs-body);
-  cursor: pointer;
-  transition: var(--card-shell-transition);
-}
-
-.create-card:hover {
-  border-color: var(--card-shell-border-hover);
-  box-shadow: var(--card-shell-shadow-hover);
-}
-
 .application-grid {
   grid-auto-rows: 1fr;
-}
-
-.create-card:focus-visible {
-  border-color: var(--card-shell-border-active);
-  box-shadow: var(--ring-focus);
-  outline: none;
-}
-
-.create-card :deep(.anticon) {
-  width: var(--space-8);
-  height: var(--space-8);
-  color: var(--accent);
-}
-
-.create-card :deep(svg) {
-  width: var(--space-7);
-  height: var(--space-7);
 }
 
 @media (max-width: 62rem) {

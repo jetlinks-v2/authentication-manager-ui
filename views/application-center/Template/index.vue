@@ -50,9 +50,10 @@
 		            </template>
 		
 	            <template #name="slotProps">
-	              <a class="application-template-page__link" @click="table.viewDetail(slotProps)">
+	              <a v-if="canEdit" class="application-template-page__link" @click="table.viewDetail(slotProps)">
 	                {{ slotProps.i18nName || slotProps.name || $t('comm.table.empty') }}
 	              </a>
+	              <span v-else>{{ slotProps.i18nName || slotProps.name || $t('comm.table.empty') }}</span>
 	            </template>
 
 	            <template #provider="slotProps">
@@ -137,6 +138,7 @@ defineOptions({ name: 'ApplicationTemplateManage' })
 
 const {
   permission,
+  canEdit,
   tableRef,
   tableLoading,
   createDialogOpen,

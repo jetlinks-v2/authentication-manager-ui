@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { onlyMessage } from '@jetlinks-web/utils'
 import type { ConditionFilterChangePayload, ConditionFilterField } from '@jetlinks-web-core/components/ConditionFilter'
 import { useMenuStore } from '@jetlinks-web-core/store/menu'
+import { useAuthStore } from '@jetlinks-web-core/store/auth'
 import { useApplicationDeletion } from './useApplicationDeletion'
 import { useApplicationOpenGuard } from './useApplicationOpenGuard'
 import { useProjectApplication } from './useProjectApplication'
@@ -19,11 +20,21 @@ export const useApplicationList = () => {
   const route = useRoute()
   const router = useRouter()
   const menuStore = useMenuStore()
+  const authStore = useAuthStore()
+  const permission = 'application-center/ProjectApplication'
+  const canCreate = computed(() => authStore.hasPermission(`${permission}:add`))
   const store = useProjectApplication()
   const userStore = useUserStore()
   const loading = ref(false)
   const loadFailed = ref(false)
   const createOpen = ref(false)
+  // 顶部、空状态和路由快捷入口共用按钮授权，不能由菜单访问权限代替。
+  const openCreate = () => {
+    if (canCreate.value) createOpen.value = true
+  }
+  watch(canCreate, allowed => {
+    if (!allowed) createOpen.value = false
+  }, { flush: 'sync' })
   const filters = ref<ConditionFilterChangePayload['filter']>({ terms: [] })
   const updatingApplicationIds = ref<string[]>([])
   const { deletingApplicationIds, deleteApplication } = useApplicationDeletion()
@@ -81,7 +92,7 @@ export const useApplicationList = () => {
   // 快捷入口先挂载列表，再把一次性路由动作转换为本页创建弹窗状态。
   watch(() => route.query.action, (action) => {
     if (action !== 'create') return
-    createOpen.value = true
+    openCreate()
     const { action: _action, ...query } = route.query
     void router.replace({ query })
   }, { immediate: true })
@@ -162,6 +173,9 @@ export const useApplicationList = () => {
   }
 
   return {
+    permission,
+    canCreate,
+    openCreate,
     loading,
     loadFailed,
     createOpen,
