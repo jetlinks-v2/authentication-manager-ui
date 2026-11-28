@@ -1,5 +1,9 @@
 # Authentication Manager UI
 
+对象目录的用户副标题由 `objectPresentations.ts` 经 `register.ts` 注册为已授权行中的 `username`；主行继续显示姓名。保留真实账号的完整用户名以区分同名账号，缺失时隐藏副标题，不新增查询或依赖本体模块。
+
+组织通过同一注册入口声明 `directory.mode: tree`，复用 `api/system/department.ts#getTreeData_api` 的不分页组织树，不请求成员统计；树的展开、保留祖先搜索及选择由消费方处理，目录行只显示图标与名称。该接口沿用组织原权限范围，身份模块不依赖本体模块，也不根据图关系拼装组织层级。
+
 ## 统一应用与接口分组详情摘要
 
 当前实现：`ProjectApplication/Detail`、`ThirdPartyApplication/Direct/Detail.vue` 与 `ApiGroup/Save/index.vue` 的现有详情使用 core `DetailHeader` 摘要模式、`DetailMetaItem` 和 `StatusTag`。保留并统一 56px 对象图标，ID/时间采用相同语义图标；说明与 ID、时间在同一摘要行内按可用宽度换行，不再强制独占一行。保留返回入口、业务动作、权限、名称/说明自动保存及失败重试。接口分组仅调整带 ID 的详情分支，不新增主导航，不改创建表单。
@@ -46,7 +50,9 @@ The application list uses `createAssetOwnershipField` for `business_application`
 
 Organizations use `OwnershipOrganizationTree.vue` and `useOwnershipOrganizationTree.ts`: independent checkbox selection, path labels, default root and selected-ancestor expansion, debounced local search and virtual rows. Clearing search restores expansion; stale responses cannot replace current selections. “Include descendants” submits the backend closure condition. Selected tags occupy at most two rows beside that control; `useSelectedTagOverflow.ts` reserves space for `+N`, whose popover shows all selections in the editor's stacking context.
 
-Requires [Web Core #186](https://github.com/jetlinks-v2/jetlinks-web-core/pull/186) and the backend Context from [Components #1655](https://github.com/jetlinks-v2/jetlinks-components/pull/1655) / [Tenant #48](https://github.com/jetlinks-v2/jetlinks-tenant/pull/48). Regression command: `node --test tests/assetOwnershipCreator.test.mjs tests/assetOwnershipOrganizationTree.test.mjs`; coverage includes lazy registration, user query mapping, SFC compilation with the real filename, tag overflow and local filtering of over 20,000 nodes. Full type checking retains existing errors; final visual verification remains pending because the browser connection times out.
+内嵌 `option-extra` 模式将名称与操作放在同一行，预留操作区并保持统一行高；搜索路径可在名称下弱化显示。复选框与展开箭头保持对齐。树只承载插槽，权限与写入交由原资产接口。
+
+空目录使用 Ant Empty 的简单图形；读取失败显示提示和重试按钮。重试复用原加载器，保留勾选、过期响应及卸载保护。组件沿当前 Vue 的真实文件名与 `defineOptions` 声明命名，不依赖旧 setup-name 转换。
 
 ## 菜单多资产表单兼容
 
@@ -939,7 +945,7 @@ node --max_old_space_size=8192 --max-semi-space-size=64 -e "process.argv.push('-
 
 私有化概览采用独立布局，展示关键指标、首次接入引导或快捷入口、应用、消息与 AI 事件趋势、告警、设备与通道、节点运行状况。模块与菜单授权决定展示和取数范围；引导状态未知时不判为已完成，失败保留未知与重试。私有化不展示 SaaS 套餐、续费、扩容、公告和帮助。
 
-私有化复用资源聚合服务、应用准入、Echarts、设备模块公开的只读监控 hook 和规则模块公开的动态告警等级字典。视频统计与视频资源页使用同一全部来源范围，插件及扩展来源纳入“其他”；今日趋势省略未结束小时，但合计保留当前全部数据。最近告警进入来源列表；目标页未支持单条深链前不拼装无效详情参数。概览和资源中心的普通设备入口统一进入设备列表“全部”，共享 `HOME_TARGETS.devices`，不再用 `type=device` 增设物联分类；最近访问状态入口保留 `status`，新增入口保留 `action=create`。设备列表兼容旧类型链接，边缘节点与视频分类仍沿用各自 Provider，概览统计口径不变。完成引导且无创建权限时隐藏空快捷卡。
+私有化复用资源聚合服务、应用准入、Echarts、设备模块公开的只读监控 hook 和规则模块公开的动态告警等级字典。视频统计与视频资源页使用同一全部来源范围，插件及扩展来源纳入“其他”；今日趋势省略未结束小时，但合计保留当前全部数据。最近告警进入来源列表；目标页未支持单条深链前不拼装无效详情参数。物联卡携带 `type=device` 下钻，SaaS 与私有化共用同口径设备过滤，未指定类型仍进入全部设备。完成引导且无创建权限时隐藏空快捷卡。
 
 SaaS 管理员概览将项目摘要固定在画布上方，最近访问、资源概况、今日概况、套餐用量、应用、公告及帮助按授权装配到 `DashBoardCanvas`。画布使用 `editable=false`、`layoutEditable=true`、`previewMode=false`，开放拖拽缩放并保留真实取数，不开放组件增删和配置。布局按账号、项目、API、应用、容器宽度档及可见组件集合隔离保存；有效个人布局优先，数据刷新不重置坐标，窄屏切为单列。
 

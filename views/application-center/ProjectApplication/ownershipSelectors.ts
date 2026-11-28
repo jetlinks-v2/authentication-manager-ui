@@ -60,6 +60,7 @@ export const createOwnershipCreatorSelector = (): AssetDimensionSelector => {
 export const createOwnershipOrganizationSelector = (): AssetDimensionSelector => {
   return {
     component: OwnershipOrganizationTree,
+    supportsOptionExtra: true,
     optionPanel: {
       loadOptions: async () => {
         const response = await getTreeData_api({ paging: false, terms: [] })
